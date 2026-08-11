@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { Search, X, LayoutGrid, Table as TableIcon, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, Table } from "lucide-react";
 import type { UsersFilters } from "../types";
 import { getRoles, getStatuses } from "../services/users-service";
 
@@ -32,13 +31,13 @@ export function UsersToolbar({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="relative w-[280px]">
+      <div className="relative w-[260px]">
         <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Buscar usuarios..."
           value={filters.search}
           onChange={(e) => onFilterChange({ search: e.target.value })}
-          className="h-[38px] pl-9"
+          className="h-9 pl-9"
         />
       </div>
 
@@ -48,7 +47,8 @@ export function UsersToolbar({
           onFilterChange({ status: value as UsersFilters["status"] })
         }
       >
-        <SelectTrigger className="h-[38px] w-[160px]">
+        <SelectTrigger className="h-9 w-[160px]">
+          <Filter className="size-3.5 mr-2 text-muted-foreground" />
           <SelectValue placeholder="Estado" />
         </SelectTrigger>
         <SelectContent>
@@ -67,7 +67,7 @@ export function UsersToolbar({
           onFilterChange({ role: value as UsersFilters["role"] })
         }
       >
-        <SelectTrigger className="h-[38px] w-[180px]">
+        <SelectTrigger className="h-9 w-[180px]">
           <SelectValue placeholder="Rol" />
         </SelectTrigger>
         <SelectContent>
@@ -94,7 +94,7 @@ export function UsersToolbar({
         </Button>
       )}
 
-      <div className="ml-auto flex items-center" />
+      <div className="ml-auto" />
 
       <div className="flex items-center rounded-lg border border-border">
         <Button
@@ -104,7 +104,7 @@ export function UsersToolbar({
           onClick={() => onViewModeChange("table")}
           aria-label="Vista tabla"
         >
-          <Table className="size-4" />
+          <TableIcon className="size-4" />
         </Button>
         <Button
           variant={viewMode === "cards" ? "secondary" : "ghost"}

@@ -1,6 +1,7 @@
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Users, Bot, MessageSquare, Activity } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { KpiCard } from "./kpi-card";
+import { SectionHeader } from "@/components/layout/section-header";
+import { StatCard } from "@/components/feedback/stat-card";
 import { ActivityChart } from "./activity-chart";
 import { QuickActions } from "./quick-actions";
 import { AgentUsageCard } from "./agent-usage-card";
@@ -35,29 +36,84 @@ export async function DashboardPage() {
         icon={LayoutDashboard}
       />
 
-      <section
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
-        aria-label="Indicadores clave"
-      >
+      {/* KPI Cards */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores clave">
         {kpis.map((kpi) => (
-          <KpiCard key={kpi.id} data={kpi} />
+          <StatCard
+            key={kpi.id}
+            label={kpi.label}
+            value={kpi.value}
+            context={kpi.context}
+            trend={kpi.trend}
+            icon={kpi.icon}
+            variant={kpi.id === "kpi-users" ? "info" : kpi.id === "kpi-agents" ? "success" : kpi.id === "kpi-uptime" ? "success" : "primary"}
+          />
         ))}
       </section>
 
-      <section className="flex flex-col gap-4 xl:flex-row" aria-label="Actividad y acciones">
-        <div className="flex flex-1 flex-col gap-4">
-          <ActivityChart data={activityData} />
+      {/* Activity Chart + Quick Actions */}
+      <div className="flex flex-col gap-4 xl:flex-row">
+        <div className="flex-1 flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <SectionHeader
+            title="Actividad semanal"
+            description="Conversaciones por día"
+            icon={Activity}
+            variant="primary"
+          />
+          <div className="p-5">
+            <ActivityChart data={activityData} />
+          </div>
         </div>
-        <QuickActions actions={quickActions} />
-      </section>
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card xl:w-[300px]">
+          <SectionHeader
+            title="Acciones rápidas"
+            description="Accesos directos"
+            icon={LayoutDashboard}
+            variant="primary"
+          />
+          <div className="p-4">
+            <QuickActions actions={quickActions} />
+          </div>
+        </div>
+      </div>
 
-      <section
-        className="grid grid-cols-1 gap-4 lg:grid-cols-3"
-        aria-label="Métricas detalladas"
-      >
-        <AgentUsageCard data={agentUsage} />
-        <GrowthCard data={growthData} />
-        <RecentActivityCard data={recentActivity} />
+      {/* Bottom Row */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label="Métricas detalladas">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <SectionHeader
+            title="Uso de agentes"
+            description="Consumo por agente"
+            icon={Bot}
+            variant="primary"
+          />
+          <div className="p-5">
+            <AgentUsageCard data={agentUsage} />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <SectionHeader
+            title="Crecimiento"
+            description="Usuarios nuevos por mes"
+            icon={Users}
+            variant="primary"
+          />
+          <div className="p-5">
+            <GrowthCard data={growthData} />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <SectionHeader
+            title="Actividad reciente"
+            description="Últimas acciones"
+            icon={MessageSquare}
+            variant="primary"
+          />
+          <div className="p-5">
+            <RecentActivityCard data={recentActivity} />
+          </div>
+        </div>
       </section>
     </div>
   );

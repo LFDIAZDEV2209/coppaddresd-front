@@ -1,7 +1,8 @@
 "use client";
 
-import { ShieldCheck, Plus, Key } from "lucide-react";
+import { ShieldCheck, Plus, Key, Search, Crown, Shield, BarChart3, Headphones, type LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,31 +17,35 @@ interface Role {
   usersCount: number;
   permissionsCount: number;
   color: string;
-  icon: string;
+  icon: LucideIcon;
 }
 
 const roles: Role[] = [
-  { id: "r1", name: "Superadministrador", description: "Acceso total al sistema", usersCount: 2, permissionsCount: 15, color: "#123B63", icon: "👑" },
-  { id: "r2", name: "Administrador", description: "Gestión de usuarios y agentes", usersCount: 5, permissionsCount: 10, color: "#1F6E9F", icon: "🛡️" },
-  { id: "r3", name: "Analista", description: "Consulta de datos y reportes", usersCount: 12, permissionsCount: 6, color: "#0E7490", icon: "📊" },
-  { id: "r4", name: "Soporte", description: "Atención y resolución de tickets", usersCount: 8, permissionsCount: 4, color: "#10B981", icon: "🎧" },
+  { id: "r1", name: "Superadministrador", description: "Acceso total al sistema", usersCount: 2, permissionsCount: 15, color: "#123B63", icon: Crown },
+  { id: "r2", name: "Administrador", description: "Gestión de usuarios y agentes", usersCount: 5, permissionsCount: 10, color: "#1F6E9F", icon: Shield },
+  { id: "r3", name: "Analista", description: "Consulta de datos y reportes", usersCount: 12, permissionsCount: 6, color: "#0E7490", icon: BarChart3 },
+  { id: "r4", name: "Soporte", description: "Atención y resolución de tickets", usersCount: 8, permissionsCount: 4, color: "#10B981", icon: Headphones },
 ];
 
 const permissionGroups = [
   {
     name: "USUARIOS",
+    color: "#0E7490",
     permissions: ["usuarios.ver", "usuarios.crear", "usuarios.editar", "usuarios.eliminar"],
   },
   {
     name: "AGENTES",
+    color: "#7C3AED",
     permissions: ["agentes.ver", "agentes.crear", "agentes.editar", "agentes.configurar", "agentes.eliminar"],
   },
   {
     name: "INTEGRACIONES",
+    color: "#F59E0B",
     permissions: ["integraciones.ver", "integraciones.conectar", "integraciones.configurar"],
   },
   {
     name: "SISTEMA",
+    color: "#475569",
     permissions: ["sistema.configurar", "sistema.seguridad", "sistema.auditoria"],
   },
 ];
@@ -72,8 +77,10 @@ export function RolesPageContent() {
     });
   };
 
+  const selectedRoleData = roles.find((r) => r.id === selectedRole);
+
   return (
-    <div className="flex flex-col gap-5 p-5">
+    <div className="flex flex-col gap-6 p-6">
       <PageHeader
         title="Roles y permisos"
         description="Administración de roles y permisos del sistema"
@@ -90,12 +97,13 @@ export function RolesPageContent() {
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[270px_1fr]">
+        {/* Role Cards */}
         <div className="flex flex-col gap-3">
           {roles.map((role) => (
             <button
               key={role.id}
               onClick={() => setSelectedRole(role.id)}
-              className={`flex flex-col gap-3 rounded-[14px] border p-4 text-left transition-all ${
+              className={`flex flex-col gap-3 rounded-2xl border p-4 text-left transition-all ${
                 selectedRole === role.id
                   ? "border-primary bg-primary-soft shadow-sm"
                   : "border-border bg-card hover:border-border-strong"
@@ -103,10 +111,10 @@ export function RolesPageContent() {
             >
               <div className="flex items-center justify-between">
                 <div
-                  className="flex size-[38px] items-center justify-center rounded-xl text-lg"
+                  className="flex size-10 items-center justify-center rounded-xl"
                   style={{ backgroundColor: `${role.color}15` }}
                 >
-                  {role.icon}
+                  <role.icon className="size-5" style={{ color: role.color }} />
                 </div>
                 <Badge variant="outline" className="text-[10px]">
                   {role.usersCount} usuarios
@@ -128,24 +136,26 @@ export function RolesPageContent() {
           ))}
         </div>
 
-        <div className="flex flex-col rounded-[14px] border border-border bg-card">
-          <div className="flex items-center justify-between border-b border-border p-4">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">
-                Permisos de {roles.find((r) => r.id === selectedRole)?.name}
-              </h2>
-              <p className="text-[11px] text-muted-foreground">
-                Configura los permisos para este rol
-              </p>
-            </div>
-            <Input
-              placeholder="Buscar permisos..."
-              className="h-8 w-[250px] text-[12px]"
-            />
-          </div>
+        {/* Permissions Panel */}
+        <div className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden">
+          <SectionHeader
+            title={`Permisos de ${selectedRoleData?.name ?? ""}`}
+            description="Configura los permisos para este rol"
+            icon={ShieldCheck}
+            variant="primary"
+            actions={
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 size-3 -translate-y-1/2 text-white/40" />
+                <Input
+                  placeholder="Buscar..."
+                  className="h-7 w-[200px] bg-white/10 text-[11px] text-white placeholder:text-white/40 border-white/10 pl-7"
+                />
+              </div>
+            }
+          />
 
-          <div className="flex flex-1 flex-col gap-0 overflow-y-auto p-4">
-            <label className="flex items-center gap-2 pb-3">
+          <div className="flex flex-1 flex-col gap-0 overflow-y-auto p-5">
+            <label className="flex items-center gap-2 pb-4">
               <Checkbox
                 checked={checkedPermissions.size === permissionGroups.flatMap((g) => g.permissions).length}
                 onCheckedChange={() => {
@@ -174,7 +184,10 @@ export function RolesPageContent() {
                         checked={allChecked}
                         onCheckedChange={() => toggleGroup(group.permissions)}
                       />
-                      <span className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+                      <span
+                        className="text-[11px] font-bold tracking-wide"
+                        style={{ color: group.color }}
+                      >
                         {group.name}
                       </span>
                     </label>

@@ -5,60 +5,68 @@ import {
   ShieldCheck,
   Bot,
   BarChart3,
-  Plug,
   Mic,
   BrainCircuit,
   ScrollText,
   Lock,
   Settings,
+  Home,
+  FolderKanban,
+  Cpu,
+  Server,
 } from "lucide-react";
 
 export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  color?: string;
 }
 
-export interface NavGroup {
+export interface NavModule {
   label: string;
+  icon: LucideIcon;
+  color: string;
   items: NavItem[];
 }
 
-export const navGroups: NavGroup[] = [
+export const navModules: NavModule[] = [
   {
-    label: "INICIO",
+    label: "Inicio",
+    icon: Home,
+    color: "#123B63",
     items: [
-      { label: "Resumen", href: "/dashboard", icon: LayoutDashboard },
+      { label: "Resumen", href: "/dashboard", icon: LayoutDashboard, color: "#123B63" },
     ],
   },
   {
-    label: "GESTIÓN",
+    label: "Gestión",
+    icon: FolderKanban,
+    color: "#1F6E9F",
     items: [
-      { label: "Usuarios", href: "/users", icon: Users },
-      { label: "Roles y permisos", href: "/roles", icon: ShieldCheck },
+      { label: "Usuarios", href: "/users", icon: Users, color: "#0E7490" },
+      { label: "Roles y permisos", href: "/roles", icon: ShieldCheck, color: "#10B981" },
     ],
   },
   {
-    label: "INTELIGENCIA ARTIFICIAL",
+    label: "Agentes AI",
+    icon: Cpu,
+    color: "#7C3AED",
     items: [
-      { label: "Agentes", href: "/agents", icon: Bot },
-      { label: "Analítica de agentes", href: "/agents/analytics", icon: BarChart3 },
+      { label: "Agentes", href: "/agents", icon: Bot, color: "#7C3AED" },
+      { label: "Analítica AI", href: "/agents/analytics", icon: BarChart3, color: "#2563EB" },
+      { label: "Voces", href: "/agents/voices", icon: Mic, color: "#0891B2" },
+      { label: "Configuración AI", href: "/agents/config", icon: BrainCircuit, color: "#6D28D9" },
     ],
   },
   {
-    label: "PLATAFORMA",
+    label: "Sistema",
+    icon: Server,
+    color: "#475569",
     items: [
-      { label: "Integraciones", href: "/settings/integrations", icon: Plug },
-      { label: "Voces", href: "/settings/voices", icon: Mic },
-      { label: "Configuración de IA", href: "/settings/ai", icon: BrainCircuit },
-    ],
-  },
-  {
-    label: "SISTEMA",
-    items: [
-      { label: "Auditoría", href: "/settings/audit", icon: ScrollText },
-      { label: "Seguridad", href: "/settings/security", icon: Lock },
-      { label: "Configuración", href: "/settings", icon: Settings },
+      { label: "Auditoría", href: "/settings/audit", icon: ScrollText, color: "#F59E0B" },
+      { label: "Seguridad", href: "/settings/security", icon: Lock, color: "#EF4444" },
+      { label: "Configuración", href: "/settings", icon: Settings, color: "#64748B" },
     ],
   },
 ];
@@ -68,7 +76,7 @@ export function getBreadcrumbSegments(pathname: string): { label: string; href?:
     { label: "Copp Adresd", href: "/dashboard" },
   ];
 
-  const allItems = navGroups.flatMap((g) => g.items);
+  const allItems = navModules.flatMap((m) => m.items);
   const current = allItems.find((item) => item.href === pathname);
 
   if (current) {
@@ -76,4 +84,8 @@ export function getBreadcrumbSegments(pathname: string): { label: string; href?:
   }
 
   return segments;
+}
+
+export function findModuleForPath(pathname: string): NavModule | null {
+  return navModules.find((m) => m.items.some((item) => item.href === pathname)) || null;
 }

@@ -8,11 +8,7 @@ export function GrowthCard({ data }: GrowthCardProps) {
   const maxValue = Math.max(...data.map((d) => d.value));
 
   return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card p-5">
-      <h3 className="mb-4 text-[15px] font-semibold text-foreground">
-        Crecimiento usuarios
-      </h3>
-
+    <div className="flex flex-col">
       <div className="flex flex-1 items-end gap-1.5" style={{ height: 100 }}>
         {data.map((point) => {
           const heightPercent = (point.value / maxValue) * 100;
@@ -42,13 +38,6 @@ export function GrowthCard({ data }: GrowthCardProps) {
             {point.month}
           </span>
         ))}
-      </div>
-
-      <div className="mt-3 flex items-center gap-1.5">
-        <div className="size-2 rounded-full bg-accent" />
-        <span className="text-[11px] text-muted-foreground">
-          Nuevos usuarios por mes
-        </span>
       </div>
     </div>
   );

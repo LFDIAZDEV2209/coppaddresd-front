@@ -2,6 +2,7 @@
 
 import { Users as UsersIcon, Plus, Download } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { UsersToolbar } from "./users-toolbar";
 import { UsersTable } from "./users-table";
@@ -23,7 +24,7 @@ export function UsersPageContent() {
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
   return (
-    <div className="flex flex-col gap-5 p-5">
+    <div className="flex flex-col gap-6 p-6">
       <PageHeader
         title="Usuarios"
         description="Gestión de usuarios del sistema"
@@ -33,7 +34,7 @@ export function UsersPageContent() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 border-border-strong text-secondary-foreground"
+              className="gap-1.5 border-white/20 text-white hover:bg-white/10"
             >
               <Download className="size-[15px]" />
               Exportar
@@ -59,10 +60,22 @@ export function UsersPageContent() {
       {loading ? (
         <UsersTableSkeleton />
       ) : result && result.data.length > 0 ? (
-        <div className="rounded-[14px] border border-border bg-card">
-          {selectedIds.size > 0 && (
-            <BulkActionBar count={selectedIds.size} />
-          )}
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <SectionHeader
+            title={`${result.total} usuarios encontrados`}
+            description="Administra los usuarios de la plataforma"
+            icon={UsersIcon}
+            variant="primary"
+            actions={
+              selectedIds.size > 0 ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-medium text-white/80">
+                    {selectedIds.size} seleccionado{selectedIds.size !== 1 ? "s" : ""}
+                  </span>
+                </div>
+              ) : undefined
+            }
+          />
           <UsersTable
             users={result.data}
             selectedIds={selectedIds}
@@ -77,22 +90,9 @@ export function UsersPageContent() {
   );
 }
 
-function BulkActionBar({ count }: { count: number }) {
-  return (
-    <div className="flex h-11 items-center gap-2 border-b border-border bg-muted px-4">
-      <div className="flex size-4 items-center justify-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
-        {count}
-      </div>
-      <span className="text-[12px] text-muted-foreground">
-        seleccionado{count !== 1 ? "s" : ""}
-      </span>
-    </div>
-  );
-}
-
 function UsersTableSkeleton() {
   return (
-    <div className="rounded-[14px] border border-border bg-card p-4">
+    <div className="rounded-2xl border border-border bg-card p-4">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 py-3">
           <Skeleton className="size-4 rounded" />
@@ -112,7 +112,7 @@ function UsersTableSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-[14px] border border-border bg-card py-16">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card py-16">
       <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
         <UsersIcon className="size-6 text-muted-foreground" />
       </div>

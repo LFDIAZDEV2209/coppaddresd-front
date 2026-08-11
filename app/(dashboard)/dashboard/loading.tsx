@@ -30,28 +30,40 @@ export default function DashboardLoading() {
         ))}
       </section>
 
-      <section className="flex flex-col gap-4 xl:flex-row">
-        <div className="flex flex-1 flex-col gap-4">
-          <div className="flex flex-col rounded-2xl border border-border bg-card p-5">
-            <Skeleton className="mb-6 h-10 w-40" />
+      <div className="flex flex-col gap-4 xl:flex-row">
+        <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="rounded-none bg-[#0B2B4A] px-5 py-4">
+            <Skeleton className="h-5 w-32 bg-white/20" />
+            <Skeleton className="mt-1 h-3 w-40 bg-white/10" />
+          </div>
+          <div className="p-5">
             <Skeleton className="h-[200px] w-full rounded-lg" />
           </div>
         </div>
-        <div className="flex w-[300px] shrink-0 flex-col gap-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-xl" />
-          ))}
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card xl:w-[300px]">
+          <div className="rounded-none bg-[#0B2B4A] px-5 py-4">
+            <Skeleton className="h-5 w-28 bg-white/20" />
+          </div>
+          <div className="p-4 flex flex-col gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-11 w-full rounded-xl" />
+            ))}
+          </div>
         </div>
-      </section>
+      </div>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col rounded-2xl border border-border bg-card p-5"
+            className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card"
           >
-            <Skeleton className="mb-4 h-5 w-32" />
-            <Skeleton className="h-[120px] w-full rounded-lg" />
+            <div className="rounded-none bg-[#0B2B4A] px-5 py-4">
+              <Skeleton className="h-5 w-28 bg-white/20" />
+            </div>
+            <div className="p-5">
+              <Skeleton className="h-[100px] w-full rounded-lg" />
+            </div>
           </div>
         ))}
       </section>

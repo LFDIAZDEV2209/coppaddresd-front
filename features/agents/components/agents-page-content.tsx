@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Plus, Search } from "lucide-react";
+import { Bot, Plus, Search, Filter } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
-import { fetchAgents } from "../services/agents-service";
+import { fetchAgents, getAgentIcon } from "../services/agents-service";
 import type { Agent } from "../types";
 
 export function AgentsPageContent() {
@@ -29,7 +29,7 @@ export function AgentsPageContent() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-5 p-5">
+    <div className="flex flex-col gap-6 p-6">
       <PageHeader
         title="Agentes"
         description="Gestión de agentes de inteligencia artificial"
@@ -46,15 +46,16 @@ export function AgentsPageContent() {
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative w-[300px]">
+        <div className="relative w-[280px]">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar agentes..."
-            className="h-[38px] pl-9"
+            className="h-9 pl-9"
           />
         </div>
         <Select>
-          <SelectTrigger className="h-[38px] w-[200px]">
+          <SelectTrigger className="h-9 w-[180px]">
+            <Filter className="size-3.5 mr-2" />
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -71,7 +72,7 @@ export function AgentsPageContent() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="flex flex-col gap-3 rounded-[14px] border border-border bg-card p-4"
+              className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4"
             >
               <div className="flex items-center gap-3">
                 <Skeleton className="size-11 rounded-xl" />
@@ -97,6 +98,8 @@ export function AgentsPageContent() {
 }
 
 function AgentCard({ agent }: { agent: Agent }) {
+  const { icon: Icon, color, bg } = getAgentIcon(agent.name);
+
   const statusVariant =
     agent.status === "Activo"
       ? "default"
@@ -105,15 +108,15 @@ function AgentCard({ agent }: { agent: Agent }) {
         : "secondary";
 
   return (
-    <div className="flex flex-col gap-3 rounded-[14px] border border-border bg-card p-4 transition-shadow hover:shadow-md">
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-lg hover:shadow-black/5">
       <div className="flex items-center gap-3">
         <div
-          className="flex size-11 shrink-0 items-center justify-center rounded-xl text-xl"
-          style={{ backgroundColor: agent.iconBg }}
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl"
+          style={{ backgroundColor: bg }}
         >
-          {agent.icon}
+          <Icon className="size-5" style={{ color }} />
         </div>
-        <div className="flex flex-1 flex-col gap-px overflow-hidden">
+        <div className="flex flex-1 flex-col gap-px overflow-hidden min-w-0">
           <span className="text-[13px] font-semibold text-foreground truncate">
             {agent.name}
           </span>
@@ -121,7 +124,10 @@ function AgentCard({ agent }: { agent: Agent }) {
             {agent.description}
           </span>
         </div>
-        <Badge variant={statusVariant as "default" | "destructive" | "secondary"} className="shrink-0">
+        <Badge
+          variant={statusVariant as "default" | "destructive" | "secondary"}
+          className="shrink-0"
+        >
           {agent.status}
         </Badge>
       </div>
@@ -136,7 +142,7 @@ function AgentCard({ agent }: { agent: Agent }) {
             style={{ width: `${agent.usage}%` }}
           />
         </div>
-        <span className="w-8 text-right text-[11px] text-muted-foreground">
+        <span className="w-8 text-right text-[11px] font-medium text-muted-foreground">
           {agent.usage}%
         </span>
       </div>
@@ -152,8 +158,10 @@ function AgentCard({ agent }: { agent: Agent }) {
 
 function NewAgentCard() {
   return (
-    <button className="flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-[14px] border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary">
-      <Plus className="size-8" />
+    <button className="flex min-h-[140px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-muted-foreground transition-all hover:border-primary/30 hover:bg-primary-soft/50 hover:text-primary">
+      <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
+        <Plus className="size-5" />
+      </div>
       <span className="text-[13px] font-medium">Nuevo agente</span>
     </button>
   );

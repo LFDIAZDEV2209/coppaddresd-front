@@ -4,7 +4,8 @@ import {
   createContext,
   useCallback,
   useContext,
-  useSyncExternalStore,
+  useEffect,
+  useState,
 } from "react";
 
 type Theme = "light" | "dark";
@@ -18,41 +19,29 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function getInitialTheme(): Theme {
-  if (typeof document === "undefined") return "light";
+  if (typeof window === "undefined") return "light";
   return (localStorage.getItem("copp-theme") as Theme) || "light";
-}
-
-const themeListeners = new Set<() => void>();
-
-function subscribeTheme(listener: () => void) {
-  themeListeners.add(listener);
-  return () => themeListeners.delete(listener);
-}
-
-function getThemeSnapshot(): Theme {
-  return getInitialTheme();
 }
 
 function applyTheme(theme: Theme) {
   localStorage.setItem("copp-theme", theme);
   document.documentElement.classList.toggle("dark", theme === "dark");
-  themeListeners.forEach((l) => l());
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const theme = useSyncExternalStore(
-    subscribeTheme,
-    getThemeSnapshot,
-    getThemeSnapshot
-  );
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
 
   const setTheme = useCallback((t: Theme) => {
-    applyTheme(t);
+    setThemeState(t);
   }, []);
 
   const toggleTheme = useCallback(() => {
-    applyTheme(theme === "light" ? "dark" : "light");
-  }, [theme]);
+    setThemeState((prev) => (prev === "light" ? "dark" : "light"));
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>

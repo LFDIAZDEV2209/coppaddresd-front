@@ -27,11 +27,11 @@ export function PageHeader({
         <Icon className="size-6 text-white" />
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 overflow-hidden">
-        <h1 className="text-xl font-bold text-white tracking-tight">
+      <div className="flex flex-1 flex-col gap-1 overflow-hidden min-w-0">
+        <h1 className="text-xl font-bold text-white tracking-tight truncate">
           {title}
         </h1>
-        <p className="text-[13px] text-white/70">
+        <p className="text-[13px] text-white/70 truncate">
           {description}
         </p>
       </div>

@@ -1,15 +1,4 @@
-export interface CurrentUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  initials: string;
-}
+import { mockAuthCurrentUser, type AuthUser } from "@/lib/api/auth-service";
 
-export const mockCurrentUser: CurrentUser = {
-  id: "usr-001",
-  name: "María López",
-  email: "maria.lopez@coppaddresd.com",
-  role: "Superadministradora",
-  initials: "ML",
-};
+export type { AuthUser as CurrentUser };
+export const mockCurrentUser: AuthUser = mockAuthCurrentUser;
