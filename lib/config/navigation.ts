@@ -14,6 +14,9 @@ import {
   FolderKanban,
   Cpu,
   Server,
+  CalendarPlus,
+  ClipboardPenLine,
+  UserRound,
 } from "lucide-react";
 
 export interface NavItem {
@@ -46,6 +49,16 @@ export const navModules: NavModule[] = [
     items: [
       { label: "Usuarios", href: "/users", icon: Users, color: "#0E7490" },
       { label: "Roles y permisos", href: "/roles", icon: ShieldCheck, color: "#10B981" },
+    ],
+  },
+  {
+    label: "Pacientes",
+    icon: UserRound,
+    color: "#0E7490",
+    items: [
+      { label: "Pacientes", href: "/patients", icon: UserRound, color: "#0E7490" },
+      { label: "Agendar cita", href: "/patients/appointments", icon: CalendarPlus, color: "#10B981" },
+      { label: "Recetario", href: "/patients/prescriptions", icon: ClipboardPenLine, color: "#F59E0B" },
     ],
   },
   {
@@ -87,5 +100,5 @@ export function getBreadcrumbSegments(pathname: string): { label: string; href?:
 }
 
 export function findModuleForPath(pathname: string): NavModule | null {
-  return navModules.find((m) => m.items.some((item) => item.href === pathname)) || null;
+  return navModules.find((m) => m.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))) || null;
 }

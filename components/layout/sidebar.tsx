@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -61,7 +62,9 @@ export function Sidebar({
     });
   }, []);
 
-  const isActive = (item: NavItem) => pathname === item.href;
+  const exactItem = navModules.flatMap((module) => module.items).find((item) => item.href === pathname);
+  const isActive = (item: NavItem) =>
+    pathname === item.href || (!exactItem && pathname.startsWith(`${item.href}/`));
   const isModuleActive = (mod: NavModule) =>
     mod.items.some((item) => isActive(item));
 
@@ -96,9 +99,11 @@ export function Sidebar({
             className="flex items-center justify-center w-full"
             onClick={collapsed ? onToggleCollapse : undefined}
           >
-            <img
+            <Image
               src="/image.png"
               alt="Copp Adresd"
+              width={582}
+              height={429}
               className={cn(
                 "w-auto object-contain transition-all cursor-pointer",
                 collapsed ? "h-10 max-w-[54px]" : "h-14 max-w-[180px]"
@@ -121,8 +126,8 @@ export function Sidebar({
         <ScrollArea className="flex-1 px-2.5">
           <nav className="flex flex-col gap-1">
             {navModules.map((mod) => {
-              const expanded = expandedModules.has(mod.label);
               const active = isModuleActive(mod);
+              const expanded = expandedModules.has(mod.label) || active;
               const Icon = mod.icon;
 
               if (collapsed) {
