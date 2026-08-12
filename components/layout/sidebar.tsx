@@ -189,31 +189,33 @@ export function Sidebar({
 
                   {expanded && (
                     <div className="mt-0.5 ml-5 flex flex-col gap-0.5 border-l border-white/15 pl-3">
-                      {mod.items.map((item) => {
-                        const ItemIcon = item.icon;
-                        const itemActive = isActive(item);
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={onCloseMobile}
-                            className={cn(
-                              "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all border",
-                              itemActive
-                                ? "bg-[#0A2340] font-semibold text-[#F59E0B] border-[#F59E0B]/30"
-                                : "text-white/70 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10",
-                            )}
-                          >
-                            <ItemIcon
-                              className="size-[16px] shrink-0"
-                              style={{
-                                color: itemActive ? "#F59E0B" : undefined,
-                              }}
-                            />
-                            <span className="truncate">{item.label}</span>
-                          </Link>
-                        );
-                      })}
+                      {mod.items
+                        .filter((item) => !item.hidden)
+                        .map((item) => {
+                          const ItemIcon = item.icon;
+                          const itemActive = isActive(item);
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={onCloseMobile}
+                              className={cn(
+                                "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all border",
+                                itemActive
+                                  ? "bg-[#0A2340] font-semibold text-[#F59E0B] border-[#F59E0B]/30"
+                                  : "text-white/70 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10",
+                              )}
+                            >
+                              <ItemIcon
+                                className="size-[16px] shrink-0"
+                                style={{
+                                  color: itemActive ? "#F59E0B" : undefined,
+                                }}
+                              />
+                              <span className="truncate">{item.label}</span>
+                            </Link>
+                          );
+                        })}
                     </div>
                   )}
                 </div>

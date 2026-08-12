@@ -29,6 +29,7 @@ export interface NavItem {
   href: string;
   icon: LucideIcon;
   color?: string;
+  hidden?: boolean;
 }
 
 export interface NavModule {
@@ -82,6 +83,7 @@ export const navModules: NavModule[] = [
         href: "/patients/appointments",
         icon: CalendarPlus,
         color: "#10B981",
+        hidden: true,
       },
       {
         label: "Recetario",
