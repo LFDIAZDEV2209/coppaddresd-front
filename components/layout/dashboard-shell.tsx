@@ -18,12 +18,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         onCloseMobile={() => setMobileOpen(false)}
       />
 
-      <div
-        className={cn(
-          "flex flex-1 flex-col overflow-hidden transition-[margin] duration-300 ml-0",
-          collapsed ? "lg:ml-[68px]" : "lg:ml-[236px]"
-        )}
-      >
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <Topbar onMenuClick={() => setMobileOpen(true)} />
 
         <main className="flex-1 overflow-y-auto">

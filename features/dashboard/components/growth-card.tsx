@@ -19,7 +19,7 @@ export function GrowthCard({ data }: GrowthCardProps) {
             >
               <div className="relative flex w-full flex-1 items-end justify-center">
                 <div
-                  className="w-[24px] rounded-t-md bg-accent transition-all duration-500 hover:bg-accent-strong hover:shadow-md hover:shadow-accent/20"
+                  className="w-[24px] rounded-t-md bg-[var(--chart-4)] transition-all duration-500 hover:shadow-md hover:shadow-[var(--chart-4)]/20"
                   style={{ height: `${heightPercent}%` }}
                   title={`${point.value} usuarios`}
                 />

@@ -7,6 +7,16 @@ interface ActivityChartProps {
 export function ActivityChart({ data }: ActivityChartProps) {
   const maxValue = Math.max(...data.map((d) => d.value));
 
+  const barColors = [
+    "var(--chart-1)",
+    "var(--chart-2)",
+    "var(--chart-3)",
+    "var(--chart-4)",
+    "var(--chart-5)",
+    "var(--chart-1)",
+    "var(--chart-2)",
+  ];
+
   return (
     <div className="flex items-end gap-0">
       <div className="flex w-10 shrink-0 flex-col-reverse items-end justify-between pb-8 text-[10px] text-muted-foreground">
@@ -16,8 +26,9 @@ export function ActivityChart({ data }: ActivityChartProps) {
       </div>
 
       <div className="flex flex-1 items-end gap-2">
-        {data.map((point) => {
+        {data.map((point, index) => {
           const heightPercent = (point.value / maxValue) * 100;
+          const barColor = barColors[index % barColors.length];
           return (
             <div
               key={point.day}
@@ -25,8 +36,12 @@ export function ActivityChart({ data }: ActivityChartProps) {
             >
               <div className="relative flex w-full items-end justify-center" style={{ height: 200 }}>
                 <div
-                  className="w-[36px] rounded-t-lg bg-primary transition-all duration-500 ease-out hover:bg-primary-strong hover:shadow-lg hover:shadow-primary/20"
-                  style={{ height: `${heightPercent}%` }}
+                  className="w-[36px] rounded-t-lg transition-all duration-500 ease-out hover:shadow-lg"
+                  style={{
+                    height: `${heightPercent}%`,
+                    backgroundColor: barColor,
+                    boxShadow: `0 4px 12px ${barColor}30`,
+                  }}
                   title={`${point.value} conversaciones`}
                 />
               </div>
