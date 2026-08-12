@@ -91,8 +91,8 @@ export function Sidebar({
       >
         {/* Brand Header - Logo */}
         <div className={cn(
-          "flex items-center justify-center px-1 pt-4 pb-3 border-b border-white/10 relative",
-          collapsed ? "h-[80px]" : "h-[90px]"
+          "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/10 relative",
+          collapsed ? "h-[80px]" : "h-80px]"
         )}>
           <Link
             href="/dashboard"
@@ -123,7 +123,7 @@ export function Sidebar({
         </div>
 
         {/* Navigation Modules */}
-        <ScrollArea className="flex-1 px-2.5">
+        <ScrollArea className="flex-1 px-2.5 py-2">
           <nav className="flex flex-col gap-1">
             {navModules.map((mod) => {
               const active = isModuleActive(mod);
