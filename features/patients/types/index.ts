@@ -20,7 +20,8 @@ export interface Patient {
   notes: string;
 }
 
-export interface PatientInput extends Omit<Patient, "id" | "registeredAt" | "lastAppointment" | "status"> {
+export interface PatientInput
+  extends Omit<Patient, "id" | "registeredAt" | "lastAppointment" | "status"> {
   status?: PatientStatus;
 }
 

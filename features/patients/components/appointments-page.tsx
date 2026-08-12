@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarCheck, CalendarPlus, CheckCircle2, Clock3, Search, UserRound } from "lucide-react";
+import {
+  CalendarCheck,
+  CalendarPlus,
+  CheckCircle2,
+  Clock3,
+  Search,
+  UserRound,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +18,26 @@ import { fetchPatients } from "../services/patients-service";
 import { createAppointment } from "../services/appointments-service";
 import type { AppointmentInput, Patient } from "../types";
 
-const defaultForm: AppointmentInput = { patientId: "", specialty: "Medicina general", professional: "Dra. Laura Martínez", date: "2024-06-20", time: "", consultationType: "Presencial", reason: "", notes: "" };
-const slots = ["08:00", "08:30", "09:30", "10:00", "11:30", "14:00", "15:30", "16:00"];
+const defaultForm: AppointmentInput = {
+  patientId: "",
+  specialty: "Medicina general",
+  professional: "Dra. Laura Martínez",
+  date: "2024-06-20",
+  time: "",
+  consultationType: "Presencial",
+  reason: "",
+  notes: "",
+};
+const slots = [
+  "08:00",
+  "08:30",
+  "09:30",
+  "10:00",
+  "11:30",
+  "14:00",
+  "15:30",
+  "16:00",
+];
 
 export function AppointmentsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -24,20 +49,289 @@ export function AppointmentsPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { void fetchPatients(1, 50, { search: "", status: "all", insurer: "all" }).then((result) => setPatients(result.data)).catch(() => setError("No pudimos cargar los pacientes." as string)).finally(() => setLoadingPatients(false)); }, []);
-  const filteredPatients = patients.filter((patient) => `${patient.firstName} ${patient.lastName} ${patient.documentNumber}`.toLowerCase().includes(patientSearch.toLowerCase()));
-  const update = <K extends keyof AppointmentInput>(field: K, value: AppointmentInput[K]) => setForm((current) => ({ ...current, [field]: value }));
-  const selectPatient = (patient: Patient) => { setSelected(patient); update("patientId", patient.id); };
+  useEffect(() => {
+    void fetchPatients(1, 50, { search: "", status: "all", insurer: "all" })
+      .then((result) => setPatients(result.data))
+      .catch(() => setError("No pudimos cargar los pacientes." as string))
+      .finally(() => setLoadingPatients(false));
+  }, []);
+  const filteredPatients = patients.filter((patient) =>
+    `${patient.firstName} ${patient.lastName} ${patient.documentNumber}`
+      .toLowerCase()
+      .includes(patientSearch.toLowerCase()),
+  );
+  const update = <K extends keyof AppointmentInput>(
+    field: K,
+    value: AppointmentInput[K],
+  ) => setForm((current) => ({ ...current, [field]: value }));
+  const selectPatient = (patient: Patient) => {
+    setSelected(patient);
+    update("patientId", patient.id);
+  };
   const submit = async () => {
-    if (!selected || !form.date || !form.time || !form.reason.trim()) { setError("Selecciona un paciente y completa fecha, hora y motivo de consulta."); return; }
-    setSubmitting(true); setError(null);
-    try { await createAppointment(form, `${selected.firstName} ${selected.lastName}`); setSuccess(true); } catch { setError("No pudimos confirmar la cita. Intenta de nuevo."); } finally { setSubmitting(false); }
+    if (!selected || !form.date || !form.time || !form.reason.trim()) {
+      setError(
+        "Selecciona un paciente y completa fecha, hora y motivo de consulta.",
+      );
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await createAppointment(
+        form,
+        `${selected.firstName} ${selected.lastName}`,
+      );
+      setSuccess(true);
+    } catch {
+      setError("No pudimos confirmar la cita. Intenta de nuevo.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (success) return <div className="flex min-h-full flex-col items-center justify-center gap-5 p-6"><div className="flex size-16 items-center justify-center rounded-2xl bg-success-soft text-success-foreground"><CheckCircle2 className="size-8" /></div><div className="text-center"><h1 className="text-2xl font-bold">Cita confirmada</h1><p className="mt-2 max-w-md text-sm text-muted-foreground">La cita de <strong>{selected?.firstName} {selected?.lastName}</strong> quedó agendada para el {form.date} a las {form.time}.</p></div><Button onClick={() => { setSuccess(false); setSelected(undefined); setForm(defaultForm); }}>Agendar otra cita</Button></div>;
+  if (success)
+    return (
+      <div className="flex min-h-full flex-col items-center justify-center gap-5 p-6">
+        <div className="flex size-16 items-center justify-center rounded-2xl bg-success-soft text-success-foreground">
+          <CheckCircle2 className="size-8" />
+        </div>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Cita confirmada</h1>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            La cita de{" "}
+            <strong>
+              {selected?.firstName} {selected?.lastName}
+            </strong>{" "}
+            quedó agendada para el {form.date} a las {form.time}.
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            setSuccess(false);
+            setSelected(undefined);
+            setForm(defaultForm);
+          }}
+        >
+          Agendar otra cita
+        </Button>
+      </div>
+    );
 
-  return <div className="flex flex-col gap-6 p-4 sm:p-6"><PageHeader title="Agendar cita" description="Programa una nueva atención para tus pacientes" icon={CalendarPlus} /><div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"><section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Paso 1</p><h2 className="mt-1 text-lg font-bold">Selecciona un paciente</h2><p className="mt-1 text-sm text-muted-foreground">Busca por nombre o documento.</p></div><div className="relative"><Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input className="pl-9" value={patientSearch} onChange={(event) => setPatientSearch(event.target.value)} placeholder="Buscar paciente..." aria-label="Buscar paciente para la cita" /></div>{selected && <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary-soft p-3"><span className="flex size-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">{selected.firstName[0]}{selected.lastName[0]}</span><div className="min-w-0"><p className="truncate text-sm font-semibold">{selected.firstName} {selected.lastName}</p><p className="text-xs text-muted-foreground">{selected.documentType} {selected.documentNumber} · {selected.phone}</p></div><button className="ml-auto text-xs font-semibold text-primary underline" onClick={() => setSelected(undefined)}>Cambiar</button></div>}{loadingPatients ? <div className="flex flex-col gap-3">{[1, 2, 3].map((item) => <Skeleton className="h-14 w-full rounded-xl" key={item} />)}</div> : filteredPatients.length ? <div className="flex max-h-[390px] flex-col gap-2 overflow-y-auto">{filteredPatients.map((patient) => <button key={patient.id} onClick={() => selectPatient(patient)} className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${selected?.id === patient.id ? "border-primary bg-primary-soft" : "border-border hover:border-primary/40 hover:bg-muted/50"}`}><span className="flex size-9 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">{patient.firstName[0]}{patient.lastName[0]}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{patient.firstName} {patient.lastName}</span><span className="block text-xs text-muted-foreground">{patient.documentType} {patient.documentNumber} · {patient.insurer}</span></span><UserRound className="size-4 text-muted-foreground" /></button>)}</div> : <EmptyAppointment text="No hay pacientes que coincidan con tu búsqueda." />}</section><section className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Paso 2</p><h2 className="mt-1 text-lg font-bold">Información de la cita</h2><p className="mt-1 text-sm text-muted-foreground">Configura la disponibilidad y el motivo.</p></div><div className="grid gap-4 sm:grid-cols-2"><Field label="Especialidad"><select value={form.specialty} onChange={(event) => update("specialty", event.target.value)}><option>Medicina general</option><option>Cardiología</option><option>Pediatría</option><option>Psicología</option><option>Nutrición</option></select></Field><Field label="Profesional"><select value={form.professional} onChange={(event) => update("professional", event.target.value)}><option>Dra. Laura Martínez</option><option>Dr. Carlos Ramírez</option><option>Dra. Andrea Gómez</option></select></Field><Field label="Fecha"><Input type="date" value={form.date} onChange={(event) => update("date", event.target.value)} /></Field><Field label="Tipo de consulta"><select value={form.consultationType} onChange={(event) => update("consultationType", event.target.value)}><option>Presencial</option><option>Virtual</option><option>Telefónica</option></select></Field></div><div className="flex flex-col gap-2"><Label>Horarios disponibles</Label><div className="grid grid-cols-4 gap-2">{slots.map((slot) => <button type="button" key={slot} onClick={() => update("time", slot)} className={`rounded-lg border px-2 py-2 text-xs font-semibold transition-colors ${form.time === slot ? "border-primary bg-primary text-white" : "border-border hover:border-primary/50"}`}><Clock3 className="mx-auto mb-1 size-3.5" />{slot}</button>)}</div></div><Field label="Motivo de consulta"><Input value={form.reason} onChange={(event) => update("reason", event.target.value)} placeholder="Ej. Control y seguimiento" /></Field><Field label="Observaciones"><textarea value={form.notes} onChange={(event) => update("notes", event.target.value)} className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="Información adicional para el profesional" /></Field>{error && <p className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive" role="alert">{error}</p>}<div className="flex justify-end"><Button onClick={submit} disabled={submitting || !selected}>{submitting && <CalendarCheck className="animate-pulse" data-icon="inline-start" />}{submitting ? "Confirmando..." : "Confirmar cita"}</Button></div></section></div></div>;
+  return (
+    <div className="flex flex-col gap-6 p-4 sm:p-6">
+      <PageHeader
+        title="Agendar cita"
+        description="Programa una nueva atención para tus pacientes"
+        icon={CalendarPlus}
+      />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-primary">
+              Paso 1
+            </p>
+            <h2 className="mt-1 text-lg font-bold">Selecciona un paciente</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Busca por nombre o documento.
+            </p>
+          </div>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              value={patientSearch}
+              onChange={(event) => setPatientSearch(event.target.value)}
+              placeholder="Buscar paciente..."
+              aria-label="Buscar paciente para la cita"
+            />
+          </div>
+          {selected && (
+            <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary-soft p-3">
+              <span className="flex size-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+                {selected.firstName[0]}
+                {selected.lastName[0]}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">
+                  {selected.firstName} {selected.lastName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {selected.documentType} {selected.documentNumber} ·{" "}
+                  {selected.phone}
+                </p>
+              </div>
+              <button
+                className="ml-auto text-xs font-semibold text-primary underline"
+                onClick={() => setSelected(undefined)}
+              >
+                Cambiar
+              </button>
+            </div>
+          )}
+          {loadingPatients ? (
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3].map((item) => (
+                <Skeleton className="h-14 w-full rounded-xl" key={item} />
+              ))}
+            </div>
+          ) : filteredPatients.length ? (
+            <div className="flex max-h-[390px] flex-col gap-2 overflow-y-auto">
+              {filteredPatients.map((patient) => (
+                <button
+                  key={patient.id}
+                  onClick={() => selectPatient(patient)}
+                  className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${selected?.id === patient.id ? "border-primary bg-primary-soft" : "border-border hover:border-primary/40 hover:bg-muted/50"}`}
+                >
+                  <span className="flex size-9 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {patient.firstName[0]}
+                    {patient.lastName[0]}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">
+                      {patient.firstName} {patient.lastName}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {patient.documentType} {patient.documentNumber} ·{" "}
+                      {patient.insurer}
+                    </span>
+                  </span>
+                  <UserRound className="size-4 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <EmptyAppointment text="No hay pacientes que coincidan con tu búsqueda." />
+          )}
+        </section>
+        <section className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-primary">
+              Paso 2
+            </p>
+            <h2 className="mt-1 text-lg font-bold">Información de la cita</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Configura la disponibilidad y el motivo.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Especialidad">
+              <select
+                value={form.specialty}
+                onChange={(event) => update("specialty", event.target.value)}
+              >
+                <option>Medicina general</option>
+                <option>Cardiología</option>
+                <option>Pediatría</option>
+                <option>Psicología</option>
+                <option>Nutrición</option>
+              </select>
+            </Field>
+            <Field label="Profesional">
+              <select
+                value={form.professional}
+                onChange={(event) => update("professional", event.target.value)}
+              >
+                <option>Dra. Laura Martínez</option>
+                <option>Dr. Carlos Ramírez</option>
+                <option>Dra. Andrea Gómez</option>
+              </select>
+            </Field>
+            <Field label="Fecha">
+              <Input
+                type="date"
+                value={form.date}
+                onChange={(event) => update("date", event.target.value)}
+              />
+            </Field>
+            <Field label="Tipo de consulta">
+              <select
+                value={form.consultationType}
+                onChange={(event) =>
+                  update("consultationType", event.target.value)
+                }
+              >
+                <option>Presencial</option>
+                <option>Virtual</option>
+                <option>Telefónica</option>
+              </select>
+            </Field>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label>Horarios disponibles</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {slots.map((slot) => (
+                <button
+                  type="button"
+                  key={slot}
+                  onClick={() => update("time", slot)}
+                  className={`rounded-lg border px-2 py-2 text-xs font-semibold transition-colors ${form.time === slot ? "border-primary bg-primary text-white" : "border-border hover:border-primary/50"}`}
+                >
+                  <Clock3 className="mx-auto mb-1 size-3.5" />
+                  {slot}
+                </button>
+              ))}
+            </div>
+          </div>
+          <Field label="Motivo de consulta">
+            <Input
+              value={form.reason}
+              onChange={(event) => update("reason", event.target.value)}
+              placeholder="Ej. Control y seguimiento"
+            />
+          </Field>
+          <Field label="Observaciones">
+            <textarea
+              value={form.notes}
+              onChange={(event) => update("notes", event.target.value)}
+              className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Información adicional para el profesional"
+            />
+          </Field>
+          {error && (
+            <p
+              className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
+          <div className="flex justify-end">
+            <Button onClick={submit} disabled={submitting || !selected}>
+              {submitting && (
+                <CalendarCheck
+                  className="animate-pulse"
+                  data-icon="inline-start"
+                />
+              )}
+              {submitting ? "Confirmando..." : "Confirmar cita"}
+            </Button>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) { return <div className="flex flex-col gap-1.5"><Label>{label}</Label>{children}</div>; }
-function EmptyAppointment({ text }: { text: string }) { return <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border py-10 text-center"><CalendarPlus className="size-7 text-muted-foreground" /><p className="text-xs text-muted-foreground">{text}</p></div>; }
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label>{label}</Label>
+      {children}
+    </div>
+  );
+}
+function EmptyAppointment({ text }: { text: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border py-10 text-center">
+      <CalendarPlus className="size-7 text-muted-foreground" />
+      <p className="text-xs text-muted-foreground">{text}</p>
+    </div>
+  );
+}

@@ -5,7 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { navModules, type NavModule, type NavItem } from "@/lib/config/navigation";
+import {
+  navModules,
+  type NavModule,
+  type NavItem,
+} from "@/lib/config/navigation";
 import { useAuth } from "@/providers/auth-provider";
 import {
   ChevronDown,
@@ -44,14 +48,12 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(
-    () => {
-      const activeModule = navModules.find((m) =>
-        m.items.some((item) => item.href === pathname)
-      );
-      return activeModule ? new Set([activeModule.label]) : new Set();
-    }
-  );
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(() => {
+    const activeModule = navModules.find((m) =>
+      m.items.some((item) => item.href === pathname),
+    );
+    return activeModule ? new Set([activeModule.label]) : new Set();
+  });
 
   const toggleModule = useCallback((label: string) => {
     setExpandedModules((prev) => {
@@ -62,9 +64,12 @@ export function Sidebar({
     });
   }, []);
 
-  const exactItem = navModules.flatMap((module) => module.items).find((item) => item.href === pathname);
+  const exactItem = navModules
+    .flatMap((module) => module.items)
+    .find((item) => item.href === pathname);
   const isActive = (item: NavItem) =>
-    pathname === item.href || (!exactItem && pathname.startsWith(`${item.href}/`));
+    pathname === item.href ||
+    (!exactItem && pathname.startsWith(`${item.href}/`));
   const isModuleActive = (mod: NavModule) =>
     mod.items.some((item) => isActive(item));
 
@@ -82,18 +87,18 @@ export function Sidebar({
         className={cn(
           "flex flex-col bg-[#0B2B4A] transition-all duration-300 ease-in-out relative shrink-0 h-screen",
           collapsed ? "w-[68px]" : "w-[236px]",
-          mobileOpen
-            ? "fixed inset-y-0 left-0 z-50"
-            : "hidden lg:flex"
+          mobileOpen ? "fixed inset-y-0 left-0 z-50" : "hidden lg:flex",
         )}
         role="navigation"
         aria-label="Navegación principal"
       >
         {/* Brand Header - Logo */}
-        <div className={cn(
-          "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/10 relative",
-          collapsed ? "h-[80px]" : "h-80px]"
-        )}>
+        <div
+          className={cn(
+            "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/10 relative",
+            collapsed ? "h-[80px]" : "h-[90px]",
+          )}
+        >
           <Link
             href="/dashboard"
             className="flex items-center justify-center w-full"
@@ -106,7 +111,7 @@ export function Sidebar({
               height={429}
               className={cn(
                 "w-auto object-contain transition-all cursor-pointer",
-                collapsed ? "h-10 max-w-[54px]" : "h-14 max-w-[180px]"
+                collapsed ? "h-10 max-w-[54px]" : "h-14 max-w-[180px]",
               )}
             />
           </Link>
@@ -138,7 +143,7 @@ export function Sidebar({
                         "flex items-center justify-center rounded-lg p-2.5 my-0.5 transition-colors border",
                         active
                           ? "bg-[#0A2340] text-[#F59E0B] border-[#F59E0B]/30"
-                          : "text-white/70 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10"
+                          : "text-white/70 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10",
                       )}
                       onClick={() => {
                         const firstItem = mod.items[0];
@@ -163,12 +168,14 @@ export function Sidebar({
                       "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-colors border",
                       active
                         ? "bg-[#0A2340] text-[#F59E0B] border-[#F59E0B]/30"
-                        : "text-white/75 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10"
+                        : "text-white/75 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10",
                     )}
                   >
                     <Icon
                       className="size-[18px] shrink-0"
-                      style={{ color: active ? "#F59E0B" : "rgba(255,255,255,0.65)" }}
+                      style={{
+                        color: active ? "#F59E0B" : "rgba(255,255,255,0.65)",
+                      }}
                     />
                     <span className="flex-1 text-left tracking-wide">
                       {mod.label}
@@ -194,7 +201,7 @@ export function Sidebar({
                               "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all border",
                               itemActive
                                 ? "bg-[#0A2340] font-semibold text-[#F59E0B] border-[#F59E0B]/30"
-                                : "text-white/70 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10"
+                                : "text-white/70 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10",
                             )}
                           >
                             <ItemIcon
@@ -254,9 +261,7 @@ export function Sidebar({
                 </span>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger
-                  className="flex size-7 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white transition-colors"
-                >
+                <DropdownMenuTrigger className="flex size-7 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white transition-colors">
                   <ChevronDown className="size-3.5" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
@@ -265,7 +270,10 @@ export function Sidebar({
                     Configuración
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-destructive">
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="text-destructive"
+                  >
                     <LogOut className="size-4" />
                     Cerrar sesión
                   </DropdownMenuItem>
