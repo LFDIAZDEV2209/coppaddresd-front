@@ -107,6 +107,7 @@ export function Sidebar({
             <Image
               src="/image.png"
               alt="Copp Adresd"
+              loading="eager"
               width={582}
               height={429}
               className={cn(

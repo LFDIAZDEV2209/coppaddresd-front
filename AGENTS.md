@@ -67,7 +67,8 @@ yarn typecheck                              # TypeScript check (si configurado)
 
 - **Next.js 16 APIs difieren** de training data — SIEMPRE leer `node_modules/next/dist/docs/`
 - **Tailwind 4** tiene cambios vs v3 — verificar sintaxis
-- **Yarn 4** usa PnP por defecto — no `node_modules` tradicional
+- **Yarn 4** con `nodeLinker: node-modules` (ver `.yarnrc.yml`) — hay `node_modules` normal, no PnP
+- **shadcn/ui sobre Base UI** (`@base-ui/react`, style `base-nova` en `components.json`) — no usar primitivas Radix
 - **Server Components** son default en App Router — usar `"use client"` solo cuando necesario
 - **Comentarios/docs en espanol** por convencion
 

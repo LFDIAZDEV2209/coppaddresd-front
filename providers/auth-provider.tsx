@@ -4,7 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useState,
+  useSyncExternalStore,
 } from "react";
 import { useRouter } from "next/navigation";
 import { mockAuthLogin, mockAuthLogout, type AuthUser } from "@/lib/api/auth-service";
@@ -18,31 +18,61 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const STORAGE_KEY = "copp-auth-user";
+
+const listeners = new Set<() => void>();
+
+let cachedStoredUser: AuthUser | null | undefined;
+
 function getStoredUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem("copp-auth-user");
-  return stored ? JSON.parse(stored) : null;
+  if (cachedStoredUser === undefined) {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === null) {
+      cachedStoredUser = null;
+    } else {
+      try {
+        cachedStoredUser = JSON.parse(stored) as AuthUser;
+      } catch {
+        cachedStoredUser = null;
+      }
+    }
+  }
+  return cachedStoredUser;
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 function persistAuth(user: AuthUser | null) {
   if (user) {
-    localStorage.setItem("copp-auth-user", JSON.stringify(user));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
   } else {
-    localStorage.removeItem("copp-auth-user");
+    localStorage.removeItem(STORAGE_KEY);
   }
+  cachedStoredUser = undefined;
+  listeners.forEach((listener) => listener());
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(getStoredUser);
-  const [loading] = useState(false);
+  const user = useSyncExternalStore(subscribe, getStoredUser, () => null);
+  const isHydrated = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
+  const loading = !isHydrated;
 
   const login = useCallback(
     async (email: string, password: string) => {
       const result = await mockAuthLogin(email, password);
       if (result.success && result.user) {
         persistAuth(result.user);
-        setUser(result.user);
         router.push("/dashboard");
         return { success: true };
       }
@@ -54,7 +84,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     mockAuthLogout();
     persistAuth(null);
-    setUser(null);
     router.push("/login");
   }, [router]);
 
