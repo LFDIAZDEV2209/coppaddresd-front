@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import type { MediaItem, MediaInput } from "../types";
 import { detectMediaMetadata, type DetectedMediaMetadata } from "../services/upload-service";
 import { formatDuration, formatFileSize } from "../services/media-service";
+import { MediaPlayer } from "./media-player";
 
 interface MediaFormDialogProps {
   open: boolean;
@@ -228,14 +229,15 @@ export function MediaFormDialog({
 
           {media && (
             <div className="rounded-xl border border-border bg-background p-3">
-              <p className="mb-1 text-xs font-semibold text-muted-foreground">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">
                 Archivo actual
               </p>
-              <p className="flex items-center gap-1.5 text-sm">
-                <FileAudio className="size-4 text-primary" />
-                {media.storageKey}
-              </p>
-              <p className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <MediaPlayer
+                storageKey={media.storageKey}
+                mediaType={media.mediaType}
+                className="max-h-48"
+              />
+              <p className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="size-3.5" />
                   {formatDuration(media.durationSecs)}

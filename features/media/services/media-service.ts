@@ -9,6 +9,20 @@ import type {
 
 const PATH = `${env.apiUrl}/api/v1/media`;
 
+/**
+ * Pide al back una URL firmada temporal para reproducir el archivo. El
+ * <video>/<audio> nativo no puede enviar el header Authorization, por eso la
+ * URL es autocontenida (exp+sig). El back la resuelve contra el proveedor de
+ * storage activo (Local hoy, S3 mañana) sin exponer la storageKey.
+ */
+export async function getMediaStreamUrl(storageKey: string): Promise<string> {
+  const params = new URLSearchParams({ key: storageKey });
+  const data = await apiFetch<{ url: string }>(
+    `${env.apiUrl}/api/v1/storage/sign?${params.toString()}`,
+  );
+  return data.url;
+}
+
 export async function fetchMediaItems(
   page: number,
   pageSize: number,

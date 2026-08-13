@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, HardDrive, Hash, Link2, FileAudio } from "lucide-react";
+import { Clock, HardDrive, Hash, FileAudio } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 import type { MediaItem } from "../types";
 import { mediaTypeMeta, mediaStatusMeta } from "./media-meta";
 import { formatDuration, formatFileSize } from "../services/media-service";
+import { MediaPlayer } from "./media-player";
 
 interface MediaDetailDialogProps {
   media?: MediaItem;
@@ -54,6 +55,13 @@ function MediaDetailContent({ media }: { media: MediaItem }) {
         </div>
       </div>
 
+      <div className="overflow-hidden rounded-xl border border-border bg-background">
+        <MediaPlayer
+          storageKey={media.storageKey}
+          mediaType={media.mediaType}
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
         <Detail
           label="Tipo de medio"
@@ -85,14 +93,6 @@ function MediaDetailContent({ media }: { media: MediaItem }) {
           value={media.contentType || "—"}
           icon={<FileAudio className="size-3.5" />}
         />
-      </div>
-
-      <div className="rounded-lg border border-border p-3">
-        <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-          <Link2 className="size-3.5" />
-          Clave de storage (S3)
-        </p>
-        <p className="break-all font-mono text-xs">{media.storageKey}</p>
       </div>
 
       <div className="rounded-lg border border-border p-3">
