@@ -4,93 +4,122 @@ import {
   createContext,
   useCallback,
   useContext,
-  useSyncExternalStore,
+  useEffect,
+  useMemo,
+  useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { mockAuthLogin, mockAuthLogout, type AuthUser } from "@/lib/api/auth-service";
+import {
+  logout as apiLogout,
+  login as apiLogin,
+  restoreSession,
+} from "@/lib/api/auth-service";
+import { setAccessToken, setSessionInvalidatedHandler } from "@/lib/api/http";
+import type { AuthSession, LoginResult, LogoutReason } from "@/lib/api/types";
+import { useSessionTimeout } from "@/hooks/use-session-timeout";
 
 interface AuthContextValue {
-  user: AuthUser | null;
+  user: AuthSession | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  login: (
+    email: string,
+    password: string,
+    rememberMe: boolean,
+  ) => Promise<LoginResult>;
+  logout: (reason?: LogoutReason) => void;
+  hasPermission: (code: string) => boolean;
+  hasRole: (role: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const STORAGE_KEY = "copp-auth-user";
-
-const listeners = new Set<() => void>();
-
-let cachedStoredUser: AuthUser | null | undefined;
-
-function getStoredUser(): AuthUser | null {
-  if (typeof window === "undefined") return null;
-  if (cachedStoredUser === undefined) {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === null) {
-      cachedStoredUser = null;
-    } else {
-      try {
-        cachedStoredUser = JSON.parse(stored) as AuthUser;
-      } catch {
-        cachedStoredUser = null;
-      }
-    }
-  }
-  return cachedStoredUser;
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function persistAuth(user: AuthUser | null) {
-  if (user) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(STORAGE_KEY);
-  }
-  cachedStoredUser = undefined;
-  listeners.forEach((listener) => listener());
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const user = useSyncExternalStore(subscribe, getStoredUser, () => null);
-  const isHydrated = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false,
-  );
-  const loading = !isHydrated;
+  const [user, setUser] = useState<AuthSession | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = useCallback(
-    async (email: string, password: string) => {
-      const result = await mockAuthLogin(email, password);
-      if (result.success && result.user) {
-        persistAuth(result.user);
-        router.push("/dashboard");
-        return { success: true };
+  // Restauración de sesión al montar: refresh (cookie HttpOnly) + /api/me.
+  // El estado inicial (null + loading) es idéntico en server y client, por lo
+  // que no hay mismatches de hidratación y no se persiste nada en el cliente.
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const session = await restoreSession();
+      if (!cancelled) {
+        setUser(session);
       }
-      return { success: false, error: result.error };
-    },
-    [router]
-  );
+      if (!cancelled) {
+        setLoading(false);
+      }
+    })();
 
-  const logout = useCallback(() => {
-    mockAuthLogout();
-    persistAuth(null);
-    router.push("/login");
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Cuando el interceptor HTTP detecta una sesión irrecuperable (refresh
+  // token inválido/corrupto/expirado), limpia el estado y redirige al login.
+  useEffect(() => {
+    const handleInvalidated = () => {
+      setUser(null);
+      setAccessToken(null);
+      router.push("/login?expired=1");
+    };
+
+    setSessionInvalidatedHandler(handleInvalidated);
+    return () => setSessionInvalidatedHandler(null);
   }, [router]);
 
+  const login = useCallback(
+    async (
+      email: string,
+      password: string,
+      rememberMe: boolean,
+    ): Promise<LoginResult> => {
+      const result = await apiLogin(email, password, rememberMe);
+      if (result.success && result.session) {
+        setUser(result.session);
+        router.push("/dashboard");
+      }
+      return result;
+    },
+    [router],
+  );
+
+  const logout = useCallback(
+    (reason: LogoutReason = "manual") => {
+      // Limpieza inmediata local + redirect; la revocación en el Auth Service
+      // es best effort (si el servicio no responde, la cookie caduca sola).
+      setUser(null);
+      setAccessToken(null);
+      router.push(reason === "expired" ? "/login?expired=1" : "/login");
+      void apiLogout();
+    },
+    [router],
+  );
+
+  // Expiración por inactividad: solo mientras hay sesión activa.
+  useSessionTimeout(user !== null && !loading, () => logout("expired"));
+
+  const hasPermission = useCallback(
+    (code: string) => user?.permissions.includes(code) ?? false,
+    [user],
+  );
+
+  const hasRole = useCallback(
+    (role: string) => user?.roles.includes(role) ?? false,
+    [user],
+  );
+
+  const value = useMemo(
+    () => ({ user, loading, login, logout, hasPermission, hasRole }),
+    [user, loading, login, logout, hasPermission, hasRole],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 }
 
