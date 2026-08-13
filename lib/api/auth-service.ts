@@ -53,7 +53,12 @@ export async function login(
         method: "POST",
         auth: false,
         retry: false,
-        body: JSON.stringify({ email, password, rememberMe }),
+        body: JSON.stringify({
+          email,
+          password,
+          rememberMe,
+          application: env.applicationCode,
+        }),
       },
     );
 
