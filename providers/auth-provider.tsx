@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { mockAuthLogin, mockAuthLogout, type AuthUser } from "@/lib/api/auth-service";
+import { authLogin, authLogout, type AuthUser } from "@/lib/api/auth-service";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const result = await mockAuthLogin(email, password);
+      const result = await authLogin(email, password);
       if (result.success && result.user) {
         persistAuth(result.user);
         setUser(result.user);
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    mockAuthLogout();
+    authLogout();
     persistAuth(null);
     setUser(null);
     router.push("/login");

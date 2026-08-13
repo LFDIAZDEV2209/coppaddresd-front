@@ -22,6 +22,7 @@ import {
   ArrowUpFromLine,
   ArrowLeftRight,
   FileBarChart,
+  FileAudio,
 } from "lucide-react";
 
 export interface NavItem {
@@ -148,6 +149,19 @@ export const navModules: NavModule[] = [
         href: "/agents/config",
         icon: BrainCircuit,
         color: "#6D28D9",
+      },
+    ],
+  },
+  {
+    label: "Contenido",
+    icon: FileAudio,
+    color: "#0E7490",
+    items: [
+      {
+        label: "Medios",
+        href: "/media",
+        icon: FileAudio,
+        color: "#0E7490",
       },
     ],
   },

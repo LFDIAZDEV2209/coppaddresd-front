@@ -1,3 +1,5 @@
+import { AUTH_API_URL, setAuthToken } from "@/lib/api/config";
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -12,69 +14,71 @@ interface LoginResult {
   error?: string;
 }
 
-const MOCK_CREDENTIALS: { email: string; password: string; user: AuthUser }[] = [
-  {
-    email: "admin@coppaddresd.com",
-    password: "Test@1234",
-    user: {
-      id: "usr-001",
-      name: "María López",
-      email: "maria.lopez@coppaddresd.com",
-      role: "Superadministradora",
-      initials: "ML",
-    },
-  },
-  {
-    email: "demo@coppaddresd.com",
-    password: "Demo@1234",
-    user: {
-      id: "usr-002",
-      name: "Carlos Ruiz",
-      email: "carlos.ruiz@coppaddresd.com",
-      role: "Administrador",
-      initials: "CR",
-    },
-  },
-];
+interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+  userId: string;
+  email: string;
+  roles: string[];
+}
 
-export async function mockAuthLogin(
+export async function authLogin(
   email: string,
-  password: string
+  password: string,
 ): Promise<LoginResult> {
-  await simulateDelay(800);
+  try {
+    const response = await fetch(`${AUTH_API_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-  if (!email || !password) {
-    return { success: false, error: "Correo y contraseña son obligatorios." };
-  }
+    if (!response.ok) {
+      return { success: false, error: "Credenciales incorrectas." };
+    }
 
-  const match = MOCK_CREDENTIALS.find(
-    (c) => c.email === email && c.password === password
-  );
+    const data = (await response.json()) as LoginResponse;
+    setAuthToken(data.accessToken);
 
-  if (!match) {
+    const name = email.split("@")[0];
+    const initials = name
+      .split(/[._\-\s]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "CA";
+
     return {
-      success: false,
-      error: "Credenciales incorrectas. Verifica tu correo y contraseña.",
+      success: true,
+      user: {
+        id: data.userId,
+        name: email,
+        email: data.email,
+        role: data.roles[0] ?? "Usuario",
+        initials,
+      },
     };
+  } catch {
+    return { success: false, error: "No fue posible conectar con el servidor de autenticación." };
   }
-
-  return { success: true, user: match.user };
 }
 
-export function mockAuthLogout(): void {
-  // In production: call API to invalidate session/refresh tokens
+export function authLogout(): void {
+  setAuthToken(null);
 }
 
-export const mockAuthCurrentUser: AuthUser = MOCK_CREDENTIALS[0].user;
+export const mockAuthCurrentUser: AuthUser = {
+  id: "usr-001",
+  name: "María López",
+  email: "admin@coppaddresd.com",
+  role: "Superadministradora",
+  initials: "ML",
+};
 
 export function getDemoCredentials() {
-  return MOCK_CREDENTIALS.map((c) => ({
-    email: c.email,
-    password: c.password,
-    role: c.user.role,
-  }));
-}
-
-function simulateDelay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return [
+    { email: "admin@coppaddresd.com", password: "Test@1234", role: "Admin" },
+  ];
 }
