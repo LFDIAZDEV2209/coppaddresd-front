@@ -260,7 +260,7 @@ export function Sidebar({
                   {user?.name ?? "Usuario"}
                 </span>
                 <span className="text-[10.5px] text-white/55 truncate">
-                  {user?.role ?? "Sin rol"}
+                  {user?.roles[0] ?? "Sin rol"}
                 </span>
               </div>
               <DropdownMenu>
@@ -274,7 +274,7 @@ export function Sidebar({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={logout}
+                    onClick={() => logout()}
                     className="text-destructive"
                   >
                     <LogOut className="size-4" />

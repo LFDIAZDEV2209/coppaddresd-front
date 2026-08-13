@@ -129,7 +129,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                 {user?.name ?? "Usuario"}
               </span>
               <span className="text-[10px] text-white/65 leading-tight">
-                {user?.role ?? "Sin rol"}
+                {user?.roles[0] ?? "Sin rol"}
               </span>
             </div>
             <ChevronDown className="hidden size-3 text-white/60 md:block" />
@@ -152,7 +152,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
               Configuración
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem onClick={() => logout()} className="text-destructive focus:text-destructive">
               <LogOut className="size-4" />
               Cerrar sesión
             </DropdownMenuItem>

@@ -31,6 +31,14 @@ yarn typecheck                              # TypeScript check (si configurado)
 - **shadcn/ui** como base de componentes
 - **Yarn 4** como package manager
 
+## Autenticación (integrada con Auth Service)
+
+- **Flujo**: login → access token en memoria (Bearer) + refresh token en cookie HttpOnly del Auth Service. Restauración de sesión al recargar: `POST /api/auth/refresh` (cookie) → `GET /api/me`. Logout revoca tokens server-side y limpia la cookie.
+- **Capas**: `lib/config/env.ts` (URLs por env vars `NEXT_PUBLIC_*`), `lib/api/http.ts` (cliente con refresh single-flight, retry único tras 800ms para raza multi-pestaña, timeout, `ApiError` tipado), `lib/api/auth-service.ts` (login/restore/logout), `providers/auth-provider.tsx` (sesión en memoria — **sin localStorage**, seguro contra XSS e hidratación), `hooks/use-session-timeout.ts` (logout por inactividad, default 30 min vía `NEXT_PUBLIC_SESSION_IDLE_MINUTES`).
+- **Sesión**: `AuthSession { id, email, firstName, lastName, name, initials, roles, permissions }` con `hasPermission(code)` / `hasRole(role)` — permisos listos para autorización granular por UI.
+- **Errores**: `ApiError` con códigos (`unauthorized`, `forbidden`, `rate-limit`, `network`, `timeout`, `server`); el banner de "sesión expirada" (`/login?expired=1`) solo aparece cuando el header `X-Refresh-Status` es `invalid` (cookie corrupta/expirada), no en visitantes nuevos.
+- **Mocks**: el login page muestra credenciales demo del admin SOLO en desarrollo. No reintroducir `localStorage` para tokens.
+
 ## OBLIGATORIO: Flujo de trabajo frontend
 
 1. **Cargar skills ANTES de escribir codigo**:

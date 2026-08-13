@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
 import { getDemoCredentials } from "@/lib/api/auth-service";
 import Image from "next/image";
@@ -23,25 +24,56 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
+/**
+ * Banner de sesión expirada: se muestra cuando se llega al login con
+ * `?expired=1` (cierre por inactividad o refresh token inválido).
+ * Se aísla en Suspense porque useSearchParams requiere boundary en
+ * prerender estático.
+ */
+function ExpiredBanner() {
+  const searchParams = useSearchParams();
+
+  if (searchParams.get("expired") !== "1") return null;
+
+  return (
+    <div
+      role="alert"
+      className="mb-6 flex items-center gap-2 rounded-lg bg-warning-soft px-3 py-2.5 text-[13px] text-warning-foreground"
+    >
+      <AlertTriangle className="size-4 shrink-0" />
+      Tu sesión expiró. Inicia sesión nuevamente para continuar.
+    </div>
+  );
+}
+
 export default function LoginPage() {
-  const { login } = useAuth();
+  const router = useRouter();
+  const { login, user, loading: sessionLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Si ya hay una sesión activa (restaurada por cookie al cargar), no tiene
+  // sentido ver el login: redirige al dashboard.
+  useEffect(() => {
+    if (!sessionLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [sessionLoading, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    setSubmitting(true);
 
-    const result = await login(email, password);
+    const result = await login(email, password, remember);
 
     if (!result.success) {
       setError(result.error || "Error inesperado. Intenta de nuevo.");
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -104,6 +136,11 @@ export default function LoginPage() {
           ))}
         </div>
 
+        {/* Sesión expirada (por inactividad o cookie corrupta) */}
+        <Suspense fallback={null}>
+          <ExpiredBanner />
+        </Suspense>
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
@@ -118,7 +155,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="h-11"
               autoComplete="email"
-              disabled={loading}
+              disabled={submitting}
             />
           </div>
 
@@ -135,7 +172,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-11 pr-10"
                 autoComplete="current-password"
-                disabled={loading}
+                disabled={submitting}
               />
               <button
                 type="button"
@@ -162,16 +199,13 @@ export default function LoginPage() {
                 Recordar sesión
               </span>
             </label>
-            <button
-              type="button"
-              className="text-[13px] font-medium text-primary hover:text-primary-strong transition-colors cursor-pointer"
-            >
-              Recuperar acceso seguro
-            </button>
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 rounded-lg bg-destructive-soft px-3 py-2.5 text-[13px] text-destructive-strong">
+            <div
+              role="alert"
+              className="flex items-center gap-2 rounded-lg bg-destructive-soft px-3 py-2.5 text-[13px] text-destructive-strong"
+            >
               <AlertTriangle className="size-4 shrink-0" />
               {error}
             </div>
@@ -179,10 +213,10 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            disabled={loading}
+            disabled={submitting}
             className="h-12 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary-strong text-[14px] font-semibold cursor-pointer"
           >
-            {loading ? (
+            {submitting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
                 Verificando credenciales...
@@ -196,31 +230,33 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        {/* Demo Credentials Card */}
-        <div className="mt-8 flex items-start gap-3 rounded-xl bg-primary-soft p-4">
-          <HeartPulse className="size-5 shrink-0 text-primary mt-0.5" />
-          <div className="flex flex-col gap-2">
-            <span className="text-[12px] font-semibold text-foreground">
-              Credenciales de demostración
-            </span>
-            {getDemoCredentials().map((cred) => (
-              <button
-                key={cred.email}
-                type="button"
-                onClick={() => fillDemo(cred.email, cred.password)}
-                className="flex items-center gap-2 text-[11.5px] text-muted-foreground hover:text-primary transition-colors text-left group cursor-pointer"
-              >
-                <CheckCircle2 className="size-3 text-success group-hover:text-primary" />
-                <span className="font-mono">{cred.email}</span>
-                <span className="text-muted-foreground/50">·</span>
-                <span className="font-mono">{cred.password}</span>
-                <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px]">
-                  {cred.role}
-                </span>
-              </button>
-            ))}
+        {/* Demo Credentials Card — solo en desarrollo */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="mt-8 flex items-start gap-3 rounded-xl bg-primary-soft p-4">
+            <HeartPulse className="size-5 shrink-0 text-primary mt-0.5" />
+            <div className="flex flex-col gap-2">
+              <span className="text-[12px] font-semibold text-foreground">
+                Credenciales de demostración
+              </span>
+              {getDemoCredentials().map((cred) => (
+                <button
+                  key={cred.email}
+                  type="button"
+                  onClick={() => fillDemo(cred.email, cred.password)}
+                  className="flex items-center gap-2 text-[11.5px] text-muted-foreground hover:text-primary transition-colors text-left group cursor-pointer"
+                >
+                  <CheckCircle2 className="size-3 text-success group-hover:text-primary" />
+                  <span className="font-mono">{cred.email}</span>
+                  <span className="text-muted-foreground/50">·</span>
+                  <span className="font-mono">{cred.password}</span>
+                  <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px]">
+                    {cred.role}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Right Panel — Image + Overlay Content */}
