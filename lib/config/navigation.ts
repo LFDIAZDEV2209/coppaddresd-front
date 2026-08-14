@@ -138,18 +138,23 @@ export const navModules: NavModule[] = [
     items: [
       { label: "Agentes", href: "/agents", icon: Bot, color: "#7C3AED" },
       {
-        label: "Analítica AI",
-        href: "/agents/analytics",
+        label: "Conocimiento",
+        href: "/agents/knowledge",
+        icon: BrainCircuit,
+        color: "#6D28D9",
+      },
+      {
+        label: "Monitoreo",
+        href: "/agents/monitoring",
         icon: BarChart3,
         color: "#2563EB",
-        hidden: true,
       },
       { label: "Voces", href: "/agents/voices", icon: Mic, color: "#0891B2", hidden: true },
       {
         label: "Configuración AI",
         href: "/agents/config",
-        icon: BrainCircuit,
-        color: "#6D28D9",
+        icon: Settings,
+        color: "#475569",
         hidden: true,
       },
     ],

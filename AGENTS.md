@@ -39,6 +39,13 @@ yarn typecheck                              # TypeScript check (si configurado)
 - **Errores**: `ApiError` con códigos (`unauthorized`, `forbidden`, `rate-limit`, `network`, `timeout`, `server`); el banner de "sesión expirada" (`/login?expired=1`) solo aparece cuando el header `X-Refresh-Status` es `invalid` (cookie corrupta/expirada), no en visitantes nuevos.
 - **Mocks**: el login page muestra credenciales demo del admin SOLO en desarrollo. No reintroducir `localStorage` para tokens.
 
+## Módulo de agentes (fase 8 — conectado al backend real)
+
+- **Rutas**: `/agents` (lista + CRUD tipos), `/agents/[id]` (detalle con tabs Versiones / Conocimiento / Monitoreo), `/agents/knowledge` (KBs globales + upload), `/agents/monitoring` (ejecuciones globales).
+- **Capas**: `features/agents/` — `types/` (espejo de DTOs del backend), `services/agents-service.ts` (apiFetch contra `{apiUrl}/api/v1/agents`), `services/upload-agent-document.ts` (PUT blob → storage + register), `hooks/` (use-agents, use-agent-detail, use-agent-knowledge, use-agent-monitoring — patrón refresh-key: el fetch vive en `useEffect` y los handlers incrementan un contador, **nunca** setState síncrono en el efecto), `components/` (listas, dialogs, tabs).
+- **El frontend NUNCA llama al AI Service directo** — el backend proxya ejecuciones (`GET /api/v1/agents/executions`). El upload de documentos: PUT `{apiUrl}/api/v1/storage/{key}` + register en la KB (el backend dispara chunking+embeddings).
+- **Versionado**: crear una versión es crear un JSON config; la primera se activa automáticamente; las versiones son inmutables (solo activar/desactivar).
+
 ## OBLIGATORIO: Flujo de trabajo frontend
 
 1. **Cargar skills ANTES de escribir codigo**:
