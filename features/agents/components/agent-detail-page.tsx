@@ -11,30 +11,23 @@ import {
   LoaderCircle,
   Plus,
   Eye,
+  Play,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useAgentDetail } from "../hooks/use-agent-detail";
 import { useAgentKnowledge } from "../hooks/use-agent-knowledge";
 import { useAgentMonitoring } from "../hooks/use-agent-monitoring";
 import { getAgentIcon, formatDate } from "../services/agents-service";
+import { uploadInstructionsDocument } from "../services/upload-agent-document";
 import { VersionsTab } from "./versions-tab";
 import { KnowledgeTab } from "./knowledge-tab";
 import { MonitoringTab } from "./monitoring-tab";
+import { VersionFormDialog } from "./version-form-dialog";
 
 const statusVariant: Record<string, "default" | "destructive" | "secondary"> = {
   Activo: "default",
@@ -105,6 +98,14 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
             )}
             <Button
               size="sm"
+              className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700"
+              onClick={() => router.push(`/agents/${agent.id}/playground`)}
+            >
+              <Play className="size-[15px]" />
+              Probar agente
+            </Button>
+            <Button
+              size="sm"
               variant="secondary"
               className="gap-1.5"
               onClick={() => setVersionDialogOpen(true)}
@@ -168,8 +169,21 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
               activeVersionId={agent.activeVersionId}
               creating={detail.creatingVersion}
               activatingId={detail.activatingVersionId}
+              knowledgeBases={knowledge.bases}
               onActivate={detail.handleActivateVersion}
               onCreate={detail.handleCreateVersion}
+              onUploadInstructions={(file) =>
+                uploadInstructionsDocument(file, {
+                  agentId: agent.id,
+                  agentName: agent.name,
+                  findAgentBase: () =>
+                    knowledge.bases.find(
+                      (base) => base.scope !== "Global" && base.agentTypeId === agent.id,
+                    ) ?? null,
+                  createAgentBase: knowledge.handleCreateBase,
+                  registerDocument: knowledge.handleRegisterDocument,
+                })
+              }
             />
           </TabsContent>
 
@@ -186,14 +200,27 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
         </Tabs>
       </div>
 
-      <NewVersionDialog
+      <VersionFormDialog
         open={versionDialogOpen}
         onOpenChange={setVersionDialogOpen}
-        creating={detail.creatingVersion}
-        onSubmit={async (config, notes) => {
+        saving={detail.creatingVersion}
+        knowledgeBases={knowledge.bases}
+        onCreate={async (config, notes) => {
           await detail.handleCreateVersion(config, notes);
           setVersionDialogOpen(false);
         }}
+        onUploadInstructions={(file) =>
+          uploadInstructionsDocument(file, {
+            agentId: agent.id,
+            agentName: agent.name,
+            findAgentBase: () =>
+              knowledge.bases.find(
+                (base) => base.scope !== "Global" && base.agentTypeId === agent.id,
+              ) ?? null,
+            createAgentBase: knowledge.handleCreateBase,
+            registerDocument: knowledge.handleRegisterDocument,
+          })
+        }
       />
     </div>
   );
@@ -202,110 +229,6 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
 export function StatusBadge({ status }: { status: string }) {
   const variant = status === "Activo" ? "default" : status === "Inactivo" ? "destructive" : "secondary";
   return <Badge variant={variant}>{status}</Badge>;
-}
-
-function NewVersionDialog({
-  open,
-  onOpenChange,
-  creating,
-  onSubmit,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  creating: boolean;
-  onSubmit: (config: string, notes?: string | null) => Promise<void>;
-}) {
-  const [config, setConfig] = useState(
-    JSON.stringify(
-      {
-        system_prompt: "Eres un asistente de salud de CoppAddresd. Responde en español.",
-        tools: ["calculate", "get_current_time"],
-        retrieval_config: { enabled: true, top_k: 5 },
-        memory_config: { enabled: true, categories: ["preferencias"] },
-      },
-      null,
-      2,
-    ),
-  );
-  const [notes, setNotes] = useState("");
-  const [validationError, setValidationError] = useState<string | null>(null);
-
-  const submit = async () => {
-    try {
-      JSON.parse(config);
-    } catch {
-      setValidationError("La configuración debe ser JSON válido.");
-      return;
-    }
-    if (!config.trim()) {
-      setValidationError("La configuración es requerida.");
-      return;
-    }
-    setValidationError(null);
-    await onSubmit(config, notes.trim() || null);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] min-w-[640px] max-w-2xl overflow-y-auto p-0">
-        <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Plus className="size-5" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <DialogTitle>Nueva versión</DialogTitle>
-              <DialogDescription>
-                La versión se activa automáticamente si el agente no tiene ninguna activa.
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-        <div className="flex flex-col gap-4 px-6 py-5">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="version-config">Configuración (JSON)</Label>
-            <textarea
-              id="version-config"
-              className="min-h-56 w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-[12.5px] outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-              value={config}
-              onChange={(event) => setConfig(event.target.value)}
-              disabled={creating}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="version-notes">Notas</Label>
-            <Input
-              id="version-notes"
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Ej. Agrega retrieval config"
-              disabled={creating}
-            />
-          </div>
-          {validationError && (
-            <p className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive" role="alert">
-              {validationError}
-            </p>
-          )}
-          <DialogFooter className="-mx-6 -mb-5 px-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={creating}>
-              Cancelar
-            </Button>
-            <Button type="button" onClick={submit} disabled={creating}>
-              {creating ? (
-                <>
-                  <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  Creando...
-                </>
-              ) : (
-                "Crear versión"
-              )}
-            </Button>
-          </DialogFooter>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 export function VersionRowActions({

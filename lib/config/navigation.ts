@@ -23,6 +23,7 @@ import {
   ArrowLeftRight,
   FileBarChart,
   FileAudio,
+  PlayCircle,
 } from "lucide-react";
 
 export interface NavItem {
@@ -142,6 +143,12 @@ export const navModules: NavModule[] = [
         href: "/agents/knowledge",
         icon: BrainCircuit,
         color: "#6D28D9",
+      },
+      {
+        label: "Playground",
+        href: "/agents/playground",
+        icon: PlayCircle,
+        color: "#059669",
       },
       {
         label: "Monitoreo",

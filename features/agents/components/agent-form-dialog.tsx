@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { AgentType, AgentTypeRequest } from "../types";
+import { AgentIconPicker } from "./agent-icon-picker";
 
 interface AgentFormDialogProps {
   open: boolean;
@@ -93,11 +94,10 @@ export function AgentFormDialog({
             />
           </Field>
 
-          <Field label="Icono (clave de lucide)">
-            <Input
+          <Field label="Icono">
+            <AgentIconPicker
               value={iconKey}
-              onChange={(event) => setIconKey(event.target.value)}
-              placeholder="Ej. MessageCircle, HeartPulse, Bot"
+              onChange={setIconKey}
               disabled={saving}
             />
           </Field>

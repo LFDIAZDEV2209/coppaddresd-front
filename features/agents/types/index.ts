@@ -173,3 +173,21 @@ export interface AgentExecutionsFilters {
   limit?: number;
   offset?: number;
 }
+
+/** Formulario amigable de configuración de versión (sin JSON para el usuario). */
+export interface AgentRuntimeConfigForm {
+  systemPrompt: string;
+  extraPrompt: string | null;
+  provider: string | null;
+  model: string | null;
+  temperature: number | null;
+  maxTokens: number | null;
+  tools: string[];
+  ragEnabled: boolean;
+  knowledgeBaseIds: string[];
+  topK: number;
+  memoryEnabled: boolean;
+  memoryCategories: string[];
+  maxToolCalls: number;
+  recursionLimit: number;
+}

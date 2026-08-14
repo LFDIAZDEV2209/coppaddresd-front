@@ -20,16 +20,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { AgentTypeVersion } from "../types";
+import type { AgentTypeVersion, KnowledgeBase } from "../types";
 import { formatDate } from "../services/agents-service";
+import { VersionFormDialog } from "./version-form-dialog";
 
 interface VersionsTabProps {
   versions: AgentTypeVersion[];
   activeVersionId: string | null;
   creating: boolean;
   activatingId: string | null;
+  knowledgeBases: KnowledgeBase[];
   onActivate: (versionId: string) => Promise<void>;
   onCreate: (config: string, notes?: string | null) => Promise<void>;
+  onUploadInstructions: (
+    file: File,
+  ) => Promise<{ knowledgeBaseId: string; storageKey: string; fileName: string }>;
 }
 
 export function VersionsTab({
@@ -37,32 +42,13 @@ export function VersionsTab({
   activeVersionId,
   creating,
   activatingId,
+  knowledgeBases,
   onActivate,
   onCreate,
+  onUploadInstructions,
 }: VersionsTabProps) {
   const [viewing, setViewing] = useState<AgentTypeVersion | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [config, setConfig] = useState("");
-  const [notes, setNotes] = useState("");
-  const [validationError, setValidationError] = useState<string | null>(null);
-
-  const submitCreate = async () => {
-    try {
-      JSON.parse(config);
-    } catch {
-      setValidationError("La configuración debe ser JSON válido.");
-      return;
-    }
-    if (!config.trim()) {
-      setValidationError("La configuración es requerida.");
-      return;
-    }
-    setValidationError(null);
-    await onCreate(config, notes.trim() || null);
-    setConfig("");
-    setNotes("");
-    setShowCreate(false);
-  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -173,65 +159,17 @@ export function VersionsTab({
         </div>
       )}
 
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-h-[92vh] min-w-[640px] max-w-2xl overflow-y-auto p-0">
-          <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
-            <DialogTitle className="text-base font-semibold">Nueva versión</DialogTitle>
-            <DialogDescription>
-              Configuración JSON del agente (prompt, modelo, tools, RAG, memoria).
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-4 px-6 py-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium" htmlFor="tab-config">
-                Configuración (JSON){" "}
-                <span className="ml-1 text-destructive" aria-hidden="true">
-                  *
-                </span>
-              </label>
-              <textarea
-                id="tab-config"
-                className="min-h-52 w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-[12.5px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                value={config}
-                onChange={(event) => setConfig(event.target.value)}
-                placeholder={'{"system_prompt": "...", "tools": ["calculate"]}'}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium" htmlFor="tab-notes">
-                Notas
-              </label>
-              <input
-                id="tab-notes"
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                placeholder="Ej. Ajuste de prompt principal"
-              />
-            </div>
-            {validationError && (
-              <p className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive" role="alert">
-                {validationError}
-              </p>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowCreate(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={submitCreate} disabled={creating}>
-                {creating ? (
-                  <>
-                    <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                    Creando...
-                  </>
-                ) : (
-                  "Crear versión"
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <VersionFormDialog
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        saving={creating}
+        knowledgeBases={knowledgeBases}
+        onCreate={async (config, notes) => {
+          await onCreate(config, notes);
+          setShowCreate(false);
+        }}
+        onUploadInstructions={onUploadInstructions}
+      />
 
       <Dialog open={viewing !== null} onOpenChange={(open) => !open && setViewing(null)}>
         <DialogContent className="max-h-[92vh] min-w-[640px] max-w-2xl overflow-y-auto p-0">
