@@ -91,11 +91,27 @@ export async function apiFetch<T>(
     retry = true,
     timeoutMs = DEFAULT_TIMEOUT_MS,
     headers: extraHeaders,
+    signal: externalSignal,
     ...fetchInit
   } = options;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  // Signal externo (p. ej. abort en cleanup de efectos): al abortarse, se
+  // cancela también la petición interna. Evita requests huérfanos en doble
+  // montaje de efectos (StrictMode en dev) y races de filtros/paginación.
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalSignal.addEventListener(
+        "abort",
+        () => controller.abort(),
+        { once: true },
+      );
+    }
+  }
 
   try {
     const headers = new Headers(extraHeaders);

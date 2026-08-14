@@ -4,27 +4,48 @@ import { useCallback, useEffect, useState } from "react";
 import {
   createPatient,
   deletePatient,
+  fetchInsurers,
   fetchPatients,
   updatePatient,
 } from "../services/patients-service";
 import type {
-  Patient,
-  PatientFilters,
+  Insurer,
   PatientInput,
+  PatientListItem,
+  PatientFilters,
   PaginatedResult,
 } from "../types";
 
-export function usePatients(pageSize = 6) {
-  const [result, setResult] = useState<PaginatedResult<Patient> | null>(null);
+export function usePatients(pageSize = 10) {
+  const [result, setResult] = useState<PaginatedResult<PatientListItem> | null>(
+    null,
+  );
   const [filters, setFiltersState] = useState<PatientFilters>({
     search: "",
     status: "all",
-    insurer: "all",
+    insurerId: "all",
   });
   const [page, setPageState] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [insurers, setInsurers] = useState<Insurer[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+    void fetchInsurers(controller.signal)
+      .then((items) => {
+        if (!cancelled) setInsurers(items);
+      })
+      .catch(() => {
+        if (!cancelled) setInsurers([]);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,8 +62,9 @@ export function usePatients(pageSize = 6) {
   }, [filters, page, pageSize]);
 
   useEffect(() => {
+    const controller = new AbortController();
     let cancelled = false;
-    void fetchPatients(page, pageSize, filters)
+    void fetchPatients(page, pageSize, filters, controller.signal)
       .then((data) => {
         if (!cancelled) setResult(data);
       })
@@ -59,6 +81,7 @@ export function usePatients(pageSize = 6) {
       });
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [filters, page, pageSize]);
 
@@ -105,6 +128,7 @@ export function usePatients(pageSize = 6) {
   return {
     result,
     filters,
+    insurers,
     loading,
     error,
     actionLoading,

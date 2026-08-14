@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchPatients } from "../services/patients-service";
 import { createAppointment } from "../services/appointments-service";
-import type { AppointmentInput, Patient } from "../types";
+import type { AppointmentInput, PatientListItem } from "../types";
 
 const defaultForm: AppointmentInput = {
   patientId: "",
@@ -40,9 +40,9 @@ const slots = [
 ];
 
 export function AppointmentsPage() {
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState<PatientListItem[]>([]);
   const [patientSearch, setPatientSearch] = useState("");
-  const [selected, setSelected] = useState<Patient>();
+  const [selected, setSelected] = useState<PatientListItem>();
   const [form, setForm] = useState<AppointmentInput>(defaultForm);
   const [loadingPatients, setLoadingPatients] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +50,7 @@ export function AppointmentsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchPatients(1, 50, { search: "", status: "all", insurer: "all" })
+    void fetchPatients(1, 50, { search: "", status: "all", insurerId: "all" })
       .then((result) => setPatients(result.data))
       .catch(() => setError("No pudimos cargar los pacientes." as string))
       .finally(() => setLoadingPatients(false));
@@ -64,7 +64,7 @@ export function AppointmentsPage() {
     field: K,
     value: AppointmentInput[K],
   ) => setForm((current) => ({ ...current, [field]: value }));
-  const selectPatient = (patient: Patient) => {
+  const selectPatient = (patient: PatientListItem) => {
     setSelected(patient);
     update("patientId", patient.id);
   };
@@ -192,8 +192,8 @@ export function AppointmentsPage() {
                       {patient.firstName} {patient.lastName}
                     </span>
                     <span className="block text-xs text-muted-foreground">
-                      {patient.documentType} {patient.documentNumber} ·{" "}
-                      {patient.insurer}
+                      {patient.documentType ?? ""} {patient.documentNumber} ·{" "}
+                      {patient.insurerName ?? "Sin aseguradora"}
                     </span>
                   </span>
                   <UserRound className="size-4 text-muted-foreground" />
