@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   MoreHorizontal,
   Pencil,
@@ -54,39 +55,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { usePatients } from "../hooks/use-patients";
-import { PatientFormDialog } from "./patient-form-dialog";
-import type { Patient, PatientInput } from "../types";
+import type { PatientListItem } from "../types";
 
 export function PatientsPage() {
+  const router = useRouter();
   const {
     result,
     filters,
+    insurers,
     loading,
     error,
     actionLoading,
     setFilters,
     setPage,
-    save,
     remove,
     retry,
   } = usePatients();
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Patient | undefined>();
-  const [details, setDetails] = useState<Patient | undefined>();
-  const [deleting, setDeleting] = useState<Patient | undefined>();
+  const [details, setDetails] = useState<PatientListItem | undefined>();
+  const [deleting, setDeleting] = useState<PatientListItem | undefined>();
 
-  const openCreate = () => {
-    setEditing(undefined);
-    setFormOpen(true);
-  };
-  const openEdit = (patient: Patient) => {
-    setEditing(patient);
-    setFormOpen(true);
-  };
-  const submit = async (input: PatientInput) => {
-    await save(input, editing?.id);
-    setFormOpen(false);
-  };
+  const openCreate = () => router.push("/patients/new");
+  const openEdit = (patient: PatientListItem) =>
+    router.push(`/patients/${patient.id}/edit`);
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -134,7 +124,7 @@ export function PatientsPage() {
             Actualizar
           </Button>
         </div>
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
             <Input
@@ -162,16 +152,16 @@ export function PatientsPage() {
           </select>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            value={filters.insurer}
-            onChange={(event) => setFilters({ insurer: event.target.value })}
+            value={filters.insurerId}
+            onChange={(event) => setFilters({ insurerId: event.target.value })}
             aria-label="Filtrar por aseguradora"
           >
             <option value="all">Todas las aseguradoras</option>
-            <option>SURA</option>
-            <option>Sanitas</option>
-            <option>Compensar</option>
-            <option>Particular</option>
-            <option>Famisanar</option>
+            {insurers.map((insurer) => (
+              <option key={insurer.id} value={insurer.id}>
+                {insurer.name}
+              </option>
+            ))}
           </select>
         </div>
       </section>
@@ -196,14 +186,6 @@ export function PatientsPage() {
           onPageChange={setPage}
         />
       )}
-      <PatientFormDialog
-        key={`${editing?.id ?? "new"}-${formOpen}`}
-        open={formOpen}
-        patient={editing}
-        saving={actionLoading}
-        onOpenChange={setFormOpen}
-        onSubmit={submit}
-      />
       <PatientDetails patient={details} onClose={() => setDetails(undefined)} />
       <AlertDialog
         open={Boolean(deleting)}
@@ -245,10 +227,10 @@ function PatientTable({
   onEdit,
   onDelete,
 }: {
-  patients: Patient[];
-  onDetails: (patient: Patient) => void;
-  onEdit: (patient: Patient) => void;
-  onDelete: (patient: Patient) => void;
+  patients: PatientListItem[];
+  onDetails: (patient: PatientListItem) => void;
+  onEdit: (patient: PatientListItem) => void;
+  onDelete: (patient: PatientListItem) => void;
 }) {
   return (
     <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
@@ -288,27 +270,28 @@ function PatientTable({
                       {patient.firstName} {patient.lastName}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {patient.gender} · {getAge(patient.birthDate)} años
+                      {patient.gender ?? "Sin género"} ·{" "}
+                      {getAge(patient.dateOfBirth)} años
                     </span>
                   </span>
                 </button>
               </TableCell>
               <TableCell>
                 <span className="text-sm font-medium">
-                  {patient.documentNumber}
+                  {patient.documentNumber ?? patient.medicalRecordNumber ?? "—"}
                 </span>
                 <span className="block text-xs text-muted-foreground">
-                  {patient.documentType}
+                  {patient.documentType ?? "MRN"}
                 </span>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
-                <span className="block text-sm">{patient.phone}</span>
+                <span className="block text-sm">{patient.phone ?? "—"}</span>
                 <span className="block max-w-44 truncate text-xs text-muted-foreground">
-                  {patient.email}
+                  {patient.email ?? "—"}
                 </span>
               </TableCell>
-              <TableCell className="hidden md:table-cell text-sm">
-                {patient.insurer}
+              <TableCell className="hidden text-sm md:table-cell">
+                {patient.insurerName ?? "Sin aseguradora"}
               </TableCell>
               <TableCell>
                 <StatusBadge
@@ -369,7 +352,7 @@ function PatientDetails({
   patient,
   onClose,
 }: {
-  patient?: Patient;
+  patient?: PatientListItem;
   onClose: () => void;
 }) {
   return (
@@ -393,7 +376,7 @@ function PatientDetails({
                   {patient.firstName} {patient.lastName}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {patient.documentType} {patient.documentNumber}
+                  {patient.medicalRecordNumber ?? "Sin MRN"}
                 </p>
               </div>
               <div className="ml-auto">
@@ -406,25 +389,30 @@ function PatientDetails({
             <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
               <Detail
                 label="Fecha de nacimiento"
-                value={`${patient.birthDate} · ${getAge(patient.birthDate)} años`}
-              />
-              <Detail label="Teléfono" value={patient.phone} />
-              <Detail label="Correo" value={patient.email || "No registrado"} />
-              <Detail label="Aseguradora" value={patient.insurer} />
-              <Detail
-                label="Dirección"
-                value={patient.address || "No registrada"}
+                value={
+                  patient.dateOfBirth
+                    ? `${patient.dateOfBirth.slice(0, 10)} · ${getAge(patient.dateOfBirth)} años`
+                    : "No registrada"
+                }
               />
               <Detail
-                label="Última cita"
-                value={patient.lastAppointment ?? "Sin citas"}
+                label="Documento"
+                value={
+                  patient.documentNumber
+                    ? `${patient.documentType ?? ""} ${patient.documentNumber}`
+                    : "No registrado"
+                }
               />
-            </div>
-            <div className="rounded-lg border border-border p-3">
-              <p className="mb-1 text-xs font-semibold text-muted-foreground">
-                Observaciones
-              </p>
-              <p className="text-sm">{patient.notes || "Sin observaciones."}</p>
+              <Detail label="Teléfono" value={patient.phone ?? "No registrado"} />
+              <Detail label="Correo" value={patient.email ?? "No registrado"} />
+              <Detail
+                label="Aseguradora"
+                value={patient.insurerName ?? "Sin aseguradora"}
+              />
+              <Detail
+                label="Género"
+                value={patient.gender ?? "No registrado"}
+              />
             </div>
           </div>
         )}
@@ -565,15 +553,17 @@ function Pagination({
     </div>
   );
 }
-function getAge(date: string) {
+function getAge(date: string | null) {
+  if (!date) return "—";
   const birth = new Date(date);
-  const today = new Date("2024-06-18");
+  if (Number.isNaN(birth.getTime())) return "—";
+  const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
   if (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate()))
     age -= 1;
-  return age;
+  return Math.max(0, age);
 }
-function statusColor(status: Patient["status"]) {
+function statusColor(status: PatientListItem["status"]) {
   const colors = {
     Activo: {
       bg: "var(--success-soft)",

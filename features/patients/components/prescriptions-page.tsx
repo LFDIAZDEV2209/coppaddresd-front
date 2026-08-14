@@ -21,11 +21,11 @@ import {
   createPrescription,
   fetchPrescriptions,
 } from "../services/prescriptions-service";
-import type { Medication, Patient, Prescription } from "../types";
+import type { Medication, PatientListItem, Prescription } from "../types";
 
 export function PrescriptionsPage() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [selected, setSelected] = useState<Patient>();
+  const [patients, setPatients] = useState<PatientListItem[]>([]);
+  const [selected, setSelected] = useState<PatientListItem>();
   const [search, setSearch] = useState("");
   const [history, setHistory] = useState<Prescription[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
@@ -37,7 +37,7 @@ export function PrescriptionsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchPatients(1, 50, { search: "", status: "all", insurer: "all" })
+    void fetchPatients(1, 50, { search: "", status: "all", insurerId: "all" })
       .then((result) => setPatients(result.data))
       .catch(() => setError("No pudimos cargar los pacientes."))
       .finally(() => setLoadingPatients(false));
@@ -47,7 +47,7 @@ export function PrescriptionsPage() {
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
-  const selectPatient = async (patient: Patient) => {
+  const selectPatient = async (patient: PatientListItem) => {
     setSelected(patient);
     setSuccess(false);
     setError(null);
@@ -178,8 +178,8 @@ export function PrescriptionsPage() {
                       {selected.firstName} {selected.lastName}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {selected.documentType} {selected.documentNumber} ·{" "}
-                      {selected.insurer}
+                      {selected.documentType ?? ""} {selected.documentNumber} ·{" "}
+                      {selected.insurerName ?? "Sin aseguradora"}
                     </p>
                   </div>
                 </div>
