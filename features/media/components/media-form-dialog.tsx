@@ -8,6 +8,7 @@ import {
   X,
   Clock,
   HardDrive,
+  ImagePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,8 @@ import type { MediaItem, MediaInput } from "../types";
 import { detectMediaMetadata, type DetectedMediaMetadata } from "../services/upload-service";
 import { formatDuration, formatFileSize } from "../services/media-service";
 import { MediaPlayer } from "./media-player";
+import { MediaThumb } from "./media-thumb";
+import { mediaCategoryMeta } from "./media-meta";
 
 interface MediaFormDialogProps {
   open: boolean;
@@ -34,15 +37,22 @@ interface MediaFormDialogProps {
   onSubmit: (
     input: MediaInput,
     file?: File,
+    thumbnailFile?: File | null,
     onProgress?: (percent: number) => void,
   ) => Promise<void>;
 }
 
+const MAX_THUMBNAIL_BYTES = 2 * 1024 * 1024; // 2 MB
+
 const emptyForm = {
   title: "",
   description: null as string | null,
+  author: "",
+  category: "Nutricion" as MediaInput["category"],
   status: "Draft" as MediaInput["status"],
   sortOrder: 1,
+  day: 1,
+  month: 1,
 };
 
 export function MediaFormDialog({
@@ -57,8 +67,14 @@ export function MediaFormDialog({
       ? {
           title: media.title,
           description: media.description,
+          author: media.author ?? "",
+          category: mediaCategoryMeta[media.category]
+            ? media.category
+            : emptyForm.category,
           status: media.status,
           sortOrder: media.sortOrder,
+          day: media.day,
+          month: media.month,
         }
       : emptyForm,
   );
@@ -68,6 +84,10 @@ export function MediaFormDialog({
   const [progress, setProgress] = useState<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailCleared, setThumbnailCleared] = useState(false);
+  const thumbInputRef = useRef<HTMLInputElement>(null);
 
   const update = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -98,10 +118,42 @@ export function MediaFormDialog({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleThumbnailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files?.[0];
+    if (!selected) return;
+
+    if (!selected.type.startsWith("image/")) {
+      setValidationError("La miniatura debe ser una imagen (JPG, PNG, WebP...).");
+      return;
+    }
+    if (selected.size > MAX_THUMBNAIL_BYTES) {
+      setValidationError("La miniatura no puede superar los 2 MB.");
+      return;
+    }
+
+    if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+    setThumbnailFile(selected);
+    setThumbnailPreview(URL.createObjectURL(selected));
+    setThumbnailCleared(false);
+    setValidationError(null);
+  };
+
+  const clearThumbnail = () => {
+    if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+    setThumbnailFile(null);
+    setThumbnailPreview(null);
+    setThumbnailCleared(true);
+    if (thumbInputRef.current) thumbInputRef.current.value = "";
+  };
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form.title.trim()) {
       setValidationError("El título es obligatorio.");
+      return;
+    }
+    if (!form.author.trim()) {
+      setValidationError("El autor es obligatorio.");
       return;
     }
 
@@ -118,27 +170,39 @@ export function MediaFormDialog({
       ? {
           title: form.title.trim(),
           description: form.description,
+          author: form.author.trim(),
           mediaType: media.mediaType,
+          category: form.category,
           storageKey: media.storageKey,
+          thumbnailKey: media.thumbnailKey && !thumbnailCleared
+            ? media.thumbnailKey
+            : null,
           contentType: media.contentType,
           fileSizeBytes: media.fileSizeBytes,
           durationSecs: media.durationSecs,
           status: form.status,
           sortOrder: form.sortOrder,
+          day: form.day,
+          month: form.month,
         }
       : {
           title: form.title.trim(),
           description: form.description,
+          author: form.author.trim(),
           mediaType: metadata?.mediaType ?? "Podcast",
+          category: form.category,
           storageKey: "",
+          thumbnailKey: null,
           contentType: metadata?.contentType ?? file?.type ?? null,
           fileSizeBytes: metadata?.fileSizeBytes ?? file?.size ?? null,
           durationSecs: metadata?.durationSecs ?? null,
           status: form.status,
           sortOrder: form.sortOrder,
+          day: form.day,
+          month: form.month,
         };
 
-    await onSubmit(input, file ?? undefined, setProgress);
+    await onSubmit(input, file ?? undefined, thumbnailFile, setProgress);
   };
 
   const uploading = progress !== null && progress > 0 && progress < 100;
@@ -315,6 +379,81 @@ export function MediaFormDialog({
             </div>
           )}
 
+          <div>
+            <Label htmlFor="media-thumbnail">Miniatura (opcional)</Label>
+            <input
+              ref={thumbInputRef}
+              id="media-thumbnail"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleThumbnailChange}
+              disabled={uploading}
+            />
+            {thumbnailPreview ? (
+              <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-background p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element -- Vista previa local con object URL; el optimizer de next/image no aplica a blob: */}
+                <img
+                  src={thumbnailPreview}
+                  alt="Vista previa de la miniatura"
+                  className="size-14 shrink-0 rounded-lg object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {thumbnailFile?.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Nueva miniatura · se sube al guardar
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={clearThumbnail}
+                  disabled={uploading}
+                  aria-label="Quitar miniatura nueva"
+                >
+                  <X />
+                </Button>
+              </div>
+            ) : media?.thumbnailKey && !thumbnailCleared ? (
+              <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-background p-3">
+                <MediaThumb
+                  storageKey={media.thumbnailKey}
+                  alt={`Miniatura de ${media.title}`}
+                  className="size-14 shrink-0 rounded-lg object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">Miniatura actual</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {media.thumbnailKey}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={clearThumbnail}
+                  disabled={uploading}
+                  aria-label="Quitar miniatura"
+                >
+                  <X />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => thumbInputRef.current?.click()}
+                disabled={uploading}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary-soft/40 disabled:opacity-50"
+              >
+                <ImagePlus className="size-4" />
+                Agregar miniatura
+              </button>
+            )}
+          </div>
+
           <fieldset className="flex flex-col gap-4">
             <legend className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Información del medio
@@ -335,6 +474,59 @@ export function MediaFormDialog({
                   value={form.sortOrder}
                   onChange={(event) =>
                     update("sortOrder", Number(event.target.value) || 0)
+                  }
+                  placeholder="Ej. 1"
+                  disabled={uploading}
+                />
+              </Field>
+              <Field label="Autor" required>
+                <Input
+                  value={form.author}
+                  onChange={(event) => update("author", event.target.value)}
+                  placeholder="Ej. Dra. Ana Pérez"
+                  disabled={uploading}
+                />
+              </Field>
+              <Field label="Categoría" required>
+                <select
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                  value={form.category}
+                  onChange={(event) =>
+                    update(
+                      "category",
+                      event.target.value as MediaInput["category"],
+                    )
+                  }
+                  disabled={uploading}
+                >
+                  {Object.entries(mediaCategoryMeta).map(([value, meta]) => (
+                    <option key={value} value={value}>
+                      {meta.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Día">
+                <Input
+                  type="number"
+                  min={1}
+                  max={31}
+                  value={form.day}
+                  onChange={(event) =>
+                    update("day", Number(event.target.value) || 1)
+                  }
+                  placeholder="Ej. 1"
+                  disabled={uploading}
+                />
+              </Field>
+              <Field label="Mes">
+                <Input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={form.month}
+                  onChange={(event) =>
+                    update("month", Number(event.target.value) || 1)
                   }
                   placeholder="Ej. 1"
                   disabled={uploading}

@@ -18,8 +18,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { MediaItem } from "../types";
-import { mediaTypeMeta, mediaStatusMeta } from "./media-meta";
-import { formatDuration, formatFileSize } from "../services/media-service";
+import { mediaTypeMeta, mediaStatusMeta, getMediaCategoryMeta } from "./media-meta";
+import { formatDuration } from "../services/media-service";
+import { MediaThumb } from "./media-thumb";
 
 interface MediaCardGridProps {
   items: MediaItem[];
@@ -39,6 +40,7 @@ export function MediaCardGrid({
       {items.map((item) => {
         const type = mediaTypeMeta[item.mediaType];
         const status = mediaStatusMeta[item.status];
+        const category = getMediaCategoryMeta(item.category);
         const TypeIcon = type.icon;
 
         return (
@@ -46,6 +48,13 @@ export function MediaCardGrid({
             key={item.id}
             className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
           >
+            {item.thumbnailKey && (
+              <MediaThumb
+                storageKey={item.thumbnailKey}
+                alt={`Miniatura de ${item.title}`}
+                className="h-36 w-full rounded-xl object-cover"
+              />
+            )}
             <div className="flex items-start justify-between gap-2">
               <span
                 className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${type.tone}`}
@@ -89,6 +98,9 @@ export function MediaCardGrid({
               <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
                 {item.title}
               </h3>
+              <p className="line-clamp-1 text-xs font-medium text-primary/80">
+                {item.author}
+              </p>
               <p className="line-clamp-2 text-xs text-muted-foreground">
                 {item.description || "Sin descripción."}
               </p>
@@ -99,8 +111,10 @@ export function MediaCardGrid({
                 <Clock className="size-3.5" />
                 {formatDuration(item.durationSecs)}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {formatFileSize(item.fileSizeBytes)}
+              <span
+                className={`rounded-full px-2.5 py-[5px] text-[11.5px] font-semibold ${category.tone}`}
+              >
+                {category.label}
               </span>
             </div>
 

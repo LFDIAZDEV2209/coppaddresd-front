@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, HardDrive, Hash, FileAudio } from "lucide-react";
+import { Clock, HardDrive, Hash, FileAudio, User, Tag, CalendarDays } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { MediaItem } from "../types";
-import { mediaTypeMeta, mediaStatusMeta } from "./media-meta";
+import { mediaTypeMeta, mediaStatusMeta, getMediaCategoryMeta } from "./media-meta";
 import { formatDuration, formatFileSize } from "../services/media-service";
 import { MediaPlayer } from "./media-player";
+import { MediaThumb } from "./media-thumb";
 
 interface MediaDetailDialogProps {
   media?: MediaItem;
@@ -37,6 +38,7 @@ export function MediaDetailDialog({ media, onClose }: MediaDetailDialogProps) {
 function MediaDetailContent({ media }: { media: MediaItem }) {
   const type = mediaTypeMeta[media.mediaType];
   const status = mediaStatusMeta[media.status];
+  const category = getMediaCategoryMeta(media.category);
   const TypeIcon = type.icon;
 
   return (
@@ -55,6 +57,14 @@ function MediaDetailContent({ media }: { media: MediaItem }) {
         </div>
       </div>
 
+      {media.thumbnailKey && (
+        <MediaThumb
+          storageKey={media.thumbnailKey}
+          alt={`Miniatura de ${media.title}`}
+          className="max-h-72 w-full rounded-xl object-cover"
+        />
+      )}
+
       <div className="overflow-hidden rounded-xl border border-border bg-background">
         <MediaPlayer
           storageKey={media.storageKey}
@@ -67,6 +77,21 @@ function MediaDetailContent({ media }: { media: MediaItem }) {
           label="Tipo de medio"
           value={type.label}
           icon={<TypeIcon className="size-3.5" />}
+        />
+        <Detail
+          label="Autor"
+          value={media.author}
+          icon={<User className="size-3.5" />}
+        />
+        <Detail
+          label="Categoría"
+          value={category.label}
+          icon={<Tag className="size-3.5" />}
+        />
+        <Detail
+          label="Día / Mes"
+          value={`${media.day} / ${media.month}`}
+          icon={<CalendarDays className="size-3.5" />}
         />
         <Detail
           label="Estado"

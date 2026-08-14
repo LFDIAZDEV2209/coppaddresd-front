@@ -62,8 +62,12 @@ export function MediaPage() {
   const submit = async (
     input: MediaInput,
     file?: File,
+    thumbnailFile?: File | null,
     onProgress?: (percent: number) => void,
   ) => {
+    let storageKey = input.storageKey;
+    let thumbnailKey = input.thumbnailKey ?? null;
+
     if (file) {
       onProgress?.(1);
       const intent = await requestUploadIntent(
@@ -72,10 +76,23 @@ export function MediaPage() {
       );
       onProgress?.(3);
       await uploadToPresignedUrl(intent.presignedUrl, file, onProgress);
-      await save({ ...input, storageKey: intent.storageKey }, editing?.id);
-    } else {
-      await save(input, editing?.id);
+      storageKey = intent.storageKey;
     }
+
+    // Miniatura: si hay archivo nuevo se sube a storage y la metadata apunta
+    // a la clave nueva; si no, se conserva lo que trae el input (null si se
+    // quitó). El objeto viejo lo limpia el back al detectar el cambio de clave.
+    if (thumbnailFile) {
+      const thumbIntent = await requestUploadIntent(
+        thumbnailFile.name,
+        thumbnailFile.type,
+        "thumbnail",
+      );
+      await uploadToPresignedUrl(thumbIntent.presignedUrl, thumbnailFile);
+      thumbnailKey = thumbIntent.storageKey;
+    }
+
+    await save({ ...input, storageKey, thumbnailKey }, editing?.id);
     setFormOpen(false);
   };
 
