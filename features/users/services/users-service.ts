@@ -1,93 +1,144 @@
+/**
+ * Servicio de usuarios del frontend contra el Auth Service.
+ *
+ * La lista completa llega por GET /api/users (Users.View) y el filtrado,
+ * búsqueda y paginación se hacen client-side (mismo patrón que media).
+ * La creación y edición usan UN SOLO request que incluye los conjuntos
+ * completos de roles y permisos (el backend hace el sync total en una
+ * transacción; evita el N+1 de asignaciones).
+ */
+
+import { apiFetch } from "@/lib/api/http";
+import { env } from "@/lib/config/env";
 import type {
-  User,
-  UsersFilters,
   PaginatedResult,
-  UserStatus,
-  UserRole,
+  User,
+  UserCreateInput,
+  UserUpdateInput,
+  UsersFilters,
 } from "../types";
+import type { Role } from "@/features/roles/types";
 
-const mockUsers: User[] = [
-  { id: "u1", name: "María González", email: "maria.gonzalez@copp.com", initials: "MG", role: "Superadministrador", status: "Activo", lastActivity: "Hace 5 min" },
-  { id: "u2", name: "Carlos Rodríguez", email: "carlos.rodriguez@copp.com", initials: "CR", role: "Administrador", status: "Activo", lastActivity: "Hace 12 min" },
-  { id: "u3", name: "Laura Martínez", email: "laura.martinez@copp.com", initials: "LM", role: "Analista", status: "Activo", lastActivity: "Hace 1h" },
-  { id: "u4", name: "Andrés Pérez", email: "andres.perez@copp.com", initials: "AP", role: "Soporte", status: "Inactivo", lastActivity: "Hace 3 días" },
-  { id: "u5", name: "Valeria Sánchez", email: "valeria.sanchez@copp.com", initials: "VS", role: "Analista", status: "Activo", lastActivity: "Hace 30 min" },
-  { id: "u6", name: "Jorge Ramírez", email: "jorge.ramirez@copp.com", initials: "JR", role: "Administrador", status: "Pendiente", lastActivity: "Hace 2h" },
-  { id: "u7", name: "Lucía Fernández", email: "lucia.fernandez@copp.com", initials: "LF", role: "Soporte", status: "Activo", lastActivity: "Hace 45 min" },
-  { id: "u8", name: "Diego Torres", email: "diego.torres@copp.com", initials: "DT", role: "Analista", status: "Activo", lastActivity: "Hace 15 min" },
-  { id: "u9", name: "Camila Herrera", email: "camila.herrera@copp.com", initials: "CH", role: "Soporte", status: "Inactivo", lastActivity: "Hace 1 semana" },
-  { id: "u10", name: "Martín Díaz", email: "martin.diaz@copp.com", initials: "MD", role: "Analista", status: "Activo", lastActivity: "Hace 1h" },
-];
+const PATH = `${env.authApiUrl}/api/users`;
 
+/**
+ * Lista paginada de usuarios con filtros aplicados client-side.
+ * `signal` permite abortar la request cuando cambian filtros/página (guard de
+ * secuencia en use-users).
+ */
 export async function fetchUsers(
   page: number,
   pageSize: number,
-  filters: UsersFilters
+  filters: UsersFilters,
+  signal?: AbortSignal,
 ): Promise<PaginatedResult<User>> {
-  await simulateDelay(500);
+  const users = await apiFetch<User[]>(PATH, { signal });
 
-  let filtered = [...mockUsers];
+  const query = filters.search.trim().toLowerCase();
+  const filtered = users.filter((user) => {
+    if (query) {
+      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+      const email = user.email.toLowerCase();
+      if (!fullName.includes(query) && !email.includes(query)) return false;
+    }
+    if (filters.status !== "all") {
+      const active = filters.status === "active";
+      if (user.isActive !== active) return false;
+    }
+    if (filters.role !== "all" && !user.roles.includes(filters.role)) {
+      return false;
+    }
+    return true;
+  });
 
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    filtered = filtered.filter(
-      (u) =>
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q)
-    );
-  }
-
-  if (filters.status !== "all") {
-    filtered = filtered.filter((u) => u.status === filters.status);
-  }
-
-  if (filters.role !== "all") {
-    filtered = filtered.filter((u) => u.role === filters.role);
-  }
+  // Los más recientes primero.
+  filtered.sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
 
   const total = filtered.length;
-  const totalPages = Math.ceil(total / pageSize);
-  const start = (page - 1) * pageSize;
-  const data = filtered.slice(start, start + pageSize);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * pageSize;
 
-  return { data, total, page, pageSize, totalPages };
+  return {
+    data: filtered.slice(start, start + pageSize),
+    total,
+    page: safePage,
+    pageSize,
+    totalPages,
+  };
 }
 
-export function getStatusColor(status: UserStatus): {
-  bg: string;
-  text: string;
-  dot: string;
-} {
-  switch (status) {
-    case "Activo":
-      return {
-        bg: "var(--success-soft)",
-        text: "var(--success-foreground)",
-        dot: "var(--success-foreground)",
-      };
-    case "Inactivo":
-      return {
-        bg: "var(--destructive-soft)",
-        text: "var(--destructive)",
-        dot: "var(--destructive)",
-      };
-    case "Pendiente":
-      return {
-        bg: "var(--warning-soft)",
-        text: "var(--warning-foreground)",
-        dot: "var(--warning)",
-      };
-  }
+/**
+ * Crea el usuario con sus roles y permisos en UNA llamada
+ * (POST /api/users, AllowAnonymous). El backend valida la existencia de los
+ * ids y persiste todo en una transacción; si el caller es anónimo o no tiene
+ * permisos de asignación y se envían roles/permisos → 403.
+ */
+export async function createUser(input: UserCreateInput): Promise<User> {
+  return apiFetch<User>(PATH, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
-export function getRoles(): UserRole[] {
-  return ["Superadministrador", "Administrador", "Analista", "Soporte"];
+/**
+ * Actualiza el perfil y hace sync TOTAL de roles y permisos directos en UNA
+ * llamada (PUT /api/users/{id}). El front siempre envía los conjuntos
+ * completos (el backend distingue null = no tocar de lista vacía = quitar
+ * todo). Requiere Users.Update y, si se envían asignaciones, Roles.Assign +
+ * Permissions.Assign → 403 si faltan.
+ */
+export async function updateUser(
+  id: string,
+  input: UserUpdateInput,
+): Promise<void> {
+  await apiFetch<void>(`${PATH}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
 }
 
-export function getStatuses(): UserStatus[] {
-  return ["Activo", "Inactivo", "Pendiente"];
+/** Elimina un usuario (DELETE /api/users/{id}) → 204. */
+export async function deleteUser(id: string): Promise<void> {
+  await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
 }
 
-function simulateDelay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+// --- Lecturas de asignaciones del usuario (precarga del form de edición) ---
+
+/** Roles asignados a un usuario (GET /api/roles/user/{userId}). */
+export async function fetchUserRoles(userId: string): Promise<Role[]> {
+  return apiFetch<Role[]>(`${env.authApiUrl}/api/roles/user/${userId}`);
 }
+
+// --- Helpers de presentación ---
+
+export function getFullName(user: User): string {
+  return `${user.firstName} ${user.lastName}`.trim();
+}
+
+export function getInitials(user: User): string {
+  return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase() ||
+    "US";
+}
+
+export function getStatusLabel(active: boolean): "Activo" | "Inactivo" {
+  return active ? "Activo" : "Inactivo";
+}
+
+// Badges de estado y fechas: compartidos con el módulo de roles.
+export {
+  getStatusColor,
+  formatDate,
+} from "@/features/auth-common/utils";
+
+/** Catálogo de roles para el multi-select (GET /api/roles). */
+export { fetchRoles } from "@/features/roles/services/roles-service";
+
+/** Catálogo de permisos y permisos directos del usuario (precarga del form). */
+export {
+  fetchPermissions,
+  fetchUserPermissions,
+} from "@/features/permissions/services/permissions-service";

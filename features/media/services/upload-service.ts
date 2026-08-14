@@ -19,10 +19,14 @@ export interface DetectedMediaMetadata {
  * Pide al back una clave determinística + URL firmada para subir el archivo.
  * Con el proveedor Local la URL apunta a PUT /api/v1/storage/{key}; con S3
  * será un presigned URL real del bucket. El front no distingue.
+ *
+ * purpose: "content" (default) sube audio/video a su carpeta; "thumbnail"
+ * sube la imagen de portada a media/thumbnails/.
  */
 export async function requestUploadIntent(
   fileName: string,
   contentType: string,
+  purpose: "content" | "thumbnail" = "content",
 ): Promise<UploadIntentResponse> {
   const token = getAccessToken();
   const response = await fetch(`${env.apiUrl}/api/v1/media/upload-intent`, {
@@ -32,7 +36,7 @@ export async function requestUploadIntent(
       Accept: "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ fileName, contentType }),
+    body: JSON.stringify({ fileName, contentType, purpose }),
   });
 
   if (!response.ok) throw new Error("No se pudo iniciar la subida del archivo.");

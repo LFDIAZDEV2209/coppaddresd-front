@@ -15,6 +15,42 @@ export const mediaTypeMeta: Record<
   Audio: { icon: AudioLines, label: "Audio", tone: "text-accent bg-secondary-soft" },
 };
 
+export const mediaCategoryMeta: Record<
+  MediaItem["category"],
+  { label: string; tone: string }
+> = {
+  Biologia: { label: "Biología", tone: "text-success bg-success-soft" },
+  Nutricion: { label: "Nutrición", tone: "text-primary bg-primary-soft" },
+  Psicologia: { label: "Psicología", tone: "text-info bg-info-soft" },
+  CrecimientoPersonal: {
+    label: "Crecimiento personal",
+    tone: "text-accent bg-secondary-soft",
+  },
+  Habitos: { label: "Hábitos", tone: "text-warning bg-warning-soft" },
+  SaludFisica: {
+    label: "Salud física",
+    tone: "text-primary bg-primary-soft",
+  },
+  BienestarEmocional: {
+    label: "Bienestar emocional",
+    tone: "text-info bg-info-soft",
+  },
+  Mindfulness: {
+    label: "Mindfulness",
+    tone: "text-accent bg-secondary-soft",
+  },
+  Motivacion: { label: "Motivación", tone: "text-warning bg-warning-soft" },
+};
+
+/** Fallback para categorías vacías/desconocidas (filas legacy pre-migración). */
+const fallbackCategoryMeta = { label: "Sin categoría", tone: "text-muted-foreground bg-muted" };
+
+export function getMediaCategoryMeta(
+  category: MediaItem["category"],
+): { label: string; tone: string } {
+  return mediaCategoryMeta[category] ?? fallbackCategoryMeta;
+}
+
 export const mediaStatusMeta: Record<
   MediaItem["status"],
   { label: string; bg: string; text: string; dot: string }

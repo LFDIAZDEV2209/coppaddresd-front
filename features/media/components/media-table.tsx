@@ -18,7 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { MediaItem } from "../types";
-import { mediaTypeMeta, mediaStatusMeta } from "./media-meta";
+import { mediaTypeMeta, mediaStatusMeta, getMediaCategoryMeta } from "./media-meta";
+import { MediaThumb } from "./media-thumb";
 import { formatDuration, formatFileSize } from "../services/media-service";
 
 interface MediaTableProps {
@@ -40,6 +41,7 @@ export function MediaTable({
         <TableRow>
           <TableHead>Medio</TableHead>
           <TableHead className="hidden md:table-cell">Tipo</TableHead>
+          <TableHead className="hidden lg:table-cell">Categoría</TableHead>
           <TableHead className="hidden lg:table-cell">Duración</TableHead>
           <TableHead className="hidden lg:table-cell">Tamaño</TableHead>
           <TableHead>Estado</TableHead>
@@ -53,6 +55,7 @@ export function MediaTable({
         {items.map((item) => {
           const type = mediaTypeMeta[item.mediaType];
           const status = mediaStatusMeta[item.status];
+          const category = getMediaCategoryMeta(item.category);
           const TypeIcon = type.icon;
 
           return (
@@ -62,11 +65,19 @@ export function MediaTable({
                   className="flex items-center gap-3 text-left"
                   onClick={() => onDetails(item)}
                 >
-                  <span
-                    className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${type.tone}`}
-                  >
-                    <TypeIcon className="size-4" />
-                  </span>
+                  {item.thumbnailKey ? (
+                    <MediaThumb
+                      storageKey={item.thumbnailKey}
+                      alt={`Miniatura de ${item.title}`}
+                      className="size-9 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <span
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${type.tone}`}
+                    >
+                      <TypeIcon className="size-4" />
+                    </span>
+                  )}
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="truncate text-sm font-semibold text-foreground">
                       {item.title}
@@ -79,6 +90,13 @@ export function MediaTable({
               </TableCell>
               <TableCell className="hidden md:table-cell text-sm">
                 {type.label}
+              </TableCell>
+              <TableCell className="hidden lg:table-cell">
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-[5px] text-[11.5px] font-semibold ${category.tone}`}
+                >
+                  {category.label}
+                </span>
               </TableCell>
               <TableCell className="hidden lg:table-cell text-sm">
                 {formatDuration(item.durationSecs)}

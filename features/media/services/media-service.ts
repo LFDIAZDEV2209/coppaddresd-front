@@ -39,7 +39,7 @@ export async function fetchMediaItems(
   const filtered = items.filter((item) => {
     if (!queryLower) return true;
     const searchable =
-      `${item.title} ${item.description ?? ""} ${item.mediaType}`.toLowerCase();
+      `${item.title} ${item.description ?? ""} ${item.author} ${item.category} ${item.mediaType}`.toLowerCase();
     return searchable.includes(queryLower);
   });
 
