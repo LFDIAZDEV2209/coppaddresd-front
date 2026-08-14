@@ -1,83 +1,170 @@
 "use client";
 
-import { ShieldCheck, Plus, Key, Search, Crown, Shield, BarChart3, Headphones, type LucideIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  CalendarDays,
+  Key,
+  Pencil,
+  Plus,
+  RefreshCw,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
-
-interface Role {
-  id: string;
-  name: string;
-  description: string;
-  usersCount: number;
-  permissionsCount: number;
-  color: string;
-  icon: LucideIcon;
-}
-
-const roles: Role[] = [
-  { id: "r1", name: "Superadministrador", description: "Acceso total al sistema", usersCount: 2, permissionsCount: 15, color: "#123B63", icon: Crown },
-  { id: "r2", name: "Administrador", description: "Gestión de usuarios y agentes", usersCount: 5, permissionsCount: 10, color: "#1F6E9F", icon: Shield },
-  { id: "r3", name: "Analista", description: "Consulta de datos y reportes", usersCount: 12, permissionsCount: 6, color: "#0E7490", icon: BarChart3 },
-  { id: "r4", name: "Soporte", description: "Atención y resolución de tickets", usersCount: 8, permissionsCount: 4, color: "#10B981", icon: Headphones },
-];
-
-const permissionGroups = [
-  {
-    name: "USUARIOS",
-    color: "#0E7490",
-    permissions: ["usuarios.ver", "usuarios.crear", "usuarios.editar", "usuarios.eliminar"],
-  },
-  {
-    name: "AGENTES",
-    color: "#7C3AED",
-    permissions: ["agentes.ver", "agentes.crear", "agentes.editar", "agentes.configurar", "agentes.eliminar"],
-  },
-  {
-    name: "INTEGRACIONES",
-    color: "#F59E0B",
-    permissions: ["integraciones.ver", "integraciones.conectar", "integraciones.configurar"],
-  },
-  {
-    name: "SISTEMA",
-    color: "#475569",
-    permissions: ["sistema.configurar", "sistema.seguridad", "sistema.auditoria"],
-  },
-];
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/feedback/status-badge";
+import { useAuth } from "@/providers/auth-provider";
+import type { Permission } from "@/features/permissions/types";
+import {
+  fetchPermissions,
+  fetchRoles,
+  createRole,
+  updateRole,
+  deleteRole,
+  formatDate,
+  getStatusColor,
+} from "../services/roles-service";
+import type { Role, RoleCreateInput, RoleUpdateInput } from "../types";
+import { RoleFormDialog } from "./role-form-dialog";
+import { RolePermissionsPanel } from "./role-permissions-panel";
 
 export function RolesPageContent() {
-  const [selectedRole, setSelectedRole] = useState<string>("r1");
-  const [checkedPermissions, setCheckedPermissions] = useState<Set<string>>(
-    new Set(permissionGroups.flatMap((g) => g.permissions))
-  );
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission("Roles.Create");
+  const canUpdate = hasPermission("Roles.Update");
+  const canDelete = hasPermission("Roles.Delete");
+  const canAssignPermissions = hasPermission("Permissions.Assign");
 
-  const togglePermission = (perm: string) => {
-    setCheckedPermissions((prev) => {
-      const next = new Set(prev);
-      if (next.has(perm)) next.delete(perm);
-      else next.add(perm);
-      return next;
-    });
+  const [roles, setRoles] = useState<Role[] | null>(null);
+  const [catalog, setCatalog] = useState<Permission[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Role | undefined>();
+  const [savingRole, setSavingRole] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Role | undefined>();
+
+  /**
+   * Aplica la lista de roles conservando el rol seleccionado si sigue
+   * existiendo; si no (o sin selección), pasa al primero. Es el único lugar
+   * que decide la selección tras cargas/creación/borrado.
+   */
+  const applyRoles = useCallback((rolesData: Role[]) => {
+    setRoles(rolesData);
+    setSelectedRoleId((prev) =>
+      prev && rolesData.some((role) => role.id === prev)
+        ? prev
+        : (rolesData[0]?.id ?? null),
+    );
+  }, []);
+
+  // Carga inicial: roles + catálogo de permisos (paralelo).
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [rolesData, permissionsData] = await Promise.all([
+        fetchRoles(),
+        fetchPermissions(),
+      ]);
+      setCatalog(permissionsData);
+      applyRoles(rolesData);
+    } catch (err) {
+      setRoles(null);
+      setError(
+        err instanceof Error ? err.message : "Error al cargar los roles.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [applyRoles]);
+
+  useEffect(() => {
+    const timer = setTimeout(loadData, 0);
+    return () => clearTimeout(timer);
+  }, [loadData, reloadKey]);
+
+  const retry = useCallback(() => setReloadKey((key) => key + 1), []);
+
+  const openCreate = () => {
+    setEditing(undefined);
+    setFormOpen(true);
+  };
+  const openEdit = (role: Role) => {
+    setEditing(role);
+    setFormOpen(true);
   };
 
-  const toggleGroup = (perms: string[]) => {
-    const allChecked = perms.every((p) => checkedPermissions.has(p));
-    setCheckedPermissions((prev) => {
-      const next = new Set(prev);
-      perms.forEach((p) => {
-        if (allChecked) next.delete(p);
-        else next.add(p);
-      });
-      return next;
-    });
+  /**
+   * Guarda el rol y recarga la lista. Los errores (ej. "El nombre del rol ya
+   * existe") se propagan al dialog, que los muestra dentro del modal.
+   */
+  const submitRole = async (
+    input: RoleCreateInput | RoleUpdateInput,
+    id?: string,
+  ) => {
+    setSavingRole(true);
+    try {
+      if (id) {
+        await updateRole(id, input as RoleUpdateInput);
+      } else {
+        const created = await createRole(input as RoleCreateInput);
+        setSelectedRoleId(created.id);
+      }
+      // Se aplica la lista antes de cerrar: si la recarga falla, el dialog
+      // queda abierto mostrando el error.
+      applyRoles(await fetchRoles());
+      setFormOpen(false);
+    } finally {
+      setSavingRole(false);
+    }
   };
 
-  const selectedRoleData = roles.find((r) => r.id === selectedRole);
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setSavingRole(true);
+    setActionError(null);
+    try {
+      await deleteRole(deleting.id);
+      setDeleting(undefined);
+      applyRoles(await fetchRoles());
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Error al eliminar el rol.",
+      );
+      setDeleting(undefined);
+    } finally {
+      setSavingRole(false);
+    }
+  };
+
+  const selectedRole = roles?.find((role) => role.id === selectedRoleId) ?? null;
+
+  if (loading) {
+    return <RolesSkeleton />;
+  }
+
+  if (error && !roles) {
+    return <RolesErrorState message={error} onRetry={retry} />;
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -86,144 +173,201 @@ export function RolesPageContent() {
         description="Administración de roles y permisos del sistema"
         icon={ShieldCheck}
         actions={
-          <Button
-            size="sm"
-            className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary-strong"
-          >
-            <Plus className="size-[15px]" />
-            Nuevo rol
-          </Button>
+          canCreate && (
+            <Button
+              size="sm"
+              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary-strong"
+              onClick={openCreate}
+            >
+              <Plus className="size-[15px]" />
+              Nuevo rol
+            </Button>
+          )
         }
       />
 
+      {actionError && (
+        <div
+          className="rounded-xl border border-destructive/20 bg-destructive-soft px-4 py-3 text-sm text-destructive"
+          role="alert"
+        >
+          {actionError}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[270px_1fr]">
-        {/* Role Cards */}
+        {/* Tarjetas de roles */}
         <div className="flex flex-col gap-3">
-          {roles.map((role) => (
-            <button
-              key={role.id}
-              onClick={() => setSelectedRole(role.id)}
-              className={`flex flex-col gap-3 rounded-2xl border p-4 text-left transition-all ${
-                selectedRole === role.id
-                  ? "border-primary bg-primary-soft shadow-sm"
-                  : "border-border bg-card hover:border-border-strong"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div
-                  className="flex size-10 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: `${role.color}15` }}
-                >
-                  <role.icon className="size-5" style={{ color: role.color }} />
+          {(roles ?? []).map((role) => {
+            const isSelected = role.id === selectedRoleId;
+            return (
+              <button
+                key={role.id}
+                onClick={() => setSelectedRoleId(role.id)}
+                className={`flex flex-col gap-3 rounded-2xl border p-4 text-left transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary-soft shadow-sm"
+                    : "border-border bg-card hover:border-border-strong"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <ShieldCheck className="size-4" />
+                    </div>
+                    <h3 className="truncate text-[13px] font-semibold text-foreground">
+                      {role.name}
+                    </h3>
+                  </div>
+                  <StatusBadge
+                    status={role.isActive ? "Activo" : "Inactivo"}
+                    color={getStatusColor(role.isActive)}
+                  />
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                  {role.usersCount} usuarios
-                </Badge>
-              </div>
-              <div>
-                <h3 className="text-[13px] font-semibold text-foreground">
-                  {role.name}
-                </h3>
-                <p className="text-[11px] text-muted-foreground">
-                  {role.description}
+                <p className="text-[11px] text-muted-foreground line-clamp-2">
+                  {role.description || "Sin descripción"}
                 </p>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <Key className="size-3" />
-                <span>{role.permissionsCount} permisos</span>
-              </div>
-            </button>
-          ))}
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                  <Key className="size-3" />
+                  <span>Permisos</span>
+                  <span className="ml-auto flex items-center gap-1">
+                    <CalendarDays className="size-3" />
+                    {formatDate(role.createdAt)}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+          {roles?.length === 0 && (
+            <div className="rounded-2xl border border-border bg-card p-6 text-center">
+              <p className="text-sm font-medium text-foreground">
+                No hay roles todavía
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {canCreate
+                  ? "Creá el primer rol para comenzar."
+                  : "No hay roles creados."}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Permissions Panel */}
-        <div className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden">
+        {/* Panel de permisos del rol seleccionado */}
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
-            title={`Permisos de ${selectedRoleData?.name ?? ""}`}
-            description="Configura los permisos para este rol"
+            title={`Permisos de ${selectedRole?.name ?? ""}`}
+            description="Configurá qué permisos tiene este rol"
             icon={ShieldCheck}
             variant="primary"
             actions={
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 size-3 -translate-y-1/2 text-white/40" />
-                <Input
-                  placeholder="Buscar..."
-                  className="h-7 w-[200px] bg-white/10 text-[11px] text-white placeholder:text-white/40 border-white/10 pl-7"
-                />
+              <div className="flex items-center gap-2">
+                {canUpdate && selectedRole && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="gap-1.5 border-white/20 text-white hover:bg-white/10"
+                    onClick={() => openEdit(selectedRole)}
+                  >
+                    <Pencil className="size-[15px]" />
+                    Editar
+                  </Button>
+                )}
+                {canDelete && selectedRole && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="gap-1.5 border-white/20 text-white hover:bg-white/10"
+                    onClick={() => setDeleting(selectedRole)}
+                  >
+                    <Trash2 className="size-[15px]" />
+                    Eliminar
+                  </Button>
+                )}
               </div>
             }
           />
-
-          <div className="flex flex-1 flex-col gap-0 overflow-y-auto p-5">
-            <label className="flex items-center gap-2 pb-4">
-              <Checkbox
-                checked={checkedPermissions.size === permissionGroups.flatMap((g) => g.permissions).length}
-                onCheckedChange={() => {
-                  const all = permissionGroups.flatMap((g) => g.permissions);
-                  const allChecked = all.every((p) => checkedPermissions.has(p));
-                  if (allChecked) setCheckedPermissions(new Set());
-                  else setCheckedPermissions(new Set(all));
-                }}
-              />
-              <span className="text-[12px] font-semibold text-foreground">
-                Seleccionar todos
-              </span>
-            </label>
-
-            <Separator />
-
-            <div className="grid grid-cols-1 gap-6 pt-4 md:grid-cols-2">
-              {permissionGroups.map((group) => {
-                const allChecked = group.permissions.every((p) =>
-                  checkedPermissions.has(p)
-                );
-                return (
-                  <div key={group.name} className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2 py-1">
-                      <Checkbox
-                        checked={allChecked}
-                        onCheckedChange={() => toggleGroup(group.permissions)}
-                      />
-                      <span
-                        className="text-[11px] font-bold tracking-wide"
-                        style={{ color: group.color }}
-                      >
-                        {group.name}
-                      </span>
-                    </label>
-                    {group.permissions.map((perm) => (
-                      <label
-                        key={perm}
-                        className="flex items-center gap-2 py-0.5"
-                      >
-                        <Checkbox
-                          checked={checkedPermissions.has(perm)}
-                          onCheckedChange={() => togglePermission(perm)}
-                        />
-                        <span className="text-[12px] text-foreground">
-                          {perm}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-2 border-t border-border p-4">
-            <Button variant="outline" size="sm">
-              Cancelar
-            </Button>
-            <Button
-              size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary-strong"
-            >
-              Guardar cambios
-            </Button>
-          </div>
+          <RolePermissionsPanel
+            role={selectedRole}
+            catalog={catalog ?? []}
+            canAssignPermissions={canAssignPermissions}
+            onError={setActionError}
+          />
         </div>
       </div>
+
+      <RoleFormDialog
+        key={`${editing?.id ?? "new"}-${formOpen}`}
+        open={formOpen}
+        role={editing}
+        saving={savingRole}
+        onOpenChange={setFormOpen}
+        onSubmit={submitRole}
+      />
+
+      <AlertDialog
+        open={Boolean(deleting)}
+        onOpenChange={(open) => !open && setDeleting(undefined)}
+      >
+        <AlertDialogContent>
+          <AlertDialogMedia className="bg-destructive-soft text-destructive">
+            <Trash2 />
+          </AlertDialogMedia>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar rol?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará el rol “{deleting?.name}”. Los usuarios que lo tengan
+              asignado perderán sus permisos. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={savingRole}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={savingRole}
+              onClick={confirmDelete}
+            >
+              {savingRole ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function RolesSkeleton() {
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      <Skeleton className="h-[88px] rounded-2xl" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[270px_1fr]">
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-[120px] rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-[420px] rounded-2xl" />
+      </div>
+    </div>
+  );
+}
+
+function RolesErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-6 py-14 text-center">
+      <p className="text-sm font-semibold text-destructive">
+        No pudimos cargar los roles
+      </p>
+      <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
+      <Button variant="outline" size="sm" onClick={onRetry}>
+        <RefreshCw data-icon="inline-start" />
+        Reintentar
+      </Button>
     </div>
   );
 }
