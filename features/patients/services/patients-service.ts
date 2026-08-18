@@ -57,6 +57,15 @@ export async function deletePatient(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
 }
 
+/** Catálogo estático: cache en memoria con TTL (evita re-peticiones al navegar). */
+const INSURERS_TTL_MS = 5 * 60_000;
+let insurersCache: { data: Insurer[]; expires: number } | null = null;
+
 export async function fetchInsurers(signal?: AbortSignal): Promise<Insurer[]> {
-  return apiFetch<Insurer[]>(`${env.apiUrl}/api/v1/insurers`, { signal });
+  if (insurersCache && insurersCache.expires > Date.now()) {
+    return insurersCache.data;
+  }
+  const data = await apiFetch<Insurer[]>(`${env.apiUrl}/api/v1/insurers`, { signal });
+  insurersCache = { data, expires: Date.now() + INSURERS_TTL_MS };
+  return data;
 }

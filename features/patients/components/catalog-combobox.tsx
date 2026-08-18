@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface CatalogComboboxProps<T extends { id: string }> {
+interface CatalogComboboxProps<T extends { id?: string }> {
   /** Item seleccionado (null = sin selección). */
   value: T | null;
   /** Se invoca al seleccionar o quitar la selección. */
@@ -28,15 +28,21 @@ interface CatalogComboboxProps<T extends { id: string }> {
   disabled?: boolean;
   allowClear?: boolean;
   className?: string;
+  /** Longitud mínima del texto para disparar la búsqueda remota (default 1). */
+  minChars?: number;
+  /** Debounce de la búsqueda remota en ms (default 250). */
+  debounceMs?: number;
 }
+
+const REMOTE_DEBOUNCE_MS = 250;
 
 /**
  * Combobox buscable sobre catálogos del backend. Soporta dos modos:
  * - Estático (`items`): lista cerrada pequeña, filtro local.
- * - Remoto (`fetchItems`): autocomplete con debounce, abort de peticiones
- *   previas y estado de carga/error (patrón async search de Base UI).
+ * - Remoto (`fetchItems`): autocomplete con debounce (250ms), abort de
+ *   peticiones previas y estado de carga/error (patrón async search de Base UI).
  */
-export function CatalogCombobox<T extends { id: string }>({
+function CatalogComboboxInner<T extends { id?: string }>({
   value,
   onSelect,
   items,
@@ -48,6 +54,8 @@ export function CatalogCombobox<T extends { id: string }>({
   disabled = false,
   allowClear = false,
   className,
+  minChars = 1,
+  debounceMs = REMOTE_DEBOUNCE_MS,
 }: CatalogComboboxProps<T>) {
   const { contains } = Combobox.useFilter();
   const [results, setResults] = React.useState<T[]>([]);
@@ -55,7 +63,15 @@ export function CatalogCombobox<T extends { id: string }>({
   const [loading, setLoading] = React.useState(false);
   const [failed, setFailed] = React.useState(false);
   const abortRef = React.useRef<AbortController | null>(null);
+  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = React.useRef(0);
+
+  React.useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const isRemote = fetchItems !== undefined;
 
@@ -91,11 +107,35 @@ export function CatalogCombobox<T extends { id: string }>({
   }, [displayItems.length, emptyText, failed, isRemote, loading, searchValue]);
 
   const clearSelection = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     abortRef.current?.abort();
     setResults([]);
     setSearchValue("");
     setFailed(false);
     onSelect(null);
+  };
+
+  const runRemoteSearch = (query: string) => {
+    const controller = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = controller;
+    const requestId = ++requestIdRef.current;
+    setLoading(true);
+    setFailed(false);
+
+    fetchItems?.(query, controller.signal)
+      .then((items) => {
+        if (controller.signal.aborted) return;
+        setResults(items);
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setResults([]);
+        setFailed(true);
+      })
+      .finally(() => {
+        if (requestId === requestIdRef.current) setLoading(false);
+      });
   };
 
   return (
@@ -119,6 +159,8 @@ export function CatalogCombobox<T extends { id: string }>({
         setSearchValue(next);
 
         if (next === "") {
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          abortRef.current?.abort();
           setResults([]);
           setFailed(false);
           return;
@@ -126,26 +168,21 @@ export function CatalogCombobox<T extends { id: string }>({
 
         if (reason === "item-press") return;
 
-        const controller = new AbortController();
-        abortRef.current?.abort();
-        abortRef.current = controller;
-        const requestId = ++requestIdRef.current;
+        if (!isRemote) return;
+        if (next.trim().length < minChars) {
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          abortRef.current?.abort();
+          setResults([]);
+          setLoading(false);
+          return;
+        }
+
+        // Debounce: una sola petición por ráfaga de escritura (250ms).
+        if (debounceRef.current) clearTimeout(debounceRef.current);
         setLoading(true);
         setFailed(false);
-
-        fetchItems?.(next, controller.signal)
-          .then((items) => {
-            if (controller.signal.aborted) return;
-            setResults(items);
-          })
-          .catch(() => {
-            if (controller.signal.aborted) return;
-            setResults([]);
-            setFailed(true);
-          })
-          .finally(() => {
-            if (requestId === requestIdRef.current) setLoading(false);
-          });
+        const query = next;
+        debounceRef.current = setTimeout(() => runRemoteSearch(query), debounceMs);
       }}
     >
       <Combobox.Trigger
@@ -205,7 +242,7 @@ export function CatalogCombobox<T extends { id: string }>({
             <Combobox.List className="max-h-(--available-height) overflow-y-auto overscroll-contain p-1 outline-none">
               {(item) => (
                 <Combobox.Item
-                  key={item.id}
+                  key={item.id ?? getLabel(item)}
                   value={item}
                   className="relative flex w-full cursor-default items-center gap-2 rounded-md py-1.5 pr-8 pl-2 text-sm outline-none select-none focus:bg-accent focus:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground data-selected:font-medium"
                 >
@@ -222,3 +259,37 @@ export function CatalogCombobox<T extends { id: string }>({
     </Combobox.Root>
   );
 }
+
+/**
+ * Comparador de memoización: se ignora `onSelect` (cambia de identidad en cada
+ * render del padre) porque el padre usa actualizaciones funcionales, así que
+ * una closure vieja nunca corrompe el estado. Con valores memoizados y
+ * funciones de etiqueta/fetch a nivel módulo, escribir en otros campos del
+ * formulario ya no re-renderiza los comboboxes.
+ */
+function areCatalogComboboxPropsEqual<T extends { id?: string }>(
+  prev: CatalogComboboxProps<T>,
+  next: CatalogComboboxProps<T>,
+): boolean {
+  return (
+    prev.value === next.value &&
+    prev.items === next.items &&
+    prev.fetchItems === next.fetchItems &&
+    prev.getLabel === next.getLabel &&
+    prev.placeholder === next.placeholder &&
+    prev.searchPlaceholder === next.searchPlaceholder &&
+    prev.emptyText === next.emptyText &&
+    prev.disabled === next.disabled &&
+    prev.allowClear === next.allowClear &&
+    prev.className === next.className &&
+    prev.minChars === next.minChars &&
+    prev.debounceMs === next.debounceMs
+  );
+}
+
+export const CatalogCombobox = React.memo(
+  CatalogComboboxInner,
+  areCatalogComboboxPropsEqual,
+) as <T extends { id?: string }>(
+  props: CatalogComboboxProps<T>,
+) => React.JSX.Element;

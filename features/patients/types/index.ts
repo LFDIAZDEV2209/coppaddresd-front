@@ -221,6 +221,21 @@ export interface PostalCodeOption {
   zipCode: string;
 }
 
+/**
+ * Código postal sugerido por el proveedor externo (autocompletado).
+ * `cityId` es la ciudad del catálogo local cuando existe (permite
+ * auto-seleccionar ciudad/estado en el formulario). `id` es sintético
+ * (no viene en la respuesta del backend).
+ */
+export interface PostalCodeSearch {
+  id?: string;
+  zipCode: string;
+  city: string;
+  stateCode: string;
+  countryCode: string;
+  cityId: string | null;
+}
+
 /** Resultado de búsqueda en un catálogo clínico (ICD-10, medicamentos, alergenos). */
 export interface CatalogSearchItem {
   id: string;

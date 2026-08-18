@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -53,17 +53,18 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { CatalogCombobox } from "./catalog-combobox";
+import { ApiError } from "@/lib/api/http";
 import {
   fetchBloodTypes,
   fetchCountries,
   fetchDocumentTypes,
   fetchEthnicities,
-  fetchPostalCodes,
   fetchStates,
   searchAllergens,
   searchCities,
   searchIcd10Codes,
   searchMedications,
+  searchPostalCodes,
 } from "../services/catalogs-service";
 import {
   createPatient,
@@ -80,7 +81,7 @@ import type {
   Patient,
   PatientInput,
   PatientStatus,
-  PostalCodeOption,
+  PostalCodeSearch,
   StateOption,
 } from "../types";
 
@@ -252,6 +253,112 @@ function toNumberOrNull(value: string): number | null {
   if (!trimmed) return null;
   const parsed = Number(trimmed.replace(",", "."));
   return Number.isNaN(parsed) ? null : parsed;
+}
+
+/* ── Validación preventiva de signos vitales (espejo de las reglas del
+     backend en CreatePatientCommandValidator) ── */
+
+const VITAL_RULES: Array<{
+  field: Exclude<keyof VitalRow, "key" | "measuredAt" | "editable">;
+  min: number;
+  max: number;
+  label: string;
+}> = [
+  { field: "systolic", min: 30, max: 300, label: "P. sistólica" },
+  { field: "diastolic", min: 20, max: 200, label: "P. diastólica" },
+  { field: "heartRate", min: 20, max: 300, label: "Frecuencia cardíaca" },
+  { field: "temperatureC", min: 30, max: 45, label: "Temperatura" },
+  { field: "o2Saturation", min: 50, max: 100, label: "Saturación O₂" },
+  { field: "heightCm", min: 30, max: 250, label: "Altura" },
+  { field: "weightKg", min: 1, max: 500, label: "Peso" },
+];
+
+/** Valida las filas de vitales que se van a enviar (con algún valor). */
+function validateVitals(vitals: VitalRow[]): Record<string, string[]> {
+  const errors: Record<string, string[]> = {};
+  for (const vital of vitals) {
+    const hasValue =
+      vital.measuredAt ||
+      vital.systolic ||
+      vital.diastolic ||
+      vital.heartRate ||
+      vital.temperatureC ||
+      vital.o2Saturation ||
+      vital.heightCm ||
+      vital.weightKg;
+    if (!hasValue) continue;
+
+    for (const rule of VITAL_RULES) {
+      const raw = vital[rule.field];
+      if (!raw.trim()) continue;
+      const value = toNumberOrNull(raw);
+      if (value === null || value < rule.min || value > rule.max) {
+        errors[`vitals.${rule.field}`] = [
+          `${rule.label} debe estar entre ${rule.min} y ${rule.max}.`,
+        ];
+      }
+    }
+  }
+  return errors;
+}
+
+/** Mapea los nombres de propiedades del backend (RFC 7807) a rutas locales. */
+const SERVER_FIELD_MAP: Record<string, string> = {
+  FirstName: "firstName",
+  MiddleName: "middleName",
+  LastName: "lastName",
+  DocumentNumber: "documentNumber",
+  DateOfBirth: "dateOfBirth",
+  Gender: "gender",
+  PhoneCountryCode: "phoneCountryCode",
+  PhoneNumber: "phoneNumber",
+  Email: "email",
+  Address: "address",
+  PostalCode: "postalCode",
+  EmergencyContact: "emergencyContact",
+  MemberId: "memberId",
+  MaritalStatus: "maritalStatus",
+  SmokingStatus: "smokingStatus",
+  AlcoholStatus: "alcoholStatus",
+  ExerciseLevel: "exerciseLevel",
+  Disability: "disability",
+  HospitalizationHistory: "hospitalizationHistory",
+  SurgeryHistory: "surgeryHistory",
+  Notes: "notes",
+  Status: "status",
+  MedicalRecordNumber: "medicalRecordNumber",
+};
+
+function mapServerFieldErrors(
+  serverErrors: Record<string, string[]>,
+): Record<string, string[]> {
+  const mapped: Record<string, string[]> = {};
+  for (const [key, messages] of Object.entries(serverErrors)) {
+    const vital = key.match(/^VitalSigns\[(\d+)\]\.(\w+)$/);
+    if (vital) {
+      const field =
+        vital[2].charAt(0).toLowerCase() + vital[2].slice(1);
+      mapped[`vitals.${field}`] = messages;
+      continue;
+    }
+    const diagnosis = key.match(/^Diagnoses\[(\d+)\]\.(\w+)$/);
+    if (diagnosis) {
+      mapped[`diagnoses.${diagnosis[1]}.${diagnosis[2]}`] = messages;
+      continue;
+    }
+    const medication = key.match(/^Medications\[(\d+)\]\.(\w+)$/);
+    if (medication) {
+      mapped[`medications.${medication[1]}.${medication[2]}`] = messages;
+      continue;
+    }
+    const allergy = key.match(/^Allergies\[(\d+)\]\.(\w+)$/);
+    if (allergy) {
+      mapped[`allergies.${allergy[1]}.${allergy[2]}`] = messages;
+      continue;
+    }
+    mapped[SERVER_FIELD_MAP[key] ?? key] = messages;
+  }
+  return mapped;
 }
 
 function emptyVitalRow(measuredAt = new Date().toISOString().slice(0, 10)): VitalRow {
@@ -467,11 +574,15 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
   const [bloodTypes, setBloodTypes] = useState<CatalogOption[]>([]);
   const [documentTypes, setDocumentTypes] = useState<CatalogOption[]>([]);
   const [ethnicities, setEthnicities] = useState<CatalogOption[]>([]);
-  const [cityZips, setCityZips] = useState<PostalCodeOption[]>([]);
+  const [cityZips, setCityZips] = useState<PostalCodeSearch[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [notFound, setNotFound] = useState(false);
+
+  /** Primer mensaje de error de un campo local (p. ej. "vitals.diastolic"). */
+  const fieldError = (path: string): string | undefined => fieldErrors[path]?.[0];
 
   useEffect(() => {
     let cancelled = false;
@@ -541,26 +652,6 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
     };
   }, [form.countryId]);
 
-  useEffect(() => {
-    if (!form.cityId) return;
-    let cancelled = false;
-    void fetchPostalCodes(form.cityId)
-      .then((zips) => {
-        if (cancelled) return;
-        setCityZips(zips);
-        setForm((current) => {
-          if (current.postalCode.trim() || zips.length !== 1) return current;
-          return { ...current, postalCode: zips[0].zipCode };
-        });
-      })
-      .catch(() => {
-        if (!cancelled) setCityZips([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [form.cityId]);
-
   const selectedCountry = useMemo(
     () => countries.find((c) => c.id === form.countryId) ?? null,
     [countries, form.countryId],
@@ -577,28 +668,140 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
     [form.cityId, form.cityName],
   );
 
+  // ZIPs de la ciudad seleccionada (fuente: proveedor externo con fallback):
+  // si la ciudad tiene un único código postal se auto-completa.
+  useEffect(() => {
+    if (!form.cityId || !selectedCountry || !selectedState) return;
+    let cancelled = false;
+    void searchPostalCodes({
+      countryCode: selectedCountry.code,
+      stateCode: selectedState.code,
+      city: form.cityName,
+    })
+      .then((zips) => {
+        if (cancelled) return;
+        setCityZips(zips);
+        setForm((current) => {
+          if (current.postalCode.trim() || zips.length !== 1) return current;
+          return { ...current, postalCode: zips[0].zipCode };
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setCityZips([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.cityId, form.cityName, selectedCountry, selectedState]);
+
+  /** Búsqueda del combobox de ZIP: por ciudad+prefijo o por código completo. */
+  const fetchZipSuggestions = async (
+    query: string,
+    signal: AbortSignal,
+  ): Promise<PostalCodeSearch[]> => {
+    const digits = query.trim().replace(/[\s-]/g, "");
+    if (!digits) return [];
+    const withId = (results: PostalCodeSearch[]): PostalCodeSearch[] =>
+      results.map((r) => ({
+        ...r,
+        id: `${r.countryCode}:${r.stateCode}:${r.city}:${r.zipCode}`,
+      }));
+    if (selectedCity && selectedState && selectedCountry) {
+      return withId(
+        await searchPostalCodes(
+          {
+            countryCode: selectedCountry.code,
+            stateCode: selectedState.code,
+            city: form.cityName,
+            zip: digits,
+          },
+          signal,
+        ),
+      );
+    }
+    if (digits.length >= 5) {
+      return withId(
+        await searchPostalCodes(
+          { countryCode: selectedCountry?.code ?? "US", zip: digits },
+          signal,
+        ),
+      );
+    }
+    return [];
+  };
+
+  const zipValue = useMemo(
+    () =>
+      form.postalCode
+        ? ({
+            id: `${selectedCountry?.code ?? "US"}:${selectedState?.code ?? ""}:${form.cityName}:${form.postalCode}`,
+            zipCode: form.postalCode,
+            city: form.cityName,
+            stateCode: selectedState?.code ?? "",
+            countryCode: selectedCountry?.code ?? "",
+            cityId: form.cityId || null,
+          } as PostalCodeSearch)
+        : null,
+    [form.postalCode, form.cityName, form.cityId, selectedState, selectedCountry],
+  );
+
   const update = <K extends keyof PatientFormState>(
     field: K,
     value: PatientFormState[K],
-  ) => setForm((current) => ({ ...current, [field]: value }));
+  ) => {
+    // Al editar un campo se descartan sus errores de servidor pendientes.
+    setFieldErrors((current) => {
+      if (Object.keys(current).length === 0) return current;
+      const next: Record<string, string[]> = {};
+      for (const [key, messages] of Object.entries(current)) {
+        if (key.split(".")[0] !== field) next[key] = messages;
+      }
+      return next;
+    });
+    setForm((current) => ({ ...current, [field]: value }));
+  };
 
   const removeByKey = <T extends Row>(list: T[], key: string): T[] =>
     list.filter((row) => row.key !== key);
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!form.firstName.trim() || !form.lastName.trim()) {
-      setError("El nombre y los apellidos son obligatorios.");
+
+    // Validación preventiva (espejo de las reglas del backend): se evita
+    // enviar el request cuando el formulario ya es inválido.
+    const clientErrors: Record<string, string[]> = {};
+    if (!form.firstName.trim()) {
+      clientErrors.firstName = ["El nombre es requerido."];
+    }
+    if (!form.lastName.trim()) {
+      clientErrors.lastName = ["Los apellidos son requeridos."];
+    }
+    Object.assign(clientErrors, validateVitals(form.vitals));
+
+    if (Object.keys(clientErrors).length > 0) {
+      setFieldErrors(clientErrors);
+      setError(null);
       return;
     }
+
     setSaving(true);
     setError(null);
+    setFieldErrors({});
     try {
       if (patientId) await updatePatient(patientId, toInput(form));
       else await createPatient(toInput(form));
       router.push("/patients");
       router.refresh();
     } catch (cause) {
+      if (cause instanceof ApiError) {
+        if (cause.code === "validation" && cause.errors) {
+          // 400/422 con errores por campo: se muestran bajo cada campo.
+          setFieldErrors(mapServerFieldErrors(cause.errors));
+          return;
+        }
+        setError(cause.message);
+        return;
+      }
       setError(
         cause instanceof Error ? cause.message : "Ocurrió un error inesperado.",
       );
@@ -671,7 +874,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="MRN-… (se genera solo si se deja vacío)"
               />
             </Field>
-            <Field label="Nombre" required icon={User}>
+            <Field label="Nombre" required icon={User} error={fieldError("firstName")}>
               <Input
                 value={form.firstName}
                 onChange={(event) => update("firstName", event.target.value)}
@@ -685,7 +888,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="Segundo nombre"
               />
             </Field>
-            <Field label="Apellidos" required icon={User}>
+            <Field label="Apellidos" required icon={User} error={fieldError("lastName")}>
               <Input
                 value={form.lastName}
                 onChange={(event) => update("lastName", event.target.value)}
@@ -704,14 +907,14 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 allowClear
               />
             </Field>
-            <Field label="Número de documento" icon={Fingerprint}>
+            <Field label="Número de documento" icon={Fingerprint} error={fieldError("documentNumber")}>
               <Input
                 value={form.documentNumber}
                 onChange={(event) => update("documentNumber", event.target.value)}
                 placeholder="Número de documento"
               />
             </Field>
-            <Field label="Fecha de nacimiento" icon={CalendarDays}>
+            <Field label="Fecha de nacimiento" icon={CalendarDays} error={fieldError("dateOfBirth")}>
               <Input
                 type="date"
                 value={form.dateOfBirth}
@@ -791,7 +994,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Teléfono" icon={Phone}>
+            <Field label="Teléfono" icon={Phone} error={fieldError("phoneNumber")}>
               <Input
                 type="tel"
                 value={form.phoneNumber}
@@ -799,7 +1002,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="300 000 0000"
               />
             </Field>
-            <Field label="Correo electrónico" icon={Mail}>
+            <Field label="Correo electrónico" icon={Mail} error={fieldError("email")}>
               <Input
                 type="email"
                 value={form.email}
@@ -881,15 +1084,37 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 allowClear
               />
             </Field>
-            <Field label="Código postal (ZIP)" icon={MapPinned}>
-              <Input
-                value={form.postalCode}
-                onChange={(event) => update("postalCode", event.target.value)}
+            <Field label="Código postal (ZIP)" icon={MapPinned} error={fieldError("postalCode")}>
+              <CatalogCombobox<PostalCodeSearch>
+                value={zipValue}
+                fetchItems={fetchZipSuggestions}
+                getLabel={(item) => item.zipCode}
                 placeholder={
                   cityZips.length > 0
                     ? `Auto: ${cityZips.map((z) => z.zipCode).join(", ")}`
-                    : "Se completa automáticamente"
+                    : "Busca o escribe el código postal…"
                 }
+                searchPlaceholder="Escribe el código postal…"
+                emptyText="Sin códigos postales para esta búsqueda."
+                disabled={!form.countryId}
+                allowClear
+                onSelect={(item) => {
+                  if (!item) {
+                    update("postalCode", "");
+                    return;
+                  }
+                  // Al elegir una sugerencia se auto-completan ciudad/estado
+                  // cuando el proveedor las resolvió (p. ej. búsqueda por ZIP).
+                  setForm((current) => ({
+                    ...current,
+                    postalCode: item.zipCode,
+                    stateId:
+                      states.find((s) => s.code === item.stateCode)?.id ??
+                      current.stateId,
+                    cityId: item.cityId ?? current.cityId,
+                    cityName: item.city || current.cityName,
+                  }));
+                }}
               />
             </Field>
           </FormSection>
@@ -1053,7 +1278,12 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                   </div>
                 </div>
                 <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
-                  <Field label="Código ICD-10" required className="sm:col-span-2">
+                  <Field
+                    label="Código ICD-10"
+                    required
+                    className="sm:col-span-2"
+                    error={fieldError(`diagnoses.${index}.Icd10CodeId`)}
+                  >
                     <CatalogCombobox<CatalogSearchItem>
                       value={
                         diagnosis.icd10CodeId
@@ -1355,7 +1585,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           }
                         />
                       </Field>
-                      <Field label="P. sistólica">
+                      <Field label="P. sistólica" error={fieldError("vitals.systolic")}>
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1373,7 +1603,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="mmHg"
                         />
                       </Field>
-                      <Field label="P. diastólica">
+                      <Field label="P. diastólica" error={fieldError("vitals.diastolic")}>
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1391,7 +1621,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="mmHg"
                         />
                       </Field>
-                      <Field label="Frecuencia cardíaca">
+                      <Field label="Frecuencia cardíaca" error={fieldError("vitals.heartRate")}>
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1409,7 +1639,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="lpm"
                         />
                       </Field>
-                      <Field label="Temperatura (°C)">
+                      <Field label="Temperatura (°C)" error={fieldError("vitals.temperatureC")}>
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -1428,7 +1658,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="°C"
                         />
                       </Field>
-                      <Field label="Saturación O₂ (%)">
+                      <Field label="Saturación O₂ (%)" error={fieldError("vitals.o2Saturation")}>
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1446,7 +1676,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="%"
                         />
                       </Field>
-                      <Field label="Altura (cm)">
+                      <Field label="Altura (cm)" error={fieldError("vitals.heightCm")}>
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -1465,7 +1695,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="cm"
                         />
                       </Field>
-                      <Field label="Peso (kg)">
+                      <Field label="Peso (kg)" error={fieldError("vitals.weightKg")}>
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -1633,14 +1863,18 @@ function Field({
   required,
   className,
   icon: Icon,
+  error,
   children,
 }: {
   label: string;
   required?: boolean;
   className?: string;
   icon?: LucideIcon;
+  /** Mensaje de error de validaci�n (backend o preventivo) del campo. */
+  error?: string;
   children: React.ReactNode;
 }) {
+  const errorId = error ? `field-error-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}` : undefined;
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <Label>
@@ -1653,6 +1887,11 @@ function Field({
         )}
       </Label>
       {children}
+      {error && (
+        <p id={errorId} role="alert" className="text-xs font-medium text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

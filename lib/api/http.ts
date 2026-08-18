@@ -17,21 +17,36 @@ import { env } from "@/lib/config/env";
 export type ApiErrorCode =
   | "unauthorized"
   | "forbidden"
+  | "validation"
   | "bad-request"
+  | "not-found"
+  | "conflict"
   | "rate-limit"
   | "server"
+  | "unavailable"
   | "network"
   | "timeout";
 
 export class ApiError extends Error {
   readonly status: number;
   readonly code: ApiErrorCode;
+  /** Errores de validación por propiedad (RFC 7807 `errors` / `validationErrors`). */
+  readonly errors?: Record<string, string[]>;
+  /** Correlation ID del backend para soporte. */
+  readonly correlationId?: string;
 
-  constructor(status: number, code: ApiErrorCode, message: string) {
+  constructor(
+    status: number,
+    code: ApiErrorCode,
+    message: string,
+    options?: { errors?: Record<string, string[]>; correlationId?: string },
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
+    this.errors = options?.errors;
+    this.correlationId = options?.correlationId;
   }
 }
 
@@ -202,48 +217,89 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 async function toApiError(response: Response): Promise<ApiError> {
+  // Problema RFC 7807 (ProblemDetails) del backend o fallback `message`.
   let detail: string | undefined;
+  let errors: Record<string, string[]> | undefined;
+  let correlationId: string | undefined;
   try {
     const body: unknown = await response.json();
-    if (
-      typeof body === "object" &&
-      body !== null &&
-      "message" in body &&
-      typeof (body as { message: unknown }).message === "string"
-    ) {
-      detail = (body as { message: string }).message;
+    if (typeof body === "object" && body !== null) {
+      const record = body as Record<string, unknown>;
+      if (typeof record.detail === "string") {
+        detail = record.detail;
+      } else if (typeof record.message === "string") {
+        detail = record.message;
+      }
+      if (typeof record.correlationId === "string") {
+        correlationId = record.correlationId;
+      }
+      const rawErrors = record.errors;
+      if (rawErrors && typeof rawErrors === "object" && !Array.isArray(rawErrors)) {
+        errors = Object.fromEntries(
+          Object.entries(rawErrors).map(([key, value]) => [
+            key,
+            Array.isArray(value)
+              ? value.map(String)
+              : [String(value ?? "")],
+          ]),
+        );
+      }
     }
   } catch {
     // Respuesta sin cuerpo JSON: se usa el mensaje genérico.
   }
 
+  const common = { errors, correlationId };
+
   switch (response.status) {
     case 401:
-      return new ApiError(401, "unauthorized", detail ?? "No autorizado.");
+      return new ApiError(401, "unauthorized", detail ?? "No autorizado.", common);
     case 403:
       return new ApiError(
         403,
         "forbidden",
         detail ?? "No tienes permisos para realizar esta acción.",
+        common,
       );
+    case 404:
+      return new ApiError(404, "not-found", detail ?? "El recurso no existe.", common);
+    case 409:
+      return new ApiError(409, "conflict", detail ?? "Conflicto con el estado actual del recurso.", common);
     case 429:
       return new ApiError(
         429,
         "rate-limit",
         detail ?? "Demasiadas peticiones. Intenta más tarde.",
+        common,
       );
+    case 400:
+    case 422:
+      if (errors) {
+        return new ApiError(response.status, "validation", detail ?? "La solicitud no es válida.", common);
+      }
+      return new ApiError(response.status, "bad-request", detail ?? "La solicitud no es válida.", common);
     default:
+      if (response.status === 502 || response.status === 503 || response.status === 504) {
+        return new ApiError(
+          response.status,
+          "unavailable",
+          detail ?? "El servicio no está disponible en este momento. Intenta más tarde.",
+          common,
+        );
+      }
       if (response.status >= 500) {
         return new ApiError(
           response.status,
           "server",
-          "El servicio no está disponible. Intenta más tarde.",
+          detail ?? "Ocurrió un error interno del servidor. Intenta más tarde.",
+          common,
         );
       }
       return new ApiError(
         response.status,
         "bad-request",
         detail ?? "La solicitud no es válida.",
+        common,
       );
   }
 }
