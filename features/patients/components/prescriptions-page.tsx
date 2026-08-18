@@ -178,7 +178,7 @@ export function PrescriptionsPage() {
                       {selected.firstName} {selected.lastName}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {selected.documentType ?? ""} {selected.documentNumber} ·{" "}
+                      {selected.documentTypeName ?? ""} {selected.documentNumber} ·{" "}
                       {selected.insurerName ?? "Sin aseguradora"}
                     </p>
                   </div>

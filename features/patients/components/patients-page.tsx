@@ -281,11 +281,11 @@ function PatientTable({
                   {patient.documentNumber ?? patient.medicalRecordNumber ?? "—"}
                 </span>
                 <span className="block text-xs text-muted-foreground">
-                  {patient.documentType ?? "MRN"}
+                  {patient.documentTypeName ?? "MRN"}
                 </span>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
-                <span className="block text-sm">{patient.phone ?? "—"}</span>
+                <span className="block text-sm">{formatPhone(patient) ?? "—"}</span>
                 <span className="block max-w-44 truncate text-xs text-muted-foreground">
                   {patient.email ?? "—"}
                 </span>
@@ -399,11 +399,14 @@ function PatientDetails({
                 label="Documento"
                 value={
                   patient.documentNumber
-                    ? `${patient.documentType ?? ""} ${patient.documentNumber}`
+                    ? `${patient.documentTypeName ?? ""} ${patient.documentNumber}`
                     : "No registrado"
                 }
               />
-              <Detail label="Teléfono" value={patient.phone ?? "No registrado"} />
+              <Detail
+                label="Teléfono"
+                value={formatPhone(patient) ?? "No registrado"}
+              />
               <Detail label="Correo" value={patient.email ?? "No registrado"} />
               <Detail
                 label="Aseguradora"
@@ -562,6 +565,12 @@ function getAge(date: string | null) {
   if (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate()))
     age -= 1;
   return Math.max(0, age);
+}
+function formatPhone(patient: PatientListItem): string | null {
+  if (!patient.phoneNumber) return null;
+  return patient.phoneCountryCode
+    ? `+${patient.phoneCountryCode} ${patient.phoneNumber}`
+    : patient.phoneNumber;
 }
 function statusColor(status: PatientListItem["status"]) {
   const colors = {

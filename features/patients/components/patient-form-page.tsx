@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -52,6 +52,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { CatalogCombobox } from "./catalog-combobox";
+import {
+  fetchBloodTypes,
+  fetchCountries,
+  fetchDocumentTypes,
+  fetchEthnicities,
+  fetchPostalCodes,
+  fetchStates,
+  searchAllergens,
+  searchCities,
+  searchIcd10Codes,
+  searchMedications,
+} from "../services/catalogs-service";
 import {
   createPatient,
   fetchInsurers,
@@ -59,28 +72,118 @@ import {
   updatePatient,
 } from "../services/patients-service";
 import type {
+  CatalogOption,
+  CatalogSearchItem,
+  CityOption,
+  CountryOption,
   Insurer,
   Patient,
   PatientInput,
   PatientStatus,
+  PostalCodeOption,
+  StateOption,
 } from "../types";
+
+/* ── Vocabulario cerrado (códigos estables en inglés, etiquetas en español) ── */
+
+const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  SSN: "Tarjeta de Seguro Social",
+  DRIVERS_LICENSE: "Licencia de conducir",
+  STATE_ID: "Identificación estatal",
+  US_PASSPORT: "Pasaporte de EE. UU.",
+  FOREIGN_PASSPORT: "Pasaporte extranjero",
+  GREEN_CARD: "Tarjeta de residencia (Green Card)",
+  MILITARY_ID: "Identificación militar",
+  TRIBAL_ID: "Identificación tribal",
+  BIRTH_CERTIFICATE: "Acta de nacimiento",
+  OTHER: "Otro",
+};
+
+const ETHNICITY_LABELS: Record<string, string> = {
+  HISPANIC_OR_LATINO: "Hispano o latino",
+  WHITE: "Blanco",
+  BLACK_OR_AFRICAN_AMERICAN: "Negro o afroamericano",
+  ASIAN: "Asiático",
+  AMERICAN_INDIAN_OR_ALASKA_NATIVE: "Indígena americano o nativo de Alaska",
+  NATIVE_HAWAIIAN_OR_PACIFIC_ISLANDER: "Nativo de Hawái o de las islas del Pacífico",
+  MIDDLE_EASTERN_OR_NORTH_AFRICAN: "Medio Oriente o norte de África",
+  MULTIRACIAL: "Multirracial",
+  OTHER: "Otro",
+};
+
+const SMOKING_OPTIONS = [
+  { value: "Never", label: "Nunca ha fumado" },
+  { value: "Former", label: "Exfumador" },
+  { value: "Current", label: "Fumador actual" },
+];
+
+const ALCOHOL_OPTIONS = [
+  { value: "Heavy", label: "Consumo alto" },
+  { value: "Moderate", label: "Consumo moderado" },
+];
+
+const EXERCISE_OPTIONS = [
+  { value: "Sedentary", label: "Sedentario" },
+  { value: "Light", label: "Ligero (1-2 días/semana)" },
+  { value: "Moderate", label: "Moderado (3-4 días/semana)" },
+  { value: "Active", label: "Activo (5+ días/semana)" },
+];
+
+const DISABILITY_OPTIONS = [
+  { value: "Cognitive", label: "Cognitiva" },
+  { value: "Hearing", label: "Auditiva" },
+  { value: "Mobility", label: "De movilidad" },
+  { value: "Multiple", label: "Múltiple" },
+  { value: "Visual", label: "Visual" },
+];
+
+const HOSPITALIZATION_OPTIONS = [
+  { value: "None", label: "Ninguna" },
+  { value: "Once", label: "Una vez" },
+  { value: "Multiple", label: "Múltiples" },
+];
+
+const SURGERY_OPTIONS = [
+  { value: "None", label: "Ninguna" },
+  { value: "Appendectomy", label: "Apendicectomía" },
+  { value: "CABG", label: "Bypass coronario (CABG)" },
+  { value: "Cardiac Catheterization", label: "Cateterismo cardíaco" },
+  { value: "Cholecystectomy", label: "Colecistectomía" },
+  { value: "C-Section", label: "Cesárea" },
+  { value: "Hernia Repair", label: "Reparación de hernia" },
+  { value: "Hip Replacement", label: "Prótesis de cadera" },
+  { value: "Hysterectomy", label: "Histerectomía" },
+  { value: "Knee Replacement", label: "Prótesis de rodilla" },
+  { value: "Prostatectomy", label: "Prostatectomía" },
+  { value: "Other", label: "Otra" },
+];
+
+const MARITAL_OPTIONS = [
+  { value: "Single", label: "Soltero/a" },
+  { value: "Married", label: "Casado/a" },
+  { value: "Divorced", label: "Divorciado/a" },
+  { value: "Widowed", label: "Viudo/a" },
+  { value: "Separated", label: "Separado/a" },
+  { value: "Domestic Partnership", label: "Unión de hecho" },
+  { value: "Prefer Not to Say", label: "Prefiere no decirlo" },
+];
 
 interface Row {
   key: string;
 }
 interface DiagnosisRow extends Row {
+  icd10CodeId: string;
   icd10Code: string;
-  description: string;
+  icd10Description: string;
   isPrimary: boolean;
 }
 interface MedicationRow extends Row {
+  medicationId: string;
   name: string;
-  ndc: string;
-  rxNorm: string;
-  drugClass: string;
   frequency: string;
 }
 interface AllergyRow extends Row {
+  allergenId: string;
   allergen: string;
   notes: string;
 }
@@ -101,21 +204,25 @@ interface PatientFormState {
   firstName: string;
   middleName: string;
   lastName: string;
-  documentType: string;
+  documentTypeId: string;
   documentNumber: string;
   dateOfBirth: string;
   gender: string;
-  ethnicity: string;
-  bloodType: string;
-  phone: string;
+  ethnicityId: string;
+  bloodTypeId: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
   email: string;
   address: string;
-  city: string;
-  state: string;
+  countryId: string;
+  stateId: string;
+  cityId: string;
+  cityName: string;
   postalCode: string;
   emergencyContact: string;
   insurerId: string;
   memberId: string;
+  maritalStatus: string;
   smokingStatus: string;
   alcoholStatus: string;
   exerciseLevel: string;
@@ -168,21 +275,25 @@ function createEmptyForm(): PatientFormState {
     firstName: "",
     middleName: "",
     lastName: "",
-    documentType: "CC",
+    documentTypeId: "",
     documentNumber: "",
     dateOfBirth: "",
     gender: "Femenino",
-    ethnicity: "",
-    bloodType: "",
-    phone: "",
+    ethnicityId: "",
+    bloodTypeId: "",
+    phoneCountryCode: "",
+    phoneNumber: "",
     email: "",
     address: "",
-    city: "",
-    state: "",
+    countryId: "",
+    stateId: "",
+    cityId: "",
+    cityName: "",
     postalCode: "",
     emergencyContact: "",
     insurerId: "",
     memberId: "",
+    maritalStatus: "",
     smokingStatus: "",
     alcoholStatus: "",
     exerciseLevel: "",
@@ -204,21 +315,25 @@ function fromPatient(patient: Patient): PatientFormState {
     firstName: patient.firstName,
     middleName: patient.middleName ?? "",
     lastName: patient.lastName,
-    documentType: patient.documentType ?? "CC",
+    documentTypeId: patient.documentTypeId ?? "",
     documentNumber: patient.documentNumber ?? "",
     dateOfBirth: toDateInput(patient.dateOfBirth),
     gender: patient.gender ?? "Femenino",
-    ethnicity: patient.ethnicity ?? "",
-    bloodType: patient.bloodType ?? "",
-    phone: patient.phone ?? "",
+    ethnicityId: patient.ethnicityId ?? "",
+    bloodTypeId: patient.bloodTypeId ?? "",
+    phoneCountryCode: patient.phoneCountryCode ?? "",
+    phoneNumber: patient.phoneNumber ?? "",
     email: patient.email ?? "",
     address: patient.address ?? "",
-    city: patient.city ?? "",
-    state: patient.state ?? "",
+    countryId: patient.countryId ?? "",
+    stateId: patient.stateId ?? "",
+    cityId: patient.cityId ?? "",
+    cityName: patient.cityName ?? "",
     postalCode: patient.postalCode ?? "",
     emergencyContact: patient.emergencyContact ?? "",
     insurerId: patient.insurerId ?? "",
     memberId: patient.memberId ?? "",
+    maritalStatus: patient.maritalStatus ?? "",
     smokingStatus: patient.smokingStatus ?? "",
     alcoholStatus: patient.alcoholStatus ?? "",
     exerciseLevel: patient.exerciseLevel ?? "",
@@ -229,20 +344,20 @@ function fromPatient(patient: Patient): PatientFormState {
     notes: patient.notes ?? "",
     diagnoses: patient.diagnoses.map((d) => ({
       key: d.id,
+      icd10CodeId: d.icd10CodeId,
       icd10Code: d.icd10Code,
-      description: d.description ?? "",
+      icd10Description: d.description ?? "",
       isPrimary: d.isPrimary,
     })),
     medications: patient.medications.map((m) => ({
       key: m.id,
+      medicationId: m.medicationId,
       name: m.name,
-      ndc: m.ndc ?? "",
-      rxNorm: m.rxNorm ?? "",
-      drugClass: m.drugClass ?? "",
       frequency: m.frequency ?? "",
     })),
     allergies: patient.allergies.map((a) => ({
       key: a.id,
+      allergenId: a.allergenId,
       allergen: a.allergen,
       notes: a.notes ?? "",
     })),
@@ -268,21 +383,24 @@ function toInput(form: PatientFormState): PatientInput {
     firstName: form.firstName.trim(),
     middleName: text(form.middleName),
     lastName: form.lastName.trim(),
-    documentType: text(form.documentType),
+    documentTypeId: form.documentTypeId || null,
     documentNumber: text(form.documentNumber),
     dateOfBirth: form.dateOfBirth || null,
     gender: text(form.gender),
-    ethnicity: text(form.ethnicity),
-    bloodType: text(form.bloodType),
-    phone: text(form.phone),
+    ethnicityId: form.ethnicityId || null,
+    bloodTypeId: form.bloodTypeId || null,
+    phoneCountryCode: text(form.phoneCountryCode),
+    phoneNumber: text(form.phoneNumber),
     email: text(form.email),
     address: text(form.address),
-    city: text(form.city),
-    state: text(form.state),
+    countryId: form.countryId || null,
+    stateId: form.stateId || null,
+    cityId: form.cityId || null,
     postalCode: text(form.postalCode),
     emergencyContact: text(form.emergencyContact),
     insurerId: form.insurerId || null,
     memberId: text(form.memberId),
+    maritalStatus: text(form.maritalStatus),
     smokingStatus: text(form.smokingStatus),
     alcoholStatus: text(form.alcoholStatus),
     exerciseLevel: text(form.exerciseLevel),
@@ -292,27 +410,14 @@ function toInput(form: PatientFormState): PatientInput {
     status: form.status,
     notes: text(form.notes),
     diagnoses: form.diagnoses
-      .filter((d) => d.icd10Code.trim())
-      .map((d) => ({
-        icd10Code: d.icd10Code.trim(),
-        description: text(d.description),
-        isPrimary: d.isPrimary,
-      })),
+      .filter((d) => d.icd10CodeId)
+      .map((d) => ({ icd10CodeId: d.icd10CodeId, isPrimary: d.isPrimary })),
     medications: form.medications
-      .filter((m) => m.name.trim())
-      .map((m) => ({
-        name: m.name.trim(),
-        ndc: text(m.ndc),
-        rxNorm: text(m.rxNorm),
-        drugClass: text(m.drugClass),
-        frequency: text(m.frequency),
-      })),
+      .filter((m) => m.medicationId)
+      .map((m) => ({ medicationId: m.medicationId, frequency: text(m.frequency) })),
     allergies: form.allergies
-      .filter((a) => a.allergen.trim())
-      .map((a) => ({
-        allergen: a.allergen.trim(),
-        notes: text(a.notes),
-      })),
+      .filter((a) => a.allergenId)
+      .map((a) => ({ allergenId: a.allergenId, notes: text(a.notes) })),
     vitalSigns: form.vitals
       .filter(
         (v) =>
@@ -338,11 +443,31 @@ function toInput(form: PatientFormState): PatientInput {
   };
 }
 
+/* ── Utilidades de etiquetas de catálogo ── */
+
+function documentTypeLabel(option: CatalogOption): string {
+  return DOCUMENT_TYPE_LABELS[option.code] ?? option.name;
+}
+
+function ethnicityLabel(option: CatalogOption): string {
+  return ETHNICITY_LABELS[option.code] ?? option.name;
+}
+
+function icd10Label(item: CatalogSearchItem): string {
+  return `${item.code ?? ""} · ${item.name ?? ""}`;
+}
+
 export function PatientFormPage({ patientId }: { patientId?: string }) {
   const isEdit = Boolean(patientId);
   const router = useRouter();
   const [form, setForm] = useState<PatientFormState>(createEmptyForm);
   const [insurers, setInsurers] = useState<Insurer[]>([]);
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [states, setStates] = useState<StateOption[]>([]);
+  const [bloodTypes, setBloodTypes] = useState<CatalogOption[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<CatalogOption[]>([]);
+  const [ethnicities, setEthnicities] = useState<CatalogOption[]>([]);
+  const [cityZips, setCityZips] = useState<PostalCodeOption[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -350,12 +475,32 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchInsurers()
-      .then((items) => {
-        if (!cancelled) setInsurers(items);
+    void Promise.all([
+      fetchInsurers(),
+      fetchCountries(),
+      fetchBloodTypes(),
+      fetchDocumentTypes(),
+      fetchEthnicities(),
+    ])
+      .then(([insurerItems, countryItems, bloodItems, docItems, ethItems]) => {
+        if (cancelled) return;
+        setInsurers(insurerItems);
+        setCountries(countryItems);
+        setBloodTypes(bloodItems);
+        setDocumentTypes(docItems);
+        setEthnicities(ethItems);
+        setForm((current) => {
+          if (current.countryId) return current;
+          const us = countryItems.find((c) => c.code === "US");
+          return {
+            ...current,
+            countryId: us?.id ?? "",
+            phoneCountryCode: us?.phoneCode ?? "1",
+          };
+        });
       })
       .catch(() => {
-        if (!cancelled) setInsurers([]);
+        if (!cancelled) setCountries([]);
       });
     return () => {
       cancelled = true;
@@ -380,6 +525,57 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
       cancelled = true;
     };
   }, [patientId]);
+
+  useEffect(() => {
+    if (!form.countryId) return;
+    let cancelled = false;
+    void fetchStates(form.countryId)
+      .then((items) => {
+        if (!cancelled) setStates(items);
+      })
+      .catch(() => {
+        if (!cancelled) setStates([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.countryId]);
+
+  useEffect(() => {
+    if (!form.cityId) return;
+    let cancelled = false;
+    void fetchPostalCodes(form.cityId)
+      .then((zips) => {
+        if (cancelled) return;
+        setCityZips(zips);
+        setForm((current) => {
+          if (current.postalCode.trim() || zips.length !== 1) return current;
+          return { ...current, postalCode: zips[0].zipCode };
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setCityZips([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.cityId]);
+
+  const selectedCountry = useMemo(
+    () => countries.find((c) => c.id === form.countryId) ?? null,
+    [countries, form.countryId],
+  );
+  const selectedState = useMemo(
+    () => states.find((s) => s.id === form.stateId) ?? null,
+    [states, form.stateId],
+  );
+  const selectedCity = useMemo(
+    () =>
+      form.cityId
+        ? ({ id: form.cityId, name: form.cityName } as CityOption)
+        : null,
+    [form.cityId, form.cityName],
+  );
 
   const update = <K extends keyof PatientFormState>(
     field: K,
@@ -497,14 +693,16 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               />
             </Field>
             <Field label="Tipo de documento" icon={IdCard}>
-              <Select
-                value={form.documentType}
-                onChange={(value) => update("documentType", value)}
-              >
-                <option value="CC">Cédula de ciudadanía</option>
-                <option value="CE">Cédula de extranjería</option>
-                <option value="Pasaporte">Pasaporte</option>
-              </Select>
+              <CatalogCombobox<CatalogOption>
+                value={documentTypes.find((d) => d.id === form.documentTypeId) ?? null}
+                onSelect={(option) => update("documentTypeId", option?.id ?? "")}
+                items={documentTypes}
+                getLabel={documentTypeLabel}
+                placeholder="Seleccionar tipo de documento"
+                searchPlaceholder="Buscar tipo de documento…"
+                emptyText="Sin tipos de documento."
+                allowClear
+              />
             </Field>
             <Field label="Número de documento" icon={Fingerprint}>
               <Input
@@ -531,18 +729,41 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               </Select>
             </Field>
             <Field label="Etnia" icon={Globe}>
-              <Input
-                value={form.ethnicity}
-                onChange={(event) => update("ethnicity", event.target.value)}
-                placeholder="Etnia o grupo étnico"
+              <CatalogCombobox<CatalogOption>
+                value={ethnicities.find((e) => e.id === form.ethnicityId) ?? null}
+                onSelect={(option) => update("ethnicityId", option?.id ?? "")}
+                items={ethnicities}
+                getLabel={ethnicityLabel}
+                placeholder="Seleccionar etnia"
+                searchPlaceholder="Buscar etnia…"
+                emptyText="Sin etnias."
+                allowClear
               />
             </Field>
             <Field label="Tipo de sangre" icon={Droplets}>
-              <Input
-                value={form.bloodType}
-                onChange={(event) => update("bloodType", event.target.value)}
-                placeholder="Ej. O+"
+              <CatalogCombobox<CatalogOption>
+                value={bloodTypes.find((b) => b.id === form.bloodTypeId) ?? null}
+                onSelect={(option) => update("bloodTypeId", option?.id ?? "")}
+                items={bloodTypes}
+                getLabel={(option) => option.code}
+                placeholder="Seleccionar grupo sanguíneo"
+                searchPlaceholder="Buscar grupo sanguíneo…"
+                emptyText="Sin grupos sanguíneos."
+                allowClear
               />
+            </Field>
+            <Field label="Estado civil" icon={Users}>
+              <Select
+                value={form.maritalStatus}
+                onChange={(value) => update("maritalStatus", value)}
+                placeholder="Seleccionar…"
+              >
+                {MARITAL_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label="Contacto de emergencia" icon={Siren}>
               <Input
@@ -557,12 +778,25 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
 
           {/* ── Contacto y ubicación ── */}
           <FormSection legend="Contacto y ubicación" icon={MapPin}>
+            <Field label="País del teléfono" icon={Globe}>
+              <Select
+                value={form.phoneCountryCode}
+                onChange={(value) => update("phoneCountryCode", value)}
+                placeholder="Seleccionar…"
+              >
+                {countries.map((country) => (
+                  <option key={country.id} value={country.phoneCode}>
+                    +{country.phoneCode} · {country.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
             <Field label="Teléfono" icon={Phone}>
               <Input
                 type="tel"
-                value={form.phone}
-                onChange={(event) => update("phone", event.target.value)}
-                placeholder="+57 300 000 0000"
+                value={form.phoneNumber}
+                onChange={(event) => update("phoneNumber", event.target.value)}
+                placeholder="300 000 0000"
               />
             </Field>
             <Field label="Correo electrónico" icon={Mail}>
@@ -573,32 +807,89 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="correo@ejemplo.com"
               />
             </Field>
-            <Field label="Dirección" icon={Home}>
+            <Field label="Dirección" icon={Home} className="sm:col-span-2">
               <Input
                 value={form.address}
                 onChange={(event) => update("address", event.target.value)}
                 placeholder="Dirección de residencia"
               />
             </Field>
+            <Field label="País" icon={MapPinned}>
+              <CatalogCombobox<CountryOption>
+                value={selectedCountry}
+                onSelect={(country) => {
+                  update("countryId", country?.id ?? "");
+                  if (country?.id !== form.countryId) {
+                    setStates([]);
+                    setCityZips([]);
+                    update("stateId", "");
+                    update("cityId", "");
+                    update("cityName", "");
+                    update("postalCode", "");
+                  }
+                }}
+                items={countries}
+                getLabel={(country) => country.name}
+                placeholder="Seleccionar país"
+                searchPlaceholder="Buscar país…"
+                emptyText="Sin países."
+              />
+            </Field>
+            <Field label="Estado / provincia" icon={Map}>
+              <CatalogCombobox<StateOption>
+                value={selectedState}
+                onSelect={(state) => {
+                  update("stateId", state?.id ?? "");
+                  if (state?.id !== form.stateId) {
+                    setCityZips([]);
+                    update("cityId", "");
+                    update("cityName", "");
+                    update("postalCode", "");
+                  }
+                }}
+                items={states}
+                getLabel={(state) => `${state.code} — ${state.name}`}
+                placeholder={
+                  form.countryId ? "Seleccionar estado" : "Elige primero el país"
+                }
+                searchPlaceholder="Buscar estado…"
+                emptyText="Sin estados para este país."
+                disabled={!form.countryId}
+              />
+            </Field>
             <Field label="Ciudad" icon={Building2}>
-              <Input
-                value={form.city}
-                onChange={(event) => update("city", event.target.value)}
-                placeholder="Ciudad"
+              <CatalogCombobox<CityOption>
+                value={selectedCity}
+                onSelect={(city) => {
+                  update("cityId", city?.id ?? "");
+                  update("cityName", city?.name ?? "");
+                  if (city?.id !== form.cityId) {
+                    setCityZips([]);
+                    update("postalCode", "");
+                  }
+                }}
+                fetchItems={(query, signal) =>
+                  form.stateId
+                    ? searchCities(form.stateId, query, signal)
+                    : Promise.resolve([])
+                }
+                getLabel={(city) => city.name}
+                placeholder={form.stateId ? "Buscar ciudad…" : "Elige primero el estado"}
+                searchPlaceholder="Escribe para buscar la ciudad…"
+                emptyText="Sin ciudades que coincidan."
+                disabled={!form.stateId}
+                allowClear
               />
             </Field>
-            <Field label="Departamento / estado" icon={Map}>
-              <Input
-                value={form.state}
-                onChange={(event) => update("state", event.target.value)}
-                placeholder="Estado o departamento"
-              />
-            </Field>
-            <Field label="Código postal" icon={MapPinned}>
+            <Field label="Código postal (ZIP)" icon={MapPinned}>
               <Input
                 value={form.postalCode}
                 onChange={(event) => update("postalCode", event.target.value)}
-                placeholder="Código postal"
+                placeholder={
+                  cityZips.length > 0
+                    ? `Auto: ${cityZips.map((z) => z.zipCode).join(", ")}`
+                    : "Se completa automáticamente"
+                }
               />
             </Field>
           </FormSection>
@@ -609,8 +900,8 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               <Select
                 value={form.insurerId}
                 onChange={(value) => update("insurerId", value)}
+                placeholder="Sin aseguradora"
               >
-                <option value="">Sin aseguradora</option>
                 {insurers.map((insurer) => (
                   <option key={insurer.id} value={insurer.id}>
                     {insurer.name}
@@ -630,48 +921,82 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
           {/* ── Estilo de vida y antecedentes ── */}
           <FormSection legend="Estilo de vida y antecedentes" icon={HeartPulse}>
             <Field label="Tabaquismo" icon={Cigarette}>
-              <Input
+              <Select
                 value={form.smokingStatus}
-                onChange={(event) => update("smokingStatus", event.target.value)}
-                placeholder="Ej. Current, Former, Never"
-              />
+                onChange={(value) => update("smokingStatus", value)}
+                placeholder="Seleccionar…"
+              >
+                {SMOKING_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label="Consumo de alcohol" icon={Wine}>
-              <Input
+              <Select
                 value={form.alcoholStatus}
-                onChange={(event) => update("alcoholStatus", event.target.value)}
-                placeholder="Ej. None, Occasional, Regular"
-              />
+                onChange={(value) => update("alcoholStatus", value)}
+                placeholder="Seleccionar…"
+              >
+                {ALCOHOL_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label="Nivel de ejercicio" icon={Dumbbell}>
-              <Input
+              <Select
                 value={form.exerciseLevel}
-                onChange={(event) => update("exerciseLevel", event.target.value)}
-                placeholder="Ej. Active, Sedentary"
-              />
+                onChange={(value) => update("exerciseLevel", value)}
+                placeholder="Seleccionar…"
+              >
+                {EXERCISE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label="Discapacidad" icon={Accessibility}>
-              <Input
+              <Select
                 value={form.disability}
-                onChange={(event) => update("disability", event.target.value)}
-                placeholder="Discapacidad si aplica"
-              />
+                onChange={(value) => update("disability", value)}
+                placeholder="Ninguna"
+              >
+                {DISABILITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label="Historial de hospitalización" icon={Hospital}>
-              <Input
+              <Select
                 value={form.hospitalizationHistory}
-                onChange={(event) =>
-                  update("hospitalizationHistory", event.target.value)
-                }
-                placeholder="Antecedentes de hospitalización"
-              />
+                onChange={(value) => update("hospitalizationHistory", value)}
+                placeholder="Seleccionar…"
+              >
+                {HOSPITALIZATION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label="Historial de cirugías" icon={Scissors}>
-              <Input
+              <Select
                 value={form.surgeryHistory}
-                onChange={(event) => update("surgeryHistory", event.target.value)}
-                placeholder="Antecedentes quirúrgicos"
-              />
+                onChange={(value) => update("surgeryHistory", value)}
+                placeholder="Seleccionar…"
+              >
+                {SURGERY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
           </FormSection>
 
@@ -703,8 +1028,13 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                             "diagnoses",
                             form.diagnoses.map((d) =>
                               d.key === diagnosis.key
-                                ? { ...d, isPrimary: event.target.checked }
-                                : d,
+                                ? {
+                                    ...d,
+                                    isPrimary: event.target.checked,
+                                  }
+                                : event.target.checked
+                                  ? { ...d, isPrimary: false }
+                                  : d,
                             ),
                           )
                         }
@@ -723,36 +1053,41 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                   </div>
                 </div>
                 <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
-                  <Field label="Código ICD-10" required>
-                    <Input
-                      value={diagnosis.icd10Code}
-                      onChange={(event) =>
+                  <Field label="Código ICD-10" required className="sm:col-span-2">
+                    <CatalogCombobox<CatalogSearchItem>
+                      value={
+                        diagnosis.icd10CodeId
+                          ? ({
+                              id: diagnosis.icd10CodeId,
+                              code: diagnosis.icd10Code,
+                              name:
+                                diagnosis.icd10Description ||
+                                diagnosis.icd10Code,
+                              description: null,
+                            } as CatalogSearchItem)
+                          : null
+                      }
+                      onSelect={(item) =>
                         update(
                           "diagnoses",
                           form.diagnoses.map((d) =>
                             d.key === diagnosis.key
-                              ? { ...d, icd10Code: event.target.value }
+                              ? {
+                                  ...d,
+                                  icd10CodeId: item?.id ?? "",
+                                  icd10Code: item?.code ?? "",
+                                  icd10Description: item?.name ?? "",
+                                }
                               : d,
                           ),
                         )
                       }
-                      placeholder="Ej. E11.9"
-                    />
-                  </Field>
-                  <Field label="Descripción" className="sm:col-span-2">
-                    <Input
-                      value={diagnosis.description}
-                      onChange={(event) =>
-                        update(
-                          "diagnoses",
-                          form.diagnoses.map((d) =>
-                            d.key === diagnosis.key
-                              ? { ...d, description: event.target.value }
-                              : d,
-                          ),
-                        )
-                      }
-                      placeholder="Descripción del diagnóstico"
+                      fetchItems={searchIcd10Codes}
+                      getLabel={icd10Label}
+                      placeholder="Buscar por código o descripción…"
+                      searchPlaceholder="Ej. E11.9, hipertensión…"
+                      emptyText="Sin coincidencias en ICD-10."
+                      allowClear
                     />
                   </Field>
                 </div>
@@ -767,8 +1102,9 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                   ...form.diagnoses,
                   {
                     key: nextRowKey(),
+                    icd10CodeId: "",
                     icd10Code: "",
-                    description: "",
+                    icd10Description: "",
                     isPrimary: false,
                   },
                 ])
@@ -806,37 +1142,39 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     }
                   />
                 </div>
-                <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <Field label="Nombre" required className="lg:col-span-2">
-                    <Input
-                      value={medication.name}
-                      onChange={(event) =>
+                <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+                  <Field label="Medicamento" required>
+                    <CatalogCombobox<CatalogSearchItem>
+                      value={
+                        medication.medicationId
+                          ? ({
+                              id: medication.medicationId,
+                              code: null,
+                              name: medication.name,
+                              description: null,
+                            } as CatalogSearchItem)
+                          : null
+                      }
+                      onSelect={(item) =>
                         update(
                           "medications",
                           form.medications.map((m) =>
                             m.key === medication.key
-                              ? { ...m, name: event.target.value }
+                              ? {
+                                  ...m,
+                                  medicationId: item?.id ?? "",
+                                  name: item?.name ?? "",
+                                }
                               : m,
                           ),
                         )
                       }
-                      placeholder="Nombre del medicamento"
-                    />
-                  </Field>
-                  <Field label="Clase">
-                    <Input
-                      value={medication.drugClass}
-                      onChange={(event) =>
-                        update(
-                          "medications",
-                          form.medications.map((m) =>
-                            m.key === medication.key
-                              ? { ...m, drugClass: event.target.value }
-                              : m,
-                          ),
-                        )
-                      }
-                      placeholder="Clase"
+                      fetchItems={searchMedications}
+                      getLabel={(item) => item.name}
+                      placeholder="Buscar medicamento…"
+                      searchPlaceholder="Ej. Amoxicilina, metformina…"
+                      emptyText="Sin medicamentos que coincidan."
+                      allowClear
                     />
                   </Field>
                   <Field label="Frecuencia">
@@ -855,38 +1193,6 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="Ej. 1 vez al día"
                     />
                   </Field>
-                  <Field label="NDC">
-                    <Input
-                      value={medication.ndc}
-                      onChange={(event) =>
-                        update(
-                          "medications",
-                          form.medications.map((m) =>
-                            m.key === medication.key
-                              ? { ...m, ndc: event.target.value }
-                              : m,
-                          ),
-                        )
-                      }
-                      placeholder="NDC"
-                    />
-                  </Field>
-                  <Field label="RxNorm">
-                    <Input
-                      value={medication.rxNorm}
-                      onChange={(event) =>
-                        update(
-                          "medications",
-                          form.medications.map((m) =>
-                            m.key === medication.key
-                              ? { ...m, rxNorm: event.target.value }
-                              : m,
-                          ),
-                        )
-                      }
-                      placeholder="RxNorm"
-                    />
-                  </Field>
                 </div>
               </div>
             ))}
@@ -899,10 +1205,8 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                   ...form.medications,
                   {
                     key: nextRowKey(),
+                    medicationId: "",
                     name: "",
-                    ndc: "",
-                    rxNorm: "",
-                    drugClass: "",
                     frequency: "",
                   },
                 ])
@@ -942,22 +1246,40 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 </div>
                 <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
                   <Field label="Alérgeno" required>
-                    <Input
-                      value={allergy.allergen}
-                      onChange={(event) =>
+                    <CatalogCombobox<CatalogSearchItem>
+                      value={
+                        allergy.allergenId
+                          ? ({
+                              id: allergy.allergenId,
+                              code: null,
+                              name: allergy.allergen,
+                              description: null,
+                            } as CatalogSearchItem)
+                          : null
+                      }
+                      onSelect={(item) =>
                         update(
                           "allergies",
                           form.allergies.map((a) =>
                             a.key === allergy.key
-                              ? { ...a, allergen: event.target.value }
+                              ? {
+                                  ...a,
+                                  allergenId: item?.id ?? "",
+                                  allergen: item?.name ?? "",
+                                }
                               : a,
                           ),
                         )
                       }
-                      placeholder="Ej. Penicilina"
+                      fetchItems={searchAllergens}
+                      getLabel={(item) => item.name}
+                      placeholder="Buscar alérgeno…"
+                      searchPlaceholder="Ej. Penicilina, polen…"
+                      emptyText="Sin alérgenos que coincidan."
+                      allowClear
                     />
                   </Field>
-                  <Field label="Notas" className="sm:col-span-2">
+                  <Field label="Notas">
                     <Input
                       value={allergy.notes}
                       onChange={(event) =>
@@ -983,7 +1305,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               onClick={() =>
                 update("allergies", [
                   ...form.allergies,
-                  { key: nextRowKey(), allergen: "", notes: "" },
+                  { key: nextRowKey(), allergenId: "", allergen: "", notes: "" },
                 ])
               }
             >
@@ -1338,10 +1660,12 @@ function Field({
 function Select({
   value,
   onChange,
+  placeholder,
   children,
 }: {
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -1350,6 +1674,7 @@ function Select({
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >
+      {placeholder !== undefined && <option value="">{placeholder}</option>}
       {children}
     </select>
   );

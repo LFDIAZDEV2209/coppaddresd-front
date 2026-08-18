@@ -157,8 +157,8 @@ export function AppointmentsPage() {
                   {selected.firstName} {selected.lastName}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {selected.documentType} {selected.documentNumber} ·{" "}
-                  {selected.phone}
+                  {selected.documentTypeName ?? ""} {selected.documentNumber} ·{" "}
+                  {formatPhone(selected)}
                 </p>
               </div>
               <button
@@ -192,7 +192,7 @@ export function AppointmentsPage() {
                       {patient.firstName} {patient.lastName}
                     </span>
                     <span className="block text-xs text-muted-foreground">
-                      {patient.documentType ?? ""} {patient.documentNumber} ·{" "}
+                      {patient.documentTypeName ?? ""} {patient.documentNumber} ·{" "}
                       {patient.insurerName ?? "Sin aseguradora"}
                     </span>
                   </span>
@@ -313,6 +313,12 @@ export function AppointmentsPage() {
   );
 }
 
+function formatPhone(patient: PatientListItem): string {
+  if (!patient.phoneNumber) return "";
+  return patient.phoneCountryCode
+    ? `+${patient.phoneCountryCode} ${patient.phoneNumber}`
+    : patient.phoneNumber;
+}
 function Field({
   label,
   children,
