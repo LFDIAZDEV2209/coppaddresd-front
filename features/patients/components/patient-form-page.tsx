@@ -2,20 +2,56 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 import {
+  Accessibility,
   Activity,
+  AlertTriangle,
   ArrowLeft,
+  BadgeCheck,
+  Building2,
+  CalendarDays,
+  Cigarette,
+  CircleDot,
+  ClipboardPen,
+  CreditCard,
+  Droplets,
+  Dumbbell,
+  FileText,
+  Fingerprint,
+  Globe,
+  HeartPulse,
+  Home,
+  Hospital,
+  IdCard,
   LoaderCircle,
+  Mail,
+  Map,
+  MapPin,
+  MapPinned,
+  NotebookPen,
+  Phone,
+  Pill,
   Plus,
   Save,
+  Scissors,
+  ShieldAlert,
+  ShieldCheck,
+  Siren,
+  Stethoscope,
   Trash2,
+  User,
   UserRound,
+  Users,
+  Wine,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import {
   createPatient,
   fetchInsurers,
@@ -376,7 +412,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-8 p-4 sm:p-6">
       <PageHeader
         title={isEdit ? "Editar paciente" : "Nuevo paciente"}
         description={
@@ -418,7 +454,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
           </Button>
         </div>
       ) : (
-        <form onSubmit={submit} className="flex flex-col gap-6">
+        <form onSubmit={submit} className="flex flex-col gap-8">
           {error && (
             <p
               className="rounded-xl border border-destructive/20 bg-destructive-soft px-4 py-3 text-sm text-destructive"
@@ -428,8 +464,9 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             </p>
           )}
 
-          <FormSection legend="Información personal">
-            <Field label="Número de historia clínica">
+          {/* ── Información personal ── */}
+          <FormSection legend="Información personal" icon={UserRound}>
+            <Field label="Número de historia clínica" icon={FileText}>
               <Input
                 value={form.medicalRecordNumber}
                 onChange={(event) =>
@@ -438,28 +475,28 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="MRN-… (se genera solo si se deja vacío)"
               />
             </Field>
-            <Field label="Nombre" required>
+            <Field label="Nombre" required icon={User}>
               <Input
                 value={form.firstName}
                 onChange={(event) => update("firstName", event.target.value)}
                 placeholder="Primer nombre"
               />
             </Field>
-            <Field label="Segundo nombre">
+            <Field label="Segundo nombre" icon={User}>
               <Input
                 value={form.middleName}
                 onChange={(event) => update("middleName", event.target.value)}
                 placeholder="Segundo nombre"
               />
             </Field>
-            <Field label="Apellidos" required>
+            <Field label="Apellidos" required icon={User}>
               <Input
                 value={form.lastName}
                 onChange={(event) => update("lastName", event.target.value)}
                 placeholder="Apellidos"
               />
             </Field>
-            <Field label="Tipo de documento">
+            <Field label="Tipo de documento" icon={IdCard}>
               <Select
                 value={form.documentType}
                 onChange={(value) => update("documentType", value)}
@@ -469,21 +506,21 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 <option value="Pasaporte">Pasaporte</option>
               </Select>
             </Field>
-            <Field label="Número de documento">
+            <Field label="Número de documento" icon={Fingerprint}>
               <Input
                 value={form.documentNumber}
                 onChange={(event) => update("documentNumber", event.target.value)}
                 placeholder="Número de documento"
               />
             </Field>
-            <Field label="Fecha de nacimiento">
+            <Field label="Fecha de nacimiento" icon={CalendarDays}>
               <Input
                 type="date"
                 value={form.dateOfBirth}
                 onChange={(event) => update("dateOfBirth", event.target.value)}
               />
             </Field>
-            <Field label="Género">
+            <Field label="Género" icon={Users}>
               <Select
                 value={form.gender}
                 onChange={(value) => update("gender", value)}
@@ -493,21 +530,21 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 <option>No binario</option>
               </Select>
             </Field>
-            <Field label="Etnia">
+            <Field label="Etnia" icon={Globe}>
               <Input
                 value={form.ethnicity}
                 onChange={(event) => update("ethnicity", event.target.value)}
                 placeholder="Etnia o grupo étnico"
               />
             </Field>
-            <Field label="Tipo de sangre">
+            <Field label="Tipo de sangre" icon={Droplets}>
               <Input
                 value={form.bloodType}
                 onChange={(event) => update("bloodType", event.target.value)}
                 placeholder="Ej. O+"
               />
             </Field>
-            <Field label="Contacto de emergencia">
+            <Field label="Contacto de emergencia" icon={Siren}>
               <Input
                 value={form.emergencyContact}
                 onChange={(event) =>
@@ -518,8 +555,9 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             </Field>
           </FormSection>
 
-          <FormSection legend="Contacto y ubicación">
-            <Field label="Teléfono">
+          {/* ── Contacto y ubicación ── */}
+          <FormSection legend="Contacto y ubicación" icon={MapPin}>
+            <Field label="Teléfono" icon={Phone}>
               <Input
                 type="tel"
                 value={form.phone}
@@ -527,7 +565,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="+57 300 000 0000"
               />
             </Field>
-            <Field label="Correo electrónico">
+            <Field label="Correo electrónico" icon={Mail}>
               <Input
                 type="email"
                 value={form.email}
@@ -535,28 +573,28 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="correo@ejemplo.com"
               />
             </Field>
-            <Field label="Dirección">
+            <Field label="Dirección" icon={Home}>
               <Input
                 value={form.address}
                 onChange={(event) => update("address", event.target.value)}
                 placeholder="Dirección de residencia"
               />
             </Field>
-            <Field label="Ciudad">
+            <Field label="Ciudad" icon={Building2}>
               <Input
                 value={form.city}
                 onChange={(event) => update("city", event.target.value)}
                 placeholder="Ciudad"
               />
             </Field>
-            <Field label="Departamento / estado">
+            <Field label="Departamento / estado" icon={Map}>
               <Input
                 value={form.state}
                 onChange={(event) => update("state", event.target.value)}
                 placeholder="Estado o departamento"
               />
             </Field>
-            <Field label="Código postal">
+            <Field label="Código postal" icon={MapPinned}>
               <Input
                 value={form.postalCode}
                 onChange={(event) => update("postalCode", event.target.value)}
@@ -565,8 +603,9 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             </Field>
           </FormSection>
 
-          <FormSection legend="Cobertura">
-            <Field label="Aseguradora">
+          {/* ── Cobertura ── */}
+          <FormSection legend="Cobertura" icon={ShieldCheck}>
+            <Field label="Aseguradora" icon={CreditCard}>
               <Select
                 value={form.insurerId}
                 onChange={(value) => update("insurerId", value)}
@@ -579,7 +618,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Número de afiliación (member ID)">
+            <Field label="Número de afiliación (member ID)" icon={BadgeCheck}>
               <Input
                 value={form.memberId}
                 onChange={(event) => update("memberId", event.target.value)}
@@ -588,36 +627,37 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             </Field>
           </FormSection>
 
-          <FormSection legend="Estilo de vida y antecedentes">
-            <Field label="Tabaquismo">
+          {/* ── Estilo de vida y antecedentes ── */}
+          <FormSection legend="Estilo de vida y antecedentes" icon={HeartPulse}>
+            <Field label="Tabaquismo" icon={Cigarette}>
               <Input
                 value={form.smokingStatus}
                 onChange={(event) => update("smokingStatus", event.target.value)}
                 placeholder="Ej. Current, Former, Never"
               />
             </Field>
-            <Field label="Consumo de alcohol">
+            <Field label="Consumo de alcohol" icon={Wine}>
               <Input
                 value={form.alcoholStatus}
                 onChange={(event) => update("alcoholStatus", event.target.value)}
                 placeholder="Ej. None, Occasional, Regular"
               />
             </Field>
-            <Field label="Nivel de ejercicio">
+            <Field label="Nivel de ejercicio" icon={Dumbbell}>
               <Input
                 value={form.exerciseLevel}
                 onChange={(event) => update("exerciseLevel", event.target.value)}
                 placeholder="Ej. Active, Sedentary"
               />
             </Field>
-            <Field label="Discapacidad">
+            <Field label="Discapacidad" icon={Accessibility}>
               <Input
                 value={form.disability}
                 onChange={(event) => update("disability", event.target.value)}
                 placeholder="Discapacidad si aplica"
               />
             </Field>
-            <Field label="Historial de hospitalización">
+            <Field label="Historial de hospitalización" icon={Hospital}>
               <Input
                 value={form.hospitalizationHistory}
                 onChange={(event) =>
@@ -626,7 +666,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="Antecedentes de hospitalización"
               />
             </Field>
-            <Field label="Historial de cirugías">
+            <Field label="Historial de cirugías" icon={Scissors}>
               <Input
                 value={form.surgeryHistory}
                 onChange={(event) => update("surgeryHistory", event.target.value)}
@@ -635,18 +675,54 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             </Field>
           </FormSection>
 
-          <FormSection legend="Diagnósticos">
-            <div className="flex flex-col gap-3">
-              {form.diagnoses.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Sin diagnósticos registrados.
-                </p>
-              )}
-              {form.diagnoses.map((diagnosis) => (
-                <div
-                  key={diagnosis.key}
-                  className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3 sm:flex-row sm:items-end"
-                >
+          {/* ── Diagnósticos ── */}
+          <FormSection legend="Diagnósticos" icon={Stethoscope} layout="stack">
+            {form.diagnoses.length === 0 && (
+              <EmptyHint icon={Stethoscope} text="Sin diagnósticos registrados." />
+            )}
+            {form.diagnoses.map((diagnosis, index) => (
+              <div
+                key={diagnosis.key}
+                className="rounded-xl border border-border bg-muted/30 p-4"
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <Stethoscope className="size-4" />
+                    </span>
+                    Diagnóstico {index + 1}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm font-medium">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary"
+                        checked={diagnosis.isPrimary}
+                        onChange={(event) =>
+                          update(
+                            "diagnoses",
+                            form.diagnoses.map((d) =>
+                              d.key === diagnosis.key
+                                ? { ...d, isPrimary: event.target.checked }
+                                : d,
+                            ),
+                          )
+                        }
+                      />
+                      Principal
+                    </label>
+                    <RemoveButton
+                      label="Eliminar diagnóstico"
+                      onClick={() =>
+                        update(
+                          "diagnoses",
+                          removeByKey(form.diagnoses, diagnosis.key),
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
                   <Field label="Código ICD-10" required>
                     <Input
                       value={diagnosis.icd10Code}
@@ -663,7 +739,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="Ej. E11.9"
                     />
                   </Field>
-                  <Field label="Descripción" className="flex-1">
+                  <Field label="Descripción" className="sm:col-span-2">
                     <Input
                       value={diagnosis.description}
                       onChange={(event) =>
@@ -679,72 +755,59 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="Descripción del diagnóstico"
                     />
                   </Field>
-                  <label className="flex items-center gap-2 pb-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
-                      checked={diagnosis.isPrimary}
-                      onChange={(event) =>
-                        update(
-                          "diagnoses",
-                          form.diagnoses.map((d) =>
-                            d.key === diagnosis.key
-                              ? { ...d, isPrimary: event.target.checked }
-                              : d,
-                          ),
-                        )
-                      }
-                    />
-                    Principal
-                  </label>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                update("diagnoses", [
+                  ...form.diagnoses,
+                  {
+                    key: nextRowKey(),
+                    icd10Code: "",
+                    description: "",
+                    isPrimary: false,
+                  },
+                ])
+              }
+            >
+              <Plus data-icon="inline-start" />
+              Agregar diagnóstico
+            </Button>
+          </FormSection>
+
+          {/* ── Medicamentos ── */}
+          <FormSection legend="Medicamentos" icon={Pill} layout="stack">
+            {form.medications.length === 0 && (
+              <EmptyHint icon={Pill} text="Sin medicamentos registrados." />
+            )}
+            {form.medications.map((medication, index) => (
+              <div
+                key={medication.key}
+                className="rounded-xl border border-border bg-muted/30 p-4"
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <Pill className="size-4" />
+                    </span>
+                    Medicamento {index + 1}
+                  </span>
                   <RemoveButton
-                    label="Eliminar diagnóstico"
+                    label="Eliminar medicamento"
                     onClick={() =>
                       update(
-                        "diagnoses",
-                        removeByKey(form.diagnoses, diagnosis.key),
+                        "medications",
+                        removeByKey(form.medications, medication.key),
                       )
                     }
                   />
                 </div>
-              ))}
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    update("diagnoses", [
-                      ...form.diagnoses,
-                      {
-                        key: nextRowKey(),
-                        icd10Code: "",
-                        description: "",
-                        isPrimary: false,
-                      },
-                    ])
-                  }
-                >
-                  <Plus data-icon="inline-start" />
-                  Agregar diagnóstico
-                </Button>
-              </div>
-            </div>
-          </FormSection>
-
-          <FormSection legend="Medicamentos">
-            <div className="flex flex-col gap-3">
-              {form.medications.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Sin medicamentos registrados.
-                </p>
-              )}
-              {form.medications.map((medication) => (
-                <div
-                  key={medication.key}
-                  className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3 sm:flex-row sm:items-end"
-                >
-                  <Field label="Nombre" required>
+                <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <Field label="Nombre" required className="lg:col-span-2">
                     <Input
                       value={medication.name}
                       onChange={(event) =>
@@ -760,7 +823,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="Nombre del medicamento"
                     />
                   </Field>
-                  <Field label="Clase" className="sm:w-40">
+                  <Field label="Clase">
                     <Input
                       value={medication.drugClass}
                       onChange={(event) =>
@@ -776,7 +839,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="Clase"
                     />
                   </Field>
-                  <Field label="Frecuencia" className="sm:w-40">
+                  <Field label="Frecuencia">
                     <Input
                       value={medication.frequency}
                       onChange={(event) =>
@@ -792,7 +855,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="Ej. 1 vez al día"
                     />
                   </Field>
-                  <Field label="NDC" className="sm:w-36">
+                  <Field label="NDC">
                     <Input
                       value={medication.ndc}
                       onChange={(event) =>
@@ -808,7 +871,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="NDC"
                     />
                   </Field>
-                  <Field label="RxNorm" className="sm:w-32">
+                  <Field label="RxNorm">
                     <Input
                       value={medication.rxNorm}
                       onChange={(event) =>
@@ -824,55 +887,60 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="RxNorm"
                     />
                   </Field>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                update("medications", [
+                  ...form.medications,
+                  {
+                    key: nextRowKey(),
+                    name: "",
+                    ndc: "",
+                    rxNorm: "",
+                    drugClass: "",
+                    frequency: "",
+                  },
+                ])
+              }
+            >
+              <Plus data-icon="inline-start" />
+              Agregar medicamento
+            </Button>
+          </FormSection>
+
+          {/* ── Alergias ── */}
+          <FormSection legend="Alergias" icon={ShieldAlert} layout="stack">
+            {form.allergies.length === 0 && (
+              <EmptyHint icon={AlertTriangle} text="Sin alergias registradas." />
+            )}
+            {form.allergies.map((allergy, index) => (
+              <div
+                key={allergy.key}
+                className="rounded-xl border border-border bg-muted/30 p-4"
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <AlertTriangle className="size-4" />
+                    </span>
+                    Alergia {index + 1}
+                  </span>
                   <RemoveButton
-                    label="Eliminar medicamento"
+                    label="Eliminar alergia"
                     onClick={() =>
                       update(
-                        "medications",
-                        removeByKey(form.medications, medication.key),
+                        "allergies",
+                        removeByKey(form.allergies, allergy.key),
                       )
                     }
                   />
                 </div>
-              ))}
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    update("medications", [
-                      ...form.medications,
-                      {
-                        key: nextRowKey(),
-                        name: "",
-                        ndc: "",
-                        rxNorm: "",
-                        drugClass: "",
-                        frequency: "",
-                      },
-                    ])
-                  }
-                >
-                  <Plus data-icon="inline-start" />
-                  Agregar medicamento
-                </Button>
-              </div>
-            </div>
-          </FormSection>
-
-          <FormSection legend="Alergias">
-            <div className="flex flex-col gap-3">
-              {form.allergies.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Sin alergias registradas.
-                </p>
-              )}
-              {form.allergies.map((allergy) => (
-                <div
-                  key={allergy.key}
-                  className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3 sm:flex-row sm:items-end"
-                >
+                <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
                   <Field label="Alérgeno" required>
                     <Input
                       value={allergy.allergen}
@@ -889,7 +957,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="Ej. Penicilina"
                     />
                   </Field>
-                  <Field label="Notas" className="flex-1">
+                  <Field label="Notas" className="sm:col-span-2">
                     <Input
                       value={allergy.notes}
                       onChange={(event) =>
@@ -905,38 +973,30 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       placeholder="Reacción, severidad, etc."
                     />
                   </Field>
-                  <RemoveButton
-                    label="Eliminar alergia"
-                    onClick={() =>
-                      update(
-                        "allergies",
-                        removeByKey(form.allergies, allergy.key),
-                      )
-                    }
-                  />
                 </div>
-              ))}
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    update("allergies", [
-                      ...form.allergies,
-                      { key: nextRowKey(), allergen: "", notes: "" },
-                    ])
-                  }
-                >
-                  <Plus data-icon="inline-start" />
-                  Agregar alergia
-                </Button>
               </div>
-            </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                update("allergies", [
+                  ...form.allergies,
+                  { key: nextRowKey(), allergen: "", notes: "" },
+                ])
+              }
+            >
+              <Plus data-icon="inline-start" />
+              Agregar alergia
+            </Button>
           </FormSection>
 
+          {/* ── Signos vitales ── */}
           <FormSection
             legend="Signos vitales"
+            icon={Activity}
+            layout="stack"
             description={
               isEdit
                 ? "La medición más reciente es editable; el historial se conserva."
@@ -944,13 +1004,19 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             }
           >
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3">
-                {form.vitals.map((vital, index) =>
-                  vital.editable ? (
-                    <div
-                      key={vital.key}
-                      className="grid gap-3 rounded-xl border border-border bg-background p-3 sm:grid-cols-4"
-                    >
+              {form.vitals.map((vital, index) =>
+                vital.editable ? (
+                  <div
+                    key={vital.key}
+                    className="rounded-xl border border-border bg-muted/30 p-4"
+                  >
+                    <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                        <Activity className="size-4" />
+                      </span>
+                      Medición actual
+                    </div>
+                    <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
                       <Field label="Fecha">
                         <Input
                           type="date"
@@ -1097,65 +1163,64 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                         />
                       </Field>
                     </div>
-                  ) : (
-                    <div
-                      key={vital.key}
-                      className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-xl border border-border bg-background px-3 py-2 text-sm"
-                    >
-                      <span className="flex items-center gap-2 font-medium text-muted-foreground">
-                        <Activity className="size-4" />
-                        {vital.measuredAt || "Fecha desconocida"}
+                  </div>
+                ) : (
+                  <div
+                    key={vital.key}
+                    className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-xl border border-border bg-muted/20 px-4 py-2.5 text-sm"
+                  >
+                    <span className="flex items-center gap-2 font-medium text-muted-foreground">
+                      <Activity className="size-4" />
+                      {vital.measuredAt || "Fecha desconocida"}
+                    </span>
+                    <span>
+                      TA {vital.systolic || "—"}/{vital.diastolic || "—"} mmHg
+                    </span>
+                    <span>FC {vital.heartRate || "—"} lpm</span>
+                    <span>Temp {vital.temperatureC || "—"} °C</span>
+                    <span>SpO₂ {vital.o2Saturation || "—"}%</span>
+                    <span>
+                      {vital.heightCm || "—"} cm · {vital.weightKg || "—"} kg
+                    </span>
+                    {index > 0 && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        Histórico
                       </span>
-                      <span>
-                        TA {vital.systolic || "—"}/{vital.diastolic || "—"} mmHg
-                      </span>
-                      <span>FC {vital.heartRate || "—"} lpm</span>
-                      <span>Temp {vital.temperatureC || "—"} °C</span>
-                      <span>SpO₂ {vital.o2Saturation || "—"}%</span>
-                      <span>
-                        {vital.heightCm || "—"} cm · {vital.weightKg || "—"} kg
-                      </span>
-                      {index > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          Histórico
-                        </span>
-                      )}
-                    </div>
-                  ),
-                )}
-              </div>
+                    )}
+                  </div>
+                ),
+              )}
               {form.vitals.length > 0 &&
                 !form.vitals[form.vitals.length - 1].editable && (
-                  <div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        update("vitals", [
-                          ...form.vitals,
-                          emptyVitalRow(),
-                        ])
-                      }
-                    >
-                      <Plus data-icon="inline-start" />
-                      Registrar nueva medición
-                    </Button>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      update("vitals", [
+                        ...form.vitals,
+                        emptyVitalRow(),
+                      ])
+                    }
+                  >
+                    <Plus data-icon="inline-start" />
+                    Registrar nueva medición
+                  </Button>
                 )}
             </div>
           </FormSection>
 
-          <FormSection legend="Observaciones y estado">
-            <Field label="Observaciones" className="sm:col-span-2">
+          {/* ── Observaciones y estado ── */}
+          <FormSection legend="Observaciones y estado" icon={ClipboardPen}>
+            <Field label="Observaciones" icon={NotebookPen} className="sm:col-span-2">
               <textarea
-                className="min-h-24 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-28 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 value={form.notes}
                 onChange={(event) => update("notes", event.target.value)}
                 placeholder="Alergias, antecedentes o notas relevantes"
               />
             </Field>
-            <Field label="Estado">
+            <Field label="Estado" icon={CircleDot}>
               <Select
                 value={form.status}
                 onChange={(value) =>
@@ -1169,7 +1234,8 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             </Field>
           </FormSection>
 
-          <div className="sticky bottom-4 z-10 flex items-center justify-end gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-sm backdrop-blur">
+          {/* ── Barra de acciones ── */}
+          <div className="sticky bottom-4 z-10 flex items-center justify-end gap-3 rounded-2xl border border-border bg-card/95 p-4 shadow-md backdrop-blur">
             <Button
               type="button"
               variant="outline"
@@ -1200,32 +1266,42 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
   );
 }
 
+/* ════════════════════════════════════════════════════════════════════════════ */
+/*  Helper components                                                         */
+/* ════════════════════════════════════════════════════════════════════════════ */
+
 function FormSection({
+  icon: Icon,
   legend,
   description,
+  layout = "grid",
   children,
 }: {
+  icon: LucideIcon;
   legend: string;
   description?: string;
+  layout?: "grid" | "stack";
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-      <fieldset className="flex flex-col gap-4">
-        <legend className="flex flex-col gap-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            {legend}
-          </span>
-          {description && (
-            <span className="text-xs font-normal normal-case tracking-normal text-muted-foreground/80">
-              {description}
-            </span>
-          )}
-        </legend>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {children}
-        </div>
-      </fieldset>
+    <section className="overflow-hidden rounded-2xl border border-border bg-card">
+      <SectionHeader
+        icon={Icon}
+        title={legend}
+        description={description}
+        variant="primary"
+        className="rounded-none"
+      />
+      <div
+        className={cn(
+          "p-5 sm:p-6",
+          layout === "grid"
+            ? "grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-3"
+            : "flex flex-col gap-5",
+        )}
+      >
+        {children}
+      </div>
     </section>
   );
 }
@@ -1234,16 +1310,19 @@ function Field({
   label,
   required,
   className,
+  icon: Icon,
   children,
 }: {
   label: string;
   required?: boolean;
   className?: string;
+  icon?: LucideIcon;
   children: React.ReactNode;
 }) {
   return (
-    <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
+    <div className={cn("flex flex-col gap-2", className)}>
       <Label>
+        {Icon && <Icon className="size-4 text-primary/70" aria-hidden="true" />}
         {label}
         {required && (
           <span className="ml-1 text-destructive" aria-hidden="true">
@@ -1288,12 +1367,27 @@ function RemoveButton({
       type="button"
       variant="ghost"
       size="icon-sm"
-      className="self-start text-destructive sm:mb-0.5 sm:self-end"
+      className="text-destructive"
       aria-label={label}
       onClick={onClick}
     >
       <Trash2 />
     </Button>
+  );
+}
+
+function EmptyHint({
+  icon: Icon,
+  text,
+}: {
+  icon: LucideIcon;
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-3.5 text-sm text-muted-foreground">
+      <Icon className="size-4 shrink-0 text-primary/50" aria-hidden="true" />
+      {text}
+    </div>
   );
 }
 
@@ -1305,8 +1399,8 @@ function FormSkeleton() {
           key={section}
           className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5"
         >
-          <Skeleton className="h-3.5 w-40" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-10 w-60 rounded-xl" />
+          <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, field) => (
               <Skeleton key={field} className="h-9 w-full" />
             ))}
