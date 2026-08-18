@@ -17,6 +17,7 @@ import type { AgentType, AgentExecutionDetail } from "../types";
 import { streamChat } from "../services/chat-service";
 import { fetchExecution } from "../services/agents-service";
 import { getAgentIconOption } from "./agent-icon-picker";
+import { Markdown } from "./markdown";
 
 interface ChatMessage {
   id: string;
@@ -29,6 +30,20 @@ interface PlaygroundProps {
   agent: AgentType;
   /** ID de usuario demo (aislamiento de memoria en el AI Service). */
   demoUserId: string;
+}
+
+function formatRagSource(source: unknown): string {
+  if (typeof source === "string") return source;
+  if (source && typeof source === "object") {
+    const { source: name, heading, score } = source as {
+      source?: string;
+      heading?: string;
+      score?: number;
+    };
+    const scorePart = typeof score === "number" ? ` (${score.toFixed(2)})` : "";
+    return `${name ?? "?"}${heading ? ` · ${heading}` : ""}${scorePart}`;
+  }
+  return String(source);
 }
 
 export function Playground({ agent, demoUserId }: PlaygroundProps) {
@@ -210,7 +225,11 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
                     : "rounded-bl-sm border border-border bg-background"
                 }`}
               >
-                {message.content || (message.streaming ? "…" : "")}
+                {message.role === "assistant" && message.content ? (
+                  <Markdown content={message.content} />
+                ) : (
+                  message.content || (message.streaming ? "…" : "")
+                )}
                 {message.streaming && message.content && (
                   <span className="ml-0.5 inline-block h-3.5 w-1.5 animate-pulse bg-current align-middle" />
                 )}
@@ -296,7 +315,9 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
               <div className="flex max-h-32 flex-col gap-1 overflow-y-auto">
                 {ragSources.map((source, index) => (
                   <p key={index} className="truncate text-[11.5px] text-muted-foreground">
-                    {String(source)}
+                    {typeof source === "string"
+                      ? source
+                      : formatRagSource(source)}
                   </p>
                 ))}
               </div>
@@ -371,9 +392,9 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Respuesta del estado
             </span>
-            <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-[11.5px] text-muted-foreground">
-              {String(outputAnswer)}
-            </p>
+            <div className="mt-1 line-clamp-3 text-[11.5px] text-muted-foreground">
+              <Markdown content={String(outputAnswer)} />
+            </div>
           </div>
         )}
       </div>
