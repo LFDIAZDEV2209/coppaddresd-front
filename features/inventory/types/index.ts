@@ -35,26 +35,37 @@ export interface Product {
   name: string;
   productType: ProductType;
   category: string;
-  activeIngredient: string;
+  activeIngredient: string | null;
   presentation: string;
-  concentration: string;
+  concentration: string | null;
   unit: string;
+  manufacturer: string | null;
+  supplier: string | null;
+  lot: string | null;
+  expirationDate: string | null;
+  stock: number;
+  minimumStock: number;
+  maximumStock: number;
+  location: string | null;
+  status: ProductStatus;
+  createdAt: string;
+  unitCost: number;
+  notes: string | null;
+}
+
+export type ProductInput = Omit<
+  Product,
+  "id" | "createdAt" | "stock" | "activeIngredient" | "concentration" | "manufacturer" | "supplier" | "lot" | "expirationDate" | "location" | "notes"
+> & {
+  stock?: number;
+  activeIngredient: string;
+  concentration: string;
   manufacturer: string;
   supplier: string;
   lot: string;
   expirationDate: string;
-  stock: number;
-  minimumStock: number;
-  maximumStock: number;
   location: string;
-  status: ProductStatus;
-  createdAt: string;
-  unitCost: number;
   notes: string;
-}
-
-export type ProductInput = Omit<Product, "id" | "createdAt" | "stock"> & {
-  stock?: number;
 };
 
 export interface InventoryLine {
@@ -148,15 +159,49 @@ export interface ProductListItem {
   name: string;
   productType: ProductType;
   category: string;
+  activeIngredient: string | null;
+  presentation: string;
+  concentration: string | null;
+  unit: string;
+  supplier: string | null;
+  manufacturer: string | null;
+  lot: string | null;
+  expirationDate: string | null;
   stock: number;
   minimumStock: number;
-  expirationDate: string | null;
+  maximumStock: number;
+  location: string | null;
   status: ProductStatus;
   unitCost: number;
+  notes: string | null;
 }
 
 export interface PaginatedProducts {
   data: ProductListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface PaginatedMovements {
+  data: InventoryMovement[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface PaginatedEntries {
+  data: InventoryEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface PaginatedExits {
+  data: InventoryExit[];
   total: number;
   page: number;
   pageSize: number;

@@ -1,188 +1,187 @@
-import {
-  mockAnalytics,
-  mockEntries,
-  mockExits,
-  mockMovements,
-  mockProducts,
-} from "../mocks/inventory";
+import { apiFetch } from "@/lib/api/http";
+import { env } from "@/lib/config/env";
 import type {
+  InventoryAnalytics,
   InventoryEntry,
   InventoryExit,
   InventoryFilters,
   InventoryMovement,
+  PaginatedEntries,
+  PaginatedExits,
+  PaginatedMovements,
+  PaginatedProducts,
   Product,
   ProductInput,
+  ProductListItem,
 } from "../types";
 
-let products = [...mockProducts];
-let movements = [...mockMovements];
-let entries = [...mockEntries];
-let exits = [...mockExits];
+const PATH = `${env.apiUrl}/api/v1/inventory`;
 
+// --- Products ---
+
+/** Server-side search/category, computed stock states derived client-side. */
 export async function fetchProducts(
   filters: InventoryFilters,
-): Promise<Product[]> {
-  await delay(550);
-  const query = filters.search.trim().toLowerCase();
-  return products.filter((product) => {
-    const state = getProductState(product);
-    return (
-      (!query ||
-        `${product.name} ${product.sku} ${product.activeIngredient}`
-          .toLowerCase()
-          .includes(query)) &&
-      (!filters.category || product.category === filters.category) &&
-      (filters.status === "all" ||
-        state === filters.status ||
-        (filters.status === "Inactivo" && product.status === "Inactivo"))
-    );
+): Promise<ProductListItem[]> {
+  const params = new URLSearchParams({ pageSize: "200" });
+  if (filters.search.trim()) params.set("search", filters.search.trim());
+  if (filters.category) params.set("category", filters.category);
+  if (filters.status === "Inactivo") params.set("status", "Inactivo");
+
+  const result = await apiFetch<PaginatedProducts>(
+    `${PATH}/products?${params.toString()}`,
+  );
+
+  return result.data.filter((product) => {
+    if (filters.status === "Inactivo") return product.status === "Inactivo";
+    if (filters.status === "all") return true;
+    return getProductState(product) === filters.status;
   });
 }
 
 export async function createProduct(input: ProductInput): Promise<Product> {
-  await delay(700);
-  const product: Product = {
-    ...input,
-    id: `prd-${Date.now()}`,
-    createdAt: new Date().toISOString().slice(0, 10),
-    stock: input.stock ?? 0,
-  };
-  products = [product, ...products];
-  return product;
+  return apiFetch<Product>(`${PATH}/products`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
+
 export async function updateProduct(
   id: string,
   input: ProductInput,
 ): Promise<Product> {
-  await delay(700);
-  const current = products.find((product) => product.id === id);
-  if (!current) throw new Error("Producto no encontrado.");
-  const product = { ...current, ...input, stock: input.stock ?? current.stock };
-  products = products.map((item) => (item.id === id ? product : item));
-  return product;
+  return apiFetch<Product>(`${PATH}/products/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
 }
-export function getProduct(id: string) {
-  return products.find((product) => product.id === id);
+
+export async function getProduct(id: string): Promise<Product> {
+  return apiFetch<Product>(`${PATH}/products/${id}`);
 }
-export function getCategories() {
-  return [...new Set(products.map((product) => product.category))].sort();
+
+export async function getCategories(): Promise<string[]> {
+  return apiFetch<string[]>(`${PATH}/products/categories`);
 }
-export function getSuppliers() {
-  return [...new Set(products.map((product) => product.supplier))].sort();
+
+export async function getSuppliers(): Promise<string[]> {
+  return apiFetch<string[]>(`${PATH}/products/suppliers`);
 }
-export function getProductState(product: Product): InventoryFilters["status"] {
+
+export function getProductState(
+  product: Pick<ProductListItem, "status" | "stock" | "minimumStock" | "expirationDate">,
+): Exclude<InventoryFilters["status"], "all"> {
   if (product.status === "Inactivo") return "Inactivo";
   if (product.stock === 0) return "Sin stock";
-  if (new Date(product.expirationDate) < new Date("2024-06-18"))
-    return "Vencido";
-  if (new Date(product.expirationDate) <= new Date("2025-02-01"))
-    return "Próximo a vencer";
+
+  const today = DateOnlyToday();
+  const expiration = product.expirationDate
+    ? new Date(`${product.expirationDate}T00:00:00`)
+    : null;
+
+  if (expiration) {
+    const expDate = DateOnly(expiration);
+    if (expDate < today) return "Vencido";
+    const soon = new Date(today.toISOString().slice(0, 10));
+    soon.setDate(soon.getDate() + 90);
+    if (expDate <= DateOnly(soon)) return "Próximo a vencer";
+  }
+
   if (product.stock <= product.minimumStock) return "Stock bajo";
   return "Disponible";
 }
+
+// --- Movements ---
+
 export async function fetchMovements(filters: {
   search: string;
   direction: "all" | "Entrada" | "Salida";
 }): Promise<InventoryMovement[]> {
-  await delay(600);
-  const query = filters.search.toLowerCase();
-  return movements.filter(
-    (movement) =>
-      (!query ||
-        `${movement.productName} ${movement.lot} ${movement.user} ${movement.reference}`
-          .toLowerCase()
-          .includes(query)) &&
-      (filters.direction === "all" || movement.direction === filters.direction),
+  const params = new URLSearchParams({ pageSize: "200" });
+  if (filters.search.trim()) params.set("search", filters.search.trim());
+  if (filters.direction !== "all") params.set("direction", filters.direction);
+
+  const result = await apiFetch<PaginatedMovements>(
+    `${PATH}/movements?${params.toString()}`,
   );
+  return result.data;
 }
+
+// --- Entries ---
+
 export async function createEntry(
   entry: Omit<InventoryEntry, "id" | "reference" | "totalCost">,
 ): Promise<InventoryEntry> {
-  await delay(800);
-  const created = {
-    ...entry,
-    id: `ent-${Date.now()}`,
-    reference: `ENT-${String(entries.length + 43).padStart(5, "0")}`,
-    totalCost: entry.lines.reduce(
-      (total, line) => total + line.quantity * line.unitCost,
-      0,
-    ),
-  };
-  entries = [created, ...entries];
-  entry.lines.forEach((line) =>
-    adjustStock(
-      line,
-      line.quantity,
-      created.reference,
-      "Entrada",
-      entry.reason,
-    ),
-  );
-  return created;
+  return apiFetch<InventoryEntry>(`${PATH}/entries`, {
+    method: "POST",
+    body: JSON.stringify({
+      date: entry.date,
+      reason: entry.reason,
+      supplier: entry.supplier,
+      document: entry.document,
+      responsible: entry.responsible,
+      notes: entry.notes,
+      lines: entry.lines.map((line) => ({
+        productId: line.productId,
+        productName: line.productName,
+        quantity: line.quantity,
+        lot: line.lot,
+        expirationDate: line.expirationDate || null,
+        unitCost: line.unitCost,
+      })),
+    }),
+  });
 }
+
+export async function fetchEntries(): Promise<InventoryEntry[]> {
+  const result = await apiFetch<PaginatedEntries>(
+    `${PATH}/entries?pageSize=100`,
+  );
+  return result.data;
+}
+
+// --- Exits ---
+
 export async function createExit(
   exit: Omit<InventoryExit, "id" | "reference">,
 ): Promise<InventoryExit> {
-  await delay(800);
-  for (const line of exit.lines) {
-    const product = getProduct(line.productId);
-    if (!product || line.quantity > product.stock)
-      throw new Error(`Stock insuficiente para ${line.productName}.`);
-  }
-  const created = {
-    ...exit,
-    id: `sal-${Date.now()}`,
-    reference: `SAL-${String(exits.length + 119).padStart(5, "0")}`,
-  };
-  exits = [created, ...exits];
-  exit.lines.forEach((line) =>
-    adjustStock(line, -line.quantity, created.reference, "Salida", exit.reason),
-  );
-  return created;
+  return apiFetch<InventoryExit>(`${PATH}/exits`, {
+    method: "POST",
+    body: JSON.stringify({
+      date: exit.date,
+      reason: exit.reason,
+      responsible: exit.responsible,
+      patientName: exit.patientName || null,
+      notes: exit.notes,
+      lines: exit.lines.map((line) => ({
+        productId: line.productId,
+        productName: line.productName,
+        quantity: line.quantity,
+        lot: line.lot,
+        expirationDate: line.expirationDate || null,
+        unitCost: line.unitCost,
+      })),
+    }),
+  });
 }
-export function fetchAnalytics() {
-  return mockAnalytics;
+
+export async function fetchExits(): Promise<InventoryExit[]> {
+  const result = await apiFetch<PaginatedExits>(`${PATH}/exits?pageSize=100`);
+  return result.data;
 }
-export function getEntries() {
-  return entries;
+
+// --- Analytics ---
+
+export async function fetchAnalytics(): Promise<InventoryAnalytics> {
+  return apiFetch<InventoryAnalytics>(`${PATH}/analytics`);
 }
-export function getExits() {
-  return exits;
+
+// --- Helpers ---
+
+function DateOnlyToday(): Date {
+  return DateOnly(new Date());
 }
-function adjustStock(
-  line: {
-    productId: string;
-    productName: string;
-    quantity: number;
-    lot: string;
-  },
-  delta: number,
-  reference: string,
-  direction: "Entrada" | "Salida",
-  reason: string,
-) {
-  const product = products.find((item) => item.id === line.productId);
-  if (!product) return;
-  const before = product.stock;
-  product.stock += delta;
-  movements = [
-    {
-      id: `mov-${Date.now()}-${Math.random()}`,
-      dateTime: new Date().toISOString().slice(0, 16).replace("T", " "),
-      productId: product.id,
-      productName: line.productName,
-      direction,
-      quantity: line.quantity,
-      stockBefore: before,
-      stockAfter: product.stock,
-      lot: line.lot,
-      user: "Carlos Ruiz",
-      reason,
-      reference,
-    },
-    ...movements,
-  ];
-}
-function delay(milliseconds: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+
+function DateOnly(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
