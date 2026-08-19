@@ -509,7 +509,7 @@ function ProductFormDialog({
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1rem)] !max-w-none overflow-x-hidden overflow-y-auto sm:w-[calc(100vw-2rem)] sm:!max-w-3xl lg:!max-w-4xl xl:!max-w-5xl">
         <DialogHeader>
           <DialogTitle>
             {product ? "Editar producto" : "Nuevo producto"}
@@ -519,7 +519,7 @@ function ProductFormDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-5">
-          <fieldset className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <fieldset className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <legend className="col-span-full mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <Tags className="size-4 text-primary" />
               Identificación
@@ -618,7 +618,7 @@ function ProductFormDialog({
               />
             </Field>
           </fieldset>
-          <fieldset className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <fieldset className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <legend className="col-span-full mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <Warehouse className="size-4 text-primary" />
               Control de inventario
@@ -842,7 +842,7 @@ function IconInput({
       {Icon && (
         <Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       )}
-      <Input className={`${Icon ? "pl-9" : ""} ${className ?? ""}`} {...props} />
+      <Input className={`min-w-0 ${Icon ? "pl-9" : ""} ${className ?? ""}`} {...props} />
     </div>
   );
 }
@@ -859,7 +859,7 @@ function IconSelect({
         <Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       )}
       <select
-        className={`h-9 w-full appearance-none rounded-md border border-input bg-background pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring ${Icon ? "pl-9" : "px-3"} ${className ?? ""}`}
+        className={`h-9 w-full min-w-0 appearance-none rounded-md border border-input bg-background pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring ${Icon ? "pl-9" : "px-3"} ${className ?? ""}`}
         {...props}
       >
         {children}
