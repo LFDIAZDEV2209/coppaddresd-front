@@ -482,6 +482,14 @@ function ProductFormDialog({
                 <option>Insumo médico</option>
                 <option>Material hospitalario</option>
                 <option>Producto de farmacia</option>
+                <option>Alimento saludable</option>
+                <option>Snack saludable</option>
+                <option>Bebida</option>
+                <option>Suplemento</option>
+                <option>Dispositivo de salud</option>
+                <option>Equipamiento fitness</option>
+                <option>Cuidado personal</option>
+                <option>Otro</option>
               </select>
             </Field>
             <Field label="Nombre" required>
