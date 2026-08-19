@@ -6,18 +6,30 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   CheckCircle2,
+  ClipboardList,
   Plus,
   Trash2,
   Warehouse,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   createEntry,
   createExit,
+  fetchEntries,
+  fetchExits,
   fetchProducts,
 } from "../services/inventory-service";
 import type {
@@ -62,6 +74,26 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<InventoryEntry[] | InventoryExit[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (isEntry ? fetchEntries() : fetchExits())
+      .then((data) => {
+        if (!cancelled) setHistory(data);
+      })
+      .catch(() => {
+        if (!cancelled) setHistory([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingHistory(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isEntry, reload]);
 
   useEffect(() => {
     let cancelled = false;
@@ -164,6 +196,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       setDocument("");
       setPatientName("");
       setNotes("");
+      setReload((v) => v + 1);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -367,6 +400,80 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
             </Button>
           </div>
         </div>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary">
+            <ClipboardList className="size-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold">
+              Historial de {isEntry ? "entradas" : "salidas"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Últimas operaciones registradas en la base de datos.
+            </p>
+          </div>
+        </div>
+        {loadingHistory ? (
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <Skeleton className="h-8 w-full" />
+          </div>
+        ) : history.length ? (
+          <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <SectionHeader
+              title={`${history.length} registros`}
+              description={`Historial de ${isEntry ? "entradas" : "salidas"}`}
+              icon={isEntry ? ArrowDownToLine : ArrowUpFromLine}
+              variant="primary"
+            />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Referencia</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Motivo</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    {isEntry ? "Proveedor" : "Responsable"}
+                  </TableHead>
+                  {!isEntry && <TableHead>Paciente</TableHead>}
+                  <TableHead className="hidden lg:table-cell">Productos</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {history.slice(0, 8).map((item) => {
+                  const entry = item as InventoryEntry;
+                  const exit = item as InventoryExit;
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {item.reference}
+                      </TableCell>
+                      <TableCell className="text-sm">{item.date}</TableCell>
+                      <TableCell className="text-sm">{item.reason}</TableCell>
+                      <TableCell className="hidden text-sm md:table-cell">
+                        {isEntry ? entry.supplier ?? "—" : exit.responsible ?? "—"}
+                      </TableCell>
+                      {!isEntry && (
+                        <TableCell className="text-sm">
+                          {exit.patientName ?? "—"}
+                        </TableCell>
+                      )}
+                      <TableCell className="hidden text-xs text-muted-foreground lg:table-cell">
+                        {item.lines.length} línea{item.lines.length !== 1 ? "s" : ""}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
+            Aún no hay {isEntry ? "entradas" : "salidas"} registradas.
+          </div>
+        )}
       </section>
     </div>
   );
