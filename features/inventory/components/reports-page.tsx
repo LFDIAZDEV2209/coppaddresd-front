@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart3,
   CalendarDays,
@@ -15,9 +15,9 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { fetchAnalytics } from "../services/inventory-service";
-
-const analytics = fetchAnalytics();
+import type { InventoryAnalytics } from "../types";
 
 export function ReportsPage() {
   const [preset, setPreset] = useState("Últimos 30 días");
@@ -25,6 +25,22 @@ export function ReportsPage() {
   const [reportType, setReportType] = useState("Reporte de movimientos");
   const [exporting, setExporting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<InventoryAnalytics | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAnalytics()
+      .then((data) => {
+        if (!cancelled) setAnalytics(data);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const exportReport = async () => {
     setExporting(true);
     setSuccess(null);
@@ -125,115 +141,123 @@ export function ReportsPage() {
           {success}
         </p>
       )}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi
-          label="Valor del inventario"
-          value={formatCurrency(analytics.totalValue)}
-          detail="+8.4% vs. período anterior"
-          icon={Package}
-          tone="primary"
-        />
-        <Kpi
-          label="Productos activos"
-          value={String(analytics.activeProducts)}
-          detail="De 9 productos registrados"
-          icon={Package}
-          tone="info"
-        />
-        <Kpi
-          label="Stock bajo"
-          value={String(analytics.lowStock)}
-          detail="Requieren reposición"
-          icon={TriangleAlert}
-          tone="warning"
-        />
-        <Kpi
-          label="Salidas del período"
-          value={String(analytics.exits)}
-          detail="+12.5% vs. período anterior"
-          icon={TrendingDown}
-          tone="danger"
-        />
-      </div>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
-        <section className="rounded-2xl border border-border bg-card p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-base font-bold">Entradas vs. salidas</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Volumen de unidades movidas durante los últimos 7 días.
-              </p>
-            </div>
-            <BarChart3 className="size-5 text-primary" />
+      {loading || !analytics ? (
+        <ReportsSkeleton />
+      ) : (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Kpi
+              label="Valor del inventario"
+              value={formatCurrency(analytics.totalValue)}
+              detail="+8.4% vs. período anterior"
+              icon={Package}
+              tone="primary"
+            />
+            <Kpi
+              label="Productos activos"
+              value={String(analytics.activeProducts)}
+              detail="De 9 productos registrados"
+              icon={Package}
+              tone="info"
+            />
+            <Kpi
+              label="Stock bajo"
+              value={String(analytics.lowStock)}
+              detail="Requieren reposición"
+              icon={TriangleAlert}
+              tone="warning"
+            />
+            <Kpi
+              label="Salidas del período"
+              value={String(analytics.exits)}
+              detail="+12.5% vs. período anterior"
+              icon={TrendingDown}
+              tone="danger"
+            />
           </div>
-          <div className="mt-6 flex h-48 items-end gap-3 border-b border-l border-border px-3 pb-0 pt-4">
-            {analytics.movementSeries.map((day) => (
-              <div
-                className="flex flex-1 items-end justify-center gap-1"
-                key={day.label}
-              >
-                <div
-                  className="w-3 rounded-t bg-primary/75"
-                  style={{ height: `${day.entries * 3}px` }}
-                  title={`Entradas: ${day.entries}`}
-                />
-                <div
-                  className="w-3 rounded-t bg-destructive/65"
-                  style={{ height: `${day.exits * 3}px` }}
-                  title={`Salidas: ${day.exits}`}
-                />
-                <span className="absolute mt-56 text-[10px] text-muted-foreground">
-                  {day.label}
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
+            <section className="rounded-2xl border border-border bg-card p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-base font-bold">Entradas vs. salidas</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Volumen de unidades movidas durante los últimos 7 días.
+                  </p>
+                </div>
+                <BarChart3 className="size-5 text-primary" />
+              </div>
+              <div className="mt-6 flex h-48 items-end gap-3 border-b border-l border-border px-3 pb-0 pt-4">
+                {analytics.movementSeries.map((day) => (
+                  <div
+                    className="flex flex-1 items-end justify-center gap-1"
+                    key={day.label}
+                  >
+                    <div
+                      className="w-3 rounded-t bg-primary/75"
+                      style={{ height: `${day.entries * 3}px` }}
+                      title={`Entradas: ${day.entries}`}
+                    />
+                    <div
+                      className="w-3 rounded-t bg-destructive/65"
+                      style={{ height: `${day.exits * 3}px` }}
+                      title={`Salidas: ${day.exits}`}
+                    />
+                    <span className="absolute mt-56 text-[10px] text-muted-foreground">
+                      {day.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-8 flex gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <i className="size-2 rounded-full bg-primary" />
+                  Entradas
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <i className="size-2 rounded-full bg-destructive" />
+                  Salidas
                 </span>
               </div>
-            ))}
-          </div>
-          <div className="mt-8 flex gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <i className="size-2 rounded-full bg-primary" />
-              Entradas
-            </span>
-            <span className="flex items-center gap-1.5">
-              <i className="size-2 rounded-full bg-destructive" />
-              Salidas
-            </span>
-          </div>
-        </section>
-        <section className="rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-base font-bold">Valor por categoría</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Distribución del inventario actual.
-          </p>
-          <div className="mt-6 flex flex-col gap-4">
-            {analytics.categoryValue.map((item, index) => (
-              <div key={item.category}>
-                <div className="mb-1 flex justify-between text-xs">
-                  <span className="font-medium">{item.category}</span>
-                  <span className="text-muted-foreground">{item.value}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div
-                    className={`h-2 rounded-full ${index === 0 ? "bg-primary" : index === 1 ? "bg-info" : "bg-warning"}`}
-                    style={{ width: `${item.value}%` }}
-                  />
-                </div>
+            </section>
+            <section className="rounded-2xl border border-border bg-card p-5">
+              <h2 className="text-base font-bold">Valor por categoría</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Distribución del inventario actual.
+              </p>
+              <div className="mt-6 flex flex-col gap-4">
+                {analytics.categoryValue.map((item, index) => (
+                  <div key={item.category}>
+                    <div className="mb-1 flex justify-between text-xs">
+                      <span className="font-medium">{item.category}</span>
+                      <span className="text-muted-foreground">{item.value}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted">
+                      <div
+                        className={`h-2 rounded-full ${index === 0 ? "bg-primary" : index === 1 ? "bg-info" : "bg-warning"}`}
+                        style={{ width: `${item.value}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+              <div className="mt-6 rounded-lg bg-primary-soft p-3 text-xs text-primary">
+                Medicamentos concentran la mayor inversión del inventario.
+              </div>
+            </section>
           </div>
-          <div className="mt-6 rounded-lg bg-primary-soft p-3 text-xs text-primary">
-            Medicamentos concentran la mayor inversión del inventario.
+          <div className="grid gap-5 xl:grid-cols-2">
+            <ReportList
+              title="Productos con mayor movimiento"
+              description="Prioriza las reposiciones por rotación"
+              items={analytics.topMoving.map(
+                (item) => `${item.name}|${item.quantity} unidades`,
+              )}
+              icon={TrendingUp}
+            />
           </div>
-        </section>
-      </div>
+        </>
+      )}
       <div className="grid gap-5 xl:grid-cols-2">
-        <ReportList
-          title="Productos con mayor movimiento"
-          description="Prioriza las reposiciones por rotación"
-          items={analytics.topMoving.map(
-            (item) => `${item.name}|${item.quantity} unidades`,
-          )}
-          icon={TrendingUp}
-        />
         <ReportList
           title="Alertas de inventario"
           description="Productos que necesitan atención"
@@ -329,4 +353,23 @@ function formatCurrency(value: number) {
     currency: "COP",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function ReportsSkeleton() {
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="rounded-2xl border border-border bg-card p-4">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="mt-3 h-7 w-20" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="mt-4 h-48" />
+      </div>
+    </div>
+  );
 }
