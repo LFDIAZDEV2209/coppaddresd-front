@@ -26,6 +26,8 @@ import {
   PlayCircle,
   ShoppingBag,
   Store,
+  Eye,
+  Star,
 } from "lucide-react";
 
 export interface NavItem {
@@ -144,6 +146,18 @@ export const navModules: NavModule[] = [
         href: "/store",
         icon: Store,
         color: "#10B981",
+      },
+      {
+        label: "Previsualización",
+        href: "/store/preview",
+        icon: Eye,
+        color: "#0E7490",
+      },
+      {
+        label: "Destacados",
+        href: "/store/featured",
+        icon: Star,
+        color: "#F59E0B",
       },
     ],
   },
