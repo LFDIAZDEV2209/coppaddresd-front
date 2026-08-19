@@ -64,11 +64,13 @@ import {
   getCategories,
   getProductState,
   fetchProducts,
+  fetchAnalytics,
   createProduct,
   updateProduct,
 } from "../services/inventory-service";
 import type {
   InventoryFilters,
+  InventoryAnalytics,
   ProductInput,
   ProductListItem,
 } from "../types";
@@ -120,6 +122,7 @@ function toProductInput(product: ProductListItem): ProductInput {
 export function ProductsPage() {
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [analytics, setAnalytics] = useState<InventoryAnalytics | null>(null);
   const [filters, setFilters] = useState<InventoryFilters>({
     search: "",
     category: "",
@@ -162,6 +165,18 @@ export function ProductsPage() {
       cancelled = true;
     };
   }, [filters, reload]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAnalytics()
+      .then((data) => {
+        if (!cancelled) setAnalytics(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [reload]);
   const updateFilters = (partial: Partial<InventoryFilters>) => {
     setFilters((current) => ({ ...current, ...partial }));
     setLoading(true);
@@ -207,18 +222,28 @@ export function ProductsPage() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
           label="Productos activos"
-          value="8"
+          value={analytics ? String(analytics.activeProducts) : "—"}
           icon={Package}
           tone="primary"
         />
         <Metric
           label="Stock bajo"
-          value="3"
+          value={analytics ? String(analytics.lowStock) : "—"}
           icon={AlertTriangle}
           tone="warning"
         />
-        <Metric label="Sin stock" value="1" icon={XCircle} tone="danger" />
-        <Metric label="Por vencer" value="3" icon={FileWarning} tone="info" />
+        <Metric
+          label="Sin stock"
+          value={analytics ? String(analytics.outOfStock) : "—"}
+          icon={XCircle}
+          tone="danger"
+        />
+        <Metric
+          label="Por vencer"
+          value={analytics ? String(analytics.expiringSoon) : "—"}
+          icon={FileWarning}
+          tone="info"
+        />
       </div>
       {alerts.length > 0 && (
         <div className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center">
