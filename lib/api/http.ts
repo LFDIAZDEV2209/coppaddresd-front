@@ -68,6 +68,10 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 // recargas (se restaura vía refresh cookie) y es invisible para XSS persistente.
 let accessToken: string | null = null;
 
+// Contexto organizacional activo (clínica seleccionada en el switcher). Vive en
+// memoria junto al token: el backend lo valida por request (permisos scoped).
+let activeClinicId: string | null = null;
+
 let refreshPromise: Promise<RefreshOutcome> | null = null;
 
 let onSessionInvalidated: (() => void) | null = null;
@@ -78,6 +82,14 @@ export function setAccessToken(token: string | null): void {
 
 export function getAccessToken(): string | null {
   return accessToken;
+}
+
+export function setActiveClinicId(clinicId: string | null): void {
+  activeClinicId = clinicId;
+}
+
+export function getActiveClinicId(): string | null {
+  return activeClinicId;
 }
 
 /**
@@ -132,6 +144,9 @@ export async function apiFetch<T>(
     const headers = new Headers(extraHeaders);
     if (auth && accessToken) {
       headers.set("Authorization", `Bearer ${accessToken}`);
+    }
+    if (activeClinicId && !headers.has("X-Clinic-Id")) {
+      headers.set("X-Clinic-Id", activeClinicId);
     }
     if (fetchInit.body && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");

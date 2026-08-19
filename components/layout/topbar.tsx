@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { getBreadcrumbSegments } from "@/lib/config/navigation";
 import { useTheme } from "@/providers/theme-provider";
 import { useAuth } from "@/providers/auth-provider";
+import { useAppContext } from "@/providers/context-provider";
 import {
   Search,
   Sun,
@@ -16,6 +17,8 @@ import {
   LogOut,
   Settings,
   User,
+  Building2,
+  MapPin,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -34,6 +37,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { context, activeClinic, setActiveClinic } = useAppContext();
   const segments = getBreadcrumbSegments(pathname);
 
   return (
@@ -110,6 +114,78 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <Bell className="size-4" />
           <span className="absolute right-1.5 top-1.5 size-[7px] rounded-full bg-destructive ring-2 ring-[#0B2B4A]" />
         </button>
+
+        {/* Contexto organizacional (switcher de clínica) */}
+        {context && context.clinics.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="flex items-center gap-2 rounded-lg bg-white/10 px-2.5 py-1.5 text-left hover:bg-white/20 transition-colors"
+              aria-label="Cambiar clínica activa"
+            >
+              <Building2 className="size-3.5 text-white/70" />
+              <span className="hidden max-w-[160px] flex-col gap-px sm:flex">
+                <span className="truncate text-[11.5px] font-semibold text-white leading-tight">
+                  {activeClinic?.name ?? "Sin clínica"}
+                </span>
+                <span className="truncate text-[9.5px] text-white/60 leading-tight">
+                  {context.organization?.name ?? "ERP"}
+                </span>
+              </span>
+              <ChevronDown className="hidden size-3 text-white/60 sm:block" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60">
+              <div className="px-2 py-1.5 border-b border-border">
+                <p className="text-[12px] font-semibold text-foreground truncate">
+                  {context.organization?.name ?? "Contexto"}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {context.clinics.length} clínica
+                  {context.clinics.length !== 1 ? "s" : ""} asignada
+                  {context.clinics.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+              {context.clinics.map((clinic) => (
+                <DropdownMenuItem
+                  key={clinic.id}
+                  onClick={() => setActiveClinic(clinic.id)}
+                  className="flex items-start gap-2"
+                >
+                  <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate text-[12.5px] font-medium">
+                        {clinic.name}
+                      </span>
+                      {clinic.isPrimary && (
+                        <span className="rounded bg-primary-soft px-1 py-px text-[9px] font-bold uppercase text-primary-strong">
+                          Principal
+                        </span>
+                      )}
+                      {activeClinic?.id === clinic.id && (
+                        <span className="text-[10px] text-primary">✓</span>
+                      )}
+                    </span>
+                    <span className="block truncate text-[11px] text-muted-foreground">
+                      {clinic.locations.length} sede
+                      {clinic.locations.length !== 1 ? "s" : ""}
+                    </span>
+                  </span>
+                </DropdownMenuItem>
+              ))}
+              {context.clinics.length > 1 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setActiveClinic(null)}
+                    className="text-muted-foreground"
+                  >
+                    Ver todo (contexto global)
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {/* Divider */}
         <div className="hidden h-6 w-px bg-white/15 sm:block" />
