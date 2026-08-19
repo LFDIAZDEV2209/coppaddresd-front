@@ -52,7 +52,11 @@ import {
   createProduct,
   updateProduct,
 } from "../services/inventory-service";
-import type { InventoryFilters, Product, ProductInput } from "../types";
+import type {
+  InventoryFilters,
+  ProductInput,
+  ProductListItem,
+} from "../types";
 
 const blankProduct: ProductInput = {
   sku: "",
@@ -75,8 +79,32 @@ const blankProduct: ProductInput = {
   notes: "",
 };
 
+function toProductInput(product: ProductListItem): ProductInput {
+  return {
+    sku: product.sku,
+    name: product.name,
+    productType: product.productType,
+    category: product.category,
+    activeIngredient: product.activeIngredient ?? "",
+    presentation: product.presentation,
+    concentration: product.concentration ?? "",
+    unit: product.unit,
+    manufacturer: product.manufacturer ?? "",
+    supplier: product.supplier ?? "",
+    lot: product.lot ?? "",
+    expirationDate: product.expirationDate ?? "",
+    minimumStock: product.minimumStock,
+    maximumStock: product.maximumStock,
+    location: product.location ?? "",
+    status: product.status,
+    unitCost: product.unitCost,
+    notes: product.notes ?? "",
+  };
+}
+
 export function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductListItem[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [filters, setFilters] = useState<InventoryFilters>({
     search: "",
     category: "",
@@ -85,10 +113,22 @@ export function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Product>();
-  const [details, setDetails] = useState<Product>();
+  const [editing, setEditing] = useState<ProductListItem>();
+  const [details, setDetails] = useState<ProductListItem>();
   const [saving, setSaving] = useState(false);
   const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getCategories()
+      .then((data) => {
+        if (!cancelled) setCategories(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -230,7 +270,7 @@ export function ProductsPage() {
             aria-label="Filtrar por categoría"
           >
             <option value="">Todas las categorías</option>
-            {getCategories().map((category) => (
+            {categories.map((category) => (
               <option key={category}>{category}</option>
             ))}
           </select>
@@ -294,9 +334,9 @@ function ProductTable({
   onDetails,
   onEdit,
 }: {
-  products: Product[];
-  onDetails: (product: Product) => void;
-  onEdit: (product: Product) => void;
+  products: ProductListItem[];
+  onDetails: (product: ProductListItem) => void;
+  onEdit: (product: ProductListItem) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -425,13 +465,13 @@ function ProductFormDialog({
   onSubmit,
 }: {
   open: boolean;
-  product?: Product;
+  product?: ProductListItem;
   saving: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (input: ProductInput) => Promise<void>;
 }) {
   const [form, setForm] = useState<ProductInput>(() =>
-    product ? { ...product } : blankProduct,
+    product ? toProductInput(product) : blankProduct,
   );
   const [error, setError] = useState<string | null>(null);
   const update = <K extends keyof ProductInput>(
@@ -664,7 +704,7 @@ function ProductDetails({
   product,
   onClose,
 }: {
-  product?: Product;
+  product?: ProductListItem;
   onClose: () => void;
 }) {
   return (
@@ -702,11 +742,11 @@ function ProductDetails({
                 label="Rango objetivo"
                 value={`${product.minimumStock} - ${product.maximumStock}`}
               />
-              <Detail label="Lote" value={product.lot} />
-              <Detail label="Vencimiento" value={product.expirationDate} />
-              <Detail label="Proveedor" value={product.supplier} />
-              <Detail label="Ubicación" value={product.location} />
-              <Detail label="Laboratorio" value={product.manufacturer} />
+              <Detail label="Lote" value={product.lot ?? "—"} />
+              <Detail label="Vencimiento" value={product.expirationDate ?? "—"} />
+              <Detail label="Proveedor" value={product.supplier ?? "—"} />
+              <Detail label="Ubicación" value={product.location ?? "—"} />
+              <Detail label="Laboratorio" value={product.manufacturer ?? "—"} />
               <Detail
                 label="Costo unitario"
                 value={formatCurrency(product.unitCost)}
