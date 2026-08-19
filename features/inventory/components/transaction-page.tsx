@@ -24,7 +24,7 @@ import type {
   InventoryEntry,
   InventoryExit,
   InventoryLine,
-  Product,
+  ProductListItem,
 } from "../types";
 
 type TransactionMode = "entry" | "exit";
@@ -48,7 +48,7 @@ const exitReasons = [
 
 export function TransactionPage({ mode }: { mode: TransactionMode }) {
   const isEntry = mode === "entry";
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductListItem[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [lines, setLines] = useState<InventoryLine[]>([]);
   const [date, setDate] = useState("2024-06-18");
@@ -384,7 +384,7 @@ function TransactionLine({
 }: {
   line: InventoryLine;
   index: number;
-  products: Product[];
+  products: ProductListItem[];
   isEntry: boolean;
   onProductChange: (id: string) => void;
   onChange: <K extends keyof InventoryLine>(
@@ -486,17 +486,17 @@ function Field({
   );
 }
 function makeLine(
-  product: Product,
+  product: ProductListItem,
   isEntry: boolean,
   id = `line-${Date.now()}-${Math.random()}`,
 ): InventoryLine {
   return {
     id,
     productId: product.id,
-    productName: `${product.name} ${product.concentration}`.trim(),
+    productName: `${product.name}${product.concentration ? ` ${product.concentration}` : ""}`.trim(),
     quantity: 1,
-    lot: isEntry ? "" : product.lot,
-    expirationDate: product.expirationDate,
+    lot: isEntry ? "" : (product.lot ?? ""),
+    expirationDate: product.expirationDate ?? "",
     unitCost: product.unitCost,
   };
 }
