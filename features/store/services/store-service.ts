@@ -5,10 +5,15 @@ import type {
   PaginatedStoreItems,
   StoreFilters,
   StoreItem,
+  StoreStats,
   UpdateStoreItemInput,
 } from "../types";
 
 const PATH = `${env.apiUrl}/api/v1/store/items`;
+
+export async function fetchStoreStats(): Promise<StoreStats> {
+  return apiFetch<StoreStats>(`${PATH}/stats`);
+}
 
 export async function fetchStoreItems(
   filters: StoreFilters,

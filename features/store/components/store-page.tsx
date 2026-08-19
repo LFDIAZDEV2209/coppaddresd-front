@@ -49,6 +49,7 @@ import { useStore, fetchAvailableProducts } from "../hooks/use-store";
 export function StorePage() {
   const {
     result,
+    stats,
     loading,
     error,
     filters,
@@ -76,10 +77,10 @@ export function StorePage() {
         }
       />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Productos en tienda" value={String(result?.total ?? "—")} tone="primary" />
-        <Metric label="Destacados" value={String(result?.data.filter((i) => i.featured).length ?? "—")} tone="warning" />
-        <Metric label="Visibles" value={String(result?.data.filter((i) => i.status === "Visible").length ?? "—")} tone="success" />
-        <Metric label="Ocultos" value={String(result?.data.filter((i) => i.status === "Oculto").length ?? "—")} tone="danger" />
+        <Metric label="Productos en tienda" value={stats ? String(stats.total) : "—"} tone="primary" />
+        <Metric label="Destacados" value={stats ? String(stats.featured) : "—"} tone="warning" />
+        <Metric label="Visibles" value={stats ? String(stats.visible) : "—"} tone="success" />
+        <Metric label="Ocultos" value={stats ? String(stats.hidden) : "—"} tone="danger" />
       </div>
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

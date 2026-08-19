@@ -8,6 +8,7 @@ import type {
   CreateStoreItemInput,
   PaginatedStoreItems,
   StoreFilters,
+  StoreStats,
   UpdateStoreItemInput,
 } from "../types";
 import {
@@ -16,10 +17,12 @@ import {
   hideStoreItem,
   restoreStoreItem,
   updateStoreItem,
+  fetchStoreStats,
 } from "../services/store-service";
 
 export function useStore() {
   const [result, setResult] = useState<PaginatedStoreItems | null>(null);
+  const [stats, setStats] = useState<StoreStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<StoreFilters>({ status: "all" });
@@ -35,8 +38,14 @@ export function useStore() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchStoreItems(filters, page, 20, controller.signal);
-        if (mountedRef.current) setResult(data);
+        const [data, storeStats] = await Promise.all([
+          fetchStoreItems(filters, page, 20, controller.signal),
+          fetchStoreStats(),
+        ]);
+        if (mountedRef.current) {
+          setResult(data);
+          setStats(storeStats);
+        }
       } catch (err) {
         if (mountedRef.current && !controller.signal.aborted) {
           setError(err instanceof Error ? err.message : "Error al cargar tienda");
@@ -90,6 +99,7 @@ export function useStore() {
 
   return {
     result,
+    stats,
     loading,
     error,
     filters,

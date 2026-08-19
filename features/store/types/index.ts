@@ -50,3 +50,10 @@ export interface PaginatedStoreItems {
 export interface StoreFilters {
   status: "all" | "Visible" | "Oculto";
 }
+
+export interface StoreStats {
+  total: number;
+  visible: number;
+  hidden: number;
+  featured: number;
+}
