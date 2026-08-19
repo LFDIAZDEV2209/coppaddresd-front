@@ -139,3 +139,26 @@ export interface InventoryReportFilters {
   category: string;
   movementType: "all" | MovementDirection;
 }
+
+// --- Paginated results from backend API ---
+
+export interface ProductListItem {
+  id: string;
+  sku: string;
+  name: string;
+  productType: ProductType;
+  category: string;
+  stock: number;
+  minimumStock: number;
+  expirationDate: string | null;
+  status: ProductStatus;
+  unitCost: number;
+}
+
+export interface PaginatedProducts {
+  data: ProductListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
