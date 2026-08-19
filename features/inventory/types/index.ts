@@ -2,7 +2,15 @@ export type ProductType =
   | "Medicamento"
   | "Insumo médico"
   | "Material hospitalario"
-  | "Producto de farmacia";
+  | "Producto de farmacia"
+  | "Alimento saludable"
+  | "Snack saludable"
+  | "Bebida"
+  | "Suplemento"
+  | "Dispositivo de salud"
+  | "Equipamiento fitness"
+  | "Cuidado personal"
+  | "Otro";
 export type ProductStatus = "Activo" | "Inactivo";
 export type MovementDirection = "Entrada" | "Salida";
 export type EntryReason =
