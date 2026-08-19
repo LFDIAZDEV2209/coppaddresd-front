@@ -6,13 +6,28 @@ import {
   AlertTriangle,
   ArrowDownToLine,
   ArrowUpFromLine,
+  Barcode,
+  Box,
+  CalendarDays,
+  CircleDollarSign,
   Eye,
+  Factory,
   FileWarning,
+  FlaskConical,
+  Hash,
+  MapPin,
   MoreHorizontal,
   Package,
+  PackagePlus,
   Pencil,
+  Pill,
   Plus,
+  Ruler,
+  Scale,
   Search,
+  Tags,
+  Truck,
+  Warehouse,
   XCircle,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -505,11 +520,13 @@ function ProductFormDialog({
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-5">
           <fieldset className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <legend className="col-span-full mb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <legend className="col-span-full mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <Tags className="size-4 text-primary" />
               Identificación
             </legend>
             <Field label="Tipo de producto">
-              <select
+              <IconSelect
+                icon={Pill}
                 value={form.productType}
                 onChange={(event) =>
                   update(
@@ -530,39 +547,45 @@ function ProductFormDialog({
                 <option>Equipamiento fitness</option>
                 <option>Cuidado personal</option>
                 <option>Otro</option>
-              </select>
+              </IconSelect>
             </Field>
             <Field label="Nombre" required>
-              <Input
+              <IconInput
+                icon={Package}
                 value={form.name}
                 onChange={(event) => update("name", event.target.value)}
                 placeholder="Ej. Paracetamol"
               />
             </Field>
             <Field label="SKU / código" required>
-              <Input
+              <IconInput
+                icon={Barcode}
                 value={form.sku}
                 onChange={(event) => update("sku", event.target.value)}
                 placeholder="MED-PAR-500"
               />
             </Field>
             <Field label="Categoría" required>
-              <Input
+              <IconInput
+                icon={Tags}
                 value={form.category}
                 onChange={(event) => update("category", event.target.value)}
                 placeholder="Analgésicos"
               />
             </Field>
             <Field label="Principio activo">
-              <Input
+              <IconInput
+                icon={FlaskConical}
                 value={form.activeIngredient}
                 onChange={(event) =>
                   update("activeIngredient", event.target.value)
                 }
+                placeholder="Acetaminofén"
               />
             </Field>
             <Field label="Concentración">
-              <Input
+              <IconInput
+                icon={Scale}
                 value={form.concentration}
                 onChange={(event) =>
                   update("concentration", event.target.value)
@@ -571,43 +594,54 @@ function ProductFormDialog({
               />
             </Field>
             <Field label="Presentación">
-              <Input
+              <IconInput
+                icon={Box}
                 value={form.presentation}
                 onChange={(event) => update("presentation", event.target.value)}
+                placeholder="Tabletas"
               />
             </Field>
             <Field label="Unidad de medida">
-              <Input
+              <IconInput
+                icon={Ruler}
                 value={form.unit}
                 onChange={(event) => update("unit", event.target.value)}
                 placeholder="Caja x 20"
               />
             </Field>
             <Field label="Laboratorio">
-              <Input
+              <IconInput
+                icon={Factory}
                 value={form.manufacturer}
                 onChange={(event) => update("manufacturer", event.target.value)}
+                placeholder="Genfar"
               />
             </Field>
           </fieldset>
-          <fieldset className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <legend className="col-span-full mb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <fieldset className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <legend className="col-span-full mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <Warehouse className="size-4 text-primary" />
               Control de inventario
             </legend>
             <Field label="Proveedor">
-              <Input
+              <IconInput
+                icon={Truck}
                 value={form.supplier}
                 onChange={(event) => update("supplier", event.target.value)}
+                placeholder="Drogas La Rebaja"
               />
             </Field>
             <Field label="Lote">
-              <Input
+              <IconInput
+                icon={Hash}
                 value={form.lot}
                 onChange={(event) => update("lot", event.target.value)}
+                placeholder="PCT2404A"
               />
             </Field>
             <Field label="Vencimiento" required>
-              <Input
+              <IconInput
+                icon={CalendarDays}
                 type="date"
                 value={form.expirationDate}
                 onChange={(event) =>
@@ -616,58 +650,69 @@ function ProductFormDialog({
               />
             </Field>
             <Field label="Ubicación">
-              <Input
+              <IconInput
+                icon={MapPin}
                 value={form.location}
                 onChange={(event) => update("location", event.target.value)}
                 placeholder="Estante A-01"
               />
             </Field>
             <Field label="Stock inicial">
-              <Input
+              <IconInput
+                icon={PackagePlus}
                 type="number"
                 min="0"
                 value={form.stock ?? 0}
                 onChange={(event) =>
                   update("stock", Number(event.target.value))
                 }
+                placeholder="0"
               />
             </Field>
             <Field label="Stock mínimo">
-              <Input
+              <IconInput
+                icon={Warehouse}
                 type="number"
                 min="0"
                 value={form.minimumStock}
                 onChange={(event) =>
                   update("minimumStock", Number(event.target.value))
                 }
+                placeholder="10"
               />
             </Field>
             <Field label="Stock máximo">
-              <Input
+              <IconInput
+                icon={Warehouse}
                 type="number"
                 min="0"
                 value={form.maximumStock}
                 onChange={(event) =>
                   update("maximumStock", Number(event.target.value))
                 }
+                placeholder="100"
               />
             </Field>
             <Field label="Costo unitario">
-              <Input
+              <IconInput
+                icon={CircleDollarSign}
                 type="number"
                 min="0"
+                step="0.01"
                 value={form.unitCost}
                 onChange={(event) =>
                   update("unitCost", Number(event.target.value))
                 }
+                placeholder="0.00"
               />
             </Field>
           </fieldset>
-          <Field label="Observaciones">
+          <Field label="Observaciones" icon={FileWarning}>
             <textarea
-              className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={form.notes}
               onChange={(event) => update("notes", event.target.value)}
+              placeholder="Notas opcionales del producto"
             />
           </Field>
           {error && (
@@ -767,19 +812,58 @@ function ProductDetails({
 function Field({
   label,
   required,
+  icon: Icon,
   children,
 }: {
   label: string;
   required?: boolean;
+  icon?: typeof Package;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label className="text-xs">
-        {label}
-        {required && <span className="ml-1 text-destructive">*</span>}
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <Label className="flex items-center gap-1.5 text-xs">
+        {Icon && <Icon className="size-3.5 shrink-0 text-muted-foreground" />}
+        <span className="truncate">{label}</span>
+        {required && <span className="ml-auto text-destructive">*</span>}
       </Label>
       {children}
+    </div>
+  );
+}
+
+function IconInput({
+  icon: Icon,
+  className,
+  ...props
+}: React.ComponentProps<typeof Input> & { icon?: typeof Package }) {
+  return (
+    <div className="relative">
+      {Icon && (
+        <Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      )}
+      <Input className={`${Icon ? "pl-9" : ""} ${className ?? ""}`} {...props} />
+    </div>
+  );
+}
+
+function IconSelect({
+  icon: Icon,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"select"> & { icon?: typeof Package }) {
+  return (
+    <div className="relative">
+      {Icon && (
+        <Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      )}
+      <select
+        className={`h-9 w-full appearance-none rounded-md border border-input bg-background pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring ${Icon ? "pl-9" : "px-3"} ${className ?? ""}`}
+        {...props}
+      >
+        {children}
+      </select>
     </div>
   );
 }
