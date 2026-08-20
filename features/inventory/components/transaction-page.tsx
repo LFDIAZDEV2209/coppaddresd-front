@@ -7,10 +7,22 @@ import {
   ArrowUpFromLine,
   CheckCircle2,
   ClipboardList,
+  LoaderCircle,
   Plus,
   Trash2,
   Warehouse,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
@@ -63,7 +75,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [lines, setLines] = useState<InventoryLine[]>([]);
-  const [date, setDate] = useState("2024-06-18");
+  const [date, setDate] = useState(() => todayString());
   const [reason, setReason] = useState(
     isEntry ? entryReasons[0] : exitReasons[0],
   );
@@ -74,6 +86,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [history, setHistory] = useState<InventoryEntry[] | InventoryExit[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [reload, setReload] = useState(0);
@@ -144,7 +157,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       const product = products.find((item) => item.id === line.productId);
       return product ? line.quantity > product.stock : true;
     });
-  const submit = async () => {
+  const submit = () => {
     if (
       !lines.length ||
       lines.some((line) => !line.productId || line.quantity < 1 || !line.lot)
@@ -156,14 +169,10 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       setError("No hay stock suficiente para realizar esta operación.");
       return;
     }
-    if (
-      !window.confirm(
-        isEntry
-          ? "¿Confirmar esta entrada de inventario?"
-          : "¿Confirmar esta salida de inventario?",
-      )
-    )
-      return;
+    setError(null);
+    setConfirmOpen(true);
+  };
+  const performSubmit = async () => {
     setSaving(true);
     setError(null);
     try {
@@ -205,6 +214,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       );
     } finally {
       setSaving(false);
+      setConfirmOpen(false);
     }
   };
 
@@ -387,7 +397,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
               <Button variant="outline">Ver movimientos</Button>
             </Link>
             <Button
-              onClick={() => void submit()}
+              onClick={submit}
               disabled={
                 saving || loadingProducts || invalidStock || !lines.length
               }
@@ -475,6 +485,56 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
           </div>
         )}
       </section>
+
+      <AlertDialog
+        open={confirmOpen}
+        onOpenChange={(open) => !open && setConfirmOpen(false)}
+      >
+        <AlertDialogContent size="sm" className="sm:max-w-sm">
+          <AlertDialogMedia
+            className={`size-12 rounded-full ring-8 ${isEntry ? "bg-success-soft text-success-foreground ring-success-soft/50" : "bg-warning-soft text-warning-foreground ring-warning-soft/50"}`}
+          >
+            {isEntry ? <ArrowDownToLine /> : <ArrowUpFromLine />}
+          </AlertDialogMedia>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold">
+              {isEntry
+                ? "Confirmar entrada de inventario"
+                : "Confirmar salida de inventario"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se registrarán {lines.length}{" "}
+              {lines.length === 1 ? "producto" : "productos"} por un valor
+              total de{" "}
+              <span className="font-semibold text-foreground">
+                {formatCurrency(total)}
+              </span>
+              .{" "}
+              {isEntry
+                ? "Los productos quedarán disponibles en stock después de confirmar."
+                : "La cantidad se descontará del stock disponible al confirmar."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="grid-cols-1">
+            <AlertDialogAction
+              className="w-full"
+              disabled={saving}
+              onClick={() => void performSubmit()}
+            >
+              {saving ? (
+                <LoaderCircle
+                  className="animate-spin"
+                  data-icon="inline-start"
+                />
+              ) : null}
+              Confirmar {isEntry ? "entrada" : "salida"}
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full" disabled={saving}>
+              Cancelar
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -613,4 +673,12 @@ function formatCurrency(value: number) {
     currency: "COP",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function todayString(): string {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
