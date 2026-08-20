@@ -45,7 +45,9 @@ export async function requestUploadIntent(
 
 /**
  * Sube el archivo directo al presignedUrl (PUT) con barra de progreso.
- * onProgress recibe 0..100.
+ * onProgress recibe 0..100. El Bearer token solo se adjunta cuando la URL
+ * apunta al backend (proveedor Local); con S3 la URL es del bucket y el
+ * presigned URL ya la autoriza (un header Authorization rompería la firma).
  */
 export async function uploadToPresignedUrl(
   presignedUrl: string,
@@ -56,8 +58,12 @@ export async function uploadToPresignedUrl(
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", presignedUrl);
 
+    const isBackendTarget = isSameOrigin(presignedUrl, env.apiUrl);
     const token = getAccessToken();
-    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    if (isBackendTarget && token) {
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    }
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
@@ -75,6 +81,15 @@ export async function uploadToPresignedUrl(
     xhr.onerror = () => reject(new Error("Error de red al subir el archivo."));
     xhr.send(file);
   });
+}
+
+/** true si la URL comparte origen con la API del backend (mismo host). */
+function isSameOrigin(url: string, base: string): boolean {
+  try {
+    return new URL(url).host === new URL(base).host;
+  } catch {
+    return false;
+  }
 }
 
 const MIME_TO_TYPE: Record<string, MediaItem["mediaType"]> = {
