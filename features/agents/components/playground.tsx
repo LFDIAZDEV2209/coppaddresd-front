@@ -17,7 +17,7 @@ import type { AgentType, AgentExecutionDetail } from "../types";
 import { streamChat } from "../services/chat-service";
 import { fetchExecution } from "../services/agents-service";
 import { getAgentIconOption } from "./agent-icon-picker";
-import { Markdown } from "./markdown";
+import { Markdown } from "@/components/markdown";
 
 interface ChatMessage {
   id: string;

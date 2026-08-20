@@ -5,12 +5,11 @@ import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
 
 /**
- * Renderiza la respuesta del agente como Markdown (GFM: tablas, listas,
- * código, links). Compatible con streaming: se re-renderiza con el texto
- * acumulado en cada token.
+ * Renderiza contenido como Markdown (GFM: tablas, listas, código, links).
+ * Componente compartido entre módulos (agentes, documentos legales, etc.).
  *
  * Seguridad: react-markdown escapa el HTML crudo por defecto (no se usa
- * rehype-raw), por lo que el contenido del agente nunca inyecta DOM.
+ * rehype-raw), por lo que el contenido nunca inyecta DOM.
  */
 const markdownComponents: Components = {
   p: ({ children }) => <p className="my-1.5 first:mt-0 last:mb-0">{children}</p>,
