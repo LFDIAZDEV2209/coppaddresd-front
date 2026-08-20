@@ -6,25 +6,49 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   CheckCircle2,
+  ClipboardList,
+  LoaderCircle,
   Plus,
   Trash2,
   Warehouse,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   createEntry,
   createExit,
+  fetchEntries,
+  fetchExits,
   fetchProducts,
 } from "../services/inventory-service";
 import type {
   InventoryEntry,
   InventoryExit,
   InventoryLine,
-  Product,
+  ProductListItem,
 } from "../types";
 
 type TransactionMode = "entry" | "exit";
@@ -48,10 +72,10 @@ const exitReasons = [
 
 export function TransactionPage({ mode }: { mode: TransactionMode }) {
   const isEntry = mode === "entry";
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductListItem[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [lines, setLines] = useState<InventoryLine[]>([]);
-  const [date, setDate] = useState("2024-06-18");
+  const [date, setDate] = useState(() => todayString());
   const [reason, setReason] = useState(
     isEntry ? entryReasons[0] : exitReasons[0],
   );
@@ -62,6 +86,27 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [history, setHistory] = useState<InventoryEntry[] | InventoryExit[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (isEntry ? fetchEntries() : fetchExits())
+      .then((data) => {
+        if (!cancelled) setHistory(data);
+      })
+      .catch(() => {
+        if (!cancelled) setHistory([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingHistory(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isEntry, reload]);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,7 +157,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       const product = products.find((item) => item.id === line.productId);
       return product ? line.quantity > product.stock : true;
     });
-  const submit = async () => {
+  const submit = () => {
     if (
       !lines.length ||
       lines.some((line) => !line.productId || line.quantity < 1 || !line.lot)
@@ -124,14 +169,10 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       setError("No hay stock suficiente para realizar esta operación.");
       return;
     }
-    if (
-      !window.confirm(
-        isEntry
-          ? "¿Confirmar esta entrada de inventario?"
-          : "¿Confirmar esta salida de inventario?",
-      )
-    )
-      return;
+    setError(null);
+    setConfirmOpen(true);
+  };
+  const performSubmit = async () => {
     setSaving(true);
     setError(null);
     try {
@@ -164,6 +205,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       setDocument("");
       setPatientName("");
       setNotes("");
+      setReload((v) => v + 1);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -172,6 +214,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       );
     } finally {
       setSaving(false);
+      setConfirmOpen(false);
     }
   };
 
@@ -354,7 +397,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
               <Button variant="outline">Ver movimientos</Button>
             </Link>
             <Button
-              onClick={() => void submit()}
+              onClick={submit}
               disabled={
                 saving || loadingProducts || invalidStock || !lines.length
               }
@@ -368,6 +411,130 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
           </div>
         </div>
       </section>
+
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary">
+            <ClipboardList className="size-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold">
+              Historial de {isEntry ? "entradas" : "salidas"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Últimas operaciones registradas en la base de datos.
+            </p>
+          </div>
+        </div>
+        {loadingHistory ? (
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <Skeleton className="h-8 w-full" />
+          </div>
+        ) : history.length ? (
+          <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <SectionHeader
+              title={`${history.length} registros`}
+              description={`Historial de ${isEntry ? "entradas" : "salidas"}`}
+              icon={isEntry ? ArrowDownToLine : ArrowUpFromLine}
+              variant="primary"
+            />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Referencia</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Motivo</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    {isEntry ? "Proveedor" : "Responsable"}
+                  </TableHead>
+                  {!isEntry && <TableHead>Paciente</TableHead>}
+                  <TableHead className="hidden lg:table-cell">Productos</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {history.slice(0, 8).map((item) => {
+                  const entry = item as InventoryEntry;
+                  const exit = item as InventoryExit;
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {item.reference}
+                      </TableCell>
+                      <TableCell className="text-sm">{item.date}</TableCell>
+                      <TableCell className="text-sm">{item.reason}</TableCell>
+                      <TableCell className="hidden text-sm md:table-cell">
+                        {isEntry ? entry.supplier ?? "—" : exit.responsible ?? "—"}
+                      </TableCell>
+                      {!isEntry && (
+                        <TableCell className="text-sm">
+                          {exit.patientName ?? "—"}
+                        </TableCell>
+                      )}
+                      <TableCell className="hidden text-xs text-muted-foreground lg:table-cell">
+                        {item.lines.length} línea{item.lines.length !== 1 ? "s" : ""}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
+            Aún no hay {isEntry ? "entradas" : "salidas"} registradas.
+          </div>
+        )}
+      </section>
+
+      <AlertDialog
+        open={confirmOpen}
+        onOpenChange={(open) => !open && setConfirmOpen(false)}
+      >
+        <AlertDialogContent size="sm" className="sm:max-w-sm">
+          <AlertDialogMedia
+            className={`size-12 rounded-full ring-8 ${isEntry ? "bg-success-soft text-success-foreground ring-success-soft/50" : "bg-warning-soft text-warning-foreground ring-warning-soft/50"}`}
+          >
+            {isEntry ? <ArrowDownToLine /> : <ArrowUpFromLine />}
+          </AlertDialogMedia>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold">
+              {isEntry
+                ? "Confirmar entrada de inventario"
+                : "Confirmar salida de inventario"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se registrarán {lines.length}{" "}
+              {lines.length === 1 ? "producto" : "productos"} por un valor
+              total de{" "}
+              <span className="font-semibold text-foreground">
+                {formatCurrency(total)}
+              </span>
+              .{" "}
+              {isEntry
+                ? "Los productos quedarán disponibles en stock después de confirmar."
+                : "La cantidad se descontará del stock disponible al confirmar."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="grid-cols-1">
+            <AlertDialogAction
+              className="w-full"
+              disabled={saving}
+              onClick={() => void performSubmit()}
+            >
+              {saving ? (
+                <LoaderCircle
+                  className="animate-spin"
+                  data-icon="inline-start"
+                />
+              ) : null}
+              Confirmar {isEntry ? "entrada" : "salida"}
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full" disabled={saving}>
+              Cancelar
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -384,7 +551,7 @@ function TransactionLine({
 }: {
   line: InventoryLine;
   index: number;
-  products: Product[];
+  products: ProductListItem[];
   isEntry: boolean;
   onProductChange: (id: string) => void;
   onChange: <K extends keyof InventoryLine>(
@@ -486,17 +653,17 @@ function Field({
   );
 }
 function makeLine(
-  product: Product,
+  product: ProductListItem,
   isEntry: boolean,
   id = `line-${Date.now()}-${Math.random()}`,
 ): InventoryLine {
   return {
     id,
     productId: product.id,
-    productName: `${product.name} ${product.concentration}`.trim(),
+    productName: `${product.name}${product.concentration ? ` ${product.concentration}` : ""}`.trim(),
     quantity: 1,
-    lot: isEntry ? "" : product.lot,
-    expirationDate: product.expirationDate,
+    lot: isEntry ? "" : (product.lot ?? ""),
+    expirationDate: product.expirationDate ?? "",
     unitCost: product.unitCost,
   };
 }
@@ -506,4 +673,12 @@ function formatCurrency(value: number) {
     currency: "COP",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function todayString(): string {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

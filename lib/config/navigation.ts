@@ -25,6 +25,10 @@ import {
   FileBarChart,
   FileAudio,
   PlayCircle,
+  ShoppingBag,
+  Store,
+  Eye,
+  Star,
 } from "lucide-react";
 
 export interface NavItem {
@@ -135,6 +139,31 @@ export const navModules: NavModule[] = [
         label: "Reportes",
         href: "/inventory/reports",
         icon: FileBarChart,
+        color: "#F59E0B",
+      },
+    ],
+  },
+  {
+    label: "Tienda de bienestar",
+    icon: ShoppingBag,
+    color: "#10B981",
+    items: [
+      {
+        label: "Catálogo",
+        href: "/store",
+        icon: Store,
+        color: "#10B981",
+      },
+      {
+        label: "Previsualización",
+        href: "/store/preview",
+        icon: Eye,
+        color: "#0E7490",
+      },
+      {
+        label: "Destacados",
+        href: "/store/featured",
+        icon: Star,
         color: "#F59E0B",
       },
     ],

@@ -2,7 +2,15 @@ export type ProductType =
   | "Medicamento"
   | "Insumo médico"
   | "Material hospitalario"
-  | "Producto de farmacia";
+  | "Producto de farmacia"
+  | "Alimento saludable"
+  | "Snack saludable"
+  | "Bebida"
+  | "Suplemento"
+  | "Dispositivo de salud"
+  | "Equipamiento fitness"
+  | "Cuidado personal"
+  | "Otro";
 export type ProductStatus = "Activo" | "Inactivo";
 export type MovementDirection = "Entrada" | "Salida";
 export type EntryReason =
@@ -27,26 +35,37 @@ export interface Product {
   name: string;
   productType: ProductType;
   category: string;
-  activeIngredient: string;
+  activeIngredient: string | null;
   presentation: string;
-  concentration: string;
+  concentration: string | null;
   unit: string;
+  manufacturer: string | null;
+  supplier: string | null;
+  lot: string | null;
+  expirationDate: string | null;
+  stock: number;
+  minimumStock: number;
+  maximumStock: number;
+  location: string | null;
+  status: ProductStatus;
+  createdAt: string;
+  unitCost: number;
+  notes: string | null;
+}
+
+export type ProductInput = Omit<
+  Product,
+  "id" | "createdAt" | "stock" | "activeIngredient" | "concentration" | "manufacturer" | "supplier" | "lot" | "expirationDate" | "location" | "notes"
+> & {
+  stock?: number;
+  activeIngredient: string;
+  concentration: string;
   manufacturer: string;
   supplier: string;
   lot: string;
   expirationDate: string;
-  stock: number;
-  minimumStock: number;
-  maximumStock: number;
   location: string;
-  status: ProductStatus;
-  createdAt: string;
-  unitCost: number;
   notes: string;
-}
-
-export type ProductInput = Omit<Product, "id" | "createdAt" | "stock"> & {
-  stock?: number;
 };
 
 export interface InventoryLine {
@@ -103,6 +122,7 @@ export interface InventoryFilters {
   category: string;
   status:
     | "all"
+    | "Con alertas"
     | "Disponible"
     | "Stock bajo"
     | "Sin stock"
@@ -120,9 +140,12 @@ export interface InventoryAnalytics {
   expired: number;
   entries: number;
   exits: number;
+  unitsEntered: number;
+  unitsExited: number;
   movementSeries: { label: string; entries: number; exits: number }[];
   topMoving: { name: string; quantity: number }[];
   categoryValue: { category: string; value: number }[];
+  products: ProductListItem[];
 }
 
 export interface InventoryReportFilters {
@@ -130,4 +153,61 @@ export interface InventoryReportFilters {
   to: string;
   category: string;
   movementType: "all" | MovementDirection;
+}
+
+// --- Paginated results from backend API ---
+
+export interface ProductListItem {
+  id: string;
+  sku: string;
+  name: string;
+  productType: ProductType;
+  category: string;
+  activeIngredient: string | null;
+  presentation: string;
+  concentration: string | null;
+  unit: string;
+  supplier: string | null;
+  manufacturer: string | null;
+  lot: string | null;
+  expirationDate: string | null;
+  stock: number;
+  minimumStock: number;
+  maximumStock: number;
+  location: string | null;
+  status: ProductStatus;
+  unitCost: number;
+  notes: string | null;
+}
+
+export interface PaginatedProducts {
+  data: ProductListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface PaginatedMovements {
+  data: InventoryMovement[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface PaginatedEntries {
+  data: InventoryEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface PaginatedExits {
+  data: InventoryExit[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }

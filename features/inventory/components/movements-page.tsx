@@ -31,14 +31,14 @@ export function MovementsPage() {
   const [direction, setDirection] = useState<"all" | "Entrada" | "Salida">(
     "all",
   );
-  const [from, setFrom] = useState("2024-06-01");
-  const [to, setTo] = useState("2024-06-18");
+  const [from, setFrom] = useState(() => daysAgo(29));
+  const [to, setTo] = useState(() => today());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   useEffect(() => {
     let cancelled = false;
-    void fetchMovements({ search, direction })
+    void fetchMovements({ search, direction, from, to })
       .then((data) => {
         if (!cancelled) setMovements(data);
       })
@@ -52,7 +52,7 @@ export function MovementsPage() {
     return () => {
       cancelled = true;
     };
-  }, [search, direction]);
+  }, [search, direction, from, to]);
   const updateSearch = (value: string) => {
     setSearch(value);
     setPage(1);
@@ -61,6 +61,18 @@ export function MovementsPage() {
   };
   const updateDirection = (value: "all" | "Entrada" | "Salida") => {
     setDirection(value);
+    setPage(1);
+    setLoading(true);
+    setError(null);
+  };
+  const updateFrom = (value: string) => {
+    setFrom(value);
+    setPage(1);
+    setLoading(true);
+    setError(null);
+  };
+  const updateTo = (value: string) => {
+    setTo(value);
     setPage(1);
     setLoading(true);
     setError(null);
@@ -111,13 +123,13 @@ export function MovementsPage() {
           <Input
             type="date"
             value={from}
-            onChange={(event) => setFrom(event.target.value)}
+            onChange={(event) => updateFrom(event.target.value)}
             aria-label="Fecha desde"
           />
           <Input
             type="date"
             value={to}
-            onChange={(event) => setTo(event.target.value)}
+            onChange={(event) => updateTo(event.target.value)}
             aria-label="Fecha hasta"
           />
         </div>
@@ -261,4 +273,21 @@ function MovementSkeleton() {
       ))}
     </div>
   );
+}
+
+function today(): string {
+  return toDateString(new Date());
+}
+
+function daysAgo(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return toDateString(date);
+}
+
+function toDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
