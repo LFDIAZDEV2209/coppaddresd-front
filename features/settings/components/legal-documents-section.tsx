@@ -26,16 +26,14 @@ import type {
   LegalDocumentVersion,
 } from "../types/legal-documents";
 
-const DEFAULT_CODE = "terms-and-conditions";
-const DEFAULT_TITLE = "Términos y condiciones";
 const BLANK = "blank";
 
 export function LegalDocumentsSection() {
   const [documents, setDocuments] = useState<LegalDocumentSummary[]>([]);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [detail, setDetail] = useState<LegalDocumentDetail | null>(null);
-  const [code, setCode] = useState(DEFAULT_CODE);
-  const [title, setTitle] = useState(DEFAULT_TITLE);
+  const [code, setCode] = useState("");
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [baseVersionId, setBaseVersionId] = useState(BLANK);
   const [view, setView] = useState<"edit" | "preview" | "history">("edit");
@@ -59,8 +57,12 @@ export function LegalDocumentsSection() {
         setTitle(document.title);
         setContent("");
         setBaseVersionId(BLANK);
-        setPreviewVersionId(null);
-        setView("edit");
+        const current = document.versions.find((version) => version.isCurrent);
+        const latest = [...document.versions].sort(
+          (a, b) => b.major - a.major || b.minor - a.minor,
+        )[0];
+        setPreviewVersionId(current?.id ?? latest?.id ?? null);
+        setView("preview");
       })
       .catch(() => {
         setDetail(null);
@@ -99,10 +101,11 @@ export function LegalDocumentsSection() {
   const startNewDocument = () => {
     setSelectedCode(null);
     setDetail(null);
-    setCode(DEFAULT_CODE);
-    setTitle(DEFAULT_TITLE);
+    setCode("");
+    setTitle("");
     setContent("");
     setBaseVersionId(BLANK);
+    setPreviewVersionId(null);
     setView("edit");
     setError(null);
     setSuccess(null);
@@ -311,7 +314,10 @@ export function LegalDocumentsSection() {
                     <textarea
                       id="legal-content"
                       value={content}
-                      onChange={(event) => setContent(event.target.value)}
+                      onChange={(event) => {
+                        setPreviewVersionId(null);
+                        setContent(event.target.value);
+                      }}
                       className="min-h-80 rounded-lg border border-input bg-background px-3 py-2 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       placeholder="Escribe aquí el contenido del documento..."
                     />
@@ -335,8 +341,17 @@ export function LegalDocumentsSection() {
                         {previewVersionId ? " · versión seleccionada" : " · borrador actual"}
                       </p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setView("edit")}>
-                      Editar
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setPreviewVersionId(null);
+                        setContent("");
+                        setBaseVersionId(BLANK);
+                        setView("edit");
+                      }}
+                    >
+                      Nueva versión
                     </Button>
                   </div>
                   <article className="min-h-80 whitespace-pre-wrap rounded-xl border border-border bg-background p-5 text-sm leading-7 text-foreground">
