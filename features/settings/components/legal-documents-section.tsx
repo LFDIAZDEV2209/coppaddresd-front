@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RichTextEditor } from "@/components/rich-text-editor";
+import { Markdown } from "@/components/markdown";
 import {
   getLegalDocument,
   listAllLegalDocumentVersions,
@@ -362,16 +364,13 @@ export function LegalDocumentsSection() {
                     </select>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="legal-content">Contenido</Label>
-                    <textarea
-                      id="legal-content"
+                    <Label>Contenido</Label>
+                    <RichTextEditor
                       value={content}
-                      onChange={(event) => {
+                      onChange={(markdown) => {
                         setPreviewVersionId(null);
-                        setContent(event.target.value);
+                        setContent(markdown);
                       }}
-                      className="min-h-80 rounded-lg border border-input bg-background px-3 py-2 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      placeholder="Escribe aquí el contenido del documento..."
                     />
                   </div>
                   <div className="flex justify-end">
@@ -406,8 +405,12 @@ export function LegalDocumentsSection() {
                       Nueva versión
                     </Button>
                   </div>
-                  <article className="min-h-80 whitespace-pre-wrap rounded-xl border border-border bg-background p-5 text-sm leading-7 text-foreground">
-                    {previewContent || "No hay contenido para previsualizar."}
+                  <article className="min-h-80 rounded-xl border border-border bg-background p-5 text-sm text-foreground">
+                    {previewContent ? (
+                      <Markdown content={previewContent} />
+                    ) : (
+                      <p className="text-muted-foreground">No hay contenido para previsualizar.</p>
+                    )}
                   </article>
                 </div>
               )}
