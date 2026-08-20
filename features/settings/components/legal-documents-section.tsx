@@ -40,6 +40,7 @@ export function LegalDocumentsSection() {
   const [previewVersionId, setPreviewVersionId] = useState<string | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishVersionId, setPublishVersionId] = useState<string>("");
+  const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -86,7 +87,7 @@ export function LegalDocumentsSection() {
 
   useEffect(() => {
     if (selectedCode) loadDocument(selectedCode);
-  }, [selectedCode]);
+  }, [selectedCode, reloadKey]);
 
   const changeBase = (versionId: string) => {
     setBaseVersionId(versionId);
@@ -241,6 +242,7 @@ export function LegalDocumentsSection() {
               onClick={() => {
                 setLoading(true);
                 setSelectedCode(document.code);
+                setReloadKey((key) => key + 1);
                 setSuccess(null);
               }}
               className={`flex items-start gap-2 rounded-lg px-2.5 py-2 text-left text-sm ${selectedCode === document.code ? "bg-primary-soft font-semibold text-primary" : "hover:bg-muted"}`}
