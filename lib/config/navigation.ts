@@ -17,6 +17,7 @@ import {
   CalendarPlus,
   ClipboardPenLine,
   UserRound,
+  Stethoscope,
   Package,
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -56,11 +57,17 @@ export const navModules: NavModule[] = [
     ],
   },
   {
-    label: "Gestión",
+    label: "GestiA3n",
     icon: FolderKanban,
     color: "#1F6E9F",
     items: [
       { label: "Usuarios", href: "/users", icon: Users, color: "#0E7490" },
+      {
+        label: "Profesionales",
+        href: "/employees",
+        icon: Stethoscope,
+        color: "#0E7490",
+      },
       {
         label: "Roles y permisos",
         href: "/roles",

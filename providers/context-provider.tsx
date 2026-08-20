@@ -21,6 +21,8 @@ interface ContextValue {
   /** Clínica activa con sus datos, o null si no hay clínica seleccionada. */
   activeClinic: MyClinic | null;
   setActiveClinic: (clinicId: string | null) => void;
+  /** Reconsulta /me/context (tras completar onboarding, cambios de clínica, etc.). */
+  refresh: () => Promise<void>;
   /**
    * ¿Tiene el permiso en el contexto actual? Combina el permiso global del
    * usuario (claims JWT, vía AuthSession) con el permiso scoped de la clínica
@@ -74,6 +76,23 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     setActiveClinicIdState(clinicId);
   }, []);
 
+  // Reconsulta el contexto (todos los setState son asíncronos: seguro de
+  // llamar desde efectos y desde handlers del wizard de onboarding).
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    try {
+      const ctx = await fetchMyContext();
+      setContext(ctx);
+      const firstClinic = ctx.clinics.find((c) => c.isPrimary) ?? ctx.clinics[0];
+      if (firstClinic && !getActiveClinicId()) {
+        setActiveClinicIdState(firstClinic.id);
+        setActiveClinicId(firstClinic.id);
+      }
+    } catch {
+      setContext(null);
+    }
+  }, [user]);
+
   const activeClinic = useMemo(
     () => context?.clinics.find((c) => c.id === activeClinicIdState) ?? null,
     [context, activeClinicIdState],
@@ -97,9 +116,10 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       activeClinicId: activeClinicIdState,
       activeClinic,
       setActiveClinic,
+      refresh,
       can,
     }),
-    [context, loading, activeClinicIdState, activeClinic, setActiveClinic, can],
+    [context, loading, activeClinicIdState, activeClinic, setActiveClinic, refresh, can],
   );
 
   return <ContextCtx.Provider value={value}>{children}</ContextCtx.Provider>;
