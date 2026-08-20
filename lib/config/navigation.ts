@@ -64,7 +64,7 @@ export const navModules: NavModule[] = [
       { label: "Usuarios", href: "/users", icon: Users, color: "#0E7490" },
       {
         label: "Profesionales",
-        href: "/employees",
+        href: "/professionals",
         icon: Stethoscope,
         color: "#0E7490",
       },
