@@ -16,11 +16,13 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getLegalDocument,
+  listAllLegalDocumentVersions,
   listLegalDocuments,
   publishLegalDocument,
   saveLegalDocumentDraft,
 } from "../services/legal-documents-service";
 import type {
+  DocumentVersionListItem,
   LegalDocumentDetail,
   LegalDocumentSummary,
   LegalDocumentVersion,
@@ -30,6 +32,7 @@ const BLANK = "blank";
 
 export function LegalDocumentsSection() {
   const [documents, setDocuments] = useState<LegalDocumentSummary[]>([]);
+  const [allVersions, setAllVersions] = useState<DocumentVersionListItem[]>([]);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [detail, setDetail] = useState<LegalDocumentDetail | null>(null);
   const [code, setCode] = useState("");
@@ -73,6 +76,12 @@ export function LegalDocumentsSection() {
   };
 
   useEffect(() => {
+    void listAllLegalDocumentVersions()
+      .then(setAllVersions)
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
     void listLegalDocuments()
       .then((data) => {
         setDocuments(data);
@@ -97,6 +106,13 @@ export function LegalDocumentsSection() {
     }
     const version = detail?.versions.find((item) => item.id === versionId);
     setContent(version?.content ?? "");
+  };
+
+  const openDocument = (documentCode: string) => {
+    setLoading(true);
+    setSelectedCode(documentCode);
+    setReloadKey((key) => key + 1);
+    setSuccess(null);
   };
 
   const startNewDocument = () => {
@@ -366,31 +382,37 @@ export function LegalDocumentsSection() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     <History className="size-4 text-primary" />
-                    <h3 className="text-sm font-semibold">Historial de versiones</h3>
+                    <h3 className="text-sm font-semibold">Todas las versiones</h3>
+                    <span className="text-xs text-muted-foreground">
+                      · {allVersions.length} borradores y publicaciones
+                    </span>
                   </div>
-                  {detail?.versions.length ? (
-                    detail.versions.map((version) => (
-                      <div key={version.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border px-3 py-2.5">
+                  {allVersions.length ? (
+                    allVersions.map((item) => (
+                      <div key={item.versionId} className="flex flex-wrap items-center gap-3 rounded-lg border border-border px-3 py-2.5">
                         <div className="flex-1">
                           <p className="text-sm font-semibold">
-                            v{version.versionLabel}
-                            {version.isPublished ? (
+                            {item.documentTitle}
+                            <span className="ml-2 font-mono text-xs text-muted-foreground">
+                              v{item.versionLabel}
+                            </span>
+                            {item.isPublished ? (
                               <span className="ml-2 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-bold text-success-foreground">Publicado</span>
                             ) : (
                               <span className="ml-2 rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-warning-foreground">Borrador</span>
                             )}
-                            {version.isCurrent && <span className="ml-2 text-xs text-success-foreground">· Activa</span>}
+                            {item.isCurrent && <span className="ml-2 text-xs text-success-foreground">· Activa</span>}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(version.createdAt).toLocaleString("es-CO")} · {version.createdBy ?? "Administrador"}
+                            {new Date(item.createdAt).toLocaleString("es-CO")} · {item.createdBy ?? "Administrador"}
                           </p>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => { setPreviewVersionId(version.id); setView("preview"); }}>
+                        <Button variant="outline" size="sm" onClick={() => openDocument(item.documentCode)}>
                           <Eye data-icon="inline-start" />
                           Ver
                         </Button>
-                        {!version.isPublished && (
-                          <Button size="sm" className="bg-success text-white hover:bg-success/90" disabled={publishing} onClick={() => { setPublishVersionId(version.id); setPublishOpen(true); }}>
+                        {!item.isPublished && (
+                          <Button size="sm" className="bg-success text-white hover:bg-success/90" disabled={publishing} onClick={() => { openDocument(item.documentCode); setPublishVersionId(item.versionId); setPublishOpen(true); }}>
                             <Rocket data-icon="inline-start" />
                             Publicar
                           </Button>

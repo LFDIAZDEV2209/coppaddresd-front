@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type {
+  DocumentVersionListItem,
   LegalDocumentDetail,
   LegalDocumentSummary,
   LegalDocumentVersion,
@@ -12,6 +13,10 @@ const PATH = `${env.apiUrl}/api/v1/legal-documents`;
 
 export function listLegalDocuments() {
   return apiFetch<LegalDocumentSummary[]>(PATH);
+}
+
+export function listAllLegalDocumentVersions() {
+  return apiFetch<DocumentVersionListItem[]>(`${PATH}/all-versions`);
 }
 
 export function getLegalDocument(code: string) {
