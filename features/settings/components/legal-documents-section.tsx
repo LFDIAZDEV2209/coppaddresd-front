@@ -43,6 +43,7 @@ export function LegalDocumentsSection() {
   const [previewVersionId, setPreviewVersionId] = useState<string | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishVersionId, setPublishVersionId] = useState<string>("");
+  const [pendingPreviewId, setPendingPreviewId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,6 +55,7 @@ export function LegalDocumentsSection() {
     listLegalDocuments().then((data) => setDocuments(data));
 
   const loadDocument = (documentCode: string) => {
+    const requestedId = pendingPreviewId;
     void getLegalDocument(documentCode)
       .then((document) => {
         setDetail(document);
@@ -61,15 +63,18 @@ export function LegalDocumentsSection() {
         setTitle(document.title);
         setContent("");
         setBaseVersionId(BLANK);
+        const requested = document.versions.find((version) => version.id === requestedId);
         const current = document.versions.find((version) => version.isCurrent);
         const latest = [...document.versions].sort(
           (a, b) => b.major - a.major || b.minor - a.minor,
         )[0];
-        setPreviewVersionId(current?.id ?? latest?.id ?? null);
+        setPreviewVersionId(requested?.id ?? current?.id ?? latest?.id ?? null);
+        setPendingPreviewId(null);
         setView("preview");
       })
       .catch(() => {
         setDetail(null);
+        setPendingPreviewId(null);
         setError("No pudimos cargar el documento seleccionado.");
       })
       .finally(() => setLoading(false));
@@ -96,6 +101,7 @@ export function LegalDocumentsSection() {
 
   useEffect(() => {
     if (selectedCode) loadDocument(selectedCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCode, reloadKey]);
 
   const changeBase = (versionId: string) => {
@@ -113,6 +119,11 @@ export function LegalDocumentsSection() {
     setSelectedCode(documentCode);
     setReloadKey((key) => key + 1);
     setSuccess(null);
+  };
+
+  const openVersion = (documentCode: string, versionId: string) => {
+    setPendingPreviewId(versionId);
+    openDocument(documentCode);
   };
 
   const startNewDocument = () => {
@@ -251,28 +262,46 @@ export function LegalDocumentsSection() {
           <p className="px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             Documentos
           </p>
-          {documents.map((document) => (
-            <button
-              type="button"
-              key={document.code}
-              onClick={() => {
-                setLoading(true);
-                setSelectedCode(document.code);
-                setReloadKey((key) => key + 1);
-                setSuccess(null);
-              }}
-              className={`flex items-start gap-2 rounded-lg px-2.5 py-2 text-left text-sm ${selectedCode === document.code ? "bg-primary-soft font-semibold text-primary" : "hover:bg-muted"}`}
-            >
-              <FileText className="mt-0.5 size-4 shrink-0" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate">{document.title}</span>
-                <span className="block text-[11px] font-normal text-muted-foreground">
-                  {document.isPublished ? `v${document.currentVersion} publicado` : "Sin publicar"}
-                  {document.latestDraft ? ` · borrador v${document.latestDraft}` : ""}
-                </span>
-              </span>
-            </button>
-          ))}
+          {documents.map((document) => {
+            const docVersions = allVersions
+              .filter((item) => item.documentCode === document.code)
+              .sort((a, b) => b.major - a.major || b.minor - a.minor);
+            return (
+              <div key={document.code} className="flex flex-col gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => openDocument(document.code)}
+                  className={`flex items-start gap-2 rounded-lg px-2.5 py-2 text-left text-sm ${selectedCode === document.code ? "bg-primary-soft font-semibold text-primary" : "hover:bg-muted"}`}
+                >
+                  <FileText className="mt-0.5 size-4 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">{document.title}</span>
+                    <span className="block text-[11px] font-normal text-muted-foreground">
+                      {document.isPublished ? `v${document.currentVersion} publicado` : "Sin publicar"}
+                      {document.versionCount ? ` · ${document.versionCount} ${document.versionCount === 1 ? "versión" : "versiones"}` : ""}
+                    </span>
+                  </span>
+                </button>
+                {docVersions.length > 0 && (
+                  <div className="ml-5 flex flex-col border-l border-border pl-2">
+                    {docVersions.map((version) => (
+                      <button
+                        type="button"
+                        key={version.versionId}
+                        onClick={() => openVersion(version.documentCode, version.versionId)}
+                        className={`flex items-center justify-between gap-2 rounded-md px-2 py-1 text-left text-xs ${previewVersionId === version.versionId ? "bg-primary-soft font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                      >
+                        <span className="font-mono">v{version.versionLabel}</span>
+                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${version.isPublished ? "bg-success-soft text-success-foreground" : "bg-warning-soft text-warning-foreground"}`}>
+                          {version.isPublished ? "Publicado" : "Borrador"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {!documents.length && (
             <p className="px-2 py-3 text-xs text-muted-foreground">Aún no hay documentos.</p>
           )}
