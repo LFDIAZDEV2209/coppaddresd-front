@@ -5,10 +5,16 @@ import {
   CheckCircle2,
   Eye,
   FileText,
+  FolderOpen,
+  GitBranch,
+  Hash,
   History,
+  PenLine,
+  Pencil,
   Plus,
   Rocket,
   Save,
+  Type,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -215,36 +221,38 @@ export function LegalDocumentsSection() {
         </p>
       )}
 
-      <section className="rounded-2xl border border-primary/15 bg-primary-soft/50 p-5">
+      <section className="rounded-2xl bg-primary-strong p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
               <FileText className="size-5" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-bold">{detail?.title ?? "Nuevo documento"}</h2>
-                <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+                <h2 className="text-lg font-bold text-white">{detail?.title ?? "Nuevo documento"}</h2>
+                <span className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[11px] text-white/70">
                   {code}
                 </span>
               </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 {detail?.isPublished ? (
-                  <span className="rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-bold text-success-foreground">
+                  <span className="rounded-full bg-success px-2.5 py-0.5 text-xs font-bold text-white">
+                    <CheckCircle2 className="mr-1 inline size-3" />
                     Publicado · v{detail.currentVersion}
                   </span>
                 ) : (
-                  <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-bold text-warning-foreground">
+                  <span className="rounded-full bg-warning px-2.5 py-0.5 text-xs font-bold text-white">
+                    <PenLine className="mr-1 inline size-3" />
                     Sin publicar
                   </span>
                 )}
                 {detail?.latestDraft && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-white/70">
                     Último borrador v{detail.latestDraft}
                   </span>
                 )}
                 {detail && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-white/70">
                     · {detail.versionCount} {detail.versionCount === 1 ? "versión" : "versiones"}
                   </span>
                 )}
@@ -252,7 +260,12 @@ export function LegalDocumentsSection() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={startNewDocument}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-white/20 bg-white/5 text-white hover:bg-white/10"
+              onClick={startNewDocument}
+            >
               <Plus data-icon="inline-start" />
               Nuevo documento
             </Button>
@@ -266,7 +279,8 @@ export function LegalDocumentsSection() {
 
       <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
         <aside className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 p-3">
-          <p className="px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="flex items-center gap-1.5 px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <FolderOpen className="size-3.5" />
             Documentos
           </p>
           {documents.map((document) => {
@@ -299,7 +313,8 @@ export function LegalDocumentsSection() {
                         className={`flex items-center justify-between gap-2 rounded-md px-2 py-1 text-left text-xs ${previewVersionId === version.versionId ? "bg-primary-soft font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                       >
                         <span className="font-mono">v{version.versionLabel}</span>
-                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${version.isPublished ? "bg-success-soft text-success-foreground" : "bg-warning-soft text-warning-foreground"}`}>
+                        <span className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${version.isPublished ? "bg-success-soft text-success-foreground" : "bg-warning-soft text-warning-foreground"}`}>
+                          {version.isPublished ? <CheckCircle2 className="size-2.5" /> : <PenLine className="size-2.5" />}
                           {version.isPublished ? "Publicado" : "Borrador"}
                         </span>
                       </button>
@@ -323,32 +338,49 @@ export function LegalDocumentsSection() {
           ) : (
             <>
               <div className="flex flex-wrap gap-2 border-b border-border pb-3">
-                {(["edit", "preview", "history"] as const).map((item) => (
-                  <button
-                    type="button"
-                    key={item}
-                    onClick={() => setView(item)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${view === item ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
-                  >
-                    {item === "edit" ? "Editar" : item === "preview" ? "Vista previa" : "Historial"}
-                  </button>
-                ))}
+                {([
+                  { id: "edit", label: "Editar", icon: Pencil },
+                  { id: "preview", label: "Vista previa", icon: Eye },
+                  { id: "history", label: "Historial", icon: History },
+                ] as const).map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => setView(item.id)}
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold ${view === item.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+                    >
+                      <Icon className="size-3.5" />
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
 
               {view === "edit" && (
                 <div className="flex flex-col gap-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="legal-code">Código</Label>
+                      <Label htmlFor="legal-code" className="flex items-center gap-1">
+                        <Hash className="size-3.5" />
+                        Código
+                      </Label>
                       <Input id="legal-code" value={code} onChange={(event) => setCode(event.target.value)} placeholder="terms-and-conditions" />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="legal-title">Título</Label>
+                      <Label htmlFor="legal-title" className="flex items-center gap-1">
+                        <Type className="size-3.5" />
+                        Título
+                      </Label>
                       <Input id="legal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Términos y condiciones" />
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="legal-base">Basada en</Label>
+                    <Label htmlFor="legal-base" className="flex items-center gap-1">
+                      <GitBranch className="size-3.5" />
+                      Basada en
+                    </Label>
                     <select
                       id="legal-base"
                       value={baseVersionId}
@@ -402,6 +434,7 @@ export function LegalDocumentsSection() {
                         setView("edit");
                       }}
                     >
+                      <Plus data-icon="inline-start" />
                       Nueva versión
                     </Button>
                   </div>
@@ -434,9 +467,15 @@ export function LegalDocumentsSection() {
                               v{item.versionLabel}
                             </span>
                             {item.isPublished ? (
-                              <span className="ml-2 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-bold text-success-foreground">Publicado</span>
+                              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-bold text-success-foreground">
+                                <CheckCircle2 className="size-3" />
+                                Publicado
+                              </span>
                             ) : (
-                              <span className="ml-2 rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-warning-foreground">Borrador</span>
+                              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-warning-foreground">
+                                <PenLine className="size-3" />
+                                Borrador
+                              </span>
                             )}
                             {item.isCurrent && <span className="ml-2 text-xs text-success-foreground">· Activa</span>}
                           </p>
