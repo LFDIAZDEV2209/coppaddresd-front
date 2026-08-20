@@ -14,6 +14,8 @@ export interface PatientListItem {
   phoneCountryCode: string | null;
   phoneNumber: string | null;
   email: string | null;
+  clinicId: string | null;
+  clinicName: string | null;
   insurerName: string | null;
   status: PatientStatus;
   createdAt: string;
@@ -100,6 +102,10 @@ export interface Patient {
   surgeryHistory: string | null;
   status: PatientStatus;
   notes: string | null;
+  clinicId: string | null;
+  clinicName: string | null;
+  locationId: string | null;
+  locationName: string | null;
   createdAt: string;
   updatedAt: string | null;
   diagnoses: PatientDiagnosis[];

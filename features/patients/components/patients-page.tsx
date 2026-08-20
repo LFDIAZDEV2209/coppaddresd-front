@@ -31,13 +31,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -71,10 +64,11 @@ export function PatientsPage() {
     remove,
     retry,
   } = usePatients();
-  const [details, setDetails] = useState<PatientListItem | undefined>();
   const [deleting, setDeleting] = useState<PatientListItem | undefined>();
 
   const openCreate = () => router.push("/patients/new");
+  const openDetail = (patient: PatientListItem) =>
+    router.push(`/patients/${patient.id}`);
   const openEdit = (patient: PatientListItem) =>
     router.push(`/patients/${patient.id}/edit`);
 
@@ -172,7 +166,7 @@ export function PatientsPage() {
       ) : result?.data.length ? (
         <PatientTable
           patients={result.data}
-          onDetails={setDetails}
+          onOpen={openDetail}
           onEdit={openEdit}
           onDelete={setDeleting}
         />
@@ -186,7 +180,6 @@ export function PatientsPage() {
           onPageChange={setPage}
         />
       )}
-      <PatientDetails patient={details} onClose={() => setDetails(undefined)} />
       <AlertDialog
         open={Boolean(deleting)}
         onOpenChange={(open) => !open && setDeleting(undefined)}
@@ -223,12 +216,12 @@ export function PatientsPage() {
 
 function PatientTable({
   patients,
-  onDetails,
+  onOpen,
   onEdit,
   onDelete,
 }: {
   patients: PatientListItem[];
-  onDetails: (patient: PatientListItem) => void;
+  onOpen: (patient: PatientListItem) => void;
   onEdit: (patient: PatientListItem) => void;
   onDelete: (patient: PatientListItem) => void;
 }) {
@@ -247,6 +240,7 @@ function PatientTable({
             <TableHead>Documento</TableHead>
             <TableHead className="hidden lg:table-cell">Contacto</TableHead>
             <TableHead className="hidden md:table-cell">Aseguradora</TableHead>
+            <TableHead className="hidden xl:table-cell">Clínica</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="w-10">
               <span className="sr-only">Acciones</span>
@@ -259,7 +253,7 @@ function PatientTable({
               <TableCell>
                 <button
                   className="flex items-center gap-3 text-left"
-                  onClick={() => onDetails(patient)}
+                  onClick={() => onOpen(patient)}
                 >
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
                     {patient.firstName[0]}
@@ -293,6 +287,9 @@ function PatientTable({
               <TableCell className="hidden text-sm md:table-cell">
                 {patient.insurerName ?? "Sin aseguradora"}
               </TableCell>
+              <TableCell className="hidden text-sm xl:table-cell">
+                {patient.clinicName ?? "Sin asignar"}
+              </TableCell>
               <TableCell>
                 <StatusBadge
                   status={patient.status}
@@ -313,7 +310,7 @@ function PatientTable({
                     <MoreHorizontal />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onDetails(patient)}>
+                    <DropdownMenuItem onClick={() => onOpen(patient)}>
                       <Eye />
                       Ver detalles
                     </DropdownMenuItem>
@@ -348,90 +345,6 @@ function PatientTable({
   );
 }
 
-function PatientDetails({
-  patient,
-  onClose,
-}: {
-  patient?: PatientListItem;
-  onClose: () => void;
-}) {
-  return (
-    <Dialog open={Boolean(patient)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Detalle del paciente</DialogTitle>
-          <DialogDescription>
-            Información registrada en el directorio.
-          </DialogDescription>
-        </DialogHeader>
-        {patient && (
-          <div className="flex flex-col gap-5">
-            <div className="flex items-center gap-3 rounded-xl bg-primary-soft p-4">
-              <span className="flex size-11 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-                {patient.firstName[0]}
-                {patient.lastName[0]}
-              </span>
-              <div>
-                <p className="font-semibold">
-                  {patient.firstName} {patient.lastName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {patient.medicalRecordNumber ?? "Sin MRN"}
-                </p>
-              </div>
-              <div className="ml-auto">
-                <StatusBadge
-                  status={patient.status}
-                  color={statusColor(patient.status)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
-              <Detail
-                label="Fecha de nacimiento"
-                value={
-                  patient.dateOfBirth
-                    ? `${patient.dateOfBirth.slice(0, 10)} · ${getAge(patient.dateOfBirth)} años`
-                    : "No registrada"
-                }
-              />
-              <Detail
-                label="Documento"
-                value={
-                  patient.documentNumber
-                    ? `${patient.documentTypeName ?? ""} ${patient.documentNumber}`
-                    : "No registrado"
-                }
-              />
-              <Detail
-                label="Teléfono"
-                value={formatPhone(patient) ?? "No registrado"}
-              />
-              <Detail label="Correo" value={patient.email ?? "No registrado"} />
-              <Detail
-                label="Aseguradora"
-                value={patient.insurerName ?? "Sin aseguradora"}
-              />
-              <Detail
-                label="Género"
-                value={patient.gender ?? "No registrado"}
-              />
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 font-medium">{value}</p>
-    </div>
-  );
-}
 function Summary({
   label,
   value,
