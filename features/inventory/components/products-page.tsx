@@ -257,12 +257,13 @@ export function ProductsPage() {
               vencer.
             </p>
           </div>
-          <Link
-            href="/inventory/reports"
+          <button
+            type="button"
+            onClick={() => updateFilters({ status: "Con alertas" })}
             className="text-xs font-bold text-warning-foreground underline underline-offset-2"
           >
             Ver alertas
-          </Link>
+          </button>
         </div>
       )}
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
@@ -325,6 +326,7 @@ export function ProductsPage() {
             aria-label="Filtrar por estado"
           >
             <option value="all">Todos los estados</option>
+            <option>Con alertas</option>
             <option>Disponible</option>
             <option>Stock bajo</option>
             <option>Sin stock</option>
@@ -989,6 +991,11 @@ function stateColor(state: InventoryFilters["status"]) {
       bg: "var(--success-soft)",
       text: "var(--success-foreground)",
       dot: "var(--success-foreground)",
+    },
+    "Con alertas": {
+      bg: "var(--warning-soft)",
+      text: "var(--warning-foreground)",
+      dot: "var(--warning)",
     },
     "Stock bajo": {
       bg: "var(--warning-soft)",
