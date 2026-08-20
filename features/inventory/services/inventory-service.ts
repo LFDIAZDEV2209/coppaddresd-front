@@ -17,6 +17,13 @@ import type {
 
 const PATH = `${env.apiUrl}/api/v1/inventory`;
 
+const ALERT_STATES: string[] = [
+  "Stock bajo",
+  "Sin stock",
+  "Próximo a vencer",
+  "Vencido",
+];
+
 // --- Products ---
 
 /** Server-side search/category, computed stock states derived client-side. */
@@ -35,6 +42,8 @@ export async function fetchProducts(
   return result.data.filter((product) => {
     if (filters.status === "Inactivo") return product.status === "Inactivo";
     if (filters.status === "all") return true;
+    if (filters.status === "Con alertas")
+      return ALERT_STATES.includes(getProductState(product));
     return getProductState(product) === filters.status;
   });
 }
@@ -96,10 +105,14 @@ export function getProductState(
 export async function fetchMovements(filters: {
   search: string;
   direction: "all" | "Entrada" | "Salida";
+  from?: string;
+  to?: string;
 }): Promise<InventoryMovement[]> {
   const params = new URLSearchParams({ pageSize: "200" });
   if (filters.search.trim()) params.set("search", filters.search.trim());
   if (filters.direction !== "all") params.set("direction", filters.direction);
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
 
   const result = await apiFetch<PaginatedMovements>(
     `${PATH}/movements?${params.toString()}`,
@@ -172,8 +185,16 @@ export async function fetchExits(): Promise<InventoryExit[]> {
 
 // --- Analytics ---
 
-export async function fetchAnalytics(): Promise<InventoryAnalytics> {
-  return apiFetch<InventoryAnalytics>(`${PATH}/analytics`);
+export async function fetchAnalytics(
+  range?: { from?: string; to?: string },
+): Promise<InventoryAnalytics> {
+  const params = new URLSearchParams();
+  if (range?.from) params.set("from", range.from);
+  if (range?.to) params.set("to", range.to);
+  const query = params.toString();
+  return apiFetch<InventoryAnalytics>(
+    `${PATH}/analytics${query ? `?${query}` : ""}`,
+  );
 }
 
 // --- Helpers ---

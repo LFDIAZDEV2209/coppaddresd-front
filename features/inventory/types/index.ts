@@ -122,6 +122,7 @@ export interface InventoryFilters {
   category: string;
   status:
     | "all"
+    | "Con alertas"
     | "Disponible"
     | "Stock bajo"
     | "Sin stock"
@@ -139,9 +140,12 @@ export interface InventoryAnalytics {
   expired: number;
   entries: number;
   exits: number;
+  unitsEntered: number;
+  unitsExited: number;
   movementSeries: { label: string; entries: number; exits: number }[];
   topMoving: { name: string; quantity: number }[];
   categoryValue: { category: string; value: number }[];
+  products: ProductListItem[];
 }
 
 export interface InventoryReportFilters {
