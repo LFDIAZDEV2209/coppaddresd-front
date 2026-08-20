@@ -52,7 +52,12 @@ export function LegalDocumentsSection() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const reloadList = () =>
-    listLegalDocuments().then((data) => setDocuments(data));
+    Promise.all([listLegalDocuments(), listAllLegalDocumentVersions()]).then(
+      ([docs, versions]) => {
+        setDocuments(docs);
+        setAllVersions(versions);
+      },
+    );
 
   const loadDocument = (documentCode: string) => {
     const requestedId = pendingPreviewId;
