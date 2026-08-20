@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings as SettingsIcon, Palette, Shield, Bot, Plug, Bell } from "lucide-react";
+import { Settings as SettingsIcon, Palette, Shield, Bot, Plug, Bell, FileText } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Separator } from "@/components/ui/separator";
@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTheme } from "@/providers/theme-provider";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { LegalDocumentsSection } from "./legal-documents-section";
 
 const accentColors = [
   { name: "Índigo", value: "#4B0082" },
@@ -25,6 +26,7 @@ const settingsNav = [
   { label: "IA", icon: Bot },
   { label: "Integraciones", icon: Plug },
   { label: "Notificaciones", icon: Bell },
+  { label: "Documentación", icon: FileText },
 ];
 
 export function SettingsPageContent() {
@@ -65,6 +67,7 @@ export function SettingsPageContent() {
         </nav>
 
         <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          {activeSection === "Documentación" ? <LegalDocumentsSection /> : <>
           <SectionHeader
             title="Apariencia"
             description="Personaliza el tema y la visualización"
@@ -186,6 +189,7 @@ export function SettingsPageContent() {
               </RadioGroup>
             </div>
           </div>
+          </>}
         </div>
       </div>
     </div>
