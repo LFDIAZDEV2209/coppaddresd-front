@@ -29,7 +29,7 @@ export async function DashboardPage() {
   const quickActions = getQuickActions();
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in">
       <PageHeader
         title="Resumen"
         description="Vista general de la actividad"
@@ -37,7 +37,7 @@ export async function DashboardPage() {
       />
 
       {/* KPI Cards */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores clave">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 stagger-children" aria-label="Indicadores clave">
         {kpis.map((kpi) => (
           <StatCard
             key={kpi.id}

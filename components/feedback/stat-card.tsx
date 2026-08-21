@@ -66,7 +66,7 @@ export function StatCard({
   const config = variantConfig[variant];
 
   return (
-    <div className="group flex items-center gap-4 rounded-xl border border-border/60 bg-card p-4 transition-all hover:border-border hover:shadow-sm">
+    <div className="group flex items-center gap-4 rounded-xl border border-border/60 bg-card p-4 transition-all duration-200 hover:border-border hover:shadow-sm hover:-translate-y-0.5">
       <div
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-lg",

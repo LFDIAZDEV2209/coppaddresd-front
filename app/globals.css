@@ -73,10 +73,10 @@
   --popover: #FFFFFF;
   --popover-foreground: #1A1D2E;
 
-  --primary: #2563EB;
+  --primary: #3B82F6;
   --primary-foreground: #FFFFFF;
-  --primary-soft: #E8F1FC;
-  --primary-strong: #1D4ED8;
+  --primary-soft: #DBEAFE;
+  --primary-strong: #2563EB;
 
   --secondary: #E2E8F0;
   --secondary-foreground: #475569;
@@ -106,9 +106,9 @@
 
   --border: #E2E8F0;
   --input: #E2E8F0;
-  --ring: #2563EB;
+  --ring: #3B82F6;
 
-  --chart-1: #2563EB;
+  --chart-1: #3B82F6;
   --chart-2: #0EA5E9;
   --chart-3: #059669;
   --chart-4: #D97706;
@@ -121,7 +121,7 @@
   --sidebar-accent: #1E293B;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #1E293B;
-  --sidebar-ring: #2563EB;
+  --sidebar-ring: #3B82F6;
   --sidebar-muted-foreground: #64748B;
 
   /* === DESIGN TOKENS === */
@@ -229,6 +229,80 @@
   [aria-disabled="true"] {
     cursor: not-allowed;
   }
+}
+
+/* === ANIMACIONES === */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Clases de utilidad para animaciones */
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.35s ease-out both;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.35s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out both;
+}
+
+/* Stagger children animations */
+.stagger-children > * {
+  animation: slide-up 0.3s ease-out both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+
+/* Transiciones suaves para elementos interactivos */
+.transition-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Gradient primary para headers y sidebar */
+.bg-primary-gradient {
+  background: linear-gradient(135deg, var(--sidebar) 0%, color-mix(in srgb, var(--sidebar) 80%, var(--primary)) 100%);
 }
 
 .rich-text-editor .ProseMirror {

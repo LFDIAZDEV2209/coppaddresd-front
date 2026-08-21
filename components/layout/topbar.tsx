@@ -41,7 +41,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const segments = getBreadcrumbSegments(pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-[var(--sidebar)] px-4 lg:px-5">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/8 bg-gradient-to-r from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_90%,var(--primary))] px-4 lg:px-5">
       {/* Left: Mobile menu + Breadcrumb */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <button

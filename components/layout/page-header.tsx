@@ -19,7 +19,7 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-t-xl rounded-b-none bg-[var(--sidebar)] px-6 py-4",
+        "flex items-center gap-4 rounded-t-xl rounded-b-none bg-gradient-to-r from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_88%,var(--primary))] px-6 py-4",
         className
       )}
     >
