@@ -21,27 +21,27 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   const styles = {
-    primary: "bg-[#0B2B4A] text-white rounded-2xl px-5 py-4",
+    primary: "bg-[var(--sidebar)] text-white rounded-none px-4 py-3",
     secondary: "bg-primary-soft text-foreground rounded-xl px-4 py-3",
     tertiary: "bg-transparent text-foreground px-0 py-2",
   };
 
   const iconStyles = {
-    primary: "bg-[#123B63] text-white",
+    primary: "bg-primary text-primary-foreground",
     secondary: "bg-primary/10 text-primary",
     tertiary: "bg-muted text-muted-foreground",
   };
 
   const titleStyles = {
-    primary: "text-[15px] font-bold text-white",
-    secondary: "text-[14px] font-semibold text-foreground",
-    tertiary: "text-[14px] font-semibold text-foreground",
+    primary: "text-[13px] font-bold text-white",
+    secondary: "text-[13px] font-semibold text-foreground",
+    tertiary: "text-[13px] font-semibold text-foreground",
   };
 
   const descStyles = {
-    primary: "text-[12px] text-white/70",
-    secondary: "text-[11.5px] text-muted-foreground",
-    tertiary: "text-[11.5px] text-muted-foreground",
+    primary: "text-[11px] text-white/60",
+    secondary: "text-[11px] text-muted-foreground",
+    tertiary: "text-[11px] text-muted-foreground",
   };
 
   return (
@@ -49,11 +49,11 @@ export function SectionHeader({
       {Icon && (
         <div
           className={cn(
-            "flex size-9 items-center justify-center rounded-xl shrink-0",
+            "flex size-8 items-center justify-center rounded-lg shrink-0",
             iconStyles[variant]
           )}
         >
-          <Icon className="size-[18px]" />
+          <Icon className="size-4" />
         </div>
       )}
 

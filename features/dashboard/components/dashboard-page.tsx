@@ -53,7 +53,7 @@ export async function DashboardPage() {
 
       {/* Activity Chart + Quick Actions */}
       <div className="flex flex-col gap-4 xl:flex-row">
-        <div className="flex-1 flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex-1 flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
           <SectionHeader
             title="Actividad semanal"
             description="Conversaciones por día"
@@ -64,7 +64,7 @@ export async function DashboardPage() {
             <ActivityChart data={activityData} />
           </div>
         </div>
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card xl:w-[300px]">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card xl:w-[300px]">
           <SectionHeader
             title="Acciones rápidas"
             description="Accesos directos"
@@ -79,7 +79,7 @@ export async function DashboardPage() {
 
       {/* Bottom Row */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label="Métricas detalladas">
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
           <SectionHeader
             title="Uso de agentes"
             description="Consumo por agente"
@@ -91,7 +91,7 @@ export async function DashboardPage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
           <SectionHeader
             title="Crecimiento"
             description="Usuarios nuevos por mes"
@@ -103,7 +103,7 @@ export async function DashboardPage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
           <SectionHeader
             title="Actividad reciente"
             description="Últimas acciones"

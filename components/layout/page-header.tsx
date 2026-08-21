@@ -19,19 +19,19 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-2xl bg-[#0B2B4A] px-6 py-5",
+        "flex items-center gap-4 rounded-t-xl rounded-b-none bg-[var(--sidebar)] px-6 py-4",
         className
       )}
     >
-      <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#123B63]">
-        <Icon className="size-6 text-white" />
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <Icon className="size-5" />
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 overflow-hidden min-w-0">
-        <h1 className="text-xl font-bold text-white tracking-tight truncate">
+      <div className="flex flex-1 flex-col gap-0.5 overflow-hidden min-w-0">
+        <h1 className="text-lg font-bold text-white tracking-tight truncate">
           {title}
         </h1>
-        <p className="text-[13px] text-white/70 truncate">
+        <p className="text-[12px] text-white/60 truncate">
           {description}
         </p>
       </div>

@@ -41,7 +41,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const segments = getBreadcrumbSegments(pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-[#0B2B4A] px-4 lg:px-5">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-[var(--sidebar)] px-4 lg:px-5">
       {/* Left: Mobile menu + Breadcrumb */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <button
@@ -112,7 +112,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           aria-label="Notificaciones"
         >
           <Bell className="size-4" />
-          <span className="absolute right-1.5 top-1.5 size-[7px] rounded-full bg-destructive ring-2 ring-[#0B2B4A]" />
+          <span className="absolute right-1.5 top-1.5 size-[7px] rounded-full bg-destructive ring-2 ring-[var(--sidebar)]" />
         </button>
 
         {/* Contexto organizacional (switcher de clínica) */}
