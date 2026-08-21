@@ -1,5 +1,5 @@
-import { ProfilesRevisionPage } from "@/features/community/components/profiles-revision-page";
+import { MembersPage } from "@/features/community/components/members-page";
 
 export default function Page() {
-  return <ProfilesRevisionPage />;
+  return <MembersPage />;
 }
