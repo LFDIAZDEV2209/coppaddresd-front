@@ -190,6 +190,16 @@ export interface Insurer {
   name: string;
 }
 
+/** Asignación paciente ↔ profesional ("mis pacientes" / quién atiende al paciente). */
+export interface PatientProfessionalAssignment {
+  professionalId: string;
+  fullName: string;
+  professionalTypeName: string | null;
+  relationshipType: string;
+  status: "Active" | "Inactive";
+  createdAt: string;
+}
+
 /** Opción de un catálogo cerrado (grupo sanguíneo, tipo de documento, etnia). */
 export interface CatalogOption {
   id: string;

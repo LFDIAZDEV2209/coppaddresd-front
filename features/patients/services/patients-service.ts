@@ -6,6 +6,7 @@ import type {
   PatientFilters,
   PatientInput,
   PatientListItem,
+  PatientProfessionalAssignment,
   PaginatedResult,
 } from "../types";
 
@@ -55,6 +56,34 @@ export async function updatePatient(
 
 export async function deletePatient(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
+}
+
+// --- Asignación paciente ↔ profesional ("mis pacientes") ---
+
+export async function fetchPatientAssignments(
+  id: string,
+): Promise<PatientProfessionalAssignment[]> {
+  return apiFetch<PatientProfessionalAssignment[]>(`${PATH}/${id}/professionals`);
+}
+
+export async function assignPatientProfessional(
+  id: string,
+  professionalId: string,
+  relationshipType?: string,
+): Promise<PatientProfessionalAssignment> {
+  return apiFetch<PatientProfessionalAssignment>(`${PATH}/${id}/professionals`, {
+    method: "POST",
+    body: JSON.stringify({ professionalId, relationshipType }),
+  });
+}
+
+export async function removePatientProfessional(
+  id: string,
+  professionalId: string,
+): Promise<void> {
+  await apiFetch<void>(`${PATH}/${id}/professionals/${professionalId}`, {
+    method: "DELETE",
+  });
 }
 
 /** Catálogo estático: cache en memoria con TTL (evita re-peticiones al navegar). */

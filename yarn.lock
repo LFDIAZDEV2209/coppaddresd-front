@@ -2708,6 +2708,7 @@ __metadata:
   resolution: "coppaddresd-front@workspace:."
   dependencies:
     "@base-ui/react": "npm:^1.7.0"
+    "@floating-ui/dom": "npm:^1.8.0"
     "@tailwindcss/postcss": "npm:^4"
     "@tiptap/core": "npm:^3.30.2"
     "@tiptap/pm": "npm:^3.30.2"
