@@ -3,17 +3,18 @@
 import { useMemo } from "react";
 import { useMutation, useQuery } from "urql";
 import {
-  APPROVE_PROFILE,
+  BAN_PROFILE,
   FEED_QUERY,
   MODERATE_DELETE_POST,
-  PENDING_PROFILES_QUERY,
   PIN_POST,
-  REJECT_PROFILE,
+  PROFILES_QUERY,
+  UNBAN_PROFILE,
   type FeedResult,
-  type PendingProfilesResult,
+  type ProfilesResult,
 } from "../services/community";
 
 const PAGE_SIZE = 50;
+const PROFILE_PAGE_SIZE = 200;
 
 export interface FeedPostView {
   post: CommunityPostLike;
@@ -25,22 +26,23 @@ type CommunityPostLike = FeedResult["feed"][number];
 
 /** Datos de la comunidad para el panel de administración. */
 export function useCommunity() {
-  const [pendingResult, refetchPending] = useQuery<PendingProfilesResult>({
-    query: PENDING_PROFILES_QUERY,
+  const [profilesResult, refetchProfiles] = useQuery<ProfilesResult>({
+    query: PROFILES_QUERY,
+    variables: { take: PROFILE_PAGE_SIZE, skip: 0 },
   });
   const [feedResult, refetchFeed] = useQuery<FeedResult>({
     query: FEED_QUERY,
     variables: { take: PAGE_SIZE, skip: 0 },
   });
 
-  const [, approveProfileMutation] = useMutation(APPROVE_PROFILE);
-  const [, rejectProfileMutation] = useMutation(REJECT_PROFILE);
+  const [, banProfileMutation] = useMutation(BAN_PROFILE);
+  const [, unbanProfileMutation] = useMutation(UNBAN_PROFILE);
   const [, pinPostMutation] = useMutation(PIN_POST);
   const [, deletePostMutation] = useMutation(MODERATE_DELETE_POST);
 
-  const pendingProfiles = useMemo(
-    () => pendingResult.data?.pendingProfiles ?? [],
-    [pendingResult.data],
+  const profiles = useMemo(
+    () => profilesResult.data?.profiles ?? [],
+    [profilesResult.data],
   );
 
   const feed = useMemo<FeedPostView[]>(
@@ -53,18 +55,18 @@ export function useCommunity() {
     [feedResult.data],
   );
 
-  const approveProfile = async (id: string) => {
-    const result = await approveProfileMutation({ id });
+  const banProfile = async (id: string, reason?: string) => {
+    const result = await banProfileMutation({ id, reason: reason || null });
     if (result.error) throw result.error;
-    refetchPending({ requestPolicy: "network-only" });
-    return result.data?.approveProfile ?? null;
+    refetchProfiles({ requestPolicy: "network-only" });
+    return result.data?.banProfile ?? null;
   };
 
-  const rejectProfile = async (id: string, reason?: string) => {
-    const result = await rejectProfileMutation({ id, reason: reason || null });
+  const unbanProfile = async (id: string) => {
+    const result = await unbanProfileMutation({ id });
     if (result.error) throw result.error;
-    refetchPending({ requestPolicy: "network-only" });
-    return result.data?.rejectProfile ?? null;
+    refetchProfiles({ requestPolicy: "network-only" });
+    return result.data?.unbanProfile ?? null;
   };
 
   const pinPost = async (id: string, pinned: boolean) => {
@@ -82,15 +84,16 @@ export function useCommunity() {
   };
 
   return {
-    pendingProfiles,
-    pendingLoading: pendingResult.fetching,
-    pendingError: pendingResult.error?.message ?? null,
+    profiles,
+    profilesLoading: profilesResult.fetching,
+    profilesError: profilesResult.error?.message ?? null,
+    refetchProfiles,
     feed,
     feedLoading: feedResult.fetching,
     feedError: feedResult.error?.message ?? null,
     refetchFeed,
-    approveProfile,
-    rejectProfile,
+    banProfile,
+    unbanProfile,
     pinPost,
     deletePost,
   };
