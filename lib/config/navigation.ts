@@ -29,6 +29,11 @@ import {
   Store,
   Eye,
   Star,
+  Video,
+  CalendarDays,
+  CalendarClock,
+  Inbox,
+  Bell,
 } from "lucide-react";
 
 export interface NavItem {
@@ -103,6 +108,49 @@ export const navModules: NavModule[] = [
         href: "/patients/prescriptions",
         icon: ClipboardPenLine,
         color: "#F59E0B",
+      },
+    ],
+  },
+  {
+    label: "Telemedicina",
+    icon: Video,
+    color: "#0E7490",
+    items: [
+      {
+        label: "Dashboard",
+        href: "/telemedicine",
+        icon: LayoutDashboard,
+        color: "#123B63",
+      },
+      {
+        label: "Mi agenda",
+        href: "/telemedicine/agenda",
+        icon: CalendarDays,
+        color: "#2563EB",
+      },
+      {
+        label: "Calendario",
+        href: "/telemedicine/calendario",
+        icon: CalendarClock,
+        color: "#0E7490",
+      },
+      {
+        label: "Solicitudes",
+        href: "/telemedicine/solicitudes",
+        icon: Inbox,
+        color: "#F59E0B",
+      },
+      {
+        label: "Alertas",
+        href: "/telemedicine/alertas",
+        icon: Bell,
+        color: "#EF4444",
+      },
+      {
+        label: "Administración",
+        href: "/telemedicine/admin",
+        icon: BarChart3,
+        color: "#7C3AED",
       },
     ],
   },

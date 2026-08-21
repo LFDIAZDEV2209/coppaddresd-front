@@ -6,6 +6,10 @@ export const env = {
   authApiUrl:
     process.env.NEXT_PUBLIC_AUTH_API_URL ?? "http://localhost:5123",
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5122",
+  // Microservicio de Telemedicina (schema tele). Comparte el JWT del Auth
+  // Service; el frontend lo consume solo para /api/v1/telemedicine/*.
+  telemedicineApiUrl:
+    process.env.NEXT_PUBLIC_TELEMEDICINE_API_URL ?? "http://localhost:5130",
   // Código de aplicación que identifica este cliente ante el Auth Service
   // ("erp" para el frontend administrativo, "app" para la móvil). Determina
   // el claim `aud` del JWT y el acceso vía UserApplication.
