@@ -5,8 +5,7 @@ import {
   Heart,
   MessageCircle,
   MessagesSquare,
-  Pin,
-  UserCheck,
+  Users,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -15,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCommunity } from "../hooks/useCommunity";
 
 export function AnalyticsPage() {
-  const { feed, feedLoading, feedError, pendingProfiles, pendingLoading } =
+  const { profiles, profilesLoading, feed, feedLoading, feedError } =
     useCommunity();
 
   const totalLikes = feed.reduce((sum, view) => sum + view.likeCount, 0);
@@ -23,6 +22,8 @@ export function AnalyticsPage() {
     (sum, view) => sum + view.commentCount,
     0,
   );
+
+  const bannedCount = profiles.filter((p) => p.status === "Banned").length;
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -34,11 +35,11 @@ export function AnalyticsPage() {
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Perfiles pendientes"
-          value={pendingLoading ? "…" : String(pendingProfiles.length)}
-          context="Esperando revisión"
-          icon={UserCheck}
-          variant="warning"
+          label="Perfiles"
+          value={profilesLoading ? "…" : String(profiles.length)}
+          context={`${bannedCount} baneados`}
+          icon={Users}
+          variant="primary"
         />
         <StatCard
           label="Publicaciones"
@@ -105,7 +106,6 @@ export function AnalyticsPage() {
                       </span>
                       {post.pinned && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-[2px] text-[11px] font-semibold text-primary">
-                          <Pin className="size-3" />
                           Fijada
                         </span>
                       )}

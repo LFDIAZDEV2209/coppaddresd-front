@@ -395,7 +395,7 @@ export const navModules: NavModule[] = [
     color: "#0D9488",
     items: [
       {
-        label: "Revisión de perfiles",
+        label: "Miembros",
         href: "/community/profiles",
         icon: UserCheck,
         color: "#0E7490",
