@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CoppAddresd — Videollamada de prueba</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f5f7fa; color: #111; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+    h1 { font-size: 18px; margin-top: 0; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    label { display: block; font-size: 12px; font-weight: 600; margin: 8px 0 4px; }
+    input { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    button { margin-top: 12px; padding: 10px 18px; border: 0; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    #join { background: #0f766e; color: #fff; }
+    #leave { background: #b91c1c; color: #fff; }
+    #status { margin-top: 10px; font-size: 13px; color: #334155; white-space: pre-wrap; }
+    #videos { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+    #local { width: 320px; height: 220px; background: #000; border-radius: 10px; overflow: hidden; }
+    #remote { display: flex; gap: 12px; flex-wrap: wrap; }
+    #remote .p { width: 320px; height: 220px; background: #000; border-radius: 10px; position: relative; overflow: hidden; }
+    #remote .p .nm { position: absolute; bottom: 6px; left: 8px; color: #fff; font-size: 12px; text-shadow: 0 1px 3px #000; z-index: 2; }
+    #remote video { width: 100%; height: 100%; }
+    .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
+    .tag.prof { background: #dbeafe; color: #1e40af; }
+    .tag.pac { background: #dcfce7; color: #166534; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>CoppAddresd · Videollamada de prueba <span id="roomTag"></span></h1>
+
+    <div class="card">
+      <div class="row">
+        <div><label>Email</label><input id="email" autocomplete="off" /></div>
+        <div><label>Password</label><input id="password" type="password" autocomplete="off" /></div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Aplicación</label>
+          <input id="application" placeholder="erp (profesional) / app (paciente)" />
+        </div>
+        <div><label>Id de la cita (opcional)</label><input id="appointmentId" /></div>
+      </div>
+      <button id="join">Iniciar sesión y unirme a la videollamada</button>
+      <button id="leave" disabled>Salir</button>
+      <div id="status">Listo. Escribe tus credenciales y pulsa el botón.</div>
+    </div>
+
+    <div id="videos">
+      <div>
+        <label>Mi cámara</label>
+        <div id="local"></div>
+      </div>
+      <div>
+        <label>Participantes remotos</label>
+        <div id="remote"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://sdk.twilio.com/js/video/releases/2.30.0/twilio-video.min.js"></script>
+  <script>
+    const AUTH = 'http://localhost:5123';
+    const TELE = 'http://localhost:5130';
+    let room = null;
+
+    function st(m) { document.getElementById('status').textContent = m; }
+
+    async function login(email, password, application) {
+      const r = await fetch(AUTH + '/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password, application })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error((data.title || data.detail || 'login falló') + (data.detail ? ': ' + data.detail : ''));
+      return data.accessToken;
+    }
+
+    async function fetchJoinToken(accessToken, appointmentId) {
+      const r = await fetch(TELE + '/api/v1/telemedicine/appointments/' + appointmentId + '/join-token', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + accessToken },
+        credentials: 'include'
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.detail || 'no se pudo obtener el join-token');
+      return { token: data.token, roomName: data.room.providerRoomName };
+    }
+
+    async function fetchAppointmentId(accessToken, app) {
+      const base = app === 'app' ? TELE : TELE;
+      const r = await fetch(base + '/api/v1/telemedicine/me', { headers: { 'Authorization': 'Bearer ' + accessToken } });
+      const me = await r.json().catch(() => ({}));
+      // Si el usuario es profesional, buscar en su agenda.
+      const profId = me.professional ? me.professional.id : null;
+      const from = new Date(Date.now() - 60 * 60000).toISOString();
+      const to = new Date(Date.now() + 3 * 3600000).toISOString();
+      if (profId) {
+        const a = await fetch(base + '/api/v1/telemedicine/appointments/agenda?professionalId=' + profId + '&from=' + from + '&to=' + to,
+          { headers: { 'Authorization': 'Bearer ' + accessToken } });
+        const list = await a.json().catch(() => []);
+        const item = (list.items || list).find(x => x.status === 'Confirmed' || x.status === 'InProgress');
+        if (item) return item.id;
+      }
+      // Para pacientes no hay endpoint de listado: el id se ingresa manualmente.
+      return null;
+    }
+
+    document.getElementById('join').onclick = async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const application = document.getElementById('application').value.trim();
+      let appointmentId = document.getElementById('appointmentId').value.trim();
+      if (!email || !password || !application) { st('Completa email, password y aplicación.'); return; }
+      try {
+        st('Iniciando sesión…');
+        const accessToken = await login(email, password, application);
+        if (!appointmentId) {
+          st('Buscando tu próxima cita…');
+          appointmentId = await fetchAppointmentId(accessToken, application);
+          if (appointmentId) document.getElementById('appointmentId').value = appointmentId;
+        }
+        if (!appointmentId) { st('No encontré una cita activa. Pega el id de la cita en el campo.'); return; }
+        st('Obteniendo join-token…');
+        const { token, roomName } = await fetchJoinToken(accessToken, appointmentId);
+        st('Conectando a la sala ' + roomName + '…');
+        room = await Twilio.Video.connect(token, { name: null, audio: true, video: true });
+        document.getElementById('leave').disabled = false;
+        document.getElementById('join').disabled = true;
+        document.getElementById('roomTag').textContent = '· ' + room.name;
+        st('Conectado a la sala: ' + room.name + '\nIdentidad: ' + room.localParticipant.identity);
+        document.getElementById('local').innerHTML = '';
+        room.localParticipant.tracks.forEach(t => { if (t.isTrackEnabled && t.track) document.getElementById('local').appendChild(t.track.attach()); });
+        room.participants.forEach(attach);
+        room.on('participantConnected', attach);
+        room.on('participantDisconnected', p => { st('Participante salió: ' + p.identity); p.tracks.forEach(t => { if (t.track && t.track.detach) t.track.detach().forEach(el => el.remove()); }); });
+      } catch (err) {
+        st('ERROR: ' + err.message);
+        console.error(err);
+      }
+    };
+
+    function attach(participant) {
+      const el = document.createElement('div');
+      el.className = 'p';
+      const nm = document.createElement('span');
+      nm.className = 'nm';
+      nm.textContent = participant.identity;
+      el.appendChild(nm);
+      document.getElementById('remote').appendChild(el);
+      participant.on('trackSubscribed', t => el.appendChild(t.attach()));
+      participant.on('trackUnsubscribed', t => { if (t.detach) t.detach().forEach(x => x.remove()); });
+    }
+
+    document.getElementById('leave').onclick = () => {
+      if (room) { room.disconnect(); room = null; }
+      document.getElementById('remote').innerHTML = '';
+      document.getElementById('local').innerHTML = '';
+      document.getElementById('join').disabled = false;
+      document.getElementById('leave').disabled = true;
+      document.getElementById('roomTag').textContent = '';
+      st('Desconectado.');
+    };
+  </script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import {
   X,
   CalendarClock,
   Stethoscope,
+  ClipboardList,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
@@ -154,6 +155,7 @@ export function ProfessionalAgenda() {
                   key={appointment.id}
                   appointment={appointment}
                   onOpen={() => router.push(`/telemedicine/citas/${appointment.id}`)}
+                  onJoin={() => router.push(`/telemedicine/sala/${appointment.id}`)}
                   onCancel={() => setCancelling(appointment)}
                   onReschedule={() => setRescheduling(appointment)}
                 />
@@ -227,17 +229,21 @@ export function ProfessionalAgenda() {
 function AppointmentRow({
   appointment,
   onOpen,
+  onJoin,
   onCancel,
   onReschedule,
 }: {
   appointment: TelemedicineAppointmentDto;
   onOpen: () => void;
+  onJoin: () => void;
   onCancel: () => void;
   onReschedule: () => void;
 }) {
   const cancellable =
     appointment.status === "Confirmed" || appointment.status === "Requested";
   const reschedulable = appointment.status === "Confirmed";
+  const joinable =
+    appointment.status === "Confirmed" || appointment.status === "InProgress";
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4">
@@ -267,8 +273,13 @@ function AppointmentRow({
           color={appointmentStatusColor(appointment.status)}
         />
         <Button size="sm" variant="outline" onClick={onOpen} className="gap-1.5">
-          <Video className="size-3.5" /> Sala
+          <ClipboardList className="size-3.5" /> Detalle
         </Button>
+        {joinable && (
+          <Button size="sm" onClick={onJoin} className="gap-1.5">
+            <Video className="size-3.5" /> Unirme
+          </Button>
+        )}
         {reschedulable && (
           <Button size="sm" variant="ghost" onClick={onReschedule} aria-label="Reprogramar">
             <CalendarClock className="size-4" />
