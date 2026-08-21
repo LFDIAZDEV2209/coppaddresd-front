@@ -32,6 +32,7 @@ import {
   Video,
   CalendarDays,
   CalendarClock,
+  ClipboardList,
   Inbox,
   Bell,
 } from "lucide-react";
@@ -168,7 +169,7 @@ export const navModules: NavModule[] = [
         permission: "Telemedicine.AgendaView",
       },
       {
-        label: "Mi agenda",
+        label: "Agenda",
         href: "/telemedicine/agenda",
         icon: CalendarDays,
         color: "#2563EB",
@@ -180,6 +181,13 @@ export const navModules: NavModule[] = [
         icon: CalendarClock,
         color: "#0E7490",
         permission: "Telemedicine.AgendaView",
+      },
+      {
+        label: "Citas",
+        href: "/telemedicine/citas",
+        icon: ClipboardList,
+        color: "#0891B2",
+        permission: "Telemedicine.AppointmentsView",
       },
       {
         label: "Solicitudes",

@@ -1,5 +1,5 @@
-import { ProfessionalCalendar } from "@/features/telemedicine/components/professional-calendar";
+import { CalendarRouter } from "@/features/telemedicine/components/calendar-router";
 
 export default function Page() {
-  return <ProfessionalCalendar />;
+  return <CalendarRouter />;
 }

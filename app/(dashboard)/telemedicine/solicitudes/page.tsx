@@ -1,5 +1,5 @@
-import { ProfessionalRequests } from "@/features/telemedicine/components/professional-requests";
+import { RequestsRouter } from "@/features/telemedicine/components/requests-router";
 
 export default function Page() {
-  return <ProfessionalRequests />;
+  return <RequestsRouter />;
 }

@@ -39,13 +39,31 @@ import type { TelemedicineAppointmentDto } from "../types";
 
 type Range = "day" | "week" | "month";
 
-export function ProfessionalAgenda() {
+/**
+ * Agenda del profesional en un rango, con acciones de cancelación y
+ * reprogramación. Con <paramref name="fixedProfessionalId"/> (vista del
+ * administrador: "todas las agendas") usa ese profesional en lugar del
+ * contexto del JWT; <paramref name="cancelledBy"/> define el actor de la
+ * cancelación (Admin para la vista global).
+ */
+export function ProfessionalAgenda({
+  fixedProfessionalId = null,
+  fixedProfessionalName = null,
+  cancelledBy = "Professional",
+}: {
+  fixedProfessionalId?: string | null;
+  fixedProfessionalName?: string | null;
+  cancelledBy?: "Professional" | "Admin";
+}) {
   const router = useRouter();
   const { context, loading: userLoading } = useCurrentUser();
 
   const [range, setRange] = useState<Range>("week");
   const { from, to } = rangeBounds(range);
-  const professionalId = context?.professional?.id ?? null;
+  const professionalId =
+    fixedProfessionalId ?? context?.professional?.id ?? null;
+  const professionalName =
+    fixedProfessionalName ?? context?.professional?.fullName ?? null;
   const { appointments, loading, error, refetch } = useAgenda(professionalId, from, to);
 
   const [cancelling, setCancelling] = useState<TelemedicineAppointmentDto | null>(null);
@@ -64,8 +82,6 @@ export function ProfessionalAgenda() {
     );
   }
 
-  const professional = context?.professional;
-
   const confirmCancel = async () => {
     if (!cancelling) return;
     setBusy(true);
@@ -73,7 +89,7 @@ export function ProfessionalAgenda() {
     try {
       await cancelAppointment(cancelling.id, {
         reason: cancelReason.trim() || "Cancelada por el profesional",
-        cancelledBy: "Professional",
+        cancelledBy,
       });
       setCancelling(null);
       setCancelReason("");
@@ -108,12 +124,12 @@ export function ProfessionalAgenda() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Mi agenda"
-        description={professional ? `Citas de ${professional.fullName}` : "Agenda del profesional"}
+        title={fixedProfessionalId ? "Agenda" : "Mi agenda"}
+        description={professionalName ? `Citas de ${professionalName}` : "Agenda del profesional"}
         icon={CalendarDays}
       />
 
-      {!professional ? (
+      {!professionalId ? (
         <EmptyState
           icon={Stethoscope}
           title="El usuario no es un profesional clínico"

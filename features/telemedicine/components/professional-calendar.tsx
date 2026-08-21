@@ -13,7 +13,18 @@ import {
   formatTime,
 } from "../utils/format";
 
-export function ProfessionalCalendar() {
+/**
+ * Calendario mensual de citas de un profesional. Con
+ * <paramref name="fixedProfessionalId"/> (vista del administrador) usa ese
+ * profesional en lugar del contexto del JWT.
+ */
+export function ProfessionalCalendar({
+  fixedProfessionalId = null,
+  fixedProfessionalName = null,
+}: {
+  fixedProfessionalId?: string | null;
+  fixedProfessionalName?: string | null;
+}) {
   const { context, loading: userLoading } = useCurrentUser();
   const [cursor, setCursor] = useState(() => {
     const now = new Date();
@@ -39,7 +50,10 @@ export function ProfessionalCalendar() {
     };
   }, [cursor]);
 
-  const professionalId = context?.professional?.id ?? null;
+  const professionalId =
+    fixedProfessionalId ?? context?.professional?.id ?? null;
+  const professionalName =
+    fixedProfessionalName ?? context?.professional?.fullName ?? null;
   const { appointments, loading } = useAgenda(professionalId, from, to);
 
   const byDay = useMemo(() => {
@@ -62,7 +76,6 @@ export function ProfessionalCalendar() {
     );
   }
 
-  const professional = context?.professional;
   const firstWeekday = new Date(from).getDay(); // 0=domingo
   const leading = Array.from({ length: firstWeekday });
 
@@ -70,7 +83,7 @@ export function ProfessionalCalendar() {
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
         title="Calendario"
-        description={professional ? `Citas de ${professional.fullName}` : "Calendario de telemedicina"}
+        description={professionalName ? `Citas de ${professionalName}` : "Calendario de telemedicina"}
         icon={CalendarDays}
         actions={
           <div className="flex items-center gap-1">
@@ -99,7 +112,7 @@ export function ProfessionalCalendar() {
         }
       />
 
-      {!professional ? (
+      {!professionalId ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-16 text-center">
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
             <Stethoscope className="size-6 text-muted-foreground" />

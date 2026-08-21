@@ -1,5 +1,5 @@
-import { ProfessionalAgenda } from "@/features/telemedicine/components/professional-agenda";
+import { AgendaRouter } from "@/features/telemedicine/components/agenda-router";
 
 export default function Page() {
-  return <ProfessionalAgenda />;
+  return <AgendaRouter />;
 }
