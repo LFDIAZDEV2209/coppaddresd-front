@@ -6,11 +6,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  navModules,
-  type NavModule,
+  visibleNavItems,
+  visibleNavModules,
   type NavItem,
+  type NavModule,
 } from "@/lib/config/navigation";
 import { useAuth } from "@/providers/auth-provider";
+import { useAppContext } from "@/providers/context-provider";
 import {
   ChevronDown,
   ChevronRight,
@@ -48,6 +50,10 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  // Permisos efectivos del contexto (global ∪ scoped de la clínica activa):
+  // la navegación se construye declarativamente desde la config con permisos.
+  const { can } = useAppContext();
+  const navModules = visibleNavModules(can);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(() => {
     const activeModule = navModules.find((m) =>
       m.items.some((item) => item.href === pathname),
@@ -137,6 +143,7 @@ export function Sidebar({
               const Icon = mod.icon;
 
               if (collapsed) {
+                const firstItem = visibleNavItems(mod, can)[0];
                 return (
                   <Tooltip key={mod.label}>
                     <TooltipTrigger
@@ -147,10 +154,9 @@ export function Sidebar({
                           : "text-white/70 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10",
                       )}
                       onClick={() => {
-                        const firstItem = mod.items[0];
                         if (firstItem) onCloseMobile();
                       }}
-                      render={<Link href={mod.items[0]?.href ?? "#"} />}
+                      render={<Link href={firstItem?.href ?? "#"} />}
                     >
                       <Icon className="size-[18px]" />
                     </TooltipTrigger>
@@ -190,9 +196,7 @@ export function Sidebar({
 
                   {expanded && (
                     <div className="mt-0.5 ml-5 flex flex-col gap-0.5 border-l border-white/15 pl-3">
-                      {mod.items
-                        .filter((item) => !item.hidden)
-                        .map((item) => {
+                      {visibleNavItems(mod, can).map((item) => {
                           const ItemIcon = item.icon;
                           const itemActive = isActive(item);
                           return (

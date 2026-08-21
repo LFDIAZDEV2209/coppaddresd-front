@@ -42,6 +42,12 @@ export interface NavItem {
   icon: LucideIcon;
   color?: string;
   hidden?: boolean;
+  /**
+   * Permiso requerido para ver el ítem (o lista any-of). La visibilidad la
+   * evalúa el Sidebar y el guard de rutas con el contexto del usuario (global
+   * ∪ scoped de la clínica activa); la autorización REAL la aplica el backend.
+   */
+  permission?: string | string[];
 }
 
 export interface NavModule {
@@ -49,6 +55,31 @@ export interface NavModule {
   icon: LucideIcon;
   color: string;
   items: NavItem[];
+  /** Permiso requerido para ver el módulo completo (or lista any-of). */
+  permission?: string | string[];
+}
+
+/** Evalúa un permiso declarativo: single code o lista any-of. */
+export function hasNavPermission(
+  permission: string | string[] | undefined,
+  can: (code: string) => boolean,
+): boolean {
+  if (!permission) return true;
+  const codes = Array.isArray(permission) ? permission : [permission];
+  return codes.some((code) => can(code));
+}
+
+/** Ítems visibles del módulo (filtra hidden y permisos). */
+export function visibleNavItems(module: NavModule, can: (code: string) => boolean): NavItem[] {
+  return module.items.filter((item) => !item.hidden && hasNavPermission(item.permission, can));
+}
+
+/** Módulos visibles: con permiso de módulo y al menos un ítem visible. */
+export function visibleNavModules(can: (code: string) => boolean): NavModule[] {
+  return navModules.filter(
+    (module) =>
+      hasNavPermission(module.permission, can) && visibleNavItems(module, can).length > 0,
+  );
 }
 
 export const navModules: NavModule[] = [
@@ -70,18 +101,26 @@ export const navModules: NavModule[] = [
     icon: FolderKanban,
     color: "#1F6E9F",
     items: [
-      { label: "Usuarios", href: "/users", icon: Users, color: "#0E7490" },
+      {
+        label: "Usuarios",
+        href: "/users",
+        icon: Users,
+        color: "#0E7490",
+        permission: "Users.View",
+      },
       {
         label: "Profesionales",
         href: "/professionals",
         icon: Stethoscope,
         color: "#0E7490",
+        permission: "Professionals.View",
       },
       {
         label: "Roles y permisos",
         href: "/roles",
         icon: ShieldCheck,
         color: "#10B981",
+        permission: "Roles.View",
       },
     ],
   },
@@ -89,12 +128,14 @@ export const navModules: NavModule[] = [
     label: "Pacientes",
     icon: UserRound,
     color: "#0E7490",
+    permission: ["Patients.View", "Patients.ViewOwn"],
     items: [
       {
         label: "Pacientes",
         href: "/patients",
         icon: UserRound,
         color: "#0E7490",
+        permission: ["Patients.View", "Patients.ViewOwn"],
       },
       {
         label: "Agendar cita",
@@ -102,12 +143,14 @@ export const navModules: NavModule[] = [
         icon: CalendarPlus,
         color: "#10B981",
         hidden: true,
+        permission: "Patients.View",
       },
       {
         label: "Recetario",
         href: "/patients/prescriptions",
         icon: ClipboardPenLine,
         color: "#F59E0B",
+        permission: "Prescriptions.View",
       },
     ],
   },
@@ -115,42 +158,49 @@ export const navModules: NavModule[] = [
     label: "Telemedicina",
     icon: Video,
     color: "#0E7490",
+    permission: ["Telemedicine.AgendaView", "Telemedicine.AdminView", "Telemedicine.RequestsView"],
     items: [
       {
         label: "Dashboard",
         href: "/telemedicine",
         icon: LayoutDashboard,
         color: "#123B63",
+        permission: "Telemedicine.AgendaView",
       },
       {
         label: "Mi agenda",
         href: "/telemedicine/agenda",
         icon: CalendarDays,
         color: "#2563EB",
+        permission: "Telemedicine.AgendaView",
       },
       {
         label: "Calendario",
         href: "/telemedicine/calendario",
         icon: CalendarClock,
         color: "#0E7490",
+        permission: "Telemedicine.AgendaView",
       },
       {
         label: "Solicitudes",
         href: "/telemedicine/solicitudes",
         icon: Inbox,
         color: "#F59E0B",
+        permission: "Telemedicine.RequestsView",
       },
       {
         label: "Alertas",
         href: "/telemedicine/alertas",
         icon: Bell,
         color: "#EF4444",
+        permission: "Telemedicine.AlertsView",
       },
       {
         label: "Administración",
         href: "/telemedicine/admin",
         icon: BarChart3,
         color: "#7C3AED",
+        permission: "Telemedicine.AdminView",
       },
     ],
   },
@@ -158,36 +208,42 @@ export const navModules: NavModule[] = [
     label: "Inventario",
     icon: Package,
     color: "#7C3AED",
+    permission: "Inventory.View",
     items: [
       {
         label: "Productos",
         href: "/inventory",
         icon: Package,
         color: "#7C3AED",
+        permission: "Inventory.View",
       },
       {
         label: "Entradas",
         href: "/inventory/entries",
         icon: ArrowDownToLine,
         color: "#10B981",
+        permission: "Inventory.View",
       },
       {
         label: "Salidas",
         href: "/inventory/exits",
         icon: ArrowUpFromLine,
         color: "#EF4444",
+        permission: "Inventory.View",
       },
       {
         label: "Movimientos",
         href: "/inventory/movements",
         icon: ArrowLeftRight,
         color: "#0E7490",
+        permission: "Inventory.View",
       },
       {
         label: "Reportes",
         href: "/inventory/reports",
         icon: FileBarChart,
         color: "#F59E0B",
+        permission: "Inventory.View",
       },
     ],
   },
@@ -195,24 +251,28 @@ export const navModules: NavModule[] = [
     label: "Tienda de bienestar",
     icon: ShoppingBag,
     color: "#10B981",
+    permission: "Store.View",
     items: [
       {
         label: "Catálogo",
         href: "/store",
         icon: Store,
         color: "#10B981",
+        permission: "Store.View",
       },
       {
         label: "Previsualización",
         href: "/store/preview",
         icon: Eye,
         color: "#0E7490",
+        permission: "Store.View",
       },
       {
         label: "Destacados",
         href: "/store/featured",
         icon: Star,
         color: "#F59E0B",
+        permission: "Store.View",
       },
     ],
   },
@@ -220,33 +280,38 @@ export const navModules: NavModule[] = [
     label: "Agentes AI",
     icon: Cpu,
     color: "#7C3AED",
+    permission: "Agents.View",
     items: [
-      { label: "Agentes", href: "/agents", icon: Bot, color: "#7C3AED" },
+      { label: "Agentes", href: "/agents", icon: Bot, color: "#7C3AED", permission: "Agents.View" },
       {
         label: "Conocimiento",
         href: "/agents/knowledge",
         icon: BrainCircuit,
         color: "#6D28D9",
+        permission: "Agents.View",
       },
       {
         label: "Playground",
         href: "/agents/playground",
         icon: PlayCircle,
         color: "#059669",
+        permission: "Agents.View",
       },
       {
         label: "Monitoreo",
         href: "/agents/monitoring",
         icon: BarChart3,
         color: "#2563EB",
+        permission: "Agents.View",
       },
-      { label: "Voces", href: "/agents/voices", icon: Mic, color: "#0891B2", hidden: true },
+      { label: "Voces", href: "/agents/voices", icon: Mic, color: "#0891B2", hidden: true, permission: "Agents.View" },
       {
         label: "Configuración AI",
         href: "/agents/config",
         icon: Settings,
         color: "#475569",
         hidden: true,
+        permission: "Agents.View",
       },
     ],
   },
@@ -254,12 +319,14 @@ export const navModules: NavModule[] = [
     label: "Contenido",
     icon: FileAudio,
     color: "#0E7490",
+    permission: "Media.View",
     items: [
       {
         label: "Medios",
         href: "/media",
         icon: FileAudio,
         color: "#0E7490",
+        permission: "Media.View",
       },
     ],
   },
@@ -273,12 +340,14 @@ export const navModules: NavModule[] = [
         href: "/settings/audit",
         icon: ScrollText,
         color: "#F59E0B",
+        permission: "Audit.View",
       },
       {
         label: "Seguridad",
         href: "/settings/security",
         icon: Lock,
         color: "#EF4444",
+        permission: "System.AdminSettings",
       },
       {
         label: "Configuración",

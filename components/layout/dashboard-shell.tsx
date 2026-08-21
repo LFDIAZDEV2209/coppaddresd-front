@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 import { AppContextProvider, useAppContext } from "@/providers/context-provider";
+import { PermissionRouteGuard } from "@/components/feedback/permission-route-guard";
 
 /** Redirige a /onboarding si el profesional aún no completó su wizard. */
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
@@ -45,7 +46,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <Topbar onMenuClick={() => setMobileOpen(true)} />
 
             <main className="flex-1 overflow-y-auto">
-              {children}
+              <PermissionRouteGuard>{children}</PermissionRouteGuard>
             </main>
           </div>
         </div>

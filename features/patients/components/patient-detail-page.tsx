@@ -22,6 +22,7 @@ import { StatusBadge } from "@/components/feedback/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPatient } from "../services/patients-service";
+import { PatientProfessionalsSection } from "./patient-professionals-section";
 import type { Patient } from "../types";
 
 export function PatientDetailPage({ id }: { id: string }) {
@@ -120,6 +121,7 @@ export function PatientDetailPage({ id }: { id: string }) {
         <Summary label="Clínica" value={patient.clinicName ?? "Sin asignar"} icon={<Building2 />} />
         <Summary label="Aseguradora" value={patient.insurerName ?? "Sin aseguradora"} icon={<Shield />} />
       </section>
+      <PatientProfessionalsSection patientId={patient.id} />
       <div className="grid gap-4 lg:grid-cols-2">
         <DetailCard
           title="Datos personales"
