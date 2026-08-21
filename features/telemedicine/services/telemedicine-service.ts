@@ -13,6 +13,7 @@ import type {
   ClinicalDataDto,
   ClinicalEncounterDto,
   CurrentUserContextDto,
+  DashboardAnalyticsDto,
   JoinSessionResultDto,
   PaginatedAdminAppointmentsResult,
   PaginatedAdminRequestsResult,
@@ -247,6 +248,33 @@ export interface AdminAppointmentsFilters {
 
 export async function fetchAdminSummary(): Promise<AdminSummaryDto> {
   return apiFetch<AdminSummaryDto>(`${PATH}/admin/summary`);
+}
+
+// --- Analytics del dashboard ---
+
+export interface DashboardAnalyticsFilters {
+  from?: string | null;
+  to?: string | null;
+}
+
+export async function fetchAdminAnalytics(
+  filters: DashboardAnalyticsFilters = {},
+): Promise<DashboardAnalyticsDto> {
+  const params = new URLSearchParams();
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+  const qs = params.toString();
+  return apiFetch<DashboardAnalyticsDto>(`${PATH}/admin/analytics${qs ? `?${qs}` : ""}`);
+}
+
+export async function fetchMyAnalytics(
+  filters: DashboardAnalyticsFilters = {},
+): Promise<DashboardAnalyticsDto> {
+  const params = new URLSearchParams();
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+  const qs = params.toString();
+  return apiFetch<DashboardAnalyticsDto>(`${PATH}/me/analytics${qs ? `?${qs}` : ""}`);
 }
 
 export async function fetchAdminAppointments(
