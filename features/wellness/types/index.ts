@@ -12,6 +12,11 @@ export interface NutritionPlanDay {
   description: string | null;
   foods: string | null;
   calories: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  fiberG: number | null;
+  waterMl: number | null;
   notes: string | null;
   sortOrder: number;
   mediaId: string | null;
@@ -25,6 +30,12 @@ export interface NutritionPlan {
   targetCondition: string | null;
   durationDays: number;
   dailyCalorieTarget: number | null;
+  dailyProteinTarget: number | null;
+  dailyCarbsTarget: number | null;
+  dailyFatTarget: number | null;
+  dailyFiberTarget: number | null;
+  allergens: string | null;
+  mealTiming: string | null;
   isTemplate: boolean;
   patientId: string | null;
   patientName: string | null;
@@ -44,6 +55,12 @@ export interface NutritionPlanListItem {
   targetCondition: string | null;
   durationDays: number;
   dailyCalorieTarget: number | null;
+  dailyProteinTarget: number | null;
+  dailyCarbsTarget: number | null;
+  dailyFatTarget: number | null;
+  dailyFiberTarget: number | null;
+  allergens: string | null;
+  mealTiming: string | null;
   isTemplate: boolean;
   patientId: string | null;
   patientName: string | null;
@@ -58,6 +75,11 @@ export interface NutritionPlanDayInput {
   description: string | null;
   foods: string | null;
   calories: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  fiberG: number | null;
+  waterMl: number | null;
   notes: string | null;
   sortOrder: number;
   mediaId: string | null;
@@ -70,6 +92,12 @@ export interface CreateNutritionPlanInput {
   targetCondition: string | null;
   durationDays: number;
   dailyCalorieTarget: number | null;
+  dailyProteinTarget: number | null;
+  dailyCarbsTarget: number | null;
+  dailyFatTarget: number | null;
+  dailyFiberTarget: number | null;
+  allergens: string | null;
+  mealTiming: string | null;
   isTemplate: boolean;
   patientId: string | null;
   sourcePlanId: string | null;
@@ -84,6 +112,12 @@ export interface UpdateNutritionPlanInput {
   targetCondition: string | null;
   durationDays: number;
   dailyCalorieTarget: number | null;
+  dailyProteinTarget: number | null;
+  dailyCarbsTarget: number | null;
+  dailyFatTarget: number | null;
+  dailyFiberTarget: number | null;
+  allergens: string | null;
+  mealTiming: string | null;
   status: NutritionPlanStatus;
   days: NutritionPlanDayInput[] | null;
 }
@@ -120,6 +154,11 @@ export interface RoutineExercise {
   restSeconds: number | null;
   durationSecs: number | null;
   weightKg: number | null;
+  targetMuscle: string | null;
+  equipment: string | null;
+  tempo: string | null;
+  rpe: number | null;
+  tips: string | null;
   mediaId: string | null;
   sortOrder: number;
 }
@@ -133,6 +172,10 @@ export interface ExerciseRoutine {
   estimatedMinutes: number | null;
   category: RoutineCategory;
   status: NutritionPlanStatus;
+  targetMuscles: string | null;
+  equipment: string | null;
+  warmupNotes: string | null;
+  cooldownNotes: string | null;
   mediaId: string | null;
   createdBy: string | null;
   createdAt: string;
@@ -149,6 +192,8 @@ export interface ExerciseRoutineListItem {
   estimatedMinutes: number | null;
   category: RoutineCategory;
   status: NutritionPlanStatus;
+  targetMuscles: string | null;
+  equipment: string | null;
   createdAt: string;
 }
 
@@ -161,6 +206,11 @@ export interface RoutineExerciseInput {
   restSeconds: number | null;
   durationSecs: number | null;
   weightKg: number | null;
+  targetMuscle: string | null;
+  equipment: string | null;
+  tempo: string | null;
+  rpe: number | null;
+  tips: string | null;
   mediaId: string | null;
   sortOrder: number;
 }
@@ -173,6 +223,10 @@ export interface CreateExerciseRoutineInput {
   estimatedMinutes: number | null;
   category: RoutineCategory;
   status: NutritionPlanStatus;
+  targetMuscles: string | null;
+  equipment: string | null;
+  warmupNotes: string | null;
+  cooldownNotes: string | null;
   mediaId: string | null;
   exercises: RoutineExerciseInput[] | null;
 }
@@ -185,6 +239,10 @@ export interface UpdateExerciseRoutineInput {
   estimatedMinutes: number | null;
   category: RoutineCategory;
   status: NutritionPlanStatus;
+  targetMuscles: string | null;
+  equipment: string | null;
+  warmupNotes: string | null;
+  cooldownNotes: string | null;
   mediaId: string | null;
   exercises: RoutineExerciseInput[] | null;
 }

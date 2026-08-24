@@ -27,6 +27,8 @@ import type {
   NutritionPlanDayInput,
   MealType,
   NutritionPlanStatus,
+  CreateNutritionPlanInput,
+  UpdateNutritionPlanInput,
 } from "../types";
 import {
   MEAL_TYPES,
@@ -41,28 +43,7 @@ interface NutritionPlanFormDialogProps {
   saving: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (
-    input:
-      | {
-          name: string;
-          description: string | null;
-          targetCondition: string | null;
-          durationDays: number;
-          dailyCalorieTarget: number | null;
-          isTemplate: boolean;
-          patientId: null;
-          sourcePlanId: null;
-          status: NutritionPlanStatus;
-          days: NutritionPlanDayInput[] | null;
-        }
-      | {
-          name: string;
-          description: string | null;
-          targetCondition: string | null;
-          durationDays: number;
-          dailyCalorieTarget: number | null;
-          status: NutritionPlanStatus;
-          days: NutritionPlanDayInput[] | null;
-        },
+    input: CreateNutritionPlanInput | UpdateNutritionPlanInput,
     id?: string,
   ) => Promise<void>;
 }
@@ -71,6 +52,11 @@ interface DayMealData {
   description: string;
   foods: string;
   calories: string;
+  proteinG: string;
+  carbsG: string;
+  fatG: string;
+  fiberG: string;
+  waterMl: string;
   notes: string;
 }
 
@@ -91,21 +77,19 @@ export function NutritionPlanFormDialog({
   const isEditing = Boolean(plan);
 
   // Form state
-  const [name, setName] = useState(plan?.name ?? "");
-  const [description, setDescription] = useState(plan?.description ?? "");
-  const [targetCondition, setTargetCondition] = useState(
-    plan?.targetCondition ?? "",
-  );
-  const [durationDays, setDurationDays] = useState(
-    plan?.durationDays ? String(plan.durationDays) : "7",
-  );
-  const [dailyCalorieTarget, setDailyCalorieTarget] = useState(
-    plan?.dailyCalorieTarget?.toString() ?? "",
-  );
-  const [isTemplate, setIsTemplate] = useState(plan?.isTemplate ?? true);
-  const [status, setStatus] = useState<NutritionPlanStatus>(
-    plan?.status ?? "Draft",
-  );
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [targetCondition, setTargetCondition] = useState("");
+  const [durationDays, setDurationDays] = useState("7");
+  const [dailyCalorieTarget, setDailyCalorieTarget] = useState("");
+  const [dailyProteinTarget, setDailyProteinTarget] = useState("");
+  const [dailyCarbsTarget, setDailyCarbsTarget] = useState("");
+  const [dailyFatTarget, setDailyFatTarget] = useState("");
+  const [dailyFiberTarget, setDailyFiberTarget] = useState("");
+  const [allergens, setAllergens] = useState("");
+  const [mealTiming, setMealTiming] = useState("");
+  const [isTemplate, setIsTemplate] = useState(true);
+  const [status, setStatus] = useState<NutritionPlanStatus>("Draft");
 
   // Days state: key = "dayNumber-mealType"
   const [days, setDays] = useState<Record<string, DayMealData>>({});
@@ -126,12 +110,7 @@ export function NutritionPlanFormDialog({
           // Estructura base para todos los días del plan
           for (let d = 1; d <= full.durationDays; d++) {
             for (const meal of MEAL_TYPES) {
-              newDays[`${d}-${meal}`] = {
-                description: "",
-                foods: "",
-                calories: "",
-                notes: "",
-              };
+              newDays[`${d}-${meal}`] = { description: "", foods: "", calories: "", proteinG: "", carbsG: "", fatG: "", fiberG: "", waterMl: "", notes: "" };
             }
           }
           // Rellenar con los datos existentes
@@ -140,6 +119,11 @@ export function NutritionPlanFormDialog({
               description: day.description ?? "",
               foods: day.foods ?? "",
               calories: day.calories?.toString() ?? "",
+              proteinG: day.proteinG?.toString() ?? "",
+              carbsG: day.carbsG?.toString() ?? "",
+              fatG: day.fatG?.toString() ?? "",
+              fiberG: day.fiberG?.toString() ?? "",
+              waterMl: day.waterMl?.toString() ?? "",
               notes: day.notes ?? "",
             };
           }
@@ -178,6 +162,11 @@ export function NutritionPlanFormDialog({
           description: "",
           foods: "",
           calories: "",
+          proteinG: "",
+          carbsG: "",
+          fatG: "",
+          fiberG: "",
+          waterMl: "",
           notes: "",
         };
       }
@@ -215,6 +204,11 @@ export function NutritionPlanFormDialog({
             description: data.description || null,
             foods: data.foods || null,
             calories: data.calories ? parseInt(data.calories, 10) : null,
+            proteinG: data.proteinG ? parseFloat(data.proteinG) : null,
+            carbsG: data.carbsG ? parseFloat(data.carbsG) : null,
+            fatG: data.fatG ? parseFloat(data.fatG) : null,
+            fiberG: data.fiberG ? parseFloat(data.fiberG) : null,
+            waterMl: data.waterMl ? parseInt(data.waterMl, 10) : null,
             notes: data.notes || null,
             sortOrder: idx,
             mediaId: null,
@@ -223,6 +217,8 @@ export function NutritionPlanFormDialog({
       });
     }
 
+    const parseNum = (v: string) => v ? parseFloat(v) : null;
+
     if (isEditing && plan) {
       await onSubmit(
         {
@@ -230,9 +226,13 @@ export function NutritionPlanFormDialog({
           description: description.trim() || null,
           targetCondition: targetCondition.trim() || null,
           durationDays: numDays,
-          dailyCalorieTarget: dailyCalorieTarget
-            ? parseInt(dailyCalorieTarget, 10)
-            : null,
+          dailyCalorieTarget: dailyCalorieTarget ? parseInt(dailyCalorieTarget, 10) : null,
+          dailyProteinTarget: parseNum(dailyProteinTarget),
+          dailyCarbsTarget: parseNum(dailyCarbsTarget),
+          dailyFatTarget: parseNum(dailyFatTarget),
+          dailyFiberTarget: parseNum(dailyFiberTarget),
+          allergens: allergens.trim() || null,
+          mealTiming: mealTiming.trim() || null,
           status,
           days: daysArray.length > 0 ? daysArray : null,
         },
@@ -244,9 +244,13 @@ export function NutritionPlanFormDialog({
         description: description.trim() || null,
         targetCondition: targetCondition.trim() || null,
         durationDays: numDays,
-        dailyCalorieTarget: dailyCalorieTarget
-          ? parseInt(dailyCalorieTarget, 10)
-          : null,
+        dailyCalorieTarget: dailyCalorieTarget ? parseInt(dailyCalorieTarget, 10) : null,
+        dailyProteinTarget: parseNum(dailyProteinTarget),
+        dailyCarbsTarget: parseNum(dailyCarbsTarget),
+        dailyFatTarget: parseNum(dailyFatTarget),
+        dailyFiberTarget: parseNum(dailyFiberTarget),
+        allergens: allergens.trim() || null,
+        mealTiming: mealTiming.trim() || null,
         isTemplate,
         patientId: null,
         sourcePlanId: null,
@@ -337,6 +341,72 @@ export function NutritionPlanFormDialog({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
+                <Label htmlFor="plan-protein">Proteína (g/día)</Label>
+                <Input
+                  id="plan-protein"
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={dailyProteinTarget}
+                  onChange={(e) => setDailyProteinTarget(e.target.value)}
+                  placeholder="Ej: 120"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="plan-carbs">Carbohidratos (g/día)</Label>
+                <Input
+                  id="plan-carbs"
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={dailyCarbsTarget}
+                  onChange={(e) => setDailyCarbsTarget(e.target.value)}
+                  placeholder="Ej: 200"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="plan-fat">Grasa (g/día)</Label>
+                <Input
+                  id="plan-fat"
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={dailyFatTarget}
+                  onChange={(e) => setDailyFatTarget(e.target.value)}
+                  placeholder="Ej: 60"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="plan-fiber">Fibra (g/día)</Label>
+                <Input
+                  id="plan-fiber"
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={dailyFiberTarget}
+                  onChange={(e) => setDailyFiberTarget(e.target.value)}
+                  placeholder="Ej: 30"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <Label htmlFor="plan-allergens">Alergias / Restricciones</Label>
+                <Input
+                  id="plan-allergens"
+                  value={allergens}
+                  onChange={(e) => setAllergens(e.target.value)}
+                  placeholder="Ej: Gluten, Lactosa, Frutos secos"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <Label htmlFor="plan-meal-timing">Horarios de comida</Label>
+                <Input
+                  id="plan-meal-timing"
+                  value={mealTiming}
+                  onChange={(e) => setMealTiming(e.target.value)}
+                  placeholder="Ej: 7:00, 12:00, 15:30, 19:00"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
                 <Label>Estado</Label>
                 <Select
                   value={status}
@@ -419,7 +489,7 @@ export function NutritionPlanFormDialog({
                                   {MEAL_LABELS[meal]}
                                 </span>
                               </div>
-                              <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="grid gap-2 sm:grid-cols-3">
                                 <Input
                                   placeholder="Descripción (ej: Ensalada de pollo)"
                                   value={data.description}
@@ -461,7 +531,56 @@ export function NutritionPlanFormDialog({
                                   className="h-8 text-sm"
                                 />
                                 <Input
-                                  placeholder="Notas (ej: Sin sal, porción doble)"
+                                  type="number"
+                                  step="0.1"
+                                  placeholder="Proteína (g)"
+                                  value={data.proteinG}
+                                  onChange={(e) =>
+                                    updateDayMeal(d, meal, "proteinG", e.target.value)
+                                  }
+                                  className="h-8 text-sm"
+                                />
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  placeholder="Carbos (g)"
+                                  value={data.carbsG}
+                                  onChange={(e) =>
+                                    updateDayMeal(d, meal, "carbsG", e.target.value)
+                                  }
+                                  className="h-8 text-sm"
+                                />
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  placeholder="Grasa (g)"
+                                  value={data.fatG}
+                                  onChange={(e) =>
+                                    updateDayMeal(d, meal, "fatG", e.target.value)
+                                  }
+                                  className="h-8 text-sm"
+                                />
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  placeholder="Fibra (g)"
+                                  value={data.fiberG}
+                                  onChange={(e) =>
+                                    updateDayMeal(d, meal, "fiberG", e.target.value)
+                                  }
+                                  className="h-8 text-sm"
+                                />
+                                <Input
+                                  type="number"
+                                  placeholder="Agua (ml)"
+                                  value={data.waterMl}
+                                  onChange={(e) =>
+                                    updateDayMeal(d, meal, "waterMl", e.target.value)
+                                  }
+                                  className="h-8 text-sm"
+                                />
+                                <Input
+                                  placeholder="Notas"
                                   value={data.notes}
                                   onChange={(e) =>
                                     updateDayMeal(
