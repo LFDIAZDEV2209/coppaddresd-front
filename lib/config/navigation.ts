@@ -35,6 +35,9 @@ import {
   ClipboardList,
   Inbox,
   Bell,
+  Apple,
+  Dumbbell,
+  ClipboardList,
 } from "lucide-react";
 
 export interface NavItem {
@@ -335,6 +338,31 @@ export const navModules: NavModule[] = [
         icon: FileAudio,
         color: "#0E7490",
         permission: "Media.View",
+      },
+    ],
+  },
+  {
+    label: "Bienestar",
+    icon: Apple,
+    color: "#059669",
+    items: [
+      {
+        label: "Planes de alimentación",
+        href: "/wellness/nutrition-plans",
+        icon: Apple,
+        color: "#059669",
+      },
+      {
+        label: "Rutinas de ejercicio",
+        href: "/wellness/exercise-routines",
+        icon: Dumbbell,
+        color: "#0891B2",
+      },
+      {
+        label: "Asignaciones",
+        href: "/wellness/assignments",
+        icon: ClipboardList,
+        color: "#7C3AED",
       },
     ],
   },
