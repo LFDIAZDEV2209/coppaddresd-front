@@ -1,7 +1,7 @@
 /**
  * Servicio de usuarios del frontend contra el Auth Service.
  *
- * La lista completa llega por GET /api/users (Users.View) y el filtrado,
+ * La lista completa llega por GET /api/auth/users (Users.View) y el filtrado,
  * búsqueda y paginación se hacen client-side (mismo patrón que media).
  * La creación y edición usan UN SOLO request que incluye los conjuntos
  * completos de roles y permisos (el backend hace el sync total en una
@@ -19,7 +19,7 @@ import type {
 } from "../types";
 import type { Role } from "@/features/roles/types";
 
-const PATH = `${env.authApiUrl}/api/users`;
+const PATH = `${env.apiUrl}/api/auth/users`;
 
 /**
  * Lista paginada de usuarios con filtros aplicados client-side.
@@ -73,7 +73,7 @@ export async function fetchUsers(
 
 /**
  * Crea el usuario con sus roles y permisos en UNA llamada
- * (POST /api/users, AllowAnonymous). El backend valida la existencia de los
+ * (POST /api/auth/users, AllowAnonymous). El backend valida la existencia de los
  * ids y persiste todo en una transacción; si el caller es anónimo o no tiene
  * permisos de asignación y se envían roles/permisos → 403.
  */
@@ -86,7 +86,7 @@ export async function createUser(input: UserCreateInput): Promise<User> {
 
 /**
  * Actualiza el perfil y hace sync TOTAL de roles y permisos directos en UNA
- * llamada (PUT /api/users/{id}). El front siempre envía los conjuntos
+ * llamada (PUT /api/auth/users/{id}). El front siempre envía los conjuntos
  * completos (el backend distingue null = no tocar de lista vacía = quitar
  * todo). Requiere Users.Update y, si se envían asignaciones, Roles.Assign +
  * Permissions.Assign → 403 si faltan.
@@ -101,16 +101,16 @@ export async function updateUser(
   });
 }
 
-/** Elimina un usuario (DELETE /api/users/{id}) → 204. */
+/** Elimina un usuario (DELETE /api/auth/users/{id}) → 204. */
 export async function deleteUser(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
 }
 
 // --- Lecturas de asignaciones del usuario (precarga del form de edición) ---
 
-/** Roles asignados a un usuario (GET /api/roles/user/{userId}). */
+/** Roles asignados a un usuario (GET /api/auth/roles/user/{userId}). */
 export async function fetchUserRoles(userId: string): Promise<Role[]> {
-  return apiFetch<Role[]>(`${env.authApiUrl}/api/roles/user/${userId}`);
+  return apiFetch<Role[]>(`${env.apiUrl}/api/auth/roles/user/${userId}`);
 }
 
 // --- Helpers de presentación ---
@@ -134,7 +134,7 @@ export {
   formatDate,
 } from "@/features/auth-common/utils";
 
-/** Catálogo de roles para el multi-select (GET /api/roles). */
+/** Catálogo de roles para el multi-select (GET /api/auth/roles). */
 export { fetchRoles } from "@/features/roles/services/roles-service";
 
 /** Catálogo de permisos y permisos directos del usuario (precarga del form). */

@@ -9,14 +9,14 @@ import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type { Role, RoleCreateInput, RoleUpdateInput } from "../types";
 
-const PATH = `${env.authApiUrl}/api/roles`;
+const PATH = `${env.apiUrl}/api/auth/roles`;
 
-/** Lista completa de roles (GET /api/roles). */
+/** Lista completa de roles (GET /api/auth/roles). */
 export async function fetchRoles(): Promise<Role[]> {
   return apiFetch<Role[]>(PATH);
 }
 
-/** Crea un rol (POST /api/roles) → 201 con el rol creado. */
+/** Crea un rol (POST /api/auth/roles) → 201 con el rol creado. */
 export async function createRole(input: RoleCreateInput): Promise<Role> {
   return apiFetch<Role>(PATH, {
     method: "POST",
@@ -24,7 +24,7 @@ export async function createRole(input: RoleCreateInput): Promise<Role> {
   });
 }
 
-/** Actualiza un rol (PUT /api/roles/{id}) → 204. */
+/** Actualiza un rol (PUT /api/auth/roles/{id}) → 204. */
 export async function updateRole(
   id: string,
   input: RoleUpdateInput,
@@ -35,7 +35,7 @@ export async function updateRole(
   });
 }
 
-/** Elimina un rol (DELETE /api/roles/{id}) → 204. */
+/** Elimina un rol (DELETE /api/auth/roles/{id}) → 204. */
 export async function deleteRole(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
 }

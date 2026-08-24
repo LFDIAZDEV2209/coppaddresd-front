@@ -1,15 +1,14 @@
 /**
  * Configuración centralizada de variables de entorno del frontend.
  * Todas las URLs de servicios se leen desde aquí (nunca hardcodeadas).
+ *
+ * Desde el api-gateway-yarp, el frontend consume una única URL pública
+ * (NEXT_PUBLIC_GATEWAY_URL) que apunta al gateway. El gateway enruta por
+ * prefijo de path a cada microservicio (Auth, Api, Telemedicina), por lo que
+ * ya no se necesitan URLs separadas por servicio.
  */
 export const env = {
-  authApiUrl:
-    process.env.NEXT_PUBLIC_AUTH_API_URL ?? "http://localhost:5123",
-  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5122",
-  // Microservicio de Telemedicina (schema tele). Comparte el JWT del Auth
-  // Service; el frontend lo consume solo para /api/v1/telemedicine/*.
-  telemedicineApiUrl:
-    process.env.NEXT_PUBLIC_TELEMEDICINE_API_URL ?? "http://localhost:5130",
+  apiUrl: process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5080",
   // Código de aplicación que identifica este cliente ante el Auth Service
   // ("erp" para el frontend administrativo, "app" para la móvil). Determina
   // el claim `aud` del JWT y el acceso vía UserApplication.

@@ -3,8 +3,8 @@
  *
  * Flujo:
  * - login: POST /api/auth/login → recibe access token (el refresh token queda
- *   en cookie HttpOnly puesta por el servidor) → GET /api/me para la sesión.
- * - restore: POST /api/auth/refresh (cookie) → nuevo access token → /api/me.
+ *   en cookie HttpOnly puesta por el servidor) → GET /api/auth/me para la sesión.
+ * - restore: POST /api/auth/refresh (cookie) → nuevo access token → /api/auth/me.
  * - logout: POST /api/auth/logout con la cookie (el servidor revoca y limpia).
  */
 
@@ -48,7 +48,7 @@ export async function login(
 ): Promise<LoginResult> {
   try {
     const data = await apiFetch<TokenResponseDto>(
-      `${env.authApiUrl}/api/auth/login`,
+      `${env.apiUrl}/api/auth/login`,
       {
         method: "POST",
         auth: false,
@@ -97,7 +97,7 @@ export async function restoreSession(): Promise<AuthSession | null> {
 }
 
 export async function fetchCurrentUser(): Promise<AuthSession> {
-  const me = await apiFetch<MeResponseDto>(`${env.authApiUrl}/api/me`);
+  const me = await apiFetch<MeResponseDto>(`${env.apiUrl}/api/auth/me`);
 
   const name = `${me.firstName} ${me.lastName}`.trim();
   const initials = name
@@ -125,7 +125,7 @@ export async function fetchCurrentUser(): Promise<AuthSession> {
  */
 export async function logout(): Promise<void> {
   try {
-    await apiFetch(`${env.authApiUrl}/api/auth/logout`, {
+    await apiFetch(`${env.apiUrl}/api/auth/logout`, {
       method: "POST",
       auth: false,
       retry: false,

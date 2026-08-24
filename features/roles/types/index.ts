@@ -10,13 +10,13 @@ export interface Role {
   createdAt: string;
 }
 
-/** Cuerpo de POST /api/roles (creación). */
+/** Cuerpo de POST /api/auth/roles (creación). */
 export interface RoleCreateInput {
   name: string;
   description?: string | null;
 }
 
-/** Cuerpo de PUT /api/roles/{id} (actualización parcial). */
+/** Cuerpo de PUT /api/auth/roles/{id} (actualización parcial). */
 export interface RoleUpdateInput {
   name?: string;
   description?: string | null;
