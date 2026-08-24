@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  Activity,
+  ArrowRight,
   BarChart3,
   CalendarDays,
   CalendarCheck,
@@ -10,16 +12,21 @@ import {
   CalendarX,
   Clock,
   Inbox,
-  UserCheck,
+  PieChart,
+  UserCog,
   Users,
   Video,
   Stethoscope,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { buttonVariants } from "@/components/ui/button";
+import {
+  RangeToggle,
+  rangeOptions,
+  type RangeKey,
+} from "./dashboard/range-toggle";
 import { useDashboardAnalytics } from "../hooks/use-dashboard-analytics";
 import { useAdminSummary } from "../hooks/use-admin";
 import { DashboardChartCard } from "./dashboard/dashboard-chart-card";
@@ -29,14 +36,6 @@ import { ProfessionalActivityChart } from "./dashboard/professional-activity-cha
 import { HourlyDistributionChart } from "./dashboard/hourly-distribution-chart";
 import { UpcomingAppointments } from "./dashboard/upcoming-appointments";
 import { QuickActions, type QuickAction } from "./dashboard/quick-actions";
-
-type RangeKey = "30d" | "60d" | "90d";
-
-const rangeOptions: Array<{ key: RangeKey; label: string; days: number }> = [
-  { key: "30d", label: "30 días", days: 30 },
-  { key: "60d", label: "60 días", days: 60 },
-  { key: "90d", label: "90 días", days: 90 },
-];
 
 /**
  * Dashboard administrativo de Telemedicina: KPIs en una línea, gráficas de
@@ -50,22 +49,44 @@ export function AdminDashboard() {
   const rangeDates = useMemo(() => {
     const to = new Date();
     const from = new Date(to);
-    from.setDate(from.getDate() - rangeOptions.find((o) => o.key === range)!.days);
+    from.setDate(
+      from.getDate() - rangeOptions.find((o) => o.key === range)!.days,
+    );
     return { from, to };
   }, [range]);
 
   const { analytics, loading, error } = useDashboardAnalytics(
     "admin",
     rangeDates.from,
-    rangeDates.to
+    rangeDates.to,
   );
   const { summary } = useAdminSummary();
 
   const actions: QuickAction[] = [
-    { href: "/telemedicine/admin/citas", icon: CalendarDays, label: "Citas", description: "Todas las citas con filtros" },
-    { href: "/telemedicine/admin/solicitudes", icon: Inbox, label: "Solicitudes", description: "Solicitudes de los pacientes" },
-    { href: "/telemedicine/admin/profesionales", icon: Users, label: "Profesionales", description: "Catálogo de profesionales clínicos" },
-    { href: "/telemedicine/admin/sesiones", icon: Video, label: "Sesiones", description: "Sesiones de video realizadas" },
+    {
+      href: "/telemedicine/admin/citas",
+      icon: CalendarDays,
+      label: "Citas",
+      description: "Todas las citas con filtros",
+    },
+    {
+      href: "/telemedicine/admin/solicitudes",
+      icon: Inbox,
+      label: "Solicitudes",
+      description: "Solicitudes de los pacientes",
+    },
+    {
+      href: "/telemedicine/admin/profesionales",
+      icon: Users,
+      label: "Profesionales",
+      description: "Catálogo de profesionales clínicos",
+    },
+    {
+      href: "/telemedicine/admin/sesiones",
+      icon: Video,
+      label: "Sesiones",
+      description: "Sesiones de video realizadas",
+    },
   ];
 
   if (loading && !analytics) {
@@ -75,7 +96,10 @@ export function AdminDashboard() {
   const kpis = analytics?.kpis;
   const completedRate =
     kpis && kpis.completed + kpis.noShow + kpis.cancelled > 0
-      ? Math.round((kpis.completed / (kpis.completed + kpis.noShow + kpis.cancelled)) * 100)
+      ? Math.round(
+          (kpis.completed / (kpis.completed + kpis.noShow + kpis.cancelled)) *
+            100,
+        )
       : null;
 
   return (
@@ -84,26 +108,14 @@ export function AdminDashboard() {
         title="Telemedicina · Administración"
         description="Resumen operativo del módulo de telemedicina"
         icon={BarChart3}
-        actions={
-          <ToggleGroup
-                value={[range]}
-            onValueChange={(values) => {
-              const next = values[0] as RangeKey | undefined;
-              if (next) setRange(next);
-            }}
-            size="sm"
-          >
-            {rangeOptions.map((option) => (
-              <ToggleGroupItem key={option.key} value={option.key}>
-                {option.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        }
+        actions={<RangeToggle value={range} onValueChange={setRange} />}
       />
 
       {error && (
-        <p className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive" role="alert">
+        <p
+          className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -115,7 +127,9 @@ export function AdminDashboard() {
           value={kpis ? String(kpis.appointmentsToday) : "—"}
           icon={CalendarCheck}
           variant="primary"
-          context={summary ? `${summary.activeSessions} sesiones activas` : undefined}
+          context={
+            summary ? `${summary.activeSessions} sesiones activas` : undefined
+          }
         />
         <StatCard
           label="Citas en el rango"
@@ -136,7 +150,11 @@ export function AdminDashboard() {
           value={kpis ? String(kpis.completed) : "—"}
           icon={Clock}
           variant="success"
-          context={completedRate !== null ? `Tasa de finalización ${completedRate}%` : undefined}
+          context={
+            completedRate !== null
+              ? `Tasa de finalización ${completedRate}%`
+              : undefined
+          }
         />
         <StatCard
           label="Canceladas"
@@ -150,7 +168,11 @@ export function AdminDashboard() {
           value={kpis ? String(kpis.activeProfessionals) : "—"}
           icon={Stethoscope}
           variant="warning"
-          context={summary ? `${summary.requestsPending} solicitudes pendientes` : undefined}
+          context={
+            summary
+              ? `${summary.requestsPending} solicitudes pendientes`
+              : undefined
+          }
         />
       </div>
 
@@ -159,6 +181,7 @@ export function AdminDashboard() {
         <DashboardChartCard
           title="Actividad de citas"
           description={`Serie temporal en el rango seleccionado (${rangeOptions.find((o) => o.key === range)!.label})`}
+          icon={Activity}
           className="xl:col-span-2"
         >
           <AppointmentsTrendChart
@@ -170,6 +193,7 @@ export function AdminDashboard() {
         <DashboardChartCard
           title="Distribución por estado"
           description="Citas agrupadas por estado en el rango"
+          icon={PieChart}
         >
           <StatusDistributionChart
             statusDistribution={analytics?.statusDistribution ?? []}
@@ -183,6 +207,7 @@ export function AdminDashboard() {
         <DashboardChartCard
           title="Actividad por profesional"
           description="Citas totales y completadas por profesional en el rango"
+          icon={Users}
         >
           <ProfessionalActivityChart
             activity={analytics?.professionalActivity ?? []}
@@ -193,6 +218,7 @@ export function AdminDashboard() {
         <DashboardChartCard
           title="Franjas de mayor demanda"
           description="Citas por hora del día en el rango"
+          icon={Clock}
         >
           <HourlyDistributionChart
             hourlyDistribution={analytics?.hourlyDistribution ?? []}
@@ -203,30 +229,40 @@ export function AdminDashboard() {
 
       {/* Próximas citas globales + accesos rápidos. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 xl:col-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-semibold text-foreground">Próximas citas</h2>
-            <Link
-              href="/telemedicine/admin/citas"
-              className={buttonVariants({ variant: "ghost", size: "sm" })}
-            >
-              Ver todas
-            </Link>
-          </div>
-          <UpcomingAppointments
-            appointments={analytics?.upcomingAppointments ?? []}
-            loading={loading}
-            emptyMessage="Sin citas próximas en el sistema"
-            hrefBase="/telemedicine/admin/citas"
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card xl:col-span-2">
+          <SectionHeader
+            title="Próximas citas"
+            description="Próximas citas en el sistema"
+            icon={CalendarDays}
+            actions={
+              <Link
+                href="/telemedicine/admin/citas"
+                className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-white/20"
+              >
+                Ver todas
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            }
           />
+          <div className="p-5 pt-4">
+            <UpcomingAppointments
+              appointments={analytics?.upcomingAppointments ?? []}
+              loading={loading}
+              emptyMessage="Sin citas próximas en el sistema"
+              hrefBase="/telemedicine/admin/citas"
+            />
+          </div>
         </section>
 
-        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-semibold text-foreground">Accesos rápidos</h2>
-            <UserCheck className="size-4 text-muted-foreground" />
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+          <SectionHeader
+            title="Accesos rápidos"
+            description="Accesos directos del módulo"
+            icon={UserCog}
+          />
+          <div className="p-5 pt-4">
+            <QuickActions actions={actions} />
           </div>
-          <QuickActions actions={actions} />
         </section>
       </div>
     </div>

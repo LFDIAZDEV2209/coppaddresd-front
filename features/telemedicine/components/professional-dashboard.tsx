@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  Activity,
+  ArrowRight,
   CalendarDays,
   CalendarCheck,
   CalendarPlus,
@@ -12,13 +14,19 @@ import {
   Inbox,
   Clock,
   ClipboardList,
-  Users,
+  PieChart,
+  UserCog,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  RangeToggle,
+  rangeOptions,
+  type RangeKey,
+} from "./dashboard/range-toggle";
 import { useCurrentUser } from "../hooks/use-current-user";
 import { useDashboardAnalytics } from "../hooks/use-dashboard-analytics";
 import { useAlerts } from "../hooks/use-alerts";
@@ -28,13 +36,6 @@ import { StatusDistributionChart } from "./dashboard/status-distribution-chart";
 import { HourlyDistributionChart } from "./dashboard/hourly-distribution-chart";
 import { UpcomingAppointments } from "./dashboard/upcoming-appointments";
 import { QuickActions, type QuickAction } from "./dashboard/quick-actions";
-
-type RangeKey = "30d" | "60d";
-
-const rangeOptions: Array<{ key: RangeKey; label: string; days: number }> = [
-  { key: "30d", label: "30 días", days: 30 },
-  { key: "60d", label: "60 días", days: 60 },
-];
 
 /**
  * Dashboard del profesional clínico: KPIs propios en una línea, gráficas de su
@@ -50,7 +51,9 @@ export function ProfessionalDashboard() {
   const rangeDates = useMemo(() => {
     const to = new Date();
     const from = new Date(to);
-    from.setDate(from.getDate() - rangeOptions.find((o) => o.key === range)!.days);
+    from.setDate(
+      from.getDate() - rangeOptions.find((o) => o.key === range)!.days,
+    );
     return { from, to };
   }, [range]);
 
@@ -59,7 +62,7 @@ export function ProfessionalDashboard() {
     "me",
     professionalId ? rangeDates.from : null,
     professionalId ? rangeDates.to : null,
-    Boolean(professionalId)
+    Boolean(professionalId),
   );
 
   if (userLoading) {
@@ -94,14 +97,38 @@ export function ProfessionalDashboard() {
   const kpis = analytics?.kpis;
   const completedRate =
     kpis && kpis.completed + kpis.noShow + kpis.cancelled > 0
-      ? Math.round((kpis.completed / (kpis.completed + kpis.noShow + kpis.cancelled)) * 100)
+      ? Math.round(
+          (kpis.completed / (kpis.completed + kpis.noShow + kpis.cancelled)) *
+            100,
+        )
       : null;
 
   const actions: QuickAction[] = [
-    { href: "/telemedicine/agenda", icon: CalendarDays, label: "Mi agenda", description: "Agenda y calendario" },
-    { href: "/telemedicine/solicitudes", icon: Inbox, label: "Solicitudes", description: "Solicitudes de los pacientes" },
-    { href: "/telemedicine/alertas", icon: Bell, label: "Alertas", description: unread > 0 ? `${unread} sin leer` : "Bandeja de notificaciones" },
-    { href: "/telemedicine/citas", icon: ClipboardList, label: "Citas", description: "Historial de mis citas" },
+    {
+      href: "/telemedicine/agenda",
+      icon: CalendarDays,
+      label: "Mi agenda",
+      description: "Agenda y calendario",
+    },
+    {
+      href: "/telemedicine/solicitudes",
+      icon: Inbox,
+      label: "Solicitudes",
+      description: "Solicitudes de los pacientes",
+    },
+    {
+      href: "/telemedicine/alertas",
+      icon: Bell,
+      label: "Alertas",
+      description:
+        unread > 0 ? `${unread} sin leer` : "Bandeja de notificaciones",
+    },
+    {
+      href: "/telemedicine/citas",
+      icon: ClipboardList,
+      label: "Citas",
+      description: "Historial de mis citas",
+    },
   ];
 
   return (
@@ -112,21 +139,18 @@ export function ProfessionalDashboard() {
         icon={Stethoscope}
         actions={
           <>
-            <ToggleGroup
-                    value={[range]}
-              onValueChange={(values) => {
-                const next = values[0] as RangeKey | undefined;
-                if (next) setRange(next);
-              }}
-              size="sm"
+            <RangeToggle
+              value={range}
+              onValueChange={setRange}
+              options={[
+                { key: "30d", label: "30 días", days: 30 },
+                { key: "60d", label: "60 días", days: 60 },
+              ]}
+            />
+            <Link
+              href="/telemedicine/agenda"
+              className={buttonVariants({ size: "sm" })}
             >
-              {rangeOptions.map((option) => (
-                <ToggleGroupItem key={option.key} value={option.key}>
-                  {option.label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-            <Link href="/telemedicine/agenda" className={buttonVariants({ size: "sm" })}>
               <CalendarDays className="size-4" />
               Mi agenda
             </Link>
@@ -135,7 +159,10 @@ export function ProfessionalDashboard() {
       />
 
       {error && (
-        <p className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive" role="alert">
+        <p
+          className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -147,7 +174,10 @@ export function ProfessionalDashboard() {
           value={kpis ? String(kpis.appointmentsToday) : "—"}
           icon={CalendarCheck}
           variant="primary"
-          context={new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}
+          context={new Date().toLocaleDateString("es-ES", {
+            day: "2-digit",
+            month: "short",
+          })}
         />
         <StatCard
           label="Próximos 7 días"
@@ -161,14 +191,22 @@ export function ProfessionalDashboard() {
           value={kpis ? String(kpis.completed) : "—"}
           icon={Clock}
           variant="success"
-          context={completedRate !== null ? `Tasa de finalización ${completedRate}%` : undefined}
+          context={
+            completedRate !== null
+              ? `Tasa de finalización ${completedRate}%`
+              : undefined
+          }
         />
         <StatCard
           label="Canceladas / No asistieron"
           value={kpis ? String(kpis.cancelled + kpis.noShow) : "—"}
           icon={CalendarX}
-          variant={kpis && kpis.cancelled + kpis.noShow > 0 ? "destructive" : "default"}
-          context={kpis ? `${kpis.uniquePatients} pacientes atendidos` : undefined}
+          variant={
+            kpis && kpis.cancelled + kpis.noShow > 0 ? "destructive" : "default"
+          }
+          context={
+            kpis ? `${kpis.uniquePatients} pacientes atendidos` : undefined
+          }
         />
       </div>
 
@@ -177,6 +215,7 @@ export function ProfessionalDashboard() {
         <DashboardChartCard
           title="Mi actividad"
           description={`Mis citas en el rango seleccionado (${rangeOptions.find((o) => o.key === range)!.label})`}
+          icon={Activity}
           className="xl:col-span-2"
         >
           <AppointmentsTrendChart
@@ -185,7 +224,11 @@ export function ProfessionalDashboard() {
           />
         </DashboardChartCard>
 
-        <DashboardChartCard title="Distribución por estado" description="Mis citas por estado en el rango">
+        <DashboardChartCard
+          title="Distribución por estado"
+          description="Mis citas por estado en el rango"
+          icon={PieChart}
+        >
           <StatusDistributionChart
             statusDistribution={analytics?.statusDistribution ?? []}
             loading={loading}
@@ -198,6 +241,7 @@ export function ProfessionalDashboard() {
         <DashboardChartCard
           title="Franjas de mayor demanda"
           description="Mis citas por hora del día en el rango"
+          icon={Clock}
           className="xl:col-span-1"
         >
           <HourlyDistributionChart
@@ -206,33 +250,43 @@ export function ProfessionalDashboard() {
           />
         </DashboardChartCard>
 
-        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 xl:col-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-semibold text-foreground">Mis próximas citas</h2>
-            <Link
-              href="/telemedicine/agenda"
-              className={buttonVariants({ variant: "ghost", size: "sm" })}
-            >
-              Ver agenda
-            </Link>
-          </div>
-          <UpcomingAppointments
-            appointments={analytics?.upcomingAppointments ?? []}
-            loading={loading}
-            emptyMessage="Sin citas próximas en tu agenda"
-            hrefBase="/telemedicine/citas"
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card xl:col-span-2">
+          <SectionHeader
+            title="Mis próximas citas"
+            description="Próximas citas de tu agenda"
+            icon={CalendarDays}
+            actions={
+              <Link
+                href="/telemedicine/agenda"
+                className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-white/20"
+              >
+                Ver agenda
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            }
           />
+          <div className="p-5 pt-4">
+            <UpcomingAppointments
+              appointments={analytics?.upcomingAppointments ?? []}
+              loading={loading}
+              emptyMessage="Sin citas próximas en tu agenda"
+              hrefBase="/telemedicine/citas"
+            />
+          </div>
         </section>
       </div>
 
-      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold text-foreground">Accesos rápidos</h2>
-          <Users className="size-4 text-muted-foreground" />
-        </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <QuickActions actions={actions.slice(0, 2)} />
-          <QuickActions actions={actions.slice(2)} />
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <SectionHeader
+          title="Accesos rápidos"
+          description="Accesos directos del módulo"
+          icon={UserCog}
+        />
+        <div className="p-5 pt-4">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <QuickActions actions={actions.slice(0, 2)} />
+            <QuickActions actions={actions.slice(2)} />
+          </div>
         </div>
       </section>
     </div>

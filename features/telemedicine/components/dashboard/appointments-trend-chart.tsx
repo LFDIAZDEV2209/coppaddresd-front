@@ -12,8 +12,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CalendarDays, CalendarRange, CalendarClock } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { DailyAppointmentCountDto } from "../../types";
+import { toggleActiveClass } from "./range-toggle";
 
 type Bucket = "day" | "week" | "month";
 
@@ -21,6 +23,12 @@ const bucketLabels: Record<Bucket, string> = {
   day: "Día",
   week: "Semana",
   month: "Mes",
+};
+
+const bucketIcons: Record<Bucket, typeof CalendarDays> = {
+  day: CalendarDays,
+  week: CalendarRange,
+  month: CalendarClock,
 };
 
 /**
@@ -61,14 +69,21 @@ export function AppointmentsTrendChart({
 
   const chart =
     bucket === "day" ? (
-      <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+      <AreaChart
+        data={data}
+        margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
+      >
         <defs>
           <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.35} />
             <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke="var(--border)"
+          vertical={false}
+        />
         <XAxis
           dataKey="label"
           tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
@@ -102,7 +117,11 @@ export function AppointmentsTrendChart({
       </AreaChart>
     ) : (
       <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke="var(--border)"
+          vertical={false}
+        />
         <XAxis
           dataKey="label"
           tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
@@ -126,7 +145,12 @@ export function AppointmentsTrendChart({
             boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
           }}
         />
-        <Bar dataKey="citas" fill="var(--chart-1)" radius={[5, 5, 0, 0]} maxBarSize={48} />
+        <Bar
+          dataKey="citas"
+          fill="var(--chart-1)"
+          radius={[5, 5, 0, 0]}
+          maxBarSize={48}
+        />
       </BarChart>
     );
 
@@ -139,12 +163,21 @@ export function AppointmentsTrendChart({
           if (next) setBucket(next);
         }}
         size="sm"
+        variant="outline"
       >
-        {(Object.keys(bucketLabels) as Bucket[]).map((key) => (
-          <ToggleGroupItem key={key} value={key}>
-            {bucketLabels[key]}
-          </ToggleGroupItem>
-        ))}
+        {(Object.keys(bucketLabels) as Bucket[]).map((key) => {
+          const Icon = bucketIcons[key];
+          return (
+            <ToggleGroupItem
+              key={key}
+              value={key}
+              className={toggleActiveClass}
+            >
+              <Icon data-icon="inline-start" />
+              {bucketLabels[key]}
+            </ToggleGroupItem>
+          );
+        })}
       </ToggleGroup>
       <div className="h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -183,14 +216,20 @@ function aggregate(series: DailyAppointmentCountDto[], bucket: Bucket) {
     let label: string;
     if (bucket === "month") {
       key = `${date.getFullYear()}-${date.getMonth()}`;
-      label = date.toLocaleDateString("es-ES", { month: "short", year: "2-digit" });
+      label = date.toLocaleDateString("es-ES", {
+        month: "short",
+        year: "2-digit",
+      });
     } else {
       // Semana ISO: lunes como inicio.
       const monday = new Date(date);
       const offset = (date.getDay() + 6) % 7;
       monday.setDate(date.getDate() - offset);
       key = monday.toISOString().slice(0, 10);
-      label = monday.toLocaleDateString("es-ES", { day: "2-digit", month: "short" });
+      label = monday.toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "short",
+      });
     }
 
     const current = buckets.get(key) ?? { label, citas: 0 };

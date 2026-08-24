@@ -3,12 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type CardVariant =
-  | "default"
-  | "primary"
-  | "success"
-  | "warning"
-  | "destructive"
-  | "info";
+  "default" | "primary" | "success" | "warning" | "destructive" | "info";
 
 interface StatCardProps {
   label: string;
@@ -70,14 +65,14 @@ export function StatCard({
       <div
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-lg",
-          config.iconBg
+          config.iconBg,
         )}
       >
         <Icon className={cn("size-5", config.iconColor)} />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="line-clamp-2 text-[11px] font-medium uppercase leading-4 tracking-wider text-muted-foreground">
           {label}
         </span>
         <div className="flex items-baseline gap-2">
@@ -85,7 +80,12 @@ export function StatCard({
             {value}
           </span>
           {trend && (
-            <span className={cn("flex items-center gap-0.5 text-[11px] font-semibold", config.trendColor)}>
+            <span
+              className={cn(
+                "flex items-center gap-0.5 text-[11px] font-semibold",
+                config.trendColor,
+              )}
+            >
               {trend.direction === "up" ? (
                 <TrendingUp className="size-3" />
               ) : (
@@ -96,9 +96,7 @@ export function StatCard({
           )}
         </div>
         {context && (
-          <span className="text-[11px] text-muted-foreground">
-            {context}
-          </span>
+          <span className="text-[11px] text-muted-foreground">{context}</span>
         )}
       </div>
     </div>

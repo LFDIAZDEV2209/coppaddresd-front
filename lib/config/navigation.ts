@@ -37,7 +37,6 @@ import {
   Bell,
   Apple,
   Dumbbell,
-  ClipboardList,
 } from "lucide-react";
 
 export interface NavItem {
@@ -74,15 +73,21 @@ export function hasNavPermission(
 }
 
 /** Ítems visibles del módulo (filtra hidden y permisos). */
-export function visibleNavItems(module: NavModule, can: (code: string) => boolean): NavItem[] {
-  return module.items.filter((item) => !item.hidden && hasNavPermission(item.permission, can));
+export function visibleNavItems(
+  module: NavModule,
+  can: (code: string) => boolean,
+): NavItem[] {
+  return module.items.filter(
+    (item) => !item.hidden && hasNavPermission(item.permission, can),
+  );
 }
 
 /** Módulos visibles: con permiso de módulo y al menos un ítem visible. */
 export function visibleNavModules(can: (code: string) => boolean): NavModule[] {
   return navModules.filter(
     (module) =>
-      hasNavPermission(module.permission, can) && visibleNavItems(module, can).length > 0,
+      hasNavPermission(module.permission, can) &&
+      visibleNavItems(module, can).length > 0,
   );
 }
 
@@ -162,7 +167,11 @@ export const navModules: NavModule[] = [
     label: "Telemedicina",
     icon: Video,
     color: "#0E7490",
-    permission: ["Telemedicine.AgendaView", "Telemedicine.AdminView", "Telemedicine.RequestsView"],
+    permission: [
+      "Telemedicine.AgendaView",
+      "Telemedicine.AdminView",
+      "Telemedicine.RequestsView",
+    ],
     items: [
       {
         label: "Dashboard",
@@ -293,7 +302,13 @@ export const navModules: NavModule[] = [
     color: "#7C3AED",
     permission: "Agents.View",
     items: [
-      { label: "Agentes", href: "/agents", icon: Bot, color: "#7C3AED", permission: "Agents.View" },
+      {
+        label: "Agentes",
+        href: "/agents",
+        icon: Bot,
+        color: "#7C3AED",
+        permission: "Agents.View",
+      },
       {
         label: "Conocimiento",
         href: "/agents/knowledge",
@@ -315,7 +330,14 @@ export const navModules: NavModule[] = [
         color: "#2563EB",
         permission: "Agents.View",
       },
-      { label: "Voces", href: "/agents/voices", icon: Mic, color: "#0891B2", hidden: true, permission: "Agents.View" },
+      {
+        label: "Voces",
+        href: "/agents/voices",
+        icon: Mic,
+        color: "#0891B2",
+        hidden: true,
+        permission: "Agents.View",
+      },
       {
         label: "Configuración AI",
         href: "/agents/config",
