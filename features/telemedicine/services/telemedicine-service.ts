@@ -46,18 +46,24 @@ export interface CreateRequestInput {
   reason: string;
 }
 
-export async function createRequest(input: CreateRequestInput): Promise<TelemedicineRequestDto> {
+export async function createRequest(
+  input: CreateRequestInput,
+): Promise<TelemedicineRequestDto> {
   return apiFetch<TelemedicineRequestDto>(`${PATH}/requests`, {
     method: "POST",
     body: JSON.stringify(input),
   });
 }
 
-export async function fetchRequest(id: string): Promise<TelemedicineRequestDto> {
+export async function fetchRequest(
+  id: string,
+): Promise<TelemedicineRequestDto> {
   return apiFetch<TelemedicineRequestDto>(`${PATH}/requests/${id}`);
 }
 
-export async function fetchMyRequests(patientId?: string): Promise<TelemedicineRequestDto[]> {
+export async function fetchMyRequests(
+  patientId?: string,
+): Promise<TelemedicineRequestDto[]> {
   const qs = patientId ? `?patientId=${patientId}` : "";
   return apiFetch<TelemedicineRequestDto[]>(`${PATH}/requests/mine${qs}`);
 }
@@ -73,10 +79,13 @@ export async function confirmRequest(
   id: string,
   input: ConfirmRequestInput,
 ): Promise<TelemedicineAppointmentDto> {
-  return apiFetch<TelemedicineAppointmentDto>(`${PATH}/requests/${id}/confirm`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  return apiFetch<TelemedicineAppointmentDto>(
+    `${PATH}/requests/${id}/confirm`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 // --- Citas (agenda del profesional) ---
@@ -91,10 +100,14 @@ export async function fetchAgenda(
     from,
     to,
   });
-  return apiFetch<TelemedicineAppointmentDto[]>(`${PATH}/appointments/agenda?${params.toString()}`);
+  return apiFetch<TelemedicineAppointmentDto[]>(
+    `${PATH}/appointments/agenda?${params.toString()}`,
+  );
 }
 
-export async function fetchAppointment(id: string): Promise<TelemedicineAppointmentDto> {
+export async function fetchAppointment(
+  id: string,
+): Promise<TelemedicineAppointmentDto> {
   return apiFetch<TelemedicineAppointmentDto>(`${PATH}/appointments/${id}`);
 }
 
@@ -122,10 +135,13 @@ export async function cancelAppointment(
   id: string,
   input: { reason: string; cancelledBy: string },
 ): Promise<TelemedicineAppointmentDto> {
-  return apiFetch<TelemedicineAppointmentDto>(`${PATH}/appointments/${id}/cancel`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  return apiFetch<TelemedicineAppointmentDto>(
+    `${PATH}/appointments/${id}/cancel`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 export async function rescheduleAppointment(
@@ -137,25 +153,37 @@ export async function rescheduleAppointment(
     requestedBy: string;
   },
 ): Promise<TelemedicineAppointmentDto> {
-  return apiFetch<TelemedicineAppointmentDto>(`${PATH}/appointments/${id}/reschedule`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  return apiFetch<TelemedicineAppointmentDto>(
+    `${PATH}/appointments/${id}/reschedule`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 // --- Sala virtual y sesiones ---
 
-export async function fetchJoinToken(appointmentId: string): Promise<JoinSessionResultDto> {
-  return apiFetch<JoinSessionResultDto>(`${PATH}/appointments/${appointmentId}/join-token`, {
-    method: "POST",
-  });
+export async function fetchJoinToken(
+  appointmentId: string,
+): Promise<JoinSessionResultDto> {
+  return apiFetch<JoinSessionResultDto>(
+    `${PATH}/appointments/${appointmentId}/join-token`,
+    {
+      method: "POST",
+    },
+  );
 }
 
-export async function fetchRoom(appointmentId: string): Promise<VirtualRoomDto> {
+export async function fetchRoom(
+  appointmentId: string,
+): Promise<VirtualRoomDto> {
   return apiFetch<VirtualRoomDto>(`${PATH}/appointments/${appointmentId}/room`);
 }
 
-export async function startSession(appointmentId: string): Promise<TelemedicineAppointmentDto> {
+export async function startSession(
+  appointmentId: string,
+): Promise<TelemedicineAppointmentDto> {
   return apiFetch<TelemedicineAppointmentDto>(
     `${PATH}/appointments/${appointmentId}/session/start`,
     { method: "POST" },
@@ -174,7 +202,9 @@ export async function endSession(
 
 // --- Encuentro clínico ---
 
-export async function fetchEncounter(appointmentId: string): Promise<ClinicalEncounterDto> {
+export async function fetchEncounter(
+  appointmentId: string,
+): Promise<ClinicalEncounterDto> {
   return apiFetch<ClinicalEncounterDto>(
     `${PATH}/appointments/${appointmentId}/encounter`,
   );
@@ -250,6 +280,38 @@ export async function fetchAdminSummary(): Promise<AdminSummaryDto> {
   return apiFetch<AdminSummaryDto>(`${PATH}/admin/summary`);
 }
 
+// --- "Mis citas" del profesional (por identidad del JWT, requiere perfil clínico) ---
+
+export interface MyAppointmentsFilters {
+  patientId?: string;
+  locationId?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export async function fetchMySummary(): Promise<AdminSummaryDto> {
+  return apiFetch<AdminSummaryDto>(`${PATH}/me/summary`);
+}
+
+export async function fetchMyAppointments(
+  filters: MyAppointmentsFilters = {},
+): Promise<PaginatedAdminAppointmentsResult> {
+  const params = new URLSearchParams();
+  params.set("page", String(filters.page ?? 1));
+  params.set("pageSize", String(filters.pageSize ?? 20));
+  for (const [key, value] of Object.entries(filters)) {
+    if (value != null && value !== "" && key !== "page" && key !== "pageSize") {
+      params.set(key, String(value));
+    }
+  }
+  return apiFetch<PaginatedAdminAppointmentsResult>(
+    `${PATH}/me/appointments?${params.toString()}`,
+  );
+}
+
 // --- Analytics del dashboard ---
 
 export interface DashboardAnalyticsFilters {
@@ -264,7 +326,9 @@ export async function fetchAdminAnalytics(
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
   const qs = params.toString();
-  return apiFetch<DashboardAnalyticsDto>(`${PATH}/admin/analytics${qs ? `?${qs}` : ""}`);
+  return apiFetch<DashboardAnalyticsDto>(
+    `${PATH}/admin/analytics${qs ? `?${qs}` : ""}`,
+  );
 }
 
 export async function fetchMyAnalytics(
@@ -274,7 +338,9 @@ export async function fetchMyAnalytics(
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
   const qs = params.toString();
-  return apiFetch<DashboardAnalyticsDto>(`${PATH}/me/analytics${qs ? `?${qs}` : ""}`);
+  return apiFetch<DashboardAnalyticsDto>(
+    `${PATH}/me/analytics${qs ? `?${qs}` : ""}`,
+  );
 }
 
 export async function fetchAdminAppointments(

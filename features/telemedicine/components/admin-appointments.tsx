@@ -56,7 +56,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useAdminAppointments, useAdminSummary } from "../hooks/use-admin";
+import { useScopedAppointments, useScopedSummary } from "../hooks/use-admin";
 import { toggleActiveOnDarkClass } from "./dashboard/range-toggle";
 import {
   appointmentStatusColor,
@@ -69,6 +69,7 @@ import {
   fetchProfessionalsCatalog,
   fetchSpecialties,
 } from "../services/reference-service";
+import { fetchMyContext } from "@/lib/api/context-service";
 import type { AdminAppointmentsFilters } from "../services/telemedicine-service";
 import type {
   AppointmentStatus,
@@ -147,25 +148,44 @@ interface FilterCatalogs {
   locations: Array<{ id: string; name: string }>;
 }
 
-function useAppointmentFilterCatalogs(): FilterCatalogs | null {
+function useAppointmentFilterCatalogs(
+  scope: "admin" | "professional",
+): FilterCatalogs | null {
   const [catalogs, setCatalogs] = useState<FilterCatalogs | null>(null);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const [professionals, patients, specialties, orgs] = await Promise.all([
-          fetchProfessionalsCatalog({ page: 1, pageSize: 100 }),
-          fetchPatients(),
-          fetchSpecialties(),
-          fetchOrganizationTree(),
-        ]);
+        // En alcance profesional el filtro por profesional no existe (los datos
+        // ya van acotados por identidad) y el árbol de organizaciones exige
+        // Organizations.View (403 para profesionales): las sedes salen de su
+        // propio contexto (/me/context), solo sus clínicas asignadas.
+        const [professionals, patients, specialties, locations] =
+          scope === "professional"
+            ? await Promise.all([
+                Promise.resolve<ProfessionalCatalogItemDto[]>([]),
+                fetchPatients(),
+                fetchSpecialties(),
+                fetchMyContext().then((context) =>
+                  context.clinics.flatMap((clinic) => clinic.locations),
+                ),
+              ])
+            : await Promise.all([
+                fetchProfessionalsCatalog({ page: 1, pageSize: 100 }).then(
+                  (result) => result.data,
+                ),
+                fetchPatients(),
+                fetchSpecialties(),
+                fetchOrganizationTree().then((orgs) =>
+                  orgs.flatMap((org) =>
+                    org.clinics.flatMap((clinic) => clinic.locations),
+                  ),
+                ),
+              ]);
         if (!active) return;
-        const locations = orgs.flatMap((org) =>
-          org.clinics.flatMap((clinic) => clinic.locations),
-        );
         setCatalogs({
-          professionals: professionals.data,
+          professionals,
           patients: patients.data,
           specialties,
           locations,
@@ -178,7 +198,7 @@ function useAppointmentFilterCatalogs(): FilterCatalogs | null {
     return () => {
       active = false;
     };
-  }, []);
+  }, [scope]);
 
   return catalogs;
 }
@@ -219,20 +239,29 @@ function SortableHeader({
 }
 
 /**
- * Listado administrativo de citas de telemedicina: KPIs operativos en una
- * línea, panel de filtros con cabecera azul (estado, profesional, paciente,
- * sede, rango de fechas) + búsqueda local, vista alterna tabla/tarjetas con
- * ordenamiento por columna y paginación. Los datos vienen de /admin/summary
- * y /admin/appointments.
+ * Listado de citas de telemedicina: KPIs operativos en una línea, panel de
+ * filtros con cabecera azul (estado, profesional, paciente, sede, rango de
+ * fechas) + búsqueda local, vista alterna tabla/tarjetas con ordenamiento por
+ * columna y paginación.
+ *
+ * <c>scope="admin"</c> (default): datos globales de /admin/summary y
+ * /admin/appointments. <c>scope="professional"</c>: mismo diseño, pero los
+ * datos salen de /me/summary y /me/appointments (acotados por identidad del
+ * JWT) y el filtro por profesional desaparece.
  */
-export function AdminAppointments() {
+export function AdminAppointments({
+  scope = "admin",
+}: {
+  scope?: "admin" | "professional";
+}) {
+  const isProfessional = scope === "professional";
   const [view, setView] = useState<ViewMode>("table");
   const [filters, setFilters] = useState<AppointmentFilters>(emptyFilters);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("scheduledStart");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  const catalogs = useAppointmentFilterCatalogs();
+  const catalogs = useAppointmentFilterCatalogs(scope);
 
   const serverFilters = useMemo<AdminAppointmentsFilters>(
     () => ({
@@ -247,8 +276,8 @@ export function AdminAppointments() {
   );
 
   const { items, total, page, pageSize, totalPages, loading, error, setPage } =
-    useAdminAppointments(serverFilters);
-  const { summary } = useAdminSummary();
+    useScopedAppointments(scope, serverFilters);
+  const { summary } = useScopedSummary(scope);
 
   const hasServerFilters = Object.values(filters).some(Boolean);
   const hasSearch = search.trim() !== "";
@@ -309,7 +338,11 @@ export function AdminAppointments() {
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
         title="Citas"
-        description="Todas las citas de telemedicina"
+        description={
+          isProfessional
+            ? "Mis citas de telemedicina"
+            : "Todas las citas de telemedicina"
+        }
         icon={CalendarDays}
         actions={
           <ToggleGroup
@@ -492,40 +525,47 @@ export function AdminAppointments() {
                 </SelectContent>
               </Select>
 
-              <Select
-                value={filters.professionalId || ALL}
-                onValueChange={(value) =>
-                  updateFilter({
-                    professionalId: value === ALL ? "" : (value ?? ""),
-                  })
-                }
-              >
-                <SelectTrigger
-                  className="w-[246px]"
-                  aria-label="Filtrar por profesional"
+              {!isProfessional && (
+                <Select
+                  value={filters.professionalId || ALL}
+                  onValueChange={(value) =>
+                    updateFilter({
+                      professionalId: value === ALL ? "" : (value ?? ""),
+                    })
+                  }
                 >
-                  <Stethoscope className="size-3.5 shrink-0 text-muted-foreground" />
-                  <SelectValue placeholder="Profesional">
-                    {(value) =>
-                      value === ALL
-                        ? "Todos los profesionales"
-                        : ((catalogs?.professionals ?? []).find(
-                            (professional) => professional.id === value,
-                          )?.fullName ?? value)
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value={ALL}>Todos los profesionales</SelectItem>
-                    {(catalogs?.professionals ?? []).map((professional) => (
-                      <SelectItem key={professional.id} value={professional.id}>
-                        {professional.fullName}
+                  <SelectTrigger
+                    className="w-[246px]"
+                    aria-label="Filtrar por profesional"
+                  >
+                    <Stethoscope className="size-3.5 shrink-0 text-muted-foreground" />
+                    <SelectValue placeholder="Profesional">
+                      {(value) =>
+                        value === ALL
+                          ? "Todos los profesionales"
+                          : ((catalogs?.professionals ?? []).find(
+                              (professional) => professional.id === value,
+                            )?.fullName ?? value)
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value={ALL}>
+                        Todos los profesionales
                       </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                      {(catalogs?.professionals ?? []).map((professional) => (
+                        <SelectItem
+                          key={professional.id}
+                          value={professional.id}
+                        >
+                          {professional.fullName}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
 
               <Select
                 value={filters.patientId || ALL}
