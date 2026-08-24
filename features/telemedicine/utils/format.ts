@@ -29,7 +29,10 @@ export function formatTime(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function formatDate(value: string | null | undefined): string {
@@ -91,7 +94,7 @@ export const encounterStatusLabel: Record<EncounterStatus, string> = {
 type ColorSet = { bg: string; text: string; dot: string };
 
 const colors = {
-  blue: { bg: "#E5F0FA", text: "#123B63", dot: "#2563EB" },
+  blue: { bg: "#162032", text: "#FFFFFF", dot: "#FFFFFF" },
   green: { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" },
   amber: { bg: "#FDF2E3", text: "#9A6A0A", dot: "#F59E0B" },
   red: { bg: "#FCEBEC", text: "#B42318", dot: "#EF4444" },
@@ -133,7 +136,9 @@ export function requestStatusColor(status: AppointmentRequestStatus): ColorSet {
   }
 }
 
-export function sessionStatusColor(status: TelemedicineSessionStatus): ColorSet {
+export function sessionStatusColor(
+  status: TelemedicineSessionStatus,
+): ColorSet {
   switch (status) {
     case "Active":
       return colors.green;
@@ -154,7 +159,11 @@ export function formatRange(start: string, end: string): string {
   const from = new Date(start);
   const to = new Date(end);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return "—";
-  const date = from.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+  const date = from.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
   const f = formatTime(start);
   const t = formatTime(end);
   return `${date} · ${f} – ${t}`;

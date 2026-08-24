@@ -61,10 +61,10 @@ export function StatCard({
   const config = variantConfig[variant];
 
   return (
-    <div className="group flex items-center gap-4 rounded-xl border border-border/60 bg-card p-4 transition-all duration-200 hover:border-border hover:shadow-sm hover:-translate-y-0.5">
+    <div className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-md hover:-translate-y-0.5">
       <div
         className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-lg",
+          "flex size-11 shrink-0 items-center justify-center rounded-xl",
           config.iconBg,
         )}
       >
@@ -76,7 +76,7 @@ export function StatCard({
           {label}
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="text-[22px] leading-none font-bold tracking-tight text-foreground">
+          <span className="text-2xl leading-none font-bold tracking-tight text-foreground">
             {value}
           </span>
           {trend && (

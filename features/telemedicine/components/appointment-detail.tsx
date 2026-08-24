@@ -29,10 +29,7 @@ import {
   formatRange,
   sessionStatusLabel,
 } from "../utils/format";
-import type {
-  TelemedicineAppointmentDto,
-  VirtualRoomDto,
-} from "../types";
+import type { TelemedicineAppointmentDto, VirtualRoomDto } from "../types";
 
 interface RoomPanelProps {
   appointment: TelemedicineAppointmentDto;
@@ -110,7 +107,8 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
     return <Skeleton className="h-48 w-full rounded-2xl" />;
   }
 
-  const participantsConnected = room?.participants.filter((p) => p.isConnected).length ?? 0;
+  const participantsConnected =
+    room?.participants.filter((p) => p.isConnected).length ?? 0;
 
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
@@ -122,20 +120,46 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
         {room && (
           <StatusBadge
             status={sessionStatusLabel[room.status]}
-            color={room.status === "Active" ? { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" } : { bg: "#E5F0FA", text: "#123B63", dot: "#2563EB" }}
+            color={
+              room.status === "Active"
+                ? { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" }
+                : { bg: "#162032", text: "#FFFFFF", dot: "#FFFFFF" }
+            }
           />
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <InfoChip icon={User} label="Paciente" value={appointment.patientName ?? "—"} />
-        <InfoChip icon={Stethoscope} label="Especialidad" value={appointment.specialtyName ?? "—"} />
-        <InfoChip icon={Clock} label="Horario" value={formatRange(appointment.scheduledStart, appointment.scheduledEnd)} />
-        <InfoChip icon={Video} label="Participantes" value={`${participantsConnected} conectados`} />
+        <InfoChip
+          icon={User}
+          label="Paciente"
+          value={appointment.patientName ?? "—"}
+        />
+        <InfoChip
+          icon={Stethoscope}
+          label="Especialidad"
+          value={appointment.specialtyName ?? "—"}
+        />
+        <InfoChip
+          icon={Clock}
+          label="Horario"
+          value={formatRange(
+            appointment.scheduledStart,
+            appointment.scheduledEnd,
+          )}
+        />
+        <InfoChip
+          icon={Video}
+          label="Participantes"
+          value={`${participantsConnected} conectados`}
+        />
       </div>
 
       {error && (
-        <p className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive" role="alert">
+        <p
+          className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -147,13 +171,23 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
             Unirme a la consulta
           </Button>
           {appointment.status === "Confirmed" && (
-            <Button variant="outline" onClick={handleStart} disabled={busy} className="gap-1.5">
+            <Button
+              variant="outline"
+              onClick={handleStart}
+              disabled={busy}
+              className="gap-1.5"
+            >
               <Video className="size-4" />
               Iniciar sesión
             </Button>
           )}
           {appointment.status === "InProgress" && (
-            <Button variant="destructive" onClick={handleEnd} disabled={busy} className="gap-1.5">
+            <Button
+              variant="destructive"
+              onClick={handleEnd}
+              disabled={busy}
+              className="gap-1.5"
+            >
               <PhoneOff className="size-4" />
               Finalizar sesión
             </Button>
@@ -185,7 +219,9 @@ function InfoChip({
         <Icon className="size-3.5" />
         {label}
       </span>
-      <span className="truncate text-[12.5px] font-semibold text-foreground">{value}</span>
+      <span className="truncate text-[12.5px] font-semibold text-foreground">
+        {value}
+      </span>
     </div>
   );
 }
@@ -196,7 +232,8 @@ export function AppointmentDetail() {
   const appointmentId = params.id;
   const { context } = useCurrentUser();
 
-  const [appointment, setAppointment] = useState<TelemedicineAppointmentDto | null>(null);
+  const [appointment, setAppointment] =
+    useState<TelemedicineAppointmentDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -223,7 +260,8 @@ export function AppointmentDetail() {
   }, [appointmentId, refreshKey]);
 
   const isProfessional =
-    context?.professional != null && appointment != null &&
+    context?.professional != null &&
+    appointment != null &&
     context.professional.id === appointment.professionalId;
 
   if (loading) {
@@ -238,10 +276,17 @@ export function AppointmentDetail() {
   if (error || !appointment) {
     return (
       <div className="flex flex-col gap-6 p-6">
-        <Button variant="outline" onClick={() => router.back()} className="w-fit gap-1.5">
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          className="w-fit gap-1.5"
+        >
           <ArrowLeft className="size-4" /> Volver
         </Button>
-        <p className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive" role="alert">
+        <p
+          className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
+          role="alert"
+        >
           {error ?? "Cita no encontrada."}
         </p>
       </div>
@@ -250,7 +295,11 @@ export function AppointmentDetail() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <Button variant="outline" onClick={() => router.back()} className="w-fit gap-1.5">
+      <Button
+        variant="outline"
+        onClick={() => router.back()}
+        className="w-fit gap-1.5"
+      >
         <ArrowLeft className="size-4" /> Volver
       </Button>
 
@@ -267,14 +316,21 @@ export function AppointmentDetail() {
       />
 
       {!isProfessional && (
-        <p className="rounded-xl bg-amber-soft px-4 py-3 text-sm text-amber-700" role="note">
-          Solo el profesional asignado puede gestionar la sala y el encuentro clínico.
+        <p
+          className="rounded-xl bg-amber-soft px-4 py-3 text-sm text-amber-700"
+          role="note"
+        >
+          Solo el profesional asignado puede gestionar la sala y el encuentro
+          clínico.
         </p>
       )}
 
       {isProfessional && (
         <>
-          <RoomPanel appointment={appointment} onSessionChanged={() => setRefreshKey((k) => k + 1)} />
+          <RoomPanel
+            appointment={appointment}
+            onSessionChanged={() => setRefreshKey((k) => k + 1)}
+          />
           <ClinicalEncounterPanel appointmentId={appointment.id} />
         </>
       )}

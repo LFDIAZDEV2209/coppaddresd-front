@@ -20,10 +20,10 @@ export function PageHeader({
     <div
       className={cn(
         "flex items-center gap-4 rounded-t-xl rounded-b-none bg-gradient-to-r from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_88%,var(--primary))] px-6 py-4",
-        className
+        className,
       )}
     >
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-primary-strong">
         <Icon className="size-5" />
       </div>
 
@@ -31,9 +31,7 @@ export function PageHeader({
         <h1 className="text-lg font-bold text-white tracking-tight truncate">
           {title}
         </h1>
-        <p className="text-[12px] text-white/60 truncate">
-          {description}
-        </p>
+        <p className="text-[12px] text-white/80 truncate">{description}</p>
       </div>
 
       {actions && (

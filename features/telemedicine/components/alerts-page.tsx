@@ -18,10 +18,25 @@ import { useAlerts } from "../hooks/use-alerts";
 import { formatDateTime } from "../utils/format";
 import type { AlertSeverity, AlertType } from "../types";
 
-const severityStyles: Record<AlertSeverity, { label: string; className: string; icon: React.ComponentType<{ className?: string }> }> = {
-  Info: { label: "Info", className: "bg-[#E5F0FA] text-[#123B63]", icon: Info },
-  Warning: { label: "Advertencia", className: "bg-[#FDF2E3] text-[#9A6A0A]", icon: AlertTriangle },
-  Critical: { label: "Crítica", className: "bg-[#FCEBEC] text-[#B42318]", icon: AlertOctagon },
+const severityStyles: Record<
+  AlertSeverity,
+  {
+    label: string;
+    className: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }
+> = {
+  Info: { label: "Info", className: "bg-[#DBEAFE] text-[#1D4ED8]", icon: Info },
+  Warning: {
+    label: "Advertencia",
+    className: "bg-[#FDF2E3] text-[#9A6A0A]",
+    icon: AlertTriangle,
+  },
+  Critical: {
+    label: "Crítica",
+    className: "bg-[#FCEBEC] text-[#B42318]",
+    icon: AlertOctagon,
+  },
 };
 
 const typeLabels: Record<AlertType, string> = {
@@ -69,11 +84,19 @@ export function AlertsPage() {
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
         title="Alertas"
-        description={unread > 0 ? `${unread} sin leer` : "Todas las alertas leídas"}
+        description={
+          unread > 0 ? `${unread} sin leer` : "Todas las alertas leídas"
+        }
         icon={Bell}
         actions={
           unread > 0 ? (
-            <Button size="sm" variant="outline" className="gap-1.5 text-white" onClick={readAll} disabled={busy}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-white"
+              onClick={readAll}
+              disabled={busy}
+            >
               <CheckCheck className="size-4" />
               Marcar todas como leídas
             </Button>
@@ -82,7 +105,10 @@ export function AlertsPage() {
       />
 
       {error && (
-        <p className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive" role="alert">
+        <p
+          className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -121,7 +147,11 @@ export function AlertsPage() {
                 <button
                   onClick={() => void handleRead(alert.id)}
                   className="flex min-w-0 flex-1 items-start gap-3 text-left"
-                  aria-label={unreadAlert ? `Marcar como leída: ${alert.title}` : `Alerta: ${alert.title}`}
+                  aria-label={
+                    unreadAlert
+                      ? `Marcar como leída: ${alert.title}`
+                      : `Alerta: ${alert.title}`
+                  }
                 >
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
                     <SeverityIcon className="size-4.5 text-muted-foreground" />
@@ -131,16 +161,25 @@ export function AlertsPage() {
                       <span className="text-[13.5px] font-semibold text-foreground">
                         {alert.title}
                       </span>
-                      {unreadAlert && <Badge className="bg-primary text-primary-foreground">Nueva</Badge>}
-                      <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${severity.className}`}>
+                      {unreadAlert && (
+                        <Badge className="bg-primary text-primary-foreground">
+                          Nueva
+                        </Badge>
+                      )}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${severity.className}`}
+                      >
                         {severity.label}
                       </span>
                     </div>
                     {alert.body && (
-                      <p className="line-clamp-2 text-[12.5px] text-muted-foreground">{alert.body}</p>
+                      <p className="line-clamp-2 text-[12.5px] text-muted-foreground">
+                        {alert.body}
+                      </p>
                     )}
                     <span className="text-[11px] text-muted-foreground/70">
-                      {typeLabels[alert.type] ?? alert.type} · {formatDateTime(alert.createdAt)}
+                      {typeLabels[alert.type] ?? alert.type} ·{" "}
+                      {formatDateTime(alert.createdAt)}
                     </span>
                   </div>
                 </button>

@@ -12,6 +12,7 @@ import {
   fetchAdminRequests,
   fetchAdminSessions,
   fetchAdminSummary,
+  type AdminAppointmentsFilters,
 } from "../services/telemedicine-service";
 
 interface UseAdminSummaryReturn {
@@ -68,13 +69,17 @@ interface UseAdminListReturn<T> {
 }
 
 export function useAdminList<T>(
-  loader: (page: number, pageSize: number) => Promise<{
+  loader: (
+    page: number,
+    pageSize: number,
+  ) => Promise<{
     items: T[];
     total: number;
     page: number;
     pageSize: number;
     totalPages: number;
   }>,
+  deps: unknown[] = [],
 ): UseAdminListReturn<T> {
   const [items, setItems] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
@@ -107,7 +112,7 @@ export function useAdminList<T>(
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, refreshKey]);
+  }, [page, pageSize, refreshKey, ...deps]);
 
   const setPage = useCallback((next: number) => {
     setPageState(next);
@@ -119,17 +124,56 @@ export function useAdminList<T>(
     setRefreshKey((key) => key + 1);
   }, []);
 
-  return { items, total, page, pageSize, totalPages, loading, error, setPage, refetch };
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages,
+    loading,
+    error,
+    setPage,
+    refetch,
+  };
 }
 
-export function useAdminAppointments(): UseAdminListReturn<TelemedicineAppointmentDto> {
-  return useAdminList((page, pageSize) => fetchAdminAppointments({ page, pageSize }));
+export function useAdminAppointments(
+  filters: AdminAppointmentsFilters = {},
+): UseAdminListReturn<TelemedicineAppointmentDto> {
+  const filterDeps = [
+    filters.professionalId,
+    filters.patientId,
+    filters.clinicId,
+    filters.locationId,
+    filters.status,
+    filters.from,
+    filters.to,
+  ];
+  const loader = useCallback(
+    (page: number, pageSize: number) =>
+      fetchAdminAppointments({ ...filters, page, pageSize }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      filters.professionalId,
+      filters.patientId,
+      filters.clinicId,
+      filters.locationId,
+      filters.status,
+      filters.from,
+      filters.to,
+    ],
+  );
+  return useAdminList(loader, filterDeps);
 }
 
 export function useAdminRequests(): UseAdminListReturn<TelemedicineRequestDto> {
-  return useAdminList((page, pageSize) => fetchAdminRequests({ page, pageSize }));
+  return useAdminList((page, pageSize) =>
+    fetchAdminRequests({ page, pageSize }),
+  );
 }
 
 export function useAdminSessions(): UseAdminListReturn<TelemedicineSessionDto> {
-  return useAdminList((page, pageSize) => fetchAdminSessions({ page, pageSize }));
+  return useAdminList((page, pageSize) =>
+    fetchAdminSessions({ page, pageSize }),
+  );
 }
