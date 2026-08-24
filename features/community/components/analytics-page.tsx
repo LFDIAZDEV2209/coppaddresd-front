@@ -23,7 +23,7 @@ export function AnalyticsPage() {
     0,
   );
 
-  const bannedCount = profiles.filter((p) => p.status === "Banned").length;
+  const bannedCount = profiles.filter((p) => p.status === "BANNED").length;
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">

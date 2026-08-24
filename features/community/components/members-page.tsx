@@ -57,8 +57,8 @@ export function MembersPage() {
     return profiles.filter((profile) => {
       const matchesStatus =
         statusFilter === "Todos" ||
-        (statusFilter === "Activos" && profile.status === "Active") ||
-        (statusFilter === "Baneados" && profile.status === "Banned");
+        (statusFilter === "Activos" && profile.status === "ACTIVE") ||
+        (statusFilter === "Baneados" && profile.status === "BANNED");
       const matchesSearch =
         !term || profile.displayName.toLowerCase().includes(term);
       return matchesStatus && matchesSearch;
@@ -197,7 +197,7 @@ export function MembersPage() {
                         <span className="truncate text-sm font-semibold">
                           {profile.displayName}
                         </span>
-                        {profile.status === "Banned" && profile.banReason ? (
+                        {profile.status === "BANNED" && profile.banReason ? (
                           <span className="truncate text-xs text-destructive">
                             {profile.banReason}
                           </span>
@@ -215,7 +215,7 @@ export function MembersPage() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {profile.status === "Active" ? (
+                    {profile.status === "ACTIVE" ? (
                       <StatusBadge
                         status="Activo"
                         color={{
@@ -237,7 +237,7 @@ export function MembersPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end">
-                      {profile.status === "Active" ? (
+                      {profile.status === "ACTIVE" ? (
                         <Button
                           variant="destructive"
                           size="sm"

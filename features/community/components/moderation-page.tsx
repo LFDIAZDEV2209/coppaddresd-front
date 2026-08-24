@@ -13,6 +13,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -32,7 +33,33 @@ const AVATAR_GRADS = [
   "from-amber-500 to-orange-600",
 ];
 
+// Filtros del feed. Los valores vacíos se envían como undefined para no
+// aplicar ese filtro en el servidor.
+type FeedFilters = {
+  author?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+};
+
+const EMPTY_FILTERS: FeedFilters = {
+  author: undefined,
+  search: undefined,
+  from: undefined,
+  to: undefined,
+};
+
 export function ModerationPage() {
+  // Estado de los inputs del formulario de filtros.
+  const [filters, setFilters] = useState<FeedFilters>({
+    author: "",
+    search: "",
+    from: "",
+    to: "",
+  });
+  // Estado de los filtros que realmente se enviaron al query.
+  const [applied, setApplied] = useState<FeedFilters>(EMPTY_FILTERS);
+
   const {
     feed,
     feedLoading,
@@ -40,10 +67,24 @@ export function ModerationPage() {
     pinPost,
     deletePost,
     refetchFeed,
-  } = useCommunity();
+  } = useCommunity({ feedVariables: applied });
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FeedPostView | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const applyFilters = () => {
+    setApplied({
+      author: filters.author?.trim() || undefined,
+      search: filters.search?.trim() || undefined,
+      from: filters.from || undefined,
+      to: filters.to || undefined,
+    });
+  };
+
+  const clearFilters = () => {
+    setFilters({ author: "", search: "", from: "", to: "" });
+    setApplied(EMPTY_FILTERS);
+  };
 
   const handlePin = async (view: FeedPostView) => {
     setBusyId(view.post.id);
@@ -94,6 +135,93 @@ export function ModerationPage() {
           </Button>
         }
       />
+
+      <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+        <div>
+          <h2 className="text-sm font-semibold">Filtros del feed</h2>
+          <p className="text-xs text-muted-foreground">
+            Filtra las publicaciones por autor, contenido o rango de fechas.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto_auto] lg:items-end">
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="filter-author"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Autor
+            </label>
+            <Input
+              id="filter-author"
+              value={filters.author ?? ""}
+              onChange={(event) =>
+                setFilters((prev) => ({ ...prev, author: event.target.value }))
+              }
+              placeholder="Buscar por usuario…"
+              aria-label="Filtrar por autor"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="filter-search"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Contenido
+            </label>
+            <Input
+              id="filter-search"
+              value={filters.search ?? ""}
+              onChange={(event) =>
+                setFilters((prev) => ({ ...prev, search: event.target.value }))
+              }
+              placeholder="Buscar por palabra…"
+              aria-label="Filtrar por contenido"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="filter-from"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Desde
+            </label>
+            <Input
+              id="filter-from"
+              type="date"
+              value={filters.from ?? ""}
+              onChange={(event) =>
+                setFilters((prev) => ({ ...prev, from: event.target.value }))
+              }
+              aria-label="Filtrar desde la fecha"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="filter-to"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Hasta
+            </label>
+            <Input
+              id="filter-to"
+              type="date"
+              value={filters.to ?? ""}
+              onChange={(event) =>
+                setFilters((prev) => ({ ...prev, to: event.target.value }))
+              }
+              aria-label="Filtrar hasta la fecha"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="default" size="sm" onClick={applyFilters}>
+              Aplicar
+            </Button>
+            <Button variant="secondary" size="sm" onClick={clearFilters}>
+              Limpiar
+            </Button>
+          </div>
+        </div>
+      </section>
 
       {error && (
         <div className="rounded-2xl border border-destructive/20 bg-destructive-soft p-4 text-sm text-destructive">

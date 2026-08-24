@@ -1,7 +1,7 @@
 // Operaciones GraphQL y tipos de la comunidad (hand-written, sin codegen).
 // Espejo del contrato del servicio CoppAddresd.Community.
 
-export type ProfileStatus = "Active" | "Banned";
+export type ProfileStatus = "ACTIVE" | "BANNED";
 
 export interface CommunityProfile {
   id: string;
@@ -66,8 +66,22 @@ export const PROFILES_QUERY = /* GraphQL */ `
 `;
 
 export const FEED_QUERY = /* GraphQL */ `
-  query Feed($take: Int!, $skip: Int!) {
-    feed(take: $take, skip: $skip) {
+  query Feed(
+    $take: Int!
+    $skip: Int!
+    $author: String
+    $search: String
+    $from: DateTime
+    $to: DateTime
+  ) {
+    feed(
+      author: $author
+      search: $search
+      from: $from
+      to: $to
+      take: $take
+      skip: $skip
+    ) {
       id
       body
       pinned

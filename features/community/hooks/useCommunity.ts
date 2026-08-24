@@ -24,15 +24,28 @@ export interface FeedPostView {
 
 type CommunityPostLike = FeedResult["feed"][number];
 
+/** Variables opcionales para filtrar el feed (autor, palabra, fecha). */
+export interface FeedVariables extends Record<string, unknown> {
+  author?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+}
+
 /** Datos de la comunidad para el panel de administración. */
-export function useCommunity() {
+export function useCommunity({
+  feedVariables,
+}: { feedVariables?: FeedVariables } = {}) {
   const [profilesResult, refetchProfiles] = useQuery<ProfilesResult>({
     query: PROFILES_QUERY,
     variables: { take: PROFILE_PAGE_SIZE, skip: 0 },
   });
   const [feedResult, refetchFeed] = useQuery<FeedResult>({
     query: FEED_QUERY,
-    variables: { take: PAGE_SIZE, skip: 0 },
+    // Siempre consultamos al servidor: los filtros se aplican al pulsar
+    // "Aplicar"/"Limpiar" y no queremos respuestas cacheadas entre combinaciones.
+    requestPolicy: "network-only",
+    variables: { take: PAGE_SIZE, skip: 0, ...feedVariables },
   });
 
   const [, banProfileMutation] = useMutation(BAN_PROFILE);
