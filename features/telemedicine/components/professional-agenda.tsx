@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toggleActiveClass } from "./dashboard/range-toggle";
+import { AgendaCalendarSwitcher } from "./agenda-calendar-switcher";
 import { useCurrentUser } from "../hooks/use-current-user";
 import { useAgenda } from "../hooks/use-agenda";
 import {
@@ -72,16 +73,22 @@ export function ProfessionalAgenda({
   fixedProfessionalId = null,
   fixedProfessionalName = null,
   cancelledBy = "Professional",
+  initialDate = null,
 }: {
   fixedProfessionalId?: string | null;
   fixedProfessionalName?: string | null;
   cancelledBy?: "Professional" | "Admin";
+  initialDate?: string | null;
 }) {
   const router = useRouter();
   const { context, loading: userLoading } = useCurrentUser();
 
-  const [range, setRange] = useState<Range>("week");
-  const { from, to } = rangeBounds(range);
+  const initialAnchor = parseFecha(initialDate);
+  const [range, setRange] = useState<Range>(() =>
+    initialAnchor ? "day" : "week",
+  );
+  const [anchor, setAnchor] = useState<Date | null>(() => initialAnchor);
+  const { from, to } = rangeBounds(range, anchor ?? new Date());
   const professionalId =
     fixedProfessionalId ?? context?.professional?.id ?? null;
   const professionalName =
@@ -176,6 +183,7 @@ export function ProfessionalAgenda({
             : "Agenda del profesional"
         }
         icon={CalendarDays}
+        actions={<AgendaCalendarSwitcher active="agenda" />}
       />
 
       {!professionalId ? (
@@ -191,7 +199,10 @@ export function ProfessionalAgenda({
               value={[range]}
               onValueChange={(values) => {
                 const next = values[0] as Range | undefined;
-                if (next) setRange(next);
+                if (next) {
+                  setRange(next);
+                  setAnchor(null);
+                }
               }}
               size="sm"
               variant="outline"
@@ -539,15 +550,33 @@ function startOfDay(date: Date): Date {
   return copy;
 }
 
-function rangeBounds(range: Range): { from: Date; to: Date } {
-  const now = new Date();
-  const from = new Date(now);
+function rangeBounds(range: Range, anchor: Date): { from: Date; to: Date } {
+  const from = new Date(anchor);
   from.setHours(0, 0, 0, 0);
   const to = new Date(from);
   if (range === "day") to.setDate(to.getDate() + 1);
   if (range === "week") to.setDate(to.getDate() + 7);
   if (range === "month") to.setMonth(to.getMonth() + 1);
   return { from, to };
+}
+
+/** Parsea una fecha "YYYY-MM-DD" como fecha LOCAL (no UTC), o null si es inválida. */
+function parseFecha(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return date;
 }
 
 function EmptyState({

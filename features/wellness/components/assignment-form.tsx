@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import type {
   RoutineAssignment,
   CreateRoutineAssignmentInput,
   UpdateRoutineAssignmentInput,
-  CreateNutritionPlanAssignmentInput,
   AssignmentFrequency,
   AssignmentStatus,
 } from "../types";
@@ -36,7 +34,6 @@ import {
   ASSIGNMENT_STATUS_OPTIONS,
   fetchPatientsForPicker,
   fetchRoutinesForPicker,
-  fetchNutritionPlansForPicker,
   createNutritionPlanAssignment,
 } from "../services/assignments-service";
 
@@ -71,16 +68,35 @@ export function AssignmentFormDialog({
   const isSaving = savingProp ?? saving;
 
   // Form state
-  const [patientId, setPatientId] = useState<string | null>(null);
-  const [patientLabel, setPatientLabel] = useState("");
-  const [routineId, setRoutineId] = useState<string | null>(null);
-  const [routineLabel, setRoutineLabel] = useState("");
-  const [assignmentType, setAssignmentType] = useState<"routine" | "nutrition">("routine");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [frequency, setFrequency] = useState<AssignmentFrequency>("Diaria");
-  const [status, setStatus] = useState<AssignmentStatus>("Active");
-  const [notes, setNotes] = useState("");
+  const [patientId, setPatientId] = useState<string | null>(
+    assignment?.patientId ?? null,
+  );
+  const [patientLabel, setPatientLabel] = useState(
+    assignment?.patientName ?? "",
+  );
+  const [routineId, setRoutineId] = useState<string | null>(
+    assignment?.routineId ?? null,
+  );
+  const [routineLabel, setRoutineLabel] = useState(
+    assignment?.routineName ?? "",
+  );
+  const [assignmentType, setAssignmentType] = useState<"routine" | "nutrition">(
+    "routine",
+  );
+  const [startDate, setStartDate] = useState(
+    assignment?.startDate?.split("T")[0] ??
+      new Date().toISOString().split("T")[0],
+  );
+  const [endDate, setEndDate] = useState(
+    assignment?.endDate?.split("T")[0] ?? "",
+  );
+  const [frequency, setFrequency] = useState<AssignmentFrequency>(
+    assignment?.frequency ?? "Diaria",
+  );
+  const [status, setStatus] = useState<AssignmentStatus>(
+    assignment?.status ?? "Active",
+  );
+  const [notes, setNotes] = useState(assignment?.notes ?? "");
 
   // Picker state
   const [patientSearch, setPatientSearch] = useState("");
@@ -90,41 +106,9 @@ export function AssignmentFormDialog({
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingRoutines, setLoadingRoutines] = useState(false);
 
-  // Initialize form
-  useEffect(() => {
-    if (assignment) {
-      setPatientId(assignment.patientId);
-      setPatientLabel(assignment.patientName ?? "");
-      setRoutineId(assignment.routineId);
-      setRoutineLabel(assignment.routineName ?? "");
-      setStartDate(assignment.startDate.split("T")[0]);
-      setEndDate(assignment.endDate?.split("T")[0] ?? "");
-      setFrequency(assignment.frequency);
-      setStatus(assignment.status);
-      setNotes(assignment.notes ?? "");
-    } else {
-      setPatientId(null);
-      setPatientLabel("");
-      setRoutineId(null);
-      setRoutineLabel("");
-      setStartDate(new Date().toISOString().split("T")[0]);
-      setEndDate("");
-      setFrequency("Diaria");
-      setStatus("Active");
-      setNotes("");
-      setPatientSearch("");
-      setRoutineSearch("");
-      setPatientResults([]);
-      setRoutineResults([]);
-    }
-  }, [assignment, open]);
-
   // Debounced patient search
   useEffect(() => {
-    if (patientSearch.trim().length < 2) {
-      setPatientResults([]);
-      return;
-    }
+    if (patientSearch.trim().length < 2) return;
 
     const timer = setTimeout(async () => {
       setLoadingPatients(true);
@@ -149,10 +133,7 @@ export function AssignmentFormDialog({
 
   // Debounced routine/nutrition plan search
   useEffect(() => {
-    if (routineSearch.trim().length < 2) {
-      setRoutineResults([]);
-      return;
-    }
+    if (routineSearch.trim().length < 2) return;
 
     const timer = setTimeout(async () => {
       setLoadingRoutines(true);
@@ -167,10 +148,13 @@ export function AssignmentFormDialog({
             })),
           );
         } else {
-          const { fetchNutritionPlansForPicker } = await import(
-            "../services/assignments-service"
+          const { fetchNutritionPlansForPicker } =
+            await import("../services/assignments-service");
+          const result = await fetchNutritionPlansForPicker(
+            1,
+            10,
+            routineSearch,
           );
-          const result = await fetchNutritionPlansForPicker(1, 10, routineSearch);
           setRoutineResults(
             result.data.map((p) => ({
               id: p.id,
@@ -283,6 +267,7 @@ export function AssignmentFormDialog({
                         setPatientSearch(e.target.value);
                         setPatientId(null);
                         setPatientLabel("");
+                        setPatientResults([]);
                       }}
                       className="h-9 pl-8"
                     />
@@ -348,7 +333,9 @@ export function AssignmentFormDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="routine">Rutina de ejercicio</SelectItem>
-                  <SelectItem value="nutrition">Plan de alimentación</SelectItem>
+                  <SelectItem value="nutrition">
+                    Plan de alimentación
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -387,6 +374,7 @@ export function AssignmentFormDialog({
                         setRoutineSearch(e.target.value);
                         setRoutineId(null);
                         setRoutineLabel("");
+                        setRoutineResults([]);
                       }}
                       className="h-9 pl-8"
                     />
@@ -499,7 +487,9 @@ export function AssignmentFormDialog({
               <Textarea
                 id="assignment-notes"
                 value={notes}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setNotes(e.target.value)
+                }
                 placeholder="Notas sobre la asignación..."
                 rows={2}
               />

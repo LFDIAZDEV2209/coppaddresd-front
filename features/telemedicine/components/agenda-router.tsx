@@ -9,12 +9,16 @@ import { ProfessionalAgenda } from "./professional-agenda";
  * cualquier profesional (selector global); el profesional clínico su propia
  * agenda. Extensible: un rol futuro solo agrega un caso declarativo.
  */
-export function AgendaRouter() {
+export function AgendaRouter({
+  initialDate = null,
+}: {
+  initialDate?: string | null;
+}) {
   const { can } = useAppContext();
 
   if (can("Telemedicine.AdminView")) {
-    return <AllAgendasPage />;
+    return <AllAgendasPage initialDate={initialDate} />;
   }
 
-  return <ProfessionalAgenda />;
+  return <ProfessionalAgenda initialDate={initialDate} />;
 }

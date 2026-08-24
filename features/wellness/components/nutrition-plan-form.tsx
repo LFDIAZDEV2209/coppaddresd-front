@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,7 +32,6 @@ import {
   MEAL_TYPES,
   PLAN_STATUSES,
   PLAN_STATUS_LABELS,
-  generateEmptyDays,
   getNutritionPlan,
 } from "../services/nutrition-plans-service";
 
@@ -44,8 +42,27 @@ interface NutritionPlanFormDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (
     input:
-      | { name: string; description: string | null; targetCondition: string | null; durationDays: number; dailyCalorieTarget: number | null; isTemplate: boolean; patientId: null; sourcePlanId: null; status: NutritionPlanStatus; days: NutritionPlanDayInput[] | null }
-      | { name: string; description: string | null; targetCondition: string | null; durationDays: number; dailyCalorieTarget: number | null; status: NutritionPlanStatus; days: NutritionPlanDayInput[] | null },
+      | {
+          name: string;
+          description: string | null;
+          targetCondition: string | null;
+          durationDays: number;
+          dailyCalorieTarget: number | null;
+          isTemplate: boolean;
+          patientId: null;
+          sourcePlanId: null;
+          status: NutritionPlanStatus;
+          days: NutritionPlanDayInput[] | null;
+        }
+      | {
+          name: string;
+          description: string | null;
+          targetCondition: string | null;
+          durationDays: number;
+          dailyCalorieTarget: number | null;
+          status: NutritionPlanStatus;
+          days: NutritionPlanDayInput[] | null;
+        },
     id?: string,
   ) => Promise<void>;
 }
@@ -74,83 +91,74 @@ export function NutritionPlanFormDialog({
   const isEditing = Boolean(plan);
 
   // Form state
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [targetCondition, setTargetCondition] = useState("");
-  const [durationDays, setDurationDays] = useState("7");
-  const [dailyCalorieTarget, setDailyCalorieTarget] = useState("");
-  const [isTemplate, setIsTemplate] = useState(true);
-  const [status, setStatus] = useState<NutritionPlanStatus>("Draft");
+  const [name, setName] = useState(plan?.name ?? "");
+  const [description, setDescription] = useState(plan?.description ?? "");
+  const [targetCondition, setTargetCondition] = useState(
+    plan?.targetCondition ?? "",
+  );
+  const [durationDays, setDurationDays] = useState(
+    plan?.durationDays ? String(plan.durationDays) : "7",
+  );
+  const [dailyCalorieTarget, setDailyCalorieTarget] = useState(
+    plan?.dailyCalorieTarget?.toString() ?? "",
+  );
+  const [isTemplate, setIsTemplate] = useState(plan?.isTemplate ?? true);
+  const [status, setStatus] = useState<NutritionPlanStatus>(
+    plan?.status ?? "Draft",
+  );
 
   // Days state: key = "dayNumber-mealType"
   const [days, setDays] = useState<Record<string, DayMealData>>({});
   const [activeDay, setActiveDay] = useState("1");
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(Boolean(plan));
 
-  // Initialize form when editing
+  // Cargar el detalle completo al editar (el item del listado no trae días)
   useEffect(() => {
+    if (!plan) return;
+
     let cancelled = false;
 
-    if (plan) {
-      setName(plan.name);
-      setDescription(plan.description ?? "");
-      setTargetCondition(plan.targetCondition ?? "");
-      setDurationDays(String(plan.durationDays));
-      setDailyCalorieTarget(plan.dailyCalorieTarget?.toString() ?? "");
-      setIsTemplate(plan.isTemplate);
-      setStatus(plan.status);
-      setDays({});
-      setActiveDay("1");
-
-      // El item del listado no trae días: traer el detalle completo
-      setLoadingDetail(true);
-      getNutritionPlan(plan.id)
-        .then((full) => {
-          if (cancelled) return;
-          if (full?.days && full.days.length > 0) {
-            const newDays: Record<string, DayMealData> = {};
-            // Estructura base para todos los días del plan
-            for (let d = 1; d <= full.durationDays; d++) {
-              for (const meal of MEAL_TYPES) {
-                newDays[`${d}-${meal}`] = { description: "", foods: "", calories: "", notes: "" };
-              }
-            }
-            // Rellenar con los datos existentes
-            for (const day of full.days) {
-              newDays[`${day.dayNumber}-${day.mealType}`] = {
-                description: day.description ?? "",
-                foods: day.foods ?? "",
-                calories: day.calories?.toString() ?? "",
-                notes: day.notes ?? "",
+    getNutritionPlan(plan.id)
+      .then((full) => {
+        if (cancelled) return;
+        if (full?.days && full.days.length > 0) {
+          const newDays: Record<string, DayMealData> = {};
+          // Estructura base para todos los días del plan
+          for (let d = 1; d <= full.durationDays; d++) {
+            for (const meal of MEAL_TYPES) {
+              newDays[`${d}-${meal}`] = {
+                description: "",
+                foods: "",
+                calories: "",
+                notes: "",
               };
             }
-            setDays(newDays);
-            const firstDay = full.days
-              .map((d) => d.dayNumber)
-              .sort((a, b) => a - b)[0];
-            if (firstDay) setActiveDay(String(firstDay));
           }
-        })
-        .catch(() => {})
-        .finally(() => {
-          if (!cancelled) setLoadingDetail(false);
-        });
-    } else {
-      setName("");
-      setDescription("");
-      setTargetCondition("");
-      setDurationDays("7");
-      setDailyCalorieTarget("");
-      setIsTemplate(true);
-      setStatus("Draft");
-      setDays({});
-      setActiveDay("1");
-    }
+          // Rellenar con los datos existentes
+          for (const day of full.days) {
+            newDays[`${day.dayNumber}-${day.mealType}`] = {
+              description: day.description ?? "",
+              foods: day.foods ?? "",
+              calories: day.calories?.toString() ?? "",
+              notes: day.notes ?? "",
+            };
+          }
+          setDays(newDays);
+          const firstDay = full.days
+            .map((d) => d.dayNumber)
+            .sort((a, b) => a - b)[0];
+          if (firstDay) setActiveDay(String(firstDay));
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingDetail(false);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [plan, open]);
+  }, [plan]);
 
   // Generate days when duration changes
   const handleDurationChange = (value: string) => {
@@ -251,14 +259,19 @@ export function NutritionPlanFormDialog({
   };
 
   const numDays = parseInt(durationDays, 10) || 1;
-  const dayTabs = Array.from({ length: Math.min(numDays, 30) }, (_, i) => i + 1);
+  const dayTabs = Array.from(
+    { length: Math.min(numDays, 30) },
+    (_, i) => i + 1,
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl min-w-[700px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Editar plan de alimentación" : "Nuevo plan de alimentación"}
+            {isEditing
+              ? "Editar plan de alimentación"
+              : "Nuevo plan de alimentación"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
@@ -285,7 +298,9 @@ export function NutritionPlanFormDialog({
                 <Textarea
                   id="plan-desc"
                   value={description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setDescription(e.target.value)
+                  }
                   placeholder="Descripción del plan..."
                   rows={2}
                 />
@@ -323,7 +338,10 @@ export function NutritionPlanFormDialog({
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label>Estado</Label>
-                <Select value={status} onValueChange={(v) => setStatus(v as NutritionPlanStatus)}>
+                <Select
+                  value={status}
+                  onValueChange={(v) => setStatus(v as NutritionPlanStatus)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -347,8 +365,12 @@ export function NutritionPlanFormDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="template">Template (biblioteca)</SelectItem>
-                      <SelectItem value="custom">Personalizado (paciente)</SelectItem>
+                      <SelectItem value="template">
+                        Template (biblioteca)
+                      </SelectItem>
+                      <SelectItem value="custom">
+                        Personalizado (paciente)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -367,7 +389,11 @@ export function NutritionPlanFormDialog({
                 <Tabs value={activeDay} onValueChange={setActiveDay}>
                   <TabsList className="h-auto flex-wrap gap-1 bg-muted p-1">
                     {dayTabs.map((d) => (
-                      <TabsTrigger key={d} value={String(d)} className="text-xs">
+                      <TabsTrigger
+                        key={d}
+                        value={String(d)}
+                        className="text-xs"
+                      >
                         Día {d}
                       </TabsTrigger>
                     ))}
@@ -398,7 +424,12 @@ export function NutritionPlanFormDialog({
                                   placeholder="Descripción (ej: Ensalada de pollo)"
                                   value={data.description}
                                   onChange={(e) =>
-                                    updateDayMeal(d, meal, "description", e.target.value)
+                                    updateDayMeal(
+                                      d,
+                                      meal,
+                                      "description",
+                                      e.target.value,
+                                    )
                                   }
                                   className="h-8 text-sm"
                                 />
@@ -406,7 +437,12 @@ export function NutritionPlanFormDialog({
                                   placeholder="Alimentos (ej: Pollo, aguacate, lechuga)"
                                   value={data.foods}
                                   onChange={(e) =>
-                                    updateDayMeal(d, meal, "foods", e.target.value)
+                                    updateDayMeal(
+                                      d,
+                                      meal,
+                                      "foods",
+                                      e.target.value,
+                                    )
                                   }
                                   className="h-8 text-sm"
                                 />
@@ -415,7 +451,12 @@ export function NutritionPlanFormDialog({
                                   placeholder="Calorías"
                                   value={data.calories}
                                   onChange={(e) =>
-                                    updateDayMeal(d, meal, "calories", e.target.value)
+                                    updateDayMeal(
+                                      d,
+                                      meal,
+                                      "calories",
+                                      e.target.value,
+                                    )
                                   }
                                   className="h-8 text-sm"
                                 />
@@ -423,7 +464,12 @@ export function NutritionPlanFormDialog({
                                   placeholder="Notas (ej: Sin sal, porción doble)"
                                   value={data.notes}
                                   onChange={(e) =>
-                                    updateDayMeal(d, meal, "notes", e.target.value)
+                                    updateDayMeal(
+                                      d,
+                                      meal,
+                                      "notes",
+                                      e.target.value,
+                                    )
                                   }
                                   className="h-8 text-sm"
                                 />
@@ -449,7 +495,11 @@ export function NutritionPlanFormDialog({
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={saving || !name.trim()}>
-            {saving ? "Guardando..." : isEditing ? "Guardar cambios" : "Crear plan"}
+            {saving
+              ? "Guardando..."
+              : isEditing
+                ? "Guardar cambios"
+                : "Crear plan"}
           </Button>
         </DialogFooter>
       </DialogContent>

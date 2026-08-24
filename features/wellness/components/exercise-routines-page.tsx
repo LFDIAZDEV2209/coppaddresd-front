@@ -36,7 +36,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useExerciseRoutines } from "../hooks/use-exercise-routines";
 import {
-  DIFFICULTY_OPTIONS,
   CATEGORY_OPTIONS,
   DIFFICULTY_COLORS,
   CATEGORY_COLORS,
@@ -65,7 +64,9 @@ export function ExerciseRoutinesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ExerciseRoutineListItem | undefined>();
   const [details, setDetails] = useState<ExerciseRoutineListItem | undefined>();
-  const [deleting, setDeleting] = useState<ExerciseRoutineListItem | undefined>();
+  const [deleting, setDeleting] = useState<
+    ExerciseRoutineListItem | undefined
+  >();
 
   const openCreate = () => {
     setEditing(undefined);
@@ -194,9 +195,15 @@ export function ExerciseRoutinesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
-                  <TableHead className="hidden md:table-cell">Categoría</TableHead>
-                  <TableHead className="hidden md:table-cell">Dificultad</TableHead>
-                  <TableHead className="hidden lg:table-cell">Duración</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Categoría
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Dificultad
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Duración
+                  </TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
@@ -215,12 +222,16 @@ export function ExerciseRoutinesPage() {
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <Badge className={CATEGORY_COLORS[routine.category] ?? ""}>
+                      <Badge
+                        className={CATEGORY_COLORS[routine.category] ?? ""}
+                      >
                         {routine.category}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <Badge className={DIFFICULTY_COLORS[routine.difficulty] ?? ""}>
+                      <Badge
+                        className={DIFFICULTY_COLORS[routine.difficulty] ?? ""}
+                      >
                         {routine.difficulty}
                       </Badge>
                     </TableCell>
@@ -325,6 +336,7 @@ export function ExerciseRoutinesPage() {
       />
 
       <ExerciseRoutineDetailDialog
+        key={details?.id ?? "closed"}
         routineId={details?.id ?? null}
         onClose={() => setDetails(undefined)}
         getRoutine={getRoutine}

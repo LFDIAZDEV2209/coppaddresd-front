@@ -30,16 +30,12 @@ export function ExerciseRoutineDetailDialog({
   getRoutine,
 }: ExerciseRoutineDetailDialogProps) {
   const [routine, setRoutine] = useState<ExerciseRoutine | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(routineId));
 
   useEffect(() => {
-    if (!routineId) {
-      setRoutine(null);
-      return;
-    }
+    if (!routineId) return;
 
     let cancelled = false;
-    setLoading(true);
 
     getRoutine(routineId).then((data) => {
       if (!cancelled) {
@@ -71,12 +67,15 @@ export function ExerciseRoutineDetailDialog({
   };
 
   return (
-    <Dialog open={Boolean(routineId)} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={Boolean(routineId)}
+      onOpenChange={(open) => !open && onClose()}
+    >
       <DialogContent className="max-h-[85vh] max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Dumbbell className="size-5" />
-            {loading ? "Cargando..." : routine?.name ?? "Rutina"}
+            {loading ? "Cargando..." : (routine?.name ?? "Rutina")}
           </DialogTitle>
         </DialogHeader>
 
@@ -95,9 +94,13 @@ export function ExerciseRoutineDetailDialog({
                 </p>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Dificultad</span>
+                <span className="text-xs text-muted-foreground">
+                  Dificultad
+                </span>
                 <p>
-                  <Badge className={DIFFICULTY_COLORS[routine.difficulty] ?? ""}>
+                  <Badge
+                    className={DIFFICULTY_COLORS[routine.difficulty] ?? ""}
+                  >
                     {routine.difficulty}
                   </Badge>
                 </p>

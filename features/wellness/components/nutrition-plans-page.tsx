@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Apple, Plus, RefreshCw, Trash2, Eye, Pencil, Copy } from "lucide-react";
+import {
+  Apple,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Eye,
+  Pencil,
+  Copy,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -195,8 +203,12 @@ export function NutritionPlansPage() {
                 <TableRow>
                   <TableHead>Nombre</TableHead>
                   <TableHead className="hidden md:table-cell">Tipo</TableHead>
-                  <TableHead className="hidden md:table-cell">Duración</TableHead>
-                  <TableHead className="hidden lg:table-cell">Calorías/día</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Duración
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Calorías/día
+                  </TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="hidden lg:table-cell">Creado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -338,6 +350,7 @@ export function NutritionPlansPage() {
       />
 
       <NutritionPlanDetailDialog
+        key={details?.id ?? "closed"}
         planId={details?.id ?? null}
         onClose={() => setDetails(undefined)}
         getPlan={getPlan}
@@ -349,9 +362,8 @@ export function NutritionPlansPage() {
         onClose={() => setCloning(undefined)}
         onConfirm={async (patientId) => {
           if (!cloning) return;
-          const { cloneNutritionPlan } = await import(
-            "../services/nutrition-plans-service"
-          );
+          const { cloneNutritionPlan } =
+            await import("../services/nutrition-plans-service");
           await cloneNutritionPlan(cloning.id, patientId);
           setCloning(undefined);
           retry();
@@ -370,8 +382,8 @@ export function NutritionPlansPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar plan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminará el plan &quot;{deleting?.name}&quot; y todos sus días.
-              Esta acción no se puede deshacer.
+              Se eliminará el plan &quot;{deleting?.name}&quot; y todos sus
+              días. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -470,7 +482,12 @@ function ClonePlanDialog({
 }) {
   const [patientSearch, setPatientSearch] = useState("");
   const [patients, setPatients] = useState<
-    Array<{ id: string; firstName: string; lastName: string; email: string | null }>
+    Array<{
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string | null;
+    }>
   >([]);
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
   const [loadingPatients, setLoadingPatients] = useState(false);
@@ -482,9 +499,8 @@ function ClonePlanDialog({
     }
     setLoadingPatients(true);
     try {
-      const { fetchPatientsForPicker } = await import(
-        "../services/nutrition-plans-service"
-      );
+      const { fetchPatientsForPicker } =
+        await import("../services/nutrition-plans-service");
       const result = await fetchPatientsForPicker(1, 10, query);
       setPatients(result.data);
     } catch {
@@ -497,7 +513,10 @@ function ClonePlanDialog({
   if (!plan) return null;
 
   return (
-    <AlertDialog open={Boolean(plan)} onOpenChange={(open) => !open && onClose()}>
+    <AlertDialog
+      open={Boolean(plan)}
+      onOpenChange={(open) => !open && onClose()}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Clonar plan a paciente</AlertDialogTitle>

@@ -35,7 +35,10 @@ import {
   CATEGORY_OPTIONS,
   getExerciseRoutine,
 } from "../services/exercise-routines-service";
-import { PLAN_STATUSES, PLAN_STATUS_LABELS } from "../services/nutrition-plans-service";
+import {
+  PLAN_STATUSES,
+  PLAN_STATUS_LABELS,
+} from "../services/nutrition-plans-service";
 
 interface ExerciseRoutineFormDialogProps {
   open: boolean;
@@ -88,67 +91,58 @@ export function ExerciseRoutineFormDialog({
 }: ExerciseRoutineFormDialogProps) {
   const isEditing = Boolean(routine);
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [difficulty, setDifficulty] = useState<RoutineDifficulty>("Moderado");
-  const [estimatedMinutes, setEstimatedMinutes] = useState("");
-  const [category, setCategory] = useState<RoutineCategory>("Mixta");
-  const [status, setStatus] = useState<NutritionPlanStatus>("Draft");
+  const [name, setName] = useState(routine?.name ?? "");
+  const [description, setDescription] = useState(routine?.description ?? "");
+  const [difficulty, setDifficulty] = useState<RoutineDifficulty>(
+    routine?.difficulty ?? "Moderado",
+  );
+  const [estimatedMinutes, setEstimatedMinutes] = useState(
+    routine?.estimatedMinutes?.toString() ?? "",
+  );
+  const [category, setCategory] = useState<RoutineCategory>(
+    routine?.category ?? "Mixta",
+  );
+  const [status, setStatus] = useState<NutritionPlanStatus>(
+    routine?.status ?? "Draft",
+  );
   const [exercises, setExercises] = useState<ExerciseFormData[]>([]);
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(Boolean(routine));
 
   useEffect(() => {
+    if (!routine) return;
+
     let cancelled = false;
 
-    if (routine) {
-      setName(routine.name);
-      setDescription(routine.description ?? "");
-      setDifficulty(routine.difficulty);
-      setEstimatedMinutes(routine.estimatedMinutes?.toString() ?? "");
-      setCategory(routine.category);
-      setStatus(routine.status);
-      setExercises([]);
-
-      // El item del listado no trae ejercicios: traer el detalle completo
-      setLoadingDetail(true);
-      getExerciseRoutine(routine.id)
-        .then((full) => {
-          if (cancelled) return;
-          if (full) {
-            setExercises(
-              full.exercises
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-                .map((e) => ({
-                  name: e.name,
-                  description: e.description ?? "",
-                  sets: e.sets?.toString() ?? "",
-                  repetitions: e.repetitions?.toString() ?? "",
-                  restSeconds: e.restSeconds?.toString() ?? "",
-                  durationSecs: e.durationSecs?.toString() ?? "",
-                  weightKg: e.weightKg?.toString() ?? "",
-                  notes: "",
-                })),
-            );
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          if (!cancelled) setLoadingDetail(false);
-        });
-    } else {
-      setName("");
-      setDescription("");
-      setDifficulty("Moderado");
-      setEstimatedMinutes("");
-      setCategory("Mixta");
-      setStatus("Draft");
-      setExercises([]);
-    }
+    // El item del listado no trae ejercicios: traer el detalle completo
+    getExerciseRoutine(routine.id)
+      .then((full) => {
+        if (cancelled) return;
+        if (full) {
+          setExercises(
+            full.exercises
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((e) => ({
+                name: e.name,
+                description: e.description ?? "",
+                sets: e.sets?.toString() ?? "",
+                repetitions: e.repetitions?.toString() ?? "",
+                restSeconds: e.restSeconds?.toString() ?? "",
+                durationSecs: e.durationSecs?.toString() ?? "",
+                weightKg: e.weightKg?.toString() ?? "",
+                notes: "",
+              })),
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingDetail(false);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [routine, open]);
+  }, [routine]);
 
   const addExercise = () => {
     setExercises((prev) => [...prev, { ...EMPTY_EXERCISE }]);
@@ -200,7 +194,9 @@ export function ExerciseRoutineFormDialog({
         name: name.trim(),
         description: description.trim() || null,
         difficulty,
-        estimatedMinutes: estimatedMinutes ? parseInt(estimatedMinutes, 10) : null,
+        estimatedMinutes: estimatedMinutes
+          ? parseInt(estimatedMinutes, 10)
+          : null,
         category,
         status,
         mediaId: null,
@@ -217,7 +213,9 @@ export function ExerciseRoutineFormDialog({
       <DialogContent className="max-h-[90vh] max-w-3xl">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Editar rutina de ejercicio" : "Nueva rutina de ejercicio"}
+            {isEditing
+              ? "Editar rutina de ejercicio"
+              : "Nueva rutina de ejercicio"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
@@ -244,14 +242,19 @@ export function ExerciseRoutineFormDialog({
                 <Textarea
                   id="routine-desc"
                   value={description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setDescription(e.target.value)
+                  }
                   placeholder="Descripción de la rutina..."
                   rows={2}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label>Categoría</Label>
-                <Select value={category} onValueChange={(v) => setCategory(v as RoutineCategory)}>
+                <Select
+                  value={category}
+                  onValueChange={(v) => setCategory(v as RoutineCategory)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -266,7 +269,10 @@ export function ExerciseRoutineFormDialog({
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label>Dificultad</Label>
-                <Select value={difficulty} onValueChange={(v) => setDifficulty(v as RoutineDifficulty)}>
+                <Select
+                  value={difficulty}
+                  onValueChange={(v) => setDifficulty(v as RoutineDifficulty)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -292,7 +298,10 @@ export function ExerciseRoutineFormDialog({
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label>Estado</Label>
-                <Select value={status} onValueChange={(v) => setStatus(v as NutritionPlanStatus)}>
+                <Select
+                  value={status}
+                  onValueChange={(v) => setStatus(v as NutritionPlanStatus)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -326,7 +335,8 @@ export function ExerciseRoutineFormDialog({
 
               {exercises.length === 0 && !loadingDetail && (
                 <p className="text-xs text-muted-foreground text-center py-4">
-                  No hay ejercicios. Haz clic en &quot;Agregar ejercicio&quot; para comenzar.
+                  No hay ejercicios. Haz clic en &quot;Agregar ejercicio&quot;
+                  para comenzar.
                 </p>
               )}
 

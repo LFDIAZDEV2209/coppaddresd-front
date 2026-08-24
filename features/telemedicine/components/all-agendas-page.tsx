@@ -10,7 +10,11 @@ import { ProfessionalAgenda } from "./professional-agenda";
  * (selector + acciones de cancelación/reprogramación con actor Admin). Si el
  * admin además es profesional, por defecto selecciona el primero del catálogo.
  */
-export function AllAgendasPage() {
+export function AllAgendasPage({
+  initialDate = null,
+}: {
+  initialDate?: string | null;
+}) {
   const [professionalId, setProfessionalId] = useState("");
 
   return (
@@ -40,6 +44,7 @@ export function AllAgendasPage() {
         <ProfessionalAgenda
           fixedProfessionalId={professionalId}
           cancelledBy="Admin"
+          initialDate={initialDate}
         />
       )}
     </div>

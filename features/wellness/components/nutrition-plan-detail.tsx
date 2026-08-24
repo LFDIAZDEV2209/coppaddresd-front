@@ -41,16 +41,12 @@ export function NutritionPlanDetailDialog({
   getPlan,
 }: NutritionPlanDetailDialogProps) {
   const [plan, setPlan] = useState<NutritionPlan | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(planId));
 
   useEffect(() => {
-    if (!planId) {
-      setPlan(null);
-      return;
-    }
+    if (!planId) return;
 
     let cancelled = false;
-    setLoading(true);
 
     getPlan(planId).then((data) => {
       if (!cancelled) {
@@ -67,7 +63,20 @@ export function NutritionPlanDetailDialog({
   if (!planId) return null;
 
   // Group days by dayNumber
-  const groupedDays: Record<number, Array<{ id: string; dayNumber: number; mealType: import("../types").MealType; description: string | null; foods: string | null; calories: number | null; notes: string | null; sortOrder: number; mediaId: string | null }>> = {};
+  const groupedDays: Record<
+    number,
+    Array<{
+      id: string;
+      dayNumber: number;
+      mealType: import("../types").MealType;
+      description: string | null;
+      foods: string | null;
+      calories: number | null;
+      notes: string | null;
+      sortOrder: number;
+      mediaId: string | null;
+    }>
+  > = {};
   if (plan?.days) {
     for (const day of plan.days) {
       if (!groupedDays[day.dayNumber]) groupedDays[day.dayNumber] = [];
@@ -100,7 +109,7 @@ export function NutritionPlanDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Apple className="size-5" />
-            {loading ? "Cargando..." : plan?.name ?? "Plan"}
+            {loading ? "Cargando..." : (plan?.name ?? "Plan")}
           </DialogTitle>
         </DialogHeader>
 
@@ -167,7 +176,11 @@ export function NutritionPlanDetailDialog({
                 <Tabs defaultValue={String(dayNumbers[0])}>
                   <TabsList className="h-auto flex-wrap gap-1 bg-muted p-1">
                     {dayNumbers.map((d) => (
-                      <TabsTrigger key={d} value={String(d)} className="text-xs">
+                      <TabsTrigger
+                        key={d}
+                        value={String(d)}
+                        className="text-xs"
+                      >
                         Día {d}
                       </TabsTrigger>
                     ))}
