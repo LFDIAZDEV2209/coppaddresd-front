@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CatalogCombobox } from "@/features/patients/components/catalog-combobox";
 import { fetchProfessionalsCatalog } from "../services/reference-service";
 
 export interface ProfessionalOption {
@@ -9,10 +10,18 @@ export interface ProfessionalOption {
   professionalTypeName: string | null;
 }
 
+/** Etiqueta de cada opción: "Nombre · Tipo de profesional". Estable para el memo del combobox. */
+function professionalLabel(professional: ProfessionalOption): string {
+  return professional.professionalTypeName
+    ? `${professional.fullName} · ${professional.professionalTypeName}`
+    : professional.fullName;
+}
+
 /**
  * Selector de profesional clínico (catálogo del backend) para la vista global
  * del administrador: agenda y calendario de cualquier profesional. Reutilizado
  * por todas las vistas "todas las agendas" (declarativo, sin duplicación).
+ * Combobox buscable con filtro local sobre la lista de profesionales activos.
  */
 export function ProfessionalSelector({
   value,
@@ -30,7 +39,10 @@ export function ProfessionalSelector({
       .then((result) => {
         if (!active) return;
         setProfessionals(result.data);
-        if (!result.data.some((p) => p.id === value) && result.data.length > 0) {
+        if (
+          !result.data.some((p) => p.id === value) &&
+          result.data.length > 0
+        ) {
           onChange(result.data[0].id);
         }
       })
@@ -47,32 +59,19 @@ export function ProfessionalSelector({
   }, []);
 
   const selected = professionals.find((p) => p.id === value) ?? null;
+  const disabled = loading || professionals.length === 0;
 
   return (
-    <div className="flex items-center gap-2">
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={loading || professionals.length === 0}
-        className="h-9 min-w-56 rounded-md border border-input bg-background px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label="Profesional"
-      >
-        {loading && <option value="">Cargando profesionales...</option>}
-        {!loading &&
-          professionals.map((professional) => (
-            <option key={professional.id} value={professional.id}>
-              {professional.fullName}
-              {professional.professionalTypeName
-                ? ` · ${professional.professionalTypeName}`
-                : ""}
-            </option>
-          ))}
-      </select>
-      {selected && (
-        <span className="text-[12px] text-muted-foreground">
-          {selected.fullName}
-        </span>
-      )}
-    </div>
+    <CatalogCombobox<ProfessionalOption>
+      value={selected}
+      onSelect={(item) => onChange(item?.id ?? "")}
+      items={professionals}
+      getLabel={professionalLabel}
+      placeholder={loading ? "Cargando profesionales…" : "Buscar profesional…"}
+      searchPlaceholder="Buscar por nombre…"
+      emptyText="Sin profesionales activos."
+      disabled={disabled}
+      className="min-w-56"
+    />
   );
 }
