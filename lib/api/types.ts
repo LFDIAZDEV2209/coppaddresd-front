@@ -1,5 +1,5 @@
 /**
- * Sesión de usuario autenticado. Se construye desde `GET /api/me` del Auth
+ * Sesión de usuario autenticado. Se construye desde `GET /api/auth/me` del Auth
  * Service: incluye roles y permisos para que la autorización granular futura
  * (por rol, por permiso directo de usuario, o combinación) no requiera
  * rehacer la autenticación.

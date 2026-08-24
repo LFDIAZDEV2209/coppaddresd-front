@@ -18,13 +18,13 @@ export interface InvitationValidation {
 
 export async function validateInvitation(token: string): Promise<InvitationValidation> {
   return apiFetch<InvitationValidation>(
-    `${env.authApiUrl}/api/invitations/validate?token=${encodeURIComponent(token)}`,
+    `${env.apiUrl}/api/auth/invitations/validate?token=${encodeURIComponent(token)}`,
     { auth: false, retry: false },
   );
 }
 
 export async function acceptInvitation(token: string, password: string): Promise<void> {
-  await apiFetch<{ success: boolean }>(`${env.authApiUrl}/api/invitations/accept`, {
+  await apiFetch<{ success: boolean }>(`${env.apiUrl}/api/auth/invitations/accept`, {
     method: "POST",
     auth: false,
     retry: false,

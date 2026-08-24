@@ -9,11 +9,15 @@ yarn install
 yarn dev            # http://localhost:3000
 ```
 
-Requiere los servicios locales corriendo (ver workspace root):
+Requiere los servicios locales corriendo (ver workspace root). El frontend
+consume una única URL pública: el **API Gateway** (`http://localhost:5080`), que
+enruta por prefijo de path a los microservicios:
 
-- Auth Service: `http://localhost:5123`
-- Backend API: `http://localhost:5122`
-- AI Service: `http://localhost:8000`
+- API Gateway (YARP): `http://localhost:5080`
+  - `/api/auth/*` → Auth Service
+  - `/api/v1/*` → Backend API
+  - `/api/v1/telemedicine/*` → Telemedicine
+- AI Service (solo backend, no se expone): `http://localhost:8000`
 
 Credenciales demo (solo desarrollo): `admin@coppaddresd.com` / `Test@1234`.
 

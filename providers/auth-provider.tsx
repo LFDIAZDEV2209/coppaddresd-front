@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Restauración de sesión al montar: refresh (cookie HttpOnly) + /api/me.
+  // Restauración de sesión al montar: refresh (cookie HttpOnly) + /api/auth/me.
   // El estado inicial (null + loading) es idéntico en server y client, por lo
   // que no hay mismatches de hidratación y no se persiste nada en el cliente.
   useEffect(() => {

@@ -25,7 +25,7 @@ import type {
   VirtualRoomDto,
 } from "../types";
 
-const PATH = `${env.telemedicineApiUrl}/api/v1/telemedicine`;
+const PATH = `${env.apiUrl}/api/v1/telemedicine`;
 
 // --- Contexto del usuario (resuelve profesional/paciente del JWT) ---
 
