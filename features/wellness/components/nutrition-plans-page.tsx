@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Apple,
   Plus,
@@ -72,6 +72,14 @@ export function NutritionPlansPage() {
   const [details, setDetails] = useState<NutritionPlanListItem | undefined>();
   const [deleting, setDeleting] = useState<NutritionPlanListItem | undefined>();
   const [cloning, setCloning] = useState<NutritionPlanListItem | undefined>();
+  const [createdMessage, setCreatedMessage] = useState<string | null>(null);
+
+  // Auto-ocultar la confirmación tras unos segundos
+  useEffect(() => {
+    if (!createdMessage) return;
+    const timer = setTimeout(() => setCreatedMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [createdMessage]);
 
   const openCreate = () => {
     setEditing(undefined);
@@ -114,6 +122,16 @@ export function NutritionPlansPage() {
           </Button>
         }
       />
+
+      {/* Confirmación de creación asignada */}
+      {createdMessage && (
+        <p
+          role="status"
+          className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800"
+        >
+          {createdMessage}
+        </p>
+      )}
 
       {/* Filtros */}
       <section
@@ -202,6 +220,7 @@ export function NutritionPlansPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
+                  <TableHead className="hidden md:table-cell">Paciente</TableHead>
                   <TableHead className="hidden md:table-cell">Tipo</TableHead>
                   <TableHead className="hidden md:table-cell">
                     Duración
@@ -218,14 +237,22 @@ export function NutritionPlansPage() {
                 {result.data.map((plan) => (
                   <TableRow key={plan.id}>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{plan.name}</span>
+                      <div className="flex max-w-[280px] flex-col">
+                        <span
+                          className="truncate font-medium"
+                          title={plan.name}
+                        >
+                          {plan.name}
+                        </span>
                         {plan.description && (
                           <span className="text-xs text-muted-foreground line-clamp-1">
                             {plan.description}
                           </span>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-sm">
+                      {plan.patientName ?? "—"}
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <Badge variant="outline">
@@ -347,6 +374,9 @@ export function NutritionPlansPage() {
         saving={actionLoading}
         onOpenChange={setFormOpen}
         onSubmit={save}
+        onCreated={(patientName) =>
+          setCreatedMessage(`Plan creado y asignado a ${patientName}`)
+        }
       />
 
       <NutritionPlanDetailDialog

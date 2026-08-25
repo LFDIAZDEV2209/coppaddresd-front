@@ -6,6 +6,7 @@ import {
   fetchAllAssignments,
   deleteUnifiedAssignment,
 } from "../services/assignments-service";
+import { subscribeAssignmentsRefresh } from "./assignments-refresh";
 
 interface UseUnifiedAssignmentsReturn {
   items: UnifiedAssignment[];
@@ -45,6 +46,14 @@ export function useUnifiedAssignments(): UseUnifiedAssignmentsReturn {
     const timer = setTimeout(loadData, 0);
     return () => clearTimeout(timer);
   }, [loadData, reloadKey]);
+
+  // Recargar cuando se crea un plan/rutina personalizado desde otro hook
+  // (la creación genera una asignación atómica en el backend).
+  useEffect(() => {
+    return subscribeAssignmentsRefresh(() => {
+      setReloadKey((key) => key + 1);
+    });
+  }, []);
 
   const remove = useCallback(
     async (id: string, type: "routine" | "nutrition") => {

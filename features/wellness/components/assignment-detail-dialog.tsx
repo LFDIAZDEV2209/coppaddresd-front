@@ -87,7 +87,7 @@ export function AssignmentDetailDialog({ assignment, onClose }: Props) {
       open={Boolean(assignment)}
       onOpenChange={(open) => !open && onClose()}
     >
-      <DialogContent className="max-w-2xl max-h-[85vh]">
+      <DialogContent className="max-w-2xl max-h-[85vh] min-w-[700px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {assignment.type === "routine" ? (
