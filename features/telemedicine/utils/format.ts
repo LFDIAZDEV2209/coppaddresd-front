@@ -154,6 +154,22 @@ export function sessionStatusColor(
   }
 }
 
+/** Tiempo relativo en español (p. ej. "hace 5 min") para bandejas tipo notificaciones. */
+export function timeAgo(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "hace un momento";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `hace ${days} d`;
+  return formatDate(value);
+}
+
 /** Muestra el rango [inicio – fin] en una sola línea. */
 export function formatRange(start: string, end: string): string {
   const from = new Date(start);

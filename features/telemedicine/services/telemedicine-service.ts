@@ -385,6 +385,33 @@ export async function fetchAdminRequests(
   );
 }
 
+// --- "Mis solicitudes" del profesional (por identidad del JWT, requiere perfil clínico) ---
+
+export interface MyRequestsFilters {
+  status?: string;
+  patientId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export async function fetchMyAssignedRequests(
+  filters: MyRequestsFilters = {},
+): Promise<PaginatedAdminRequestsResult> {
+  const params = new URLSearchParams();
+  params.set("page", String(filters.page ?? 1));
+  params.set("pageSize", String(filters.pageSize ?? 20));
+  for (const [key, value] of Object.entries(filters)) {
+    if (value != null && value !== "" && key !== "page" && key !== "pageSize") {
+      params.set(key, String(value));
+    }
+  }
+  return apiFetch<PaginatedAdminRequestsResult>(
+    `${PATH}/me/requests?${params.toString()}`,
+  );
+}
+
 export interface AdminSessionsFilters {
   appointmentId?: string;
   from?: string;
