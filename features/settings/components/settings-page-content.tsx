@@ -6,6 +6,7 @@ import { SectionHeader } from "@/components/layout/section-header";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTheme } from "@/providers/theme-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { LegalDocumentsSection } from "./legal-documents-section";
@@ -19,22 +20,35 @@ const accentColors = [
   { name: "Ámbar", value: "#F59E0B" },
 ];
 
+// Secciones del módulo Sistema. Las configuraciones administrativas (IA,
+// Integraciones) requieren System.AdminSettings: el profesional clínico solo
+// ve sus configuraciones personales y generales.
 const settingsNav = [
   { label: "General", icon: SettingsIcon },
   { label: "Apariencia", icon: Palette },
   { label: "Seguridad", icon: Shield },
-  { label: "IA", icon: Bot },
-  { label: "Integraciones", icon: Plug },
+  { label: "IA", icon: Bot, permission: "System.AdminSettings" },
+  { label: "Integraciones", icon: Plug, permission: "System.AdminSettings" },
   { label: "Notificaciones", icon: Bell },
   { label: "Documentación", icon: FileText },
 ];
 
 export function SettingsPageContent() {
   const { theme, setTheme } = useTheme();
+  const { can } = useAppContext();
   const [activeSection, setActiveSection] = useState("Apariencia");
   const [accent, setAccent] = useState("#123B63");
   const [density, setDensity] = useState("comodo");
   const [sidebarMode, setSidebarMode] = useState("siempre");
+
+  // Secciones visibles según el contexto (global ∪ scoped de la clínica).
+  const visibleSections = settingsNav.filter((item) => !item.permission || can(item.permission));
+
+  // Sección efectiva: si la activa quedó fuera del alcance (cambio de
+  // contexto), se muestra Apariencia (siempre visible) sin setState extra.
+  const effectiveSection = visibleSections.some((item) => item.label === activeSection)
+    ? activeSection
+    : "Apariencia";
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -46,7 +60,7 @@ export function SettingsPageContent() {
 
       <div className="flex gap-6">
         <nav className="flex w-[220px] shrink-0 flex-col gap-1">
-          {settingsNav.map((item) => {
+          {visibleSections.map((item) => {
             const Icon = item.icon;
             return (
               <button
@@ -54,7 +68,7 @@ export function SettingsPageContent() {
                 onClick={() => setActiveSection(item.label)}
                 className={cn(
                   "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-colors",
-                  activeSection === item.label
+                  effectiveSection === item.label
                     ? "bg-primary-soft font-semibold text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
@@ -67,7 +81,7 @@ export function SettingsPageContent() {
         </nav>
 
         <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
-          {activeSection === "Documentación" ? <LegalDocumentsSection /> : <>
+          {effectiveSection === "Documentación" ? <LegalDocumentsSection /> : <>
           <SectionHeader
             title="Apariencia"
             description="Personaliza el tema y la visualización"

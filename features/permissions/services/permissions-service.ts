@@ -9,19 +9,19 @@ import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type { Permission } from "../types";
 
-const PATH = `${env.authApiUrl}/api/permissions`;
+const PATH = `${env.apiUrl}/api/auth/permissions`;
 
-/** Catálogo completo de permisos (GET /api/permissions). */
+/** Catálogo completo de permisos (GET /api/auth/permissions). */
 export async function fetchPermissions(): Promise<Permission[]> {
   return apiFetch<Permission[]>(PATH);
 }
 
-/** Permisos actuales de un rol (GET /api/permissions/role/{roleId}). */
+/** Permisos actuales de un rol (GET /api/auth/permissions/role/{roleId}). */
 export async function fetchRolePermissions(roleId: string): Promise<Permission[]> {
   return apiFetch<Permission[]>(`${PATH}/role/${roleId}`);
 }
 
-/** Asigna un permiso a un rol (POST /api/permissions/role/{roleId}). */
+/** Asigna un permiso a un rol (POST /api/auth/permissions/role/{roleId}). */
 export async function assignPermissionToRole(
   roleId: string,
   permissionId: string,
@@ -32,7 +32,7 @@ export async function assignPermissionToRole(
   });
 }
 
-/** Quita un permiso de un rol (DELETE /api/permissions/role/{roleId}/{permissionId}). */
+/** Quita un permiso de un rol (DELETE /api/auth/permissions/role/{roleId}/{permissionId}). */
 export async function removePermissionFromRole(
   roleId: string,
   permissionId: string,
@@ -42,7 +42,7 @@ export async function removePermissionFromRole(
   });
 }
 
-/** Permisos directos de un usuario (GET /api/permissions/user/{userId}). */
+/** Permisos directos de un usuario (GET /api/auth/permissions/user/{userId}). */
 export async function fetchUserPermissions(userId: string): Promise<Permission[]> {
   return apiFetch<Permission[]>(`${PATH}/user/${userId}`);
 }

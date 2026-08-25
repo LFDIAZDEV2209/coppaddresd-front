@@ -338,7 +338,7 @@ export async function refreshAccessToken(): Promise<RefreshOutcome> {
 
 async function doRefresh(): Promise<RefreshOutcome> {
   try {
-    const response = await fetch(`${env.authApiUrl}/api/auth/refresh`, {
+    const response = await fetch(`${env.apiUrl}/api/auth/refresh`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -358,7 +358,7 @@ async function doRefresh(): Promise<RefreshOutcome> {
       // Su Set-Cookie ya actualizó el cookie jar compartido: reintentar una vez.
       const firstReason = refreshReason(response);
       await delay(800);
-      const retry = await fetch(`${env.authApiUrl}/api/auth/refresh`, {
+      const retry = await fetch(`${env.apiUrl}/api/auth/refresh`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

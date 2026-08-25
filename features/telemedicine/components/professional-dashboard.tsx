@@ -1,48 +1,69 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  Activity,
+  ArrowRight,
   CalendarDays,
+  CalendarCheck,
   CalendarPlus,
-  ClipboardList,
+  CalendarX,
   Bell,
-  Video,
-  ChevronRight,
   Stethoscope,
   Inbox,
   Clock,
+  ClipboardList,
+  PieChart,
+  UserCog,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
-import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
-import { useCurrentUser } from "../hooks/use-current-user";
-import { useAgenda } from "../hooks/use-agenda";
-import { useAlerts } from "../hooks/use-alerts";
 import {
-  appointmentStatusColor,
-  appointmentStatusLabel,
-  formatTime,
-  formatDate,
-} from "../utils/format";
+  RangeToggle,
+  rangeOptions,
+  type RangeKey,
+} from "./dashboard/range-toggle";
+import { useCurrentUser } from "../hooks/use-current-user";
+import { useDashboardAnalytics } from "../hooks/use-dashboard-analytics";
+import { useAlerts } from "../hooks/use-alerts";
+import { DashboardChartCard } from "./dashboard/dashboard-chart-card";
+import { AppointmentsTrendChart } from "./dashboard/appointments-trend-chart";
+import { StatusDistributionChart } from "./dashboard/status-distribution-chart";
+import { HourlyDistributionChart } from "./dashboard/hourly-distribution-chart";
+import { UpcomingAppointments } from "./dashboard/upcoming-appointments";
+import { QuickActions, type QuickAction } from "./dashboard/quick-actions";
 
+/**
+ * Dashboard del profesional clínico: KPIs propios en una línea, gráficas de su
+ * actividad (serie temporal, distribución por estado y franjas horarias), sus
+ * próximas citas y accesos rápidos. Los datos vienen de /me/analytics: el
+ * backend resuelve el profesional del JWT (identidad), nunca de un id del cliente.
+ */
 export function ProfessionalDashboard() {
   const { context, loading: userLoading } = useCurrentUser();
+  const { unread } = useAlerts();
+  const [range, setRange] = useState<RangeKey>("30d");
 
-  // Rango: de hoy 00:00 local a +14 días (agenda próxima).
-  const { from, to } = useMemo(() => {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 14);
-    return { from: start, to: end };
-  }, []);
+  const rangeDates = useMemo(() => {
+    const to = new Date();
+    const from = new Date(to);
+    from.setDate(
+      from.getDate() - rangeOptions.find((o) => o.key === range)!.days,
+    );
+    return { from, to };
+  }, [range]);
 
   const professionalId = context?.professional?.id ?? null;
-  const { appointments, loading: agendaLoading } = useAgenda(professionalId, from, to);
-  const { unread, loading: alertsLoading } = useAlerts();
+  const { analytics, loading, error } = useDashboardAnalytics(
+    "me",
+    professionalId ? rangeDates.from : null,
+    professionalId ? rangeDates.to : null,
+    Boolean(professionalId),
+  );
 
   if (userLoading) {
     return <DashboardSkeleton />;
@@ -73,13 +94,42 @@ export function ProfessionalDashboard() {
     );
   }
 
-  const today = new Date();
-  const todayAppointments = appointments.filter((a) => {
-    const start = new Date(a.scheduledStart);
-    return start.toDateString() === today.toDateString();
-  });
-  const next = appointments.find((a) => new Date(a.scheduledStart) >= today);
-  const confirmed = appointments.filter((a) => a.status === "Confirmed").length;
+  const kpis = analytics?.kpis;
+  const completedRate =
+    kpis && kpis.completed + kpis.noShow + kpis.cancelled > 0
+      ? Math.round(
+          (kpis.completed / (kpis.completed + kpis.noShow + kpis.cancelled)) *
+            100,
+        )
+      : null;
+
+  const actions: QuickAction[] = [
+    {
+      href: "/telemedicine/agenda",
+      icon: CalendarDays,
+      label: "Mi agenda",
+      description: "Agenda y calendario",
+    },
+    {
+      href: "/telemedicine/solicitudes",
+      icon: Inbox,
+      label: "Solicitudes",
+      description: "Solicitudes de los pacientes",
+    },
+    {
+      href: "/telemedicine/alertas",
+      icon: Bell,
+      label: "Alertas",
+      description:
+        unread > 0 ? `${unread} sin leer` : "Bandeja de notificaciones",
+    },
+    {
+      href: "/telemedicine/citas",
+      icon: ClipboardList,
+      label: "Citas",
+      description: "Historial de mis citas",
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -88,149 +138,158 @@ export function ProfessionalDashboard() {
         description={`Bienvenido, ${professional.fullName}`}
         icon={Stethoscope}
         actions={
-          <Link
-            href="/telemedicine/agenda"
-            className={buttonVariants({ size: "sm" })}
-          >
-            <CalendarDays className="size-4" />
-            Mi agenda
-          </Link>
+          <>
+            <RangeToggle
+              value={range}
+              onValueChange={setRange}
+              options={[
+                { key: "30d", label: "30 días", days: 30 },
+                { key: "60d", label: "60 días", days: 60 },
+              ]}
+            />
+            <Link
+              href="/telemedicine/agenda"
+              className={buttonVariants({ size: "sm" })}
+            >
+              <CalendarDays className="size-4" />
+              Mi agenda
+            </Link>
+          </>
         }
       />
 
+      {error && (
+        <p
+          className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
+
+      {/* Stats cards en UNA línea (xl) — mis KPIs. */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Citas de hoy"
-          value={String(todayAppointments.length)}
-          icon={CalendarDays}
+          label="Mis citas de hoy"
+          value={kpis ? String(kpis.appointmentsToday) : "—"}
+          icon={CalendarCheck}
           variant="primary"
-          context={today.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}
+          context={new Date().toLocaleDateString("es-ES", {
+            day: "2-digit",
+            month: "short",
+          })}
         />
         <StatCard
-          label="Próxima cita"
-          value={next ? formatTime(next.scheduledStart) : "—"}
-          icon={Clock}
-          variant="info"
-          context={next ? formatDate(next.scheduledStart) : "Sin citas próximas"}
-        />
-        <StatCard
-          label="Citas confirmadas (14 días)"
-          value={String(confirmed)}
+          label="Próximos 7 días"
+          value={kpis ? String(kpis.upcomingAppointments) : "—"}
           icon={CalendarPlus}
-          variant="success"
-          context={`${appointments.length} en total`}
+          variant="info"
+          context={kpis ? `${kpis.pending} confirmadas pendientes` : undefined}
         />
         <StatCard
-          label="Alertas sin leer"
-          value={String(unread)}
-          icon={Bell}
-          variant={unread > 0 ? "warning" : "default"}
-          context={alertsLoading ? "Cargando..." : "Bandeja de notificaciones"}
+          label="Completadas (rango)"
+          value={kpis ? String(kpis.completed) : "—"}
+          icon={Clock}
+          variant="success"
+          context={
+            completedRate !== null
+              ? `Tasa de finalización ${completedRate}%`
+              : undefined
+          }
+        />
+        <StatCard
+          label="Canceladas / No asistieron"
+          value={kpis ? String(kpis.cancelled + kpis.noShow) : "—"}
+          icon={CalendarX}
+          variant={
+            kpis && kpis.cancelled + kpis.noShow > 0 ? "destructive" : "default"
+          }
+          context={
+            kpis ? `${kpis.uniquePatients} pacientes atendidos` : undefined
+          }
         />
       </div>
 
+      {/* Gráficas: mi tendencia + mi distribución por estado. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 xl:col-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-semibold text-foreground">Próximas citas</h2>
-            <Link
-              href="/telemedicine/agenda"
-              className="flex items-center gap-1 text-[12px] font-medium text-primary hover:underline"
-            >
-              Ver agenda <ChevronRight className="size-3.5" />
-            </Link>
-          </div>
+        <DashboardChartCard
+          title="Mi actividad"
+          description={`Mis citas en el rango seleccionado (${rangeOptions.find((o) => o.key === range)!.label})`}
+          icon={Activity}
+          className="xl:col-span-2"
+        >
+          <AppointmentsTrendChart
+            dailySeries={analytics?.dailySeries ?? []}
+            loading={loading}
+          />
+        </DashboardChartCard>
 
-          {agendaLoading ? (
-            <div className="flex flex-col gap-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full rounded-xl" />
-              ))}
-            </div>
-          ) : appointments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border py-12 text-center">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
-                <CalendarDays className="size-5 text-muted-foreground" />
-              </div>
-              <p className="text-[13px] font-medium text-foreground">
-                Sin citas en los próximos 14 días
-              </p>
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {appointments.slice(0, 6).map((appointment) => (
-                <li key={appointment.id}>
-                  <Link
-                    href={`/telemedicine/citas/${appointment.id}`}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <Video className="size-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex min-w-0 flex-col gap-px">
-                        <span className="truncate text-[13px] font-semibold text-foreground">
-                          {appointment.patientName ?? "Paciente"}
-                        </span>
-                        <span className="truncate text-[11.5px] text-muted-foreground">
-                          {appointment.specialtyName ?? "Especialidad"} ·{" "}
-                          {appointment.locationName ?? "Sede"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-[12px] font-medium text-muted-foreground">
-                        {formatDate(appointment.scheduledStart)} ·{" "}
-                        {formatTime(appointment.scheduledStart)}
-                      </span>
-                      <StatusBadge
-                        status={appointmentStatusLabel[appointment.status]}
-                        color={appointmentStatusColor(appointment.status)}
-                      />
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <DashboardChartCard
+          title="Distribución por estado"
+          description="Mis citas por estado en el rango"
+          icon={PieChart}
+        >
+          <StatusDistributionChart
+            statusDistribution={analytics?.statusDistribution ?? []}
+            loading={loading}
+          />
+        </DashboardChartCard>
+      </div>
 
-        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-semibold text-foreground">Accesos rápidos</h2>
-          </div>
-          <div className="flex flex-col gap-2">
-            <QuickLink href="/telemedicine/agenda" icon={CalendarDays} label="Mi agenda" />
-            <QuickLink href="/telemedicine/solicitudes" icon={Inbox} label="Solicitudes" />
-            <QuickLink href="/telemedicine/alertas" icon={Bell} label="Alertas" />
-            <QuickLink href="/telemedicine/citas" icon={ClipboardList} label="Citas" />
+      {/* Franjas horarias + próximas citas + accesos rápidos. */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <DashboardChartCard
+          title="Franjas de mayor demanda"
+          description="Mis citas por hora del día en el rango"
+          icon={Clock}
+          className="xl:col-span-1"
+        >
+          <HourlyDistributionChart
+            hourlyDistribution={analytics?.hourlyDistribution ?? []}
+            loading={loading}
+          />
+        </DashboardChartCard>
+
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card xl:col-span-2">
+          <SectionHeader
+            title="Mis próximas citas"
+            description="Próximas citas de tu agenda"
+            icon={CalendarDays}
+            actions={
+              <Link
+                href="/telemedicine/agenda"
+                className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-white/20"
+              >
+                Ver agenda
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            }
+          />
+          <div className="p-5 pt-4">
+            <UpcomingAppointments
+              appointments={analytics?.upcomingAppointments ?? []}
+              loading={loading}
+              emptyMessage="Sin citas próximas en tu agenda"
+              hrefBase="/telemedicine/citas"
+            />
           </div>
         </section>
       </div>
+
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <SectionHeader
+          title="Accesos rápidos"
+          description="Accesos directos del módulo"
+          icon={UserCog}
+        />
+        <div className="p-5 pt-4">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <QuickActions actions={actions.slice(0, 2)} />
+            <QuickActions actions={actions.slice(2)} />
+          </div>
+        </div>
+      </section>
     </div>
-  );
-}
-
-function QuickLink({
-  href,
-  icon: Icon,
-  label,
-}: {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
-    >
-      <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
-        <Icon className="size-4 text-muted-foreground" />
-      </div>
-      <span className="flex-1 text-[13px] font-medium text-foreground">{label}</span>
-      <ChevronRight className="size-4 text-muted-foreground" />
-    </Link>
   );
 }
 
@@ -240,8 +299,16 @@ function DashboardSkeleton() {
       <Skeleton className="h-[76px] w-full rounded-2xl" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-[120px] w-full rounded-2xl" />
+          <Skeleton key={i} className="h-[110px] w-full rounded-2xl" />
         ))}
+      </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <Skeleton className="h-[320px] rounded-2xl xl:col-span-2" />
+        <Skeleton className="h-[320px] rounded-2xl" />
+      </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <Skeleton className="h-[280px] rounded-2xl" />
+        <Skeleton className="h-[280px] rounded-2xl xl:col-span-2" />
       </div>
     </div>
   );

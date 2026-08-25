@@ -6,14 +6,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  navModules,
-  type NavModule,
+  visibleNavItems,
+  visibleNavModules,
   type NavItem,
+  type NavModule,
 } from "@/lib/config/navigation";
 import { useAuth } from "@/providers/auth-provider";
+import { useAppContext } from "@/providers/context-provider";
 import {
   ChevronDown,
-  ChevronRight,
   ChevronsLeft,
   LogOut,
   Settings,
@@ -48,6 +49,8 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { can } = useAppContext();
+  const navModules = visibleNavModules(can);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(() => {
     const activeModule = navModules.find((m) =>
       m.items.some((item) => item.href === pathname),
@@ -55,11 +58,11 @@ export function Sidebar({
     return activeModule ? new Set([activeModule.label]) : new Set();
   });
 
+  /* Accordion: abre un módulo y cierra los demás */
   const toggleModule = useCallback((label: string) => {
     setExpandedModules((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) next.delete(label);
-      else next.add(label);
+      const next = new Set<string>();
+      if (!prev.has(label)) next.add(label);
       return next;
     });
   }, []);
@@ -77,7 +80,7 @@ export function Sidebar({
     <>
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden animate-in fade-in duration-200"
           onClick={onCloseMobile}
           aria-hidden="true"
         />
@@ -85,23 +88,23 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "flex flex-col bg-[#0B2B4A] transition-all duration-300 ease-in-out relative shrink-0 h-screen",
+          "flex flex-col bg-gradient-to-b from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_85%,#000)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] relative shrink-0 h-screen",
           collapsed ? "w-[68px]" : "w-[236px]",
           mobileOpen ? "fixed inset-y-0 left-0 z-50" : "hidden lg:flex",
         )}
         role="navigation"
         aria-label="Navegación principal"
       >
-        {/* Brand Header - Logo */}
+        {/* Brand Header */}
         <div
           className={cn(
-            "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/10 relative",
+            "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/8 relative",
             collapsed ? "h-[80px]" : "h-[90px]",
           )}
         >
           <Link
             href="/dashboard"
-            className="flex items-center justify-center w-full"
+            className="flex items-center justify-center w-full transition-transform duration-200 hover:scale-[1.02]"
             onClick={collapsed ? onToggleCollapse : undefined}
           >
             <Image
@@ -111,7 +114,7 @@ export function Sidebar({
               width={582}
               height={429}
               className={cn(
-                "w-auto object-contain transition-all cursor-pointer",
+                "w-auto object-contain transition-all duration-300 cursor-pointer",
                 collapsed ? "h-10 max-w-[54px]" : "h-14 max-w-[180px]",
               )}
             />
@@ -120,7 +123,7 @@ export function Sidebar({
           {!collapsed && (
             <button
               onClick={onToggleCollapse}
-              className="absolute right-2 top-4 flex size-[26px] items-center justify-center rounded-lg border border-white/20 bg-[#0A2340] text-white/80 hover:bg-[#0E3458] hover:text-white transition-all"
+              className="absolute right-2 top-4 flex size-[26px] items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white hover:scale-110 transition-all duration-200"
               aria-label="Colapsar sidebar"
             >
               <ChevronsLeft className="size-[15px]" />
@@ -130,27 +133,27 @@ export function Sidebar({
 
         {/* Navigation Modules */}
         <ScrollArea className="flex-1 px-2.5 py-2">
-          <nav className="flex flex-col gap-1">
+          <nav className="flex flex-col gap-0.5">
             {navModules.map((mod) => {
               const active = isModuleActive(mod);
               const expanded = expandedModules.has(mod.label) || active;
               const Icon = mod.icon;
 
               if (collapsed) {
+                const firstItem = visibleNavItems(mod, can)[0];
                 return (
                   <Tooltip key={mod.label}>
                     <TooltipTrigger
                       className={cn(
-                        "flex items-center justify-center rounded-lg p-2.5 my-0.5 transition-colors border",
+                        "flex items-center justify-center rounded-lg p-2.5 my-0.5 transition-all duration-200 border",
                         active
-                          ? "bg-[#0A2340] text-[#F59E0B] border-[#F59E0B]/30"
-                          : "text-white/70 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10",
+                          ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
+                          : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white hover:scale-105 border-transparent",
                       )}
                       onClick={() => {
-                        const firstItem = mod.items[0];
                         if (firstItem) onCloseMobile();
                       }}
-                      render={<Link href={mod.items[0]?.href ?? "#"} />}
+                      render={<Link href={firstItem?.href ?? "#"} />}
                     >
                       <Icon className="size-[18px]" />
                     </TooltipTrigger>
@@ -166,33 +169,39 @@ export function Sidebar({
                   <button
                     onClick={() => toggleModule(mod.label)}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-colors border",
+                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-all duration-200 border group",
                       active
-                        ? "bg-[#0A2340] text-[#F59E0B] border-[#F59E0B]/30"
-                        : "text-white/75 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10",
+                        ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
+                        : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white hover:scale-[1.01] border-transparent",
                     )}
                   >
                     <Icon
-                      className="size-[18px] shrink-0"
-                      style={{
-                        color: active ? "#F59E0B" : "rgba(255,255,255,0.65)",
-                      }}
+                      className={cn(
+                        "size-[18px] shrink-0 transition-transform duration-200",
+                        active && "scale-110",
+                      )}
                     />
                     <span className="flex-1 text-left tracking-wide">
                       {mod.label}
                     </span>
-                    {expanded ? (
-                      <ChevronDown className="size-3.5 text-white/60" />
-                    ) : (
-                      <ChevronRight className="size-3.5 text-white/50" />
-                    )}
+                    <ChevronDown
+                      className={cn(
+                        "size-3.5 text-white/40 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                        expanded && "rotate-180",
+                      )}
+                    />
                   </button>
 
-                  {expanded && (
-                    <div className="mt-0.5 ml-5 flex flex-col gap-0.5 border-l border-white/15 pl-3">
-                      {mod.items
-                        .filter((item) => !item.hidden)
-                        .map((item) => {
+                  {/* Panel animado con grid transition */}
+                  <div
+                    className={cn(
+                      "grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                      expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                    )}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="mt-1 ml-5 flex flex-col gap-0.5 border-l border-white/10 pl-3 py-0.5">
+                        {visibleNavItems(mod, can).map((item, idx) => {
                           const ItemIcon = item.icon;
                           const itemActive = isActive(item);
                           return (
@@ -201,24 +210,23 @@ export function Sidebar({
                               href={item.href}
                               onClick={onCloseMobile}
                               className={cn(
-                                "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all border",
+                                "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all duration-200 border",
                                 itemActive
-                                  ? "bg-[#0A2340] font-semibold text-[#F59E0B] border-[#F59E0B]/30"
-                                  : "text-white/70 hover:bg-white/10 hover:text-white border-transparent hover:border-white/10",
+                                  ? "bg-[var(--sidebar-active-bg)] font-semibold text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
+                                  : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white border-transparent",
                               )}
+                              style={{
+                                animationDelay: expanded ? `${idx * 40}ms` : undefined,
+                              }}
                             >
-                              <ItemIcon
-                                className="size-[16px] shrink-0"
-                                style={{
-                                  color: itemActive ? "#F59E0B" : undefined,
-                                }}
-                              />
+                              <ItemIcon className="size-[16px] shrink-0" />
                               <span className="truncate">{item.label}</span>
                             </Link>
                           );
                         })}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
@@ -231,14 +239,14 @@ export function Sidebar({
             <div className="flex flex-col gap-2">
               <button
                 onClick={onToggleCollapse}
-                className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 p-2 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 p-2 text-white/70 hover:text-white hover:bg-white/10 hover:scale-110 transition-all duration-200"
                 aria-label="Expandir sidebar"
               >
-                <ChevronRight className="size-4" />
+                <ChevronDown className="size-4 -rotate-90" />
               </button>
               <Tooltip>
                 <TooltipTrigger
-                  className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 p-2 text-white/70 hover:text-white transition-colors"
+                  className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 p-2 text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
                   render={<Link href="/settings" />}
                   onClick={onCloseMobile}
                   aria-label="Configuración"
@@ -249,9 +257,9 @@ export function Sidebar({
               </Tooltip>
             </div>
           ) : (
-            <div className="flex items-center gap-2.5 rounded-xl bg-white/5 border border-white/10 p-2.5">
-              <Avatar className="size-8">
-                <AvatarFallback className="bg-primary-soft text-[11px] font-bold text-primary-strong">
+            <div className="flex items-center gap-2.5 rounded-xl bg-white/5 border border-white/10 p-2.5 transition-all duration-200 hover:bg-white/8">
+              <Avatar className="size-8 transition-transform duration-200 hover:scale-110">
+                <AvatarFallback className="bg-primary text-[11px] font-bold text-primary-foreground">
                   {user?.initials ?? "CA"}
                 </AvatarFallback>
               </Avatar>
@@ -259,12 +267,12 @@ export function Sidebar({
                 <span className="text-[12.5px] font-semibold text-white truncate">
                   {user?.name ?? "Usuario"}
                 </span>
-                <span className="text-[10.5px] text-white/55 truncate">
+                <span className="text-[10.5px] text-[var(--sidebar-muted-foreground)] truncate">
                   {user?.roles[0] ?? "Sin rol"}
                 </span>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex size-7 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white transition-colors">
+                <DropdownMenuTrigger className="flex size-7 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white hover:scale-110 transition-all duration-200">
                   <ChevronDown className="size-3.5" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">

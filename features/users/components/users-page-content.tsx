@@ -36,8 +36,17 @@ import {
   fetchPermissions,
 } from "../services/users-service";
 import type { User, UserFormValues } from "../types";
+import type { DataView } from "@/components/feedback/view-toggle";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { UsersToolbar } from "./users-toolbar";
 import { UsersTable } from "./users-table";
+import { UsersCards } from "./users-cards";
 import { UserFormDialog } from "./user-form-dialog";
 
 export function UsersPageContent() {
@@ -66,6 +75,7 @@ export function UsersPageContent() {
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [view, setView] = useState<DataView>("table");
 
   // Catálogo de roles y permisos. Se carga en el montaje de la página para
   // alimentar el filtro por rol del toolbar; se reutiliza en los forms.
@@ -269,6 +279,8 @@ export function UsersPageContent() {
       <UsersToolbar
         filters={filters}
         roles={roleNames}
+        view={view}
+        onViewChange={setView}
         onFilterChange={setFilters}
       />
 
@@ -277,40 +289,59 @@ export function UsersPageContent() {
       ) : error ? (
         <UsersErrorState message={error} onRetry={retry} />
       ) : result && result.data.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
-          <SectionHeader
-            title={`${result.total} ${result.total === 1 ? "usuario" : "usuarios"} encontrados`}
-            description="Administra los usuarios de la plataforma"
-            icon={UsersIcon}
-            variant="primary"
-            actions={
-              selectedIds.size > 0 ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-medium text-white/80">
-                    {selectedIds.size} seleccionado
-                    {selectedIds.size !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              ) : undefined
-            }
-          />
-          <UsersTable
-            users={result.data}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onToggleSelectAll={toggleSelectAll}
-            onEdit={openEdit}
-            onDelete={setDeleting}
-          />
-        </div>
+        view === "table" ? (
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
+            <SectionHeader
+              title={`${result.total} ${result.total === 1 ? "usuario" : "usuarios"} encontrados`}
+              description="Administra los usuarios de la plataforma"
+              icon={UsersIcon}
+              variant="primary"
+              actions={
+                selectedIds.size > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-medium text-white/80">
+                      {selectedIds.size} seleccionado
+                      {selectedIds.size !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                ) : undefined
+              }
+            />
+            <UsersTable
+              users={result.data}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onToggleSelectAll={toggleSelectAll}
+              onEdit={openEdit}
+              onDelete={setDeleting}
+            />
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <SectionHeader
+              title={`${result.total} ${result.total === 1 ? "usuario" : "usuarios"} encontrados`}
+              description="Administra los usuarios de la plataforma"
+              icon={UsersIcon}
+              variant="primary"
+            />
+            <UsersCards
+              users={result.data}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onEdit={openEdit}
+              onDelete={setDeleting}
+            />
+          </div>
+        )
       ) : (
         <EmptyState onCreate={openCreate} canCreate={canCreate} />
       )}
 
       {result && result.totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
           <span>
-            Página {result.page} de {result.totalPages}
+            Página {result.page} de {result.totalPages} · {result.total}{" "}
+            {result.total === 1 ? "usuario" : "usuarios"}
           </span>
           <div className="flex items-center gap-3">
             <select
@@ -323,24 +354,40 @@ export function UsersPageContent() {
               <option value={10}>10 por página</option>
               <option value={20}>20 por página</option>
             </select>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={result.page === 1}
-                onClick={() => setPage(result.page - 1)}
-              >
-                Anterior
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={result.page === result.totalPages}
-                onClick={() => setPage(result.page + 1)}
-              >
-                Siguiente
-              </Button>
-            </div>
+            <Pagination className="w-auto justify-start">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    text="Anterior"
+                    aria-disabled={result.page === 1}
+                    className={
+                      result.page === 1
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage(result.page - 1);
+                    }}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    text="Siguiente"
+                    aria-disabled={result.page === result.totalPages}
+                    className={
+                      result.page === result.totalPages
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage(result.page + 1);
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       )}

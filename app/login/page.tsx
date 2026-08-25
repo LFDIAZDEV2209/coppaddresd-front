@@ -6,17 +6,19 @@ import { useAuth } from "@/providers/auth-provider";
 import { getDemoCredentials } from "@/lib/api/auth-service";
 import Image from "next/image";
 import {
+  AlertTriangle,
+  CheckCircle2,
   Eye,
   EyeOff,
-  Loader2,
-  ShieldCheck,
-  Lock,
-  Activity,
+  Fingerprint,
   HeartPulse,
-  Users,
-  Bot,
-  CheckCircle2,
-  AlertTriangle,
+  KeyRound,
+  Loader2,
+  Lock,
+  LogIn,
+  Mail,
+  ShieldCheck,
+  UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,10 +88,16 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen w-full">
       {/* Left Panel — Form */}
-      <div className="flex w-full max-w-[560px] flex-col justify-center px-10 py-12 lg:px-14">
+      <div className="relative flex w-full max-w-[560px] flex-col justify-center overflow-hidden px-6 py-12 sm:px-10 lg:px-14">
+        {/* Fondo decorativo sutil (familia Antares) */}
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -top-24 -left-24 size-72 rounded-full bg-primary-soft blur-3xl" />
+          <div className="absolute -right-32 bottom-0 size-80 rounded-full bg-success-soft blur-3xl" />
+        </div>
+
         {/* Brand */}
         <div className="mb-10 flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground shadow-sm shadow-primary/30">
             CA
           </div>
           <div className="flex flex-col gap-0.5">
@@ -111,9 +119,14 @@ export default function LoginPage() {
         </div>
 
         {/* Title */}
-        <h1 className="mb-2 text-[28px] font-bold leading-tight tracking-tight text-foreground">
-          Acceso administrativo clínico
-        </h1>
+        <div className="mb-2 flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Lock className="size-5" />
+          </div>
+          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-foreground">
+            Acceso administrativo clínico
+          </h1>
+        </div>
         <p className="mb-8 max-w-[400px] text-[14px] leading-relaxed text-secondary-foreground">
           Gestiona pacientes, agentes de IA y programas de salud desde un
           entorno seguro.
@@ -123,8 +136,8 @@ export default function LoginPage() {
         <div className="mb-8 flex flex-wrap items-center gap-4">
           {[
             { icon: Lock, label: "Datos cifrados", color: "text-success" },
-            { icon: Activity, label: "Monitoreo 24/7", color: "text-info" },
-            { icon: ShieldCheck, label: "2FA disponible", color: "text-primary" },
+            { icon: HeartPulse, label: "Monitoreo 24/7", color: "text-info" },
+            { icon: Fingerprint, label: "2FA disponible", color: "text-primary" },
           ].map((item) => (
             <div
               key={item.label}
@@ -147,16 +160,19 @@ export default function LoginPage() {
             <Label htmlFor="email" className="text-[13px] font-medium">
               Correo electrónico
             </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="admin@coppaddresd.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-11"
-              autoComplete="email"
-              disabled={submitting}
-            />
+            <div className="relative">
+              <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@coppaddresd.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-11 bg-card pl-10"
+                autoComplete="email"
+                disabled={submitting}
+              />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -164,20 +180,21 @@ export default function LoginPage() {
               Contraseña
             </Label>
             <div className="relative">
+              <KeyRound className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-11 pr-10"
+                className="h-11 bg-card pr-10 pl-10"
                 autoComplete="current-password"
                 disabled={submitting}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                 aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               >
                 {showPassword ? (
@@ -199,12 +216,16 @@ export default function LoginPage() {
                 Recordar sesión
               </span>
             </label>
+            <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
+              <UserRound className="size-3.5" />
+              Acceso restringido
+            </span>
           </div>
 
           {error && (
             <div
               role="alert"
-              className="flex items-center gap-2 rounded-lg bg-destructive-soft px-3 py-2.5 text-[13px] text-destructive-strong"
+              className="flex items-center gap-2 rounded-lg bg-destructive-soft px-3 py-2.5 text-[13px] text-destructive"
             >
               <AlertTriangle className="size-4 shrink-0" />
               {error}
@@ -214,7 +235,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={submitting}
-            className="h-12 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary-strong text-[14px] font-semibold cursor-pointer"
+            className="h-12 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary-strong text-[14px] font-semibold shadow-sm shadow-primary/30 cursor-pointer"
           >
             {submitting ? (
               <>
@@ -223,7 +244,7 @@ export default function LoginPage() {
               </>
             ) : (
               <>
-                <Lock className="size-4" />
+                <LogIn className="size-4" />
                 Iniciar sesión segura
               </>
             )}
@@ -270,8 +291,8 @@ export default function LoginPage() {
             className="object-cover"
             priority
           />
-          {/* Overlay Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0B2B4A]/92 via-[#0B2B4A]/85 to-[#0B2B4A]/95" />
+          {/* Overlay Gradient (familia Antares: navy → azul) */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--sidebar)]/95 via-[var(--sidebar-primary)]/90 to-primary/85" />
         </div>
 
         {/* Decorative Elements */}
@@ -313,9 +334,9 @@ export default function LoginPage() {
             </p>
             <div className="flex items-center gap-8">
               {[
-                { icon: Users, value: "12.8K", label: "Usuarios", color: "text-[#67E8F9]" },
-                { icon: Bot, value: "24", label: "Agentes IA", color: "text-[#34D399]" },
-                { icon: Activity, value: "99.8%", label: "Disponibilidad", color: "text-[#FBBF24]" },
+                { icon: UserRound, value: "12.8K", label: "Usuarios", color: "text-info" },
+                { icon: Fingerprint, value: "24", label: "Agentes IA", color: "text-success" },
+                { icon: HeartPulse, value: "99.8%", label: "Disponibilidad", color: "text-warning" },
               ].map((metric) => (
                 <div key={metric.label} className="flex flex-col gap-1">
                   <metric.icon className={cn("size-4", metric.color)} />

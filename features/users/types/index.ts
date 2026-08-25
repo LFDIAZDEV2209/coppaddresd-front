@@ -33,7 +33,7 @@ export interface PaginatedResult<T> {
 }
 
 /**
- * Cuerpo de POST /api/users (creación; AllowAnonymous).
+ * Cuerpo de POST /api/auth/users (creación; AllowAnonymous).
  * `roleIds`/`permissionIds` van SOLO si el caller tiene los permisos de
  * asignación (si no, se omiten → el backend los trata como null = sin
  * asignaciones, y no exige Roles.Assign/Permissions.Assign).
@@ -50,7 +50,7 @@ export interface UserCreateInput {
 }
 
 /**
- * Cuerpo de PUT /api/users/{id} (actualización; sync total de asignaciones).
+ * Cuerpo de PUT /api/auth/users/{id} (actualización; sync total de asignaciones).
  * `roleIds`/`permissionIds` opcionales: el front los manda solo si tiene los
  * permisos de asignación; omitirlos = null = el backend no toca la asignación.
  */

@@ -1,5 +1,10 @@
-import { ProfessionalAgenda } from "@/features/telemedicine/components/professional-agenda";
+import { AgendaRouter } from "@/features/telemedicine/components/agenda-router";
 
-export default function Page() {
-  return <ProfessionalAgenda />;
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ fecha?: string }>;
+}) {
+  const { fecha } = await searchParams;
+  return <AgendaRouter initialDate={fecha ?? null} />;
 }

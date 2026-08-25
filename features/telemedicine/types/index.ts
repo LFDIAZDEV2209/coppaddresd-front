@@ -253,6 +253,53 @@ export interface AdminSummaryDto {
   alertsUnread: number;
 }
 
+// --- Analytics del dashboard ---
+
+export interface DashboardKpisDto {
+  totalAppointments: number;
+  appointmentsToday: number;
+  upcomingAppointments: number;
+  completed: number;
+  cancelled: number;
+  noShow: number;
+  pending: number;
+  uniquePatients: number;
+  activeProfessionals: number;
+}
+
+export interface DailyAppointmentCountDto {
+  day: string;
+  count: number;
+}
+
+export interface StatusCountDto {
+  status: AppointmentStatus;
+  count: number;
+}
+
+export interface HourlyCountDto {
+  hour: number;
+  count: number;
+}
+
+export interface ProfessionalActivityDto {
+  professionalId: string;
+  professionalName: string | null;
+  total: number;
+  completed: number;
+  cancelled: number;
+  uniquePatients: number;
+}
+
+export interface DashboardAnalyticsDto {
+  kpis: DashboardKpisDto;
+  dailySeries: DailyAppointmentCountDto[];
+  statusDistribution: StatusCountDto[];
+  hourlyDistribution: HourlyCountDto[];
+  professionalActivity: ProfessionalActivityDto[];
+  upcomingAppointments: TelemedicineAppointmentDto[];
+}
+
 // --- Catálogos del backend (para crear solicitud y filtros admin) ---
 
 export interface ProfessionalCatalogItemDto {

@@ -1,5 +1,5 @@
-import { ProfessionalDashboard } from "@/features/telemedicine/components/professional-dashboard";
+import { TelemedicineDashboard } from "@/features/telemedicine/components/telemedicine-dashboard";
 
 export default function Page() {
-  return <ProfessionalDashboard />;
+  return <TelemedicineDashboard />;
 }
