@@ -38,6 +38,7 @@ import {
   Bell,
   Apple,
   Dumbbell,
+  UserCheck,
 } from "lucide-react";
 
 export interface NavItem {
@@ -390,6 +391,31 @@ export const navModules: NavModule[] = [
         href: "/wellness/assignments",
         icon: ClipboardList,
         color: "#7C3AED",
+      },
+    ],
+  },
+  {
+    label: "Comunidad",
+    icon: Users,
+    color: "#0D9488",
+    items: [
+      {
+        label: "Miembros",
+        href: "/community/profiles",
+        icon: UserCheck,
+        color: "#0E7490",
+      },
+      {
+        label: "Moderación",
+        href: "/community/moderation",
+        icon: ShieldCheck,
+        color: "#F59E0B",
+      },
+      {
+        label: "Analítica",
+        href: "/community/analytics",
+        icon: BarChart3,
+        color: "#10B981",
       },
     ],
   },
