@@ -62,7 +62,11 @@ interface RefreshOutcome {
   token?: string;
 }
 
-const DEFAULT_TIMEOUT_MS = 15_000;
+// Timeout global moderado: cubre la gran mayoría de las peticiones (listas,
+// guardados, auth, refresh). Las llamadas de larga duración (p. ej. generación
+// con IA) deben pasar un `timeoutMs` explícito en lugar de inflar este default,
+// que de otro modo retrasaría hasta ~95s la aparición de errores de red/5xx.
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 // El access token vive SOLO en memoria del proceso del navegador: no sobrevive
 // recargas (se restaura vía refresh cookie) y es invisible para XSS persistente.

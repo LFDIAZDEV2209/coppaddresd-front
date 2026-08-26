@@ -16,6 +16,7 @@ import {
   updateExerciseRoutine,
   deleteExerciseRoutine,
 } from "../services/exercise-routines-service";
+import { notifyAssignmentsRefresh } from "./assignments-refresh";
 
 interface UseExerciseRoutinesReturn {
   result: PaginatedResult<ExerciseRoutineListItem> | null;
@@ -106,7 +107,12 @@ export function useExerciseRoutines(
       setActionLoading(true);
       try {
         if (id) await updateExerciseRoutine(id, input as UpdateExerciseRoutineInput);
-        else await createExerciseRoutine(input as CreateExerciseRoutineInput);
+        else {
+          await createExerciseRoutine(input as CreateExerciseRoutineInput);
+          // Al crear, el backend puede generar una asignación atómica
+          // (si el payload trae patientId): refrescar asignaciones unificadas.
+          notifyAssignmentsRefresh();
+        }
         setPageState(1);
         await loadData();
       } finally {

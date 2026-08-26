@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { uuid } from "@/lib/uuid";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -277,7 +278,7 @@ export function KnowledgePageContent() {
           onOpenChange={(open) => !open && setUploadBase(null)}
           uploading={knowledge.registeringDoc}
           onSubmit={async (file) => {
-            const storageKey = `agents/docs/${uploadBase.id}/${crypto.randomUUID()}-${file.name}`;
+            const storageKey = `agents/docs/${uploadBase.id}/${uuid()}-${file.name}`;
             await uploadDocumentToStorage(storageKey, file);
             await knowledge.handleRegisterDocument(uploadBase.id, {
               storageKey,

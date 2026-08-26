@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { GlassWater, Search, Sparkles } from "lucide-react";
+import { ApiError } from "@/lib/api/http";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,13 +31,19 @@ import type {
   NutritionPlanStatus,
   CreateNutritionPlanInput,
   UpdateNutritionPlanInput,
+  NutritionGeneratedPayload,
 } from "../types";
 import {
   MEAL_TYPES,
   PLAN_STATUSES,
   PLAN_STATUS_LABELS,
   getNutritionPlan,
+  fetchPatientsForPicker,
 } from "../services/nutrition-plans-service";
+import {
+  generatePlan,
+  mapNutritionPayloadToForm,
+} from "../services/generate-plan-service";
 
 interface NutritionPlanFormDialogProps {
   open: boolean;
@@ -46,6 +54,14 @@ interface NutritionPlanFormDialogProps {
     input: CreateNutritionPlanInput | UpdateNutritionPlanInput,
     id?: string,
   ) => Promise<void>;
+  /** Se invoca tras crear (no editar) un plan vinculado a un paciente. */
+  onCreated?: (patientName: string) => void;
+}
+
+interface PickerItem {
+  id: string;
+  label: string;
+  sublabel?: string;
 }
 
 interface DayMealData {
@@ -67,12 +83,21 @@ const MEAL_LABELS: Record<MealType, string> = {
   Snack: "Snack",
 };
 
+/** Vasos de 300 ml para la meta de agua diaria. Regla de redondeo consistente:
+ *  Math.round(ml / 300) con mínimo 1 vaso (2000 ml → 7 vasos). */
+const glassesForDailyWater = (value: string): number => {
+  const ml = Number(value);
+  const safeMl = Number.isFinite(ml) && ml > 0 ? ml : 2000;
+  return Math.max(1, Math.round(safeMl / 300));
+};
+
 export function NutritionPlanFormDialog({
   open,
   plan,
   saving,
   onOpenChange,
   onSubmit,
+  onCreated,
 }: NutritionPlanFormDialogProps) {
   const isEditing = Boolean(plan);
 
@@ -93,10 +118,50 @@ export function NutritionPlanFormDialog({
 
   // Days state: key = "dayNumber-mealType"
   const [days, setDays] = useState<Record<string, DayMealData>>({});
+  // Meta de agua diaria por DÍA (mismo valor para todas las comidas del día,
+  // igual que dayNumber). Se edita una sola vez por día, no por comida.
+  const [dailyWaterByDay, setDailyWaterByDay] = useState<Record<number, string>>({});
   const [activeDay, setActiveDay] = useState("1");
   const [loadingDetail, setLoadingDetail] = useState(Boolean(plan));
 
-  // Cargar el detalle completo al editar (el item del listado no trae días)
+  // Estado del picker de paciente + generación con IA (solo en creación)
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
+    null,
+  );
+  const [selectedPatientLabel, setSelectedPatientLabel] = useState("");
+  const [patientSearch, setPatientSearch] = useState("");
+  const [patientResults, setPatientResults] = useState<PickerItem[]>([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState("");
+
+  // Búsqueda de paciente con debounce (mismo patrón que assignment-form)
+  useEffect(() => {
+    if (patientSearch.trim().length < 2) return;
+
+    const timer = setTimeout(async () => {
+      setLoadingPatients(true);
+      try {
+        const result = await fetchPatientsForPicker(1, 10, patientSearch);
+        setPatientResults(
+          result.data.map((p) => ({
+            id: p.id,
+            label: `${p.firstName} ${p.lastName}`,
+            sublabel: p.email ?? p.medicalRecordNumber ?? undefined,
+          })),
+        );
+      } catch {
+        setPatientResults([]);
+      } finally {
+        setLoadingPatients(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [patientSearch]);
+
+  // Cargar el detalle completo al editar (el item del listado no trae días
+  // ni todos los campos: el detalle es la fuente de verdad)
   useEffect(() => {
     if (!plan) return;
 
@@ -105,7 +170,34 @@ export function NutritionPlanFormDialog({
     getNutritionPlan(plan.id)
       .then((full) => {
         if (cancelled) return;
-        if (full?.days && full.days.length > 0) {
+        if (!full) return;
+
+        // Datos básicos
+        setName(full.name);
+        setDescription(full.description ?? "");
+        setTargetCondition(full.targetCondition ?? "");
+        setDurationDays(String(full.durationDays));
+        setDailyCalorieTarget(full.dailyCalorieTarget?.toString() ?? "");
+        setDailyProteinTarget(full.dailyProteinTarget?.toString() ?? "");
+        setDailyCarbsTarget(full.dailyCarbsTarget?.toString() ?? "");
+        setDailyFatTarget(full.dailyFatTarget?.toString() ?? "");
+        setDailyFiberTarget(full.dailyFiberTarget?.toString() ?? "");
+        setAllergens(full.allergens ?? "");
+        setMealTiming(full.mealTiming ?? "");
+        setIsTemplate(full.isTemplate);
+        setStatus(full.status);
+
+        // Paciente asociado (planes personalizados)
+        if (full.patientId) {
+          setSelectedPatientId(full.patientId);
+          setSelectedPatientLabel(full.patientName ?? "");
+        } else {
+          setSelectedPatientId(null);
+          setSelectedPatientLabel("");
+        }
+
+        // Días/comidas
+        if (full.days && full.days.length > 0) {
           const newDays: Record<string, DayMealData> = {};
           // Estructura base para todos los días del plan
           for (let d = 1; d <= full.durationDays; d++) {
@@ -128,6 +220,21 @@ export function NutritionPlanFormDialog({
             };
           }
           setDays(newDays);
+
+          // Meta de agua diaria: todas las filas del día traen el mismo valor
+          // (misma convención que dayNumber). Tomar el de la primera fila que
+          // lo traiga; default 2000 si el backend no lo envía.
+          const newDailyWater: Record<number, string> = {};
+          for (let d = 1; d <= full.durationDays; d++) {
+            newDailyWater[d] = "2000";
+          }
+          for (const day of full.days) {
+            if (day.dailyWaterMl) {
+              newDailyWater[day.dayNumber] = String(day.dailyWaterMl);
+            }
+          }
+          setDailyWaterByDay(newDailyWater);
+
           const firstDay = full.days
             .map((d) => d.dayNumber)
             .sort((a, b) => a - b)[0];
@@ -172,6 +279,15 @@ export function NutritionPlanFormDialog({
       }
     }
     setDays(newDays);
+
+    // Conservar la meta de agua de los días existentes; default 2000 para los nuevos
+    setDailyWaterByDay((prev) => {
+      const next: Record<number, string> = {};
+      for (let d = 1; d <= num; d++) {
+        next[d] = prev[d] ?? "2000";
+      }
+      return next;
+    });
   };
 
   const updateDayMeal = (
@@ -187,6 +303,72 @@ export function NutritionPlanFormDialog({
     }));
   };
 
+const handleSelectPatient = (p: PickerItem) => {
+      setSelectedPatientId(p.id);
+      setSelectedPatientLabel(p.label);
+      setPatientSearch("");
+      setPatientResults([]);
+      setGenerateError("");
+      // Un plan vinculado a un paciente es personalizado (no template) y
+      // nace como asignación activa para que aparezca en Asignaciones.
+      setIsTemplate(false);
+      setStatus("Active");
+    };
+
+  const handleClearPatient = () => {
+    setSelectedPatientId(null);
+    setSelectedPatientLabel("");
+    setGenerateError("");
+  };
+
+  // Genera el plan con IA y pre-llena el form completo
+  const handleGenerate = async () => {
+    if (!selectedPatientId) return;
+
+    setGenerating(true);
+    setGenerateError("");
+    try {
+      const response = await generatePlan(selectedPatientId, "nutrition");
+      const values = mapNutritionPayloadToForm(
+        response.payload as unknown as NutritionGeneratedPayload,
+      );
+      setName(values.name);
+      setDescription(values.description);
+      setTargetCondition(values.targetCondition);
+      setDurationDays(values.durationDays);
+      setDailyCalorieTarget(values.dailyCalorieTarget);
+      setDailyProteinTarget(values.dailyProteinTarget);
+      setDailyCarbsTarget(values.dailyCarbsTarget);
+      setDailyFatTarget(values.dailyFatTarget);
+      setDailyFiberTarget(values.dailyFiberTarget);
+      setAllergens(values.allergens);
+      setMealTiming(values.mealTiming);
+      setDays(values.days);
+
+      // La IA no genera la meta de agua diaria: default 2000 para todos los días
+      const generatedDuration = Math.max(
+        Math.trunc(Number(values.durationDays)) || 1,
+        1,
+      );
+      const generatedDailyWater: Record<number, string> = {};
+      for (let d = 1; d <= generatedDuration; d++) {
+        generatedDailyWater[d] = "2000";
+      }
+      setDailyWaterByDay(generatedDailyWater);
+
+      // Al vincular con paciente, el plan es personalizado
+      setIsTemplate(false);
+    } catch (err) {
+      setGenerateError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo generar el plan. Intenta nuevamente.",
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handleSubmit = async () => {
     const numDays = parseInt(durationDays, 10);
     if (!name.trim() || isNaN(numDays) || numDays < 1) return;
@@ -194,6 +376,13 @@ export function NutritionPlanFormDialog({
     // Build days array from the record
     const daysArray: NutritionPlanDayInput[] = [];
     for (let d = 1; d <= numDays; d++) {
+      // Meta de agua diaria: se envía igual en todas las comidas del día
+      // (default 2000 cuando está vacía o es inválida; el backend usa 2000 para 0)
+      const parsedDailyWater = parseInt(dailyWaterByDay[d] ?? "2000", 10);
+      const dailyWaterMl =
+        !isNaN(parsedDailyWater) && parsedDailyWater > 0
+          ? parsedDailyWater
+          : 2000;
       MEAL_TYPES.forEach((meal, idx) => {
         const key = `${d}-${meal}`;
         const data = days[key];
@@ -209,6 +398,7 @@ export function NutritionPlanFormDialog({
             fatG: data.fatG ? parseFloat(data.fatG) : null,
             fiberG: data.fiberG ? parseFloat(data.fiberG) : null,
             waterMl: data.waterMl ? parseInt(data.waterMl, 10) : null,
+            dailyWaterMl,
             notes: data.notes || null,
             sortOrder: idx,
             mediaId: null,
@@ -251,12 +441,19 @@ export function NutritionPlanFormDialog({
         dailyFiberTarget: parseNum(dailyFiberTarget),
         allergens: allergens.trim() || null,
         mealTiming: mealTiming.trim() || null,
-        isTemplate,
-        patientId: null,
+        // Con paciente seleccionado el plan es personalizado y queda vinculado
+        isTemplate: selectedPatientId ? false : isTemplate,
+        patientId: selectedPatientId,
         sourcePlanId: null,
         status,
         days: daysArray.length > 0 ? daysArray : null,
       });
+
+      // Al crear con paciente, el backend crea la asignación en la misma
+      // transacción: notificar para confirmar el vínculo.
+      if (selectedPatientId) {
+        onCreated?.(selectedPatientLabel);
+      }
     }
 
     onOpenChange(false);
@@ -286,6 +483,97 @@ export function NutritionPlanFormDialog({
 
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="flex flex-col gap-4 py-2">
+            {/* Paciente (opcional) + generación con IA */}
+            <div className="flex flex-col gap-1.5">
+              <Label>
+                {isEditing ? "Paciente asociado" : "Paciente (opcional)"}
+              </Label>
+              {isEditing ? (
+                // En edición: mostrar el paciente del plan (solo lectura)
+                <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">
+                  {selectedPatientLabel || "—"}
+                </div>
+              ) : selectedPatientId && selectedPatientLabel ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">
+                    {selectedPatientLabel}
+                    <button
+                      type="button"
+                      className="ml-auto text-muted-foreground hover:text-foreground"
+                      onClick={handleClearPatient}
+                      aria-label="Quitar paciente"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-fit"
+                    disabled={generating || saving}
+                    onClick={handleGenerate}
+                  >
+                    <Sparkles data-icon="inline-start" className="size-3" />
+                    {generating
+                      ? "Generando..."
+                      : "Generar plan con IA"}
+                  </Button>
+                  {generateError && (
+                    <p className="text-xs text-destructive">
+                      {generateError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar paciente por nombre..."
+                      value={patientSearch}
+                      onChange={(e) => {
+                        setPatientSearch(e.target.value);
+                        setGenerateError("");
+                      }}
+                      className="h-9 pl-8"
+                    />
+                  </div>
+                  {loadingPatients && (
+                    <p className="text-xs text-muted-foreground">
+                      Buscando...
+                    </p>
+                  )}
+                  {patientResults.length > 0 && (
+                    <div className="max-h-40 overflow-y-auto rounded-md border border-border">
+                      {patientResults.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className="flex w-full flex-col px-3 py-2 text-left text-sm hover:bg-muted"
+                          onClick={() => handleSelectPatient(p)}
+                        >
+                          <span>{p.label}</span>
+                          {p.sublabel && (
+                            <span className="text-xs text-muted-foreground">
+                              {p.sublabel}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {patientSearch.length >= 2 &&
+                    !loadingPatients &&
+                    patientResults.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        No se encontraron pacientes.
+                      </p>
+                    )}
+                </>
+              )}
+            </div>
+
             {/* Datos básicos */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5 sm:col-span-2">
@@ -468,10 +756,57 @@ export function NutritionPlanFormDialog({
                       </TabsTrigger>
                     ))}
                   </TabsList>
-                  {dayTabs.map((d) => (
-                    <TabsContent key={d} value={String(d)} className="mt-2">
-                      <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
-                        {MEAL_TYPES.map((meal) => {
+                  {dayTabs.map((d) => {
+                    const glasses = glassesForDailyWater(
+                      dailyWaterByDay[d] ?? "2000",
+                    );
+                    return (
+                      <TabsContent key={d} value={String(d)} className="mt-2">
+                        <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
+                          {/* Meta de agua del DÍA: se edita una vez por día, no por
+                              comida (el input "Agua (ml)" de cada comida es otro
+                              concepto: agua de esa comida). */}
+                          <div className="flex flex-col gap-2 rounded-md bg-muted/50 p-3">
+                            <span className="text-xs font-semibold uppercase text-muted-foreground">
+                              Agua del día
+                            </span>
+                            <div className="flex flex-wrap items-end gap-3">
+                              <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={`daily-water-${d}`}>
+                                  Meta de agua (ml)
+                                </Label>
+                                <Input
+                                  id={`daily-water-${d}`}
+                                  type="number"
+                                  min={0}
+                                  step={50}
+                                  value={dailyWaterByDay[d] ?? "2000"}
+                                  onChange={(e) =>
+                                    setDailyWaterByDay((prev) => ({
+                                      ...prev,
+                                      [d]: e.target.value,
+                                    }))
+                                  }
+                                  className="h-8 w-28 text-sm"
+                                />
+                              </div>
+                              <div
+                                className="flex items-center gap-1 pb-1"
+                                aria-hidden="true"
+                              >
+                                {Array.from({ length: glasses }, (_, i) => (
+                                  <GlassWater
+                                    key={i}
+                                    className="size-4 text-sky-500"
+                                  />
+                                ))}
+                              </div>
+                              <span className="pb-1 text-xs text-muted-foreground">
+                                ≈ {glasses} vasos de 300 ml
+                              </span>
+                            </div>
+                          </div>
+                          {MEAL_TYPES.map((meal) => {
                           const key = `${d}-${meal}`;
                           const data = days[key] ?? {
                             description: "",
@@ -598,7 +933,8 @@ export function NutritionPlanFormDialog({
                         })}
                       </div>
                     </TabsContent>
-                  ))}
+                  );
+                })}
                 </Tabs>
               </div>
             )}
