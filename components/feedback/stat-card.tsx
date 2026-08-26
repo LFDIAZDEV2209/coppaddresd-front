@@ -3,7 +3,13 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type CardVariant =
-  "default" | "primary" | "success" | "warning" | "destructive" | "info";
+  | "default"
+  | "primary"
+  | "success"
+  | "warning"
+  | "destructive"
+  | "info"
+  | "navy";
 
 interface StatCardProps {
   label: string;
@@ -47,6 +53,11 @@ const variantConfig: Record<
     iconBg: "bg-info",
     iconColor: "text-white",
     trendColor: "text-info",
+  },
+  navy: {
+    iconBg: "bg-[var(--sidebar)]",
+    iconColor: "text-white",
+    trendColor: "text-[var(--sidebar)]",
   },
 };
 

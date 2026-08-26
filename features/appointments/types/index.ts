@@ -6,11 +6,7 @@
 // --- Enums del dominio (serializados por nombre desde el microservicio) ---
 
 export type AppointmentRequestStatus =
-  | "Pending"
-  | "Approved"
-  | "Rejected"
-  | "Cancelled"
-  | "Converted";
+  "Pending" | "Approved" | "Rejected" | "Cancelled" | "Converted";
 
 export type AppointmentStatus =
   | "Requested"
@@ -21,23 +17,14 @@ export type AppointmentStatus =
   | "NoShow";
 
 export type CancelledBy = "Patient" | "Professional" | "Admin" | "System";
-export type RescheduleRequestedBy = "Patient" | "Professional" | "Admin" | "System";
+export type RescheduleRequestedBy =
+  "Patient" | "Professional" | "Admin" | "System";
 
 export type VirtualRoomStatus =
-  | "Created"
-  | "Waiting"
-  | "Active"
-  | "Ended"
-  | "Expired"
-  | "Failed";
+  "Created" | "Waiting" | "Active" | "Ended" | "Expired" | "Failed";
 
 export type TelemedicineSessionStatus =
-  | "Created"
-  | "Waiting"
-  | "Active"
-  | "Ended"
-  | "Expired"
-  | "Failed";
+  "Created" | "Waiting" | "Active" | "Ended" | "Expired" | "Failed";
 
 export type EncounterStatus = "Draft" | "Completed" | "Cancelled";
 
@@ -73,6 +60,8 @@ export interface AppointmentRequestDto {
   reason: string | null;
   status: AppointmentRequestStatus;
   createdAt: string;
+  /** Motivo del rechazo (persistido al rechazar; null salvo Rejected). */
+  rejectionReason?: string | null;
 }
 
 export interface AppointmentDto {

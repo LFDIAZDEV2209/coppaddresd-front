@@ -6,24 +6,39 @@ interface PageHeaderProps {
   description: string;
   icon: LucideIcon;
   actions?: React.ReactNode;
+  /** Tono del gradiente de fondo: navy (default, color principal del sidebar) o primary (azul de acento). */
+  tone?: "navy" | "primary";
   className?: string;
 }
 
+/**
+ * Cabecera de página. El color principal de la plataforma es el navy del
+ * sidebar (`--sidebar`): el tono por defecto lo usa con un degradado LEVE
+ * (viraje sutil, sin azul claro protagonista). `primary` se reserva como
+ * acento en vistas que lo requieran.
+ */
 export function PageHeader({
   title,
   description,
   icon: Icon,
   actions,
+  tone = "navy",
   className,
 }: PageHeaderProps) {
+  const gradient =
+    tone === "primary"
+      ? "from-primary via-primary/85 to-[color-mix(in_srgb,var(--primary)_50%,var(--sidebar))]"
+      : "from-[var(--sidebar)] via-[color-mix(in_srgb,var(--sidebar)_97%,var(--primary))] to-[color-mix(in_srgb,var(--sidebar)_94%,var(--primary))]";
+
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-t-xl rounded-b-none bg-gradient-to-r from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_88%,var(--primary))] px-6 py-4",
+        "flex items-center gap-4 rounded-t-xl rounded-b-none bg-gradient-to-r px-6 py-4 shadow-sm",
+        gradient,
         className,
       )}
     >
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-primary-strong">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--sidebar)] shadow-sm">
         <Icon className="size-5" />
       </div>
 

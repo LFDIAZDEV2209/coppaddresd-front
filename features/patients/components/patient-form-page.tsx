@@ -106,7 +106,8 @@ const ETHNICITY_LABELS: Record<string, string> = {
   BLACK_OR_AFRICAN_AMERICAN: "Negro o afroamericano",
   ASIAN: "Asiático",
   AMERICAN_INDIAN_OR_ALASKA_NATIVE: "Indígena americano o nativo de Alaska",
-  NATIVE_HAWAIIAN_OR_PACIFIC_ISLANDER: "Nativo de Hawái o de las islas del Pacífico",
+  NATIVE_HAWAIIAN_OR_PACIFIC_ISLANDER:
+    "Nativo de Hawái o de las islas del Pacífico",
   MIDDLE_EASTERN_OR_NORTH_AFRICAN: "Medio Oriente o norte de África",
   MULTIRACIAL: "Multirracial",
   OTHER: "Otro",
@@ -336,8 +337,7 @@ function mapServerFieldErrors(
   for (const [key, messages] of Object.entries(serverErrors)) {
     const vital = key.match(/^VitalSigns\[(\d+)\]\.(\w+)$/);
     if (vital) {
-      const field =
-        vital[2].charAt(0).toLowerCase() + vital[2].slice(1);
+      const field = vital[2].charAt(0).toLowerCase() + vital[2].slice(1);
       mapped[`vitals.${field}`] = messages;
       continue;
     }
@@ -361,7 +361,9 @@ function mapServerFieldErrors(
   return mapped;
 }
 
-function emptyVitalRow(measuredAt = new Date().toISOString().slice(0, 10)): VitalRow {
+function emptyVitalRow(
+  measuredAt = new Date().toISOString().slice(0, 10),
+): VitalRow {
   return {
     key: nextRowKey(),
     measuredAt,
@@ -521,7 +523,10 @@ function toInput(form: PatientFormState): PatientInput {
       .map((d) => ({ icd10CodeId: d.icd10CodeId, isPrimary: d.isPrimary })),
     medications: form.medications
       .filter((m) => m.medicationId)
-      .map((m) => ({ medicationId: m.medicationId, frequency: text(m.frequency) })),
+      .map((m) => ({
+        medicationId: m.medicationId,
+        frequency: text(m.frequency),
+      })),
     allergies: form.allergies
       .filter((a) => a.allergenId)
       .map((a) => ({ allergenId: a.allergenId, notes: text(a.notes) })),
@@ -582,7 +587,8 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
   const [notFound, setNotFound] = useState(false);
 
   /** Primer mensaje de error de un campo local (p. ej. "vitals.diastolic"). */
-  const fieldError = (path: string): string | undefined => fieldErrors[path]?.[0];
+  const fieldError = (path: string): string | undefined =>
+    fieldErrors[path]?.[0];
 
   useEffect(() => {
     let cancelled = false;
@@ -742,7 +748,13 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             cityId: form.cityId || null,
           } as PostalCodeSearch)
         : null,
-    [form.postalCode, form.cityName, form.cityId, selectedState, selectedCountry],
+    [
+      form.postalCode,
+      form.cityName,
+      form.cityId,
+      selectedState,
+      selectedCountry,
+    ],
   );
 
   const update = <K extends keyof PatientFormState>(
@@ -874,7 +886,12 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="MRN-… (se genera solo si se deja vacío)"
               />
             </Field>
-            <Field label="Nombre" required icon={User} error={fieldError("firstName")}>
+            <Field
+              label="Nombre"
+              required
+              icon={User}
+              error={fieldError("firstName")}
+            >
               <Input
                 value={form.firstName}
                 onChange={(event) => update("firstName", event.target.value)}
@@ -888,7 +905,12 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="Segundo nombre"
               />
             </Field>
-            <Field label="Apellidos" required icon={User} error={fieldError("lastName")}>
+            <Field
+              label="Apellidos"
+              required
+              icon={User}
+              error={fieldError("lastName")}
+            >
               <Input
                 value={form.lastName}
                 onChange={(event) => update("lastName", event.target.value)}
@@ -897,8 +919,13 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             </Field>
             <Field label="Tipo de documento" icon={IdCard}>
               <CatalogCombobox<CatalogOption>
-                value={documentTypes.find((d) => d.id === form.documentTypeId) ?? null}
-                onSelect={(option) => update("documentTypeId", option?.id ?? "")}
+                value={
+                  documentTypes.find((d) => d.id === form.documentTypeId) ??
+                  null
+                }
+                onSelect={(option) =>
+                  update("documentTypeId", option?.id ?? "")
+                }
                 items={documentTypes}
                 getLabel={documentTypeLabel}
                 placeholder="Seleccionar tipo de documento"
@@ -907,14 +934,24 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 allowClear
               />
             </Field>
-            <Field label="Número de documento" icon={Fingerprint} error={fieldError("documentNumber")}>
+            <Field
+              label="Número de documento"
+              icon={Fingerprint}
+              error={fieldError("documentNumber")}
+            >
               <Input
                 value={form.documentNumber}
-                onChange={(event) => update("documentNumber", event.target.value)}
+                onChange={(event) =>
+                  update("documentNumber", event.target.value)
+                }
                 placeholder="Número de documento"
               />
             </Field>
-            <Field label="Fecha de nacimiento" icon={CalendarDays} error={fieldError("dateOfBirth")}>
+            <Field
+              label="Fecha de nacimiento"
+              icon={CalendarDays}
+              error={fieldError("dateOfBirth")}
+            >
               <Input
                 type="date"
                 value={form.dateOfBirth}
@@ -933,7 +970,9 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             </Field>
             <Field label="Etnia" icon={Globe}>
               <CatalogCombobox<CatalogOption>
-                value={ethnicities.find((e) => e.id === form.ethnicityId) ?? null}
+                value={
+                  ethnicities.find((e) => e.id === form.ethnicityId) ?? null
+                }
                 onSelect={(option) => update("ethnicityId", option?.id ?? "")}
                 items={ethnicities}
                 getLabel={ethnicityLabel}
@@ -945,7 +984,9 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             </Field>
             <Field label="Tipo de sangre" icon={Droplets}>
               <CatalogCombobox<CatalogOption>
-                value={bloodTypes.find((b) => b.id === form.bloodTypeId) ?? null}
+                value={
+                  bloodTypes.find((b) => b.id === form.bloodTypeId) ?? null
+                }
                 onSelect={(option) => update("bloodTypeId", option?.id ?? "")}
                 items={bloodTypes}
                 getLabel={(option) => option.code}
@@ -994,7 +1035,11 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Teléfono" icon={Phone} error={fieldError("phoneNumber")}>
+            <Field
+              label="Teléfono"
+              icon={Phone}
+              error={fieldError("phoneNumber")}
+            >
               <Input
                 type="tel"
                 value={form.phoneNumber}
@@ -1002,7 +1047,11 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="300 000 0000"
               />
             </Field>
-            <Field label="Correo electrónico" icon={Mail} error={fieldError("email")}>
+            <Field
+              label="Correo electrónico"
+              icon={Mail}
+              error={fieldError("email")}
+            >
               <Input
                 type="email"
                 value={form.email}
@@ -1053,7 +1102,9 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 items={states}
                 getLabel={(state) => `${state.code} — ${state.name}`}
                 placeholder={
-                  form.countryId ? "Seleccionar estado" : "Elige primero el país"
+                  form.countryId
+                    ? "Seleccionar estado"
+                    : "Elige primero el país"
                 }
                 searchPlaceholder="Buscar estado…"
                 emptyText="Sin estados para este país."
@@ -1077,14 +1128,20 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     : Promise.resolve([])
                 }
                 getLabel={(city) => city.name}
-                placeholder={form.stateId ? "Buscar ciudad…" : "Elige primero el estado"}
+                placeholder={
+                  form.stateId ? "Buscar ciudad…" : "Elige primero el estado"
+                }
                 searchPlaceholder="Escribe para buscar la ciudad…"
                 emptyText="Sin ciudades que coincidan."
                 disabled={!form.stateId}
                 allowClear
               />
             </Field>
-            <Field label="Código postal (ZIP)" icon={MapPinned} error={fieldError("postalCode")}>
+            <Field
+              label="Código postal (ZIP)"
+              icon={MapPinned}
+              error={fieldError("postalCode")}
+            >
               <CatalogCombobox<PostalCodeSearch>
                 value={zipValue}
                 fetchItems={fetchZipSuggestions}
@@ -1228,7 +1285,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
           {/* ── Diagnósticos ── */}
           <FormSection legend="Diagnósticos" icon={Stethoscope} layout="stack">
             {form.diagnoses.length === 0 && (
-              <EmptyHint icon={Stethoscope} text="Sin diagnósticos registrados." />
+              <EmptyHint
+                icon={Stethoscope}
+                text="Sin diagnósticos registrados."
+              />
             )}
             {form.diagnoses.map((diagnosis, index) => (
               <div
@@ -1450,7 +1510,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
           {/* ── Alergias ── */}
           <FormSection legend="Alergias" icon={ShieldAlert} layout="stack">
             {form.allergies.length === 0 && (
-              <EmptyHint icon={AlertTriangle} text="Sin alergias registradas." />
+              <EmptyHint
+                icon={AlertTriangle}
+                text="Sin alergias registradas."
+              />
             )}
             {form.allergies.map((allergy, index) => (
               <div
@@ -1535,7 +1598,12 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               onClick={() =>
                 update("allergies", [
                   ...form.allergies,
-                  { key: nextRowKey(), allergenId: "", allergen: "", notes: "" },
+                  {
+                    key: nextRowKey(),
+                    allergenId: "",
+                    allergen: "",
+                    notes: "",
+                  },
                 ])
               }
             >
@@ -1585,7 +1653,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           }
                         />
                       </Field>
-                      <Field label="P. sistólica" error={fieldError("vitals.systolic")}>
+                      <Field
+                        label="P. sistólica"
+                        error={fieldError("vitals.systolic")}
+                      >
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1603,7 +1674,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="mmHg"
                         />
                       </Field>
-                      <Field label="P. diastólica" error={fieldError("vitals.diastolic")}>
+                      <Field
+                        label="P. diastólica"
+                        error={fieldError("vitals.diastolic")}
+                      >
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1621,7 +1695,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="mmHg"
                         />
                       </Field>
-                      <Field label="Frecuencia cardíaca" error={fieldError("vitals.heartRate")}>
+                      <Field
+                        label="Frecuencia cardíaca"
+                        error={fieldError("vitals.heartRate")}
+                      >
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1639,7 +1716,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="lpm"
                         />
                       </Field>
-                      <Field label="Temperatura (°C)" error={fieldError("vitals.temperatureC")}>
+                      <Field
+                        label="Temperatura (°C)"
+                        error={fieldError("vitals.temperatureC")}
+                      >
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -1658,7 +1738,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="°C"
                         />
                       </Field>
-                      <Field label="Saturación O₂ (%)" error={fieldError("vitals.o2Saturation")}>
+                      <Field
+                        label="Saturación O₂ (%)"
+                        error={fieldError("vitals.o2Saturation")}
+                      >
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1676,7 +1759,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="%"
                         />
                       </Field>
-                      <Field label="Altura (cm)" error={fieldError("vitals.heightCm")}>
+                      <Field
+                        label="Altura (cm)"
+                        error={fieldError("vitals.heightCm")}
+                      >
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -1695,7 +1781,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="cm"
                         />
                       </Field>
-                      <Field label="Peso (kg)" error={fieldError("vitals.weightKg")}>
+                      <Field
+                        label="Peso (kg)"
+                        error={fieldError("vitals.weightKg")}
+                      >
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -1749,10 +1838,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      update("vitals", [
-                        ...form.vitals,
-                        emptyVitalRow(),
-                      ])
+                      update("vitals", [...form.vitals, emptyVitalRow()])
                     }
                   >
                     <Plus data-icon="inline-start" />
@@ -1764,7 +1850,11 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
 
           {/* ── Observaciones y estado ── */}
           <FormSection legend="Observaciones y estado" icon={ClipboardPen}>
-            <Field label="Observaciones" icon={NotebookPen} className="sm:col-span-2">
+            <Field
+              label="Observaciones"
+              icon={NotebookPen}
+              className="sm:col-span-2"
+            >
               <textarea
                 className="min-h-28 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 value={form.notes}
@@ -1775,9 +1865,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             <Field label="Estado" icon={CircleDot}>
               <Select
                 value={form.status}
-                onChange={(value) =>
-                  update("status", value as PatientStatus)
-                }
+                onChange={(value) => update("status", value as PatientStatus)}
               >
                 <option>Activo</option>
                 <option>Pendiente</option>
@@ -1870,11 +1958,13 @@ function Field({
   required?: boolean;
   className?: string;
   icon?: LucideIcon;
-  /** Mensaje de error de validaci�n (backend o preventivo) del campo. */
+  /** Mensaje de error de validación (backend o preventivo) del campo. */
   error?: string;
   children: React.ReactNode;
 }) {
-  const errorId = error ? `field-error-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}` : undefined;
+  const errorId = error
+    ? `field-error-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
+    : undefined;
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <Label>
@@ -1888,7 +1978,11 @@ function Field({
       </Label>
       {children}
       {error && (
-        <p id={errorId} role="alert" className="text-xs font-medium text-destructive">
+        <p
+          id={errorId}
+          role="alert"
+          className="text-xs font-medium text-destructive"
+        >
           {error}
         </p>
       )}
@@ -1940,13 +2034,7 @@ function RemoveButton({
   );
 }
 
-function EmptyHint({
-  icon: Icon,
-  text,
-}: {
-  icon: LucideIcon;
-  text: string;
-}) {
+function EmptyHint({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-3.5 text-sm text-muted-foreground">
       <Icon className="size-4 shrink-0 text-primary/50" aria-hidden="true" />

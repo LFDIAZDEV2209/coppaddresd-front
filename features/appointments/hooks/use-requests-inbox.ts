@@ -9,17 +9,19 @@ import {
 } from "../services/appointments-service";
 
 export interface RequestCounts {
+  pending: number;
+  approved: number;
   converted: number;
   rejected: number;
   cancelled: number;
 }
 
 /**
- * Bandeja de solicitudes segÃºn el alcance de la vista: admin â†’ listado global;
- * profesional â†’ solo las solicitudes que los pacientes enviaron a su agenda
+ * Bandeja de solicitudes según el alcance de la vista: admin → listado global;
+ * profesional → solo las solicitudes que los pacientes enviaron a su agenda
  * (alcance por identidad del JWT en /me/requests, nunca por un id del cliente).
  * Devuelve la lista paginada con filtro por estado y los conteos por estado
- * (consultas ligeras pageSize=1) para las stats cards.
+ * (consultas ligeras pageSize=1) para los chips de filtro y las stats cards.
  */
 export function useRequestsInbox(options: {
   scope: "admin" | "professional";
@@ -47,6 +49,8 @@ export function useRequestsInbox(options: {
   ]);
 
   const [counts, setCounts] = useState<RequestCounts>({
+    pending: 0,
+    approved: 0,
     converted: 0,
     rejected: 0,
     cancelled: 0,
@@ -60,20 +64,31 @@ export function useRequestsInbox(options: {
         ? fetchMyAssignedRequests
         : fetchAdminRequests;
       try {
-        const [converted, rejected, cancelled] = await Promise.all([
-          fetcher({ status: "Converted", page: 1, pageSize: 1 }),
-          fetcher({ status: "Rejected", page: 1, pageSize: 1 }),
-          fetcher({ status: "Cancelled", page: 1, pageSize: 1 }),
-        ]);
+        const [pending, approved, converted, rejected, cancelled] =
+          await Promise.all([
+            fetcher({ status: "Pending", page: 1, pageSize: 1 }),
+            fetcher({ status: "Approved", page: 1, pageSize: 1 }),
+            fetcher({ status: "Converted", page: 1, pageSize: 1 }),
+            fetcher({ status: "Rejected", page: 1, pageSize: 1 }),
+            fetcher({ status: "Cancelled", page: 1, pageSize: 1 }),
+          ]);
         if (!active) return;
         setCounts({
+          pending: pending.total,
+          approved: approved.total,
           converted: converted.total,
           rejected: rejected.total,
           cancelled: cancelled.total,
         });
       } catch {
         if (!active) return;
-        setCounts({ converted: 0, rejected: 0, cancelled: 0 });
+        setCounts({
+          pending: 0,
+          approved: 0,
+          converted: 0,
+          rejected: 0,
+          cancelled: 0,
+        });
       }
     })();
     return () => {

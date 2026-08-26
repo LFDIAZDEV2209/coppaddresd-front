@@ -103,6 +103,42 @@ export async function confirmRequest(
   );
 }
 
+/**
+ * Primer paso del ciclo de revisión de 2: aprueba la solicitud (Pending →
+ * Approved) sin crear cita. Autorización dual en el backend: admin con
+ * Appointments.AdminView o el profesional asignado (identidad del JWT).
+ */
+export async function approveRequest(
+  id: string,
+): Promise<AppointmentRequestDto> {
+  return apiFetch<AppointmentRequestDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/requests/${id}/approve`,
+    { method: "POST" },
+  );
+}
+
+export interface RejectRequestInput {
+  reason: string;
+}
+
+/**
+ * Cierra la solicitud con motivo obligatorio (Pending|Approved → Rejected).
+ * Autorización dual en el backend: admin con Appointments.AdminView o el
+ * profesional asignado (identidad del JWT).
+ */
+export async function rejectRequest(
+  id: string,
+  input: RejectRequestInput,
+): Promise<AppointmentRequestDto> {
+  return apiFetch<AppointmentRequestDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/requests/${id}/reject`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
 // --- Citas (agenda del profesional) ---
 
 export async function fetchAgenda(
