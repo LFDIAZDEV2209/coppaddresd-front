@@ -34,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -247,7 +246,6 @@ export function Sidebar({
               >
                 <ChevronDown className="size-4 -rotate-90" />
               </button>
-              <LanguageToggle className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 p-2 text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200" />
               <Tooltip>
                 <TooltipTrigger
                   className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 p-2 text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
@@ -275,7 +273,6 @@ export function Sidebar({
                   {user?.roles[0] ?? "Sin rol"}
                 </span>
               </div>
-              <LanguageToggle className="flex items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white transition-all duration-200" />
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex size-7 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white hover:scale-110 transition-all duration-200">
                   <ChevronDown className="size-3.5" />
