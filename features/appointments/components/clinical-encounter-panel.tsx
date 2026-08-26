@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ClipboardPenLine, Save, CheckCircle2 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const EMPTY_CLINICAL_DATA: ClinicalDataDto = {
  * consulta. Reutilizado en el detalle de cita y en la sala virtual.
  */
 export function ClinicalEncounterPanel({ appointmentId }: { appointmentId: string }) {
+  const t = useT();
   const [encounter, setEncounter] = useState<ClinicalDataDto>(EMPTY_CLINICAL_DATA);
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export function ClinicalEncounterPanel({ appointmentId }: { appointmentId: strin
         setStatus("Draft");
       }
     } catch {
-      setError("No se pudo guardar el encuentro clínico.");
+      setError(t('No se pudo guardar el encuentro clínico.'));
     } finally {
       setBusy(false);
     }
@@ -94,7 +96,7 @@ export function ClinicalEncounterPanel({ appointmentId }: { appointmentId: strin
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-[15px] font-semibold text-foreground">
           <ClipboardPenLine className="size-4 text-primary" />
-          Encuentro clínico
+          {t('Encuentro clínico')}
         </h2>
         <StatusBadge
           status={encounterStatusLabel[(status as "Draft" | "Completed" | "Cancelled") ?? "Draft"] ?? "Borrador"}
@@ -109,22 +111,22 @@ export function ClinicalEncounterPanel({ appointmentId }: { appointmentId: strin
       )}
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Field label="Motivo de consulta" value={encounter.motivoConsulta ?? ""} onChange={(v) => update("motivoConsulta", v)} disabled={isCompleted} />
-        <Field label="Evaluación" value={encounter.evaluacion ?? ""} onChange={(v) => update("evaluacion", v)} disabled={isCompleted} />
-        <Field label="Diagnóstico" value={encounter.diagnostico ?? ""} onChange={(v) => update("diagnostico", v)} disabled={isCompleted} />
-        <Field label="Plan" value={encounter.plan ?? ""} onChange={(v) => update("plan", v)} disabled={isCompleted} />
-        <Field label="Indicaciones" value={encounter.indicaciones ?? ""} onChange={(v) => update("indicaciones", v)} disabled={isCompleted} />
-        <Field label="Observaciones" value={encounter.observaciones ?? ""} onChange={(v) => update("observaciones", v)} disabled={isCompleted} />
-        <Field label="Seguimiento" value={encounter.seguimiento ?? ""} onChange={(v) => update("seguimiento", v)} disabled={isCompleted} />
+        <Field label={t('Motivo de consulta')} value={encounter.motivoConsulta ?? ""} onChange={(v) => update("motivoConsulta", v)} disabled={isCompleted} />
+        <Field label={t('Evaluación')} value={encounter.evaluacion ?? ""} onChange={(v) => update("evaluacion", v)} disabled={isCompleted} />
+        <Field label={t('Diagnóstico')} value={encounter.diagnostico ?? ""} onChange={(v) => update("diagnostico", v)} disabled={isCompleted} />
+        <Field label={t('Plan')} value={encounter.plan ?? ""} onChange={(v) => update("plan", v)} disabled={isCompleted} />
+        <Field label={t('Indicaciones')} value={encounter.indicaciones ?? ""} onChange={(v) => update("indicaciones", v)} disabled={isCompleted} />
+        <Field label={t('Observaciones')} value={encounter.observaciones ?? ""} onChange={(v) => update("observaciones", v)} disabled={isCompleted} />
+        <Field label={t('Seguimiento')} value={encounter.seguimiento ?? ""} onChange={(v) => update("seguimiento", v)} disabled={isCompleted} />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="encounter-notes">Notas</Label>
+        <Label htmlFor="encounter-notes">{t('Notas')}</Label>
         <textarea
           id="encounter-notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Notas adicionales de la consulta"
+          placeholder={t('Notas adicionales de la consulta')}
           disabled={isCompleted}
           className="min-h-20 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
         />
@@ -134,11 +136,11 @@ export function ClinicalEncounterPanel({ appointmentId }: { appointmentId: strin
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => persist(false)} disabled={busy} className="gap-1.5">
             <Save className="size-4" />
-            Guardar borrador
+            {t('Guardar borrador')}
           </Button>
           <Button onClick={() => persist(true)} disabled={busy} className="gap-1.5">
             <CheckCircle2 className="size-4" />
-            Completar encuentro
+            {t('Completar encuentro')}
           </Button>
         </div>
       )}

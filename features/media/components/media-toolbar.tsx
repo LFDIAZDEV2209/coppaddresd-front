@@ -4,6 +4,7 @@ import { LayoutGrid, Rows3, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { MediaFilters } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 interface MediaToolbarProps {
   filters: MediaFilters;
@@ -18,6 +19,7 @@ export function MediaToolbar({
   viewMode,
   onViewModeChange,
 }: MediaToolbarProps) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex flex-1 flex-col gap-3 md:flex-row">
@@ -29,8 +31,8 @@ export function MediaToolbar({
             onChange={(event) =>
               onFilterChange({ search: event.target.value })
             }
-            placeholder="Buscar medio por título o descripción..."
-            aria-label="Buscar medios"
+            placeholder={t('Buscar medio por título o descripción...')}
+            aria-label={t('Buscar medios')}
           />
         </div>
         <div className="grid grid-cols-2 gap-3 md:flex md:w-fit">
@@ -42,9 +44,9 @@ export function MediaToolbar({
                 mediaType: event.target.value as MediaFilters["mediaType"],
               })
             }
-            aria-label="Filtrar por tipo de medio"
+            aria-label={t('Filtrar por tipo de medio')}
           >
-            <option value="all">Todos los tipos</option>
+            <option value="all">{t('Todos los tipos')}</option>
             <option value="Podcast">Podcast</option>
             <option value="Video">Video</option>
             <option value="Audio">Audio</option>
@@ -57,12 +59,12 @@ export function MediaToolbar({
                 status: event.target.value as MediaFilters["status"],
               })
             }
-            aria-label="Filtrar por estado"
+            aria-label={t('Filtrar por estado')}
           >
-            <option value="all">Todos los estados</option>
-            <option value="Published">Publicado</option>
-            <option value="Draft">Borrador</option>
-            <option value="Archived">Archivado</option>
+            <option value="all">{t('Todos los estados')}</option>
+            <option value="Published">{t('Publicado')}</option>
+            <option value="Draft">{t('Borrador')}</option>
+            <option value="Archived">{t('Archivado')}</option>
           </select>
         </div>
       </div>
@@ -73,15 +75,15 @@ export function MediaToolbar({
         onValueChange={(values) =>
           onViewModeChange((values[0] ?? "grid") as "grid" | "table")
         }
-        aria-label="Cambiar vista"
+        aria-label={t('Cambiar vista')}
       >
-        <ToggleGroupItem value="grid" aria-label="Vista de tarjetas">
+        <ToggleGroupItem value="grid" aria-label={t('Vista de tarjetas')}>
           <LayoutGrid data-icon="inline-start" />
-          Tarjetas
+          {t('Tarjetas')}
         </ToggleGroupItem>
-        <ToggleGroupItem value="table" aria-label="Vista de tabla">
+        <ToggleGroupItem value="table" aria-label={t('Vista de tabla')}>
           <Rows3 data-icon="inline-start" />
-          Tabla
+          {t('Tabla')}
         </ToggleGroupItem>
       </ToggleGroup>
     </div>

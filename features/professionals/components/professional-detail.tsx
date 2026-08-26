@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Stethoscope,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function ProfessionalDetail({ id }: { id: string }) {
+  const t = useT();
   const router = useRouter();
 
   const [employee, setEmployee] = useState<EmployeeDetail | null>(null);
@@ -61,7 +63,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         }
         setDirty(false);
       } catch {
-        setFeedback({ kind: "error", message: "No se pudo cargar el profesional." });
+        setFeedback({ kind: "error", message: t("No se pudo cargar el profesional.") });
       } finally {
         if (showSpinner) setLoading(false);
       }
@@ -91,7 +93,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         }
       } catch {
         if (!cancelled) {
-          setFeedback({ kind: "error", message: "No se pudo cargar el profesional." });
+          setFeedback({ kind: "error", message: t("No se pudo cargar el profesional.") });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -113,14 +115,14 @@ export function ProfessionalDetail({ id }: { id: string }) {
     try {
       const result = await inviteEmployee(id);
       const message = result.invitationLink
-        ? `Invitación enviada. Enlace (dev): ${result.invitationLink}`
-        : `Invitación enviada a ${employee?.email}. Recibirá el enlace por correo.`;
+        ? t("Invitación enviada. Enlace (dev): {link}", { link: result.invitationLink })
+        : t("Invitación enviada a {email}. Recibirá el enlace por correo.", { email: employee?.email ?? "" });
       setFeedback({ kind: "ok", message });
       await load(true);
     } catch (err) {
       setFeedback({
         kind: "error",
-        message: err instanceof ApiError ? err.message : "No se pudo enviar la invitación.",
+        message: err instanceof ApiError ? err.message : t("No se pudo enviar la invitación."),
       });
     } finally {
       setBusy(false);
@@ -144,12 +146,12 @@ export function ProfessionalDetail({ id }: { id: string }) {
         roles: rolesToApply,
         permissions: scopes?.permissions ?? [],
       });
-      setFeedback({ kind: "ok", message: "Permisos por clínica actualizados." });
+      setFeedback({ kind: "ok", message: t("Permisos por clínica actualizados.") });
       await load();
     } catch (err) {
       setFeedback({
         kind: "error",
-        message: err instanceof ApiError ? err.message : "No se pudieron guardar los permisos.",
+        message: err instanceof ApiError ? err.message : t("No se pudieron guardar los permisos."),
       });
     } finally {
       setBusy(false);
@@ -160,7 +162,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-5xl items-center justify-center text-muted-foreground">
         <Loader2 className="mr-2 size-5 animate-spin" />
-        Cargando...
+        {t("Cargando...")}
       </div>
     );
   }
@@ -169,12 +171,12 @@ export function ProfessionalDetail({ id }: { id: string }) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-6">
         <PageHeader
-          title="Profesional"
-          description="No se encontró el profesional."
+          title={t("Profesional")}
+          description={t("No se encontró el profesional.")}
           icon={Stethoscope}
         />
         <Button variant="outline" className="mt-4" onClick={() => router.push("/professionals")}>
-          Volver al directorio
+          {t("Volver al directorio")}
         </Button>
       </div>
     );
@@ -185,7 +187,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
       <PageHeader
         title={`${employee.firstName} ${employee.middleName ?? ""} ${employee.lastName}`}
         description={`${employee.email} · ${
-          employee.isProfessional ? (employee.professionalTypeName ?? "Profesional") : "Empleado"
+          employee.isProfessional ? (employee.professionalTypeName ?? t("Profesional")) : t("Empleado")
         }`}
         icon={Stethoscope}
         actions={
@@ -198,7 +200,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
                   : "bg-muted text-muted-foreground"
             }`}
           >
-            {STATUS_LABELS[employee.status] ?? employee.status}
+            {t(STATUS_LABELS[employee.status] ?? employee.status)}
           </span>
         }
       />
@@ -221,25 +223,23 @@ export function ProfessionalDetail({ id }: { id: string }) {
           <section className="rounded-2xl border border-border bg-card">
             <div className="flex items-center gap-2 border-b border-border px-5 py-4">
               <ShieldCheck className="size-4 text-primary" />
-              <h2 className="text-[14px] font-semibold">Permisos por clínica</h2>
+              <h2 className="text-[14px] font-semibold">{t("Permisos por clínica")}</h2>
             </div>
 
             {!employee.userId ? (
               <div className="flex flex-col items-start gap-3 p-5">
                 <p className="text-[13px] text-muted-foreground">
-                  Este profesional aún no tiene usuario. Invítalo para poder asignar sus
-                  permisos por clínica.
+                  {t("Este profesional aún no tiene usuario. Invítalo para poder asignar sus permisos por clínica.")}
                 </p>
                 <Button onClick={onInvite} disabled={busy}>
                   {busy ? <Loader2 className="size-4 animate-spin" /> : <MailPlus className="size-4" />}
-                  Invitar al profesional
+                  {t("Invitar al profesional")}
                 </Button>
               </div>
             ) : canManageScopes ? (
               <div className="p-5">
                 <p className="mb-4 text-[12.5px] text-muted-foreground">
-                  El rol se asigna por clínica: el profesional puede tener permisos distintos
-                  en cada una. Los cambios aplican de inmediato.
+                  {t("El rol se asigna por clínica: el profesional puede tener permisos distintos en cada una. Los cambios aplican de inmediato.")}
                 </p>
                 <div className="space-y-3">
                   {employee.clinics.map((clinic) => (
@@ -253,12 +253,12 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           {clinic.clinicName}
                           {clinic.isPrimary && (
                             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                              Principal
+                              {t("Principal")}
                             </span>
                           )}
                         </p>
                         <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-                          {currentRoleName(clinic.clinicId, roleByClinic, scopes, roles)}
+                          {t(currentRoleName(clinic.clinicId, roleByClinic, scopes, roles))}
                         </p>
                       </div>
                       <select
@@ -269,7 +269,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
                         }}
                         className="h-9 w-full rounded-lg border border-border bg-background px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-56"
                       >
-                        <option value="">Sin rol</option>
+                        <option value="">{t("Sin rol")}</option>
                         {roles.map((r) => (
                           <option key={r.id} value={r.id}>
                             {r.name}
@@ -283,14 +283,14 @@ export function ProfessionalDetail({ id }: { id: string }) {
                 <div className="mt-4 flex justify-end">
                   <Button onClick={onSaveScopes} disabled={busy || !dirty}>
                     {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
-                    Guardar permisos
+                    {t("Guardar permisos")}
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="p-5">
                 <p className="text-[13px] text-muted-foreground">
-                  No hay clínicas asignadas. Agrega clínicas desde la edición del profesional.
+                  {t("No hay clínicas asignadas. Agrega clínicas desde la edición del profesional.")}
                 </p>
               </div>
             )}
@@ -301,20 +301,20 @@ export function ProfessionalDetail({ id }: { id: string }) {
         <div className="space-y-5">
           <section className="rounded-2xl border border-border bg-card">
             <div className="border-b border-border px-5 py-4">
-              <h2 className="text-[14px] font-semibold">Invitación</h2>
+              <h2 className="text-[14px] font-semibold">{t("Invitación")}</h2>
             </div>
             <div className="space-y-3 p-5">
-              <InfoRow label="Organización" value={employee.organizationName} />
-              <InfoRow label="Estado" value={STATUS_LABELS[employee.status] ?? employee.status} />
+              <InfoRow label={t("Organización")} value={employee.organizationName} />
+              <InfoRow label={t("Estado")} value={t(STATUS_LABELS[employee.status] ?? employee.status)} />
               {employee.userId ? (
                 <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 px-3 py-2">
                   <span className="text-[12.5px] font-medium text-emerald-700">
-                    Usuario vinculado
+                    {t("Usuario vinculado")}
                   </span>
                   <button
                     onClick={() => navigator.clipboard.writeText(employee.userId!)}
                     className="text-[12px] text-muted-foreground hover:text-foreground"
-                    aria-label="Copiar ID de usuario"
+                    aria-label={t("Copiar ID de usuario")}
                   >
                     <Copy className="size-3.5" />
                   </button>
@@ -322,7 +322,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
               ) : (
                 <Button className="w-full" onClick={onInvite} disabled={busy}>
                   {busy ? <Loader2 className="size-4 animate-spin" /> : <MailPlus className="size-4" />}
-                  Invitar
+                  {t("Invitar")}
                 </Button>
               )}
             </div>
@@ -331,12 +331,12 @@ export function ProfessionalDetail({ id }: { id: string }) {
           {employee.professionalTypeName && (
             <section className="rounded-2xl border border-border bg-card">
               <div className="border-b border-border px-5 py-4">
-                <h2 className="text-[14px] font-semibold">Profesión</h2>
+                <h2 className="text-[14px] font-semibold">{t("Profesión")}</h2>
               </div>
               <div className="space-y-3 p-5">
-                <InfoRow label="Tipo" value={employee.professionalTypeName} />
+                <InfoRow label={t("Tipo")} value={employee.professionalTypeName} />
                 <p className="text-[12px] text-muted-foreground">
-                  El profesional puede completar su perfil y credenciales desde su propio acceso.
+                  {t("El profesional puede completar su perfil y credenciales desde su propio acceso.")}
                 </p>
               </div>
             </section>

@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/providers/i18n-provider";
 
 export interface AgentIconOption {
   key: string;
@@ -62,6 +63,7 @@ export function AgentIconPicker({
   onChange: (key: string) => void;
   disabled?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
       {AGENT_ICONS.map((option) => {
@@ -72,9 +74,9 @@ export function AgentIconPicker({
             type="button"
             disabled={disabled}
             onClick={() => onChange(option.key)}
-            aria-label={option.label}
+            aria-label={t(option.label)}
             aria-pressed={selected}
-            title={option.label}
+            title={t(option.label)}
             className={cn(
               "relative flex flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 transition-all",
               selected
@@ -90,7 +92,7 @@ export function AgentIconPicker({
               <option.icon className="size-4.5" style={{ color: option.color }} />
             </span>
             <span className="w-full truncate text-center text-[10px] font-medium text-muted-foreground">
-              {option.label}
+              {t(option.label)}
             </span>
             {selected && (
               <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground">

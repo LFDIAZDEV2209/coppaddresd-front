@@ -49,8 +49,10 @@ import {
 } from "@/components/ui/table";
 import { usePatients } from "../hooks/use-patients";
 import type { PatientListItem } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 export function PatientsPage() {
+  const t = useT();
   const router = useRouter();
   const {
     result,
@@ -75,34 +77,34 @@ export function PatientsPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Pacientes"
-        description="Gestiona la información y el seguimiento de tus pacientes"
+        title={t('Pacientes')}
+        description={t('Gestiona la información y el seguimiento de tus pacientes')}
         icon={UserRound}
         actions={
           <Button size="sm" onClick={openCreate}>
             <Plus data-icon="inline-start" />
-            Nuevo paciente
+            {t('Nuevo paciente')}
           </Button>
         }
       />
       <div className="grid gap-3 sm:grid-cols-3">
         <Summary
-          label="Pacientes activos"
+          label={t('Pacientes activos')}
           value={result ? String(result.total) : "—"}
           tone="primary"
         />
-        <Summary label="Citas esta semana" value="24" tone="success" />
-        <Summary label="Pendientes de completar" value="3" tone="warning" />
+        <Summary label={t('Citas esta semana')} value="24" tone="success" />
+        <Summary label={t('Pendientes de completar')} value="3" tone="warning" />
       </div>
       <section
         className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
-        aria-label="Filtros de pacientes"
+        aria-label={t('Filtros de pacientes')}
       >
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-sm font-semibold">Directorio de pacientes</h2>
+            <h2 className="text-sm font-semibold">{t('Directorio de pacientes')}</h2>
             <p className="text-xs text-muted-foreground">
-              Busca por nombre, documento o correo electrónico.
+              {t('Busca por nombre, documento o correo electrónico.')}
             </p>
           </div>
           <Button
@@ -115,7 +117,7 @@ export function PatientsPage() {
               data-icon="inline-start"
               className={loading ? "animate-spin" : undefined}
             />
-            Actualizar
+            {t('Actualizar')}
           </Button>
         </div>
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]">
@@ -125,8 +127,8 @@ export function PatientsPage() {
               className="pl-9"
               value={filters.search}
               onChange={(event) => setFilters({ search: event.target.value })}
-              placeholder="Buscar paciente..."
-              aria-label="Buscar pacientes"
+              placeholder={t('Buscar paciente...')}
+              aria-label={t('Buscar pacientes')}
             />
           </div>
           <select
@@ -137,20 +139,20 @@ export function PatientsPage() {
                 status: event.target.value as typeof filters.status,
               })
             }
-            aria-label="Filtrar por estado"
+            aria-label={t('Filtrar por estado')}
           >
-            <option value="all">Todos los estados</option>
-            <option>Activo</option>
-            <option>Pendiente</option>
-            <option>Inactivo</option>
+            <option value="all">{t('Todos los estados')}</option>
+            <option>{t('Activo')}</option>
+            <option>{t('Pendiente')}</option>
+            <option>{t('Inactivo')}</option>
           </select>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={filters.insurerId}
             onChange={(event) => setFilters({ insurerId: event.target.value })}
-            aria-label="Filtrar por aseguradora"
+            aria-label={t('Filtrar por aseguradora')}
           >
-            <option value="all">Todas las aseguradoras</option>
+            <option value="all">{t('Todas las aseguradoras')}</option>
             {insurers.map((insurer) => (
               <option key={insurer.id} value={insurer.id}>
                 {insurer.name}
@@ -189,14 +191,14 @@ export function PatientsPage() {
             <Trash2 />
           </AlertDialogMedia>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar paciente?</AlertDialogTitle>
+            <AlertDialogTitle>{t('¿Eliminar paciente?')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminará el registro de {deleting?.firstName}{" "}
-              {deleting?.lastName}. Esta acción no se puede deshacer.
+              {t('Se eliminará el registro de')} {deleting?.firstName}{" "}
+              {deleting?.lastName}. {t('Esta acción no se puede deshacer.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('Cancelar')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
               disabled={actionLoading}
@@ -205,7 +207,7 @@ export function PatientsPage() {
                 setDeleting(undefined);
               }}
             >
-              Eliminar
+              {t('Eliminar')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -225,25 +227,26 @@ function PatientTable({
   onEdit: (patient: PatientListItem) => void;
   onDelete: (patient: PatientListItem) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader
-        title={`${patients.length} pacientes visibles`}
-        description="Directorio clínico"
+        title={`${patients.length} ${t('pacientes visibles')}`}
+        description={t('Directorio clínico')}
         icon={UserRound}
         variant="primary"
       />
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Paciente</TableHead>
-            <TableHead>Documento</TableHead>
-            <TableHead className="hidden lg:table-cell">Contacto</TableHead>
-            <TableHead className="hidden md:table-cell">Aseguradora</TableHead>
-            <TableHead className="hidden xl:table-cell">Clínica</TableHead>
-            <TableHead>Estado</TableHead>
+            <TableHead>{t('Paciente')}</TableHead>
+            <TableHead>{t('Documento')}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t('Contacto')}</TableHead>
+            <TableHead className="hidden md:table-cell">{t('Aseguradora')}</TableHead>
+            <TableHead className="hidden xl:table-cell">{t('Clínica')}</TableHead>
+            <TableHead>{t('Estado')}</TableHead>
             <TableHead className="w-10">
-              <span className="sr-only">Acciones</span>
+              <span className="sr-only">{t('Acciones')}</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -264,8 +267,8 @@ function PatientTable({
                       {patient.firstName} {patient.lastName}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {patient.gender ?? "Sin género"} ·{" "}
-                      {getAge(patient.dateOfBirth)} años
+                      {patient.gender ?? t("Sin género")} ·{" "}
+                      {getAge(patient.dateOfBirth)} {t('años')}
                     </span>
                   </span>
                 </button>
@@ -285,10 +288,10 @@ function PatientTable({
                 </span>
               </TableCell>
               <TableCell className="hidden text-sm md:table-cell">
-                {patient.insurerName ?? "Sin aseguradora"}
+                {patient.insurerName ?? t("Sin aseguradora")}
               </TableCell>
               <TableCell className="hidden text-sm xl:table-cell">
-                {patient.clinicName ?? "Sin asignar"}
+                {patient.clinicName ?? t("Sin asignar")}
               </TableCell>
               <TableCell>
                 <StatusBadge
@@ -303,7 +306,7 @@ function PatientTable({
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        aria-label={`Acciones de ${patient.firstName} ${patient.lastName}`}
+                        aria-label={`${t('Acciones de')} ${patient.firstName} ${patient.lastName}`}
                       />
                     }
                   >
@@ -312,19 +315,19 @@ function PatientTable({
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => onOpen(patient)}>
                       <Eye />
-                      Ver detalles
+                      {t('Ver detalles')}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onEdit(patient)}>
                       <Pencil />
-                      Editar
+                      {t('Editar')}
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <CalendarPlus />
-                      Agendar cita
+                      {t('Agendar cita')}
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <ClipboardPenLine />
-                      Crear receta
+                      {t('Crear receta')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -332,7 +335,7 @@ function PatientTable({
                       onClick={() => onDelete(patient)}
                     >
                       <Trash2 />
-                      Eliminar
+                      {t('Eliminar')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -396,20 +399,21 @@ function PatientsSkeleton() {
   );
 }
 function EmptyState({ onCreate }: { onCreate: () => void }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card py-16 text-center">
       <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
         <UserRound className="size-6" />
       </span>
       <div>
-        <h3 className="text-sm font-semibold">No encontramos pacientes</h3>
+        <h3 className="text-sm font-semibold">{t('No encontramos pacientes')}</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Prueba con otros filtros o registra un nuevo paciente.
+          {t('Prueba con otros filtros o registra un nuevo paciente.')}
         </p>
       </div>
       <Button size="sm" onClick={onCreate}>
         <Plus data-icon="inline-start" />
-        Nuevo paciente
+        {t('Nuevo paciente')}
       </Button>
     </div>
   );
@@ -421,15 +425,16 @@ function ErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
       <p className="text-sm font-semibold text-destructive">
-        No pudimos cargar el directorio
+        {t('No pudimos cargar el directorio')}
       </p>
       <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
         <RefreshCw data-icon="inline-start" />
-        Reintentar
+        {t('Reintentar')}
       </Button>
     </div>
   );
@@ -443,10 +448,11 @@ function Pagination({
   totalPages: number;
   onPageChange: (page: number) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex items-center justify-between text-xs text-muted-foreground">
       <span>
-        Página {page} de {totalPages}
+        {t('Página')} {page} {t('de')} {totalPages}
       </span>
       <div className="flex gap-2">
         <Button
@@ -455,7 +461,7 @@ function Pagination({
           disabled={page === 1}
           onClick={() => onPageChange(page - 1)}
         >
-          Anterior
+          {t('Anterior')}
         </Button>
         <Button
           variant="outline"
@@ -463,7 +469,7 @@ function Pagination({
           disabled={page === totalPages}
           onClick={() => onPageChange(page + 1)}
         >
-          Siguiente
+          {t('Siguiente')}
         </Button>
       </div>
     </div>

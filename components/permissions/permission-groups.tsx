@@ -3,6 +3,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { PermissionGroup } from "@/features/permissions/types";
+import { useT } from "@/providers/i18n-provider";
 
 interface PermissionGroupsProps {
   groups: PermissionGroup[];
@@ -24,6 +25,7 @@ export function PermissionGroups({
   disabled = false,
   className,
 }: PermissionGroupsProps) {
+  const t = useT();
   return (
     <div className={cn("grid grid-cols-1 gap-6 md:grid-cols-2", className)}>
       {groups.map((group) => {
@@ -54,7 +56,7 @@ export function PermissionGroups({
                 indeterminate={groupIndeterminate}
                 onCheckedChange={toggleGroup}
                 disabled={disabled}
-                aria-label={`Seleccionar todos los permisos de ${group.module}`}
+                aria-label={t("Seleccionar todos los permisos de {module}", { module: group.module })}
               />
               <span className="text-[11px] font-bold tracking-wide text-foreground uppercase">
                 {group.module}

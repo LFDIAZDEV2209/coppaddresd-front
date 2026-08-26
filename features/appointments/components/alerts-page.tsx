@@ -10,6 +10,7 @@ import {
   AlertOctagon,
   ChevronRight,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const typeLabels: Record<AlertType, string> = {
 };
 
 export function AlertsPage() {
+  const t = useT();
   const {
     alerts,
     unread,
@@ -68,14 +70,14 @@ export function AlertsPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Alertas"
-        description={unread > 0 ? `${unread} sin leer` : "Todas las alertas leídas"}
+        title={t('Alertas')}
+        description={unread > 0 ? t('{count} sin leer', { count: String(unread) }) : t('Todas las alertas leídas')}
         icon={Bell}
         actions={
           unread > 0 ? (
             <Button size="sm" variant="outline" className="gap-1.5 text-white" onClick={readAll} disabled={busy}>
               <CheckCheck className="size-4" />
-              Marcar todas como leídas
+              {t('Marcar todas como leídas')}
             </Button>
           ) : undefined
         }
@@ -98,9 +100,9 @@ export function AlertsPage() {
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
             <Bell className="size-6 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium text-foreground">No hay alertas</p>
+          <p className="text-sm font-medium text-foreground">{t('No hay alertas')}</p>
           <p className="text-[12.5px] text-muted-foreground">
-            Los eventos de tus citas y solicitudes aparecerán aquí.
+            {t('Los eventos de tus citas y solicitudes aparecerán aquí.')}
           </p>
         </div>
       ) : (
@@ -121,7 +123,7 @@ export function AlertsPage() {
                 <button
                   onClick={() => void handleRead(alert.id)}
                   className="flex min-w-0 flex-1 items-start gap-3 text-left"
-                  aria-label={unreadAlert ? `Marcar como leída: ${alert.title}` : `Alerta: ${alert.title}`}
+                  aria-label={unreadAlert ? t('Marcar como leída: {title}', { title: alert.title }) : t('Alerta: {title}', { title: alert.title })}
                 >
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
                     <SeverityIcon className="size-4.5 text-muted-foreground" />
@@ -131,16 +133,16 @@ export function AlertsPage() {
                       <span className="text-[13.5px] font-semibold text-foreground">
                         {alert.title}
                       </span>
-                      {unreadAlert && <Badge className="bg-primary text-primary-foreground">Nueva</Badge>}
+                      {unreadAlert && <Badge className="bg-primary text-primary-foreground">{t('Nueva')}</Badge>}
                       <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${severity.className}`}>
-                        {severity.label}
+                        {t(severity.label)}
                       </span>
                     </div>
                     {alert.body && (
                       <p className="line-clamp-2 text-[12.5px] text-muted-foreground">{alert.body}</p>
                     )}
                     <span className="text-[11px] text-muted-foreground/70">
-                      {typeLabels[alert.type] ?? alert.type} · {formatDateTime(alert.createdAt)}
+                      {t(typeLabels[alert.type]) ?? alert.type} · {formatDateTime(alert.createdAt)}
                     </span>
                   </div>
                 </button>
@@ -148,7 +150,7 @@ export function AlertsPage() {
                   <Link
                     href={`/appointments/citas/${alert.relatedAppointmentId}`}
                     className="shrink-0 rounded-full border border-border p-2 text-muted-foreground hover:text-foreground"
-                    aria-label="Ver cita relacionada"
+                    aria-label={t('Ver cita relacionada')}
                   >
                     <ChevronRight className="size-4" />
                   </Link>
@@ -167,10 +169,10 @@ export function AlertsPage() {
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
           >
-            Anterior
+            {t('Anterior')}
           </Button>
           <span className="text-[12px] text-muted-foreground">
-            Página {page} de {totalPages}
+            {t('Página {page} de {totalPages}', { page: String(page), totalPages: String(totalPages) })}
           </span>
           <Button
             variant="outline"
@@ -178,7 +180,7 @@ export function AlertsPage() {
             disabled={page >= totalPages}
             onClick={() => setPage(page + 1)}
           >
-            Siguiente
+            {t('Siguiente')}
           </Button>
         </div>
       )}

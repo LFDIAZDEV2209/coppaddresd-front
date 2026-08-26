@@ -84,6 +84,7 @@ import type {
   PostalCodeSearch,
   StateOption,
 } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 /* ── Vocabulario cerrado (códigos estables en inglés, etiquetas en español) ── */
 
@@ -566,6 +567,7 @@ function icd10Label(item: CatalogSearchItem): string {
 
 export function PatientFormPage({ patientId }: { patientId?: string }) {
   const isEdit = Boolean(patientId);
+  const t = useT();
   const router = useRouter();
   const [form, setForm] = useState<PatientFormState>(createEmptyForm);
   const [insurers, setInsurers] = useState<Insurer[]>([]);
@@ -771,10 +773,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
     // enviar el request cuando el formulario ya es inválido.
     const clientErrors: Record<string, string[]> = {};
     if (!form.firstName.trim()) {
-      clientErrors.firstName = ["El nombre es requerido."];
+      clientErrors.firstName = [t("El nombre es requerido.")];
     }
     if (!form.lastName.trim()) {
-      clientErrors.lastName = ["Los apellidos son requeridos."];
+      clientErrors.lastName = [t("Los apellidos son requeridos.")];
     }
     Object.assign(clientErrors, validateVitals(form.vitals));
 
@@ -803,7 +805,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
         return;
       }
       setError(
-        cause instanceof Error ? cause.message : "Ocurrió un error inesperado.",
+        cause instanceof Error ? cause.message : t("Ocurrió un error inesperado."),
       );
     } finally {
       setSaving(false);
@@ -813,11 +815,11 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
   return (
     <div className="flex flex-col gap-8 p-4 sm:p-6">
       <PageHeader
-        title={isEdit ? "Editar paciente" : "Nuevo paciente"}
+        title={isEdit ? t("Editar paciente") : t("Nuevo paciente")}
         description={
           isEdit
-            ? "Actualiza la información clínica y de contacto del paciente"
-            : "Registra la información clínica y de contacto del paciente"
+            ? t("Actualiza la información clínica y de contacto del paciente")
+            : t("Registra la información clínica y de contacto del paciente")
         }
         icon={UserRound}
         actions={
@@ -827,7 +829,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             onClick={() => router.push("/patients")}
           >
             <ArrowLeft data-icon="inline-start" />
-            Volver al directorio
+            {t('Volver al directorio')}
           </Button>
         }
       />
@@ -837,11 +839,12 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
       ) : notFound ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
           <p className="text-sm font-semibold text-destructive">
-            Paciente no encontrado
+            {t('Paciente no encontrado')}
           </p>
           <p className="max-w-sm text-xs text-muted-foreground">
-            Es posible que el registro haya sido eliminado o que la dirección
-            sea incorrecta.
+            {t('Es posible que el registro haya sido eliminado o que la dirección')}
+            {" "}
+            {t('sea incorrecta.')}
           </p>
           <Button
             variant="outline"
@@ -849,7 +852,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             onClick={() => router.push("/patients")}
           >
             <ArrowLeft data-icon="inline-start" />
-            Volver al directorio
+            {t('Volver al directorio')}
           </Button>
         </div>
       ) : (
@@ -864,102 +867,102 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
           )}
 
           {/* ── Información personal ── */}
-          <FormSection legend="Información personal" icon={UserRound}>
-            <Field label="Número de historia clínica" icon={FileText}>
+          <FormSection legend={t("Información personal")} icon={UserRound}>
+            <Field label={t("Número de historia clínica")} icon={FileText}>
               <Input
                 value={form.medicalRecordNumber}
                 onChange={(event) =>
                   update("medicalRecordNumber", event.target.value)
                 }
-                placeholder="MRN-… (se genera solo si se deja vacío)"
+                placeholder={t("MRN-… (se genera solo si se deja vacío)")}
               />
             </Field>
-            <Field label="Nombre" required icon={User} error={fieldError("firstName")}>
+            <Field label={t("Nombre")} required icon={User} error={fieldError("firstName")}>
               <Input
                 value={form.firstName}
                 onChange={(event) => update("firstName", event.target.value)}
-                placeholder="Primer nombre"
+                placeholder={t("Primer nombre")}
               />
             </Field>
-            <Field label="Segundo nombre" icon={User}>
+            <Field label={t("Segundo nombre")} icon={User}>
               <Input
                 value={form.middleName}
                 onChange={(event) => update("middleName", event.target.value)}
-                placeholder="Segundo nombre"
+                placeholder={t("Segundo nombre")}
               />
             </Field>
-            <Field label="Apellidos" required icon={User} error={fieldError("lastName")}>
+            <Field label={t("Apellidos")} required icon={User} error={fieldError("lastName")}>
               <Input
                 value={form.lastName}
                 onChange={(event) => update("lastName", event.target.value)}
-                placeholder="Apellidos"
+                placeholder={t("Apellidos")}
               />
             </Field>
-            <Field label="Tipo de documento" icon={IdCard}>
+            <Field label={t("Tipo de documento")} icon={IdCard}>
               <CatalogCombobox<CatalogOption>
                 value={documentTypes.find((d) => d.id === form.documentTypeId) ?? null}
                 onSelect={(option) => update("documentTypeId", option?.id ?? "")}
                 items={documentTypes}
                 getLabel={documentTypeLabel}
-                placeholder="Seleccionar tipo de documento"
-                searchPlaceholder="Buscar tipo de documento…"
-                emptyText="Sin tipos de documento."
+                placeholder={t("Seleccionar tipo de documento")}
+                searchPlaceholder={t("Buscar tipo de documento…")}
+                emptyText={t("Sin tipos de documento.")}
                 allowClear
               />
             </Field>
-            <Field label="Número de documento" icon={Fingerprint} error={fieldError("documentNumber")}>
+            <Field label={t("Número de documento")} icon={Fingerprint} error={fieldError("documentNumber")}>
               <Input
                 value={form.documentNumber}
                 onChange={(event) => update("documentNumber", event.target.value)}
-                placeholder="Número de documento"
+                placeholder={t("Número de documento")}
               />
             </Field>
-            <Field label="Fecha de nacimiento" icon={CalendarDays} error={fieldError("dateOfBirth")}>
+            <Field label={t("Fecha de nacimiento")} icon={CalendarDays} error={fieldError("dateOfBirth")}>
               <Input
                 type="date"
                 value={form.dateOfBirth}
                 onChange={(event) => update("dateOfBirth", event.target.value)}
               />
             </Field>
-            <Field label="Género" icon={Users}>
+            <Field label={t("Género")} icon={Users}>
               <Select
                 value={form.gender}
                 onChange={(value) => update("gender", value)}
               >
-                <option>Femenino</option>
-                <option>Masculino</option>
-                <option>No binario</option>
+                <option value="Femenino">{t('Femenino')}</option>
+                <option value="Masculino">{t('Masculino')}</option>
+                <option value="No binario">{t('No binario')}</option>
               </Select>
             </Field>
-            <Field label="Etnia" icon={Globe}>
+            <Field label={t("Etnia")} icon={Globe}>
               <CatalogCombobox<CatalogOption>
                 value={ethnicities.find((e) => e.id === form.ethnicityId) ?? null}
                 onSelect={(option) => update("ethnicityId", option?.id ?? "")}
                 items={ethnicities}
                 getLabel={ethnicityLabel}
-                placeholder="Seleccionar etnia"
-                searchPlaceholder="Buscar etnia…"
-                emptyText="Sin etnias."
+                placeholder={t("Seleccionar etnia")}
+                searchPlaceholder={t("Buscar etnia…")}
+                emptyText={t("Sin etnias.")}
                 allowClear
               />
             </Field>
-            <Field label="Tipo de sangre" icon={Droplets}>
+            <Field label={t("Tipo de sangre")} icon={Droplets}>
               <CatalogCombobox<CatalogOption>
                 value={bloodTypes.find((b) => b.id === form.bloodTypeId) ?? null}
                 onSelect={(option) => update("bloodTypeId", option?.id ?? "")}
                 items={bloodTypes}
                 getLabel={(option) => option.code}
-                placeholder="Seleccionar grupo sanguíneo"
-                searchPlaceholder="Buscar grupo sanguíneo…"
-                emptyText="Sin grupos sanguíneos."
+                placeholder={t("Seleccionar grupo sanguíneo")}
+                searchPlaceholder={t("Buscar grupo sanguíneo…")}
+                emptyText={t("Sin grupos sanguíneos.")}
                 allowClear
               />
             </Field>
-            <Field label="Estado civil" icon={Users}>
+            <Field label={t("Estado civil")} icon={Users}>
               <Select
                 value={form.maritalStatus}
                 onChange={(value) => update("maritalStatus", value)}
-                placeholder="Seleccionar…"
+                placeholder={t("Seleccionar…")}
               >
                 {MARITAL_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -968,24 +971,24 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Contacto de emergencia" icon={Siren}>
+            <Field label={t("Contacto de emergencia")} icon={Siren}>
               <Input
                 value={form.emergencyContact}
                 onChange={(event) =>
                   update("emergencyContact", event.target.value)
                 }
-                placeholder="Nombre de contacto de emergencia"
+                placeholder={t("Nombre de contacto de emergencia")}
               />
             </Field>
           </FormSection>
 
           {/* ── Contacto y ubicación ── */}
-          <FormSection legend="Contacto y ubicación" icon={MapPin}>
-            <Field label="País del teléfono" icon={Globe}>
+          <FormSection legend={t("Contacto y ubicación")} icon={MapPin}>
+            <Field label={t("País del teléfono")} icon={Globe}>
               <Select
                 value={form.phoneCountryCode}
                 onChange={(value) => update("phoneCountryCode", value)}
-                placeholder="Seleccionar…"
+                placeholder={t("Seleccionar…")}
               >
                 {countries.map((country) => (
                   <option key={country.id} value={country.phoneCode}>
@@ -994,7 +997,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Teléfono" icon={Phone} error={fieldError("phoneNumber")}>
+            <Field label={t("Teléfono")} icon={Phone} error={fieldError("phoneNumber")}>
               <Input
                 type="tel"
                 value={form.phoneNumber}
@@ -1002,7 +1005,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="300 000 0000"
               />
             </Field>
-            <Field label="Correo electrónico" icon={Mail} error={fieldError("email")}>
+            <Field label={t("Correo electrónico")} icon={Mail} error={fieldError("email")}>
               <Input
                 type="email"
                 value={form.email}
@@ -1010,14 +1013,14 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder="correo@ejemplo.com"
               />
             </Field>
-            <Field label="Dirección" icon={Home} className="sm:col-span-2">
+            <Field label={t("Dirección")} icon={Home} className="sm:col-span-2">
               <Input
                 value={form.address}
                 onChange={(event) => update("address", event.target.value)}
-                placeholder="Dirección de residencia"
+                placeholder={t("Dirección de residencia")}
               />
             </Field>
-            <Field label="País" icon={MapPinned}>
+            <Field label={t("País")} icon={MapPinned}>
               <CatalogCombobox<CountryOption>
                 value={selectedCountry}
                 onSelect={(country) => {
@@ -1033,12 +1036,12 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 }}
                 items={countries}
                 getLabel={(country) => country.name}
-                placeholder="Seleccionar país"
-                searchPlaceholder="Buscar país…"
-                emptyText="Sin países."
+                placeholder={t("Seleccionar país")}
+                searchPlaceholder={t("Buscar país…")}
+                emptyText={t("Sin países.")}
               />
             </Field>
-            <Field label="Estado / provincia" icon={Map}>
+            <Field label={t("Estado / provincia")} icon={Map}>
               <CatalogCombobox<StateOption>
                 value={selectedState}
                 onSelect={(state) => {
@@ -1053,14 +1056,14 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 items={states}
                 getLabel={(state) => `${state.code} — ${state.name}`}
                 placeholder={
-                  form.countryId ? "Seleccionar estado" : "Elige primero el país"
+                  form.countryId ? t("Seleccionar estado") : t("Elige primero el país")
                 }
-                searchPlaceholder="Buscar estado…"
-                emptyText="Sin estados para este país."
+                searchPlaceholder={t("Buscar estado…")}
+                emptyText={t("Sin estados para este país.")}
                 disabled={!form.countryId}
               />
             </Field>
-            <Field label="Ciudad" icon={Building2}>
+            <Field label={t("Ciudad")} icon={Building2}>
               <CatalogCombobox<CityOption>
                 value={selectedCity}
                 onSelect={(city) => {
@@ -1077,14 +1080,14 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     : Promise.resolve([])
                 }
                 getLabel={(city) => city.name}
-                placeholder={form.stateId ? "Buscar ciudad…" : "Elige primero el estado"}
-                searchPlaceholder="Escribe para buscar la ciudad…"
-                emptyText="Sin ciudades que coincidan."
+                placeholder={form.stateId ? t("Buscar ciudad…") : t("Elige primero el estado")}
+                searchPlaceholder={t("Escribe para buscar la ciudad…")}
+                emptyText={t("Sin ciudades que coincidan.")}
                 disabled={!form.stateId}
                 allowClear
               />
             </Field>
-            <Field label="Código postal (ZIP)" icon={MapPinned} error={fieldError("postalCode")}>
+            <Field label={t("Código postal (ZIP)")} icon={MapPinned} error={fieldError("postalCode")}>
               <CatalogCombobox<PostalCodeSearch>
                 value={zipValue}
                 fetchItems={fetchZipSuggestions}
@@ -1092,10 +1095,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 placeholder={
                   cityZips.length > 0
                     ? `Auto: ${cityZips.map((z) => z.zipCode).join(", ")}`
-                    : "Busca o escribe el código postal…"
+                    : t("Busca o escribe el código postal…")
                 }
-                searchPlaceholder="Escribe el código postal…"
-                emptyText="Sin códigos postales para esta búsqueda."
+                searchPlaceholder={t("Escribe el código postal…")}
+                emptyText={t("Sin códigos postales para esta búsqueda.")}
                 disabled={!form.countryId}
                 allowClear
                 onSelect={(item) => {
@@ -1103,8 +1106,6 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     update("postalCode", "");
                     return;
                   }
-                  // Al elegir una sugerencia se auto-completan ciudad/estado
-                  // cuando el proveedor las resolvió (p. ej. búsqueda por ZIP).
                   setForm((current) => ({
                     ...current,
                     postalCode: item.zipCode,
@@ -1120,12 +1121,12 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
           </FormSection>
 
           {/* ── Cobertura ── */}
-          <FormSection legend="Cobertura" icon={ShieldCheck}>
-            <Field label="Aseguradora" icon={CreditCard}>
+          <FormSection legend={t("Cobertura")} icon={ShieldCheck}>
+            <Field label={t("Aseguradora")} icon={CreditCard}>
               <Select
                 value={form.insurerId}
                 onChange={(value) => update("insurerId", value)}
-                placeholder="Sin aseguradora"
+                placeholder={t("Sin aseguradora")}
               >
                 {insurers.map((insurer) => (
                   <option key={insurer.id} value={insurer.id}>
@@ -1134,22 +1135,22 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Número de afiliación (member ID)" icon={BadgeCheck}>
+            <Field label={t("Número de afiliación (member ID)")} icon={BadgeCheck}>
               <Input
                 value={form.memberId}
                 onChange={(event) => update("memberId", event.target.value)}
-                placeholder="Número de afiliado"
+                placeholder={t("Número de afiliado")}
               />
             </Field>
           </FormSection>
 
           {/* ── Estilo de vida y antecedentes ── */}
-          <FormSection legend="Estilo de vida y antecedentes" icon={HeartPulse}>
-            <Field label="Tabaquismo" icon={Cigarette}>
+          <FormSection legend={t("Estilo de vida y antecedentes")} icon={HeartPulse}>
+            <Field label={t("Tabaquismo")} icon={Cigarette}>
               <Select
                 value={form.smokingStatus}
                 onChange={(value) => update("smokingStatus", value)}
-                placeholder="Seleccionar…"
+                placeholder={t("Seleccionar…")}
               >
                 {SMOKING_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1158,11 +1159,11 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Consumo de alcohol" icon={Wine}>
+            <Field label={t("Consumo de alcohol")} icon={Wine}>
               <Select
                 value={form.alcoholStatus}
                 onChange={(value) => update("alcoholStatus", value)}
-                placeholder="Seleccionar…"
+                placeholder={t("Seleccionar…")}
               >
                 {ALCOHOL_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1171,11 +1172,11 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Nivel de ejercicio" icon={Dumbbell}>
+            <Field label={t("Nivel de ejercicio")} icon={Dumbbell}>
               <Select
                 value={form.exerciseLevel}
                 onChange={(value) => update("exerciseLevel", value)}
-                placeholder="Seleccionar…"
+                placeholder={t("Seleccionar…")}
               >
                 {EXERCISE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1184,11 +1185,11 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Discapacidad" icon={Accessibility}>
+            <Field label={t("Discapacidad")} icon={Accessibility}>
               <Select
                 value={form.disability}
                 onChange={(value) => update("disability", value)}
-                placeholder="Ninguna"
+                placeholder={t("Ninguna")}
               >
                 {DISABILITY_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1197,11 +1198,11 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Historial de hospitalización" icon={Hospital}>
+            <Field label={t("Historial de hospitalización")} icon={Hospital}>
               <Select
                 value={form.hospitalizationHistory}
                 onChange={(value) => update("hospitalizationHistory", value)}
-                placeholder="Seleccionar…"
+                placeholder={t("Seleccionar…")}
               >
                 {HOSPITALIZATION_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1210,11 +1211,11 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Historial de cirugías" icon={Scissors}>
+            <Field label={t("Historial de cirugías")} icon={Scissors}>
               <Select
                 value={form.surgeryHistory}
                 onChange={(value) => update("surgeryHistory", value)}
-                placeholder="Seleccionar…"
+                placeholder={t("Seleccionar…")}
               >
                 {SURGERY_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1226,9 +1227,9 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
           </FormSection>
 
           {/* ── Diagnósticos ── */}
-          <FormSection legend="Diagnósticos" icon={Stethoscope} layout="stack">
+          <FormSection legend={t("Diagnósticos")} icon={Stethoscope} layout="stack">
             {form.diagnoses.length === 0 && (
-              <EmptyHint icon={Stethoscope} text="Sin diagnósticos registrados." />
+              <EmptyHint icon={Stethoscope} text={t("Sin diagnósticos registrados.")} />
             )}
             {form.diagnoses.map((diagnosis, index) => (
               <div
@@ -1240,7 +1241,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
                       <Stethoscope className="size-4" />
                     </span>
-                    Diagnóstico {index + 1}
+                    {t('Diagnóstico')} {index + 1}
                   </span>
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm font-medium">
@@ -1264,10 +1265,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           )
                         }
                       />
-                      Principal
+                      {t('Principal')}
                     </label>
                     <RemoveButton
-                      label="Eliminar diagnóstico"
+                      label={t("Eliminar diagnóstico")}
                       onClick={() =>
                         update(
                           "diagnoses",
@@ -1279,7 +1280,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 </div>
                 <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
                   <Field
-                    label="Código ICD-10"
+                    label={t("Código ICD-10")}
                     required
                     className="sm:col-span-2"
                     error={fieldError(`diagnoses.${index}.Icd10CodeId`)}
@@ -1314,9 +1315,9 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       }
                       fetchItems={searchIcd10Codes}
                       getLabel={icd10Label}
-                      placeholder="Buscar por código o descripción…"
-                      searchPlaceholder="Ej. E11.9, hipertensión…"
-                      emptyText="Sin coincidencias en ICD-10."
+                      placeholder={t("Buscar por código o descripción…")}
+                      searchPlaceholder={t("Ej. E11.9, hipertensión…")}
+                      emptyText={t("Sin coincidencias en ICD-10.")}
                       allowClear
                     />
                   </Field>
@@ -1341,14 +1342,14 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               }
             >
               <Plus data-icon="inline-start" />
-              Agregar diagnóstico
+              {t('Agregar diagnóstico')}
             </Button>
           </FormSection>
 
           {/* ── Medicamentos ── */}
-          <FormSection legend="Medicamentos" icon={Pill} layout="stack">
+          <FormSection legend={t("Medicamentos")} icon={Pill} layout="stack">
             {form.medications.length === 0 && (
-              <EmptyHint icon={Pill} text="Sin medicamentos registrados." />
+              <EmptyHint icon={Pill} text={t("Sin medicamentos registrados.")} />
             )}
             {form.medications.map((medication, index) => (
               <div
@@ -1360,10 +1361,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
                       <Pill className="size-4" />
                     </span>
-                    Medicamento {index + 1}
+                    {t('Medicamento')} {index + 1}
                   </span>
                   <RemoveButton
-                    label="Eliminar medicamento"
+                    label={t("Eliminar medicamento")}
                     onClick={() =>
                       update(
                         "medications",
@@ -1373,7 +1374,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                   />
                 </div>
                 <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
-                  <Field label="Medicamento" required>
+                  <Field label={t("Medicamento")} required>
                     <CatalogCombobox<CatalogSearchItem>
                       value={
                         medication.medicationId
@@ -1401,13 +1402,13 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       }
                       fetchItems={searchMedications}
                       getLabel={(item) => item.name}
-                      placeholder="Buscar medicamento…"
-                      searchPlaceholder="Ej. Amoxicilina, metformina…"
-                      emptyText="Sin medicamentos que coincidan."
+                      placeholder={t("Buscar medicamento…")}
+                      searchPlaceholder={t("Ej. Amoxicilina, metformina…")}
+                      emptyText={t("Sin medicamentos que coincidan.")}
                       allowClear
                     />
                   </Field>
-                  <Field label="Frecuencia">
+                  <Field label={t("Frecuencia")}>
                     <Input
                       value={medication.frequency}
                       onChange={(event) =>
@@ -1420,7 +1421,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           ),
                         )
                       }
-                      placeholder="Ej. 1 vez al día"
+                      placeholder={t("Ej. 1 vez al día")}
                     />
                   </Field>
                 </div>
@@ -1443,14 +1444,14 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               }
             >
               <Plus data-icon="inline-start" />
-              Agregar medicamento
+              {t('Agregar medicamento')}
             </Button>
           </FormSection>
 
           {/* ── Alergias ── */}
-          <FormSection legend="Alergias" icon={ShieldAlert} layout="stack">
+          <FormSection legend={t("Alergias")} icon={ShieldAlert} layout="stack">
             {form.allergies.length === 0 && (
-              <EmptyHint icon={AlertTriangle} text="Sin alergias registradas." />
+              <EmptyHint icon={AlertTriangle} text={t("Sin alergias registradas.")} />
             )}
             {form.allergies.map((allergy, index) => (
               <div
@@ -1462,10 +1463,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
                       <AlertTriangle className="size-4" />
                     </span>
-                    Alergia {index + 1}
+                    {t('Alergia')} {index + 1}
                   </span>
                   <RemoveButton
-                    label="Eliminar alergia"
+                    label={t("Eliminar alergia")}
                     onClick={() =>
                       update(
                         "allergies",
@@ -1475,7 +1476,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                   />
                 </div>
                 <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
-                  <Field label="Alérgeno" required>
+                  <Field label={t("Alérgeno")} required>
                     <CatalogCombobox<CatalogSearchItem>
                       value={
                         allergy.allergenId
@@ -1503,13 +1504,13 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       }
                       fetchItems={searchAllergens}
                       getLabel={(item) => item.name}
-                      placeholder="Buscar alérgeno…"
-                      searchPlaceholder="Ej. Penicilina, polen…"
-                      emptyText="Sin alérgenos que coincidan."
+                      placeholder={t("Buscar alérgeno…")}
+                      searchPlaceholder={t("Ej. Penicilina, polen…")}
+                      emptyText={t("Sin alérgenos que coincidan.")}
                       allowClear
                     />
                   </Field>
-                  <Field label="Notas">
+                  <Field label={t("Notas")}>
                     <Input
                       value={allergy.notes}
                       onChange={(event) =>
@@ -1522,7 +1523,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           ),
                         )
                       }
-                      placeholder="Reacción, severidad, etc."
+                      placeholder={t("Reacción, severidad, etc.")}
                     />
                   </Field>
                 </div>
@@ -1540,19 +1541,19 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               }
             >
               <Plus data-icon="inline-start" />
-              Agregar alergia
+              {t('Agregar alergia')}
             </Button>
           </FormSection>
 
           {/* ── Signos vitales ── */}
           <FormSection
-            legend="Signos vitales"
+            legend={t("Signos vitales")}
             icon={Activity}
             layout="stack"
             description={
               isEdit
-                ? "La medición más reciente es editable; el historial se conserva."
-                : "Primera medición registrada (unidades SI: cm, kg, °C)."
+                ? t("La medición más reciente es editable; el historial se conserva.")
+                : t("Primera medición registrada (unidades SI: cm, kg, °C).")
             }
           >
             <div className="flex flex-col gap-4">
@@ -1566,10 +1567,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                       <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
                         <Activity className="size-4" />
                       </span>
-                      Medición actual
+                      {t('Medición actual')}
                     </div>
                     <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
-                      <Field label="Fecha">
+                      <Field label={t("Fecha")}>
                         <Input
                           type="date"
                           value={vital.measuredAt}
@@ -1585,7 +1586,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           }
                         />
                       </Field>
-                      <Field label="P. sistólica" error={fieldError("vitals.systolic")}>
+                      <Field label={t("P. sistólica")} error={fieldError("vitals.systolic")}>
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1603,7 +1604,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="mmHg"
                         />
                       </Field>
-                      <Field label="P. diastólica" error={fieldError("vitals.diastolic")}>
+                      <Field label={t("P. diastólica")} error={fieldError("vitals.diastolic")}>
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1621,7 +1622,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="mmHg"
                         />
                       </Field>
-                      <Field label="Frecuencia cardíaca" error={fieldError("vitals.heartRate")}>
+                      <Field label={t("Frecuencia cardíaca")} error={fieldError("vitals.heartRate")}>
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1639,7 +1640,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="lpm"
                         />
                       </Field>
-                      <Field label="Temperatura (°C)" error={fieldError("vitals.temperatureC")}>
+                      <Field label={t("Temperatura (°C)")} error={fieldError("vitals.temperatureC")}>
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -1658,7 +1659,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="°C"
                         />
                       </Field>
-                      <Field label="Saturación O₂ (%)" error={fieldError("vitals.o2Saturation")}>
+                      <Field label={t("Saturación O₂ (%)")} error={fieldError("vitals.o2Saturation")}>
                         <Input
                           type="number"
                           inputMode="numeric"
@@ -1676,7 +1677,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="%"
                         />
                       </Field>
-                      <Field label="Altura (cm)" error={fieldError("vitals.heightCm")}>
+                      <Field label={t("Altura (cm)")} error={fieldError("vitals.heightCm")}>
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -1695,7 +1696,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                           placeholder="cm"
                         />
                       </Field>
-                      <Field label="Peso (kg)" error={fieldError("vitals.weightKg")}>
+                      <Field label={t("Peso (kg)")} error={fieldError("vitals.weightKg")}>
                         <Input
                           type="number"
                           inputMode="decimal"
@@ -1723,7 +1724,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                   >
                     <span className="flex items-center gap-2 font-medium text-muted-foreground">
                       <Activity className="size-4" />
-                      {vital.measuredAt || "Fecha desconocida"}
+                      {vital.measuredAt || t("Fecha desconocida")}
                     </span>
                     <span>
                       TA {vital.systolic || "—"}/{vital.diastolic || "—"} mmHg
@@ -1736,7 +1737,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     </span>
                     {index > 0 && (
                       <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                        Histórico
+                        {t('Histórico')}
                       </span>
                     )}
                   </div>
@@ -1756,32 +1757,32 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     }
                   >
                     <Plus data-icon="inline-start" />
-                    Registrar nueva medición
+                    {t('Registrar nueva medición')}
                   </Button>
                 )}
             </div>
           </FormSection>
 
           {/* ── Observaciones y estado ── */}
-          <FormSection legend="Observaciones y estado" icon={ClipboardPen}>
-            <Field label="Observaciones" icon={NotebookPen} className="sm:col-span-2">
+          <FormSection legend={t("Observaciones y estado")} icon={ClipboardPen}>
+            <Field label={t("Observaciones")} icon={NotebookPen} className="sm:col-span-2">
               <textarea
                 className="min-h-28 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 value={form.notes}
                 onChange={(event) => update("notes", event.target.value)}
-                placeholder="Alergias, antecedentes o notas relevantes"
+                placeholder={t("Alergias, antecedentes o notas relevantes")}
               />
             </Field>
-            <Field label="Estado" icon={CircleDot}>
+            <Field label={t("Estado")} icon={CircleDot}>
               <Select
                 value={form.status}
                 onChange={(value) =>
                   update("status", value as PatientStatus)
                 }
               >
-                <option>Activo</option>
-                <option>Pendiente</option>
-                <option>Inactivo</option>
+                <option value="Activo">{t('Activo')}</option>
+                <option value="Pendiente">{t('Pendiente')}</option>
+                <option value="Inactivo">{t('Inactivo')}</option>
               </Select>
             </Field>
           </FormSection>
@@ -1794,7 +1795,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               onClick={() => router.push("/patients")}
               disabled={saving}
             >
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button type="submit" disabled={saving}>
               {saving ? (
@@ -1806,10 +1807,10 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 <Save data-icon="inline-start" />
               )}
               {saving
-                ? "Guardando..."
+                ? t("Guardando...")
                 : isEdit
-                  ? "Guardar cambios"
-                  : "Crear paciente"}
+                  ? t("Guardar cambios")
+                  : t("Crear paciente")}
             </Button>
           </div>
         </form>

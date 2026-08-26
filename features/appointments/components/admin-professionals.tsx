@@ -6,6 +6,7 @@ import {
   Search,
   Stethoscope,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import { fetchProfessionalsCatalog } from "../services/reference-service";
 import type { ProfessionalCatalogItemDto } from "../types";
 
 export function AdminProfessionals() {
+  const t = useT();
   const [items, setItems] = useState<ProfessionalCatalogItemDto[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPageState] = useState(1);
@@ -61,8 +63,8 @@ export function AdminProfessionals() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Profesionales"
-        description="Catálogo de profesionales clínicos del ERP"
+        title={t('Profesionales')}
+        description={t('Catálogo de profesionales clínicos del ERP')}
         icon={Users}
       />
 
@@ -70,14 +72,14 @@ export function AdminProfessionals() {
         <div className="relative w-[280px]">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar profesionales..."
+            placeholder={t('Buscar profesionales...')}
             className="h-9 pl-9"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
         <span className="text-[12px] text-muted-foreground">
-          {total} profesional{total === 1 ? "" : "es"}
+          {t('{total} profesional', { total: String(total) })}{total === 1 ? "" : "es"}
         </span>
       </div>
 
@@ -98,7 +100,7 @@ export function AdminProfessionals() {
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
             <Users className="size-6 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium text-foreground">No hay profesionales</p>
+          <p className="text-sm font-medium text-foreground">{t('No hay profesionales')}</p>
         </div>
       ) : (
         <>
@@ -114,11 +116,11 @@ export function AdminProfessionals() {
                       {professional.fullName}
                     </span>
                     <span className="truncate text-[11.5px] text-muted-foreground">
-                      {professional.professionalTypeName ?? "Profesional"}
+                      {professional.professionalTypeName ?? t('Profesional')}
                     </span>
                   </div>
                   <Badge variant={professional.status === "Active" ? "default" : "secondary"}>
-                    {professional.status === "Active" ? "Activo" : professional.status}
+                    {professional.status === "Active" ? t('Activo') : professional.status}
                   </Badge>
                 </div>
 
@@ -129,13 +131,13 @@ export function AdminProfessionals() {
                     </Badge>
                   ))}
                   {professional.specialties.length === 0 && (
-                    <span className="text-[11px] text-muted-foreground">Sin especialidades</span>
+                    <span className="text-[11px] text-muted-foreground">{t('Sin especialidades')}</span>
                   )}
                 </div>
 
                 {professional.locations.length > 0 && (
                   <p className="truncate text-[11px] text-muted-foreground">
-                    Sedes: {professional.locations.map((location) => location.name).join(", ")}
+                    {t('Sedes')}: {professional.locations.map((location) => location.name).join(", ")}
                   </p>
                 )}
               </div>
@@ -145,13 +147,13 @@ export function AdminProfessionals() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
               <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                Anterior
+                {t('Anterior')}
               </Button>
               <span className="text-[12px] text-muted-foreground">
-                Página {page} de {totalPages}
+                {t('Página {page} de {totalPages}', { page: String(page), totalPages: String(totalPages) })}
               </span>
               <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
-                Siguiente
+                {t('Siguiente')}
               </Button>
             </div>
           )}

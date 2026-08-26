@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/providers/i18n-provider";
 import type { AgentType, AgentTypeRequest } from "../types";
 import { AgentIconPicker } from "./agent-icon-picker";
 
@@ -31,6 +32,7 @@ export function AgentFormDialog({
   onOpenChange,
   onSubmit,
 }: AgentFormDialogProps) {
+  const t = useT();
   const [name, setName] = useState(agent?.name ?? "");
   const [description, setDescription] = useState(agent?.description ?? "");
   const [specialty, setSpecialty] = useState(agent?.specialty ?? "");
@@ -41,7 +43,7 @@ export function AgentFormDialog({
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!name.trim()) {
-      setValidationError("El nombre del agente es obligatorio.");
+      setValidationError(t('El nombre del agente es obligatorio.'));
       return;
     }
     setValidationError(null);
@@ -65,36 +67,36 @@ export function AgentFormDialog({
             </div>
             <div className="flex flex-col gap-1">
               <DialogTitle>
-                {agent ? "Editar agente" : "Nuevo tipo de agente"}
+                {agent ? t('Editar agente') : t('Nuevo tipo de agente')}
               </DialogTitle>
               <DialogDescription>
                 {agent
-                  ? "Actualiza la información del tipo de agente."
-                  : "Define el tipo de agente: nombre, especialidad y estado."}
+                  ? t('Actualiza la información del tipo de agente.')
+                  : t('Define el tipo de agente: nombre, especialidad y estado.')}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4 px-6 py-5">
-          <Field label="Nombre" required>
+          <Field label={t('Nombre')} required>
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Ej. Asistente de Nutrición"
+              placeholder={t('Ej. Asistente de Nutrición')}
               disabled={saving}
             />
           </Field>
 
-          <Field label="Especialidad">
+          <Field label={t('Especialidad')}>
             <Input
               value={specialty}
               onChange={(event) => setSpecialty(event.target.value)}
-              placeholder="Ej. Nutrición, Salud mental, Citas"
+              placeholder={t('Ej. Nutrición, Salud mental, Citas')}
               disabled={saving}
             />
           </Field>
 
-          <Field label="Icono">
+          <Field label={t('Icono')}>
             <AgentIconPicker
               value={iconKey}
               onChange={setIconKey}
@@ -102,7 +104,7 @@ export function AgentFormDialog({
             />
           </Field>
 
-          <Field label="Estado">
+          <Field label={t('Estado')}>
             <select
               className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               value={status}
@@ -111,18 +113,18 @@ export function AgentFormDialog({
               }
               disabled={saving}
             >
-              <option value="Borrador">Borrador</option>
-              <option value="Activo">Activo</option>
-              <option value="Inactivo">Inactivo</option>
+              <option value="Borrador">{t('Borrador')}</option>
+              <option value="Activo">{t('Activo')}</option>
+              <option value="Inactivo">{t('Inactivo')}</option>
             </select>
           </Field>
 
-          <Field label="Descripción">
+          <Field label={t('Descripción')}>
             <textarea
               className="min-h-20 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Describe el propósito del agente"
+              placeholder={t('Describe el propósito del agente')}
               disabled={saving}
             />
           </Field>
@@ -143,18 +145,18 @@ export function AgentFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={saving}
             >
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button type="submit" disabled={saving}>
               {saving ? (
                 <>
                   <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  Guardando...
+                  {t('Guardando...')}
                 </>
               ) : agent ? (
-                "Guardar cambios"
+                t('Guardar cambios')
               ) : (
-                "Crear agente"
+                t('Crear agente')
               )}
             </Button>
           </DialogFooter>

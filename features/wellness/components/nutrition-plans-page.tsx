@@ -10,6 +10,7 @@ import {
   Pencil,
   Copy,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -52,6 +53,7 @@ import { NutritionPlanDetailDialog } from "./nutrition-plan-detail";
 import type { NutritionPlanListItem } from "../types";
 
 export function NutritionPlansPage() {
+  const t = useT();
   const {
     result,
     loading,
@@ -112,13 +114,13 @@ export function NutritionPlansPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Planes de alimentación"
-        description="Gestiona los planes nutricionales para tus pacientes"
+        title={t("Planes de alimentación")}
+        description={t("Gestiona los planes nutricionales para tus pacientes")}
         icon={Apple}
         actions={
           <Button size="sm" onClick={openCreate}>
             <Plus data-icon="inline-start" />
-            Nuevo plan
+            {t("Nuevo plan")}
           </Button>
         }
       />
@@ -136,13 +138,13 @@ export function NutritionPlansPage() {
       {/* Filtros */}
       <section
         className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
-        aria-label="Filtros de planes"
+        aria-label={t("Filtros de planes")}
       >
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-sm font-semibold">Planes de alimentación</h2>
+            <h2 className="text-sm font-semibold">{t("Planes de alimentación")}</h2>
             <p className="text-xs text-muted-foreground">
-              Filtra por tipo, estado o busca por nombre.
+              {t("Filtra por tipo, estado o busca por nombre.")}
             </p>
           </div>
           <Button
@@ -155,12 +157,12 @@ export function NutritionPlansPage() {
               data-icon="inline-start"
               className={loading ? "animate-spin" : undefined}
             />
-            Actualizar
+            {t("Actualizar")}
           </Button>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input
-            placeholder="Buscar por nombre..."
+            placeholder={t("Buscar por nombre...")}
             value={filters.search}
             onChange={(e) => setFilters({ search: e.target.value })}
             className="h-9 w-full sm:max-w-xs"
@@ -172,7 +174,7 @@ export function NutritionPlansPage() {
             }
           >
             <SelectTrigger className="h-9 w-full sm:w-[160px]">
-              <SelectValue placeholder="Tipo" />
+              <SelectValue placeholder={t("Tipo")} />
             </SelectTrigger>
             <SelectContent>
               {TEMPLATE_OPTIONS.map((opt) => (
@@ -189,14 +191,14 @@ export function NutritionPlansPage() {
             }
           >
             <SelectTrigger className="h-9 w-full sm:w-[160px]">
-              <SelectValue placeholder="Estado" />
+              <SelectValue placeholder={t("Estado")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="Draft">Borrador</SelectItem>
-              <SelectItem value="Active">Activo</SelectItem>
-              <SelectItem value="Completed">Completado</SelectItem>
-              <SelectItem value="Archived">Archivado</SelectItem>
+              <SelectItem value="all">{t("Todos")}</SelectItem>
+              <SelectItem value="Draft">{t("Borrador")}</SelectItem>
+              <SelectItem value="Active">{t("Activo")}</SelectItem>
+              <SelectItem value="Completed">{t("Completado")}</SelectItem>
+              <SelectItem value="Archived">{t("Archivado")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -210,8 +212,8 @@ export function NutritionPlansPage() {
       ) : result && result.data.length > 0 ? (
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
-            title={`${result.total} ${result.total === 1 ? "plan" : "planes"} disponibles`}
-            description="Vista de tabla"
+            title={t("{count} planes disponibles", { count: String(result.total) })}
+            description={t("Vista de tabla")}
             icon={Apple}
             variant="primary"
           />
@@ -219,18 +221,18 @@ export function NutritionPlansPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead className="hidden md:table-cell">Paciente</TableHead>
-                  <TableHead className="hidden md:table-cell">Tipo</TableHead>
+                  <TableHead>{t("Nombre")}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t("Paciente")}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t("Tipo")}</TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Duración
+                    {t("Duración")}
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">
-                    Calorías/día
+                    {t("Calorías/día")}
                   </TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="hidden lg:table-cell">Creado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead>{t("Estado")}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t("Creado")}</TableHead>
+                  <TableHead className="text-right">{t("Acciones")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -256,11 +258,11 @@ export function NutritionPlansPage() {
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <Badge variant="outline">
-                        {plan.isTemplate ? "Template" : "Personalizado"}
+                        {plan.isTemplate ? "Template" : t("Personalizado")}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {plan.durationDays} días
+                      {t("{days} días", { days: String(plan.durationDays) })}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       {plan.dailyCalorieTarget
@@ -281,7 +283,7 @@ export function NutritionPlansPage() {
                           variant="ghost"
                           size="icon"
                           className="size-8"
-                          title="Ver detalles"
+                          title={t("Ver detalles")}
                           onClick={() => setDetails(plan)}
                         >
                           <Eye className="size-4" />
@@ -290,7 +292,7 @@ export function NutritionPlansPage() {
                           variant="ghost"
                           size="icon"
                           className="size-8"
-                          title="Editar"
+                          title={t("Editar")}
                           onClick={() => openEdit(plan)}
                         >
                           <Pencil className="size-4" />
@@ -300,7 +302,7 @@ export function NutritionPlansPage() {
                             variant="ghost"
                             size="icon"
                             className="size-8"
-                            title="Clonar a paciente"
+                            title={t("Clonar a paciente")}
                             onClick={() => setCloning(plan)}
                           >
                             <Copy className="size-4" />
@@ -310,7 +312,7 @@ export function NutritionPlansPage() {
                           variant="ghost"
                           size="icon"
                           className="size-8 text-destructive"
-                          title="Eliminar"
+                          title={t("Eliminar")}
                           onClick={() => setDeleting(plan)}
                         >
                           <Trash2 className="size-4" />
@@ -331,18 +333,18 @@ export function NutritionPlansPage() {
       {result && result.totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            Página {result.page} de {result.totalPages}
+            {t("Página {page} de {total}", { page: String(result.page), total: String(result.totalPages) })}
           </span>
           <div className="flex items-center gap-3">
             <select
               className="h-8 rounded-md border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={result.pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              aria-label="Planes por página"
+              aria-label={t("Planes por página")}
             >
-              <option value={10}>10 por página</option>
-              <option value={20}>20 por página</option>
-              <option value={50}>50 por página</option>
+              <option value={10}>{t("10 por página")}</option>
+              <option value={20}>{t("20 por página")}</option>
+              <option value={50}>{t("50 por página")}</option>
             </select>
             <div className="flex gap-2">
               <Button
@@ -351,7 +353,7 @@ export function NutritionPlansPage() {
                 disabled={result.page === 1}
                 onClick={() => setPage(result.page - 1)}
               >
-                Anterior
+                {t("Anterior")}
               </Button>
               <Button
                 variant="outline"
@@ -359,7 +361,7 @@ export function NutritionPlansPage() {
                 disabled={result.page === result.totalPages}
                 onClick={() => setPage(result.page + 1)}
               >
-                Siguiente
+                {t("Siguiente")}
               </Button>
             </div>
           </div>
@@ -375,7 +377,7 @@ export function NutritionPlansPage() {
         onOpenChange={setFormOpen}
         onSubmit={save}
         onCreated={(patientName) =>
-          setCreatedMessage(`Plan creado y asignado a ${patientName}`)
+          setCreatedMessage(t("Plan creado y asignado a {patientName}", { patientName }))
         }
       />
 
@@ -410,14 +412,13 @@ export function NutritionPlansPage() {
             <Trash2 />
           </AlertDialogMedia>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar plan?</AlertDialogTitle>
+            <AlertDialogTitle>{t("¿Eliminar plan?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminará el plan &quot;{deleting?.name}&quot; y todos sus
-              días. Esta acción no se puede deshacer.
+              {t('Se eliminará el plan "{name}" y todos sus días. Esta acción no se puede deshacer.', { name: deleting?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
               disabled={actionLoading}
@@ -426,7 +427,7 @@ export function NutritionPlansPage() {
                 setDeleting(undefined);
               }}
             >
-              Eliminar
+              {t("Eliminar")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -467,35 +468,37 @@ function PlansErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
       <p className="text-sm font-semibold text-destructive">
-        No pudimos cargar los planes
+        {t("No pudimos cargar los planes")}
       </p>
       <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
         <RefreshCw data-icon="inline-start" />
-        Reintentar
+        {t("Reintentar")}
       </Button>
     </div>
   );
 }
 
 function PlansEmptyState({ onCreate }: { onCreate: () => void }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border py-16 text-center">
       <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
         <Apple className="size-6 text-muted-foreground" />
       </div>
       <div>
-        <p className="text-sm font-semibold">No hay planes de alimentación</p>
+        <p className="text-sm font-semibold">{t("No hay planes de alimentación")}</p>
         <p className="text-xs text-muted-foreground">
-          Crea tu primer plan nutricional para asignarlo a tus pacientes.
+          {t("Crea tu primer plan nutricional para asignarlo a tus pacientes.")}
         </p>
       </div>
       <Button size="sm" onClick={onCreate}>
         <Plus data-icon="inline-start" />
-        Nuevo plan
+        {t("Nuevo plan")}
       </Button>
     </div>
   );
@@ -510,6 +513,7 @@ function ClonePlanDialog({
   onClose: () => void;
   onConfirm: (patientId: string) => Promise<void>;
 }) {
+  const t = useT();
   const [patientSearch, setPatientSearch] = useState("");
   const [patients, setPatients] = useState<
     Array<{
@@ -549,15 +553,14 @@ function ClonePlanDialog({
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Clonar plan a paciente</AlertDialogTitle>
+          <AlertDialogTitle>{t("Clonar plan a paciente")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Se creará una copia del plan &quot;{plan.name}&quot; asignada al
-            paciente seleccionado. El plan original no se modifica.
+            {t('Se creará una copia del plan "{name}" asignada al paciente seleccionado. El plan original no se modifica.', { name: plan.name })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex flex-col gap-3 py-2">
           <Input
-            placeholder="Buscar paciente por nombre..."
+            placeholder={t("Buscar paciente por nombre...")}
             value={patientSearch}
             onChange={(e) => {
               setPatientSearch(e.target.value);
@@ -565,7 +568,7 @@ function ClonePlanDialog({
             }}
           />
           {loadingPatients && (
-            <p className="text-xs text-muted-foreground">Buscando...</p>
+            <p className="text-xs text-muted-foreground">{t("Buscando...")}</p>
           )}
           {patients.length > 0 && (
             <div className="max-h-40 overflow-y-auto rounded-md border border-border">
@@ -593,19 +596,19 @@ function ClonePlanDialog({
             !loadingPatients &&
             patients.length === 0 && (
               <p className="text-xs text-muted-foreground">
-                No se encontraron pacientes.
+                {t("No se encontraron pacientes.")}
               </p>
             )}
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
           <AlertDialogAction
             disabled={!selectedPatient}
             onClick={async () => {
               if (selectedPatient) await onConfirm(selectedPatient);
             }}
           >
-            Clonar plan
+            {t("Clonar plan")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

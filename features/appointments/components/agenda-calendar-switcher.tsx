@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CalendarDays, ClipboardList } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 
 /**
  * Conmutador Agenda | Calendario para la cabecera degradada. Permite alternar
@@ -12,6 +13,7 @@ export function AgendaCalendarSwitcher({
 }: {
   active: "agenda" | "calendario";
 }) {
+  const t = useT();
   const base =
     "flex min-w-24 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-[12.5px] transition-colors";
   const activeClass = "bg-white font-semibold text-primary-strong shadow-sm";
@@ -20,7 +22,7 @@ export function AgendaCalendarSwitcher({
 
   return (
     <nav
-      aria-label="Cambiar entre agenda y calendario"
+      aria-label={t('Cambiar entre agenda y calendario')}
       className="flex items-center gap-1 rounded-lg bg-white/10 p-1"
     >
       <Link
@@ -29,7 +31,7 @@ export function AgendaCalendarSwitcher({
         className={`${base} ${active === "agenda" ? activeClass : inactiveClass}`}
       >
         <ClipboardList className="size-4" aria-hidden="true" />
-        Agenda
+        {t('Agenda')}
       </Link>
       <Link
         href="/appointments/calendario"
@@ -37,7 +39,7 @@ export function AgendaCalendarSwitcher({
         className={`${base} ${active === "calendario" ? activeClass : inactiveClass}`}
       >
         <CalendarDays className="size-4" aria-hidden="true" />
-        Calendario
+        {t('Calendario')}
       </Link>
     </nav>
   );

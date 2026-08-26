@@ -7,6 +7,7 @@ import {
   Stethoscope,
   CalendarClock,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +34,7 @@ import {
 import type { AppointmentRequestDto } from "../types";
 
 export function ProfessionalRequests() {
+  const t = useT();
   const { context, loading: userLoading } = useCurrentUser();
   const professionalId = context?.professional?.id ?? null;
 
@@ -79,7 +81,7 @@ export function ProfessionalRequests() {
       refetch();
     } catch {
       setActionError(
-        "No se pudo confirmar la solicitud. Verifica el horario (anticipación mínima) y que no se solape con otra cita.",
+        t('No se pudo confirmar la solicitud. Verifica el horario (anticipación mínima) y que no se solape con otra cita.'),
       );
     } finally {
       setBusy(false);
@@ -89,13 +91,13 @@ export function ProfessionalRequests() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Solicitudes"
-        description={professional ? `Solicitudes asignadas a ${professional.fullName}` : "Solicitudes de citas"}
+        title={t('Solicitudes')}
+        description={professional ? t('Solicitudes asignadas a {name}', { name: professional.fullName }) : t('Solicitudes de citas')}
         icon={Inbox}
       />
 
       {!professional ? (
-        <EmptyState icon={Stethoscope} title="El usuario no es un profesional clínico" />
+        <EmptyState icon={Stethoscope} title={t('El usuario no es un profesional clínico')} />
       ) : (
         <>
           {actionError && (
@@ -117,8 +119,8 @@ export function ProfessionalRequests() {
           ) : requests.length === 0 ? (
             <EmptyState
               icon={Inbox}
-              title="Sin solicitudes"
-              description="No hay solicitudes asignadas a tu agenda por confirmar."
+              title={t('Sin solicitudes')}
+              description={t('No hay solicitudes asignadas a tu agenda por confirmar.')}
             />
           ) : (
             <div className="flex flex-col gap-2">
@@ -131,17 +133,17 @@ export function ProfessionalRequests() {
                   >
                     <div className="flex min-w-0 flex-1 flex-col gap-px">
                       <span className="text-[13.5px] font-semibold text-foreground">
-                        {request.patientName ?? "Paciente"}
+                        {request.patientName ?? t('Paciente')}
                       </span>
                       <span className="truncate text-[12px] text-muted-foreground">
-                        {request.specialtyName ?? "Especialidad"} ·{" "}
+                        {request.specialtyName ?? t('Especialidad')} ·{" "}
                         {request.preferredStart
-                          ? `Preferida: ${formatDate(request.preferredStart)} ${formatTime(request.preferredStart)}`
-                          : "Sin fecha preferida"}
+                          ? `${t('Preferida')}: ${formatDate(request.preferredStart)} ${formatTime(request.preferredStart)}`
+                          : t('Sin fecha preferida')}
                       </span>
                       {request.reason && (
                         <span className="line-clamp-2 text-[12px] text-muted-foreground/80">
-                          Motivo: {request.reason}
+                          {t('Motivo')}: {request.reason}
                         </span>
                       )}
                     </div>
@@ -158,7 +160,7 @@ export function ProfessionalRequests() {
                         onClick={() => setConfirming(request)}
                       >
                         <CheckCircle2 className="size-4" />
-                        Confirmar
+                        {t('Confirmar')}
                       </Button>
                     )}
                   </div>
@@ -166,7 +168,7 @@ export function ProfessionalRequests() {
               })}
               {total > requests.length && (
                 <p className="text-center text-[12px] text-muted-foreground">
-                  Mostrando {requests.length} de {total} solicitudes
+                  {t('Mostrando {count} de {total} solicitudes', { count: String(requests.length), total: String(total) })}
                 </p>
               )}
             </div>
@@ -177,14 +179,14 @@ export function ProfessionalRequests() {
       <Dialog open={confirming !== null} onOpenChange={(open) => !open && setConfirming(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar solicitud</DialogTitle>
+            <DialogTitle>{t('Confirmar solicitud')}</DialogTitle>
             <DialogDescription>
-              Asigná el horario de la cita para{" "}
-              {confirming?.patientName ?? "el paciente"}.
+              {t('Asigná el horario de la cita para')}{" "}
+              {confirming?.patientName ?? t('el paciente')}.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="confirm-start">Inicio de la cita</Label>
+            <Label htmlFor="confirm-start">{t('Inicio de la cita')}</Label>
             <Input
               id="confirm-start"
               type="datetime-local"
@@ -198,7 +200,7 @@ export function ProfessionalRequests() {
             </Button>
             <Button onClick={doConfirm} disabled={busy || !scheduledStart} className="gap-1.5">
               <CalendarClock className="size-4" />
-              {busy ? "Confirmando..." : "Confirmar cita"}
+              {busy ? t('Confirmando...') : t('Confirmar cita')}
             </Button>
           </DialogFooter>
         </DialogContent>

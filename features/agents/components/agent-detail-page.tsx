@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
+import { useT } from "@/providers/i18n-provider";
 import { useAgentDetail } from "../hooks/use-agent-detail";
 import { useAgentKnowledge } from "../hooks/use-agent-knowledge";
 import { useAgentMonitoring } from "../hooks/use-agent-monitoring";
@@ -36,6 +37,7 @@ const statusVariant: Record<string, "default" | "destructive" | "secondary"> = {
 };
 
 export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
+  const t = useT();
   const router = useRouter();
   const detail = useAgentDetail(agentTypeId);
   const knowledge = useAgentKnowledge(agentTypeId, { includeGlobal: true });
@@ -56,11 +58,11 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
     return (
       <div className="flex flex-col gap-4 p-6">
         <p className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive" role="alert">
-          {detail.error ?? "Agente no encontrado."}
+          {detail.error ?? t('Agente no encontrado.')}
         </p>
         <Button variant="outline" className="w-fit" onClick={() => router.push("/agents")}>
           <ArrowLeft data-icon="inline-start" />
-          Volver a agentes
+          {t('Volver a agentes')}
         </Button>
       </div>
     );
@@ -78,12 +80,12 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
         onClick={() => router.push("/agents")}
       >
         <ArrowLeft data-icon="inline-start" />
-        Volver a agentes
+        {t('Volver a agentes')}
       </Button>
 
       <PageHeader
         title={agent.name}
-        description={agent.description ?? agent.specialty ?? "Tipo de agente"}
+        description={agent.description ?? agent.specialty ?? t('Tipo de agente')}
         icon={Bot}
         actions={
           <div className="flex items-center gap-2">
@@ -102,7 +104,7 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
               onClick={() => router.push(`/agents/${agent.id}/playground`)}
             >
               <Play className="size-[15px]" />
-              Probar agente
+              {t('Probar agente')}
             </Button>
             <Button
               size="sm"
@@ -111,7 +113,7 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
               onClick={() => setVersionDialogOpen(true)}
             >
               <Plus className="size-[15px]" />
-              Nueva versión
+              {t('Nueva versión')}
             </Button>
           </div>
         }
@@ -127,21 +129,21 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Especialidad
+              {t('Especialidad')}
             </span>
             <span className="text-sm font-medium">{agent.specialty ?? "—"}</span>
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Versión activa
+              {t('Versión activa')}
             </span>
             <span className="text-sm font-medium">
-              {agent.activeVersionNumber !== null ? `v${agent.activeVersionNumber}` : "Sin versión"}
+              {agent.activeVersionNumber !== null ? `v${agent.activeVersionNumber}` : t('Sin versión')}
             </span>
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Creado
+              {t('Creado')}
             </span>
             <span className="text-sm text-muted-foreground">{formatDate(agent.createdAt)}</span>
           </div>
@@ -151,15 +153,15 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
           <TabsList>
             <TabsTrigger value="versions">
               <Layers data-icon="inline-start" className="size-4" />
-              Versiones
+              {t('Versiones')}
             </TabsTrigger>
             <TabsTrigger value="knowledge">
               <BookOpen data-icon="inline-start" className="size-4" />
-              Conocimiento
+              {t('Conocimiento')}
             </TabsTrigger>
             <TabsTrigger value="monitoring">
               <Activity data-icon="inline-start" className="size-4" />
-              Monitoreo
+              {t('Monitoreo')}
             </TabsTrigger>
           </TabsList>
 
@@ -244,9 +246,10 @@ export function VersionRowActions({
   onView: () => void;
   activating: boolean;
 }) {
+  const t = useT();
   return (
     <div className="flex items-center gap-1">
-      <Button variant="ghost" size="icon-sm" onClick={onView} aria-label="Ver configuración">
+      <Button variant="ghost" size="icon-sm" onClick={onView} aria-label={t('Ver configuración')}>
         <Eye className="size-4" />
       </Button>
       {!isActive && (
@@ -255,7 +258,7 @@ export function VersionRowActions({
           size="icon-sm"
           onClick={() => onActivate(versionId)}
           disabled={activating}
-          aria-label="Activar versión"
+          aria-label={t('Activar versión')}
         >
           {activating ? (
             <LoaderCircle className="size-4 animate-spin" />

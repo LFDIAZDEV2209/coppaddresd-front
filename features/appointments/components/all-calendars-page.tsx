@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CalendarDays } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { ProfessionalSelector } from "./professional-selector";
 import { ProfessionalCalendar } from "./professional-calendar";
 
@@ -10,6 +11,7 @@ import { ProfessionalCalendar } from "./professional-calendar";
  * clínico (selector + grid mensual/semanal).
  */
 export function AllCalendarsPage() {
+  const t = useT();
   const [professionalId, setProfessionalId] = useState("");
 
   return (
@@ -21,11 +23,10 @@ export function AllCalendarsPage() {
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <p className="text-[13px] font-semibold text-primary-strong">
-              Calendario de profesionales
+              {t('Calendario de profesionales')}
             </p>
             <p className="text-[11.5px] text-primary-strong/70">
-              Seleccioná un profesional para ver y gestionar sus citas en el
-              calendario.
+              {t('Seleccioná un profesional para ver y gestionar sus citas en el calendario.')}
             </p>
           </div>
           <div className="w-full shrink-0 sm:w-72">

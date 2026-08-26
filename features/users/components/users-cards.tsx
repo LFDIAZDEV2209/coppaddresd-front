@@ -29,6 +29,7 @@ import {
   getStatusColor,
   getStatusLabel,
 } from "../services/users-service";
+import { useT } from "@/providers/i18n-provider";
 
 interface UsersCardsProps {
   users: User[];
@@ -50,6 +51,7 @@ export function UsersCards({
   const { hasPermission } = useAuth();
   const canUpdate = hasPermission("Users.Update");
   const canDelete = hasPermission("Users.Delete");
+  const t = useT();
 
   return (
     <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
@@ -68,7 +70,7 @@ export function UsersCards({
               <Checkbox
                 checked={selectedIds.has(user.id)}
                 onCheckedChange={() => onToggleSelect(user.id)}
-                aria-label={`Seleccionar ${getFullName(user)}`}
+                aria-label={t('Seleccionar {name}', { name: getFullName(user) })}
                 className="mt-0.5"
               />
               <Avatar className="size-9">
@@ -89,7 +91,7 @@ export function UsersCards({
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-muted"
-                    aria-label={`Acciones de ${getFullName(user)}`}
+                    aria-label={t('Acciones de {name}', { name: getFullName(user) })}
                   >
                     <MoreHorizontal className="size-4 text-muted-foreground" />
                   </DropdownMenuTrigger>
@@ -97,7 +99,7 @@ export function UsersCards({
                     {canUpdate && (
                       <DropdownMenuItem onClick={() => onEdit(user)}>
                         <Pencil className="size-4" />
-                        Editar
+                        {t('Editar')}
                       </DropdownMenuItem>
                     )}
                     {canDelete && (
@@ -106,7 +108,7 @@ export function UsersCards({
                         onClick={() => onDelete(user)}
                       >
                         <Trash2 className="size-4" />
-                        Eliminar
+                        {t('Eliminar')}
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -117,7 +119,7 @@ export function UsersCards({
             <div className="flex flex-wrap items-center gap-1">
               {visibleRoles.length === 0 && (
                 <span className="text-[11px] text-muted-foreground">
-                  Sin roles
+                  {t('Sin roles')}
                 </span>
               )}
               {visibleRoles.map((role) => (

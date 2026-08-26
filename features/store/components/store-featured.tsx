@@ -17,12 +17,14 @@ import {
 } from "@/components/ui/table";
 import { fetchStoreItems, updateStoreItem } from "../services/store-service";
 import type { StoreItemListItem } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 export function StoreFeaturedPage() {
   const [items, setItems] = useState<StoreItemListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const t = useT();
 
   useEffect(() => {
     let cancelled = false;
@@ -61,21 +63,21 @@ export function StoreFeaturedPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Productos destacados"
-        description="Selecciona qué productos resaltar en la tienda del paciente"
+        title={t('Productos destacados')}
+        description={t('Selecciona qué productos resaltar en la tienda del paciente')}
         icon={Star}
         actions={
           <Button variant="outline" size="sm" onClick={() => setReload((v) => v + 1)} disabled={loading}>
             <RefreshCw data-icon="inline-start" className={loading ? "animate-spin" : undefined} />
-            Actualizar
+            {t('Actualizar')}
           </Button>
         }
       />
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Summary label="Productos visibles" value={String(items.length)} tone="primary" />
-        <Summary label="Destacados" value={String(featuredCount)} tone="warning" />
-        <Summary label="Sin destacar" value={String(rest.length)} tone="info" />
+        <Summary label={t('Productos visibles')} value={String(items.length)} tone="primary" />
+        <Summary label={t('Destacados')} value={String(featuredCount)} tone="warning" />
+        <Summary label={t('Sin destacar')} value={String(rest.length)} tone="info" />
       </div>
 
       {loading ? (
@@ -83,20 +85,20 @@ export function StoreFeaturedPage() {
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
-            title={`${items.length} productos visibles`}
-            description="Activa o desactiva el estado destacado"
+            title={`${items.length} ${t('productos visibles')}`}
+            description={t('Activa o desactiva el estado destacado')}
             icon={Star}
             variant="primary"
           />
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Producto</TableHead>
-                <TableHead className="hidden lg:table-cell">Tipo</TableHead>
-                <TableHead>Precio</TableHead>
-                <TableHead className="hidden md:table-cell">Stock</TableHead>
-                <TableHead>Destacado</TableHead>
-                <TableHead className="w-32">Acción</TableHead>
+                <TableHead>{t('Producto')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('Tipo')}</TableHead>
+                <TableHead>{t('Precio')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('Stock')}</TableHead>
+                <TableHead>{t('Destacado')}</TableHead>
+                <TableHead className="w-32">{t('Acción')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -133,7 +135,7 @@ export function StoreFeaturedPage() {
                   <TableCell>
                     {item.featured ? (
                       <StatusBadge
-                        status="Destacado"
+                        status={t('Destacado')}
                         color={{
                           bg: "var(--warning-soft)",
                           text: "var(--warning-foreground)",
@@ -154,12 +156,12 @@ export function StoreFeaturedPage() {
                       {item.featured ? (
                         <>
                           <StarOff data-icon="inline-start" className="text-warning-foreground" />
-                          Quitar
+                          {t('Quitar')}
                         </>
                       ) : (
                         <>
                           <Star data-icon="inline-start" className="fill-current" />
-                          Destacar
+                          {t('Destacar')}
                         </>
                       )}
                     </Button>

@@ -1,3 +1,4 @@
+import { useT } from "@/providers/i18n-provider";
 import type { ActivityDataPoint } from "../types";
 
 interface ActivityChartProps {
@@ -5,6 +6,7 @@ interface ActivityChartProps {
 }
 
 export function ActivityChart({ data }: ActivityChartProps) {
+  const t = useT();
   const maxValue = Math.max(...data.map((d) => d.value));
 
   const barColors = [
@@ -42,7 +44,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
                     backgroundColor: barColor,
                     boxShadow: `0 4px 12px ${barColor}30`,
                   }}
-                  title={`${point.value} conversaciones`}
+                  title={t('{count} conversaciones', { count: String(point.value) })}
                 />
               </div>
               <span className="text-[11px] font-medium text-muted-foreground">

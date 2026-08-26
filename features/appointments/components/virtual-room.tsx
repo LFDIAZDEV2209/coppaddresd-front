@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Activity,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,6 +59,7 @@ const LOCAL_IDENTITY = "__local__";
  * JWT (ver GenerateAccessTokenAsync en el backend).
  */
 export function VirtualRoom() {
+  const t = useT();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const appointmentId = params.id;
@@ -98,22 +100,22 @@ export function VirtualRoom() {
   const nameFor = useCallback(
     (identity: string, isLocal: boolean): { name: string; role: string } => {
       if (isLocal || identity === myIdentity) {
-        if (isProfessionalParticipant) return { name: "Tú", role: "Profesional" };
-        if (context?.patient) return { name: "Tú", role: "Paciente" };
-        return { name: "Tú", role: "Supervisor" };
+        if (isProfessionalParticipant) return { name: t('Tú'), role: t('Profesional') };
+        if (context?.patient) return { name: t('Tú'), role: t('Paciente') };
+        return { name: t('Tú'), role: t('Supervisor') };
       }
       if (isProfessionalParticipant) {
         return {
-          name: appointment?.patientName ?? "Paciente",
-          role: "Paciente",
+          name: appointment?.patientName ?? t('Paciente'),
+          role: t('Paciente'),
         };
       }
       return {
-        name: appointment?.professionalName ?? "Profesional",
-        role: "Profesional",
+        name: appointment?.professionalName ?? t('Profesional'),
+        role: t('Profesional'),
       };
     },
-    [appointment, context, isProfessionalParticipant, myIdentity],
+    [appointment, context, isProfessionalParticipant, myIdentity, t],
   );
 
   // --- Carga inicial de la cita ---
@@ -130,14 +132,14 @@ export function VirtualRoom() {
         setPhase("ready");
       } catch {
         if (!active) return;
-        setLoadError("No se pudo cargar la cita. Verificá que el enlace sea válido.");
+        setLoadError(t('No se pudo cargar la cita. Verificá que el enlace sea válido.'));
         setPhase("ended");
       }
     })();
     return () => {
       active = false;
     };
-  }, [appointmentId]);
+  }, [appointmentId, t]);
 
   // --- Participantes remotos ---
 
@@ -217,7 +219,7 @@ export function VirtualRoom() {
             video: withVideo,
           }),
           30000,
-          "La conexión con la sala tardó demasiado. Revisá que la cámara y el micrófono estén disponibles e intentá de nuevo.",
+          t('La conexión con la sala tardó demasiado. Revisá que la cámara y el micrófono estén disponibles e intentá de nuevo.'),
         );
         roomRef.current = room;
         setVideoOn(withVideo);
@@ -244,7 +246,7 @@ export function VirtualRoom() {
         room.on("disconnected", (disconnectedRoom) => {
           if (roomRef.current !== disconnectedRoom) return;
           setPhase("ended");
-          setEndedReason("Te desconectaste de la sala o la conexión se interrumpió.");
+          setEndedReason(t('Te desconectaste de la sala o la conexión se interrumpió.'));
         });
 
         setPhase("connected");
@@ -254,11 +256,11 @@ export function VirtualRoom() {
         setConnectError(
           error instanceof Error
             ? formatBackendMessage(error.message)
-            : "No se pudo conectar con la sala de video.",
+            : t('No se pudo conectar con la sala de video.'),
         );
       }
     },
-    [addRemoteTile, appointmentId, removeRemoteTile, watchParticipant],
+    [addRemoteTile, appointmentId, removeRemoteTile, watchParticipant, t],
   );
 
   const join = useCallback(async () => {
@@ -300,10 +302,10 @@ export function VirtualRoom() {
       roomRef.current = null;
       router.push(`/appointments/citas/${appointment.id}`);
     } catch {
-      setConnectError("No se pudo finalizar la sesión. Intentá nuevamente.");
+      setConnectError(t('No se pudo finalizar la sesión. Intentá nuevamente.'));
       setEnding(false);
     }
-  }, [appointment, router]);
+  }, [appointment, router, t]);
 
   const toggleAudio = useCallback(() => {
     const room = roomRef.current;
@@ -440,7 +442,7 @@ export function VirtualRoom() {
               <User className="size-8 text-slate-300" />
             </div>
             <p className="text-[12.5px] font-medium text-slate-400">
-              {tile.isLocal ? "Tu cámara está apagada" : `Esperando a ${info.name.toLowerCase()}…`}
+              {tile.isLocal ? t('Tu cámara está apagada') : `${t('Esperando a')} ${info.name.toLowerCase()}…`}
             </p>
           </div>
         )}
@@ -456,7 +458,7 @@ export function VirtualRoom() {
           <span className="size-1.5 rounded-full bg-emerald-400" />
           <span className="text-[11px] font-semibold text-white">
             {info.name}
-            {tile.isLocal ? " (tú)" : ""}
+            {tile.isLocal ? ` (${t('tú')})` : ""}
           </span>
           <span className="text-[10.5px] font-medium text-slate-300">· {info.role}</span>
         </div>
@@ -480,10 +482,10 @@ export function VirtualRoom() {
           <AlertTriangle className="size-7 text-rose-400" />
         </div>
         <p className="max-w-md text-center text-sm text-slate-300">
-          {loadError ?? "Cita no encontrada."}
+          {loadError ?? t('Cita no encontrada.')}
         </p>
         <Button variant="outline" onClick={() => router.back()} className="gap-1.5">
-          <ArrowLeft className="size-4" /> Volver
+          <ArrowLeft className="size-4" /> {t('Volver')}
         </Button>
       </div>
     );
@@ -496,14 +498,14 @@ export function VirtualRoom() {
           <PhoneOff className="size-7 text-slate-400" />
         </div>
         <p className="max-w-md text-center text-sm text-slate-300">
-          {endedReason ?? "La sesión finalizó."}
+          {endedReason ?? t('La sesión finalizó.')}
         </p>
         <Button
           variant="outline"
           onClick={() => router.push(`/appointments/citas/${appointment.id}`)}
           className="gap-1.5"
         >
-          Volver a la cita
+          {t('Volver a la cita')}
         </Button>
       </div>
     );
@@ -526,7 +528,7 @@ export function VirtualRoom() {
                 <PhoneCall className="size-5 text-teal-300" />
               </div>
               <div>
-                <p className="text-[15px] font-semibold text-white">Sala virtual</p>
+                <p className="text-[15px] font-semibold text-white">{t('Sala virtual')}</p>
                 <p className="text-[12px] text-slate-400">Citas · CoppAddresd</p>
               </div>
             </div>
@@ -544,11 +546,11 @@ export function VirtualRoom() {
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-lg font-semibold text-white">
-                    {appointment.patientName ?? "Paciente"}
+                    {appointment.patientName ?? t('Paciente')}
                   </p>
                   <p className="truncate text-[12.5px] text-slate-400">
-                    {appointment.specialtyName ?? "Especialidad"} ·{" "}
-                    {appointment.locationName ?? "Sede"}
+                    {appointment.specialtyName ?? t('Especialidad')} ·{" "}
+                    {appointment.locationName ?? t('Sede')}
                   </p>
                 </div>
               </div>
@@ -556,15 +558,15 @@ export function VirtualRoom() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <InfoChip
                   icon={CalendarDays}
-                  label="Horario"
+                  label={t('Horario')}
                   value={formatRange(appointment.scheduledStart, appointment.scheduledEnd)}
                 />
                 <InfoChip
                   icon={Stethoscope}
-                  label="Especialidad"
+                  label={t('Especialidad')}
                   value={appointment.specialtyName ?? "—"}
                 />
-                <InfoChip icon={MapPin} label="Sede" value={appointment.locationName ?? "—"} />
+                <InfoChip icon={MapPin} label={t('Sede')} value={appointment.locationName ?? "—"} />
               </div>
 
               {connectError && (
@@ -590,10 +592,10 @@ export function VirtualRoom() {
                       <PhoneCall className="size-4" />
                     )}
                     {connecting
-                      ? "Conectando…"
+                      ? t('Conectando…')
                       : isOwner && appointment.status === "Confirmed"
-                        ? "Iniciar consulta y unirme"
-                        : "Unirme a la consulta"}
+                        ? t('Iniciar consulta y unirme')
+                        : t('Unirme a la consulta')}
                   </Button>
                   {connectError && (
                     <Button
@@ -602,21 +604,21 @@ export function VirtualRoom() {
                       onClick={joinAudioOnly}
                       className="text-slate-300 hover:bg-white/5"
                     >
-                      Unirme solo con audio
+                      {t('Unirme solo con audio')}
                     </Button>
                   )}
                   <p className="text-center text-[11.5px] text-slate-500">
-                    Necesitás cámara y micrófono. La sala abre 10 minutos antes de la cita.
+                    {t('Necesitás cámara y micrófono. La sala abre 10 minutos antes de la cita.')}
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2 rounded-xl bg-white/5 px-4 py-4 text-center">
                   <AlertTriangle className="size-5 text-amber-300" />
-                  <p className="text-[13px] font-medium text-slate-200">
-                    La sala solo está disponible para citas confirmadas o en curso
-                  </p>
-                  <p className="text-[12px] text-slate-400">
-                    Estado actual: {appointmentStatusLabel[appointment.status]}
+                    <p className="text-[13px] font-medium text-slate-200">
+                      {t('La sala solo está disponible para citas confirmadas o en curso')}
+                    </p>
+                    <p className="text-[12px] text-slate-400">
+                      {t('Estado actual')}: {appointmentStatusLabel[appointment.status]}
                   </p>
                 </div>
               )}
@@ -628,7 +630,7 @@ export function VirtualRoom() {
             onClick={() => router.back()}
             className="mx-auto gap-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200"
           >
-            <ArrowLeft className="size-4" /> Volver a la cita
+            <ArrowLeft className="size-4" /> {t('Volver a la cita')}
           </Button>
         </div>
       </div>
@@ -652,8 +654,8 @@ export function VirtualRoom() {
           </Button>
           <div className="min-w-0">
             <p className="truncate text-[13.5px] font-semibold text-white">
-              {appointment.patientName ?? "Paciente"} ·{" "}
-              {appointment.specialtyName ?? "Especialidad"}
+              {appointment.patientName ?? t('Paciente')} ·{" "}
+              {appointment.specialtyName ?? t('Especialidad')}
             </p>
             <p className="truncate text-[11px] text-slate-400">
               {formatRange(appointment.scheduledStart, appointment.scheduledEnd)}
@@ -720,21 +722,21 @@ export function VirtualRoom() {
             <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 py-4">
               <Activity className="size-4 text-slate-500" />
               <p className="text-[12.5px] text-slate-400">
-                Esperando que el paciente se conecte a la sala…
+                {t('Esperando que el paciente se conecte a la sala…')}
               </p>
             </div>
           )}
 
           <div className="flex items-center justify-center gap-2 pb-1">
             <ControlButton
-              label={audioOn ? "Silenciar" : "Activar micrófono"}
+              label={audioOn ? t('Silenciar') : t('Activar micrófono')}
               active={audioOn}
               onClick={toggleAudio}
             >
               {audioOn ? <Mic className="size-5" /> : <MicOff className="size-5" />}
             </ControlButton>
             <ControlButton
-              label={videoOn ? "Apagar cámara" : "Encender cámara"}
+              label={videoOn ? t('Apagar cámara') : t('Encender cámara')}
               active={videoOn}
               onClick={toggleVideo}
             >
@@ -751,7 +753,7 @@ export function VirtualRoom() {
                 ) : (
                   <PhoneOff className="size-4" />
                 )}
-                Finalizar consulta
+                {t('Finalizar consulta')}
               </Button>
             )}
           </div>
@@ -767,7 +769,7 @@ export function VirtualRoom() {
           <div className="flex flex-col gap-4 p-4">
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <h3 className="mb-3 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wider text-slate-300">
-                <Users className="size-3.5" /> Participantes
+                <Users className="size-3.5" /> {t('Participantes')}
               </h3>
               <div className="flex flex-col gap-2">
                 <ParticipantRow
@@ -803,13 +805,12 @@ export function VirtualRoom() {
 
             {canManage && (
               <div className="rounded-2xl border border-teal-400/20 bg-teal-400/10 p-3">
-                <p className="flex items-center gap-1.5 text-[12px] font-medium text-teal-200">
-                  <ShieldCheck className="size-3.5" /> Sos el profesional de esta cita
-                </p>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-teal-200/70">
-                  Podés registrar el encuentro clínico durante la consulta y finalizarla
-                  cuando termines.
-                </p>
+                  <p className="flex items-center gap-1.5 text-[12px] font-medium text-teal-200">
+                    <ShieldCheck className="size-3.5" /> {t('Sos el profesional de esta cita')}
+                  </p>
+                  <p className="mt-1 text-[11.5px] leading-relaxed text-teal-200/70">
+                    {t('Podés registrar el encuentro clínico durante la consulta y finalizarla cuando termines.')}
+                  </p>
               </div>
             )}
 
@@ -820,7 +821,7 @@ export function VirtualRoom() {
 
       {sidebarOpen && (
         <button
-          aria-label="Cerrar panel"
+          aria-label={t('Cerrar panel')}
           className="fixed inset-0 z-30 bg-slate-950/60 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -911,6 +912,7 @@ function ParticipantRow({
   connected: boolean;
   isLocal?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="flex items-center gap-2.5 rounded-xl bg-white/5 px-3 py-2">
       <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-500/20">
@@ -919,7 +921,7 @@ function ParticipantRow({
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12.5px] font-semibold text-white">
           {name}
-          {isLocal ? " (tú)" : ""}
+          {isLocal ? ` (${t('tú')})` : ""}
         </p>
         <p className="text-[10.5px] text-slate-400">{role}</p>
       </div>
@@ -931,7 +933,7 @@ function ParticipantRow({
         <span
           className={`size-1.5 rounded-full ${connected ? "bg-emerald-400" : "bg-slate-600"}`}
         />
-        {connected ? "Conectado" : "Esperando"}
+        {connected ? t('Conectado') : t('Esperando')}
       </span>
     </div>
   );

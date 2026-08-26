@@ -3,6 +3,7 @@
 import {
   Inbox,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,14 +24,15 @@ import {
 } from "../utils/format";
 
 export function AdminRequests() {
+  const t = useT();
   const { items, total, page, totalPages, loading, error, setPage } =
     useAdminRequests();
 
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Solicitudes"
-        description="Solicitudes de citas de los pacientes"
+        title={t('Solicitudes')}
+        description={t('Solicitudes de citas de los pacientes')}
         icon={Inbox}
       />
 
@@ -51,18 +53,18 @@ export function AdminRequests() {
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
             <Inbox className="size-6 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium text-foreground">No hay solicitudes</p>
+          <p className="text-sm font-medium text-foreground">{t('No hay solicitudes')}</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Paciente</TableHead>
-                <TableHead>Especialidad</TableHead>
-                <TableHead>Fecha preferida</TableHead>
-                <TableHead>Motivo</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>{t('Paciente')}</TableHead>
+                <TableHead>{t('Especialidad')}</TableHead>
+                <TableHead>{t('Fecha preferida')}</TableHead>
+                <TableHead>{t('Motivo')}</TableHead>
+                <TableHead>{t('Estado')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -71,7 +73,7 @@ export function AdminRequests() {
                   <TableCell className="font-medium">{request.patientName ?? "—"}</TableCell>
                   <TableCell>{request.specialtyName ?? "—"}</TableCell>
                   <TableCell>
-                    {request.preferredStart ? formatDateTime(request.preferredStart) : "Sin preferencia"}
+                    {request.preferredStart ? formatDateTime(request.preferredStart) : t('Sin preferencia')}
                   </TableCell>
                   <TableCell className="max-w-64 truncate">{request.reason ?? "—"}</TableCell>
                   <TableCell>
@@ -90,13 +92,13 @@ export function AdminRequests() {
       {totalPages > 1 && !loading && (
         <div className="flex items-center justify-center gap-2">
           <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-            Anterior
+            {t('Anterior')}
           </Button>
           <span className="text-[12px] text-muted-foreground">
-            Página {page} de {totalPages} · {total} solicitudes
+            {t('Página {page} de {totalPages} · {total} solicitudes', { page: String(page), totalPages: String(totalPages), total: String(total) })}
           </span>
           <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
-            Siguiente
+            {t('Siguiente')}
           </Button>
         </div>
       )}

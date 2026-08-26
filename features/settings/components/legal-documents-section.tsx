@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { Markdown } from "@/components/markdown";
+import { useT } from "@/providers/i18n-provider";
 import {
   getLegalDocument,
   listAllLegalDocumentVersions,
@@ -39,6 +40,7 @@ import type {
 const BLANK = "blank";
 
 export function LegalDocumentsSection() {
+  const t = useT();
   const [documents, setDocuments] = useState<LegalDocumentSummary[]>([]);
   const [allVersions, setAllVersions] = useState<DocumentVersionListItem[]>([]);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
@@ -88,7 +90,7 @@ export function LegalDocumentsSection() {
       .catch(() => {
         setDetail(null);
         setPendingPreviewId(null);
-        setError("No pudimos cargar el documento seleccionado.");
+        setError(t("No pudimos cargar el documento seleccionado."));
       })
       .finally(() => setLoading(false));
   };
@@ -107,7 +109,7 @@ export function LegalDocumentsSection() {
         else setLoading(false);
       })
       .catch(() => {
-        setError("No pudimos cargar los documentos legales.");
+        setError(t("No pudimos cargar los documentos legales."));
         setLoading(false);
       });
   }, []);
@@ -165,10 +167,10 @@ export function LegalDocumentsSection() {
       setDetail(saved);
       setSelectedCode(saved.code);
       setPreviewVersionId(null);
-      setSuccess("Borrador guardado correctamente.");
+      setSuccess(t("Borrador guardado correctamente."));
       void reloadList();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "No pudimos guardar el documento.");
+      setError(cause instanceof Error ? cause.message : t("No pudimos guardar el documento."));
     } finally {
       setSaving(false);
     }
@@ -191,10 +193,10 @@ export function LegalDocumentsSection() {
       });
       setDetail(published);
       setPublishOpen(false);
-      setSuccess(`Publicado como v${published.currentVersion}.`);
+      setSuccess(t('Publicado como v{version}.', { version: String(published.currentVersion) }));
       void reloadList();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "No pudimos publicar el documento.");
+      setError(cause instanceof Error ? cause.message : t("No pudimos publicar el documento."));
     } finally {
       setPublishing(false);
     }
@@ -229,7 +231,7 @@ export function LegalDocumentsSection() {
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-bold text-white">{detail?.title ?? "Nuevo documento"}</h2>
+                <h2 className="text-lg font-bold text-white">{detail?.title ?? t("Nuevo documento")}</h2>
                 <span className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[11px] text-white/70">
                   {code}
                 </span>
@@ -238,22 +240,22 @@ export function LegalDocumentsSection() {
                 {detail?.isPublished ? (
                   <span className="rounded-full bg-success px-2.5 py-0.5 text-xs font-bold text-white">
                     <CheckCircle2 className="mr-1 inline size-3" />
-                    Publicado · v{detail.currentVersion}
+                    {t('Publicado · v{version}', { version: String(detail.currentVersion) })}
                   </span>
                 ) : (
                   <span className="rounded-full bg-warning px-2.5 py-0.5 text-xs font-bold text-white">
                     <PenLine className="mr-1 inline size-3" />
-                    Sin publicar
+                    {t("Sin publicar")}
                   </span>
                 )}
                 {detail?.latestDraft && (
                   <span className="text-xs text-white/70">
-                    Último borrador v{detail.latestDraft}
+                    {t('Último borrador v{version}', { version: String(detail.latestDraft) })}
                   </span>
                 )}
                 {detail && (
                   <span className="text-xs text-white/70">
-                    · {detail.versionCount} {detail.versionCount === 1 ? "versión" : "versiones"}
+                    · {detail.versionCount} {detail.versionCount === 1 ? t("versión") : t("versiones")}
                   </span>
                 )}
               </div>
@@ -267,11 +269,11 @@ export function LegalDocumentsSection() {
               onClick={startNewDocument}
             >
               <Plus data-icon="inline-start" />
-              Nuevo documento
+              {t("Nuevo documento")}
             </Button>
             <Button size="sm" className="bg-success text-white hover:bg-success/90" onClick={openPublish} disabled={!hasDrafts || publishing}>
               <Rocket data-icon="inline-start" />
-              Publicar
+              {t("Publicar")}
             </Button>
           </div>
         </div>
@@ -281,7 +283,7 @@ export function LegalDocumentsSection() {
         <aside className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 p-3">
           <p className="flex items-center gap-1.5 px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             <FolderOpen className="size-3.5" />
-            Documentos
+            {t("Documentos")}
           </p>
           {documents.map((document) => {
             const docVersions = allVersions
@@ -298,8 +300,8 @@ export function LegalDocumentsSection() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{document.title}</span>
                     <span className="block text-[11px] font-normal text-muted-foreground">
-                      {document.isPublished ? `v${document.currentVersion} publicado` : "Sin publicar"}
-                      {document.versionCount ? ` · ${document.versionCount} ${document.versionCount === 1 ? "versión" : "versiones"}` : ""}
+                      {document.isPublished ? t('v{version} publicado', { version: String(document.currentVersion) }) : t("Sin publicar")}
+                      {document.versionCount ? ` · ${document.versionCount} ${document.versionCount === 1 ? t("versión") : t("versiones")}` : ""}
                     </span>
                   </span>
                 </button>
@@ -315,7 +317,7 @@ export function LegalDocumentsSection() {
                         <span className="font-mono">v{version.versionLabel}</span>
                         <span className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${version.isPublished ? "bg-success-soft text-success-foreground" : "bg-warning-soft text-warning-foreground"}`}>
                           {version.isPublished ? <CheckCircle2 className="size-2.5" /> : <PenLine className="size-2.5" />}
-                          {version.isPublished ? "Publicado" : "Borrador"}
+                          {version.isPublished ? t("Publicado") : t("Borrador")}
                         </span>
                       </button>
                     ))}
@@ -325,7 +327,7 @@ export function LegalDocumentsSection() {
             );
           })}
           {!documents.length && (
-            <p className="px-2 py-3 text-xs text-muted-foreground">Aún no hay documentos.</p>
+            <p className="px-2 py-3 text-xs text-muted-foreground">{t("Aún no hay documentos.")}</p>
           )}
         </aside>
 
@@ -339,9 +341,9 @@ export function LegalDocumentsSection() {
             <>
               <div className="flex flex-wrap gap-2 border-b border-border pb-3">
                 {([
-                  { id: "edit", label: "Editar", icon: Pencil },
-                  { id: "preview", label: "Vista previa", icon: Eye },
-                  { id: "history", label: "Historial", icon: History },
+                  { id: "edit", label: t("Editar"), icon: Pencil },
+                  { id: "preview", label: t("Vista previa"), icon: Eye },
+                  { id: "history", label: t("Historial"), icon: History },
                 ] as const).map((item) => {
                   const Icon = item.icon;
                   return (
@@ -364,39 +366,39 @@ export function LegalDocumentsSection() {
                     <div className="flex flex-col gap-1.5">
                       <Label htmlFor="legal-code" className="flex items-center gap-1">
                         <Hash className="size-3.5" />
-                        Código
+                        {t("Código")}
                       </Label>
                       <Input id="legal-code" value={code} onChange={(event) => setCode(event.target.value)} placeholder="terms-and-conditions" />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <Label htmlFor="legal-title" className="flex items-center gap-1">
                         <Type className="size-3.5" />
-                        Título
+                        {t("Título")}
                       </Label>
                       <Input id="legal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Términos y condiciones" />
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="legal-base" className="flex items-center gap-1">
-                      <GitBranch className="size-3.5" />
-                      Basada en
-                    </Label>
+                      <Label htmlFor="legal-base" className="flex items-center gap-1">
+                        <GitBranch className="size-3.5" />
+                        {t("Basada en")}
+                      </Label>
                     <select
                       id="legal-base"
                       value={baseVersionId}
                       onChange={(event) => changeBase(event.target.value)}
                       className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <option value={BLANK}>En blanco</option>
+                      <option value={BLANK}>{t("En blanco")}</option>
                       {detail?.versions.map((version) => (
                         <option key={version.id} value={version.id}>
-                          v{version.versionLabel} · {version.isPublished ? "Publicado" : "Borrador"}
+                          v{version.versionLabel} · {version.isPublished ? t("Publicado") : t("Borrador")}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label>Contenido</Label>
+                    <Label>{t("Contenido")}</Label>
                     <RichTextEditor
                       value={content}
                       onChange={(markdown) => {
@@ -408,7 +410,7 @@ export function LegalDocumentsSection() {
                   <div className="flex justify-end">
                     <Button onClick={() => void saveDraft()} disabled={saving || !code.trim() || !title.trim() || !content.trim()}>
                       <Save data-icon="inline-start" />
-                      {saving ? "Guardando..." : "Guardar borrador"}
+                      {saving ? t("Guardando...") : t("Guardar borrador")}
                     </Button>
                   </div>
                 </div>
@@ -418,10 +420,10 @@ export function LegalDocumentsSection() {
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-base font-bold">{title || "Sin título"}</h3>
+                      <h3 className="text-base font-bold">{title || t("Sin título")}</h3>
                       <p className="text-xs text-muted-foreground">
-                        Vista previa para la aplicación
-                        {previewVersionId ? " · versión seleccionada" : " · borrador actual"}
+                        {t("Vista previa para la aplicación")}
+                        {previewVersionId ? ` · ${t("versión seleccionada")}` : ` · ${t("borrador actual")}`}
                       </p>
                     </div>
                     <Button
@@ -435,14 +437,14 @@ export function LegalDocumentsSection() {
                       }}
                     >
                       <Plus data-icon="inline-start" />
-                      Nueva versión
+                      {t("Nueva versión")}
                     </Button>
                   </div>
                   <article className="min-h-80 rounded-xl border border-border bg-background p-5 text-sm text-foreground">
                     {previewContent ? (
                       <Markdown content={previewContent} />
                     ) : (
-                      <p className="text-muted-foreground">No hay contenido para previsualizar.</p>
+                      <p className="text-muted-foreground">{t("No hay contenido para previsualizar.")}</p>
                     )}
                   </article>
                 </div>
@@ -452,9 +454,9 @@ export function LegalDocumentsSection() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     <History className="size-4 text-primary" />
-                    <h3 className="text-sm font-semibold">Todas las versiones</h3>
+                    <h3 className="text-sm font-semibold">{t("Todas las versiones")}</h3>
                     <span className="text-xs text-muted-foreground">
-                      · {allVersions.length} borradores y publicaciones
+                      · {allVersions.length} {t("borradores y publicaciones")}
                     </span>
                   </div>
                   {allVersions.length ? (
@@ -469,15 +471,15 @@ export function LegalDocumentsSection() {
                             {item.isPublished ? (
                               <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-bold text-success-foreground">
                                 <CheckCircle2 className="size-3" />
-                                Publicado
+                                {t("Publicado")}
                               </span>
                             ) : (
                               <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-warning-foreground">
                                 <PenLine className="size-3" />
-                                Borrador
+                                {t("Borrador")}
                               </span>
                             )}
-                            {item.isCurrent && <span className="ml-2 text-xs text-success-foreground">· Activa</span>}
+                            {item.isCurrent && <span className="ml-2 text-xs text-success-foreground">· {t("Activa")}</span>}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {new Date(item.createdAt).toLocaleString("es-CO")} · {item.createdBy ?? "Administrador"}
@@ -485,19 +487,19 @@ export function LegalDocumentsSection() {
                         </div>
                         <Button variant="outline" size="sm" onClick={() => openDocument(item.documentCode)}>
                           <Eye data-icon="inline-start" />
-                          Ver
+                          {t("Ver")}
                         </Button>
                         {!item.isPublished && (
                           <Button size="sm" className="bg-success text-white hover:bg-success/90" disabled={publishing} onClick={() => { openDocument(item.documentCode); setPublishVersionId(item.versionId); setPublishOpen(true); }}>
                             <Rocket data-icon="inline-start" />
-                            Publicar
+                            {t("Publicar")}
                           </Button>
                         )}
                       </div>
                     ))
                   ) : (
                     <p className="rounded-lg bg-muted/40 px-3 py-8 text-center text-sm text-muted-foreground">
-                      No hay versiones guardadas.
+                      {t("No hay versiones guardadas.")}
                     </p>
                   )}
                 </div>
@@ -510,12 +512,12 @@ export function LegalDocumentsSection() {
       {publishOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5">
-            <h3 className="text-base font-bold">Publicar documento</h3>
+            <h3 className="text-base font-bold">{t("Publicar documento")}</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Elige el borrador que quieres publicar. Se creará una nueva versión {nextMajor(detail)}.0.
+              {t('Elige el borrador que quieres publicar. Se creará una nueva versión {version}.0.', { version: String(nextMajor(detail)) })}
             </p>
             <div className="mt-4 flex flex-col gap-1.5">
-              <Label htmlFor="publish-version">Versión a publicar</Label>
+              <Label htmlFor="publish-version">{t("Versión a publicar")}</Label>
               <select
                 id="publish-version"
                 value={publishVersionId}
@@ -531,11 +533,11 @@ export function LegalDocumentsSection() {
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setPublishOpen(false)} disabled={publishing}>
-                Cancelar
+                {t("Cancelar")}
               </Button>
               <Button size="sm" className="bg-success text-white hover:bg-success/90" onClick={() => void publish()} disabled={publishing || !publishVersionId}>
                 <Rocket data-icon="inline-start" />
-                {publishing ? "Publicando..." : "Publicar"}
+                {publishing ? t("Publicando...") : t("Publicar")}
               </Button>
             </div>
           </div>

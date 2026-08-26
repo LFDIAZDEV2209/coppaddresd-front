@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,6 +81,7 @@ export function ProfessionalAgenda({
   cancelledBy?: "Professional" | "Admin";
   initialDate?: string | null;
 }) {
+  const t = useT();
   const router = useRouter();
   const { context, loading: userLoading } = useCurrentUser();
 
@@ -131,7 +133,7 @@ export function ProfessionalAgenda({
       refetch();
     } catch {
       setActionError(
-        "No se pudo cancelar la cita. Revisa que el estado lo permita.",
+        t('No se pudo cancelar la cita. Revisa que el estado lo permita.'),
       );
     } finally {
       setBusy(false);
@@ -153,7 +155,7 @@ export function ProfessionalAgenda({
       refetch();
     } catch {
       setActionError(
-        "No se pudo reprogramar la cita. Verifica el horario y la anticipación.",
+        t('No se pudo reprogramar la cita. Verifica el horario y la anticipación.'),
       );
     } finally {
       setBusy(false);
@@ -176,11 +178,11 @@ export function ProfessionalAgenda({
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title={fixedProfessionalId ? "Agenda" : "Mi agenda"}
+        title={fixedProfessionalId ? t('Agenda') : t('Mi agenda')}
         description={
           professionalName
-            ? `Citas de ${professionalName}`
-            : "Agenda del profesional"
+            ? t('Citas de {name}', { name: professionalName })
+            : t('Agenda del profesional')
         }
         icon={CalendarDays}
         actions={<AgendaCalendarSwitcher active="agenda" />}
@@ -189,8 +191,8 @@ export function ProfessionalAgenda({
       {!professionalId ? (
         <EmptyState
           icon={Stethoscope}
-          title="El usuario no es un profesional clínico"
-          description="La agenda de Citas requiere una asignación clínica en el ERP."
+          title={t('El usuario no es un profesional clínico')}
+          description={t('La agenda de Citas requiere una asignación clínica en el ERP.')}
         />
       ) : (
         <>
@@ -225,7 +227,7 @@ export function ProfessionalAgenda({
             </ToggleGroup>
             <span className="text-[12px] text-muted-foreground">
               {appointments.length} cita{appointments.length === 1 ? "" : "s"}{" "}
-              en el rango
+              {t('en el rango')}
             </span>
           </div>
 
@@ -275,8 +277,8 @@ export function ProfessionalAgenda({
           ) : appointments.length === 0 ? (
             <EmptyState
               icon={CalendarDays}
-              title="Sin citas en el rango"
-              description="No hay citas programadas para este período."
+              title={t('Sin citas en el rango')}
+              description={t('No hay citas programadas para este período.')}
             />
           ) : (
             <div className="flex flex-col gap-5">
@@ -326,10 +328,10 @@ export function ProfessionalAgenda({
               <span className="flex size-7 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
                 <CalendarX className="size-4" />
               </span>
-              Cancelar cita
+              {t('Cancelar cita')}
             </DialogTitle>
             <DialogDescription>
-              ¿Seguro que querés cancelar la cita del{" "}
+              {t('¿Seguro que querés cancelar la cita del')}{" "}
               {cancelling
                 ? formatRange(
                     cancelling.scheduledStart,
@@ -340,12 +342,12 @@ export function ProfessionalAgenda({
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="cancel-reason">Motivo (opcional)</Label>
+            <Label htmlFor="cancel-reason">{t('Motivo (opcional)')}</Label>
             <Input
               id="cancel-reason"
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
-              placeholder="Motivo de la cancelación"
+              placeholder={t('Motivo de la cancelación')}
             />
           </div>
           <DialogFooter>
@@ -354,14 +356,14 @@ export function ProfessionalAgenda({
               onClick={() => setCancelling(null)}
               disabled={busy}
             >
-              Volver
+              {t('Volver')}
             </Button>
             <Button
               variant="destructive"
               onClick={confirmCancel}
               disabled={busy}
             >
-              {busy ? "Cancelando..." : "Cancelar cita"}
+              {busy ? t('Cancelando...') : t('Cancelar cita')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -378,14 +380,14 @@ export function ProfessionalAgenda({
               <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
                 <CalendarClock className="size-4" />
               </span>
-              Reprogramar cita
+              {t('Reprogramar cita')}
             </DialogTitle>
             <DialogDescription>
-              Elegí el nuevo horario para la cita.
+              {t('Elegí el nuevo horario para la cita.')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="reschedule-start">Nuevo inicio</Label>
+            <Label htmlFor="reschedule-start">{t('Nuevo inicio')}</Label>
             <Input
               id="reschedule-start"
               type="datetime-local"
@@ -399,10 +401,10 @@ export function ProfessionalAgenda({
               onClick={() => setRescheduling(null)}
               disabled={busy}
             >
-              Volver
+              {t('Volver')}
             </Button>
             <Button onClick={confirmReschedule} disabled={busy || !newStart}>
-              {busy ? "Reprogramando..." : "Reprogramar"}
+              {busy ? t('Reprogramando...') : t('Reprogramar')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -424,6 +426,7 @@ function AppointmentRow({
   onCancel: () => void;
   onReschedule: () => void;
 }) {
+  const t = useT();
   const cancellable =
     appointment.status === "Confirmed" || appointment.status === "Requested";
   const reschedulable = appointment.status === "Confirmed";
@@ -449,16 +452,16 @@ function AppointmentRow({
         </div>
         <div className="flex min-w-0 flex-col gap-px">
           <span className="truncate text-[13.5px] font-semibold text-foreground">
-            {appointment.patientName ?? "Paciente"}
+            {appointment.patientName ?? t('Paciente')}
           </span>
           <span className="truncate text-[12px] text-muted-foreground">
-            {appointment.specialtyName ?? "Especialidad"} ·{" "}
-            {appointment.locationName ?? "Sede"}
+            {appointment.specialtyName ?? t('Especialidad')} ·{" "}
+            {appointment.locationName ?? t('Sede')}
           </span>
           {appointment.cancellationReason && (
-            <span className="truncate text-[11.5px] text-muted-foreground/70">
-              Motivo: {appointment.cancellationReason}
-            </span>
+              <span className="truncate text-[11.5px] text-muted-foreground/70">
+                {t('Motivo')}: {appointment.cancellationReason}
+              </span>
           )}
         </div>
       </button>
@@ -469,11 +472,11 @@ function AppointmentRow({
           color={appointmentStatusColor(appointment.status)}
         />
         <Button size="sm" variant="outline" onClick={onOpen}>
-          <ClipboardList data-icon="inline-start" /> Detalle
+          <ClipboardList data-icon="inline-start" /> {t('Detalle')}
         </Button>
         {joinable && (
           <Button size="sm" onClick={onJoin}>
-            <Video data-icon="inline-start" /> Unirme
+            <Video data-icon="inline-start" /> {t('Unirme')}
           </Button>
         )}
         {reschedulable && (
@@ -481,7 +484,7 @@ function AppointmentRow({
             size="sm"
             variant="ghost"
             onClick={onReschedule}
-            aria-label="Reprogramar"
+            aria-label={t('Reprogramar')}
           >
             <CalendarClock data-icon="inline-start" />
           </Button>
@@ -492,7 +495,7 @@ function AppointmentRow({
             variant="ghost"
             className="text-muted-foreground hover:text-destructive"
             onClick={onCancel}
-            aria-label="Cancelar"
+            aria-label={t('Cancelar')}
           >
             <X data-icon="inline-start" />
           </Button>

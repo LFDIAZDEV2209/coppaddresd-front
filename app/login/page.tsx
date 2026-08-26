@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { useT } from "@/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,6 +36,7 @@ import { cn } from "@/lib/utils";
  */
 function ExpiredBanner() {
   const searchParams = useSearchParams();
+  const t = useT();
 
   if (searchParams.get("expired") !== "1") return null;
 
@@ -43,7 +46,7 @@ function ExpiredBanner() {
       className="mb-6 flex items-center gap-2 rounded-lg bg-warning-soft px-3 py-2.5 text-[13px] text-warning-foreground"
     >
       <AlertTriangle className="size-4 shrink-0" />
-      Tu sesión expiró. Inicia sesión nuevamente para continuar.
+      {t("Tu sesión expiró. Inicia sesión nuevamente para continuar.")}
     </div>
   );
 }
@@ -57,6 +60,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const t = useT();
 
   // Si ya hay una sesión activa (restaurada por cookie al cargar), no tiene
   // sentido ver el login: redirige al dashboard.
@@ -95,6 +99,9 @@ export default function LoginPage() {
           <div className="absolute -right-32 bottom-0 size-80 rounded-full bg-success-soft blur-3xl" />
         </div>
 
+        {/* Language Toggle */}
+        <LanguageToggle className="absolute right-6 top-6 z-10 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors sm:right-10" />
+
         {/* Brand */}
         <div className="mb-10 flex items-center gap-3">
           <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground shadow-sm shadow-primary/30">
@@ -105,7 +112,7 @@ export default function LoginPage() {
               Copp Adresd
             </span>
             <span className="text-xs text-muted-foreground">
-              Consola de administración
+              {t("Consola de administración")}
             </span>
           </div>
         </div>
@@ -114,7 +121,7 @@ export default function LoginPage() {
         <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-lg bg-primary-soft px-3 py-1.5">
           <ShieldCheck className="size-4 text-primary" />
           <span className="text-xs font-medium text-primary">
-            Conexión segura · SSL/TLS
+            {t("Conexión segura · SSL/TLS")}
           </span>
         </div>
 
@@ -124,12 +131,13 @@ export default function LoginPage() {
             <Lock className="size-5" />
           </div>
           <h1 className="text-[28px] font-bold leading-tight tracking-tight text-foreground">
-            Acceso administrativo clínico
+            {t("Acceso administrativo clínico")}
           </h1>
         </div>
         <p className="mb-8 max-w-[400px] text-[14px] leading-relaxed text-secondary-foreground">
-          Gestiona pacientes, agentes de IA y programas de salud desde un
-          entorno seguro.
+          {t(
+            "Gestiona pacientes, agentes de IA y programas de salud desde un entorno seguro.",
+          )}
         </p>
 
         {/* Security Indicators */}
@@ -144,7 +152,7 @@ export default function LoginPage() {
               className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
             >
               <item.icon className={cn("size-3.5", item.color)} />
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
             </div>
           ))}
         </div>
@@ -157,9 +165,9 @@ export default function LoginPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email" className="text-[13px] font-medium">
-              Correo electrónico
-            </Label>
+              <Label htmlFor="email" className="text-[13px] font-medium">
+                {t("Correo electrónico")}
+              </Label>
             <div className="relative">
               <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -176,9 +184,9 @@ export default function LoginPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password" className="text-[13px] font-medium">
-              Contraseña
-            </Label>
+              <Label htmlFor="password" className="text-[13px] font-medium">
+                {t("Contraseña")}
+              </Label>
             <div className="relative">
               <KeyRound className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -195,7 +203,11 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-label={
+                  showPassword
+                    ? t("Ocultar contraseña")
+                    : t("Mostrar contraseña")
+                }
               >
                 {showPassword ? (
                   <EyeOff className="size-4" />
@@ -213,12 +225,12 @@ export default function LoginPage() {
                 onCheckedChange={(v) => setRemember(v === true)}
               />
               <span className="text-[13px] text-muted-foreground">
-                Recordar sesión
+                {t("Recordar sesión")}
               </span>
             </label>
             <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
               <UserRound className="size-3.5" />
-              Acceso restringido
+              {t("Acceso restringido")}
             </span>
           </div>
 
@@ -240,12 +252,12 @@ export default function LoginPage() {
             {submitting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Verificando credenciales...
+                {t("Verificando credenciales...")}
               </>
             ) : (
               <>
                 <LogIn className="size-4" />
-                Iniciar sesión segura
+                {t("Iniciar sesión segura")}
               </>
             )}
           </Button>
@@ -257,7 +269,7 @@ export default function LoginPage() {
             <HeartPulse className="size-5 shrink-0 text-primary mt-0.5" />
             <div className="flex flex-col gap-2">
               <span className="text-[12px] font-semibold text-foreground">
-                Credenciales de demostración
+                {t("Credenciales de demostración")}
               </span>
               {getDemoCredentials().map((cred) => (
                 <button
@@ -286,7 +298,7 @@ export default function LoginPage() {
         <div className="absolute inset-0">
           <Image
             src="https://images.unsplash.com/photo-1638202993928-7267aad84c31?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            alt="Tecnología médica"
+            alt={t("Tecnología médica")}
             fill
             className="object-cover"
             priority
@@ -305,7 +317,7 @@ export default function LoginPage() {
         <div className="absolute top-12 left-12 flex items-center gap-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 px-4 py-3">
           <div className="size-2 rounded-full bg-success animate-pulse" />
           <span className="text-[13px] font-medium text-white">
-            Sistema operativo
+            {t("Sistema operativo")}
           </span>
           <ShieldCheck className="size-4 text-white/80" />
         </div>
@@ -316,22 +328,25 @@ export default function LoginPage() {
             <div className="mb-8 inline-flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-6">
               <HeartPulse className="size-16 text-white/90" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-3">
-              Plataforma de salud integral
-            </h2>
-            <p className="text-[15px] text-white/70 leading-relaxed">
-              Administración clínica para seguimiento integral de pacientes con
-              programas de obesidad y agentes de inteligencia artificial.
-            </p>
+              <h2 className="text-2xl font-bold text-white mb-3">
+                {t("Plataforma de salud integral")}
+              </h2>
+              <p className="text-[15px] text-white/70 leading-relaxed">
+                {t(
+                  "Administración clínica para seguimiento integral de pacientes con programas de obesidad y agentes de inteligencia artificial.",
+                )}
+              </p>
           </div>
         </div>
 
         {/* Metrics Card */}
         <div className="absolute bottom-12 left-12 right-12">
           <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-6">
-            <p className="text-[14px] font-semibold text-white/90 mb-5 leading-relaxed">
-              Administración clínica para seguimiento integral de pacientes con obesidad.
-            </p>
+              <p className="text-[14px] font-semibold text-white/90 mb-5 leading-relaxed">
+                {t(
+                  "Administración clínica para seguimiento integral de pacientes con obesidad.",
+                )}
+              </p>
             <div className="flex items-center gap-8">
               {[
                 { icon: UserRound, value: "12.8K", label: "Usuarios", color: "text-info" },

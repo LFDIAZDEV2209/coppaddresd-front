@@ -18,6 +18,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/providers/i18n-provider";
 
 const turndown = new TurndownService({
   headingStyle: "atx",
@@ -36,6 +37,7 @@ interface RichTextEditorProps {
 
 export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   const appliedRef = useRef<string | null>(null);
+  const t = useT();
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -65,21 +67,21 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
     <div className="overflow-hidden rounded-lg border border-input bg-background">
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/30 px-2 py-1">
         <ToolbarButton
-          label="Encabezado 1"
+          label={t("Encabezado 1")}
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           active={editor.isActive("heading", { level: 1 })}
         >
           <Heading1 className="size-4" />
         </ToolbarButton>
         <ToolbarButton
-          label="Encabezado 2"
+          label={t("Encabezado 2")}
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           active={editor.isActive("heading", { level: 2 })}
         >
           <Heading2 className="size-4" />
         </ToolbarButton>
         <ToolbarButton
-          label="Encabezado 3"
+          label={t("Encabezado 3")}
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           active={editor.isActive("heading", { level: 3 })}
         >
@@ -87,14 +89,14 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
         </ToolbarButton>
         <span className="mx-1 h-5 w-px bg-border" />
         <ToolbarButton
-          label="Negrita"
+          label={t("Negrita")}
           onClick={() => editor.chain().focus().toggleBold().run()}
           active={editor.isActive("bold")}
         >
           <Bold className="size-4" />
         </ToolbarButton>
         <ToolbarButton
-          label="Cursiva"
+          label={t("Cursiva")}
           onClick={() => editor.chain().focus().toggleItalic().run()}
           active={editor.isActive("italic")}
         >
@@ -102,31 +104,31 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
         </ToolbarButton>
         <span className="mx-1 h-5 w-px bg-border" />
         <ToolbarButton
-          label="Lista con viñetas"
+          label={t("Lista con viñetas")}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           active={editor.isActive("bulletList")}
         >
           <List className="size-4" />
         </ToolbarButton>
         <ToolbarButton
-          label="Lista numerada"
+          label={t("Lista numerada")}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           active={editor.isActive("orderedList")}
         >
           <ListOrdered className="size-4" />
         </ToolbarButton>
         <ToolbarButton
-          label="Cita"
+          label={t("Cita")}
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           active={editor.isActive("blockquote")}
         >
           <Quote className="size-4" />
         </ToolbarButton>
         <span className="mx-1 h-5 w-px bg-border" />
-        <ToolbarButton label="Deshacer" onClick={() => editor.chain().focus().undo().run()}>
+        <ToolbarButton label={t("Deshacer")} onClick={() => editor.chain().focus().undo().run()}>
           <Undo2 className="size-4" />
         </ToolbarButton>
-        <ToolbarButton label="Rehacer" onClick={() => editor.chain().focus().redo().run()}>
+        <ToolbarButton label={t("Rehacer")} onClick={() => editor.chain().focus().redo().run()}>
           <Redo2 className="size-4" />
         </ToolbarButton>
       </div>

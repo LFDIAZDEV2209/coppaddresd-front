@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Loader2, MailPlus, Plus, Search, Stethoscope, UserRound } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   fetchEmployees,
@@ -19,6 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function ProfessionalDirectory() {
+  const t = useT();
   const router = useRouter();
   const [data, setData] = useState<PaginatedEmployees | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,7 +34,7 @@ export function ProfessionalDirectory() {
       const result = await fetchEmployees({ page: 1, pageSize: 50, search: term });
       setData(result);
     } catch {
-      setFeedback({ kind: "error", message: "No se pudo cargar el directorio de empleados." });
+      setFeedback({ kind: "error", message: t("No se pudo cargar el directorio de empleados.") });
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,7 @@ export function ProfessionalDirectory() {
         if (!cancelled) setData(result);
       } catch {
         if (!cancelled) {
-          setFeedback({ kind: "error", message: "No se pudo cargar el directorio de empleados." });
+          setFeedback({ kind: "error", message: t("No se pudo cargar el directorio de empleados.") });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -63,14 +65,14 @@ export function ProfessionalDirectory() {
     try {
       const result = await inviteEmployee(employee.id);
       const message = result.invitationLink
-        ? `Invitación enviada a ${employee.email}. Enlace (dev): ${result.invitationLink}`
-        : `Invitación enviada a ${employee.email}. El profesional recibirá el enlace por correo.`;
+        ? t("Invitación enviada a {email}. Enlace (dev): {link}", { email: employee.email, link: result.invitationLink })
+        : t("Invitación enviada a {email}. El profesional recibirá el enlace por correo.", { email: employee.email });
       setFeedback({ kind: "ok", message });
       await load(search, true);
     } catch (err) {
       setFeedback({
         kind: "error",
-        message: err instanceof ApiError ? err.message : "No se pudo enviar la invitación.",
+        message: err instanceof ApiError ? err.message : t("No se pudo enviar la invitación."),
       });
     } finally {
       setInvitingId(null);
@@ -80,8 +82,8 @@ export function ProfessionalDirectory() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <PageHeader
-        title="Profesionales"
-        description="Directorio del personal clínico y administrativo. Invita a nuevos profesionales para que completen su acceso."
+        title={t("Profesionales")}
+        description={t("Directorio del personal clínico y administrativo. Invita a nuevos profesionales para que completen su acceso.")}
         icon={Stethoscope}
         actions={
           <button
@@ -89,7 +91,7 @@ export function ProfessionalDirectory() {
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-[13px] font-semibold text-[#0B2B4A] hover:bg-white/90 transition-colors"
           >
             <Plus className="size-4" />
-            Nuevo profesional
+            {t("Nuevo profesional")}
           </button>
         }
       />
@@ -115,7 +117,7 @@ export function ProfessionalDirectory() {
             onKeyDown={(e) => {
               if (e.key === "Enter") void load(search, true);
             }}
-            placeholder="Buscar por nombre o correo..."
+            placeholder={t("Buscar por nombre o correo...")}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
@@ -123,19 +125,19 @@ export function ProfessionalDirectory() {
         {loading && !data ? (
           <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
-            Cargando...
+            {t("Cargando...")}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 font-semibold">Nombre</th>
-                  <th className="px-4 py-3 font-semibold">Correo</th>
-                  <th className="px-4 py-3 font-semibold">Profesión</th>
-                  <th className="px-4 py-3 font-semibold">Clínicas</th>
-                  <th className="px-4 py-3 font-semibold">Estado</th>
-                  <th className="px-4 py-3 text-right font-semibold">Acciones</th>
+                  <th className="px-4 py-3 font-semibold">{t("Nombre")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("Correo")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("Profesión")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("Clínicas")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("Estado")}</th>
+                  <th className="px-4 py-3 text-right font-semibold">{t("Acciones")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -154,7 +156,7 @@ export function ProfessionalDirectory() {
                     <td className="px-4 py-3 text-muted-foreground">{employee.email}</td>
                     <td className="px-4 py-3">
                       {employee.isProfessional ? (
-                        employee.professionalTypeName ?? "Profesional"
+                        employee.professionalTypeName ?? t("Profesional")
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
@@ -174,7 +176,7 @@ export function ProfessionalDirectory() {
                               : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {STATUS_LABELS[employee.status] ?? employee.status}
+                        {t(STATUS_LABELS[employee.status] ?? employee.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -192,7 +194,7 @@ export function ProfessionalDirectory() {
                           ) : (
                             <MailPlus className="size-3.5" />
                           )}
-                          Invitar
+                          {t("Invitar")}
                         </button>
                       ) : (
                         <button
@@ -201,7 +203,7 @@ export function ProfessionalDirectory() {
                             navigator.clipboard.writeText(employee.id);
                           }}
                           className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground"
-                          aria-label="Copiar ID"
+                          aria-label={t("Copiar ID")}
                         >
                           <Copy className="size-3.5" />
                           ID
@@ -214,7 +216,7 @@ export function ProfessionalDirectory() {
             </table>
             {data && data.data.length === 0 && (
               <p className="py-12 text-center text-sm text-muted-foreground">
-                Sin empleados para mostrar.
+                {t("Sin empleados para mostrar.")}
               </p>
             )}
           </div>
