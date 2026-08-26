@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -105,6 +106,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             <Sun className="size-4" />
           )}
         </button>
+
+        {/* Language Toggle */}
+        <LanguageToggle className="flex h-8 items-center gap-1.5 rounded-lg bg-white/10 px-2.5 text-white/80 hover:bg-white/20 hover:text-white transition-colors" />
 
         {/* Notifications */}
         <button
