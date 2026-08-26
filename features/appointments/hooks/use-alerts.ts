@@ -22,6 +22,14 @@ interface UseAlertsReturn {
   handleReadAll: () => Promise<void>;
 }
 
+const PAGE_SIZE = 20;
+
+/**
+ * Bandeja de alertas del módulo de Citas. Las mutaciones (marcar leída /
+ * marcar todas) son OPTIMISTAS: el estado local cambia al instante para dar
+ * feedback inmediato y se sincroniza con el backend; si el servidor falla se
+ * restaura la lista original.
+ */
 export function useAlerts(): UseAlertsReturn {
   const [alerts, setAlerts] = useState<AppointmentAlertDto[]>([]);
   const [unread, setUnread] = useState(0);
@@ -36,7 +44,7 @@ export function useAlerts(): UseAlertsReturn {
     (async () => {
       try {
         const [list, summary] = await Promise.all([
-          fetchAlerts({ page, pageSize: 20 }),
+          fetchAlerts({ page, pageSize: PAGE_SIZE }),
           fetchAlertsSummary(),
         ]);
         if (!active) return;
@@ -68,15 +76,45 @@ export function useAlerts(): UseAlertsReturn {
     setRefreshKey((key) => key + 1);
   }, []);
 
-  const handleRead = useCallback(async (id: string) => {
-    await markAlertRead(id);
-    setRefreshKey((key) => key + 1);
-  }, []);
+  /** Marca una alerta como leída con actualización optimista local. */
+  const handleRead = useCallback(
+    async (id: string) => {
+      const previous = alerts;
+      setAlerts((current) =>
+        current.map((alert) =>
+          alert.id === id && alert.readAt === null
+            ? { ...alert, readAt: new Date().toISOString() }
+            : alert,
+        ),
+      );
+      setUnread((count) => Math.max(0, count - 1));
+      try {
+        await markAlertRead(id);
+      } catch {
+        // Restaura el estado anterior si el servidor rechaza la operación.
+        setAlerts(previous);
+        setUnread((count) => count + 1);
+      }
+    },
+    [alerts],
+  );
 
+  /** Marca todas como leídas con actualización optimista local. */
   const handleReadAll = useCallback(async () => {
-    await markAllAlertsRead();
-    setRefreshKey((key) => key + 1);
-  }, []);
+    const previous = alerts;
+    const now = new Date().toISOString();
+    setAlerts((current) =>
+      current.map((alert) =>
+        alert.readAt === null ? { ...alert, readAt: now } : alert,
+      ),
+    );
+    setUnread(0);
+    try {
+      await markAllAlertsRead();
+    } catch {
+      setAlerts(previous);
+    }
+  }, [alerts]);
 
   return {
     alerts,

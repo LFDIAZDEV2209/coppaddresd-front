@@ -31,6 +31,7 @@ export type EncounterStatus = "Draft" | "Completed" | "Cancelled";
 export type AlertType =
   | "NewRequest"
   | "RequestApproved"
+  | "RequestRejected"
   | "NewAppointment"
   | "UpcomingAppointment"
   | "AppointmentRescheduled"
