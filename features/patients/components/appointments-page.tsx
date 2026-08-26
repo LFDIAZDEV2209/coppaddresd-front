@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchPatients } from "../services/patients-service";
 import { createAppointment } from "../services/appointments-service";
 import type { AppointmentInput, PatientListItem } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 const defaultForm: AppointmentInput = {
   patientId: "",
@@ -40,6 +41,7 @@ const slots = [
 ];
 
 export function AppointmentsPage() {
+  const t = useT();
   const [patients, setPatients] = useState<PatientListItem[]>([]);
   const [patientSearch, setPatientSearch] = useState("");
   const [selected, setSelected] = useState<PatientListItem>();
@@ -52,9 +54,9 @@ export function AppointmentsPage() {
   useEffect(() => {
     void fetchPatients(1, 50, { search: "", status: "all", insurerId: "all" })
       .then((result) => setPatients(result.data))
-      .catch(() => setError("No pudimos cargar los pacientes." as string))
+      .catch(() => setError(t("No pudimos cargar los pacientes.") as string))
       .finally(() => setLoadingPatients(false));
-  }, []);
+  }, [t]);
   const filteredPatients = patients.filter((patient) =>
     `${patient.firstName} ${patient.lastName} ${patient.documentNumber}`
       .toLowerCase()
@@ -71,7 +73,7 @@ export function AppointmentsPage() {
   const submit = async () => {
     if (!selected || !form.date || !form.time || !form.reason.trim()) {
       setError(
-        "Selecciona un paciente y completa fecha, hora y motivo de consulta.",
+        t("Selecciona un paciente y completa fecha, hora y motivo de consulta."),
       );
       return;
     }
@@ -84,7 +86,7 @@ export function AppointmentsPage() {
       );
       setSuccess(true);
     } catch {
-      setError("No pudimos confirmar la cita. Intenta de nuevo.");
+      setError(t("No pudimos confirmar la cita. Intenta de nuevo."));
     } finally {
       setSubmitting(false);
     }
@@ -97,13 +99,13 @@ export function AppointmentsPage() {
           <CheckCircle2 className="size-8" />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Cita confirmada</h1>
+          <h1 className="text-2xl font-bold">{t('Cita confirmada')}</h1>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            La cita de{" "}
+            {t('La cita de')}{" "}
             <strong>
               {selected?.firstName} {selected?.lastName}
             </strong>{" "}
-            quedó agendada para el {form.date} a las {form.time}.
+            {t('quedó agendada para el')} {form.date} {t('a las')} {form.time}.
           </p>
         </div>
         <Button
@@ -113,7 +115,7 @@ export function AppointmentsPage() {
             setForm(defaultForm);
           }}
         >
-          Agendar otra cita
+          {t('Agendar otra cita')}
         </Button>
       </div>
     );
@@ -121,19 +123,19 @@ export function AppointmentsPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Agendar cita"
-        description="Programa una nueva atención para tus pacientes"
+        title={t('Agendar cita')}
+        description={t('Programa una nueva atención para tus pacientes')}
         icon={CalendarPlus}
       />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-primary">
-              Paso 1
+              {t('Paso 1')}
             </p>
-            <h2 className="mt-1 text-lg font-bold">Selecciona un paciente</h2>
+            <h2 className="mt-1 text-lg font-bold">{t('Selecciona un paciente')}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Busca por nombre o documento.
+              {t('Busca por nombre o documento.')}
             </p>
           </div>
           <div className="relative">
@@ -142,8 +144,8 @@ export function AppointmentsPage() {
               className="pl-9"
               value={patientSearch}
               onChange={(event) => setPatientSearch(event.target.value)}
-              placeholder="Buscar paciente..."
-              aria-label="Buscar paciente para la cita"
+              placeholder={t('Buscar paciente...')}
+              aria-label={t('Buscar paciente para la cita')}
             />
           </div>
           {selected && (
@@ -165,7 +167,7 @@ export function AppointmentsPage() {
                 className="ml-auto text-xs font-semibold text-primary underline"
                 onClick={() => setSelected(undefined)}
               >
-                Cambiar
+                {t('Cambiar')}
               </button>
             </div>
           )}
@@ -193,7 +195,7 @@ export function AppointmentsPage() {
                     </span>
                     <span className="block text-xs text-muted-foreground">
                       {patient.documentTypeName ?? ""} {patient.documentNumber} ·{" "}
-                      {patient.insurerName ?? "Sin aseguradora"}
+                      {patient.insurerName ?? t("Sin aseguradora")}
                     </span>
                   </span>
                   <UserRound className="size-4 text-muted-foreground" />
@@ -201,33 +203,33 @@ export function AppointmentsPage() {
               ))}
             </div>
           ) : (
-            <EmptyAppointment text="No hay pacientes que coincidan con tu búsqueda." />
+            <EmptyAppointment text={t("No hay pacientes que coincidan con tu búsqueda.")} />
           )}
         </section>
         <section className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-primary">
-              Paso 2
+              {t('Paso 2')}
             </p>
-            <h2 className="mt-1 text-lg font-bold">Información de la cita</h2>
+            <h2 className="mt-1 text-lg font-bold">{t('Información de la cita')}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Configura la disponibilidad y el motivo.
+              {t('Configura la disponibilidad y el motivo.')}
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Especialidad">
+            <Field label={t("Especialidad")}>
               <select
                 value={form.specialty}
                 onChange={(event) => update("specialty", event.target.value)}
               >
-                <option>Medicina general</option>
-                <option>Cardiología</option>
-                <option>Pediatría</option>
-                <option>Psicología</option>
-                <option>Nutrición</option>
+                <option>{t('Medicina general')}</option>
+                <option>{t('Cardiología')}</option>
+                <option>{t('Pediatría')}</option>
+                <option>{t('Psicología')}</option>
+                <option>{t('Nutrición')}</option>
               </select>
             </Field>
-            <Field label="Profesional">
+            <Field label={t("Profesional")}>
               <select
                 value={form.professional}
                 onChange={(event) => update("professional", event.target.value)}
@@ -237,28 +239,28 @@ export function AppointmentsPage() {
                 <option>Dra. Andrea Gómez</option>
               </select>
             </Field>
-            <Field label="Fecha">
+            <Field label={t("Fecha")}>
               <Input
                 type="date"
                 value={form.date}
                 onChange={(event) => update("date", event.target.value)}
               />
             </Field>
-            <Field label="Tipo de consulta">
+            <Field label={t("Tipo de consulta")}>
               <select
                 value={form.consultationType}
                 onChange={(event) =>
                   update("consultationType", event.target.value)
                 }
               >
-                <option>Presencial</option>
-                <option>Virtual</option>
-                <option>Telefónica</option>
+                <option>{t('Presencial')}</option>
+                <option>{t('Virtual')}</option>
+                <option>{t('Telefónica')}</option>
               </select>
             </Field>
           </div>
           <div className="flex flex-col gap-2">
-            <Label>Horarios disponibles</Label>
+            <Label>{t('Horarios disponibles')}</Label>
             <div className="grid grid-cols-4 gap-2">
               {slots.map((slot) => (
                 <button
@@ -273,19 +275,19 @@ export function AppointmentsPage() {
               ))}
             </div>
           </div>
-          <Field label="Motivo de consulta">
+          <Field label={t("Motivo de consulta")}>
             <Input
               value={form.reason}
               onChange={(event) => update("reason", event.target.value)}
-              placeholder="Ej. Control y seguimiento"
+              placeholder={t("Ej. Control y seguimiento")}
             />
           </Field>
-          <Field label="Observaciones">
+          <Field label={t("Observaciones")}>
             <textarea
               value={form.notes}
               onChange={(event) => update("notes", event.target.value)}
               className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              placeholder="Información adicional para el profesional"
+              placeholder={t("Información adicional para el profesional")}
             />
           </Field>
           {error && (
@@ -304,7 +306,7 @@ export function AppointmentsPage() {
                   data-icon="inline-start"
                 />
               )}
-              {submitting ? "Confirmando..." : "Confirmar cita"}
+              {submitting ? t("Confirmando...") : t("Confirmar cita")}
             </Button>
           </div>
         </section>

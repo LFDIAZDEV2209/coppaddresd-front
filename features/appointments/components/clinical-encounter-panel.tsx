@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useEffect, useState } from "react";
 import { ClipboardPenLine, Save, CheckCircle2 } from "lucide-react";
 import { StatusBadge } from "@/components/feedback/status-badge";
@@ -40,6 +41,7 @@ export function ClinicalEncounterPanel({
   appointmentId: string;
   variant?: "light" | "dark";
 }) {
+  const t = useT();
   const [encounter, setEncounter] =
     useState<ClinicalDataDto>(EMPTY_CLINICAL_DATA);
   const [notes, setNotes] = useState("");
@@ -155,21 +157,21 @@ export function ClinicalEncounterPanel({
         className={`grid grid-cols-1 gap-3 ${dark ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}
       >
         <Field
-          label="Motivo de consulta"
+          label={t("Motivo de consulta")}
           value={encounter.motivoConsulta ?? ""}
           onChange={(v) => update("motivoConsulta", v)}
           disabled={isCompleted}
           dark={dark}
         />
         <Field
-          label="Evaluación"
+          label={t("Evaluación")}
           value={encounter.evaluacion ?? ""}
           onChange={(v) => update("evaluacion", v)}
           disabled={isCompleted}
           dark={dark}
         />
         <Field
-          label="Diagnóstico"
+          label={t("Diagnóstico")}
           value={encounter.diagnostico ?? ""}
           onChange={(v) => update("diagnostico", v)}
           disabled={isCompleted}
@@ -182,7 +184,7 @@ export function ClinicalEncounterPanel({
             </Label>
             <CatalogSearchSelect
               search={searchIcd10Codes}
-              placeholder="Agregar código CIE-10…"
+              placeholder={t("Agregar código CIE-10…")}
               icon={ClipboardPenLine}
               onSelect={(item) => {
                 const label = `${item.code ?? ""} — ${item.name}`.trim();
@@ -197,28 +199,28 @@ export function ClinicalEncounterPanel({
           </div>
         )}
         <Field
-          label="Plan"
+          label={t("Plan")}
           value={encounter.plan ?? ""}
           onChange={(v) => update("plan", v)}
           disabled={isCompleted}
           dark={dark}
         />
         <Field
-          label="Indicaciones"
+          label={t("Indicaciones")}
           value={encounter.indicaciones ?? ""}
           onChange={(v) => update("indicaciones", v)}
           disabled={isCompleted}
           dark={dark}
         />
         <Field
-          label="Observaciones"
+          label={t("Observaciones")}
           value={encounter.observaciones ?? ""}
           onChange={(v) => update("observaciones", v)}
           disabled={isCompleted}
           dark={dark}
         />
         <Field
-          label="Seguimiento"
+          label={t("Seguimiento")}
           value={encounter.seguimiento ?? ""}
           onChange={(v) => update("seguimiento", v)}
           disabled={isCompleted}
@@ -239,7 +241,7 @@ export function ClinicalEncounterPanel({
           id="encounter-notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Notas adicionales de la consulta"
+          placeholder={t("Notas adicionales de la consulta")}
           disabled={isCompleted}
           className={
             dark

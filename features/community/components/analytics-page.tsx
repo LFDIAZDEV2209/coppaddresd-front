@@ -12,8 +12,10 @@ import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCommunity } from "../hooks/useCommunity";
+import { useT } from "@/providers/i18n-provider";
 
 export function AnalyticsPage() {
+  const t = useT();
   const { profiles, profilesLoading, feed, feedLoading, feedError } =
     useCommunity();
 
@@ -28,37 +30,37 @@ export function AnalyticsPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Analítica de comunidad"
-        description="Indicadores básicos de la actividad de la comunidad"
+        title={t('Analítica de comunidad')}
+        description={t('Indicadores básicos de la actividad de la comunidad')}
         icon={BarChart3}
       />
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Perfiles"
+          label={t('Perfiles')}
           value={profilesLoading ? "…" : String(profiles.length)}
-          context={`${bannedCount} baneados`}
+          context={t('{count} baneados', { count: String(bannedCount) })}
           icon={Users}
           variant="primary"
         />
         <StatCard
-          label="Publicaciones"
+          label={t('Publicaciones')}
           value={feedLoading ? "…" : String(feed.length)}
-          context={`Basado en las últimas ${feed.length} publicaciones`}
+          context={t('Basado en las últimas {count} publicaciones', { count: String(feed.length) })}
           icon={MessagesSquare}
           variant="primary"
         />
         <StatCard
-          label="Me gusta"
+          label={t('Me gusta')}
           value={feedLoading ? "…" : String(totalLikes)}
-          context="En las publicaciones recientes"
+          context={t('En las publicaciones recientes')}
           icon={Heart}
           variant="info"
         />
         <StatCard
-          label="Comentarios"
+          label={t('Comentarios')}
           value={feedLoading ? "…" : String(totalComments)}
-          context="En las publicaciones recientes"
+          context={t('En las publicaciones recientes')}
           icon={MessageCircle}
           variant="success"
         />
@@ -66,8 +68,8 @@ export function AnalyticsPage() {
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader
-          title="Últimas publicaciones"
-          description="Actividad más reciente del feed"
+          title={t('Últimas publicaciones')}
+          description={t('Actividad más reciente del feed')}
           icon={BarChart3}
           variant="primary"
         />
@@ -85,7 +87,7 @@ export function AnalyticsPage() {
           </div>
         ) : feedError ? (
           <div className="p-10 text-center text-sm text-destructive">
-            No pudimos cargar la actividad de la comunidad.
+            {t('No pudimos cargar la actividad de la comunidad.')}
           </div>
         ) : feed.length ? (
           <div className="divide-y divide-border">
@@ -106,7 +108,7 @@ export function AnalyticsPage() {
                       </span>
                       {post.pinned && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-[2px] text-[11px] font-semibold text-primary">
-                          Fijada
+                          {t('Fijada')}
                         </span>
                       )}
                     </div>
@@ -130,7 +132,7 @@ export function AnalyticsPage() {
           </div>
         ) : (
           <div className="py-14 text-center text-sm text-muted-foreground">
-            Todavía no hay publicaciones en la comunidad.
+            {t('Todavía no hay publicaciones en la comunidad.')}
           </div>
         )}
       </div>

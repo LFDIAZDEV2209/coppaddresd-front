@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -59,6 +60,7 @@ const LOCAL_IDENTITY = "__local__";
  * JWT (ver GenerateAccessTokenAsync en el backend).
  */
 export function VirtualRoom() {
+  const t = useT();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const appointmentId = params.id;
@@ -609,12 +611,12 @@ export function VirtualRoom() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <InfoChip
                   icon={CalendarDays}
-                  label="Horario"
+                  label={t("Horario")}
                   value={`${formatTime(appointment.scheduledStart)} – ${formatTime(appointment.scheduledEnd)}`}
                 />
                 <InfoChip
                   icon={Stethoscope}
-                  label="Código de cita"
+                  label={t("Código de cita")}
                   value={appointment.id.slice(0, 8).toUpperCase()}
                   mono
                 />
@@ -700,7 +702,7 @@ export function VirtualRoom() {
             variant="ghost"
             size="icon-sm"
             onClick={leave}
-            aria-label="Salir de la sala"
+            aria-label={t("Salir de la sala")}
             className="text-slate-300 hover:bg-white/10 hover:text-white"
           >
             <PhoneOff className="size-4" />
@@ -753,7 +755,7 @@ export function VirtualRoom() {
               setSidebarTab("participants");
               setSidebarOpen(true);
             }}
-            aria-label="Abrir panel de participantes y formularios"
+            aria-label={t("Abrir panel de participantes y formularios")}
             className="text-slate-300 hover:bg-white/10 hover:text-white"
           >
             <PanelRight className="size-4" />
@@ -798,11 +800,11 @@ export function VirtualRoom() {
                   setSidebarTab("forms");
                   setSidebarOpen(true);
                 }}
-                aria-label="Abrir formularios médicos"
+                aria-label={t("Abrir formularios médicos")}
                 className="gap-1.5 border border-white/10 bg-white/[0.06] text-slate-200 hover:bg-white/10 hover:text-white"
               >
                 <ClipboardList className="size-4" />
-                <span className="hidden sm:inline">Formularios</span>
+                <span className="hidden sm:inline">{t("Formularios")}</span>
               </Button>
             )}
             <ControlButton

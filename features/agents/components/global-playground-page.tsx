@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { AgentType } from "../types";
 import { useAgents } from "../hooks/use-agents";
+import { useT } from "@/providers/i18n-provider";
 import { Playground } from "./playground";
 import { getAgentIconOption } from "./agent-icon-picker";
 
@@ -25,13 +26,14 @@ function AgentPicker({
   selected: AgentType | null;
   onSelect: (agent: AgentType) => void;
 }) {
+  const t = useT();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
           <Button size="sm" className="gap-1.5">
             <Bot className="size-4" />
-            {selected ? selected.name : "Elegir agente"}
+            {selected ? selected.name : t('Elegir agente')}
             <ChevronDown className="size-3.5 opacity-70" />
           </Button>
         }
@@ -39,7 +41,7 @@ function AgentPicker({
       <DropdownMenuContent className="w-72">
         {agents.length === 0 ? (
           <p className="px-3 py-6 text-center text-[12.5px] text-muted-foreground">
-            No hay agentes creados todavía.
+            {t('No hay agentes creados todavía.')}
           </p>
         ) : (
           agents.map((agent) => {
@@ -62,7 +64,7 @@ function AgentPicker({
                     {agent.name}
                   </span>
                   <span className="block truncate text-[11px] text-muted-foreground">
-                    {agent.specialty ?? agent.description ?? "Sin descripción"} · v
+                    {agent.specialty ?? agent.description ?? t('Sin descripción')} · v
                     {agent.activeVersionNumber ?? "—"}
                   </span>
                 </span>
@@ -77,6 +79,7 @@ function AgentPicker({
 }
 
 export function GlobalPlaygroundPage() {
+  const t = useT();
   const { agents, loading } = useAgents(100);
   const [selected, setSelected] = useState<AgentType | null>(null);
 
@@ -92,8 +95,8 @@ export function GlobalPlaygroundPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Playground"
-        description="Probá cualquier agente en vivo: instrucciones, herramientas y conocimiento"
+        title={t('Playground')}
+        description={t('Probá cualquier agente en vivo: instrucciones, herramientas y conocimiento')}
         icon={Play}
         actions={
           <AgentPicker agents={agents} selected={selected} onSelect={setSelected} />
@@ -108,9 +111,9 @@ export function GlobalPlaygroundPage() {
             <Bot className="size-7" />
           </span>
           <div className="flex flex-col gap-1">
-            <p className="text-sm font-semibold">Elegí un agente para probar</p>
+            <p className="text-sm font-semibold">{t('Elegí un agente para probar')}</p>
             <p className="max-w-sm text-[12.5px] text-muted-foreground">
-              Seleccioná un agente de la lista y conversá con él en tiempo real.
+              {t('Seleccioná un agente de la lista y conversá con él en tiempo real.')}
             </p>
           </div>
           <AgentPicker agents={agents} selected={selected} onSelect={setSelected} />

@@ -60,6 +60,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useT } from "@/providers/i18n-provider";
 import {
   getCategories,
   getProductState,
@@ -120,6 +121,7 @@ function toProductInput(product: ProductListItem): ProductInput {
 }
 
 export function ProductsPage() {
+  const t = useT();
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [analytics, setAnalytics] = useState<InventoryAnalytics | null>(null);
@@ -156,7 +158,7 @@ export function ProductsPage() {
       })
       .catch(() => {
         if (!cancelled)
-          setError("No fue posible cargar el catálogo de productos.");
+          setError(t("No fue posible cargar el catálogo de productos."));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -164,7 +166,7 @@ export function ProductsPage() {
     return () => {
       cancelled = true;
     };
-  }, [filters, reload]);
+  }, [filters, reload, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,8 +205,8 @@ export function ProductsPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Productos"
-        description="Catálogo y control de existencias del inventario"
+        title={t("Productos")}
+        description={t("Catálogo y control de existencias del inventario")}
         icon={Package}
         actions={
           <Button
@@ -215,31 +217,31 @@ export function ProductsPage() {
             }}
           >
             <Plus data-icon="inline-start" />
-            Nuevo producto
+            {t("Nuevo producto")}
           </Button>
         }
       />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
-          label="Productos activos"
+          label={t("Productos activos")}
           value={analytics ? String(analytics.activeProducts) : "—"}
           icon={Package}
           tone="primary"
         />
         <Metric
-          label="Stock bajo"
+          label={t("Stock bajo")}
           value={analytics ? String(analytics.lowStock) : "—"}
           icon={AlertTriangle}
           tone="warning"
         />
         <Metric
-          label="Sin stock"
+          label={t("Sin stock")}
           value={analytics ? String(analytics.outOfStock) : "—"}
           icon={XCircle}
           tone="danger"
         />
         <Metric
-          label="Por vencer"
+          label={t("Por vencer")}
           value={analytics ? String(analytics.expiringSoon) : "—"}
           icon={FileWarning}
           tone="info"
@@ -250,11 +252,10 @@ export function ProductsPage() {
           <AlertTriangle className="size-5 shrink-0 text-warning-foreground" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-warning-foreground">
-              {alerts.length} alertas requieren atención
+              {t("{count} alertas requieren atención", { count: String(alerts.length) })}
             </p>
             <p className="text-xs text-warning-foreground/80">
-              Revisa productos con stock bajo, sin existencias o próximos a
-              vencer.
+              {t("Revisa productos con stock bajo, sin existencias o próximos a vencer.")}
             </p>
           </div>
           <button
@@ -262,29 +263,29 @@ export function ProductsPage() {
             onClick={() => updateFilters({ status: "Con alertas" })}
             className="text-xs font-bold text-warning-foreground underline underline-offset-2"
           >
-            Ver alertas
+            {t("Ver alertas")}
           </button>
         </div>
       )}
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-sm font-semibold">Catálogo de productos</h2>
+            <h2 className="text-sm font-semibold">{t("Catálogo de productos")}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Gestiona medicamentos, insumos y futuras categorías.
+              {t("Gestiona medicamentos, insumos y futuras categorías.")}
             </p>
           </div>
           <div className="flex gap-2">
             <Link href="/inventory/entries">
               <Button variant="outline" size="sm">
                 <ArrowDownToLine data-icon="inline-start" />
-                Registrar entrada
+                {t("Registrar entrada")}
               </Button>
             </Link>
             <Link href="/inventory/exits">
               <Button variant="outline" size="sm">
                 <ArrowUpFromLine data-icon="inline-start" />
-                Registrar salida
+                {t("Registrar salida")}
               </Button>
             </Link>
           </div>
@@ -298,8 +299,8 @@ export function ProductsPage() {
               onChange={(event) =>
                 updateFilters({ search: event.target.value })
               }
-              placeholder="Buscar por nombre, SKU o principio activo"
-              aria-label="Buscar productos"
+              placeholder={t("Buscar por nombre, SKU o principio activo")}
+              aria-label={t("Buscar productos")}
             />
           </div>
           <select
@@ -308,9 +309,9 @@ export function ProductsPage() {
             onChange={(event) =>
               updateFilters({ category: event.target.value })
             }
-            aria-label="Filtrar por categoría"
+            aria-label={t("Filtrar por categoría")}
           >
-            <option value="">Todas las categorías</option>
+            <option value="">{t("Todas las categorías")}</option>
             {categories.map((category) => (
               <option key={category}>{category}</option>
             ))}
@@ -323,16 +324,16 @@ export function ProductsPage() {
                 status: event.target.value as InventoryFilters["status"],
               })
             }
-            aria-label="Filtrar por estado"
+            aria-label={t("Filtrar por estado")}
           >
-            <option value="all">Todos los estados</option>
-            <option>Con alertas</option>
-            <option>Disponible</option>
-            <option>Stock bajo</option>
-            <option>Sin stock</option>
-            <option>Próximo a vencer</option>
-            <option>Vencido</option>
-            <option>Inactivo</option>
+            <option value="all">{t("Todos los estados")}</option>
+            <option value="Con alertas">{t("Con alertas")}</option>
+            <option value="Disponible">{t("Disponible")}</option>
+            <option value="Stock bajo">{t("Stock bajo")}</option>
+            <option value="Sin stock">{t("Sin stock")}</option>
+            <option value="Próximo a vencer">{t("Próximo a vencer")}</option>
+            <option value="Vencido">{t("Vencido")}</option>
+            <option value="Inactivo">{t("Inactivo")}</option>
           </select>
         </div>
       </section>
@@ -380,25 +381,26 @@ function ProductTable({
   onDetails: (product: ProductListItem) => void;
   onEdit: (product: ProductListItem) => void;
 }) {
+  const t = useT();
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader
-        title={`${products.length} productos`}
-        description="Existencias y alertas por producto"
+        title={t("{count} productos", { count: String(products.length) })}
+        description={t("Existencias y alertas por producto")}
         icon={Package}
         variant="primary"
       />
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Producto</TableHead>
-            <TableHead>SKU</TableHead>
-            <TableHead className="hidden lg:table-cell">Categoría</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead>Vencimiento</TableHead>
-            <TableHead>Estado</TableHead>
+            <TableHead>{t("Producto")}</TableHead>
+            <TableHead>{t("SKU")}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t("Categoría")}</TableHead>
+            <TableHead>{t("Stock")}</TableHead>
+            <TableHead>{t("Vencimiento")}</TableHead>
+            <TableHead>{t("Estado")}</TableHead>
             <TableHead>
-              <span className="sr-only">Acciones</span>
+              <span className="sr-only">{t("Acciones")}</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -438,14 +440,14 @@ function ProductTable({
                     {product.stock}
                   </span>
                   <span className="block text-[11px] text-muted-foreground">
-                    mín. {product.minimumStock}
+                    {t("mín.")} {product.minimumStock}
                   </span>
                 </TableCell>
                 <TableCell>
                   <span className="text-sm">{product.expirationDate}</span>
                   {state === "Próximo a vencer" || state === "Vencido" ? (
                     <span className="block text-[11px] text-destructive">
-                      {state}
+                      {t(state)}
                     </span>
                   ) : null}
                 </TableCell>
@@ -459,7 +461,7 @@ function ProductTable({
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={`Acciones de ${product.name}`}
+                          aria-label={t("Acciones de {name}", { name: product.name })}
                         />
                       }
                     >
@@ -468,24 +470,24 @@ function ProductTable({
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onDetails(product)}>
                         <Eye />
-                        Ver detalle
+                        {t("Ver detalle")}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onEdit(product)}>
                         <Pencil />
-                        Editar producto
+                        {t("Editar producto")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         render={<Link href="/inventory/entries" />}
                       >
                         <ArrowDownToLine />
-                        Registrar entrada
+                        {t("Registrar entrada")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         render={<Link href="/inventory/exits" />}
                       >
                         <ArrowUpFromLine />
-                        Registrar salida
+                        {t("Registrar salida")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -512,6 +514,7 @@ function ProductFormDialog({
   onOpenChange: (open: boolean) => void;
   onSubmit: (input: ProductInput) => Promise<void>;
 }) {
+  const t = useT();
   const [form, setForm] = useState<ProductInput>(() =>
     product ? toProductInput(product) : blankProduct,
   );
@@ -528,7 +531,7 @@ function ProductFormDialog({
       !form.category.trim() ||
       !form.expirationDate
     ) {
-      setError("Completa nombre, SKU, categoría y vencimiento.");
+      setError(t("Completa nombre, SKU, categoría y vencimiento."));
       return;
     }
     setError(null);
@@ -539,19 +542,19 @@ function ProductFormDialog({
       <DialogContent className="max-h-[92dvh] w-[calc(100vw-1rem)] !max-w-none overflow-x-hidden overflow-y-auto sm:w-[calc(100vw-2rem)] sm:!max-w-3xl lg:!max-w-4xl xl:!max-w-5xl">
         <DialogHeader>
           <DialogTitle>
-            {product ? "Editar producto" : "Nuevo producto"}
+            {product ? t("Editar producto") : t("Nuevo producto")}
           </DialogTitle>
           <DialogDescription>
-            El producto queda preparado para medicamentos y futuras categorías.
+            {t("El producto queda preparado para medicamentos y futuras categorías.")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-5">
           <fieldset className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <legend className="col-span-full mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <Tags className="size-4 text-primary" />
-              Identificación
+              {t("Identificación")}
             </legend>
-            <Field label="Tipo de producto">
+            <Field label={t("Tipo de producto")}>
               <IconSelect
                 icon={Pill}
                 value={form.productType}
@@ -562,29 +565,29 @@ function ProductFormDialog({
                   )
                 }
               >
-                <option>Medicamento</option>
-                <option>Insumo médico</option>
-                <option>Material hospitalario</option>
-                <option>Producto de farmacia</option>
-                <option>Alimento saludable</option>
-                <option>Snack saludable</option>
-                <option>Bebida</option>
-                <option>Suplemento</option>
-                <option>Dispositivo de salud</option>
-                <option>Equipamiento fitness</option>
-                <option>Cuidado personal</option>
-                <option>Otro</option>
+                <option value="Medicamento">{t("Medicamento")}</option>
+                <option value="Insumo médico">{t("Insumo médico")}</option>
+                <option value="Material hospitalario">{t("Material hospitalario")}</option>
+                <option value="Producto de farmacia">{t("Producto de farmacia")}</option>
+                <option value="Alimento saludable">{t("Alimento saludable")}</option>
+                <option value="Snack saludable">{t("Snack saludable")}</option>
+                <option value="Bebida">{t("Bebida")}</option>
+                <option value="Suplemento">{t("Suplemento")}</option>
+                <option value="Dispositivo de salud">{t("Dispositivo de salud")}</option>
+                <option value="Equipamiento fitness">{t("Equipamiento fitness")}</option>
+                <option value="Cuidado personal">{t("Cuidado personal")}</option>
+                <option value="Otro">{t("Otro")}</option>
               </IconSelect>
             </Field>
-            <Field label="Nombre" required>
+            <Field label={t("Nombre")} required>
               <IconInput
                 icon={Package}
                 value={form.name}
                 onChange={(event) => update("name", event.target.value)}
-                placeholder="Ej. Paracetamol"
+                placeholder={t("Ej. Paracetamol")}
               />
             </Field>
-            <Field label="SKU / código" required>
+            <Field label={t("SKU / código")} required>
               <IconInput
                 icon={Barcode}
                 value={form.sku}
@@ -592,25 +595,25 @@ function ProductFormDialog({
                 placeholder="MED-PAR-500"
               />
             </Field>
-            <Field label="Categoría" required>
+            <Field label={t("Categoría")} required>
               <IconInput
                 icon={Tags}
                 value={form.category}
                 onChange={(event) => update("category", event.target.value)}
-                placeholder="Analgésicos"
+                placeholder={t("Analgésicos")}
               />
             </Field>
-            <Field label="Principio activo">
+            <Field label={t("Principio activo")}>
               <IconInput
                 icon={FlaskConical}
                 value={form.activeIngredient}
                 onChange={(event) =>
                   update("activeIngredient", event.target.value)
                 }
-                placeholder="Acetaminofén"
+                placeholder={t("Acetaminofén")}
               />
             </Field>
-            <Field label="Concentración">
+            <Field label={t("Concentración")}>
               <IconInput
                 icon={Scale}
                 value={form.concentration}
@@ -620,23 +623,23 @@ function ProductFormDialog({
                 placeholder="500 mg"
               />
             </Field>
-            <Field label="Presentación">
+            <Field label={t("Presentación")}>
               <IconInput
                 icon={Box}
                 value={form.presentation}
                 onChange={(event) => update("presentation", event.target.value)}
-                placeholder="Tabletas"
+                placeholder={t("Tabletas")}
               />
             </Field>
-            <Field label="Unidad de medida">
+            <Field label={t("Unidad de medida")}>
               <IconInput
                 icon={Ruler}
                 value={form.unit}
                 onChange={(event) => update("unit", event.target.value)}
-                placeholder="Caja x 20"
+                placeholder={t("Caja x 20")}
               />
             </Field>
-            <Field label="Laboratorio">
+            <Field label={t("Laboratorio")}>
               <IconInput
                 icon={Factory}
                 value={form.manufacturer}
@@ -648,9 +651,9 @@ function ProductFormDialog({
           <fieldset className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <legend className="col-span-full mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <Warehouse className="size-4 text-primary" />
-              Control de inventario
+              {t("Control de inventario")}
             </legend>
-            <Field label="Proveedor">
+            <Field label={t("Proveedor")}>
               <IconInput
                 icon={Truck}
                 value={form.supplier}
@@ -658,7 +661,7 @@ function ProductFormDialog({
                 placeholder="Drogas La Rebaja"
               />
             </Field>
-            <Field label="Lote">
+            <Field label={t("Lote")}>
               <IconInput
                 icon={Hash}
                 value={form.lot}
@@ -666,7 +669,7 @@ function ProductFormDialog({
                 placeholder="PCT2404A"
               />
             </Field>
-            <Field label="Vencimiento" required>
+            <Field label={t("Vencimiento")} required>
               <IconInput
                 icon={CalendarDays}
                 type="date"
@@ -676,7 +679,7 @@ function ProductFormDialog({
                 }
               />
             </Field>
-            <Field label="Ubicación">
+            <Field label={t("Ubicación")}>
               <IconInput
                 icon={MapPin}
                 value={form.location}
@@ -684,7 +687,7 @@ function ProductFormDialog({
                 placeholder="Estante A-01"
               />
             </Field>
-            <Field label="Stock inicial">
+            <Field label={t("Stock inicial")}>
               <IconInput
                 icon={PackagePlus}
                 type="number"
@@ -696,7 +699,7 @@ function ProductFormDialog({
                 placeholder="0"
               />
             </Field>
-            <Field label="Stock mínimo">
+            <Field label={t("Stock mínimo")}>
               <IconInput
                 icon={Warehouse}
                 type="number"
@@ -708,7 +711,7 @@ function ProductFormDialog({
                 placeholder="10"
               />
             </Field>
-            <Field label="Stock máximo">
+            <Field label={t("Stock máximo")}>
               <IconInput
                 icon={Warehouse}
                 type="number"
@@ -720,7 +723,7 @@ function ProductFormDialog({
                 placeholder="100"
               />
             </Field>
-            <Field label="Costo unitario">
+            <Field label={t("Costo unitario")}>
               <IconInput
                 icon={CircleDollarSign}
                 type="number"
@@ -734,12 +737,12 @@ function ProductFormDialog({
               />
             </Field>
           </fieldset>
-          <Field label="Observaciones" icon={FileWarning}>
+          <Field label={t("Observaciones")} icon={FileWarning}>
             <textarea
               className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={form.notes}
               onChange={(event) => update("notes", event.target.value)}
-              placeholder="Notas opcionales del producto"
+              placeholder={t("Notas opcionales del producto")}
             />
           </Field>
           {error && (
@@ -756,14 +759,14 @@ function ProductFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancelar
+              {t("Cancelar")}
             </Button>
             <Button type="submit" disabled={saving}>
               {saving
-                ? "Guardando..."
+                ? t("Guardando...")
                 : product
-                  ? "Guardar cambios"
-                  : "Crear producto"}
+                  ? t("Guardar cambios")
+                  : t("Crear producto")}
             </Button>
           </DialogFooter>
         </form>
@@ -779,13 +782,14 @@ function ProductDetails({
   product?: ProductListItem;
   onClose: () => void;
 }) {
+  const t = useT();
   return (
     <Dialog open={Boolean(product)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Detalle del producto</DialogTitle>
+          <DialogTitle>{t("Detalle del producto")}</DialogTitle>
           <DialogDescription>
-            Ficha y trazabilidad del artículo.
+            {t("Ficha y trazabilidad del artículo.")}
           </DialogDescription>
         </DialogHeader>
         {product && (
@@ -807,28 +811,28 @@ function ProductDetails({
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <Detail
-                label="Stock actual"
+                label={t("Stock actual")}
                 value={`${product.stock} ${product.unit}`}
               />
               <Detail
-                label="Rango objetivo"
+                label={t("Rango objetivo")}
                 value={`${product.minimumStock} - ${product.maximumStock}`}
               />
-              <Detail label="Lote" value={product.lot ?? "—"} />
-              <Detail label="Vencimiento" value={product.expirationDate ?? "—"} />
-              <Detail label="Proveedor" value={product.supplier ?? "—"} />
-              <Detail label="Ubicación" value={product.location ?? "—"} />
-              <Detail label="Laboratorio" value={product.manufacturer ?? "—"} />
+              <Detail label={t("Lote")} value={product.lot ?? "—"} />
+              <Detail label={t("Vencimiento")} value={product.expirationDate ?? "—"} />
+              <Detail label={t("Proveedor")} value={product.supplier ?? "—"} />
+              <Detail label={t("Ubicación")} value={product.location ?? "—"} />
+              <Detail label={t("Laboratorio")} value={product.manufacturer ?? "—"} />
               <Detail
-                label="Costo unitario"
+                label={t("Costo unitario")}
                 value={formatCurrency(product.unitCost)}
               />
             </div>
             <div className="rounded-lg border border-border p-3 text-sm">
               <p className="mb-1 text-xs font-semibold text-muted-foreground">
-                Observaciones
+                {t("Observaciones")}
               </p>
-              {product.notes || "Sin observaciones."}
+              {product.notes || t("Sin observaciones.")}
             </div>
           </div>
         )}
@@ -956,12 +960,13 @@ function ProductSkeleton() {
   );
 }
 function EmptyState() {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card py-16 text-center">
       <Package className="size-8 text-muted-foreground" />
-      <h3 className="text-sm font-semibold">No hay productos para mostrar</h3>
+      <h3 className="text-sm font-semibold">{t("No hay productos para mostrar")}</h3>
       <p className="text-xs text-muted-foreground">
-        Ajusta los filtros o crea el primer producto.
+        {t("Ajusta los filtros o crea el primer producto.")}
       </p>
     </div>
   );
@@ -973,14 +978,15 @@ function ErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/30 py-14 text-center">
       <p className="text-sm font-semibold text-destructive">
-        No pudimos cargar el catálogo
+        {t("No pudimos cargar el catálogo")}
       </p>
       <p className="text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
-        Reintentar
+        {t("Reintentar")}
       </Button>
     </div>
   );

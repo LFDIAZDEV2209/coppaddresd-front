@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Dumbbell } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -29,6 +30,7 @@ export function ExerciseRoutineDetailDialog({
   onClose,
   getRoutine,
 }: ExerciseRoutineDetailDialogProps) {
+  const t = useT();
   const [routine, setRoutine] = useState<ExerciseRoutine | null>(null);
   const [loading, setLoading] = useState(Boolean(routineId));
 
@@ -75,7 +77,7 @@ export function ExerciseRoutineDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Dumbbell className="size-5" />
-            {loading ? "Cargando..." : (routine?.name ?? "Rutina")}
+            {loading ? t("Cargando...") : (routine?.name ?? t("Rutina"))}
           </DialogTitle>
         </DialogHeader>
 
@@ -86,7 +88,7 @@ export function ExerciseRoutineDetailDialog({
             {/* Info básica */}
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <span className="text-xs text-muted-foreground">Categoría</span>
+                <span className="text-xs text-muted-foreground">{t("Categoría")}</span>
                 <p>
                   <Badge className={CATEGORY_COLORS[routine.category] ?? ""}>
                     {routine.category}
@@ -95,7 +97,7 @@ export function ExerciseRoutineDetailDialog({
               </div>
               <div>
                 <span className="text-xs text-muted-foreground">
-                  Dificultad
+                  {t("Dificultad")}
                 </span>
                 <p>
                   <Badge
@@ -106,7 +108,7 @@ export function ExerciseRoutineDetailDialog({
                 </p>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Estado</span>
+                <span className="text-xs text-muted-foreground">{t("Estado")}</span>
                 <p>
                   <Badge className={statusColor(routine.status)}>
                     {PLAN_STATUS_LABELS[routine.status]}
@@ -116,17 +118,17 @@ export function ExerciseRoutineDetailDialog({
               {routine.estimatedMinutes && (
                 <div>
                   <span className="text-xs text-muted-foreground">
-                    Duración estimada
+                    {t("Duración estimada")}
                   </span>
                   <p className="text-sm font-medium">
-                    {routine.estimatedMinutes} minutos
+                    {t("{minutes} minutos", { minutes: String(routine.estimatedMinutes) })}
                   </p>
                 </div>
               )}
               {routine.description && (
                 <div className="sm:col-span-2">
                   <span className="text-xs text-muted-foreground">
-                    Descripción
+                    {t("Descripción")}
                   </span>
                   <p className="text-sm">{routine.description}</p>
                 </div>
@@ -138,9 +140,9 @@ export function ExerciseRoutineDetailDialog({
             {/* Ejercicios */}
             {routine.exercises.length > 0 ? (
               <div className="flex flex-col gap-2">
-                <span className="text-xs font-semibold uppercase text-muted-foreground">
-                  Ejercicios ({routine.exercises.length})
-                </span>
+              <span className="text-xs font-semibold uppercase text-muted-foreground">
+                {t("Ejercicios ({count})", { count: String(routine.exercises.length) })}
+              </span>
                 {routine.exercises
                   .sort((a, b) => a.sortOrder - b.sortOrder)
                   .map((exercise, index) => (
@@ -164,7 +166,7 @@ export function ExerciseRoutineDetailDialog({
                       <div className="flex flex-wrap gap-2 pl-5 mt-1">
                         {exercise.sets && (
                           <Badge variant="outline" className="text-xs">
-                            {exercise.sets} series
+                            {t("{count} series", { count: String(exercise.sets) })}
                           </Badge>
                         )}
                         {exercise.repetitions && (
@@ -174,7 +176,7 @@ export function ExerciseRoutineDetailDialog({
                         )}
                         {exercise.restSeconds && (
                           <Badge variant="outline" className="text-xs">
-                            {exercise.restSeconds}s descanso
+                            {t("{seconds}s descanso", { seconds: String(exercise.restSeconds) })}
                           </Badge>
                         )}
                         {exercise.durationSecs && (
@@ -193,13 +195,13 @@ export function ExerciseRoutineDetailDialog({
               </div>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Esta rutina no tiene ejercicios configurados aún.
+                {t("Esta rutina no tiene ejercicios configurados aún.")}
               </p>
             )}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No se pudo cargar la rutina.
+            {t("No se pudo cargar la rutina.")}
           </p>
         )}
       </DialogContent>

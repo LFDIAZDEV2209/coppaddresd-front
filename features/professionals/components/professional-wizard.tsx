@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -161,6 +162,7 @@ const EMPTY: FormState = {
 };
 
 export function ProfessionalWizard() {
+  const t = useT();
   const router = useRouter();
 
   const [step, setStep] = useState(0);
@@ -455,14 +457,14 @@ export function ProfessionalWizard() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
       <PageHeader
-        title="Nuevo profesional"
-        description="Crea el perfil, asigna sus clínicas, permisos y horarios de atención, y envía la invitación por correo."
+        title={t("Nuevo profesional")}
+        description={t("Crea el perfil, asigna sus clínicas, permisos y horarios de atención, y envía la invitación por correo.")}
         icon={Stethoscope}
       />
 
       {/* Stepper profesional: círculos con iconos, conectores y navegación por pasos completados. */}
       <nav
-        aria-label="Progreso del formulario"
+        aria-label={t("Progreso del formulario")}
         className="mt-6 flex items-stretch rounded-2xl border border-border bg-card px-4 py-4 sm:px-6"
       >
         {STEPS.map((s, i) => {
@@ -624,51 +626,51 @@ export function ProfessionalWizard() {
           {step === 0 && (
             <div className="flex flex-col gap-0">
               <SectionHeader
-                title="Datos básicos"
-                description="Identidad y contacto del profesional"
+                title={t("Datos básicos")}
+                description={t("Identidad y contacto del profesional")}
                 icon={UserRound}
                 variant="primary"
               />
               <div className="flex flex-col gap-4 p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Nombre">
+                  <Field label={t("Nombre")}>
                     <input
                       value={form.firstName}
                       onChange={(e) =>
                         setForm({ ...form, firstName: e.target.value })
                       }
-                      placeholder="Jane"
+                      placeholder={t("Jane")}
                       className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </Field>
-                  <Field label="Apellido">
+                  <Field label={t("Apellido")}>
                     <input
                       value={form.lastName}
                       onChange={(e) =>
                         setForm({ ...form, lastName: e.target.value })
                       }
-                      placeholder="Doe"
+                      placeholder={t("Doe")}
                       className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </Field>
-                  <Field label="Correo electrónico">
+                  <Field label={t("Correo electrónico")}>
                     <input
                       type="email"
                       value={form.email}
                       onChange={(e) =>
                         setForm({ ...form, email: e.target.value })
                       }
-                      placeholder="jane.doe@mediquer.com"
+                      placeholder={t("jane.doe@mediquer.com")}
                       className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </Field>
-                  <Field label="Teléfono (opcional)">
+                  <Field label={t("Teléfono (opcional)")}>
                     <input
                       value={form.phone}
                       onChange={(e) =>
                         setForm({ ...form, phone: e.target.value })
                       }
-                      placeholder="555-010-2244"
+                      placeholder={t("555-010-2244")}
                       className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </Field>
@@ -691,13 +693,13 @@ export function ProfessionalWizard() {
           {step === 1 && (
             <div className="flex flex-col gap-0">
               <SectionHeader
-                title="Clínicas y permisos"
-                description="Organización, sedes y rol por clínica"
+                title={t("Clínicas y permisos")}
+                description={t("Organización, sedes y rol por clínica")}
                 icon={Building2}
                 variant="primary"
               />
               <div className="flex flex-col gap-5 p-5 sm:p-6">
-                <Field label="Organización">
+                <Field label={t("Organización")}>
                   <select
                     value={form.organizationId}
                     onChange={(e) =>
@@ -756,7 +758,7 @@ export function ProfessionalWizard() {
                         {assignment && (
                           <div className="mt-3 flex flex-col gap-3 pl-7">
                             <div className="grid gap-3 sm:grid-cols-2">
-                              <Field label="Rol en esta clínica">
+                              <Field label={t("Rol en esta clínica")}>
                                 <select
                                   value={assignment.roleId ?? ""}
                                   onChange={(e) =>
@@ -863,8 +865,8 @@ export function ProfessionalWizard() {
           {step === 2 && (
             <div className="flex flex-col gap-0">
               <SectionHeader
-                title="Profesión y especialidades"
-                description="Tipo de profesional y áreas que puede atender"
+                title={t("Profesión y especialidades")}
+                description={t("Tipo de profesional y áreas que puede atender")}
                 icon={Stethoscope}
                 variant="primary"
               />
@@ -974,8 +976,8 @@ export function ProfessionalWizard() {
           {step === 3 && (
             <div className="flex flex-col gap-0">
               <SectionHeader
-                title="Horarios de atención"
-                description="Disponibilidad del profesional para agendar citas, por clínica"
+                title={t("Horarios de atención")}
+                description={t("Disponibilidad del profesional para agendar citas, por clínica")}
                 icon={CalendarClock}
                 variant="primary"
               />
@@ -1142,7 +1144,7 @@ export function ProfessionalWizard() {
 
                                   {schedule.sameEveryDay ? (
                                     <div className="grid gap-3 sm:grid-cols-2">
-                                      <Field label="Desde">
+                                      <Field label={t("Desde")}>
                                         <input
                                           type="time"
                                           value={
@@ -1161,7 +1163,7 @@ export function ProfessionalWizard() {
                                           className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                                         />
                                       </Field>
-                                      <Field label="Hasta">
+                                      <Field label={t("Hasta")}>
                                         <input
                                           type="time"
                                           value={
@@ -1259,8 +1261,8 @@ export function ProfessionalWizard() {
           {step === 4 && (
             <div className="flex flex-col gap-0">
               <SectionHeader
-                title="Revisa y envía"
-                description="Confirma los datos antes de crear e invitar"
+                title={t("Revisa y envía")}
+                description={t("Confirma los datos antes de crear e invitar")}
                 icon={Send}
                 variant="primary"
               />

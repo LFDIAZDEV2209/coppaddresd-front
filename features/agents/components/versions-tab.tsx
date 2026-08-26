@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import type { AgentTypeVersion, KnowledgeBase } from "../types";
 import { formatDate } from "../services/agents-service";
+import { useT } from "@/providers/i18n-provider";
 import { VersionFormDialog } from "./version-form-dialog";
 
 interface VersionsTabProps {
@@ -47,6 +48,7 @@ export function VersionsTab({
   onCreate,
   onUploadInstructions,
 }: VersionsTabProps) {
+  const t = useT();
   const [viewing, setViewing] = useState<AgentTypeVersion | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -58,24 +60,24 @@ export function VersionsTab({
             <Layers className="size-4.5" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold">Versiones de configuración</h3>
+            <h3 className="text-sm font-semibold">{t('Versiones de configuración')}</h3>
             <p className="text-[12px] text-muted-foreground">
-              Cada versión es inmutable: la activa se ejecuta en el runtime de IA.
+              {t('Cada versión es inmutable: la activa se ejecuta en el runtime de IA.')}
             </p>
           </div>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}>
           <Plus data-icon="inline-start" />
-          Nueva versión
+          {t('Nueva versión')}
         </Button>
       </div>
 
       {versions.length === 0 && !creating ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border py-12 text-center">
           <Layers className="size-8 text-muted-foreground" />
-          <p className="text-sm font-medium">Sin versiones</p>
+          <p className="text-sm font-medium">{t('Sin versiones')}</p>
           <p className="text-[12.5px] text-muted-foreground">
-            Crea la primera versión de configuración.
+            {t('Crea la primera versión de configuración.')}
           </p>
         </div>
       ) : (
@@ -83,11 +85,11 @@ export function VersionsTab({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Versión</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Notas</TableHead>
-                <TableHead>Creada</TableHead>
-                <TableHead className="w-24 text-right">Acciones</TableHead>
+                <TableHead>{t('Versión')}</TableHead>
+                <TableHead>{t('Estado')}</TableHead>
+                <TableHead>{t('Notas')}</TableHead>
+                <TableHead>{t('Creada')}</TableHead>
+                <TableHead className="w-24 text-right">{t('Acciones')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -102,10 +104,10 @@ export function VersionsTab({
                     {version.id === activeVersionId ? (
                       <Badge className="gap-1">
                         <CheckCircle2 className="size-3" />
-                        Activa
+                        {t('Activa')}
                       </Badge>
                     ) : (
-                      <Badge variant="secondary">Inactiva</Badge>
+                      <Badge variant="secondary">{t('Inactiva')}</Badge>
                     )}
                   </TableCell>
                   <TableCell className="max-w-[260px] truncate text-[12.5px] text-muted-foreground">
@@ -120,7 +122,7 @@ export function VersionsTab({
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => setViewing(version)}
-                        aria-label={`Ver configuración de v${version.versionNumber}`}
+                        aria-label={t('Ver configuración de v{version}', { version: String(version.versionNumber) })}
                       >
                         <Eye className="size-4" />
                       </Button>
@@ -131,7 +133,7 @@ export function VersionsTab({
                           className="text-muted-foreground hover:text-primary"
                           onClick={() => onActivate(version.id)}
                           disabled={activatingId === version.id}
-                          aria-label={`Activar v${version.versionNumber}`}
+                          aria-label={t('Activar v{version}', { version: String(version.versionNumber) })}
                         >
                           {activatingId === version.id ? (
                             <LoaderCircle className="size-4 animate-spin" />
@@ -149,7 +151,7 @@ export function VersionsTab({
                   <TableCell colSpan={5}>
                     <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
                       <LoaderCircle className="size-4 animate-spin" />
-                      Creando versión...
+                      {t('Creando versión...')}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -175,10 +177,10 @@ export function VersionsTab({
         <DialogContent className="max-h-[92vh] min-w-[640px] max-w-2xl overflow-y-auto p-0">
           <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
             <DialogTitle className="text-base font-semibold">
-              Configuración de v{viewing?.versionNumber}
+              {t('Configuración de v{version}', { version: String(viewing?.versionNumber ?? '') })}
             </DialogTitle>
             <DialogDescription>
-              {viewing?.notes ?? "Sin notas"} · Creada {viewing ? formatDate(viewing.createdAt) : ""}
+              {viewing?.notes ?? t('Sin notas')} · {t('Creada')} {viewing ? formatDate(viewing.createdAt) : ""}
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 py-5">

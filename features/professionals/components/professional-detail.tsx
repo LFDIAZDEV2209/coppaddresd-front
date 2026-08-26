@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -32,6 +33,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function ProfessionalDetail({ id }: { id: string }) {
+  const t = useT();
   const router = useRouter();
 
   const [employee, setEmployee] = useState<EmployeeDetail | null>(null);
@@ -209,8 +211,8 @@ export function ProfessionalDetail({ id }: { id: string }) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-6">
         <PageHeader
-          title="Profesional"
-          description="No se encontró el profesional."
+          title={t("Profesional")}
+          description={t("No se encontró el profesional.")}
           icon={Stethoscope}
         />
         <Button
@@ -330,7 +332,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
                         }}
                         className="h-9 w-full rounded-lg border border-border bg-background px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-56"
                       >
-                        <option value="">Sin rol</option>
+                        <option value="">{t("Sin rol")}</option>
                         {roles.map((r) => (
                           <option key={r.id} value={r.id}>
                             {r.name}
@@ -370,9 +372,9 @@ export function ProfessionalDetail({ id }: { id: string }) {
               <h2 className="text-[14px] font-semibold">Invitación</h2>
             </div>
             <div className="space-y-3 p-5">
-              <InfoRow label="Organización" value={employee.organizationName} />
+              <InfoRow label={t("Organización")} value={employee.organizationName} />
               <InfoRow
-                label="Estado"
+                label={t("Estado")}
                 value={STATUS_LABELS[employee.status] ?? employee.status}
               />
               {employee.userId ? (
@@ -385,7 +387,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
                       navigator.clipboard.writeText(employee.userId!)
                     }
                     className="text-[12px] text-muted-foreground hover:text-foreground"
-                    aria-label="Copiar ID de usuario"
+                    aria-label={t("Copiar ID de usuario")}
                   >
                     <Copy className="size-3.5" />
                   </button>
@@ -448,7 +450,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
                 <h2 className="text-[14px] font-semibold">Profesión</h2>
               </div>
               <div className="space-y-3 p-5">
-                <InfoRow label="Tipo" value={employee.professionalTypeName} />
+                <InfoRow label={t("Tipo")} value={employee.professionalTypeName} />
                 <p className="text-[12px] text-muted-foreground">
                   El profesional puede completar su perfil y credenciales desde
                   su propio acceso.

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,6 +65,7 @@ export function AssignmentFormDialog({
   onCreated,
 }: AssignmentFormDialogProps) {
   const isEditing = Boolean(assignment);
+  const t = useT();
   const [saving, setSaving] = useState(false);
   const isSaving = savingProp ?? saving;
 
@@ -226,12 +228,12 @@ export function AssignmentFormDialog({
       <DialogContent className="max-h-[90vh] max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Editar asignación" : "Nueva asignación"}
+            {isEditing ? t("Editar asignación") : t("Nueva asignación")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Modifica los datos de la asignación."
-              : "Asigna una rutina de ejercicio a un paciente."}
+              ? t("Modifica los datos de la asignación.")
+              : t("Asigna una rutina de ejercicio a un paciente.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -239,7 +241,7 @@ export function AssignmentFormDialog({
           <div className="flex flex-col gap-4 py-2">
             {/* Picker de paciente */}
             <div className="flex flex-col gap-1.5">
-              <Label>Paciente *</Label>
+              <Label>{t("Paciente")} *</Label>
               {patientId && patientLabel ? (
                 <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">
                   {patientLabel}
@@ -261,7 +263,7 @@ export function AssignmentFormDialog({
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                     <Input
-                      placeholder="Buscar paciente por nombre..."
+                      placeholder={t("Buscar paciente por nombre...")}
                       value={patientSearch}
                       onChange={(e) => {
                         setPatientSearch(e.target.value);
@@ -273,7 +275,7 @@ export function AssignmentFormDialog({
                     />
                   </div>
                   {loadingPatients && (
-                    <p className="text-xs text-muted-foreground">Buscando...</p>
+                    <p className="text-xs text-muted-foreground">{t("Buscando...")}</p>
                   )}
                   {patientResults.length > 0 && (
                     <div className="max-h-40 overflow-y-auto rounded-md border border-border">
@@ -305,7 +307,7 @@ export function AssignmentFormDialog({
                     !loadingPatients &&
                     patientResults.length === 0 && (
                       <p className="text-xs text-muted-foreground">
-                        No se encontraron pacientes.
+                        {t("No se encontraron pacientes.")}
                       </p>
                     )}
                 </>
@@ -314,7 +316,7 @@ export function AssignmentFormDialog({
 
             {/* Tipo de asignación */}
             <div className="flex flex-col gap-1.5">
-              <Label>Tipo de asignación *</Label>
+              <Label>{t("Tipo de asignación")} *</Label>
               <Select
                 value={assignmentType}
                 onValueChange={(v: string | null) => {
@@ -332,9 +334,9 @@ export function AssignmentFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="routine">Rutina de ejercicio</SelectItem>
+                  <SelectItem value="routine">{t("Rutina de ejercicio")}</SelectItem>
                   <SelectItem value="nutrition">
-                    Plan de alimentación
+                    {t("Plan de alimentación")}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -344,8 +346,8 @@ export function AssignmentFormDialog({
             <div className="flex flex-col gap-1.5">
               <Label>
                 {assignmentType === "routine"
-                  ? "Rutina de ejercicio *"
-                  : "Plan de alimentación *"}
+                  ? t("Rutina de ejercicio *")
+                  : t("Plan de alimentación *")}
               </Label>
               {routineId && routineLabel ? (
                 <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">
@@ -368,7 +370,7 @@ export function AssignmentFormDialog({
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                     <Input
-                      placeholder="Buscar rutina por nombre..."
+                      placeholder={t("Buscar rutina por nombre...")}
                       value={routineSearch}
                       onChange={(e) => {
                         setRoutineSearch(e.target.value);
@@ -380,7 +382,7 @@ export function AssignmentFormDialog({
                     />
                   </div>
                   {loadingRoutines && (
-                    <p className="text-xs text-muted-foreground">Buscando...</p>
+                    <p className="text-xs text-muted-foreground">{t("Buscando...")}</p>
                   )}
                   {routineResults.length > 0 && (
                     <div className="max-h-40 overflow-y-auto rounded-md border border-border">
@@ -412,7 +414,7 @@ export function AssignmentFormDialog({
                     !loadingRoutines &&
                     routineResults.length === 0 && (
                       <p className="text-xs text-muted-foreground">
-                        No se encontraron rutinas activas.
+                        {t("No se encontraron rutinas activas.")}
                       </p>
                     )}
                 </>
@@ -422,7 +424,7 @@ export function AssignmentFormDialog({
             {/* Fechas */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="start-date">Fecha de inicio *</Label>
+                <Label htmlFor="start-date">{t("Fecha de inicio")} *</Label>
                 <Input
                   id="start-date"
                   type="date"
@@ -431,7 +433,7 @@ export function AssignmentFormDialog({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="end-date">Fecha de fin</Label>
+                <Label htmlFor="end-date">{t("Fecha de fin")}</Label>
                 <Input
                   id="end-date"
                   type="date"
@@ -444,7 +446,7 @@ export function AssignmentFormDialog({
             {/* Frecuencia y estado */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <Label>Frecuencia</Label>
+                <Label>{t("Frecuencia")}</Label>
                 <Select
                   value={frequency}
                   onValueChange={(v) => setFrequency(v as AssignmentFrequency)}
@@ -462,7 +464,7 @@ export function AssignmentFormDialog({
                 </Select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>Estado</Label>
+                <Label>{t("Estado")}</Label>
                 <Select
                   value={status}
                   onValueChange={(v) => setStatus(v as AssignmentStatus)}
@@ -483,14 +485,14 @@ export function AssignmentFormDialog({
 
             {/* Notas */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="assignment-notes">Notas</Label>
+              <Label htmlFor="assignment-notes">{t("Notas")}</Label>
               <Textarea
                 id="assignment-notes"
                 value={notes}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setNotes(e.target.value)
                 }
-                placeholder="Notas sobre la asignación..."
+                placeholder={t("Notas sobre la asignación...")}
                 rows={2}
               />
             </div>
@@ -503,14 +505,14 @@ export function AssignmentFormDialog({
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
-            Cancelar
+            {t("Cancelar")}
           </Button>
           <Button onClick={handleSubmit} disabled={!canSubmit}>
             {saving
-              ? "Guardando..."
+              ? t("Guardando...")
               : isEditing
-                ? "Guardar cambios"
-                : "Crear asignación"}
+                ? t("Guardar cambios")
+                : t("Crear asignación")}
           </Button>
         </DialogFooter>
       </DialogContent>

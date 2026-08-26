@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { createElement, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -116,6 +117,7 @@ const severityChips: Array<{
 type OrderBy = "recent" | "oldest" | "severity";
 
 export function AlertsPage() {
+  const t = useT();
   const {
     alerts,
     unread,
@@ -202,7 +204,7 @@ export function AlertsPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Alertas"
+        title={t("Alertas")}
         description={
           unread > 0
             ? `${unread} alertas sin leer · ${total} en total`
@@ -216,7 +218,7 @@ export function AlertsPage() {
               className="gap-1.5 border-transparent bg-white text-[var(--sidebar)] shadow-sm hover:bg-white/90 hover:text-[var(--sidebar)]"
               onClick={refetch}
               disabled={loading}
-              aria-label="Actualizar alertas"
+              aria-label={t("Actualizar alertas")}
             >
               <RefreshCw
                 className={cn("size-4", loading && "animate-spin")}
@@ -262,28 +264,28 @@ export function AlertsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Sin leer"
+          label={t("Sin leer")}
           value={String(unread)}
           icon={Bell}
           variant="info"
-          context="requieren atención"
+          context={t("requieren atención")}
         />
         <StatCard
-          label="Críticas"
+          label={t("Críticas")}
           value={String(counts.critical)}
           icon={AlertOctagon}
           variant="destructive"
-          context="atención inmediata"
+          context={t("atención inmediata")}
         />
         <StatCard
-          label="Advertencias"
+          label={t("Advertencias")}
           value={String(counts.warning)}
           icon={AlertTriangle}
           variant="warning"
-          context="próximas a vencer"
+          context={t("próximas a vencer")}
         />
         <StatCard
-          label="En la vista"
+          label={t("En la vista")}
           value={String(alerts.length)}
           icon={LayoutList}
           variant="navy"
@@ -301,16 +303,16 @@ export function AlertsPage() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar alerta por título o contenido…"
+              placeholder={t("Buscar alerta por título o contenido…")}
               className="pl-9 pr-9"
-              aria-label="Buscar alertas"
+              aria-label={t("Buscar alertas")}
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label="Limpiar búsqueda"
+                aria-label={t("Limpiar búsqueda")}
               >
                 <X className="size-3.5" aria-hidden />
               </button>
@@ -330,11 +332,11 @@ export function AlertsPage() {
               value={orderBy}
               onChange={(event) => setOrderBy(event.target.value as OrderBy)}
               className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-[12px] font-medium text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-              aria-label="Ordenar alertas"
+              aria-label={t("Ordenar alertas")}
             >
-              <option value="recent">Más recientes</option>
-              <option value="oldest">Más antiguas</option>
-              <option value="severity">Por severidad</option>
+              <option value="recent">{t("Más recientes")}</option>
+              <option value="oldest">{t("Más antiguas")}</option>
+              <option value="severity">{t("Por severidad")}</option>
             </select>
             <Button
               variant="outline"
@@ -353,7 +355,7 @@ export function AlertsPage() {
           <div
             className="flex items-center gap-2 overflow-x-auto pb-0.5"
             role="group"
-            aria-label="Filtrar por severidad"
+            aria-label={t("Filtrar por severidad")}
           >
             {severityChips.map((chip) => {
               const active = (severity || ALL) === chip.value;
@@ -540,6 +542,7 @@ function AlertCard({
   onToggle: () => void;
   onRead: () => void;
 }) {
+  const t = useT();
   const severity = severityMeta[alert.severity];
   const type = alertTypeMeta[alert.type] ?? alertTypeMeta.System;
   const unreadAlert = alert.readAt === null;
@@ -592,7 +595,7 @@ function AlertCard({
               {alert.title}
             </span>
             {unreadAlert && (
-              <Badge className="bg-[var(--sidebar)] text-white">Nueva</Badge>
+              <Badge className="bg-[var(--sidebar)] text-white">{t("Nueva")}</Badge>
             )}
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
@@ -651,7 +654,7 @@ function AlertCard({
                   <Link
                     href={`/appointments/citas/${alert.relatedAppointmentId}`}
                     className="inline-flex items-center gap-1 font-medium text-[var(--sidebar)] underline-offset-2 hover:underline"
-                    aria-label="Abrir cita relacionada"
+                    aria-label={t("Abrir cita relacionada")}
                   >
                     <Eye className="size-3.5" aria-hidden />
                     Ver cita relacionada

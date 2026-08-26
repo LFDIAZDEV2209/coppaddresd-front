@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useState } from "react";
 import {
   BadgePlus,
@@ -63,6 +64,7 @@ const EMPTY_FORM: CatalogForm = {
  * ediciones (ON CONFLICT DO NOTHING).
  */
 export function CatalogManagement() {
+  const t = useT();
   const [types, setTypes] = useState<ProfessionalTypeDto[]>([]);
   const [specialties, setSpecialties] = useState<SpecialtyDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -214,11 +216,11 @@ export function CatalogManagement() {
   return (
     <section
       className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card"
-      aria-label="Gestión de catálogos profesionales"
+      aria-label={t("Gestión de catálogos profesionales")}
     >
       <SectionHeader
-        title="Catálogos del sistema"
-        description="Gestiona tipos de profesional y especialidades (configuración crítica — Super Admin)"
+        title={t("Catálogos del sistema")}
+        description={t("Gestiona tipos de profesional y especialidades (configuración crítica — Super Admin)")}
         icon={BookOpenText}
         variant="primary"
         actions={
@@ -271,10 +273,10 @@ export function CatalogManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Código</TableHead>
-                    <TableHead className="w-24">Estado</TableHead>
-                    <TableHead className="w-20 text-right">Acciones</TableHead>
+                    <TableHead>{t("Nombre")}</TableHead>
+                    <TableHead>{t("Código")}</TableHead>
+                    <TableHead className="w-24">{t("Estado")}</TableHead>
+                    <TableHead className="w-20 text-right">{t("Acciones")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -355,10 +357,10 @@ export function CatalogManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead className="w-24">Estado</TableHead>
-                    <TableHead className="w-20 text-right">Acciones</TableHead>
+                    <TableHead>{t("Nombre")}</TableHead>
+                    <TableHead>{t("Categoría")}</TableHead>
+                    <TableHead className="w-24">{t("Estado")}</TableHead>
+                    <TableHead className="w-20 text-right">{t("Acciones")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -442,47 +444,47 @@ export function CatalogManagement() {
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-2">
-              <Label htmlFor="catalog-code">Código</Label>
+              <Label htmlFor="catalog-code">{t("Código")}</Label>
               <Input
                 id="catalog-code"
                 value={form.code}
                 disabled={Boolean(dialog?.editing)}
                 onChange={(e) => setForm({ ...form, code: e.target.value })}
-                placeholder="EJEMPLO: FONOAUDIOLOGO"
+                placeholder={t("EJEMPLO: FONOAUDIOLOGO")}
                 className="font-mono text-sm"
               />
             </div>
             {dialog?.kind === "specialty" && (
               <div className="grid gap-2">
-                <Label htmlFor="catalog-category">Categoría</Label>
+                <Label htmlFor="catalog-category">{t("Categoría")}</Label>
                 <Input
                   id="catalog-category"
                   value={form.category}
                   onChange={(e) =>
                     setForm({ ...form, category: e.target.value })
                   }
-                  placeholder="Ej. Terapia, Medicina, Nutrición"
+                  placeholder={t("Ej. Terapia, Medicina, Nutrición")}
                 />
               </div>
             )}
             <div className="grid gap-2">
-              <Label htmlFor="catalog-name">Nombre</Label>
+              <Label htmlFor="catalog-name">{t("Nombre")}</Label>
               <Input
                 id="catalog-name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Nombre visible en la plataforma"
+                placeholder={t("Nombre visible en la plataforma")}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="catalog-description">Descripción</Label>
+              <Label htmlFor="catalog-description">{t("Descripción")}</Label>
               <Input
                 id="catalog-description"
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
-                placeholder="Opcional"
+                placeholder={t("Opcional")}
               />
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Trash2, GripVertical, Search, Sparkles } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { ApiError } from "@/lib/api/http";
 import { Button } from "@/components/ui/button";
 import {
@@ -109,6 +110,7 @@ export function ExerciseRoutineFormDialog({
   onCreated,
 }: ExerciseRoutineFormDialogProps) {
   const isEditing = Boolean(routine);
+  const t = useT();
 
   const [name, setName] = useState(routine?.name ?? "");
   const [description, setDescription] = useState(routine?.description ?? "");
@@ -282,7 +284,7 @@ export function ExerciseRoutineFormDialog({
       setGenerateError(
         err instanceof ApiError
           ? err.message
-          : "No se pudo generar la rutina. Intenta nuevamente.",
+          : t("No se pudo generar la rutina. Intenta nuevamente."),
       );
     } finally {
       setGenerating(false);
@@ -347,13 +349,13 @@ export function ExerciseRoutineFormDialog({
         <DialogHeader>
           <DialogTitle>
             {isEditing
-              ? "Editar rutina de ejercicio"
-              : "Nueva rutina de ejercicio"}
+              ? t("Editar rutina de ejercicio")
+              : t("Nueva rutina de ejercicio")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Modifica los datos de la rutina y sus ejercicios."
-              : "Crea una nueva rutina con sus ejercicios."}
+              ? t("Modifica los datos de la rutina y sus ejercicios.")
+              : t("Crea una nueva rutina con sus ejercicios.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -364,7 +366,7 @@ export function ExerciseRoutineFormDialog({
                 automáticamente (creación atómica en el backend). */}
             {!isEditing && (
               <div className="flex flex-col gap-1.5">
-                <Label>Paciente (opcional)</Label>
+                <Label>{t("Paciente (opcional)")}</Label>
                 {selectedPatientId && selectedPatientLabel ? (
                   <div className="flex flex-col gap-2">
                     <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">
@@ -388,8 +390,8 @@ export function ExerciseRoutineFormDialog({
                     >
                       <Sparkles data-icon="inline-start" className="size-3" />
                       {generating
-                        ? "Generando..."
-                        : "Generar rutina con IA"}
+                        ? t("Generando...")
+                        : t("Generar rutina con IA")}
                     </Button>
                     {generateError && (
                       <p className="text-xs text-destructive">
@@ -402,7 +404,7 @@ export function ExerciseRoutineFormDialog({
                     <div className="relative">
                       <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                       <Input
-                        placeholder="Buscar paciente por nombre..."
+                        placeholder={t("Buscar paciente por nombre...")}
                         value={patientSearch}
                         onChange={(e) => {
                           setPatientSearch(e.target.value);
@@ -413,7 +415,7 @@ export function ExerciseRoutineFormDialog({
                     </div>
                     {loadingPatients && (
                       <p className="text-xs text-muted-foreground">
-                        Buscando...
+                        {t("Buscando...")}
                       </p>
                     )}
                     {patientResults.length > 0 && (
@@ -438,9 +440,9 @@ export function ExerciseRoutineFormDialog({
                     {patientSearch.length >= 2 &&
                       !loadingPatients &&
                       patientResults.length === 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          No se encontraron pacientes.
-                        </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("No se encontraron pacientes.")}
+                      </p>
                       )}
                   </>
                 )}
@@ -450,28 +452,28 @@ export function ExerciseRoutineFormDialog({
             {/* Datos básicos */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="routine-name">Nombre *</Label>
+                <Label htmlFor="routine-name">{t("Nombre")} *</Label>
                 <Input
                   id="routine-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ej: Rutina cardio HIIT principiantes"
+                  placeholder={t("Ej: Rutina cardio HIIT principiantes")}
                 />
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="routine-desc">Descripción</Label>
+                <Label htmlFor="routine-desc">{t("Descripción")}</Label>
                 <Textarea
                   id="routine-desc"
                   value={description}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setDescription(e.target.value)
                   }
-                  placeholder="Descripción de la rutina..."
+                  placeholder={t("Descripción de la rutina...")}
                   rows={2}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>Categoría</Label>
+                <Label>{t("Categoría")}</Label>
                 <Select
                   value={category}
                   onValueChange={(v) => setCategory(v as RoutineCategory)}
@@ -489,7 +491,7 @@ export function ExerciseRoutineFormDialog({
                 </Select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>Dificultad</Label>
+                <Label>{t("Dificultad")}</Label>
                 <Select
                   value={difficulty}
                   onValueChange={(v) => setDifficulty(v as RoutineDifficulty)}
@@ -507,18 +509,18 @@ export function ExerciseRoutineFormDialog({
                 </Select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="routine-minutes">Duración estimada (min)</Label>
+                <Label htmlFor="routine-minutes">{t("Duración estimada (min)")}</Label>
                 <Input
                   id="routine-minutes"
                   type="number"
                   min={0}
                   value={estimatedMinutes}
                   onChange={(e) => setEstimatedMinutes(e.target.value)}
-                  placeholder="Ej: 30"
+                  placeholder={t("Ej: 30")}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>Estado</Label>
+                <Label>{t("Estado")}</Label>
                 <Select
                   value={status}
                   onValueChange={(v) => setStatus(v as NutritionPlanStatus)}
@@ -536,40 +538,40 @@ export function ExerciseRoutineFormDialog({
                 </Select>
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="routine-target-muscles">Grupos musculares objetivo</Label>
+                <Label htmlFor="routine-target-muscles">{t("Grupos musculares objetivo")}</Label>
                 <Input
                   id="routine-target-muscles"
                   value={targetMuscles}
                   onChange={(e) => setTargetMuscles(e.target.value)}
-                  placeholder="Ej: Piernas, Core, Tren superior"
+                  placeholder={t("Ej: Piernas, Core, Tren superior")}
                 />
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="routine-equipment">Equipamiento necesario</Label>
+                <Label htmlFor="routine-equipment">{t("Equipamiento necesario")}</Label>
                 <Input
                   id="routine-equipment"
                   value={equipment}
                   onChange={(e) => setEquipment(e.target.value)}
-                  placeholder="Ej: Mancuernas, banda elástica, banca"
+                  placeholder={t("Ej: Mancuernas, banda elástica, banca")}
                 />
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="routine-warmup">Calentamiento</Label>
+                <Label htmlFor="routine-warmup">{t("Calentamiento")}</Label>
                 <Textarea
                   id="routine-warmup"
                   value={warmupNotes}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setWarmupNotes(e.target.value)}
-                  placeholder="Instrucciones del calentamiento..."
+                  placeholder={t("Instrucciones del calentamiento...")}
                   rows={2}
                 />
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="routine-cooldown">Enfriamiento</Label>
+                <Label htmlFor="routine-cooldown">{t("Enfriamiento")}</Label>
                 <Textarea
                   id="routine-cooldown"
                   value={cooldownNotes}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCooldownNotes(e.target.value)}
-                  placeholder="Instrucciones del enfriamiento..."
+                  placeholder={t("Instrucciones del enfriamiento...")}
                   rows={2}
                 />
               </div>
@@ -580,7 +582,7 @@ export function ExerciseRoutineFormDialog({
             {/* Ejercicios */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <Label>Ejercicios ({exercises.length})</Label>
+                <Label>{t("Ejercicios ({count})", { count: String(exercises.length) })}</Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -588,20 +590,19 @@ export function ExerciseRoutineFormDialog({
                   onClick={addExercise}
                 >
                   <Plus data-icon="inline-start" className="size-3" />
-                  Agregar ejercicio
+                  {t("Agregar ejercicio")}
                 </Button>
               </div>
 
               {exercises.length === 0 && !loadingDetail && (
                 <p className="text-xs text-muted-foreground text-center py-4">
-                  No hay ejercicios. Haz clic en &quot;Agregar ejercicio&quot;
-                  para comenzar.
+                  {t('No hay ejercicios. Haz clic en "Agregar ejercicio" para comenzar.')}
                 </p>
               )}
 
               {loadingDetail && (
                 <p className="text-xs text-muted-foreground text-center py-4">
-                  Cargando ejercicios...
+                  {t("Cargando ejercicios...")}
                 </p>
               )}
 
@@ -613,7 +614,7 @@ export function ExerciseRoutineFormDialog({
                   <div className="flex items-center gap-2">
                     <GripVertical className="size-4 text-muted-foreground" />
                     <span className="text-xs font-semibold text-muted-foreground">
-                      Ejercicio {index + 1}
+                      {t("Ejercicio {index}", { index: String(index + 1) })}
                     </span>
                     <div className="ml-auto flex gap-1">
                       <Button
@@ -649,7 +650,7 @@ export function ExerciseRoutineFormDialog({
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <Input
-                      placeholder="Nombre del ejercicio *"
+                      placeholder={t("Nombre del ejercicio *")}
                       value={exercise.name}
                       onChange={(e) =>
                         updateExercise(index, "name", e.target.value)
@@ -657,7 +658,7 @@ export function ExerciseRoutineFormDialog({
                       className="h-8 text-sm"
                     />
                     <Input
-                      placeholder="Descripción"
+                      placeholder={t("Descripción")}
                       value={exercise.description}
                       onChange={(e) =>
                         updateExercise(index, "description", e.target.value)
@@ -666,7 +667,7 @@ export function ExerciseRoutineFormDialog({
                     />
                     <Input
                       type="number"
-                      placeholder="Series"
+                      placeholder={t("Series")}
                       value={exercise.sets}
                       onChange={(e) =>
                         updateExercise(index, "sets", e.target.value)
@@ -675,7 +676,7 @@ export function ExerciseRoutineFormDialog({
                     />
                     <Input
                       type="number"
-                      placeholder="Repeticiones"
+                      placeholder={t("Repeticiones")}
                       value={exercise.repetitions}
                       onChange={(e) =>
                         updateExercise(index, "repetitions", e.target.value)
@@ -684,7 +685,7 @@ export function ExerciseRoutineFormDialog({
                     />
                     <Input
                       type="number"
-                      placeholder="Descanso (seg)"
+                      placeholder={t("Descanso (seg)")}
                       value={exercise.restSeconds}
                       onChange={(e) =>
                         updateExercise(index, "restSeconds", e.target.value)
@@ -693,7 +694,7 @@ export function ExerciseRoutineFormDialog({
                     />
                     <Input
                       type="number"
-                      placeholder="Duración (seg)"
+                      placeholder={t("Duración (seg)")}
                       value={exercise.durationSecs}
                       onChange={(e) =>
                         updateExercise(index, "durationSecs", e.target.value)
@@ -703,7 +704,7 @@ export function ExerciseRoutineFormDialog({
                     <Input
                       type="number"
                       step="0.5"
-                      placeholder="Peso (kg)"
+                      placeholder={t("Peso (kg)")}
                       value={exercise.weightKg}
                       onChange={(e) =>
                         updateExercise(index, "weightKg", e.target.value)
@@ -711,7 +712,7 @@ export function ExerciseRoutineFormDialog({
                       className="h-8 text-sm"
                     />
                     <Input
-                      placeholder="Músculo objetivo"
+                      placeholder={t("Músculo objetivo")}
                       value={exercise.targetMuscle}
                       onChange={(e) =>
                         updateExercise(index, "targetMuscle", e.target.value)
@@ -719,7 +720,7 @@ export function ExerciseRoutineFormDialog({
                       className="h-8 text-sm"
                     />
                     <Input
-                      placeholder="Equipamiento"
+                      placeholder={t("Equipamiento")}
                       value={exercise.equipment}
                       onChange={(e) =>
                         updateExercise(index, "equipment", e.target.value)
@@ -727,7 +728,7 @@ export function ExerciseRoutineFormDialog({
                       className="h-8 text-sm"
                     />
                     <Input
-                      placeholder="Tempo (ej: 2-1-2)"
+                      placeholder={t("Tempo (ej: 2-1-2)")}
                       value={exercise.tempo}
                       onChange={(e) =>
                         updateExercise(index, "tempo", e.target.value)
@@ -738,7 +739,7 @@ export function ExerciseRoutineFormDialog({
                       type="number"
                       min={1}
                       max={10}
-                      placeholder="RPE (1-10)"
+                      placeholder={t("RPE (1-10)")}
                       value={exercise.rpe}
                       onChange={(e) =>
                         updateExercise(index, "rpe", e.target.value)
@@ -746,7 +747,7 @@ export function ExerciseRoutineFormDialog({
                       className="h-8 text-sm"
                     />
                     <Input
-                      placeholder="Tips de forma"
+                      placeholder={t("Tips de forma")}
                       value={exercise.tips}
                       onChange={(e) =>
                         updateExercise(index, "tips", e.target.value)
@@ -766,14 +767,14 @@ export function ExerciseRoutineFormDialog({
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
-            Cancelar
+            {t("Cancelar")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving || !name.trim()}>
             {saving
-              ? "Guardando..."
+              ? t("Guardando...")
               : isEditing
-                ? "Guardar cambios"
-                : "Crear rutina"}
+                ? t("Guardar cambios")
+                : t("Crear rutina")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -37,6 +38,7 @@ interface RoomPanelProps {
 }
 
 function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
+  const t = useT();
   const router = useRouter();
   const [room, setRoom] = useState<VirtualRoomDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,17 +134,17 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <InfoChip
           icon={User}
-          label="Paciente"
+          label={t("Paciente")}
           value={appointment.patientName ?? "—"}
         />
         <InfoChip
           icon={Stethoscope}
-          label="Especialidad"
+          label={t("Especialidad")}
           value={appointment.specialtyName ?? "—"}
         />
         <InfoChip
           icon={Clock}
-          label="Horario"
+          label={t("Horario")}
           value={formatRange(
             appointment.scheduledStart,
             appointment.scheduledEnd,
@@ -150,7 +152,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
         />
         <InfoChip
           icon={Video}
-          label="Participantes"
+          label={t("Participantes")}
           value={`${participantsConnected} conectados`}
         />
       </div>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { useT } from "@/providers/i18n-provider";
 import { PermissionGroups } from "@/components/permissions/permission-groups";
 import {
   groupPermissionsByModule,
@@ -48,6 +49,7 @@ export function RolePermissionsPanel({
   canAssignPermissions,
   onError,
 }: RolePermissionsPanelProps) {
+  const t = useT();
   const [permissionsFor, setPermissionsFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
@@ -74,7 +76,7 @@ export function RolePermissionsPanel({
           setLoadError(
             err instanceof Error
               ? err.message
-              : "Error al cargar los permisos del rol.",
+              : t("Error al cargar los permisos del rol."),
           );
         })
         .finally(() => {
@@ -138,12 +140,12 @@ export function RolePermissionsPanel({
 
       if (result.errors.length > 0) {
         onError(
-          `Se aplicaron ${result.applied} cambios, pero ${result.errors.length} asignaciones fallaron. Reintentá guardar: las pendientes se completarán.`,
+          t('Se aplicaron {applied} cambios, pero {errors} asignaciones fallaron. Reintentá guardar: las pendientes se completarán.', { applied: String(result.applied), errors: String(result.errors.length) }),
         );
       }
     } catch (err) {
       setLoadError(
-        err instanceof Error ? err.message : "Error al guardar los permisos.",
+        err instanceof Error ? err.message : t("Error al guardar los permisos."),
       );
     } finally {
       setSaving(false);
@@ -163,7 +165,7 @@ export function RolePermissionsPanel({
       setLoadError(
         err instanceof Error
           ? err.message
-          : "Error al actualizar los permisos del rol.",
+          : t("Error al actualizar los permisos del rol."),
       );
     } finally {
       setSaving(false);
@@ -177,7 +179,7 @@ export function RolePermissionsPanel({
           <ShieldCheck className="size-6 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-foreground">
-          Seleccioná un rol para configurar sus permisos
+          {t("Seleccioná un rol para configurar sus permisos")}
         </p>
       </div>
     );
@@ -205,7 +207,7 @@ export function RolePermissionsPanel({
                 disabled={!canAssignPermissions}
               />
               <span className="text-[12px] font-semibold text-foreground">
-                Seleccionar todos
+                {t("Seleccionar todos")}
               </span>
               <Badge variant="outline" className="ml-auto text-[10px]">
                 {checked.size} / {allPermissionIds.size}
@@ -224,8 +226,7 @@ export function RolePermissionsPanel({
 
             {!canAssignPermissions && (
               <p className="mt-4 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
-                No tenés permiso para modificar la asignación de permisos
-                (Permissions.Assign).
+                {t("No tenés permiso para modificar la asignación de permisos (Permissions.Assign).")}
               </p>
             )}
           </>
@@ -249,7 +250,7 @@ export function RolePermissionsPanel({
             onClick={resetChecked}
             disabled={saving}
           >
-            Cancelar
+            {t("Cancelar")}
           </Button>
           <Button
             size="sm"
@@ -260,10 +261,10 @@ export function RolePermissionsPanel({
             {saving ? (
               <>
                 <LoaderCircle className="size-[15px] animate-spin" />
-                Guardando...
+                {t("Guardando...")}
               </>
             ) : (
-              "Guardar cambios"
+              t("Guardar cambios")
             )}
           </Button>
         </div>

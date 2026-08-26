@@ -45,6 +45,7 @@ import {
 import type { ProductListItem } from "@/features/inventory/types";
 import type { CreateStoreItemInput, StoreItemListItem, UpdateStoreItemInput } from "../types";
 import { useStore, fetchAvailableProducts } from "../hooks/use-store";
+import { useT } from "@/providers/i18n-provider";
 
 export function StorePage() {
   const {
@@ -62,53 +63,54 @@ export function StorePage() {
   } = useStore();
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<StoreItemListItem | undefined>();
+  const t = useT();
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Tienda de bienestar"
-        description="Administra los productos que se muestran en el marketplace del paciente"
+        title={t('Tienda de bienestar')}
+        description={t('Administra los productos que se muestran en el marketplace del paciente')}
         icon={Store}
         actions={
           <Button size="sm" onClick={() => setAddOpen(true)}>
             <Plus data-icon="inline-start" />
-            Agregar producto
+            {t('Agregar producto')}
           </Button>
         }
       />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Productos en tienda" value={stats ? String(stats.total) : "—"} tone="primary" />
-        <Metric label="Destacados" value={stats ? String(stats.featured) : "—"} tone="warning" />
-        <Metric label="Visibles" value={stats ? String(stats.visible) : "—"} tone="success" />
-        <Metric label="Ocultos" value={stats ? String(stats.hidden) : "—"} tone="danger" />
+        <Metric label={t('Productos en tienda')} value={stats ? String(stats.total) : "—"} tone="primary" />
+        <Metric label={t('Destacados')} value={stats ? String(stats.featured) : "—"} tone="warning" />
+        <Metric label={t('Visibles')} value={stats ? String(stats.visible) : "—"} tone="success" />
+        <Metric label={t('Ocultos')} value={stats ? String(stats.hidden) : "—"} tone="danger" />
       </div>
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-sm font-semibold">Catálogo de tienda</h2>
+            <h2 className="text-sm font-semibold">{t('Catálogo de tienda')}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Productos visibles para el paciente en la app móvil.
+              {t('Productos visibles para el paciente en la app móvil.')}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={retry} disabled={loading}>
             <RefreshCw data-icon="inline-start" className={loading ? "animate-spin" : undefined} />
-            Actualizar
+            {t('Actualizar')}
           </Button>
         </div>
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_190px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Buscar por nombre o SKU..." />
+            <Input className="pl-9" placeholder={t('Buscar por nombre o SKU...')} />
           </div>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
             value={filters.status}
             onChange={(e) => setFilters({ status: e.target.value as typeof filters.status })}
-            aria-label="Filtrar por visibilidad"
+            aria-label={t('Filtrar por visibilidad')}
           >
-            <option value="all">Todos</option>
-            <option value="Visible">Visibles</option>
-            <option value="Oculto">Ocultos</option>
+            <option value="all">{t('Todos')}</option>
+            <option value="Visible">{t('Visibles')}</option>
+            <option value="Oculto">{t('Ocultos')}</option>
           </select>
         </div>
       </section>
@@ -117,23 +119,23 @@ export function StorePage() {
       ) : error ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/30 py-14 text-center">
           <p className="text-sm font-semibold text-destructive">{error}</p>
-          <Button variant="outline" size="sm" onClick={retry}>Reintentar</Button>
+          <Button variant="outline" size="sm" onClick={retry}>{t('Reintentar')}</Button>
         </div>
       ) : result?.data.length ? (
         <StoreTable items={result.data} onEdit={setEditing} onHide={hideItem} onRestore={restoreItem} />
       ) : (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card py-16 text-center">
           <ShoppingBag className="size-8 text-muted-foreground" />
-          <p className="text-sm font-semibold">No hay productos en la tienda</p>
-          <Button size="sm" onClick={() => setAddOpen(true)}>Agregar primer producto</Button>
+          <p className="text-sm font-semibold">{t('No hay productos en la tienda')}</p>
+          <Button size="sm" onClick={() => setAddOpen(true)}>{t('Agregar primer producto')}</Button>
         </div>
       )}
       {result && result.totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Página {result.page} de {result.totalPages}</span>
+          <span>{t('Página {page} de {totalPages}', { page: String(result.page), totalPages: String(result.totalPages) })}</span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={result.page === 1}>Anterior</Button>
-            <Button variant="outline" size="sm" disabled={result.page === result.totalPages}>Siguiente</Button>
+            <Button variant="outline" size="sm" disabled={result.page === 1}>{t('Anterior')}</Button>
+            <Button variant="outline" size="sm" disabled={result.page === result.totalPages}>{t('Siguiente')}</Button>
           </div>
         </div>
       )}
@@ -156,18 +158,19 @@ function StoreTable({
   onHide: (id: string) => void;
   onRestore: (id: string) => void;
 }) {
+  const t = useT();
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <SectionHeader title={`${items.length} productos`} description="Estado de la tienda" icon={ShoppingBag} variant="primary" />
+      <SectionHeader title={`${items.length} ${t('productos')}`} description={t('Estado de la tienda')} icon={ShoppingBag} variant="primary" />
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Producto</TableHead>
-            <TableHead className="hidden lg:table-cell">Tipo</TableHead>
-            <TableHead>Precio venta</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead className="w-10"><span className="sr-only">Acciones</span></TableHead>
+            <TableHead>{t('Producto')}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t('Tipo')}</TableHead>
+            <TableHead>{t('Precio venta')}</TableHead>
+            <TableHead>{t('Stock')}</TableHead>
+            <TableHead>{t('Estado')}</TableHead>
+            <TableHead className="w-10"><span className="sr-only">{t('Acciones')}</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -197,20 +200,20 @@ function StoreTable({
               </TableCell>
               <TableCell>
                 <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${item.productName}`} />}>
+                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={t('Acciones de {name}', { name: item.productName })} />}>
                     <MoreHorizontal />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => onEdit(item)}>
-                      <Pencil /> Editar precio
+                      <Pencil /> {t('Editar precio')}
                     </DropdownMenuItem>
                     {item.status === "Visible" ? (
                       <DropdownMenuItem onClick={() => onHide(item.id)} className="text-destructive">
-                        <EyeOff /> Ocultar
+                        <EyeOff /> {t('Ocultar')}
                       </DropdownMenuItem>
                     ) : (
                       <DropdownMenuItem onClick={() => onRestore(item.id)}>
-                        <Eye /> Restaurar
+                        <Eye /> {t('Restaurar')}
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -239,6 +242,7 @@ function AddToStoreDialog({
   const [desc, setDesc] = useState("");
   const [featured, setFeatured] = useState(false);
   const [saving, setSaving] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     if (!open) return;
@@ -265,14 +269,14 @@ function AddToStoreDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Agregar producto a la tienda</DialogTitle>
-          <DialogDescription>Selecciona un producto del inventario y establece su precio de venta.</DialogDescription>
+          <DialogTitle>{t('Agregar producto a la tienda')}</DialogTitle>
+          <DialogDescription>{t('Selecciona un producto del inventario y establece su precio de venta.')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label className="text-xs">Producto del inventario *</Label>
+            <Label className="text-xs">{t('Producto del inventario')} *</Label>
             <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={selected} onChange={(e) => setSelected(e.target.value)}>
-              <option value="">Seleccionar producto…</option>
+              <option value="">{t('Seleccionar producto…')}</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>{p.name} ({p.sku}) — Stock: {p.stock}</option>
               ))}
@@ -280,11 +284,11 @@ function AddToStoreDialog({
           </div>
           <div className="flex gap-3">
             <div className="flex flex-1 flex-col gap-1.5">
-              <Label className="text-xs">Precio de venta *</Label>
+              <Label className="text-xs">{t('Precio de venta')} *</Label>
               <Input type="number" min="0" value={price || ""} onChange={(e) => setPrice(Number(e.target.value))} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs">Destacado</Label>
+              <Label className="text-xs">{t('Destacado')}</Label>
               <button type="button" onClick={() => setFeatured(!featured)}
                 className={`flex size-9 items-center justify-center rounded-md border ${featured ? "border-warning bg-warning-soft text-warning-foreground" : "border-input bg-background text-muted-foreground"}`}>
                 <Star className="size-4" fill={featured ? "currentColor" : "none"} />
@@ -292,12 +296,12 @@ function AddToStoreDialog({
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label className="text-xs">Descripción (opcional)</Label>
-            <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Descripción para el paciente…" />
+            <Label className="text-xs">{t('Descripción (opcional)')}</Label>
+            <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={t('Descripción para el paciente…')} />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving || !selected || price <= 0}>{saving ? "Agregando…" : "Agregar"}</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('Cancelar')}</Button>
+            <Button type="submit" disabled={saving || !selected || price <= 0}>{saving ? t('Agregando…') : t('Agregar')}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -316,6 +320,7 @@ function EditStoreDialog({
 }) {
   const [price, setPrice] = useState(item.salePrice);
   const [saving, setSaving] = useState(false);
+  const t = useT();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -332,17 +337,17 @@ function EditStoreDialog({
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Editar precio</DialogTitle>
+          <DialogTitle>{t('Editar precio')}</DialogTitle>
           <DialogDescription>{item.productName}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label className="text-xs">Precio de venta</Label>
+            <Label className="text-xs">{t('Precio de venta')}</Label>
             <Input type="number" min="0" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onOpenChange}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar"}</Button>
+            <Button type="button" variant="outline" onClick={onOpenChange}>{t('Cancelar')}</Button>
+            <Button type="submit" disabled={saving}>{saving ? t('Guardando…') : t('Guardar')}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

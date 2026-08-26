@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -95,6 +96,7 @@ function statusColor(status: string) {
  * de datos los resuelve siempre el backend.
  */
 export function ProfessionalDirectory() {
+  const t = useT();
   const router = useRouter();
   const { can } = useAppContext();
   const {
@@ -177,8 +179,8 @@ export function ProfessionalDirectory() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Profesionales"
-        description="Gestiona el equipo clínico, sus especialidades, roles y acceso al ERP"
+        title={t("Profesionales")}
+        description={t("Gestiona el equipo clínico, sus especialidades, roles y acceso al ERP")}
         icon={Stethoscope}
         actions={
           canCreate ? (
@@ -193,32 +195,32 @@ export function ProfessionalDirectory() {
       {/* Stats cards con métricas reales del backend (mismo alcance del listado). */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total de profesionales"
+          label={t("Total de profesionales")}
           value={stats ? String(stats.total) : "—"}
           icon={Users}
           variant="primary"
-          context="Directorio completo"
+          context={t("Directorio completo")}
         />
         <StatCard
-          label="Activos"
+          label={t("Activos")}
           value={stats ? String(stats.active) : "—"}
           icon={UserCheck}
           variant="success"
-          context="En el equipo activo"
+          context={t("En el equipo activo")}
         />
         <StatCard
-          label="Invitados"
+          label={t("Invitados")}
           value={stats ? String(stats.invited) : "—"}
           icon={MailPlus}
           variant="warning"
-          context="Pendientes de primer acceso"
+          context={t("Pendientes de primer acceso")}
         />
         <StatCard
-          label="Inactivos"
+          label={t("Inactivos")}
           value={stats ? String(stats.inactive) : "—"}
           icon={UserX}
           variant="destructive"
-          context="Sin actividad en el ERP"
+          context={t("Sin actividad en el ERP")}
         />
       </div>
 
@@ -248,11 +250,11 @@ export function ProfessionalDirectory() {
       {/* Filtros con header navy e icono y botón de actualizar. */}
       <section
         className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
-        aria-label="Filtros de profesionales"
+        aria-label={t("Filtros de profesionales")}
       >
         <SectionHeader
-          title="Directorio de profesionales"
-          description="Busca por nombre, correo o cargo; filtra por estado, especialidad, rol o clínica"
+          title={t("Directorio de profesionales")}
+          description={t("Busca por nombre, correo o cargo; filtra por estado, especialidad, rol o clínica")}
           icon={SlidersHorizontal}
           variant="primary"
           actions={
@@ -278,15 +280,15 @@ export function ProfessionalDirectory() {
               className="pl-9"
               value={filters.search}
               onChange={(event) => setFilters({ search: event.target.value })}
-              placeholder="Buscar profesional..."
-              aria-label="Buscar profesionales"
+              placeholder={t("Buscar profesional...")}
+              aria-label={t("Buscar profesionales")}
             />
           </div>
           <Select
             value={filters.status}
             onValueChange={(value) => setFilters({ status: value ?? "all" })}
           >
-            <SelectTrigger className="w-full" aria-label="Filtrar por estado">
+            <SelectTrigger className="w-full" aria-label={t("Filtrar por estado")}>
               <SelectValue>
                 {filters.status === "all"
                   ? "Todos los estados"
@@ -294,10 +296,10 @@ export function ProfessionalDirectory() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="Active">Activo</SelectItem>
-              <SelectItem value="Invited">Invitado</SelectItem>
-              <SelectItem value="Inactive">Inactivo</SelectItem>
+              <SelectItem value="all">{t("Todos los estados")}</SelectItem>
+              <SelectItem value="Active">{t("Activo")}</SelectItem>
+              <SelectItem value="Invited">{t("Invitado")}</SelectItem>
+              <SelectItem value="Inactive">{t("Inactivo")}</SelectItem>
             </SelectContent>
           </Select>
           <Select
@@ -308,7 +310,7 @@ export function ProfessionalDirectory() {
           >
             <SelectTrigger
               className="w-full"
-              aria-label="Filtrar por especialidad"
+              aria-label={t("Filtrar por especialidad")}
             >
               <SelectValue>
                 {filters.specialtyId === "all"
@@ -318,7 +320,7 @@ export function ProfessionalDirectory() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas las especialidades</SelectItem>
+              <SelectItem value="all">{t("Todas las especialidades")}</SelectItem>
               {specialties
                 .filter((s) => s.isActive)
                 .map((specialty) => (
@@ -332,7 +334,7 @@ export function ProfessionalDirectory() {
             value={filters.roleId}
             onValueChange={(value) => setFilters({ roleId: value ?? "all" })}
           >
-            <SelectTrigger className="w-full" aria-label="Filtrar por rol">
+            <SelectTrigger className="w-full" aria-label={t("Filtrar por rol")}>
               <SelectValue>
                 {filters.roleId === "all"
                   ? "Todos los roles"
@@ -341,7 +343,7 @@ export function ProfessionalDirectory() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los roles</SelectItem>
+              <SelectItem value="all">{t("Todos los roles")}</SelectItem>
               {roles.map((role) => (
                 <SelectItem key={role.id} value={role.id}>
                   {role.name}
@@ -353,7 +355,7 @@ export function ProfessionalDirectory() {
             value={filters.clinicId}
             onValueChange={(value) => setFilters({ clinicId: value ?? "all" })}
           >
-            <SelectTrigger className="w-full" aria-label="Filtrar por clínica">
+            <SelectTrigger className="w-full" aria-label={t("Filtrar por clínica")}>
               <SelectValue>
                 {filters.clinicId === "all"
                   ? "Todas las clínicas"
@@ -362,7 +364,7 @@ export function ProfessionalDirectory() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas las clínicas</SelectItem>
+              <SelectItem value="all">{t("Todas las clínicas")}</SelectItem>
               {clinics.map((clinic) => (
                 <SelectItem key={clinic.id} value={clinic.id}>
                   {clinic.name}
@@ -436,26 +438,27 @@ function DirectoryTable({
   onOpen: (employee: EmployeeListItem) => void;
   onInvite: (employee: EmployeeListItem) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader
         title={`${employees.length} profesionales visibles`}
-        description="Equipo del ERP"
+        description={t("Equipo del ERP")}
         icon={UserRound}
         variant="primary"
       />
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Profesional</TableHead>
-            <TableHead className="hidden md:table-cell">Tipo</TableHead>
+            <TableHead>{t("Profesional")}</TableHead>
+            <TableHead className="hidden md:table-cell">{t("Tipo")}</TableHead>
             <TableHead className="hidden lg:table-cell">
               Especialidades
             </TableHead>
-            <TableHead className="hidden xl:table-cell">Clínicas</TableHead>
-            <TableHead>Estado</TableHead>
+            <TableHead className="hidden xl:table-cell">{t("Clínicas")}</TableHead>
+            <TableHead>{t("Estado")}</TableHead>
             <TableHead className="w-10">
-              <span className="sr-only">Acciones</span>
+              <span className="sr-only">{t("Acciones")}</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -485,7 +488,7 @@ function DirectoryTable({
               <TableCell className="hidden md:table-cell">
                 <span className="text-sm">
                   {employee.professionalTypeName ?? (
-                    <span className="text-muted-foreground">Sin tipo</span>
+                    <span className="text-muted-foreground">{t("Sin tipo")}</span>
                   )}
                 </span>
                 <span className="block text-xs text-muted-foreground">

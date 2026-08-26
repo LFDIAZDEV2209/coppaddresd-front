@@ -110,3 +110,14 @@ yarn typecheck                              # TypeScript check (si configurado)
 | **pencil** | Diseno visual, mockups, prototipos UI/UX |
 | **playwright** | QA, testing E2E, verificacion visual |
 | **codegraph** | Entender codigo, buscar simbolos |
+
+## i18n (internacionalizacion)
+
+Cada string visible al usuario debe envolver con `t()` del hook `useT()` (providers/i18n-provider.tsx). Las keys son el texto en espanol; la traduccion al ingles vive en `providers/translations/en.json`. Cargar la skill `i18n-translations` antes de agregar texto visible.
+
+```bash
+yarn i18n:check   # escanea t() vs en.json — exit 1 si faltan keys
+yarn i18n:apply   # aplica traducciones revisadas de pending-review.json
+```
+
+Regla de oro: toda string visible vive en `t("...")` y tiene key en AMBOS `es.json` y `en.json`.

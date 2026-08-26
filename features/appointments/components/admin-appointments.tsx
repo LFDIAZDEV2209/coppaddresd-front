@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -254,6 +255,7 @@ export function AdminAppointments({
 }: {
   scope?: "admin" | "professional";
 }) {
+  const t = useT();
   const isProfessional = scope === "professional";
   const [view, setView] = useState<ViewMode>("table");
   const [filters, setFilters] = useState<AppointmentFilters>(emptyFilters);
@@ -337,7 +339,7 @@ export function AdminAppointments({
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Citas"
+        title={t("Citas")}
         description={
           isProfessional
             ? "Mis citas de telemedicina"
@@ -353,11 +355,11 @@ export function AdminAppointments({
             }}
             size="sm"
             variant="outline"
-            aria-label="Cambiar vista de las citas"
+            aria-label={t("Cambiar vista de las citas")}
           >
             <ToggleGroupItem
               value="table"
-              aria-label="Vista de tabla"
+              aria-label={t("Vista de tabla")}
               className={cn(
                 view === "table"
                   ? toggleActiveOnDarkClass
@@ -368,7 +370,7 @@ export function AdminAppointments({
             </ToggleGroupItem>
             <ToggleGroupItem
               value="cards"
-              aria-label="Vista de tarjetas"
+              aria-label={t("Vista de tarjetas")}
               className={cn(
                 view === "cards"
                   ? toggleActiveOnDarkClass
@@ -393,7 +395,7 @@ export function AdminAppointments({
       {/* KPIs operativos: dos filas de tres tarjetas con aire entre ellas. */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
-          label="Citas de hoy"
+          label={t("Citas de hoy")}
           value={summary ? String(summary.appointmentsToday) : "—"}
           icon={CalendarCheck}
           variant="primary"
@@ -404,35 +406,35 @@ export function AdminAppointments({
           }
         />
         <StatCard
-          label="Citas pendientes"
+          label={t("Citas pendientes")}
           value={summary ? String(summary.appointmentsPending) : "—"}
           icon={CalendarClock}
           variant="warning"
-          context="Requieren confirmación"
+          context={t("Requieren confirmación")}
         />
         <StatCard
-          label="Citas completadas"
+          label={t("Citas completadas")}
           value={summary ? String(summary.appointmentsCompleted) : "—"}
           icon={CheckCircle2}
           variant="success"
-          context="Sesiones finalizadas"
+          context={t("Sesiones finalizadas")}
         />
         <StatCard
-          label="Solicitudes pendientes"
+          label={t("Solicitudes pendientes")}
           value={summary ? String(summary.requestsPending) : "—"}
           icon={Inbox}
-          context="Nuevas solicitudes por revisar"
+          context={t("Nuevas solicitudes por revisar")}
           variant="info"
         />
         <StatCard
-          label="Sesiones activas"
+          label={t("Sesiones activas")}
           value={summary ? String(summary.activeSessions) : "—"}
           icon={Video}
           variant="default"
-          context="Videollamadas en curso"
+          context={t("Videollamadas en curso")}
         />
         <StatCard
-          label="Alertas sin leer"
+          label={t("Alertas sin leer")}
           value={summary ? String(summary.alertsUnread) : "—"}
           icon={Bell}
           variant="destructive"
@@ -485,9 +487,9 @@ export function AdminAppointments({
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar citas…"
+                placeholder={t("Buscar citas…")}
                 className="pl-9"
-                aria-label="Buscar citas"
+                aria-label={t("Buscar citas")}
               />
             </div>
 
@@ -500,10 +502,10 @@ export function AdminAppointments({
               >
                 <SelectTrigger
                   className="w-[186px]"
-                  aria-label="Filtrar por estado"
+                  aria-label={t("Filtrar por estado")}
                 >
                   <ListFilter className="size-3.5 shrink-0 text-muted-foreground" />
-                  <SelectValue placeholder="Estado">
+                  <SelectValue placeholder={t("Estado")}>
                     {(value) =>
                       value === ALL
                         ? "Todos los estados"
@@ -515,7 +517,7 @@ export function AdminAppointments({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value={ALL}>Todos los estados</SelectItem>
+                    <SelectItem value={ALL}>{t("Todos los estados")}</SelectItem>
                     {statusOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -536,10 +538,10 @@ export function AdminAppointments({
                 >
                   <SelectTrigger
                     className="w-[246px]"
-                    aria-label="Filtrar por profesional"
+                    aria-label={t("Filtrar por profesional")}
                   >
                     <Stethoscope className="size-3.5 shrink-0 text-muted-foreground" />
-                    <SelectValue placeholder="Profesional">
+                    <SelectValue placeholder={t("Profesional")}>
                       {(value) =>
                         value === ALL
                           ? "Todos los profesionales"
@@ -577,10 +579,10 @@ export function AdminAppointments({
               >
                 <SelectTrigger
                   className="w-[216px]"
-                  aria-label="Filtrar por paciente"
+                  aria-label={t("Filtrar por paciente")}
                 >
                   <User className="size-3.5 shrink-0 text-muted-foreground" />
-                  <SelectValue placeholder="Paciente">
+                  <SelectValue placeholder={t("Paciente")}>
                     {(value) => {
                       if (value === ALL) return "Todos los pacientes";
                       const patient = (catalogs?.patients ?? []).find(
@@ -596,7 +598,7 @@ export function AdminAppointments({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value={ALL}>Todos los pacientes</SelectItem>
+                    <SelectItem value={ALL}>{t("Todos los pacientes")}</SelectItem>
                     {(catalogs?.patients ?? []).map((patient) => (
                       <SelectItem key={patient.id} value={patient.id}>
                         {[patient.firstName, patient.lastName]
@@ -618,10 +620,10 @@ export function AdminAppointments({
               >
                 <SelectTrigger
                   className="w-[206px]"
-                  aria-label="Filtrar por sede"
+                  aria-label={t("Filtrar por sede")}
                 >
                   <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
-                  <SelectValue placeholder="Sede">
+                  <SelectValue placeholder={t("Sede")}>
                     {(value) =>
                       value === ALL
                         ? "Todas las sedes"
@@ -633,7 +635,7 @@ export function AdminAppointments({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value={ALL}>Todas las sedes</SelectItem>
+                    <SelectItem value={ALL}>{t("Todas las sedes")}</SelectItem>
                     {(catalogs?.locations ?? []).map((location) => (
                       <SelectItem key={location.id} value={location.id}>
                         {location.name}
@@ -653,7 +655,7 @@ export function AdminAppointments({
                       updateFilter({ from: event.target.value })
                     }
                     className="w-[172px] pl-8"
-                    aria-label="Desde"
+                    aria-label={t("Desde")}
                   />
                 </div>
                 <ArrowRight
@@ -669,7 +671,7 @@ export function AdminAppointments({
                       updateFilter({ to: event.target.value })
                     }
                     className="w-[172px] pl-8"
-                    aria-label="Hasta"
+                    aria-label={t("Hasta")}
                   />
                 </div>
               </div>
@@ -721,42 +723,42 @@ export function AdminAppointments({
             <TableHeader>
               <TableRow className="bg-[var(--sidebar)] hover:bg-[var(--sidebar)]">
                 <SortableHeader
-                  label="Paciente"
+                  label={t("Paciente")}
                   sortKey="patientName"
                   activeKey={sortKey}
                   dir={sortDir}
                   onSort={handleSort}
                 />
                 <SortableHeader
-                  label="Profesional"
+                  label={t("Profesional")}
                   sortKey="professionalName"
                   activeKey={sortKey}
                   dir={sortDir}
                   onSort={handleSort}
                 />
                 <SortableHeader
-                  label="Especialidad"
+                  label={t("Especialidad")}
                   sortKey="specialtyName"
                   activeKey={sortKey}
                   dir={sortDir}
                   onSort={handleSort}
                 />
                 <SortableHeader
-                  label="Fecha y hora"
+                  label={t("Fecha y hora")}
                   sortKey="scheduledStart"
                   activeKey={sortKey}
                   dir={sortDir}
                   onSort={handleSort}
                 />
                 <SortableHeader
-                  label="Sede"
+                  label={t("Sede")}
                   sortKey="locationName"
                   activeKey={sortKey}
                   dir={sortDir}
                   onSort={handleSort}
                 />
                 <SortableHeader
-                  label="Estado"
+                  label={t("Estado")}
                   sortKey="status"
                   activeKey={sortKey}
                   dir={sortDir}

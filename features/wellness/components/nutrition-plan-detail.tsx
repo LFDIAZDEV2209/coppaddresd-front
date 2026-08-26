@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Apple } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -40,6 +41,7 @@ export function NutritionPlanDetailDialog({
   onClose,
   getPlan,
 }: NutritionPlanDetailDialogProps) {
+  const t = useT();
   const [plan, setPlan] = useState<NutritionPlan | null>(null);
   const [loading, setLoading] = useState(Boolean(planId));
 
@@ -109,7 +111,7 @@ export function NutritionPlanDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Apple className="size-5" />
-            {loading ? "Cargando..." : (plan?.name ?? "Plan")}
+            {loading ? t("Cargando...") : (plan?.name ?? t("Plan"))}
           </DialogTitle>
         </DialogHeader>
 
@@ -120,13 +122,13 @@ export function NutritionPlanDetailDialog({
             {/* Info básica */}
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <span className="text-xs text-muted-foreground">Tipo</span>
+                <span className="text-xs text-muted-foreground">{t("Tipo")}</span>
                 <p className="text-sm font-medium">
-                  {plan.isTemplate ? "Template" : "Personalizado"}
+                  {plan.isTemplate ? "Template" : t("Personalizado")}
                 </p>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Estado</span>
+                <span className="text-xs text-muted-foreground">{t("Estado")}</span>
                 <p>
                   <Badge className={statusColor(plan.status)}>
                     {PLAN_STATUS_LABELS[plan.status]}
@@ -134,23 +136,23 @@ export function NutritionPlanDetailDialog({
                 </p>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Duración</span>
-                <p className="text-sm font-medium">{plan.durationDays} días</p>
+                <span className="text-xs text-muted-foreground">{t("Duración")}</span>
+                <p className="text-sm font-medium">{t("{days} días", { days: String(plan.durationDays) })}</p>
               </div>
               {plan.dailyCalorieTarget && (
                 <div>
                   <span className="text-xs text-muted-foreground">
-                    Calorías diarias
+                    {t("Calorías diarias")}
                   </span>
                   <p className="text-sm font-medium">
-                    {plan.dailyCalorieTarget} kcal
+                    {t("{calories} kcal", { calories: String(plan.dailyCalorieTarget) })}
                   </p>
                 </div>
               )}
               {plan.targetCondition && (
                 <div className="sm:col-span-2">
                   <span className="text-xs text-muted-foreground">
-                    Condición objetivo
+                    {t("Condición objetivo")}
                   </span>
                   <p className="text-sm font-medium">{plan.targetCondition}</p>
                 </div>
@@ -158,7 +160,7 @@ export function NutritionPlanDetailDialog({
               {plan.description && (
                 <div className="sm:col-span-2">
                   <span className="text-xs text-muted-foreground">
-                    Descripción
+                    {t("Descripción")}
                   </span>
                   <p className="text-sm">{plan.description}</p>
                 </div>
@@ -170,20 +172,20 @@ export function NutritionPlanDetailDialog({
             {/* Días */}
             {dayNumbers.length > 0 ? (
               <div className="flex flex-col gap-2">
-                <span className="text-xs font-semibold uppercase text-muted-foreground">
-                  Plan alimentario ({dayNumbers.length} días)
-                </span>
-                <Tabs defaultValue={String(dayNumbers[0])}>
-                  <TabsList className="h-auto flex-wrap gap-1 bg-muted p-1">
-                    {dayNumbers.map((d) => (
-                      <TabsTrigger
-                        key={d}
-                        value={String(d)}
-                        className="text-xs"
-                      >
-                        Día {d}
-                      </TabsTrigger>
-                    ))}
+              <span className="text-xs font-semibold uppercase text-muted-foreground">
+                {t("Plan alimentario ({count} días)", { count: String(dayNumbers.length) })}
+              </span>
+              <Tabs defaultValue={String(dayNumbers[0])}>
+                <TabsList className="h-auto flex-wrap gap-1 bg-muted p-1">
+                  {dayNumbers.map((d) => (
+                    <TabsTrigger
+                      key={d}
+                      value={String(d)}
+                      className="text-xs"
+                    >
+                      {t("Día {day}", { day: String(d) })}
+                    </TabsTrigger>
+                  ))}
                   </TabsList>
                   {dayNumbers.map((d) => (
                     <TabsContent key={d} value={String(d)}>
@@ -229,13 +231,13 @@ export function NutritionPlanDetailDialog({
               </div>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Este plan no tiene días configurados aún.
+                {t("Este plan no tiene días configurados aún.")}
               </p>
             )}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No se pudo cargar el plan.
+            {t("No se pudo cargar el plan.")}
           </p>
         )}
       </DialogContent>

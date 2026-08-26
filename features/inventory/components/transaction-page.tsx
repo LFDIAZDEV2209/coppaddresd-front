@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useT } from "@/providers/i18n-provider";
 import {
   createEntry,
   createExit,
@@ -71,6 +72,7 @@ const exitReasons = [
 ];
 
 export function TransactionPage({ mode }: { mode: TransactionMode }) {
+  const t = useT();
   const isEntry = mode === "entry";
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -119,7 +121,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       })
       .catch(() => {
         if (!cancelled)
-          setError("No pudimos cargar los productos disponibles.");
+          setError(t("No pudimos cargar los productos disponibles."));
       })
       .finally(() => {
         if (!cancelled) setLoadingProducts(false);
@@ -127,7 +129,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
     return () => {
       cancelled = true;
     };
-  }, [isEntry, lines.length]);
+  }, [isEntry, lines.length, t]);
   const updateLine = <K extends keyof InventoryLine>(
     id: string,
     field: K,
@@ -162,11 +164,11 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       !lines.length ||
       lines.some((line) => !line.productId || line.quantity < 1 || !line.lot)
     ) {
-      setError("Agrega al menos un producto con cantidad y lote válido.");
+      setError(t("Agrega al menos un producto con cantidad y lote válido."));
       return;
     }
     if (!isEntry && invalidStock) {
-      setError("No hay stock suficiente para realizar esta operación.");
+      setError(t("No hay stock suficiente para realizar esta operación."));
       return;
     }
     setError(null);
@@ -187,7 +189,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
           lines,
         };
         const created = await createEntry(entry);
-        setSuccess(`Entrada ${created.reference} registrada correctamente.`);
+        setSuccess(t("Entrada {reference} registrada correctamente.", { reference: created.reference }));
       } else {
         const exit: Omit<InventoryExit, "id" | "reference"> = {
           date,
@@ -198,7 +200,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
           lines,
         };
         const created = await createExit(exit);
-        setSuccess(`Salida ${created.reference} registrada correctamente.`);
+        setSuccess(t("Salida {reference} registrada correctamente.", { reference: created.reference }));
       }
       setLines([]);
       setSupplier("");
@@ -210,7 +212,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "No se pudo completar la operación.",
+          : t("No se pudo completar la operación."),
       );
     } finally {
       setSaving(false);
@@ -221,11 +223,11 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title={isEntry ? "Entradas" : "Salidas"}
+        title={isEntry ? t("Entradas") : t("Salidas")}
         description={
           isEntry
-            ? "Registra compras y recepciones que incrementan el stock"
-            : "Registra dispensaciones y operaciones que disminuyen el stock"
+            ? t("Registra compras y recepciones que incrementan el stock")
+            : t("Registra dispensaciones y operaciones que disminuyen el stock")
         }
         icon={isEntry ? ArrowDownToLine : ArrowUpFromLine}
       />
@@ -241,68 +243,68 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
               className={`text-sm font-semibold ${isEntry ? "text-success-foreground" : "text-warning-foreground"}`}
             >
               {isEntry
-                ? "Incremento de inventario"
-                : "Disminución de inventario"}
+                ? t("Incremento de inventario")
+                : t("Disminución de inventario")}
             </p>
             <p
               className={`mt-1 text-xs ${isEntry ? "text-success-foreground/80" : "text-warning-foreground/80"}`}
             >
               {isEntry
-                ? "Los productos recibidos quedarán disponibles después de confirmar la operación."
-                : "La cantidad solicitada se valida contra el stock disponible antes de confirmar."}
+                ? t("Los productos recibidos quedarán disponibles después de confirmar la operación.")
+                : t("La cantidad solicitada se valida contra el stock disponible antes de confirmar.")}
             </p>
           </div>
         </div>
       </div>
       <section className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Fecha">
+          <Field label={t("Fecha")}>
             <Input
               type="date"
               value={date}
               onChange={(event) => setDate(event.target.value)}
             />
           </Field>
-          <Field label="Tipo de operación">
+          <Field label={t("Tipo de operación")}>
             <select
               value={reason}
               onChange={(event) => setReason(event.target.value)}
             >
               {(isEntry ? entryReasons : exitReasons).map((item) => (
-                <option key={item}>{item}</option>
+                <option key={item} value={item}>{t(item)}</option>
               ))}
             </select>
           </Field>
           {isEntry ? (
-            <Field label="Proveedor">
+            <Field label={t("Proveedor")}>
               <Input
                 value={supplier}
                 onChange={(event) => setSupplier(event.target.value)}
-                placeholder="Ej. Drogas La Rebaja"
+                placeholder={t("Ej. Drogas La Rebaja")}
               />
             </Field>
           ) : (
-            <Field label="Paciente (opcional)">
+            <Field label={t("Paciente (opcional)")}>
               <Input
                 value={patientName}
                 onChange={(event) => setPatientName(event.target.value)}
-                placeholder="Si es dispensación"
+                placeholder={t("Si es dispensación")}
               />
             </Field>
           )}
-          <Field label="Documento de referencia">
+          <Field label={t("Documento de referencia")}>
             <Input
               value={document}
               onChange={(event) => setDocument(event.target.value)}
-              placeholder="Factura, receta o remisión"
+              placeholder={t("Factura, receta o remisión")}
             />
           </Field>
         </div>
         <div className="flex items-center justify-between border-t border-border pt-5">
           <div>
-            <h2 className="text-base font-bold">Productos de la operación</h2>
+            <h2 className="text-base font-bold">{t("Productos de la operación")}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Puedes agregar múltiples productos y controlar lote y vencimiento.
+              {t("Puedes agregar múltiples productos y controlar lote y vencimiento.")}
             </p>
           </div>
           <Button
@@ -318,7 +320,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
             disabled={loadingProducts}
           >
             <Plus data-icon="inline-start" />
-            Agregar producto
+            {t("Agregar producto")}
           </Button>
         </div>
         {loadingProducts ? (
@@ -357,15 +359,15 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border py-10 text-center text-xs text-muted-foreground">
-            Agrega un producto para comenzar.
+            {t("Agrega un producto para comenzar.")}
           </div>
         )}
-        <Field label="Observaciones">
+        <Field label={t("Observaciones")}>
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
-            placeholder="Notas de la operación"
+            placeholder={t("Notas de la operación")}
           />
         </Field>
         {error && (
@@ -388,13 +390,13 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
           <div>
             <span className="text-xs text-muted-foreground">
-              Valor total estimado
+              {t("Valor total estimado")}
             </span>
             <p className="text-xl font-bold">{formatCurrency(total)}</p>
           </div>
           <div className="flex gap-2">
             <Link href="/inventory/movements">
-              <Button variant="outline">Ver movimientos</Button>
+              <Button variant="outline">{t("Ver movimientos")}</Button>
             </Link>
             <Button
               onClick={submit}
@@ -403,10 +405,10 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
               }
             >
               {saving
-                ? "Confirmando..."
+                ? t("Confirmando...")
                 : isEntry
-                  ? "Confirmar entrada"
-                  : "Confirmar salida"}
+                  ? t("Confirmar entrada")
+                  : t("Confirmar salida")}
             </Button>
           </div>
         </div>
@@ -419,10 +421,10 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
           </div>
           <div>
             <h2 className="text-sm font-semibold">
-              Historial de {isEntry ? "entradas" : "salidas"}
+              {t("Historial de {type}", { type: isEntry ? t("entradas") : t("salidas") })}
             </h2>
             <p className="text-xs text-muted-foreground">
-              Últimas operaciones registradas en la base de datos.
+              {t("Últimas operaciones registradas en la base de datos.")}
             </p>
           </div>
         </div>
@@ -433,22 +435,22 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
         ) : history.length ? (
           <div className="overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
-              title={`${history.length} registros`}
-              description={`Historial de ${isEntry ? "entradas" : "salidas"}`}
+              title={t("{count} registros", { count: String(history.length) })}
+              description={t("Historial de {type}", { type: isEntry ? t("entradas") : t("salidas") })}
               icon={isEntry ? ArrowDownToLine : ArrowUpFromLine}
               variant="primary"
             />
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Referencia</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Motivo</TableHead>
+                  <TableHead>{t("Referencia")}</TableHead>
+                  <TableHead>{t("Fecha")}</TableHead>
+                  <TableHead>{t("Motivo")}</TableHead>
                   <TableHead className="hidden md:table-cell">
-                    {isEntry ? "Proveedor" : "Responsable"}
+                    {isEntry ? t("Proveedor") : t("Responsable")}
                   </TableHead>
-                  {!isEntry && <TableHead>Paciente</TableHead>}
-                  <TableHead className="hidden lg:table-cell">Productos</TableHead>
+                  {!isEntry && <TableHead>{t("Paciente")}</TableHead>}
+                  <TableHead className="hidden lg:table-cell">{t("Productos")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -471,7 +473,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
                         </TableCell>
                       )}
                       <TableCell className="hidden text-xs text-muted-foreground lg:table-cell">
-                        {item.lines.length} línea{item.lines.length !== 1 ? "s" : ""}
+                        {item.lines.length} {t("línea" + (item.lines.length !== 1 ? "s" : ""))}
                       </TableCell>
                     </TableRow>
                   );
@@ -481,7 +483,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
-            Aún no hay {isEntry ? "entradas" : "salidas"} registradas.
+            {t("Aún no hay {type} registradas.", { type: isEntry ? t("entradas") : t("salidas") })}
           </div>
         )}
       </section>
@@ -499,20 +501,18 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
               {isEntry
-                ? "Confirmar entrada de inventario"
-                : "Confirmar salida de inventario"}
+                ? t("Confirmar entrada de inventario")
+                : t("Confirmar salida de inventario")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Se registrarán {lines.length}{" "}
-              {lines.length === 1 ? "producto" : "productos"} por un valor
-              total de{" "}
-              <span className="font-semibold text-foreground">
-                {formatCurrency(total)}
-              </span>
-              .{" "}
-              {isEntry
-                ? "Los productos quedarán disponibles en stock después de confirmar."
-                : "La cantidad se descontará del stock disponible al confirmar."}
+              {t("Se registrarán {count} {product} por un valor total de {total}. {detail}", {
+                count: String(lines.length),
+                product: lines.length === 1 ? t("producto") : t("productos"),
+                total: formatCurrency(total),
+                detail: isEntry
+                  ? t("Los productos quedarán disponibles en stock después de confirmar.")
+                  : t("La cantidad se descontará del stock disponible al confirmar."),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="grid-cols-1">
@@ -527,10 +527,10 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
                   data-icon="inline-start"
                 />
               ) : null}
-              Confirmar {isEntry ? "entrada" : "salida"}
+              {t("Confirmar {type}", { type: isEntry ? t("entrada") : t("salida") })}
             </AlertDialogAction>
             <AlertDialogCancel className="w-full" disabled={saving}>
-              Cancelar
+              {t("Cancelar")}
             </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -562,18 +562,19 @@ function TransactionLine({
   onRemove: () => void;
   invalid: boolean;
 }) {
+  const t = useT();
   const product = products.find((item) => item.id === line.productId);
   return (
     <div
       className={`grid gap-3 rounded-xl border p-4 sm:grid-cols-2 lg:grid-cols-6 ${invalid ? "border-destructive bg-destructive-soft/30" : "border-border bg-muted/20"}`}
     >
       <div className="flex flex-col gap-1.5 lg:col-span-2">
-        <Label className="text-xs">Producto {index + 1}</Label>
+        <Label className="text-xs">{t("Producto")} {index + 1}</Label>
         <select
           value={line.productId}
           onChange={(event) => onProductChange(event.target.value)}
         >
-          <option value="">Selecciona producto</option>
+          <option value="">{t("Selecciona producto")}</option>
           {products.map((item) => (
             <option value={item.id} key={item.id}>
               {item.name} {item.concentration} · {item.sku}
@@ -582,11 +583,11 @@ function TransactionLine({
         </select>
         {!isEntry && product && (
           <span className="text-[11px] text-muted-foreground">
-            Stock disponible: <strong>{product.stock}</strong>
+            {t("Stock disponible:")}: <strong>{product.stock}</strong>
           </span>
         )}
       </div>
-      <Field label="Cantidad">
+      <Field label={t("Cantidad")}>
         <Input
           type="number"
           min="1"
@@ -597,14 +598,14 @@ function TransactionLine({
           aria-invalid={invalid}
         />
       </Field>
-      <Field label="Lote">
+      <Field label={t("Lote")}>
         <Input
           value={line.lot}
           onChange={(event) => onChange(line.id, "lot", event.target.value)}
-          placeholder={product?.lot ?? "Lote"}
+          placeholder={product?.lot ?? t("Lote")}
         />
       </Field>
-      <Field label="Vencimiento">
+      <Field label={t("Vencimiento")}>
         <Input
           type="date"
           value={line.expirationDate}
@@ -615,7 +616,7 @@ function TransactionLine({
       </Field>
       <div className="flex items-end justify-between gap-2">
         <div>
-          <p className="text-xs text-muted-foreground">Subtotal</p>
+          <p className="text-xs text-muted-foreground">{t("Subtotal")}</p>
           <p className="font-semibold">
             {formatCurrency(line.quantity * line.unitCost)}
           </p>
@@ -625,14 +626,14 @@ function TransactionLine({
           size="icon-sm"
           className="text-destructive"
           onClick={onRemove}
-          aria-label={`Eliminar producto ${index + 1}`}
+          aria-label={t("Eliminar producto {index}", { index: String(index + 1) })}
         >
           <Trash2 />
         </Button>
       </div>
       {invalid && (
         <p className="col-span-full text-xs font-semibold text-destructive">
-          No hay stock suficiente para esta cantidad.
+          {t("No hay stock suficiente para esta cantidad.")}
         </p>
       )}
     </div>

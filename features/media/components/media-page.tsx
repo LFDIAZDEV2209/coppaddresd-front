@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useT } from "@/providers/i18n-provider";
 import { useMedia } from "../hooks/use-media";
 import {
   requestUploadIntent,
@@ -30,6 +31,7 @@ import { MediaDetailDialog } from "./media-detail-dialog";
 import type { MediaItem, MediaInput } from "../types";
 
 export function MediaPage() {
+  const t = useT();
   const {
     result,
     loading,
@@ -99,26 +101,26 @@ export function MediaPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Contenido multimedia"
-        description="Gestiona los podcasts, videos y audios de las lecciones"
+        title={t('Contenido multimedia')}
+        description={t('Gestiona los podcasts, videos y audios de las lecciones')}
         icon={FileAudio}
         actions={
           <Button size="sm" onClick={openCreate}>
             <Plus data-icon="inline-start" />
-            Nuevo medio
+            {t('Nuevo medio')}
           </Button>
         }
       />
 
       <section
         className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
-        aria-label="Filtros de medios"
+        aria-label={t('Filtros de medios')}
       >
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-sm font-semibold">Biblioteca de medios</h2>
+            <h2 className="text-sm font-semibold">{t('Biblioteca de medios')}</h2>
             <p className="text-xs text-muted-foreground">
-              Filtra por tipo, estado o busca por título.
+              {t('Filtra por tipo, estado o busca por título.')}
             </p>
           </div>
           <Button
@@ -131,7 +133,7 @@ export function MediaPage() {
               data-icon="inline-start"
               className={loading ? "animate-spin" : undefined}
             />
-            Actualizar
+            {t('Actualizar')}
           </Button>
         </div>
         <MediaToolbar
@@ -149,11 +151,13 @@ export function MediaPage() {
       ) : result && result.data.length > 0 ? (
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
-            title={`${result.total} ${result.total === 1 ? "medio" : "medios"} disponibles`}
+            title={result.total === 1
+              ? t('{count} medio disponible', { count: String(result.total) })
+              : t('{count} medios disponibles', { count: String(result.total) })}
             description={
               viewMode === "grid"
-                ? "Vista de tarjetas"
-                : "Vista de tabla"
+                ? t('Vista de tarjetas')
+                : t('Vista de tabla')
             }
             icon={FileAudio}
             variant="primary"
@@ -183,7 +187,7 @@ export function MediaPage() {
       {result && result.totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            Página {result.page} de {result.totalPages}
+            {t('Página {page} de {totalPages}', { page: String(result.page), totalPages: String(result.totalPages) })}
           </span>
           <div className="flex items-center gap-3">
             <select
@@ -194,11 +198,11 @@ export function MediaPage() {
                 setPageSizeLocal(size);
                 setPageSize(size);
               }}
-              aria-label="Medios por página"
+              aria-label={t('Medios por página')}
             >
-              <option value={8}>8 por página</option>
-              <option value={12}>12 por página</option>
-              <option value={24}>24 por página</option>
+              <option value={8}>8 {t('por página')}</option>
+              <option value={12}>12 {t('por página')}</option>
+              <option value={24}>24 {t('por página')}</option>
             </select>
             <div className="flex gap-2">
               <Button
@@ -207,7 +211,7 @@ export function MediaPage() {
                 disabled={result.page === 1}
                 onClick={() => setPage(result.page - 1)}
               >
-                Anterior
+                {t('Anterior')}
               </Button>
               <Button
                 variant="outline"
@@ -215,7 +219,7 @@ export function MediaPage() {
                 disabled={result.page === result.totalPages}
                 onClick={() => setPage(result.page + 1)}
               >
-                Siguiente
+                {t('Siguiente')}
               </Button>
             </div>
           </div>
@@ -243,14 +247,13 @@ export function MediaPage() {
             <Trash2 />
           </AlertDialogMedia>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar medio?</AlertDialogTitle>
+            <AlertDialogTitle>{t('¿Eliminar medio?')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminará la metadata de “{deleting?.title}”. Esta acción no se
-              puede deshacer.
+              {t('Se eliminará la metadata de "{title}". Esta acción no se puede deshacer.', { title: deleting?.title ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('Cancelar')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
               disabled={actionLoading}
@@ -259,7 +262,7 @@ export function MediaPage() {
                 setDeleting(undefined);
               }}
             >
-              Eliminar
+              {t('Eliminar')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -317,15 +320,16 @@ function MediaErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
       <p className="text-sm font-semibold text-destructive">
-        No pudimos cargar la biblioteca
+        {t('No pudimos cargar la biblioteca')}
       </p>
       <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
         <RefreshCw data-icon="inline-start" />
-        Reintentar
+        {t('Reintentar')}
       </Button>
     </div>
   );

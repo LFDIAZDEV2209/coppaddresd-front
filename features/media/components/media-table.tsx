@@ -21,6 +21,7 @@ import type { MediaItem } from "../types";
 import { mediaTypeMeta, mediaStatusMeta, getMediaCategoryMeta } from "./media-meta";
 import { MediaThumb } from "./media-thumb";
 import { formatDuration, formatFileSize } from "../services/media-service";
+import { useT } from "@/providers/i18n-provider";
 
 interface MediaTableProps {
   items: MediaItem[];
@@ -35,19 +36,20 @@ export function MediaTable({
   onEdit,
   onDelete,
 }: MediaTableProps) {
+  const t = useT();
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Medio</TableHead>
-          <TableHead className="hidden md:table-cell">Tipo</TableHead>
-          <TableHead className="hidden lg:table-cell">Categoría</TableHead>
-          <TableHead className="hidden lg:table-cell">Duración</TableHead>
-          <TableHead className="hidden lg:table-cell">Tamaño</TableHead>
-          <TableHead>Estado</TableHead>
-          <TableHead className="hidden md:table-cell">Orden</TableHead>
+          <TableHead>{t('Medio')}</TableHead>
+          <TableHead className="hidden md:table-cell">{t('Tipo')}</TableHead>
+          <TableHead className="hidden lg:table-cell">{t('Categoría')}</TableHead>
+          <TableHead className="hidden lg:table-cell">{t('Duración')}</TableHead>
+          <TableHead className="hidden lg:table-cell">{t('Tamaño')}</TableHead>
+          <TableHead>{t('Estado')}</TableHead>
+          <TableHead className="hidden md:table-cell">{t('Orden')}</TableHead>
           <TableHead className="w-10">
-            <span className="sr-only">Acciones</span>
+            <span className="sr-only">{t('Acciones')}</span>
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -68,7 +70,7 @@ export function MediaTable({
                   {item.thumbnailKey ? (
                     <MediaThumb
                       storageKey={item.thumbnailKey}
-                      alt={`Miniatura de ${item.title}`}
+                      alt={t('Miniatura de {title}', { title: item.title })}
                       className="size-9 shrink-0 rounded-lg object-cover"
                     />
                   ) : (
@@ -83,7 +85,7 @@ export function MediaTable({
                       {item.title}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {type.label} · {item.contentType ?? "sin tipo"}
+                      {type.label} · {item.contentType ?? t('sin tipo')}
                     </span>
                   </span>
                 </button>
@@ -126,7 +128,7 @@ export function MediaTable({
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        aria-label={`Acciones de ${item.title}`}
+                        aria-label={t('Acciones de {title}', { title: item.title })}
                       />
                     }
                   >
@@ -135,11 +137,11 @@ export function MediaTable({
                   <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuItem onClick={() => onDetails(item)}>
                       <Eye />
-                      Ver detalles
+                      {t('Ver detalles')}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onEdit(item)}>
                       <Pencil />
-                      Editar
+                      {t('Editar')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -147,7 +149,7 @@ export function MediaTable({
                       onClick={() => onDelete(item)}
                     >
                       <Trash2 />
-                      Eliminar
+                      {t('Eliminar')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

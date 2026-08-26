@@ -55,3 +55,41 @@ yarn lint         # ESLint
 yarn start        # production server
 npx tsc --noEmit  # typecheck
 ```
+
+## i18n (internacionalización)
+
+El idioma se cambia en **Configuración > General > Idioma** (Español / English).
+Las claves de traducción son strings en español; los valores en inglés están en
+`providers/translations/en.json`.
+
+### Auto-traducción en desarrollo
+
+Al navegar la app en inglés, faltan claves nuevas → el console las reporta. Un
+collector las envía al endpoint `/api/i18n/missing` (solo dev), que las traduce
+automáticamente con MyMemory y las agrega a `en.json`.
+
+### Revisar y aplicar traducciones
+
+1. Editá `providers/translations/pending-review.json` con tus valores finales en inglés.
+2. Ejecutá:
+
+```bash
+yarn i18n:apply
+```
+
+Los valores se copian a `en.json` y la cola se resetea a `{}`.
+
+### Añadir traducciones manualmente
+
+Si preferís no usar la auto-traducción, agregá las claves directamente a
+`providers/translations/en.json`:
+
+```json
+"Spanish text": "English translation"
+```
+
+### Notas
+
+- `providers/translations/es.json` es opcional (fallback al texto fuente).
+- `MYMEMORY_EMAIL` en `.env` es opcional — sube la cuota diaria de 5k → 50k chars.
+- El endpoint `/api/i18n/missing` devuelve 404 en producción (safe).

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Eye, EyeOff, KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { acceptInvitation, validateInvitation, type InvitationValidation } from "@/lib/api/invitation-service";
 import { ApiError } from "@/lib/api/http";
+import { useT } from "@/providers/i18n-provider";
 
 type Phase = "loading" | "invalid" | "ready" | "submitting" | "done";
 
@@ -13,6 +14,7 @@ function InvitationPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
+  const t = useT();
 
   const [phase, setPhase] = useState<Phase>(token ? "loading" : "invalid");
   const [validation, setValidation] = useState<InvitationValidation | null>(null);
@@ -20,7 +22,7 @@ function InvitationPageContent() {
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(
-    token ? null : "Falta el enlace de invitación. Revisa el correo que recibiste.",
+    token ? null : t("Falta el enlace de invitación. Revisa el correo que recibiste."),
   );
 
   useEffect(() => {
@@ -33,7 +35,7 @@ function InvitationPageContent() {
         if (cancelled) return;
         if (!result.valid) {
           setPhase("invalid");
-          setError(result.error ?? "La invitación no es válida.");
+          setError(result.error ?? t("La invitación no es válida."));
         } else {
           setValidation(result);
           setPhase("ready");
@@ -41,7 +43,7 @@ function InvitationPageContent() {
       } catch {
         if (!cancelled) {
           setPhase("invalid");
-          setError("No se pudo validar la invitación. Intenta nuevamente.");
+          setError(t("No se pudo validar la invitación. Intenta nuevamente."));
         }
       }
     })();
@@ -49,15 +51,15 @@ function InvitationPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, t]);
 
   const submit = async () => {
     if (password.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres.");
+      setError(t("La contraseña debe tener al menos 8 caracteres."));
       return;
     }
     if (password !== confirm) {
-      setError("Las contraseñas no coinciden.");
+      setError(t("Las contraseñas no coinciden."));
       return;
     }
 
@@ -70,7 +72,7 @@ function InvitationPageContent() {
     } catch (err) {
       setPhase("ready");
       setError(
-        err instanceof ApiError ? err.message : "No se pudo completar el acceso. Intenta nuevamente.",
+        err instanceof ApiError ? err.message : t("No se pudo completar el acceso. Intenta nuevamente."),
       );
     }
   };
@@ -82,9 +84,9 @@ function InvitationPageContent() {
           <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary-strong">
             <KeyRound className="size-7" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Completa tu acceso</h1>
+          <h1 className="text-2xl font-bold text-white">{t("Completa tu acceso")}</h1>
           <p className="mt-1 text-sm text-white/65">
-            Establece tu contraseña para entrar a la plataforma.
+            {t("Establece tu contraseña para entrar a la plataforma.")}
           </p>
         </div>
 
@@ -92,7 +94,7 @@ function InvitationPageContent() {
           {phase === "loading" && (
             <div className="flex items-center justify-center gap-2 py-8 text-white/70">
               <Loader2 className="size-5 animate-spin" />
-              <span className="text-sm">Validando invitación...</span>
+              <span className="text-sm">{t("Validando invitación...")}</span>
             </div>
           )}
 
@@ -103,7 +105,7 @@ function InvitationPageContent() {
                 href="/login"
                 className="mt-4 inline-block rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition-colors"
               >
-                Volver al inicio de sesión
+                {t("Volver al inicio de sesión")}
               </Link>
             </div>
           )}
@@ -123,7 +125,7 @@ function InvitationPageContent() {
               <div className="space-y-4">
                 <div>
                   <label htmlFor="password" className="mb-1.5 block text-[12.5px] font-medium text-white/80">
-                    Nueva contraseña
+                    {t("Nueva contraseña")}
                   </label>
                   <div className="relative">
                     <input
@@ -131,14 +133,14 @@ function InvitationPageContent() {
                       type={show ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mínimo 8 caracteres"
+                      placeholder={t("Mínimo 8 caracteres")}
                       className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3.5 pr-10 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/60"
                     />
                     <button
                       type="button"
                       onClick={() => setShow((v) => !v)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80"
-                      aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+                      aria-label={show ? t("Ocultar contraseña") : t("Mostrar contraseña")}
                     >
                       {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
@@ -147,16 +149,16 @@ function InvitationPageContent() {
 
                 <div>
                   <label htmlFor="confirm" className="mb-1.5 block text-[12.5px] font-medium text-white/80">
-                    Confirmar contraseña
+                    {t("Confirmar contraseña")}
                   </label>
-                  <input
-                    id="confirm"
-                    type={show ? "text" : "password"}
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    placeholder="Repite la contraseña"
-                    className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/60"
-                  />
+                    <input
+                      id="confirm"
+                      type={show ? "text" : "password"}
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                      placeholder={t("Repite la contraseña")}
+                      className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/60"
+                    />
                 </div>
 
                 {error && (
@@ -167,7 +169,7 @@ function InvitationPageContent() {
                   onClick={submit}
                   className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"
                 >
-                  Establecer contraseña e iniciar
+                  {t("Establecer contraseña e iniciar")}
                 </button>
               </div>
             </div>
@@ -176,8 +178,8 @@ function InvitationPageContent() {
           {phase === "done" && (
             <div className="py-6 text-center">
               <ShieldCheck className="mx-auto mb-3 size-10 text-emerald-400" />
-              <p className="text-sm font-semibold text-white">¡Acceso completado!</p>
-              <p className="mt-1 text-[12.5px] text-white/60">Redirigiendo al inicio de sesión...</p>
+              <p className="text-sm font-semibold text-white">{t("¡Acceso completado!")}</p>
+              <p className="mt-1 text-[12.5px] text-white/60">{t("Redirigiendo al inicio de sesión...")}</p>
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useEffect, useState } from "react";
 import {
   Check,
@@ -41,6 +42,7 @@ export function PatientProfessionalsSection({
 }: {
   patientId: string;
 }) {
+  const t = useT();
   const { can } = useAppContext();
   const canManage = can("Patients.Update");
 
@@ -158,10 +160,10 @@ export function PatientProfessionalsSection({
   return (
     <section
       className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
-      aria-label="Profesionales asignados"
+      aria-label={t("Profesionales asignados")}
     >
       <SectionHeader
-        title="Profesionales asignados"
+        title={t("Profesionales asignados")}
         description={`${active.length} atienden a este paciente`}
         icon={Stethoscope}
         variant="primary"
@@ -242,7 +244,7 @@ export function PatientProfessionalsSection({
                       variant="outline"
                       role="combobox"
                       aria-expanded={pickerOpen}
-                      aria-label="Profesional a asignar"
+                      aria-label={t("Profesional a asignar")}
                       className="h-9 min-w-0 flex-1 justify-start truncate font-normal"
                     >
                       <Stethoscope className="size-4 shrink-0 text-muted-foreground" />
@@ -267,8 +269,8 @@ export function PatientProfessionalsSection({
                       className="h-8 pl-8"
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Buscar profesional..."
-                      aria-label="Buscar profesional"
+                      placeholder={t("Buscar profesional...")}
+                      aria-label={t("Buscar profesional")}
                       autoFocus
                     />
                   </div>

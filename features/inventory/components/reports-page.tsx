@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useT } from "@/providers/i18n-provider";
 import { fetchAnalytics } from "../services/inventory-service";
 import type { InventoryAnalytics, ProductListItem } from "../types";
 
@@ -41,6 +42,7 @@ const CHART_COLORS = [
 ];
 
 export function ReportsPage() {
+  const t = useT();
   const [preset, setPreset] = useState("Últimos 30 días");
   const [from, setFrom] = useState(() => daysAgo(29));
   const [to, setTo] = useState(() => today());
@@ -61,7 +63,7 @@ export function ReportsPage() {
       .catch(() => {
         if (!cancelled) {
           setAnalytics(null);
-          setError("No pudimos cargar los datos del reporte.");
+          setError(t("No pudimos cargar los datos del reporte."));
         }
       })
       .finally(() => {
@@ -70,7 +72,7 @@ export function ReportsPage() {
     return () => {
       cancelled = true;
     };
-  }, [from, to]);
+  }, [from, to, t]);
 
   const changePreset = (value: string) => {
     setPreset(value);
@@ -89,17 +91,17 @@ export function ReportsPage() {
     setError(null);
     try {
       if (format === "Excel") {
-        downloadCsv(reportType, analytics, from, to);
+        downloadCsv(t, reportType, analytics, from, to);
       } else {
-        printReport(reportType, analytics, from, to);
+        printReport(t, reportType, analytics, from, to);
       }
       setSuccess(
         format === "Excel"
-          ? `${reportType} descargado en formato CSV.`
-          : `${reportType} listo para guardar como PDF.`,
+          ? t("{reportType} descargado en formato CSV.", { reportType: t(reportType) })
+          : t("{reportType} listo para guardar como PDF.", { reportType: t(reportType) }),
       );
     } catch {
-      setError("No pudimos generar el reporte. Intenta nuevamente.");
+      setError(t("No pudimos generar el reporte. Intenta nuevamente."));
     } finally {
       setExporting(false);
     }
@@ -108,21 +110,21 @@ export function ReportsPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Reportes"
-        description="Convierte el inventario en decisiones de reposición y control"
+        title={t("Reportes")}
+        description={t("Convierte el inventario en decisiones de reposición y control")}
         icon={FileBarChart}
         actions={
           <Button size="sm" onClick={() => void exportReport()} disabled={exporting}>
             <Download data-icon="inline-start" />
-            {exporting ? "Generando..." : "Exportar reporte"}
+            {exporting ? t("Generando...") : t("Exportar reporte")}
           </Button>
         }
       />
 
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <SectionHeader
-          title="Periodo del reporte"
-          description="Filtra los datos para descargar un reporte operativo"
+          title={t("Periodo del reporte")}
+          description={t("Filtra los datos para descargar un reporte operativo")}
           icon={CalendarDays}
           variant="secondary"
         />
@@ -131,14 +133,14 @@ export function ReportsPage() {
             className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={preset}
             onChange={(event) => changePreset(event.target.value)}
-            aria-label="Periodo"
+            aria-label={t("Periodo")}
           >
-            <option>Hoy</option>
-            <option>Últimos 7 días</option>
-            <option>Últimos 30 días</option>
-            <option>Este mes</option>
-            <option>Mes anterior</option>
-            <option>Rango personalizado</option>
+            <option value="Hoy">{t("Hoy")}</option>
+            <option value="Últimos 7 días">{t("Últimos 7 días")}</option>
+            <option value="Últimos 30 días">{t("Últimos 30 días")}</option>
+            <option value="Este mes">{t("Este mes")}</option>
+            <option value="Mes anterior">{t("Mes anterior")}</option>
+            <option value="Rango personalizado">{t("Rango personalizado")}</option>
           </select>
           <input
             type="date"
@@ -149,7 +151,7 @@ export function ReportsPage() {
               setError(null);
               setFrom(event.target.value);
             }}
-            aria-label="Fecha desde"
+            aria-label={t("Fecha desde")}
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
           />
           <input
@@ -161,19 +163,19 @@ export function ReportsPage() {
               setError(null);
               setTo(event.target.value);
             }}
-            aria-label="Fecha hasta"
+            aria-label={t("Fecha hasta")}
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
           />
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={reportType}
             onChange={(event) => setReportType(event.target.value)}
-            aria-label="Tipo de reporte"
+            aria-label={t("Tipo de reporte")}
           >
-            <option>Reporte de movimientos</option>
-            <option>Existencias actuales</option>
-            <option>Productos por vencer</option>
-            <option>Valorización de inventario</option>
+            <option value="Reporte de movimientos">{t("Reporte de movimientos")}</option>
+            <option value="Existencias actuales">{t("Existencias actuales")}</option>
+            <option value="Productos por vencer">{t("Productos por vencer")}</option>
+            <option value="Valorización de inventario">{t("Valorización de inventario")}</option>
           </select>
           <div className="flex gap-2">
             <Button
@@ -219,36 +221,42 @@ export function ReportsPage() {
         <ReportsSkeleton />
       ) : !analytics ? (
         <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">
-          No hay datos disponibles para este periodo.
+          {t("No hay datos disponibles para este periodo.")}
         </div>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Unidades entradas"
+              label={t("Unidades entradas")}
               value={String(analytics.unitsEntered)}
-              context={`${analytics.entries} ${analytics.entries === 1 ? "operación" : "operaciones"} de entrada`}
+              context={t("{count} {operation} de entrada", {
+                count: String(analytics.entries),
+                operation: analytics.entries === 1 ? t("operación") : t("operaciones"),
+              })}
               icon={ArrowDownToLine}
               variant="success"
             />
             <StatCard
-              label="Unidades salidas"
+              label={t("Unidades salidas")}
               value={String(analytics.unitsExited)}
-              context={`${analytics.exits} ${analytics.exits === 1 ? "operación" : "operaciones"} de salida`}
+              context={t("{count} {operation} de salida", {
+                count: String(analytics.exits),
+                operation: analytics.exits === 1 ? t("operación") : t("operaciones"),
+              })}
               icon={ArrowUpFromLine}
               variant="destructive"
             />
             <StatCard
-              label="Entradas del período"
+              label={t("Entradas del período")}
               value={String(analytics.entries)}
-              context="Documentos de entrada"
+              context={t("Documentos de entrada")}
               icon={Package}
               variant="info"
             />
             <StatCard
-              label="Salidas del período"
+              label={t("Salidas del período")}
               value={String(analytics.exits)}
-              context="Documentos de salida"
+              context={t("Documentos de salida")}
               icon={PackageX}
               variant="warning"
             />
@@ -283,6 +291,7 @@ function ReportBody({
 }
 
 function MovimientosReport({ analytics }: { analytics: InventoryAnalytics }) {
+  const t = useT();
   const maxValue = Math.max(
     1,
     ...analytics.movementSeries.flatMap((day) => [day.entries, day.exits]),
@@ -292,8 +301,8 @@ function MovimientosReport({ analytics }: { analytics: InventoryAnalytics }) {
     <div className="grid gap-5">
       <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader
-          title="Entradas vs. salidas"
-          description="Unidades movidas por fecha de operación"
+          title={t("Entradas vs. salidas")}
+          description={t("Unidades movidas por fecha de operación")}
           icon={BarChart3}
           variant="primary"
         />
@@ -307,12 +316,12 @@ function MovimientosReport({ analytics }: { analytics: InventoryAnalytics }) {
                 <div
                   className="w-3 rounded-t bg-primary/80"
                   style={{ height: `${(day.entries / maxValue) * 100}%` }}
-                  title={`Entradas: ${day.entries}`}
+                  title={`${t("Entradas")}: ${day.entries}`}
                 />
                 <div
                   className="w-3 rounded-t bg-destructive/70"
                   style={{ height: `${(day.exits / maxValue) * 100}%` }}
-                  title={`Salidas: ${day.exits}`}
+                  title={`${t("Salidas")}: ${day.exits}`}
                 />
               </div>
               <span className="text-[10px] text-muted-foreground">
@@ -324,23 +333,23 @@ function MovimientosReport({ analytics }: { analytics: InventoryAnalytics }) {
         <div className="flex gap-4 px-5 py-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <i className="size-2 rounded-full bg-primary" />
-            Entradas
+            {t("Entradas")}
           </span>
           <span className="flex items-center gap-1.5">
             <i className="size-2 rounded-full bg-destructive" />
-            Salidas
+            {t("Salidas")}
           </span>
         </div>
       </section>
 
       <ReportList
-        title="Productos con mayor movimiento"
-        description="Prioriza las reposiciones por rotación"
+        title={t("Productos con mayor movimiento")}
+        description={t("Prioriza las reposiciones por rotación")}
         icon={TrendingUp}
         ranked
         items={analytics.topMoving.map((item, i) => ({
           name: item.name,
-          detail: `${item.quantity} unidades`,
+          detail: t("{count} unidades", { count: String(item.quantity) }),
           rank: i + 1,
         }))}
       />
@@ -349,6 +358,7 @@ function MovimientosReport({ analytics }: { analytics: InventoryAnalytics }) {
 }
 
 function ExistenciasReport({ analytics }: { analytics: InventoryAnalytics }) {
+  const t = useT();
   const rows = analytics.products
     .filter((product) => product.status === "Activo")
     .sort((a, b) => b.stock * b.unitCost - a.stock * a.unitCost);
@@ -356,8 +366,8 @@ function ExistenciasReport({ analytics }: { analytics: InventoryAnalytics }) {
   return (
     <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader
-        title="Existencias actuales"
-        description="Inventario disponible en almacén al día de hoy"
+        title={t("Existencias actuales")}
+        description={t("Inventario disponible en almacén al día de hoy")}
         icon={Package}
         variant="primary"
       />
@@ -365,11 +375,11 @@ function ExistenciasReport({ analytics }: { analytics: InventoryAnalytics }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Producto</TableHead>
-              <TableHead className="hidden md:table-cell">SKU</TableHead>
-              <TableHead className="hidden lg:table-cell">Ubicación</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Valor</TableHead>
+              <TableHead>{t("Producto")}</TableHead>
+              <TableHead className="hidden md:table-cell">{t("SKU")}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t("Ubicación")}</TableHead>
+              <TableHead>{t("Stock")}</TableHead>
+              <TableHead>{t("Valor")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -397,7 +407,7 @@ function ExistenciasReport({ analytics }: { analytics: InventoryAnalytics }) {
         </Table>
       ) : (
         <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-          No hay productos activos en el catálogo.
+          {t("No hay productos activos en el catálogo.")}
         </div>
       )}
     </section>
@@ -405,6 +415,7 @@ function ExistenciasReport({ analytics }: { analytics: InventoryAnalytics }) {
 }
 
 function VencimientoReport({ analytics }: { analytics: InventoryAnalytics }) {
+  const t = useT();
   const rows = analytics.products
     .map((product) => ({
       ...product,
@@ -416,8 +427,8 @@ function VencimientoReport({ analytics }: { analytics: InventoryAnalytics }) {
   return (
     <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader
-        title="Productos por vencer"
-        description="Vencidos y próximos a vencer (90 días)"
+        title={t("Productos por vencer")}
+        description={t("Vencidos y próximos a vencer (90 días)")}
         icon={TriangleAlert}
         variant="primary"
       />
@@ -425,11 +436,11 @@ function VencimientoReport({ analytics }: { analytics: InventoryAnalytics }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Producto</TableHead>
-              <TableHead className="hidden md:table-cell">Lote</TableHead>
-              <TableHead>Vencimiento</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead>{t("Producto")}</TableHead>
+              <TableHead className="hidden md:table-cell">{t("Lote")}</TableHead>
+              <TableHead>{t("Vencimiento")}</TableHead>
+              <TableHead>{t("Stock")}</TableHead>
+              <TableHead>{t("Estado")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -455,7 +466,7 @@ function VencimientoReport({ analytics }: { analytics: InventoryAnalytics }) {
                         : "bg-warning-soft text-warning-foreground"
                     }`}
                   >
-                    {product.state}
+                    {product.state ? t(product.state) : ""}
                   </span>
                 </TableCell>
               </TableRow>
@@ -464,7 +475,7 @@ function VencimientoReport({ analytics }: { analytics: InventoryAnalytics }) {
         </Table>
       ) : (
         <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-          No hay productos próximos a vencer ni vencidos.
+          {t("No hay productos próximos a vencer ni vencidos.")}
         </div>
       )}
     </section>
@@ -472,25 +483,25 @@ function VencimientoReport({ analytics }: { analytics: InventoryAnalytics }) {
 }
 
 function ValorizacionReport({ analytics }: { analytics: InventoryAnalytics }) {
+  const t = useT();
   const maxValue = Math.max(1, ...analytics.categoryValue.map((c) => c.value));
 
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(300px,1fr)_minmax(0,1.5fr)]">
       <div className="flex flex-col justify-center gap-3 rounded-2xl border border-border bg-card p-5">
         <span className="text-xs text-muted-foreground">
-          Valor total del inventario
+          {t("Valor total del inventario")}
         </span>
         <p className="text-3xl font-bold">{formatCurrency(analytics.totalValue)}</p>
         <span className="text-xs text-muted-foreground">
-          {analytics.activeProducts} productos activos · {analytics.lowStock} con
-          stock bajo · {analytics.outOfStock} sin stock
+          {analytics.activeProducts} {t("productos activos")} · {analytics.lowStock} {t("con stock bajo")} · {analytics.outOfStock} {t("sin stock")}
         </span>
       </div>
 
       <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader
-          title="Valor por categoría"
-          description="Distribución del inventario actual"
+          title={t("Valor por categoría")}
+          description={t("Distribución del inventario actual")}
           icon={PieChart}
           variant="primary"
         />
@@ -518,19 +529,20 @@ function ValorizacionReport({ analytics }: { analytics: InventoryAnalytics }) {
 }
 
 function EstadoActual({ analytics }: { analytics: InventoryAnalytics }) {
+  const t = useT();
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
       <SectionHeader
-        title="Estado actual del inventario"
-        description="Snapshot del catálogo, independiente del periodo seleccionado"
+        title={t("Estado actual del inventario")}
+        description={t("Snapshot del catálogo, independiente del periodo seleccionado")}
         icon={Package}
         variant="secondary"
       />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MiniStat label="Valor total" value={formatCurrency(analytics.totalValue)} />
-        <MiniStat label="Productos activos" value={String(analytics.activeProducts)} />
-        <MiniStat label="Stock bajo" value={String(analytics.lowStock)} />
-        <MiniStat label="Sin stock" value={String(analytics.outOfStock)} />
+        <MiniStat label={t("Valor total")} value={formatCurrency(analytics.totalValue)} />
+        <MiniStat label={t("Productos activos")} value={String(analytics.activeProducts)} />
+        <MiniStat label={t("Stock bajo")} value={String(analytics.lowStock)} />
+        <MiniStat label={t("Sin stock")} value={String(analytics.outOfStock)} />
       </div>
     </section>
   );
@@ -558,6 +570,7 @@ function ReportList({
   items: { name: string; detail: string; rank?: number }[];
   ranked?: boolean;
 }) {
+  const t = useT();
   return (
     <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader
@@ -591,7 +604,7 @@ function ReportList({
         ) : (
           <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
             <PackageX className="size-4" />
-            Sin datos en este período.
+            {t("Sin datos en este período.")}
           </div>
         )}
       </div>
@@ -685,34 +698,35 @@ function rangeForPreset(preset: string): { from: string; to: string } | null {
 }
 
 function downloadCsv(
+  t: (key: string, params?: Record<string, string>) => string,
   reportType: string,
   analytics: InventoryAnalytics,
   from: string,
   to: string,
 ) {
   const rows = [
-    ["Reporte", reportType],
-    ["Desde", from],
-    ["Hasta", to],
+    [t("Reporte"), reportType],
+    [t("Desde"), from],
+    [t("Hasta"), to],
     [],
-    ["Indicador", "Valor"],
-    ["Unidades entradas", String(analytics.unitsEntered)],
-    ["Unidades salidas", String(analytics.unitsExited)],
-    ["Operaciones de entrada", String(analytics.entries)],
-    ["Operaciones de salida", String(analytics.exits)],
-    ["Valor total del inventario", String(analytics.totalValue)],
-    ["Productos activos", String(analytics.activeProducts)],
-    ["Stock bajo", String(analytics.lowStock)],
-    ["Sin stock", String(analytics.outOfStock)],
+    [t("Indicador"), t("Valor")],
+    [t("Unidades entradas"), String(analytics.unitsEntered)],
+    [t("Unidades salidas"), String(analytics.unitsExited)],
+    [t("Operaciones de entrada"), String(analytics.entries)],
+    [t("Operaciones de salida"), String(analytics.exits)],
+    [t("Valor total del inventario"), String(analytics.totalValue)],
+    [t("Productos activos"), String(analytics.activeProducts)],
+    [t("Stock bajo"), String(analytics.lowStock)],
+    [t("Sin stock"), String(analytics.outOfStock)],
     [],
-    ["Fecha", "Entradas", "Salidas"],
+    [t("Fecha"), t("Entradas"), t("Salidas")],
     ...analytics.movementSeries.map((day) => [
       day.label,
       String(day.entries),
       String(day.exits),
     ]),
     [],
-    ["SKU", "Producto", "Categoría", "Stock", "Ubicación", "Valor", "Vencimiento"],
+    [t("SKU"), t("Producto"), t("Categoría"), t("Stock"), t("Ubicación"), t("Valor"), t("Vencimiento")],
     ...analytics.products.map((product: ProductListItem) => [
       product.sku,
       product.name,
@@ -734,6 +748,7 @@ function downloadCsv(
 }
 
 function printReport(
+  t: (key: string, params?: Record<string, string>) => string,
   reportType: string,
   analytics: InventoryAnalytics,
   from: string,
@@ -751,21 +766,21 @@ function printReport(
 
   printWindow.document.write(`
     <!doctype html>
-    <html lang="es"><head><title>${escapeHtml(reportType)}</title>
+    <html lang="es"><head><title>${escapeHtml(t(reportType))}</title>
     <style>body{font-family:Arial,sans-serif;padding:32px;color:#172033}h1{margin-bottom:4px}p{color:#667085}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}.card{border:1px solid #d9dee8;border-radius:8px;padding:14px}.value{font-size:22px;font-weight:700}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{border:1px solid #d9dee8;padding:8px;text-align:left}</style></head>
-    <body><h1>${escapeHtml(reportType)}</h1><p>Periodo: ${escapeHtml(from)} a ${escapeHtml(to)}</p>
+    <body><h1>${escapeHtml(t(reportType))}</h1><p>${t("Periodo")}: ${escapeHtml(from)} ${t("a")} ${escapeHtml(to)}</p>
     <div class="grid">
-      <div class="card">Unidades entradas<div class="value">${analytics.unitsEntered}</div></div>
-      <div class="card">Unidades salidas<div class="value">${analytics.unitsExited}</div></div>
-      <div class="card">Operaciones entrada<div class="value">${analytics.entries}</div></div>
-      <div class="card">Operaciones salida<div class="value">${analytics.exits}</div></div>
+      <div class="card">${t("Unidades entradas")}<div class="value">${analytics.unitsEntered}</div></div>
+      <div class="card">${t("Unidades salidas")}<div class="value">${analytics.unitsExited}</div></div>
+      <div class="card">${t("Operaciones entrada")}<div class="value">${analytics.entries}</div></div>
+      <div class="card">${t("Operaciones salida")}<div class="value">${analytics.exits}</div></div>
     </div>
-    <h2>Movimiento por fecha</h2>
-    <table><thead><tr><th>Fecha</th><th>Entradas</th><th>Salidas</th></tr></thead><tbody>
+    <h2>${t("Movimiento por fecha")}</h2>
+    <table><thead><tr><th>${t("Fecha")}</th><th>${t("Entradas")}</th><th>${t("Salidas")}</th></tr></thead><tbody>
     ${analytics.movementSeries.map((day) => `<tr><td>${escapeHtml(day.label)}</td><td>${day.entries}</td><td>${day.exits}</td></tr>`).join("")}
     </tbody></table>
-    <h2>Existencias</h2>
-    <table><thead><tr><th>Producto</th><th>Stock</th><th>Ubicación</th><th>Valor</th></tr></thead><tbody>
+    <h2>${t("Existencias")}</h2>
+    <table><thead><tr><th>${t("Producto")}</th><th>${t("Stock")}</th><th>${t("Ubicación")}</th><th>${t("Valor")}</th></tr></thead><tbody>
     ${productRows}
     </tbody></table></body></html>`);
   printWindow.document.close();

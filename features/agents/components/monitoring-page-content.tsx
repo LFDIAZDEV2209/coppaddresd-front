@@ -39,6 +39,7 @@ import {
 import type { AgentExecutionDetail } from "../types";
 import { fetchExecution, formatDate } from "../services/agents-service";
 import { useAgentMonitoring } from "../hooks/use-agent-monitoring";
+import { useT } from "@/providers/i18n-provider";
 
 const statusVariant: Record<string, "default" | "destructive" | "secondary"> = {
   completado: "default",
@@ -47,6 +48,7 @@ const statusVariant: Record<string, "default" | "destructive" | "secondary"> = {
 };
 
 export function MonitoringPageContent() {
+  const t = useT();
   const monitoring = useAgentMonitoring(undefined, 25);
   const [detail, setDetail] = useState<AgentExecutionDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -77,36 +79,36 @@ export function MonitoringPageContent() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Monitoreo"
-        description="Ejecuciones de agentes: latencia, tokens, errores y calidad"
+        title={t('Monitoreo')}
+        description={t('Ejecuciones de agentes: latencia, tokens, errores y calidad')}
         icon={Activity}
       />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={Activity}
-          label="Ejecuciones (7 días)"
+          label={t('Ejecuciones (7 días)')}
           value={monitoring.total.toLocaleString("es-ES")}
           color="#2563EB"
           bg="#E5F0FA"
         />
         <MetricCard
           icon={Clock}
-          label="Latencia promedio"
+          label={t('Latencia promedio')}
           value={avgLatency !== null ? `${avgLatency.toLocaleString("es-ES")} ms` : "—"}
           color="#0EA5E9"
           bg="#E6F7FB"
         />
         <MetricCard
           icon={Star}
-          label="Tokens (in+out)"
+          label={t('Tokens (in+out)')}
           value={tokensTotal.toLocaleString("es-ES")}
           color="#8B5CF6"
           bg="#F1EBF9"
         />
         <MetricCard
           icon={XCircle}
-          label="Errores / Feedback"
+          label={t('Errores / Feedback')}
           value={`${errors} / ${withFeedback}`}
           color={errors > 0 ? "#EF4444" : "#10B981"}
           bg={errors > 0 ? "#FCEBEC" : "#E6F7EF"}
@@ -115,7 +117,7 @@ export function MonitoringPageContent() {
 
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Filtrar por usuario (ID)"
+          placeholder={t('Filtrar por usuario (ID)')}
           className="h-9 w-[220px]"
           defaultValue={monitoring.filters.userId ?? ""}
           onChange={(event) => monitoring.setFilters({ userId: event.target.value || "" })}
@@ -127,18 +129,18 @@ export function MonitoringPageContent() {
           }
         >
           <SelectTrigger className="h-9 w-[180px]">
-            <SelectValue placeholder="Estado" />
+            <SelectValue placeholder={t('Estado')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="completado">Completado</SelectItem>
-            <SelectItem value="error">Error</SelectItem>
-            <SelectItem value="ejecutando">Ejecutando</SelectItem>
+            <SelectItem value="all">{t('Todos')}</SelectItem>
+            <SelectItem value="completado">{t('Completado')}</SelectItem>
+            <SelectItem value="error">{t('Error')}</SelectItem>
+            <SelectItem value="ejecutando">{t('Ejecutando')}</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" className="h-9" onClick={monitoring.refetch}>
           <RefreshCw data-icon="inline-start" className="size-4" />
-          Refrescar
+          {t('Refrescar')}
         </Button>
       </div>
 
@@ -153,9 +155,9 @@ export function MonitoringPageContent() {
       ) : monitoring.executions.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border py-16 text-center">
           <Activity className="size-8 text-muted-foreground" />
-          <p className="text-sm font-medium">Sin ejecuciones</p>
+          <p className="text-sm font-medium">{t('Sin ejecuciones')}</p>
           <p className="text-[12.5px] text-muted-foreground">
-            Las conversaciones de los agentes aparecerán aquí.
+            {t('Las conversaciones de los agentes aparecerán aquí.')}
           </p>
         </div>
       ) : (
@@ -163,14 +165,14 @@ export function MonitoringPageContent() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Agente</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Modelo</TableHead>
-                <TableHead>Latencia</TableHead>
-                <TableHead>Tokens</TableHead>
-                <TableHead>Feedback</TableHead>
-                <TableHead className="w-16 text-right">Detalle</TableHead>
+                <TableHead>{t('Fecha')}</TableHead>
+                <TableHead>{t('Agente')}</TableHead>
+                <TableHead>{t('Estado')}</TableHead>
+                <TableHead>{t('Modelo')}</TableHead>
+                <TableHead>{t('Latencia')}</TableHead>
+                <TableHead>{t('Tokens')}</TableHead>
+                <TableHead>{t('Feedback')}</TableHead>
+                <TableHead className="w-16 text-right">{t('Detalle')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -213,7 +215,7 @@ export function MonitoringPageContent() {
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => openDetail(execution.id)}
-                      aria-label="Ver detalle de ejecución"
+                      aria-label={t('Ver detalle de ejecución')}
                     >
                       <Eye className="size-4" />
                     </Button>
@@ -229,10 +231,10 @@ export function MonitoringPageContent() {
         <DialogContent className="max-h-[92vh] min-w-[700px] max-w-3xl overflow-y-auto p-0">
           <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
             <DialogTitle className="text-base font-semibold">
-              Ejecución {detail?.id.slice(0, 8)}
+              {t('Ejecución {id}', { id: detail?.id.slice(0, 8) ?? '' })}
             </DialogTitle>
             <DialogDescription>
-              {detail ? formatDate(detail.createdAt) : ""} · {detail?.model ?? "modelo desconocido"}
+              {detail ? formatDate(detail.createdAt) : ""} · {detail?.model ?? t('modelo desconocido')}
             </DialogDescription>
           </DialogHeader>
           {detailLoading ? (
@@ -242,23 +244,23 @@ export function MonitoringPageContent() {
           ) : detail ? (
             <div className="flex flex-col gap-4 px-6 py-5">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <DetailChip label="Estado" value={detail.status} />
+                <DetailChip label={t('Estado')} value={detail.status} />
                 <DetailChip
-                  label="Latencia"
+                  label={t('Latencia')}
                   value={detail.latencyMs !== null ? `${detail.latencyMs} ms` : "—"}
                 />
                 <DetailChip
-                  label="Tokens"
+                  label={t('Tokens')}
                   value={`${(detail.tokensIn ?? 0).toLocaleString("es-ES")} → ${(detail.tokensOut ?? 0).toLocaleString("es-ES")}`}
                 />
                 <DetailChip
-                  label="Feedback"
+                  label={t('Feedback')}
                   value={detail.feedbackRating !== null ? `${detail.feedbackRating}/5` : "—"}
                 />
               </div>
 
               {Boolean(detail.output?.answer) && (
-                <Section title="Respuesta">
+                <Section title={t('Respuesta')}>
                   <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">
                     {String(detail.output?.answer)}
                   </p>
@@ -266,7 +268,7 @@ export function MonitoringPageContent() {
               )}
 
               {Boolean(detail.output?.rag_sources) && (
-                <Section title="Fuentes recuperadas (RAG)">
+                <Section title={t('Fuentes recuperadas (RAG)')}>
                   <pre className="max-h-40 overflow-auto rounded-xl bg-muted p-3 font-mono text-[11.5px]">
                     {JSON.stringify(detail.output?.rag_sources, null, 2)}
                   </pre>
@@ -275,7 +277,7 @@ export function MonitoringPageContent() {
 
               {Array.isArray(detail.output?.tools_used) &&
                 detail.output.tools_used.length > 0 && (
-                  <Section title="Tools ejecutadas">
+                  <Section title={t('Tools ejecutadas')}>
                     <div className="flex flex-wrap gap-1.5">
                       {(detail.output.tools_used as string[]).map((tool) => (
                         <Badge key={tool} variant="outline">
@@ -287,7 +289,7 @@ export function MonitoringPageContent() {
                 )}
 
               {detail.experiences.length > 0 && (
-                <Section title="Experiencias generadas">
+                <Section title={t('Experiencias generadas')}>
                   {detail.experiences.map((exp, index) => (
                     <div key={index} className="rounded-lg border border-border bg-background p-3">
                       <p className="text-[12.5px]">
@@ -295,7 +297,7 @@ export function MonitoringPageContent() {
                       </p>
                       <p className="mt-1 text-[12.5px] text-muted-foreground">{exp.response}</p>
                       <div className="mt-1.5 flex items-center gap-2 text-[11.5px] text-muted-foreground">
-                        <Badge variant="secondary">recurrencia {exp.recurrence}</Badge>
+                        <Badge variant="secondary">{t('recurrencia')} {exp.recurrence}</Badge>
                         {exp.rating !== null && <span>rating {exp.rating}</span>}
                       </div>
                     </div>
@@ -304,7 +306,7 @@ export function MonitoringPageContent() {
               )}
 
               {detail.error && (
-                <Section title="Error">
+                <Section title={t('Error')}>
                   <p className="rounded-lg bg-destructive-soft px-3 py-2 text-[12.5px] text-destructive">
                     {detail.error}
                   </p>

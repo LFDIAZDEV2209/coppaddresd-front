@@ -1,6 +1,7 @@
 "use client";
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { useT } from "@/providers/i18n-provider";
 import type { StatusCountDto } from "../../types";
 import {
   appointmentStatusColor,
@@ -18,6 +19,8 @@ export function StatusDistributionChart({
   statusDistribution: StatusCountDto[];
   loading: boolean;
 }) {
+  const t = useT();
+
   if (loading) {
     return <div className="h-56 w-full animate-pulse rounded-xl bg-muted" />;
   }
@@ -33,7 +36,7 @@ export function StatusDistributionChart({
   if (data.length === 0) {
     return (
       <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-border text-[12.5px] text-muted-foreground">
-        Sin datos de citas
+        {t('Sin datos de citas')}
       </div>
     );
   }
@@ -46,7 +49,7 @@ export function StatusDistributionChart({
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Tooltip
-              formatter={(value) => [String(value), "Citas"]}
+              formatter={(value) => [String(value), t('Citas')]}
               contentStyle={{
                 borderRadius: 12,
                 border: "1px solid var(--border)",
@@ -74,7 +77,7 @@ export function StatusDistributionChart({
             {total}
           </span>
           <span className="text-[10.5px] uppercase tracking-wider text-muted-foreground">
-            citas
+            {t('citas')}
           </span>
         </div>
       </div>

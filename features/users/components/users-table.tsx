@@ -28,6 +28,7 @@ import {
   getStatusColor,
   getStatusLabel,
 } from "../services/users-service";
+import { useT } from "@/providers/i18n-provider";
 
 interface UsersTableProps {
   users: User[];
@@ -52,6 +53,7 @@ export function UsersTable({
   const canUpdate = hasPermission("Users.Update");
   const canDelete = hasPermission("Users.Delete");
   const allSelected = users.length > 0 && selectedIds.size === users.length;
+  const t = useT();
 
   return (
     <Table>
@@ -61,13 +63,13 @@ export function UsersTable({
             <Checkbox
               checked={allSelected}
               onCheckedChange={onToggleSelectAll}
-              aria-label="Seleccionar todos"
+              aria-label={t('Seleccionar todos')}
             />
           </TableHead>
-          <TableHead>Usuario</TableHead>
-          <TableHead className="w-[190px]">Roles</TableHead>
-          <TableHead className="w-[120px]">Estado</TableHead>
-          <TableHead className="w-[110px]">Creado</TableHead>
+          <TableHead>{t('Usuario')}</TableHead>
+          <TableHead className="w-[190px]">{t('Roles')}</TableHead>
+          <TableHead className="w-[120px]">{t('Estado')}</TableHead>
+          <TableHead className="w-[110px]">{t('Creado')}</TableHead>
           <TableHead className="w-[76px]" />
         </TableRow>
       </TableHeader>
@@ -81,7 +83,7 @@ export function UsersTable({
                 <Checkbox
                   checked={selectedIds.has(user.id)}
                   onCheckedChange={() => onToggleSelect(user.id)}
-                  aria-label={`Seleccionar ${getFullName(user)}`}
+                  aria-label={t('Seleccionar {name}', { name: getFullName(user) })}
                 />
               </TableCell>
               <TableCell>
@@ -105,7 +107,7 @@ export function UsersTable({
                 <div className="flex flex-wrap items-center gap-1">
                   {visibleRoles.length === 0 && (
                     <span className="text-[11px] text-muted-foreground">
-                      Sin roles
+                      {t('Sin roles')}
                     </span>
                   )}
                   {visibleRoles.map((role) => (
@@ -137,7 +139,7 @@ export function UsersTable({
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-muted"
-                      aria-label="Acciones"
+                      aria-label={t('Acciones')}
                     >
                       <MoreHorizontal className="size-4 text-muted-foreground" />
                     </DropdownMenuTrigger>
@@ -145,7 +147,7 @@ export function UsersTable({
                       {canUpdate && (
                         <DropdownMenuItem onClick={() => onEdit(user)}>
                           <Pencil className="size-4" />
-                          Editar
+                          {t('Editar')}
                         </DropdownMenuItem>
                       )}
                       {canDelete && (
@@ -154,7 +156,7 @@ export function UsersTable({
                           onClick={() => onDelete(user)}
                         >
                           <Trash2 className="size-4" />
-                          Eliminar
+                          {t('Eliminar')}
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>

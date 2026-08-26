@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Dumbbell, Apple, Clock, Flame } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -52,6 +53,7 @@ interface Props {
 }
 
 export function AssignmentDetailDialog({ assignment, onClose }: Props) {
+  const t = useT();
   const [routine, setRoutine] = useState<ExerciseRoutine | null>(null);
   const [plan, setPlan] = useState<NutritionPlan | null>(null);
   const [loading, setLoading] = useState(Boolean(assignment));
@@ -96,10 +98,10 @@ export function AssignmentDetailDialog({ assignment, onClose }: Props) {
               <Apple className="size-5 text-green-600" />
             )}
             {assignment.itemName ??
-              (assignment.type === "routine" ? "Rutina" : "Plan")}
+              (assignment.type === "routine" ? t("Rutina") : t("Plan"))}
           </DialogTitle>
           <DialogDescription>
-            Asignada a {assignment.patientName ?? "—"}
+            {t("Asignada a {patientName}", { patientName: assignment.patientName ?? "—" })}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] pr-4">
@@ -145,39 +147,40 @@ function RoutineDetail({
   assignment: UnifiedAssignment;
   routine: ExerciseRoutine | null;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
-        <InfoItem label="Paciente" value={assignment.patientName} />
+        <InfoItem label={t("Paciente")} value={assignment.patientName} />
         <InfoItem
-          label="Estado"
+          label={t("Estado")}
           value={
             assignment.status === "Active"
-              ? "Activa"
+              ? t("Activa")
               : assignment.status === "Paused"
-                ? "Pausada"
-                : "Completada"
+                ? t("Pausada")
+                : t("Completada")
           }
         />
         {assignment.frequency && (
           <InfoItem
-            label="Frecuencia"
+            label={t("Frecuencia")}
             value={
               assignment.frequency === "Diaria"
-                ? "Diaria"
+                ? t("Diaria")
                 : assignment.frequency === "TresVecesSemana"
-                  ? "3x/semana"
-                  : "Personalizada"
+                  ? t("3x/semana")
+                  : t("Personalizada")
             }
           />
         )}
         <InfoItem
-          label="Inicio"
+          label={t("Inicio")}
           value={new Date(assignment.startDate).toLocaleDateString("es-CO")}
         />
         {assignment.endDate && (
           <InfoItem
-            label="Fin"
+            label={t("Fin")}
             value={new Date(assignment.endDate).toLocaleDateString("es-CO")}
           />
         )}
@@ -187,7 +190,7 @@ function RoutineDetail({
           <Separator />
           <div>
             <span className="text-xs font-semibold uppercase text-muted-foreground">
-              Notas
+              {t("Notas")}
             </span>
             <p className="text-sm mt-1">{assignment.notes}</p>
           </div>
@@ -209,7 +212,7 @@ function RoutineDetail({
             {routine.estimatedMinutes && (
               <Badge variant="outline" className="gap-1">
                 <Clock className="size-3" />
-                {routine.estimatedMinutes} min
+                {t("{minutes} min", { minutes: String(routine.estimatedMinutes) })}
               </Badge>
             )}
           </div>
@@ -221,7 +224,7 @@ function RoutineDetail({
           {routine.exercises.length > 0 && (
             <div className="flex flex-col gap-2">
               <span className="text-xs font-semibold uppercase text-muted-foreground">
-                Ejercicios ({routine.exercises.length})
+                {t("Ejercicios ({count})", { count: String(routine.exercises.length) })}
               </span>
               {routine.exercises
                 .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -244,7 +247,7 @@ function RoutineDetail({
                     <div className="flex flex-wrap gap-1.5 pl-5 mt-1">
                       {e.sets && (
                         <Badge variant="outline" className="text-xs py-0 h-5">
-                          {e.sets} series
+                          {t("{count} series", { count: String(e.sets) })}
                         </Badge>
                       )}
                       {e.repetitions && (
@@ -254,7 +257,7 @@ function RoutineDetail({
                       )}
                       {e.restSeconds && (
                         <Badge variant="outline" className="text-xs py-0 h-5">
-                          {e.restSeconds}s descanso
+                          {t("{seconds}s descanso", { seconds: String(e.restSeconds) })}
                         </Badge>
                       )}
                       {e.durationSecs && (
@@ -275,7 +278,7 @@ function RoutineDetail({
         </div>
       ) : (
         <div className="text-center py-8 text-sm text-muted-foreground">
-          No se pudo cargar el detalle de la rutina
+          {t("No se pudo cargar el detalle de la rutina")}
         </div>
       )}
     </div>
@@ -289,6 +292,7 @@ function PlanDetail({
   assignment: UnifiedAssignment;
   plan: NutritionPlan | null;
 }) {
+  const t = useT();
   const [activeDay, setActiveDay] = useState(1);
   const groupedDays: Record<number, NutritionPlanDay[]> = {};
   if (plan?.days)
@@ -303,24 +307,24 @@ function PlanDetail({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
-        <InfoItem label="Paciente" value={assignment.patientName} />
+        <InfoItem label={t("Paciente")} value={assignment.patientName} />
         <InfoItem
-          label="Estado"
+          label={t("Estado")}
           value={
             assignment.status === "Active"
-              ? "Activa"
+              ? t("Activa")
               : assignment.status === "Paused"
-                ? "Pausada"
-                : "Completada"
+                ? t("Pausada")
+                : t("Completada")
           }
         />
         <InfoItem
-          label="Inicio"
+          label={t("Inicio")}
           value={new Date(assignment.startDate).toLocaleDateString("es-CO")}
         />
         {assignment.endDate && (
           <InfoItem
-            label="Fin"
+            label={t("Fin")}
             value={new Date(assignment.endDate).toLocaleDateString("es-CO")}
           />
         )}
@@ -330,7 +334,7 @@ function PlanDetail({
           <Separator />
           <div>
             <span className="text-xs font-semibold uppercase text-muted-foreground">
-              Notas
+              {t("Notas")}
             </span>
             <p className="text-sm mt-1">{assignment.notes}</p>
           </div>
@@ -343,11 +347,11 @@ function PlanDetail({
             <Badge className={statusColor(plan.status)}>
               {PLAN_STATUS_LABELS[plan.status] ?? plan.status}
             </Badge>
-            <Badge variant="outline">{plan.durationDays} días</Badge>
+            <Badge variant="outline">{t("{days} días", { days: String(plan.durationDays) })}</Badge>
             {plan.dailyCalorieTarget && (
               <Badge variant="outline" className="gap-1">
                 <Flame className="size-3" />
-                {plan.dailyCalorieTarget} kcal/día
+                {t("{calories} kcal/día", { calories: String(plan.dailyCalorieTarget) })}
               </Badge>
             )}
             {plan.targetCondition && (
@@ -360,7 +364,7 @@ function PlanDetail({
           {dayNumbers.length > 0 && (
             <div className="flex flex-col gap-2">
               <span className="text-xs font-semibold uppercase text-muted-foreground">
-                Plan alimentario ({dayNumbers.length} días)
+                {t("Plan alimentario ({count} días)", { count: String(dayNumbers.length) })}
               </span>
               <div className="flex flex-wrap gap-1">
                 {dayNumbers.map((d) => (
@@ -374,7 +378,7 @@ function PlanDetail({
                         : "px-2 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
                     }
                   >
-                    Día {d}
+                    {t("Día {day}", { day: String(d) })}
                   </button>
                 ))}
               </div>
@@ -429,7 +433,7 @@ function PlanDetail({
         </div>
       ) : (
         <div className="text-center py-8 text-sm text-muted-foreground">
-          No se pudo cargar el detalle del plan
+          {t("No se pudo cargar el detalle del plan")}
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -81,6 +82,7 @@ type PatientViewMode = "table" | "cards";
  * la presentación).
  */
 export function PatientsPage() {
+  const t = useT();
   const router = useRouter();
   const { can } = useAppContext();
   const {
@@ -161,26 +163,26 @@ export function PatientsPage() {
           context={fullScope ? "Directorio completo" : "A tu cargo"}
         />
         <StatCard
-          label="Activos"
+          label={t("Activos")}
           value={stats ? String(stats.active) : "—"}
           icon={UserCheck}
           variant="success"
-          context="En seguimiento activo"
+          context={t("En seguimiento activo")}
         />
         <StatCard
-          label="Nuevos este mes"
+          label={t("Nuevos este mes")}
           value={stats ? String(stats.newThisMonth) : "—"}
           icon={UserPlus}
           variant="info"
-          context="Registrados en el mes"
+          context={t("Registrados en el mes")}
         />
         {fullScope && (
           <StatCard
-            label="Sin profesional asignado"
+            label={t("Sin profesional asignado")}
             value={stats ? String(stats.withoutProfessional) : "—"}
             icon={UserRoundX}
             variant="warning"
-            context="Requieren asignación"
+            context={t("Requieren asignación")}
           />
         )}
       </div>
@@ -197,11 +199,11 @@ export function PatientsPage() {
       {/* Filtros con header navy e icono, toggle de vista y actualizar. */}
       <section
         className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
-        aria-label="Filtros de pacientes"
+        aria-label={t("Filtros de pacientes")}
       >
         <SectionHeader
           title={fullScope ? "Directorio de pacientes" : "Directorio"}
-          description="Busca por nombre, documento o correo electrónico"
+          description={t("Busca por nombre, documento o correo electrónico")}
           icon={SlidersHorizontal}
           variant="primary"
           actions={
@@ -213,18 +215,18 @@ export function PatientsPage() {
                   if (next === "table" || next === "cards") changeView(next);
                   else changeView(view);
                 }}
-                aria-label="Cambiar vista de los registros"
+                aria-label={t("Cambiar vista de los registros")}
               >
                 <ToggleGroupItem
                   value="table"
-                  aria-label="Vista tabla"
+                  aria-label={t("Vista tabla")}
                   className="data-pressed:bg-white data-pressed:text-[var(--sidebar)]"
                 >
                   <Rows3 />
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="cards"
-                  aria-label="Vista tarjetas"
+                  aria-label={t("Vista tarjetas")}
                   className="data-pressed:bg-white data-pressed:text-[var(--sidebar)]"
                 >
                   <LayoutGrid />
@@ -253,8 +255,8 @@ export function PatientsPage() {
               className="pl-9"
               value={filters.search}
               onChange={(event) => setFilters({ search: event.target.value })}
-              placeholder="Buscar paciente..."
-              aria-label="Buscar pacientes"
+              placeholder={t("Buscar paciente...")}
+              aria-label={t("Buscar pacientes")}
             />
           </div>
           <Select
@@ -263,7 +265,7 @@ export function PatientsPage() {
               setFilters({ status: (value ?? "all") as typeof filters.status })
             }
           >
-            <SelectTrigger className="w-full" aria-label="Filtrar por estado">
+            <SelectTrigger className="w-full" aria-label={t("Filtrar por estado")}>
               <SelectValue>
                 {filters.status === "all"
                   ? "Todos los estados"
@@ -271,10 +273,10 @@ export function PatientsPage() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="Activo">Activo</SelectItem>
-              <SelectItem value="Pendiente">Pendiente</SelectItem>
-              <SelectItem value="Inactivo">Inactivo</SelectItem>
+              <SelectItem value="all">{t("Todos los estados")}</SelectItem>
+              <SelectItem value="Activo">{t("Activo")}</SelectItem>
+              <SelectItem value="Pendiente">{t("Pendiente")}</SelectItem>
+              <SelectItem value="Inactivo">{t("Inactivo")}</SelectItem>
             </SelectContent>
           </Select>
           <Select
@@ -283,7 +285,7 @@ export function PatientsPage() {
           >
             <SelectTrigger
               className="w-full"
-              aria-label="Filtrar por aseguradora"
+              aria-label={t("Filtrar por aseguradora")}
             >
               <SelectValue>
                 {filters.insurerId === "all"
@@ -293,7 +295,7 @@ export function PatientsPage() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas las aseguradoras</SelectItem>
+              <SelectItem value="all">{t("Todas las aseguradoras")}</SelectItem>
               {insurers.map((insurer) => (
                 <SelectItem key={insurer.id} value={insurer.id}>
                   {insurer.name}
@@ -378,7 +380,7 @@ export function PatientsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
               disabled={actionLoading}
@@ -455,6 +457,7 @@ function PatientTable({
   onEdit: (patient: PatientListItem) => void;
   onDelete: (patient: PatientListItem) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader
@@ -467,21 +470,21 @@ function PatientTable({
         <TableHeader>
           <TableRow>
             <SortableHeader
-              label="Paciente"
+              label={t("Paciente")}
               sortKey="firstName"
               activeKey={sortBy}
               dir={sortDir}
               onSort={onSort}
             />
             <SortableHeader
-              label="Documento"
+              label={t("Documento")}
               sortKey="documentNumber"
               activeKey={sortBy}
               dir={sortDir}
               onSort={onSort}
             />
             <SortableHeader
-              label="Contacto"
+              label={t("Contacto")}
               sortKey="phoneNumber"
               activeKey={sortBy}
               dir={sortDir}
@@ -489,7 +492,7 @@ function PatientTable({
               className="hidden lg:table-cell"
             />
             <SortableHeader
-              label="Aseguradora"
+              label={t("Aseguradora")}
               sortKey="insurerName"
               activeKey={sortBy}
               dir={sortDir}
@@ -497,7 +500,7 @@ function PatientTable({
               className="hidden md:table-cell"
             />
             <SortableHeader
-              label="Clínica"
+              label={t("Clínica")}
               sortKey="clinicName"
               activeKey={sortBy}
               dir={sortDir}
@@ -510,14 +513,14 @@ function PatientTable({
               </TableHead>
             )}
             <SortableHeader
-              label="Estado"
+              label={t("Estado")}
               sortKey="status"
               activeKey={sortBy}
               dir={sortDir}
               onSort={onSort}
             />
             <TableHead className="w-10">
-              <span className="sr-only">Acciones</span>
+              <span className="sr-only">{t("Acciones")}</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -620,6 +623,7 @@ function PatientCards({
   onEdit: (patient: PatientListItem) => void;
   onDelete: (patient: PatientListItem) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader
@@ -664,32 +668,32 @@ function PatientCards({
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
               <span className="flex flex-col gap-px">
-                <span className="text-muted-foreground">Documento</span>
+                <span className="text-muted-foreground">{t("Documento")}</span>
                 <span className="truncate font-medium">
                   {patient.documentNumber ?? patient.medicalRecordNumber ?? "—"}
                 </span>
               </span>
               <span className="flex flex-col gap-px">
-                <span className="text-muted-foreground">Aseguradora</span>
+                <span className="text-muted-foreground">{t("Aseguradora")}</span>
                 <span className="truncate font-medium">
                   {patient.insurerName ?? "Sin aseguradora"}
                 </span>
               </span>
               <span className="flex flex-col gap-px">
-                <span className="text-muted-foreground">Contacto</span>
+                <span className="text-muted-foreground">{t("Contacto")}</span>
                 <span className="truncate font-medium">
                   {formatPhone(patient) ?? patient.email ?? "—"}
                 </span>
               </span>
               <span className="flex flex-col gap-px">
-                <span className="text-muted-foreground">Clínica</span>
+                <span className="text-muted-foreground">{t("Clínica")}</span>
                 <span className="truncate font-medium">
                   {patient.clinicName ?? "Sin asignar"}
                 </span>
               </span>
               {fullScope && (
                 <span className="flex flex-col gap-px">
-                  <span className="text-muted-foreground">Profesional</span>
+                  <span className="text-muted-foreground">{t("Profesional")}</span>
                   <span className="line-clamp-1 font-medium">
                     {patient.professionalNames.length > 0
                       ? patient.professionalNames.join(", ")
@@ -698,7 +702,7 @@ function PatientCards({
                 </span>
               )}
               <span className="flex flex-col gap-px">
-                <span className="text-muted-foreground">Estado</span>
+                <span className="text-muted-foreground">{t("Estado")}</span>
                 <span>
                   <StatusBadge
                     status={patient.status}

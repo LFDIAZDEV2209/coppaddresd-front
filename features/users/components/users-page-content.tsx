@@ -48,10 +48,12 @@ import { UsersToolbar } from "./users-toolbar";
 import { UsersTable } from "./users-table";
 import { UsersCards } from "./users-cards";
 import { UserFormDialog } from "./user-form-dialog";
+import { useT } from "@/providers/i18n-provider";
 
 export function UsersPageContent() {
   const { user: session, hasPermission, logout } = useAuth();
   const canCreate = hasPermission("Users.Create");
+  const t = useT();
 
   const {
     result,
@@ -97,7 +99,7 @@ export function UsersPageContent() {
       setCatalogError(
         err instanceof Error
           ? err.message
-          : "Error al cargar roles y permisos.",
+          : t('Error al cargar roles y permisos.'),
       );
     }
   }, []);
@@ -181,13 +183,13 @@ export function UsersPageContent() {
       }
       if (somethingChanged) {
         setNotice(
-          "El usuario deberá volver a iniciar sesión para que los cambios apliquen.",
+          t('El usuario deberá volver a iniciar sesión para que los cambios apliquen.'),
         );
       }
     } catch (err) {
       // El error del endpoint único se muestra dentro del modal (submitErrors).
       throw new Error(
-        err instanceof Error ? err.message : "Error al guardar el usuario.",
+        err instanceof Error ? err.message : t('Error al guardar el usuario.'),
       );
     } finally {
       setSaving(false);
@@ -205,7 +207,7 @@ export function UsersPageContent() {
       await refetch();
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : "Error al eliminar el usuario.",
+        err instanceof Error ? err.message : t('Error al eliminar el usuario.'),
       );
       setDeleting(undefined);
     } finally {
@@ -220,8 +222,8 @@ export function UsersPageContent() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Usuarios"
-        description="Gestión de usuarios del sistema"
+        title={t('Usuarios')}
+        description={t('Gestión de usuarios del sistema')}
         icon={UsersIcon}
         actions={
           canCreate && (
@@ -231,7 +233,7 @@ export function UsersPageContent() {
               onClick={openCreate}
             >
               <Plus className="size-[15px]" />
-              Nuevo usuario
+              {t('Nuevo usuario')}
             </Button>
           )
         }
@@ -262,7 +264,7 @@ export function UsersPageContent() {
           role="alert"
         >
           <span className="flex-1">
-            No se pudieron cargar los roles y permisos del catálogo:{" "}
+            {t('No se pudieron cargar los roles y permisos del catálogo:')}{" "}
             {catalogError}
           </span>
           <Button
@@ -271,7 +273,7 @@ export function UsersPageContent() {
             onClick={() => void loadCatalog()}
           >
             <RefreshCw data-icon="inline-start" />
-            Reintentar
+            {t('Reintentar')}
           </Button>
         </div>
       )}
@@ -292,15 +294,15 @@ export function UsersPageContent() {
         view === "table" ? (
           <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
             <SectionHeader
-              title={`${result.total} ${result.total === 1 ? "usuario" : "usuarios"} encontrados`}
-              description="Administra los usuarios de la plataforma"
+              title={`${result.total} ${result.total === 1 ? t('usuario') : t('usuarios')} ${t('encontrados')}`}
+              description={t('Administra los usuarios de la plataforma')}
               icon={UsersIcon}
               variant="primary"
               actions={
                 selectedIds.size > 0 ? (
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-medium text-white/80">
-                      {selectedIds.size} seleccionado
+                      {selectedIds.size} {t('seleccionado')}
                       {selectedIds.size !== 1 ? "s" : ""}
                     </span>
                   </div>
@@ -319,8 +321,8 @@ export function UsersPageContent() {
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
-              title={`${result.total} ${result.total === 1 ? "usuario" : "usuarios"} encontrados`}
-              description="Administra los usuarios de la plataforma"
+              title={`${result.total} ${result.total === 1 ? t('usuario') : t('usuarios')} ${t('encontrados')}`}
+              description={t('Administra los usuarios de la plataforma')}
               icon={UsersIcon}
               variant="primary"
             />
@@ -340,25 +342,25 @@ export function UsersPageContent() {
       {result && result.totalPages > 1 && (
         <div className="flex flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
           <span>
-            Página {result.page} de {result.totalPages} · {result.total}{" "}
-            {result.total === 1 ? "usuario" : "usuarios"}
+            {t('Página {page} de {totalPages}', { page: String(result.page), totalPages: String(result.totalPages) })} · {result.total}{" "}
+            {result.total === 1 ? t('usuario') : t('usuarios')}
           </span>
           <div className="flex items-center gap-3">
             <select
               className="h-8 rounded-md border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={result.pageSize}
               onChange={(event) => setPageSize(Number(event.target.value))}
-              aria-label="Usuarios por página"
+              aria-label={t('Usuarios por página')}
             >
-              <option value={5}>5 por página</option>
-              <option value={10}>10 por página</option>
-              <option value={20}>20 por página</option>
+              <option value={5}>{t('5 por página')}</option>
+              <option value={10}>{t('10 por página')}</option>
+              <option value={20}>{t('20 por página')}</option>
             </select>
             <Pagination className="w-auto justify-start">
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    text="Anterior"
+                    text={t('Anterior')}
                     aria-disabled={result.page === 1}
                     className={
                       result.page === 1
@@ -373,7 +375,7 @@ export function UsersPageContent() {
                 </PaginationItem>
                 <PaginationItem>
                   <PaginationNext
-                    text="Siguiente"
+                    text={t('Siguiente')}
                     aria-disabled={result.page === result.totalPages}
                     className={
                       result.page === result.totalPages
@@ -413,15 +415,15 @@ export function UsersPageContent() {
             <Trash2 />
           </AlertDialogMedia>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+            <AlertDialogTitle>{t('¿Eliminar usuario?')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminará el usuario
-              {deleting ? ` “${deleting.firstName} ${deleting.lastName}”` : ""}{" "}
-              y todas sus asignaciones. Esta acción no se puede deshacer.
+              {t('Se eliminará el usuario')}
+              {deleting ? ` "${deleting.firstName} ${deleting.lastName}"` : ""}{" "}
+              {t('y todas sus asignaciones. Esta acción no se puede deshacer.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={saving}>{t('Cancelar')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
               disabled={saving}
@@ -430,7 +432,7 @@ export function UsersPageContent() {
               {saving ? (
                 <LoaderCircle className="animate-spin" data-icon="inline-start" />
               ) : null}
-              Eliminar
+              {t('Eliminar')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -466,15 +468,16 @@ function UsersErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
       <p className="text-sm font-semibold text-destructive">
-        No pudimos cargar los usuarios
+        {t('No pudimos cargar los usuarios')}
       </p>
       <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
         <RefreshCw data-icon="inline-start" />
-        Reintentar
+        {t('Reintentar')}
       </Button>
     </div>
   );
@@ -487,6 +490,7 @@ function EmptyState({
   onCreate: () => void;
   canCreate: boolean;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card py-16">
       <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
@@ -494,18 +498,18 @@ function EmptyState({
       </div>
       <div className="text-center">
         <h3 className="text-sm font-semibold text-foreground">
-          No se encontraron usuarios
+          {t('No se encontraron usuarios')}
         </h3>
         <p className="mt-1 text-[13px] text-muted-foreground">
           {canCreate
-            ? "Intentá ajustar los filtros o creá un nuevo usuario."
-            : "Intentá ajustar los filtros de búsqueda."}
+            ? t('Intentá ajustar los filtros o creá un nuevo usuario.')
+            : t('Intentá ajustar los filtros de búsqueda.')}
         </p>
       </div>
       {canCreate && (
         <Button size="sm" onClick={onCreate}>
           <Plus data-icon="inline-start" />
-          Nuevo usuario
+          {t('Nuevo usuario')}
         </Button>
       )}
     </div>

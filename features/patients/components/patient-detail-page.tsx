@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -55,6 +56,7 @@ const TONES = {
 type Tone = keyof typeof TONES;
 
 export function PatientDetailPage({ id }: { id: string }) {
+  const t = useT();
   const router = useRouter();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,7 +125,7 @@ export function PatientDetailPage({ id }: { id: string }) {
         variant="ghost"
         size="sm"
         onClick={() => router.push("/patients")}
-        aria-label="Volver al directorio de pacientes"
+        aria-label={t("Volver al directorio de pacientes")}
         className="w-fit"
       >
         <ArrowLeft data-icon="inline-start" />
@@ -154,28 +156,28 @@ export function PatientDetailPage({ id }: { id: string }) {
       {/* Stats del paciente con colores representativos. */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Edad"
+          label={t("Edad")}
           value={getAge(patient.dateOfBirth)}
           icon={CalendarDays}
           variant="primary"
-          context="Años cumplidos"
+          context={t("Años cumplidos")}
         />
         <StatCard
-          label="Género"
+          label={t("Género")}
           value={patient.gender ?? "No registrado"}
           icon={UserRound}
           variant="info"
-          context="Perfil demográfico"
+          context={t("Perfil demográfico")}
         />
         <StatCard
-          label="Clínica"
+          label={t("Clínica")}
           value={patient.clinicName ?? "Sin asignar"}
           icon={Building2}
           variant="success"
           context={patient.locationName ?? "Sin sede"}
         />
         <StatCard
-          label="Aseguradora"
+          label={t("Aseguradora")}
           value={patient.insurerName ?? "Sin aseguradora"}
           icon={Shield}
           variant="warning"
@@ -187,7 +189,7 @@ export function PatientDetailPage({ id }: { id: string }) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <DetailCard
-          title="Datos personales"
+          title={t("Datos personales")}
           icon={UserRound}
           tone="primary"
           items={[
@@ -224,7 +226,7 @@ export function PatientDetailPage({ id }: { id: string }) {
           ]}
         />
         <DetailCard
-          title="Contacto"
+          title={t("Contacto")}
           icon={MapPin}
           tone="info"
           items={[
@@ -262,7 +264,7 @@ export function PatientDetailPage({ id }: { id: string }) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <DetailCard
-          title="Cobertura"
+          title={t("Cobertura")}
           icon={Shield}
           tone="warning"
           items={[
@@ -279,7 +281,7 @@ export function PatientDetailPage({ id }: { id: string }) {
           ]}
         />
         <DetailCard
-          title="Clínica y sede"
+          title={t("Clínica y sede")}
           icon={Building2}
           tone="success"
           items={[
@@ -298,7 +300,7 @@ export function PatientDetailPage({ id }: { id: string }) {
       </div>
 
       <DetailCard
-        title="Estilo de vida e historial"
+        title={t("Estilo de vida e historial")}
         icon={HeartPulse}
         tone="destructive"
         items={[
@@ -337,7 +339,7 @@ export function PatientDetailPage({ id }: { id: string }) {
 
       {patient.notes && (
         <DetailCard
-          title="Notas"
+          title={t("Notas")}
           icon={ClipboardPenLine}
           tone="primary"
           items={[
@@ -403,13 +405,14 @@ function DetailCard({
 }
 
 function DiagnosesSection({ patient }: { patient: Patient }) {
+  const t = useT();
   return (
     <section
       className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
-      aria-label="Diagnósticos"
+      aria-label={t("Diagnósticos")}
     >
       <SectionHeader
-        title="Diagnósticos"
+        title={t("Diagnósticos")}
         description={`${patient.diagnoses.length} registrados`}
         icon={Stethoscope}
         variant="primary"
@@ -452,13 +455,14 @@ function DiagnosesSection({ patient }: { patient: Patient }) {
 }
 
 function MedicationsSection({ patient }: { patient: Patient }) {
+  const t = useT();
   return (
     <section
       className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
-      aria-label="Medicamentos"
+      aria-label={t("Medicamentos")}
     >
       <SectionHeader
-        title="Medicamentos"
+        title={t("Medicamentos")}
         description={`${patient.medications.length} prescritos`}
         icon={ClipboardPenLine}
         variant="primary"
@@ -501,13 +505,14 @@ function MedicationsSection({ patient }: { patient: Patient }) {
 }
 
 function AllergiesSection({ patient }: { patient: Patient }) {
+  const t = useT();
   return (
     <section
       className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
-      aria-label="Alergias"
+      aria-label={t("Alergias")}
     >
       <SectionHeader
-        title="Alergias"
+        title={t("Alergias")}
         description={`${patient.allergies.length} registradas`}
         icon={HeartPulse}
         variant="primary"
@@ -543,14 +548,15 @@ function AllergiesSection({ patient }: { patient: Patient }) {
 }
 
 function VitalSignsSection({ patient }: { patient: Patient }) {
+  const t = useT();
   const latest = patient.vitalSigns[0];
   return (
     <section
       className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
-      aria-label="Signos vitales"
+      aria-label={t("Signos vitales")}
     >
       <SectionHeader
-        title="Signos vitales"
+        title={t("Signos vitales")}
         description={
           latest
             ? `Última medición · ${formatDate(latest.measuredAt)}`
@@ -564,7 +570,7 @@ function VitalSignsSection({ patient }: { patient: Patient }) {
           <VitalStat
             icon={Gauge}
             tone="primary"
-            label="Presión"
+            label={t("Presión")}
             value={
               latest.systolic
                 ? `${latest.systolic}/${latest.diastolic ?? "—"} mmHg`
@@ -574,31 +580,31 @@ function VitalSignsSection({ patient }: { patient: Patient }) {
           <VitalStat
             icon={HeartPulse}
             tone="destructive"
-            label="Frecuencia cardíaca"
+            label={t("Frecuencia cardíaca")}
             value={latest.heartRate ? `${latest.heartRate} lpm` : "—"}
           />
           <VitalStat
             icon={Thermometer}
             tone="warning"
-            label="Temperatura"
+            label={t("Temperatura")}
             value={latest.temperatureC ? `${latest.temperatureC} °C` : "—"}
           />
           <VitalStat
             icon={Wind}
             tone="success"
-            label="Saturación O₂"
+            label={t("Saturación O₂")}
             value={latest.o2Saturation ? `${latest.o2Saturation} %` : "—"}
           />
           <VitalStat
             icon={Ruler}
             tone="info"
-            label="Estatura"
+            label={t("Estatura")}
             value={latest.heightCm ? `${latest.heightCm} cm` : "—"}
           />
           <VitalStat
             icon={Weight}
             tone="warning"
-            label="Peso"
+            label={t("Peso")}
             value={latest.weightKg ? `${latest.weightKg} kg` : "—"}
           />
         </div>

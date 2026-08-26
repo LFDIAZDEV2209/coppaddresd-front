@@ -13,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { CalendarDays, CalendarRange, CalendarClock } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { DailyAppointmentCountDto } from "../../types";
 import { toggleActiveClass } from "./range-toggle";
@@ -42,6 +43,7 @@ export function AppointmentsTrendChart({
   dailySeries: DailyAppointmentCountDto[];
   loading: boolean;
 }) {
+  const t = useT();
   const [bucket, setBucket] = useState<Bucket>("day");
 
   const data = useMemo(() => {
@@ -62,7 +64,7 @@ export function AppointmentsTrendChart({
   if (data.length === 0) {
     return (
       <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-border text-[12.5px] text-muted-foreground">
-        Sin citas en el período seleccionado
+        {t('Sin citas en el período seleccionado')}
       </div>
     );
   }
@@ -98,7 +100,7 @@ export function AppointmentsTrendChart({
           axisLine={false}
         />
         <Tooltip
-          formatter={(value) => [String(value), "Citas"]}
+          formatter={(value) => [String(value), t('Citas')]}
           labelFormatter={(label) => String(label)}
           contentStyle={{
             borderRadius: 12,
@@ -135,7 +137,7 @@ export function AppointmentsTrendChart({
           axisLine={false}
         />
         <Tooltip
-          formatter={(value) => [String(value), "Citas"]}
+          formatter={(value) => [String(value), t('Citas')]}
           labelFormatter={(label) => String(label)}
           cursor={{ fill: "var(--muted)", opacity: 0.4 }}
           contentStyle={{
@@ -174,7 +176,7 @@ export function AppointmentsTrendChart({
               className={toggleActiveClass}
             >
               <Icon data-icon="inline-start" />
-              {bucketLabels[key]}
+              {t(bucketLabels[key])}
             </ToggleGroupItem>
           );
         })}
