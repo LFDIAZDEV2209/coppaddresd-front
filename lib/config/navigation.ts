@@ -17,6 +17,7 @@ import {
   CalendarPlus,
   ClipboardPenLine,
   UserRound,
+  Users,
   Stethoscope,
   Package,
   ArrowDownToLine,
