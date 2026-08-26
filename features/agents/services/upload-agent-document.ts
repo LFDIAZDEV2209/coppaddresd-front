@@ -1,5 +1,6 @@
 import { getAccessToken, apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
+import { uuid } from "@/lib/uuid";
 import type { KnowledgeBaseRequest } from "../types";
 
 /**
@@ -81,7 +82,7 @@ export async function uploadInstructionsDocument(
       throw new Error("No se pudo crear la knowledge base de instrucciones.");
     }
   }
-  const storageKey = `agents/docs/${kb.id}/${crypto.randomUUID()}-${file.name}`;
+  const storageKey = `agents/docs/${kb.id}/${uuid()}-${file.name}`;
   await uploadDocumentToStorage(storageKey, file);
   await ctx.registerDocument(kb.id, {
     storageKey,
