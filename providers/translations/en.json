@@ -222,6 +222,7 @@
   "Analítica": "Analytics",
   "Analítica de comunidad": "Community analytics",
   "años": "years",
+  "ANTARES · ERP Comunidad": "ANTARES - Community ERP",
   "Anterior": "Previous",
   "Apagar cámara": "Turn off camera",
   "Apariencia": "Appearance",
@@ -288,6 +289,7 @@
   "Buscar medicamento…": "Search medication…",
   "Buscar medio por título o descripción...": "Search media by title or description...",
   "Buscar medios": "Search media",
+  "Buscar miembro, post, región…": "Buscar miembro, post, región…",
   "Buscar miembro...": "Buscar miembro...",
   "Buscar miembros": "Search members",
   "Buscar movimientos": "Search movements",
@@ -1939,6 +1941,7 @@
   "Volver al detalle del agente": "Back to agent details",
   "Volver al directorio": "Back to directory",
   "Volver al directorio de pacientes": "Back to patient directory",
+  "Volver al ERP": "Volver al ERP",
   "Volver al inicio de sesión": "Back to sign in",
   "XP": "XP",
   "XP entregados": "XP entregados",
@@ -1947,7 +1950,5 @@
   "XP por posts": "XP por posts",
   "XP por rachas": "XP por rachas",
   "XP prom": "XP prom",
-  "y todas sus asignaciones. Esta acción no se puede deshacer.": "and all their assignments. This action cannot be undone.",
-  "Volver al ERP": "Volver al ERP",
-  "Buscar miembro, post, región…": "Buscar miembro, post, región…"
+  "y todas sus asignaciones. Esta acción no se puede deshacer.": "and all their assignments. This action cannot be undone."
 }

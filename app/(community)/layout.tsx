@@ -1,5 +1,7 @@
 import { AuthGuard } from "@/components/feedback/auth-guard";
 import { CommunityErpShell } from "@/features/community/components/community-shell";
+import { ErpProvider } from "@/features/community/erp-provider";
+import { ErpToaster } from "@/features/community/components/erp-toaster";
 
 export default function CommunityLayout({
   children,
@@ -8,7 +10,10 @@ export default function CommunityLayout({
 }) {
   return (
     <AuthGuard>
-      <CommunityErpShell>{children}</CommunityErpShell>
+      <ErpProvider>
+        <CommunityErpShell>{children}</CommunityErpShell>
+        <ErpToaster />
+      </ErpProvider>
     </AuthGuard>
   );
 }
