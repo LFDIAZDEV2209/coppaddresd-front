@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { hasAppointmentPermission } from "./appointment-permissions";
 import {
   LayoutDashboard,
   Users,
@@ -63,14 +64,18 @@ export interface NavModule {
   permission?: string | string[];
 }
 
-/** Evalúa un permiso declarativo: single code o lista any-of. */
+/**
+ * Evalúa un permiso declarativo: single code o lista any-of. Durante la
+ * transición Phase-1 también acepta los códigos legacy Telemedicine.*
+ * equivalentes (ver appointment-permissions).
+ */
 export function hasNavPermission(
   permission: string | string[] | undefined,
   can: (code: string) => boolean,
 ): boolean {
   if (!permission) return true;
   const codes = Array.isArray(permission) ? permission : [permission];
-  return codes.some((code) => can(code));
+  return codes.some((code) => hasAppointmentPermission(can, code));
 }
 
 /** Ítems visibles del módulo (filtra hidden y permisos). */
@@ -165,63 +170,63 @@ export const navModules: NavModule[] = [
     ],
   },
   {
-    label: "Telemedicina",
+    label: "Citas",
     icon: Video,
     color: "#0E7490",
     permission: [
-      "Telemedicine.AgendaView",
-      "Telemedicine.AdminView",
-      "Telemedicine.RequestsView",
+      "Appointments.AgendaView",
+      "Appointments.AdminView",
+      "Appointments.RequestsView",
     ],
     items: [
       {
         label: "Dashboard",
-        href: "/telemedicine",
+        href: "/appointments",
         icon: LayoutDashboard,
         color: "#123B63",
-        permission: "Telemedicine.AgendaView",
+        permission: "Appointments.AgendaView",
       },
       {
         label: "Agenda",
-        href: "/telemedicine/agenda",
+        href: "/appointments/agenda",
         icon: CalendarDays,
         color: "#2563EB",
-        permission: "Telemedicine.AgendaView",
+        permission: "Appointments.AgendaView",
       },
       {
         label: "Calendario",
-        href: "/telemedicine/calendario",
+        href: "/appointments/calendario",
         icon: CalendarClock,
         color: "#0E7490",
-        permission: "Telemedicine.AgendaView",
+        permission: "Appointments.AgendaView",
       },
       {
         label: "Citas",
-        href: "/telemedicine/citas",
+        href: "/appointments/citas",
         icon: ClipboardList,
         color: "#0891B2",
-        permission: "Telemedicine.AppointmentsView",
+        permission: "Appointments.View",
       },
       {
         label: "Solicitudes",
-        href: "/telemedicine/solicitudes",
+        href: "/appointments/solicitudes",
         icon: Inbox,
         color: "#F59E0B",
-        permission: "Telemedicine.RequestsView",
+        permission: "Appointments.RequestsView",
       },
       {
         label: "Alertas",
-        href: "/telemedicine/alertas",
+        href: "/appointments/alertas",
         icon: Bell,
         color: "#EF4444",
-        permission: "Telemedicine.AlertsView",
+        permission: "Appointments.AlertsView",
       },
       {
         label: "Administración",
-        href: "/telemedicine/admin",
+        href: "/appointments/admin",
         icon: BarChart3,
         color: "#7C3AED",
-        permission: "Telemedicine.AdminView",
+        permission: "Appointments.AdminView",
       },
     ],
   },

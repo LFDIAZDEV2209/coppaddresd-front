@@ -211,8 +211,10 @@ export function AssignmentsPage() {
                         {item.patientName ?? "Sin nombre"}
                       </span>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {item.itemName ?? "—"}
+                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-[280px]">
+                      <span className="block truncate" title={item.itemName ?? undefined}>
+                        {item.itemName ?? "—"}
+                      </span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm">
                       {item.frequency

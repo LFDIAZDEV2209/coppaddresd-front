@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dumbbell, Plus, RefreshCw, Trash2, Eye, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -67,6 +67,14 @@ export function ExerciseRoutinesPage() {
   const [deleting, setDeleting] = useState<
     ExerciseRoutineListItem | undefined
   >();
+  const [createdMessage, setCreatedMessage] = useState<string | null>(null);
+
+  // Auto-ocultar la confirmación tras unos segundos
+  useEffect(() => {
+    if (!createdMessage) return;
+    const timer = setTimeout(() => setCreatedMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [createdMessage]);
 
   const openCreate = () => {
     setEditing(undefined);
@@ -106,6 +114,16 @@ export function ExerciseRoutinesPage() {
           </Button>
         }
       />
+
+      {/* Confirmación de creación asignada */}
+      {createdMessage && (
+        <p
+          role="status"
+          className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800"
+        >
+          {createdMessage}
+        </p>
+      )}
 
       {/* Filtros */}
       <section
@@ -212,8 +230,13 @@ export function ExerciseRoutinesPage() {
                 {result.data.map((routine) => (
                   <TableRow key={routine.id}>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{routine.name}</span>
+                      <div className="flex max-w-[280px] flex-col">
+                        <span
+                          className="truncate font-medium"
+                          title={routine.name}
+                        >
+                          {routine.name}
+                        </span>
                         {routine.description && (
                           <span className="text-xs text-muted-foreground line-clamp-1">
                             {routine.description}
@@ -333,6 +356,9 @@ export function ExerciseRoutinesPage() {
         saving={actionLoading}
         onOpenChange={setFormOpen}
         onSubmit={save}
+        onCreated={(patientName) =>
+          setCreatedMessage(`Rutina creada y asignada a ${patientName}`)
+        }
       />
 
       <ExerciseRoutineDetailDialog

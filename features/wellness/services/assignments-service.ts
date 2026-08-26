@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
+import { fetchNutritionPlans } from "./nutrition-plans-service";
 import type {
   RoutineAssignment,
   CreateRoutineAssignmentInput,
@@ -202,9 +203,12 @@ export const FREQUENCY_LABELS: Record<string, string> = {
 export async function fetchAllAssignments(
   signal?: AbortSignal,
 ): Promise<UnifiedAssignment[]> {
-  const [routines, plans] = await Promise.all([
+  const [routines, planAssignments, personalizedPlans] = await Promise.all([
     fetchRoutineAssignments(1, 100, { search: "", status: "all" }, signal),
     fetchNutritionPlanAssignments(1, 100, { status: "all" }, signal),
+    // Planes personalizados (isTemplate=false) sin assignment: también son
+    // "asignaciones" desde la perspectiva del listado (Opción B).
+    fetchNutritionPlans(1, 100, { search: "", isTemplate: "custom", status: "all" }, signal),
   ]);
 
   const routineItems: UnifiedAssignment[] = routines.data.map((r) => ({
@@ -223,7 +227,7 @@ export async function fetchAllAssignments(
     createdAt: r.createdAt,
   }));
 
-  const planItems: UnifiedAssignment[] = plans.data.map((p) => ({
+  const planItems: UnifiedAssignment[] = planAssignments.data.map((p) => ({
     id: p.id,
     type: "nutrition" as const,
     itemId: p.planId,
@@ -238,7 +242,33 @@ export async function fetchAllAssignments(
     createdAt: p.createdAt,
   }));
 
-  return [...routineItems, ...planItems].sort(
+  // Planes personalizados que tienen patientId pero NO un assignment explícito.
+  // Se excluyen los que ya están cubiertos por planAssignments (mismo planId)
+  // y los que están en Draft/Archived (todavía no son asignaciones vigentes).
+  const assignedPlanIds = new Set(planItems.map((p) => p.itemId));
+  const virtualPlanItems: UnifiedAssignment[] = personalizedPlans.data
+    .filter(
+      (p) =>
+        p.patientId &&
+        !assignedPlanIds.has(p.id) &&
+        (p.status === "Active" || p.status === "Completed"),
+    )
+    .map((p) => ({
+      id: `plan-${p.id}`,
+      type: "nutrition" as const,
+      itemId: p.id,
+      patientId: p.patientId!,
+      patientName: p.patientName,
+      itemName: p.name,
+      startDate: p.createdAt,
+      endDate: null,
+      status: p.status === "Active" ? "Active" : "Completed",
+      notes: null,
+      createdBy: null,
+      createdAt: p.createdAt,
+    }));
+
+  return [...routineItems, ...planItems, ...virtualPlanItems].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 }

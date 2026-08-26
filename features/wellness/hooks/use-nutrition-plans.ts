@@ -16,6 +16,7 @@ import {
   updateNutritionPlan,
   deleteNutritionPlan,
 } from "../services/nutrition-plans-service";
+import { notifyAssignmentsRefresh } from "./assignments-refresh";
 
 interface UseNutritionPlansReturn {
   result: PaginatedResult<NutritionPlanListItem> | null;
@@ -106,7 +107,12 @@ export function useNutritionPlans(
       setActionLoading(true);
       try {
         if (id) await updateNutritionPlan(id, input as UpdateNutritionPlanInput);
-        else await createNutritionPlan(input as CreateNutritionPlanInput);
+        else {
+          await createNutritionPlan(input as CreateNutritionPlanInput);
+          // Al crear, el backend puede generar una asignación atómica
+          // (si el payload trae patientId): refrescar asignaciones unificadas.
+          notifyAssignmentsRefresh();
+        }
         setPageState(1);
         await loadData();
       } finally {
