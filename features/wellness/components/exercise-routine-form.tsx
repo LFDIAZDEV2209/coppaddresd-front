@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, Search, Sparkles } from "lucide-react";
+import { ApiError } from "@/lib/api/http";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +32,7 @@ import type {
   NutritionPlanStatus,
   CreateExerciseRoutineInput,
   UpdateExerciseRoutineInput,
+  ExerciseGeneratedPayload,
 } from "../types";
 import {
   DIFFICULTY_OPTIONS,
@@ -40,7 +42,12 @@ import {
 import {
   PLAN_STATUSES,
   PLAN_STATUS_LABELS,
+  fetchPatientsForPicker,
 } from "../services/nutrition-plans-service";
+import {
+  generatePlan,
+  mapExercisePayloadToForm,
+} from "../services/generate-plan-service";
 
 interface ExerciseRoutineFormDialogProps {
   open: boolean;
@@ -51,6 +58,14 @@ interface ExerciseRoutineFormDialogProps {
     input: CreateExerciseRoutineInput | UpdateExerciseRoutineInput,
     id?: string,
   ) => Promise<void>;
+  /** Se invoca tras crear (no editar) una rutina vinculada a un paciente. */
+  onCreated?: (patientName: string) => void;
+}
+
+interface PickerItem {
+  id: string;
+  label: string;
+  sublabel?: string;
 }
 
 interface ExerciseFormData {
@@ -91,6 +106,7 @@ export function ExerciseRoutineFormDialog({
   saving,
   onOpenChange,
   onSubmit,
+  onCreated,
 }: ExerciseRoutineFormDialogProps) {
   const isEditing = Boolean(routine);
 
@@ -114,6 +130,42 @@ export function ExerciseRoutineFormDialog({
   const [cooldownNotes, setCooldownNotes] = useState("");
   const [exercises, setExercises] = useState<ExerciseFormData[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(Boolean(routine));
+
+  // Estado del picker de paciente + generación con IA (solo en creación)
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
+    null,
+  );
+  const [selectedPatientLabel, setSelectedPatientLabel] = useState("");
+  const [patientSearch, setPatientSearch] = useState("");
+  const [patientResults, setPatientResults] = useState<PickerItem[]>([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState("");
+
+  // Búsqueda de paciente con debounce (mismo patrón que assignment-form)
+  useEffect(() => {
+    if (patientSearch.trim().length < 2) return;
+
+    const timer = setTimeout(async () => {
+      setLoadingPatients(true);
+      try {
+        const result = await fetchPatientsForPicker(1, 10, patientSearch);
+        setPatientResults(
+          result.data.map((p) => ({
+            id: p.id,
+            label: `${p.firstName} ${p.lastName}`,
+            sublabel: p.email ?? p.medicalRecordNumber ?? undefined,
+          })),
+        );
+      } catch {
+        setPatientResults([]);
+      } finally {
+        setLoadingPatients(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [patientSearch]);
 
   useEffect(() => {
     if (!routine) return;
@@ -188,6 +240,55 @@ export function ExerciseRoutineFormDialog({
     });
   };
 
+  const handleSelectPatient = (p: PickerItem) => {
+    setSelectedPatientId(p.id);
+    setSelectedPatientLabel(p.label);
+    setPatientSearch("");
+    setPatientResults([]);
+    setGenerateError("");
+    // Una rutina vinculada a un paciente nace activa y como asignación
+    // (mismo comportamiento que los planes personalizados).
+    setStatus("Active");
+  };
+
+  const handleClearPatient = () => {
+    setSelectedPatientId(null);
+    setSelectedPatientLabel("");
+    setGenerateError("");
+  };
+
+  // Genera la rutina con IA y pre-llena el form completo
+  const handleGenerate = async () => {
+    if (!selectedPatientId) return;
+
+    setGenerating(true);
+    setGenerateError("");
+    try {
+      const response = await generatePlan(selectedPatientId, "exercise");
+      const values = mapExercisePayloadToForm(
+        response.payload as unknown as ExerciseGeneratedPayload,
+      );
+      setName(values.name);
+      setDescription(values.description);
+      setDifficulty(values.difficulty);
+      setEstimatedMinutes(values.estimatedMinutes);
+      setCategory(values.category);
+      setTargetMuscles(values.targetMuscles);
+      setEquipment(values.equipment);
+      setWarmupNotes(values.warmupNotes);
+      setCooldownNotes(values.cooldownNotes);
+      setExercises(values.exercises);
+    } catch (err) {
+      setGenerateError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo generar la rutina. Intenta nuevamente.",
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!name.trim()) return;
 
@@ -225,10 +326,17 @@ export function ExerciseRoutineFormDialog({
         warmupNotes: warmupNotes.trim() || null,
         cooldownNotes: cooldownNotes.trim() || null,
         mediaId: null,
+        patientId: selectedPatientId ?? undefined,
         exercises: exercisesInput.length > 0 ? exercisesInput : null,
       },
       routine?.id,
     );
+
+    // Al crear con paciente, el backend crea la asignación en la misma
+    // transacción: notificar para confirmar el vínculo.
+    if (!routine && selectedPatientId) {
+      onCreated?.(selectedPatientLabel);
+    }
 
     onOpenChange(false);
   };
@@ -251,6 +359,94 @@ export function ExerciseRoutineFormDialog({
 
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="flex flex-col gap-4 py-2">
+            {/* Paciente (opcional) + generación con IA — solo en creación.
+                Al guardar con paciente, la rutina nace activa y se asigna
+                automáticamente (creación atómica en el backend). */}
+            {!isEditing && (
+              <div className="flex flex-col gap-1.5">
+                <Label>Paciente (opcional)</Label>
+                {selectedPatientId && selectedPatientLabel ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">
+                      {selectedPatientLabel}
+                      <button
+                        type="button"
+                        className="ml-auto text-muted-foreground hover:text-foreground"
+                        onClick={handleClearPatient}
+                        aria-label="Quitar paciente"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-fit"
+                      disabled={generating || saving}
+                      onClick={handleGenerate}
+                    >
+                      <Sparkles data-icon="inline-start" className="size-3" />
+                      {generating
+                        ? "Generando..."
+                        : "Generar rutina con IA"}
+                    </Button>
+                    {generateError && (
+                      <p className="text-xs text-destructive">
+                        {generateError}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar paciente por nombre..."
+                        value={patientSearch}
+                        onChange={(e) => {
+                          setPatientSearch(e.target.value);
+                          setGenerateError("");
+                        }}
+                        className="h-9 pl-8"
+                      />
+                    </div>
+                    {loadingPatients && (
+                      <p className="text-xs text-muted-foreground">
+                        Buscando...
+                      </p>
+                    )}
+                    {patientResults.length > 0 && (
+                      <div className="max-h-40 overflow-y-auto rounded-md border border-border">
+                        {patientResults.map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            className="flex w-full flex-col px-3 py-2 text-left text-sm hover:bg-muted"
+                            onClick={() => handleSelectPatient(p)}
+                          >
+                            <span>{p.label}</span>
+                            {p.sublabel && (
+                              <span className="text-xs text-muted-foreground">
+                                {p.sublabel}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {patientSearch.length >= 2 &&
+                      !loadingPatients &&
+                      patientResults.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          No se encontraron pacientes.
+                        </p>
+                      )}
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Datos básicos */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5 sm:col-span-2">

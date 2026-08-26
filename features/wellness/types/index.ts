@@ -17,6 +17,9 @@ export interface NutritionPlanDay {
   fatG: number | null;
   fiberG: number | null;
   waterMl: number | null;
+  /** Meta de agua diaria (ml) — misma convención que dayNumber: todas las
+   *  filas del día llevan el mismo valor. El backend la envía siempre. */
+  dailyWaterMl: number | null;
   notes: string | null;
   sortOrder: number;
   mediaId: string | null;
@@ -40,6 +43,7 @@ export interface NutritionPlan {
   patientId: string | null;
   patientName: string | null;
   sourcePlanId: string | null;
+  assignmentId?: string | null;
   status: NutritionPlanStatus;
   createdBy: string | null;
   createdAt: string;
@@ -80,6 +84,10 @@ export interface NutritionPlanDayInput {
   fatG: number | null;
   fiberG: number | null;
   waterMl: number | null;
+  /** Meta de agua diaria (ml) — misma convención que dayNumber: todas las
+   *  filas del día llevan el mismo valor. Opcional: el backend usa 2000 si
+   *  se omite o viene 0. */
+  dailyWaterMl: number | null;
   notes: string | null;
   sortOrder: number;
   mediaId: string | null;
@@ -178,6 +186,7 @@ export interface ExerciseRoutine {
   cooldownNotes: string | null;
   mediaId: string | null;
   createdBy: string | null;
+  assignmentId?: string | null;
   createdAt: string;
   updatedAt: string | null;
   exercises: RoutineExercise[];
@@ -228,6 +237,7 @@ export interface CreateExerciseRoutineInput {
   warmupNotes: string | null;
   cooldownNotes: string | null;
   mediaId: string | null;
+  patientId?: string;
   exercises: RoutineExerciseInput[] | null;
 }
 
@@ -352,4 +362,69 @@ export interface PatientListItem {
   lastName: string;
   email: string | null;
   status: string;
+}
+
+// --- Generación con IA (wellness/plans/generate) ---
+
+/** Respuesta del endpoint de generación con IA. `payload` es el JSON crudo
+ *  del ai-service y viene en SNAKE_CASE. */
+export interface GeneratePlanResponse {
+  type: "nutrition" | "exercise";
+  generatedAt: string;
+  payload: Record<string, unknown>;
+}
+
+/** Payload de generación de plan de alimentación (snake_case, ai-service). */
+export interface NutritionGeneratedPayload {
+  name: string;
+  description: string | null;
+  target_condition: string | null;
+  duration_days: number;
+  daily_calorie_target: number | null;
+  daily_protein_target: number | null;
+  daily_carbs_target: number | null;
+  daily_fat_target: number | null;
+  daily_fiber_target: number | null;
+  allergens: string | null;
+  meal_timing: string | null;
+  days: Array<{
+    day_number: number;
+    meal_type: string;
+    description: string | null;
+    foods: string | null;
+    calories: number | null;
+    protein_g: number | null;
+    carbs_g: number | null;
+    fat_g: number | null;
+    fiber_g: number | null;
+    water_ml: number | null;
+    notes: string | null;
+  }>;
+}
+
+/** Payload de generación de rutina de ejercicio (snake_case, ai-service). */
+export interface ExerciseGeneratedPayload {
+  name: string;
+  description: string | null;
+  difficulty: string;
+  estimated_minutes: number | null;
+  category: string;
+  target_muscles: string | string[] | null;
+  equipment: string | string[] | null;
+  warmup_notes: string | null;
+  cooldown_notes: string | null;
+  exercises: Array<{
+    name: string;
+    description: string | null;
+    sets: number | null;
+    repetitions: number | null;
+    rest_seconds: number | null;
+    duration_secs: number | null;
+    weight_kg: number | null;
+    target_muscle: string | null;
+    equipment: string | null;
+    tempo: string | null;
+    rpe: number | null;
+    tips: string | null;
+  }>;
 }

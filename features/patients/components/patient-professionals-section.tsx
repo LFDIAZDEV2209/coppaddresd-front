@@ -11,7 +11,7 @@ import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/providers/context-provider";
-import { fetchProfessionalsCatalog } from "@/features/telemedicine/services/reference-service";
+import { fetchProfessionalsCatalog } from "@/features/appointments/services/reference-service";
 import {
   assignPatientProfessional,
   fetchPatientAssignments,
