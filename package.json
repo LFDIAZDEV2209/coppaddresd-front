@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "i18n:apply": "node scripts/i18n-review.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
