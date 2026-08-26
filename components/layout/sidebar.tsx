@@ -13,6 +13,7 @@ import {
 } from "@/lib/config/navigation";
 import { useAuth } from "@/providers/auth-provider";
 import { useAppContext } from "@/providers/context-provider";
+import { useT } from "@/providers/i18n-provider";
 import {
   ChevronDown,
   ChevronsLeft,
@@ -51,6 +52,7 @@ export function Sidebar({
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { can } = useAppContext();
+  const t = useT();
   const navModules = visibleNavModules(can);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(() => {
     const activeModule = navModules.find((m) =>
@@ -125,7 +127,7 @@ export function Sidebar({
             <button
               onClick={onToggleCollapse}
               className="absolute right-2 top-4 flex size-[26px] items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white hover:scale-110 transition-all duration-200"
-              aria-label="Colapsar sidebar"
+              aria-label={t("Colapsar sidebar")}
             >
               <ChevronsLeft className="size-[15px]" />
             </button>
@@ -159,7 +161,7 @@ export function Sidebar({
                       <Icon className="size-[18px]" />
                     </TooltipTrigger>
                     <TooltipContent side="right" sideOffset={8}>
-                      {mod.label}
+                      {t(mod.label)}
                     </TooltipContent>
                   </Tooltip>
                 );
@@ -183,7 +185,7 @@ export function Sidebar({
                       )}
                     />
                     <span className="flex-1 text-left tracking-wide">
-                      {mod.label}
+                      {t(mod.label)}
                     </span>
                     <ChevronDown
                       className={cn(
@@ -221,7 +223,7 @@ export function Sidebar({
                               }}
                             >
                               <ItemIcon className="size-[16px] shrink-0" />
-                              <span className="truncate">{item.label}</span>
+                              <span className="truncate">{t(item.label)}</span>
                             </Link>
                           );
                         })}
@@ -241,7 +243,7 @@ export function Sidebar({
               <button
                 onClick={onToggleCollapse}
                 className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 p-2 text-white/70 hover:text-white hover:bg-white/10 hover:scale-110 transition-all duration-200"
-                aria-label="Expandir sidebar"
+                aria-label={t("Expandir sidebar")}
               >
                 <ChevronDown className="size-4 -rotate-90" />
               </button>
@@ -251,10 +253,10 @@ export function Sidebar({
                   className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 p-2 text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
                   render={<Link href="/settings" />}
                   onClick={onCloseMobile}
-                  aria-label="Configuración"
+                  aria-label={t("Configuración")}
                 />
                 <TooltipContent side="right" sideOffset={8}>
-                  Configuración
+                  {t("Configuración")}
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -281,7 +283,7 @@ export function Sidebar({
                 <DropdownMenuContent align="end" className="w-44">
                   <DropdownMenuItem render={<Link href="/settings" />}>
                     <Settings className="size-4" />
-                    Configuración
+                    {t("Configuración")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -289,7 +291,7 @@ export function Sidebar({
                     className="text-destructive"
                   >
                     <LogOut className="size-4" />
-                    Cerrar sesión
+                    {t("Cerrar sesión")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
