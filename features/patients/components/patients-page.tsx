@@ -3,21 +3,31 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Eye,
+  LayoutGrid,
   MoreHorizontal,
   Pencil,
   Plus,
-  Search,
-  Trash2,
-  UserRound,
-  UserRoundPlus,
-  Eye,
-  CalendarPlus,
-  ClipboardPenLine,
   RefreshCw,
+  Rows3,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  UserCheck,
+  UserPlus,
+  UserRound,
+  UserRoundX,
+  Users,
 } from "lucide-react";
+import { useAppContext } from "@/providers/context-provider";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
+import { StatCard } from "@/components/feedback/stat-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +48,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -47,24 +64,52 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { usePatients } from "../hooks/use-patients";
-import type { PatientListItem } from "../types";
+import type { PatientListItem, PatientSortKey } from "../types";
 
+/** Preferencia de vista (tabla vs cards) persistida en el navegador. */
+const VIEW_KEY = "patients-view-mode";
+type PatientViewMode = "table" | "cards";
+
+/**
+ * Directorio de pacientes con el lenguaje visual del módulo de Citas, en el
+ * azul de la plataforma (navy). Router declarativo por permisos: con
+ * Patients.View se presenta la vista global (todos los pacientes +
+ * profesionales asignados); con solo Patients.ViewOwn, "Mis pacientes" (los
+ * datos ya vienen scoped por el backend desde el JWT — aquí solo se adapta
+ * la presentación).
+ */
 export function PatientsPage() {
   const router = useRouter();
+  const { can } = useAppContext();
   const {
     result,
+    stats,
+    statsError,
     filters,
     insurers,
     loading,
     error,
     actionLoading,
+    fullScope,
     setFilters,
+    setSort,
     setPage,
     remove,
     retry,
   } = usePatients();
   const [deleting, setDeleting] = useState<PatientListItem | undefined>();
+  const [view, setView] = useState<PatientViewMode>(() => {
+    if (typeof window === "undefined") return "table";
+    return window.localStorage.getItem(VIEW_KEY) === "cards"
+      ? "cards"
+      : "table";
+  });
+
+  const canCreate = can("Patients.Create");
+  const canEdit = can("Patients.Update");
+  const canDelete = can("Patients.Delete");
 
   const openCreate = () => router.push("/patients/new");
   const openDetail = (patient: PatientListItem) =>
@@ -72,53 +117,136 @@ export function PatientsPage() {
   const openEdit = (patient: PatientListItem) =>
     router.push(`/patients/${patient.id}/edit`);
 
+  const changeView = (next: PatientViewMode) => {
+    setView(next);
+    window.localStorage.setItem(VIEW_KEY, next);
+  };
+
+  const isFiltered =
+    filters.search.trim() !== "" ||
+    filters.status !== "all" ||
+    filters.insurerId !== "all";
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Pacientes"
-        description="Gestiona la información y el seguimiento de tus pacientes"
+        title={fullScope ? "Pacientes" : "Mis pacientes"}
+        description={
+          fullScope
+            ? "Gestiona la información y el seguimiento de todos los pacientes"
+            : "Gestiona la información de los pacientes a tu cargo"
+        }
         icon={UserRound}
         actions={
-          <Button size="sm" onClick={openCreate}>
-            <Plus data-icon="inline-start" />
-            Nuevo paciente
-          </Button>
+          canCreate ? (
+            <Button size="sm" onClick={openCreate}>
+              <Plus data-icon="inline-start" />
+              Nuevo paciente
+            </Button>
+          ) : undefined
         }
       />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Summary
-          label="Pacientes activos"
-          value={result ? String(result.total) : "—"}
-          tone="primary"
+
+      {/* Stats cards en el azul de la plataforma (navy), scoped por el backend. */}
+      <div
+        className={`grid grid-cols-1 gap-4 ${
+          fullScope ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-3"
+        }`}
+      >
+        <StatCard
+          label={fullScope ? "Total de pacientes" : "Mis pacientes"}
+          value={stats ? String(stats.total) : "—"}
+          icon={Users}
+          variant="primary"
+          context={fullScope ? "Directorio completo" : "A tu cargo"}
         />
-        <Summary label="Citas esta semana" value="24" tone="success" />
-        <Summary label="Pendientes de completar" value="3" tone="warning" />
+        <StatCard
+          label="Activos"
+          value={stats ? String(stats.active) : "—"}
+          icon={UserCheck}
+          variant="success"
+          context="En seguimiento activo"
+        />
+        <StatCard
+          label="Nuevos este mes"
+          value={stats ? String(stats.newThisMonth) : "—"}
+          icon={UserPlus}
+          variant="info"
+          context="Registrados en el mes"
+        />
+        {fullScope && (
+          <StatCard
+            label="Sin profesional asignado"
+            value={stats ? String(stats.withoutProfessional) : "—"}
+            icon={UserRoundX}
+            variant="warning"
+            context="Requieren asignación"
+          />
+        )}
       </div>
+
+      {statsError && (
+        <p
+          className="rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning-foreground"
+          role="alert"
+        >
+          No pudimos cargar las estadísticas: {statsError}
+        </p>
+      )}
+
+      {/* Filtros con header navy e icono, toggle de vista y actualizar. */}
       <section
-        className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
+        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
         aria-label="Filtros de pacientes"
       >
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold">Directorio de pacientes</h2>
-            <p className="text-xs text-muted-foreground">
-              Busca por nombre, documento o correo electrónico.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={retry}
-            disabled={loading}
-          >
-            <RefreshCw
-              data-icon="inline-start"
-              className={loading ? "animate-spin" : undefined}
-            />
-            Actualizar
-          </Button>
-        </div>
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]">
+        <SectionHeader
+          title={fullScope ? "Directorio de pacientes" : "Directorio"}
+          description="Busca por nombre, documento o correo electrónico"
+          icon={SlidersHorizontal}
+          variant="primary"
+          actions={
+            <>
+              <ToggleGroup
+                value={[view]}
+                onValueChange={(values) => {
+                  const next = values[0];
+                  if (next === "table" || next === "cards") changeView(next);
+                  else changeView(view);
+                }}
+                aria-label="Cambiar vista de los registros"
+              >
+                <ToggleGroupItem
+                  value="table"
+                  aria-label="Vista tabla"
+                  className="data-pressed:bg-white data-pressed:text-[var(--sidebar)]"
+                >
+                  <Rows3 />
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="cards"
+                  aria-label="Vista tarjetas"
+                  className="data-pressed:bg-white data-pressed:text-[var(--sidebar)]"
+                >
+                  <LayoutGrid />
+                </ToggleGroupItem>
+              </ToggleGroup>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={retry}
+                disabled={loading}
+                className="bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              >
+                <RefreshCw
+                  data-icon="inline-start"
+                  className={loading ? "animate-spin" : undefined}
+                />
+                Actualizar
+              </Button>
+            </>
+          }
+        />
+        <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_180px_220px] sm:p-5">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
             <Input
@@ -129,57 +257,111 @@ export function PatientsPage() {
               aria-label="Buscar pacientes"
             />
           </div>
-          <select
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          <Select
             value={filters.status}
-            onChange={(event) =>
-              setFilters({
-                status: event.target.value as typeof filters.status,
-              })
+            onValueChange={(value) =>
+              setFilters({ status: (value ?? "all") as typeof filters.status })
             }
-            aria-label="Filtrar por estado"
           >
-            <option value="all">Todos los estados</option>
-            <option>Activo</option>
-            <option>Pendiente</option>
-            <option>Inactivo</option>
-          </select>
-          <select
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            <SelectTrigger className="w-full" aria-label="Filtrar por estado">
+              <SelectValue>
+                {filters.status === "all"
+                  ? "Todos los estados"
+                  : filters.status}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los estados</SelectItem>
+              <SelectItem value="Activo">Activo</SelectItem>
+              <SelectItem value="Pendiente">Pendiente</SelectItem>
+              <SelectItem value="Inactivo">Inactivo</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
             value={filters.insurerId}
-            onChange={(event) => setFilters({ insurerId: event.target.value })}
-            aria-label="Filtrar por aseguradora"
+            onValueChange={(value) => setFilters({ insurerId: value ?? "all" })}
           >
-            <option value="all">Todas las aseguradoras</option>
-            {insurers.map((insurer) => (
-              <option key={insurer.id} value={insurer.id}>
-                {insurer.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              className="w-full"
+              aria-label="Filtrar por aseguradora"
+            >
+              <SelectValue>
+                {filters.insurerId === "all"
+                  ? "Todas las aseguradoras"
+                  : (insurers.find((i) => i.id === filters.insurerId)?.name ??
+                    "Todas las aseguradoras")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las aseguradoras</SelectItem>
+              {insurers.map((insurer) => (
+                <SelectItem key={insurer.id} value={insurer.id}>
+                  {insurer.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </section>
-      {loading ? (
-        <PatientsSkeleton />
-      ) : error ? (
+
+      {error && !result ? (
         <ErrorState message={error} onRetry={retry} />
-      ) : result?.data.length ? (
-        <PatientTable
-          patients={result.data}
-          onOpen={openDetail}
-          onEdit={openEdit}
-          onDelete={setDeleting}
-        />
       ) : (
-        <EmptyState onCreate={openCreate} />
+        <>
+          {error && (
+            <p
+              className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
+          {loading && !result ? (
+            <PatientsSkeleton fullScope={fullScope} view={view} />
+          ) : result?.data.length ? (
+            view === "table" ? (
+              <PatientTable
+                patients={result.data}
+                fullScope={fullScope}
+                sortBy={filters.sortBy ?? "createdAt"}
+                sortDir={filters.sortDir ?? "desc"}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onSort={setSort}
+                onOpen={openDetail}
+                onEdit={openEdit}
+                onDelete={setDeleting}
+              />
+            ) : (
+              <PatientCards
+                patients={result.data}
+                fullScope={fullScope}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onOpen={openDetail}
+                onEdit={openEdit}
+                onDelete={setDeleting}
+              />
+            )
+          ) : (
+            <EmptyState
+              filtered={isFiltered}
+              canCreate={canCreate}
+              onCreate={openCreate}
+            />
+          )}
+          {result && result.total > 0 && (
+            <Pagination
+              page={result.page}
+              totalPages={result.totalPages}
+              total={result.total}
+              pageSize={result.pageSize}
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
-      {result && result.total > 0 && (
-        <Pagination
-          page={result.page}
-          totalPages={result.totalPages}
-          onPageChange={setPage}
-        />
-      )}
+
       <AlertDialog
         open={Boolean(deleting)}
         onOpenChange={(open) => !open && setDeleting(undefined)}
@@ -214,13 +396,61 @@ export function PatientsPage() {
   );
 }
 
+function SortableHeader({
+  label,
+  sortKey,
+  activeKey,
+  dir,
+  onSort,
+  className,
+}: {
+  label: string;
+  sortKey: PatientSortKey;
+  activeKey: PatientSortKey;
+  dir: "asc" | "desc";
+  onSort: (key: PatientSortKey) => void;
+  className?: string;
+}) {
+  const active = activeKey === sortKey;
+  const SortIcon = active ? (dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+  return (
+    <TableHead className={className}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        aria-label={`Ordenar por ${label}`}
+        title={`Ordenar por ${label}`}
+        className={cn(
+          "inline-flex items-center gap-1 text-[11.5px] font-semibold uppercase tracking-wider transition-colors",
+          active ? "text-white" : "text-white/80 hover:text-white",
+        )}
+      >
+        {label}
+        <SortIcon className="size-3.5" />
+      </button>
+    </TableHead>
+  );
+}
+
 function PatientTable({
   patients,
+  fullScope,
+  sortBy,
+  sortDir,
+  canEdit,
+  canDelete,
+  onSort,
   onOpen,
   onEdit,
   onDelete,
 }: {
   patients: PatientListItem[];
+  fullScope: boolean;
+  sortBy: PatientSortKey;
+  sortDir: "asc" | "desc";
+  canEdit: boolean;
+  canDelete: boolean;
+  onSort: (key: PatientSortKey) => void;
   onOpen: (patient: PatientListItem) => void;
   onEdit: (patient: PatientListItem) => void;
   onDelete: (patient: PatientListItem) => void;
@@ -229,19 +459,63 @@ function PatientTable({
     <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader
         title={`${patients.length} pacientes visibles`}
-        description="Directorio clínico"
+        description={fullScope ? "Directorio clínico" : "Pacientes a tu cargo"}
         icon={UserRound}
         variant="primary"
       />
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Paciente</TableHead>
-            <TableHead>Documento</TableHead>
-            <TableHead className="hidden lg:table-cell">Contacto</TableHead>
-            <TableHead className="hidden md:table-cell">Aseguradora</TableHead>
-            <TableHead className="hidden xl:table-cell">Clínica</TableHead>
-            <TableHead>Estado</TableHead>
+            <SortableHeader
+              label="Paciente"
+              sortKey="firstName"
+              activeKey={sortBy}
+              dir={sortDir}
+              onSort={onSort}
+            />
+            <SortableHeader
+              label="Documento"
+              sortKey="documentNumber"
+              activeKey={sortBy}
+              dir={sortDir}
+              onSort={onSort}
+            />
+            <SortableHeader
+              label="Contacto"
+              sortKey="phoneNumber"
+              activeKey={sortBy}
+              dir={sortDir}
+              onSort={onSort}
+              className="hidden lg:table-cell"
+            />
+            <SortableHeader
+              label="Aseguradora"
+              sortKey="insurerName"
+              activeKey={sortBy}
+              dir={sortDir}
+              onSort={onSort}
+              className="hidden md:table-cell"
+            />
+            <SortableHeader
+              label="Clínica"
+              sortKey="clinicName"
+              activeKey={sortBy}
+              dir={sortDir}
+              onSort={onSort}
+              className="hidden xl:table-cell"
+            />
+            {fullScope && (
+              <TableHead className="hidden xl:table-cell">
+                Profesional
+              </TableHead>
+            )}
+            <SortableHeader
+              label="Estado"
+              sortKey="status"
+              activeKey={sortBy}
+              dir={sortDir}
+              onSort={onSort}
+            />
             <TableHead className="w-10">
               <span className="sr-only">Acciones</span>
             </TableHead>
@@ -279,7 +553,9 @@ function PatientTable({
                 </span>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
-                <span className="block text-sm">{formatPhone(patient) ?? "—"}</span>
+                <span className="block text-sm">
+                  {formatPhone(patient) ?? "—"}
+                </span>
                 <span className="block max-w-44 truncate text-xs text-muted-foreground">
                   {patient.email ?? "—"}
                 </span>
@@ -290,6 +566,19 @@ function PatientTable({
               <TableCell className="hidden text-sm xl:table-cell">
                 {patient.clinicName ?? "Sin asignar"}
               </TableCell>
+              {fullScope && (
+                <TableCell className="hidden xl:table-cell">
+                  {patient.professionalNames.length > 0 ? (
+                    <span className="line-clamp-2 max-w-44 text-sm">
+                      {patient.professionalNames.join(", ")}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Sin asignar
+                    </span>
+                  )}
+                </TableCell>
+              )}
               <TableCell>
                 <StatusBadge
                   status={patient.status}
@@ -297,45 +586,14 @@ function PatientTable({
                 />
               </TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Acciones de ${patient.firstName} ${patient.lastName}`}
-                      />
-                    }
-                  >
-                    <MoreHorizontal />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onOpen(patient)}>
-                      <Eye />
-                      Ver detalles
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(patient)}>
-                      <Pencil />
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <CalendarPlus />
-                      Agendar cita
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <ClipboardPenLine />
-                      Crear receta
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => onDelete(patient)}
-                    >
-                      <Trash2 />
-                      Eliminar
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <ActionsMenu
+                  patient={patient}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                  onOpen={onOpen}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
               </TableCell>
             </TableRow>
           ))}
@@ -345,75 +603,256 @@ function PatientTable({
   );
 }
 
-function Summary({
-  label,
-  value,
-  tone,
+function PatientCards({
+  patients,
+  fullScope,
+  canEdit,
+  canDelete,
+  onOpen,
+  onEdit,
+  onDelete,
 }: {
-  label: string;
-  value: string;
-  tone: "primary" | "success" | "warning";
+  patients: PatientListItem[];
+  fullScope: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  onOpen: (patient: PatientListItem) => void;
+  onEdit: (patient: PatientListItem) => void;
+  onDelete: (patient: PatientListItem) => void;
 }) {
-  const colors = {
-    primary: "bg-primary-soft text-primary",
-    success: "bg-success-soft text-success-foreground",
-    warning: "bg-warning-soft text-warning-foreground",
-  };
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground">
-          {label}
-        </span>
-        <span
-          className={`flex size-8 items-center justify-center rounded-lg ${colors[tone]}`}
-        >
-          <UserRoundPlus className="size-4" />
-        </span>
+    <div className="flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card">
+      <SectionHeader
+        title={`${patients.length} pacientes visibles`}
+        description={fullScope ? "Directorio clínico" : "Pacientes a tu cargo"}
+        icon={UserRound}
+        variant="primary"
+      />
+      <div className="grid grid-cols-1 gap-4 p-5 pt-4 sm:grid-cols-2 xl:grid-cols-3">
+        {patients.map((patient) => (
+          <article
+            key={patient.id}
+            className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <button
+                className="flex min-w-0 items-center gap-3 text-left"
+                onClick={() => onOpen(patient)}
+              >
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">
+                  {patient.firstName[0]}
+                  {patient.lastName[0]}
+                </span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate text-sm font-semibold text-foreground">
+                    {patient.firstName} {patient.lastName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {patient.gender ?? "Sin género"} ·{" "}
+                    {getAge(patient.dateOfBirth)} años
+                  </span>
+                </span>
+              </button>
+              <ActionsMenu
+                patient={patient}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onOpen={onOpen}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+              <span className="flex flex-col gap-px">
+                <span className="text-muted-foreground">Documento</span>
+                <span className="truncate font-medium">
+                  {patient.documentNumber ?? patient.medicalRecordNumber ?? "—"}
+                </span>
+              </span>
+              <span className="flex flex-col gap-px">
+                <span className="text-muted-foreground">Aseguradora</span>
+                <span className="truncate font-medium">
+                  {patient.insurerName ?? "Sin aseguradora"}
+                </span>
+              </span>
+              <span className="flex flex-col gap-px">
+                <span className="text-muted-foreground">Contacto</span>
+                <span className="truncate font-medium">
+                  {formatPhone(patient) ?? patient.email ?? "—"}
+                </span>
+              </span>
+              <span className="flex flex-col gap-px">
+                <span className="text-muted-foreground">Clínica</span>
+                <span className="truncate font-medium">
+                  {patient.clinicName ?? "Sin asignar"}
+                </span>
+              </span>
+              {fullScope && (
+                <span className="flex flex-col gap-px">
+                  <span className="text-muted-foreground">Profesional</span>
+                  <span className="line-clamp-1 font-medium">
+                    {patient.professionalNames.length > 0
+                      ? patient.professionalNames.join(", ")
+                      : "Sin asignar"}
+                  </span>
+                </span>
+              )}
+              <span className="flex flex-col gap-px">
+                <span className="text-muted-foreground">Estado</span>
+                <span>
+                  <StatusBadge
+                    status={patient.status}
+                    color={statusColor(patient.status)}
+                  />
+                </span>
+              </span>
+            </div>
+          </article>
+        ))}
       </div>
-      <p className="mt-3 text-2xl font-bold tracking-tight">{value}</p>
     </div>
   );
 }
-function PatientsSkeleton() {
+
+function ActionsMenu({
+  patient,
+  canEdit,
+  canDelete,
+  onOpen,
+  onEdit,
+  onDelete,
+}: {
+  patient: PatientListItem;
+  canEdit: boolean;
+  canDelete: boolean;
+  onOpen: (patient: PatientListItem) => void;
+  onEdit: (patient: PatientListItem) => void;
+  onDelete: (patient: PatientListItem) => void;
+}) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div
-          className="flex items-center gap-4 border-b border-border py-4 last:border-0"
-          key={index}
-        >
-          <Skeleton className="size-9 rounded-full" />
-          <div className="flex flex-1 flex-col gap-2">
-            <Skeleton className="h-3.5 w-40" />
-            <Skeleton className="h-3 w-24" />
-          </div>
-          <Skeleton className="hidden h-4 w-28 md:block" />
-          <Skeleton className="h-5 w-16 rounded-full" />
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Acciones de ${patient.firstName} ${patient.lastName}`}
+          />
+        }
+      >
+        <MoreHorizontal />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onOpen(patient)}>
+          <Eye />
+          Ver detalles
+        </DropdownMenuItem>
+        {canEdit && (
+          <DropdownMenuItem onClick={() => onEdit(patient)}>
+            <Pencil />
+            Editar
+          </DropdownMenuItem>
+        )}
+        {canDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => onDelete(patient)}
+            >
+              <Trash2 />
+              Eliminar
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function PatientsSkeleton({
+  fullScope,
+  view,
+}: {
+  fullScope: boolean;
+  view: PatientViewMode;
+}) {
+  const statCount = fullScope ? 4 : 3;
+  return (
+    <div className="flex flex-col gap-6">
+      <div
+        className={`grid grid-cols-1 gap-4 ${
+          fullScope ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-3"
+        }`}
+      >
+        {Array.from({ length: statCount }).map((_, index) => (
+          <Skeleton key={index} className="h-[110px] w-full rounded-2xl" />
+        ))}
+      </div>
+      {view === "table" ? (
+        <div className="rounded-2xl border border-border bg-card p-5">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              className="flex items-center gap-4 border-b border-border py-4 last:border-0"
+              key={index}
+            >
+              <Skeleton className="size-9 rounded-full" />
+              <div className="flex flex-1 flex-col gap-2">
+                <Skeleton className="h-3.5 w-40" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="hidden h-4 w-28 md:block" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-[190px] rounded-2xl" />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
-function EmptyState({ onCreate }: { onCreate: () => void }) {
+
+function EmptyState({
+  filtered,
+  canCreate,
+  onCreate,
+}: {
+  filtered: boolean;
+  canCreate: boolean;
+  onCreate: () => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card py-16 text-center">
       <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
         <UserRound className="size-6" />
       </span>
       <div>
-        <h3 className="text-sm font-semibold">No encontramos pacientes</h3>
+        <h3 className="text-sm font-semibold">
+          {filtered
+            ? "Sin resultados con los filtros"
+            : "No encontramos pacientes"}
+        </h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Prueba con otros filtros o registra un nuevo paciente.
+          {filtered
+            ? "Prueba con otros términos o quita algún filtro."
+            : "Registra el primer paciente para comenzar."}
         </p>
       </div>
-      <Button size="sm" onClick={onCreate}>
-        <Plus data-icon="inline-start" />
-        Nuevo paciente
-      </Button>
+      {canCreate && !filtered && (
+        <Button size="sm" onClick={onCreate}>
+          <Plus data-icon="inline-start" />
+          Nuevo paciente
+        </Button>
+      )}
     </div>
   );
 }
+
 function ErrorState({
   message,
   onRetry,
@@ -434,19 +873,27 @@ function ErrorState({
     </div>
   );
 }
+
 function Pagination({
   page,
   totalPages,
+  total,
+  pageSize,
   onPageChange,
 }: {
   page: number;
   totalPages: number;
+  total: number;
+  pageSize: number;
   onPageChange: (page: number) => void;
 }) {
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
+
   return (
     <div className="flex items-center justify-between text-xs text-muted-foreground">
       <span>
-        Página {page} de {totalPages}
+        Mostrando {from}–{to} de {total} pacientes
       </span>
       <div className="flex gap-2">
         <Button
@@ -469,6 +916,7 @@ function Pagination({
     </div>
   );
 }
+
 function getAge(date: string | null) {
   if (!date) return "—";
   const birth = new Date(date);
@@ -479,12 +927,14 @@ function getAge(date: string | null) {
     age -= 1;
   return Math.max(0, age);
 }
+
 function formatPhone(patient: PatientListItem): string | null {
   if (!patient.phoneNumber) return null;
   return patient.phoneCountryCode
     ? `+${patient.phoneCountryCode} ${patient.phoneNumber}`
     : patient.phoneNumber;
 }
+
 function statusColor(status: PatientListItem["status"]) {
   const colors = {
     Activo: {

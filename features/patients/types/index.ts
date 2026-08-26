@@ -19,6 +19,19 @@ export interface PatientListItem {
   insurerName: string | null;
   status: PatientStatus;
   createdAt: string;
+  /** Nombres de los profesionales con asignación activa (columna "Profesional"). */
+  professionalNames: string[];
+}
+
+/**
+ * Estadísticas del directorio calculadas por el backend sobre el alcance del
+ * usuario (clínica activa + alcance propio vs global). Nunca ficticias.
+ */
+export interface PatientStats {
+  total: number;
+  active: number;
+  newThisMonth: number;
+  withoutProfessional: number;
 }
 
 /** Diagnóstico de un paciente (agregado). */
@@ -182,7 +195,21 @@ export interface PatientFilters {
   search: string;
   status: PatientStatus | "all";
   insurerId: string | "all";
+  sortBy?: PatientSortKey | null;
+  sortDir?: PatientSortDir | null;
 }
+
+/** Campos de orden del listado (espejo de la whitelist del backend). */
+export type PatientSortKey =
+  | "firstName"
+  | "documentNumber"
+  | "phoneNumber"
+  | "insurerName"
+  | "clinicName"
+  | "status"
+  | "createdAt";
+
+export type PatientSortDir = "asc" | "desc";
 
 /** Aseguradora del catálogo (app.insurers). */
 export interface Insurer {
