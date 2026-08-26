@@ -118,7 +118,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
           <ListOrdered className="size-4" />
         </ToolbarButton>
         <ToolbarButton
-          label={t("Cita")}
+          label={t("Cita (bloque)")}
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           active={editor.isActive("blockquote")}
         >
