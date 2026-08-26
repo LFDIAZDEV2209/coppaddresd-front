@@ -136,8 +136,8 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Gráficos fila 2 */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {/* Hora pico · Diagnóstico · Top rachas en una sola fila */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader title={t("Horario pico de actividad")} description={t("Actividad por hora (24h)")} icon={Clock} variant="primary" />
           <div className="p-4">
@@ -150,11 +150,7 @@ export function DashboardPage() {
             <DiagnosisRadar data={diagnosisParticipation} />
           </div>
         </div>
-      </section>
-
-      {/* Top rachas + Feed */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-1">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader title={t("Top rachas activas")} description={t("Miembros con mayor racha")} icon={Flame} variant="primary" />
           <Table>
             <TableHeader>
@@ -177,31 +173,32 @@ export function DashboardPage() {
             </TableBody>
           </Table>
         </div>
+      </section>
 
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
-          <SectionHeader title={t("Feed reciente")} description={t("Actividad en tiempo real")} icon={MessageCircle} variant="primary" />
-          <div className="flex flex-col divide-y divide-border">
-            {feed.map((item) => {
-              const Icon = FEED_ICON[item.kind];
-              return (
-                <div key={item.id} className="flex items-center gap-3 p-3">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                    <Icon className="size-4" />
+      {/* Feed reciente */}
+      <section className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <SectionHeader title={t("Feed reciente")} description={t("Actividad en tiempo real")} icon={MessageCircle} variant="primary" />
+        <div className="flex flex-col divide-y divide-border">
+          {feed.map((item) => {
+            const Icon = FEED_ICON[item.kind];
+            return (
+              <div key={item.id} className="flex items-center gap-3 p-3">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                  <Icon className="size-4" />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate text-sm">
+                    <span className="font-semibold">{item.member}</span>{" "}
+                    <span className="text-muted-foreground">{item.description}</span>
                   </span>
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="truncate text-sm">
-                      <span className="font-semibold">{item.member}</span>{" "}
-                      <span className="text-muted-foreground">{item.description}</span>
-                    </span>
-                    <span className="text-xs text-muted-foreground">{item.time}</span>
-                  </div>
-                  {item.xp ? (
-                    <StatusBadge status={`+${item.xp} XP`} color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }} />
-                  ) : null}
+                  <span className="text-xs text-muted-foreground">{item.time}</span>
                 </div>
-              );
-            })}
-          </div>
+                {item.xp ? (
+                  <StatusBadge status={`+${item.xp} XP`} color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }} />
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       </section>
 
