@@ -112,7 +112,7 @@ export const navModules: NavModule[] = [
     ],
   },
   {
-    label: "GestiA3n",
+    label: "Gestión",
     icon: FolderKanban,
     color: "#1F6E9F",
     items: [
