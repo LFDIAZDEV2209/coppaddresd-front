@@ -1732,5 +1732,20 @@
   "Filtros de asignaciones": "Assignment filters",
   "{count} asignaciones encontradas": "{count} assignments found",
   "Tipo de asignación": "Assignment type",
-  "Fecha de inicio": "Start date"
+  "Fecha de inicio": "Start date",
+  "Asistente": "Assistant",
+  "Robot": "Robot",
+  "Salud": "Health",
+  "Médico": "Doctor",
+  "Cerebro": "Brain",
+  "Ejercicio": "Exercise",
+  "Vacunas": "Vaccines",
+  "Actividad": "Activity",
+  "IA Creativa": "Creative AI",
+  "Protección": "Protection",
+  "{reportType} descargado en formato CSV.": "{reportType} downloaded as CSV.",
+  "a": "to",
+  "Operaciones entrada": "Incoming operations",
+  "Operaciones salida": "Outgoing operations",
+  "{reportType} listo para guardar como PDF.": "{reportType} ready to save as PDF."
 }
