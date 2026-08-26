@@ -3,27 +3,33 @@
 import { createElement, useMemo, useState } from "react";
 import {
   Apple,
+  Ban,
   Brain,
   CalendarCheck,
   CalendarClock,
   Check,
+  CheckCheck,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Eye,
+  FileText,
   Inbox,
+  LayoutList,
   ListFilter,
+  MapPin,
   MessageSquareX,
   RefreshCw,
   Scale,
   Search,
   Stethoscope,
+  User,
   X,
   XCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/feedback/stat-card";
-import { StatusBadge } from "@/components/feedback/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +40,6 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -58,6 +63,33 @@ import type { AppointmentRequestStatus, AppointmentRequestDto } from "../types";
 
 const ALL = "__all__";
 
+/** Icono representativo de cada especialidad (fallback genérico). */
+function specialtyIcon(name: string | null): LucideIcon {
+  const normalized = (name ?? "").toLowerCase();
+  if (/(behavioral|psic|mental|ansiedad)/.test(normalized)) return Brain;
+  if (/(nutrition|aliment|nutric)/.test(normalized)) return Apple;
+  if (/(obesity|weight|peso)/.test(normalized)) return Scale;
+  return Stethoscope;
+}
+
+/** Icono representativo de cada estado de solicitud (chips, badges, detalle). */
+function statusIcon(status: AppointmentRequestStatus | typeof ALL): LucideIcon {
+  switch (status) {
+    case "Pending":
+      return Clock;
+    case "Approved":
+      return CheckCheck;
+    case "Converted":
+      return CalendarCheck;
+    case "Rejected":
+      return XCircle;
+    case "Cancelled":
+      return Ban;
+    default:
+      return LayoutList;
+  }
+}
+
 const statusOptions: Array<{
   value: AppointmentRequestStatus | typeof ALL;
   label: string;
@@ -70,15 +102,6 @@ const statusOptions: Array<{
   { value: "Cancelled", label: "Canceladas" },
 ];
 
-/** Icono representativo de cada especialidad (fallback genérico). */
-function specialtyIcon(name: string | null): LucideIcon {
-  const normalized = (name ?? "").toLowerCase();
-  if (/(behavioral|psic|mental|ansiedad)/.test(normalized)) return Brain;
-  if (/(nutrition|aliment|nutric)/.test(normalized)) return Apple;
-  if (/(obesity|weight|peso)/.test(normalized)) return Scale;
-  return Stethoscope;
-}
-
 interface RequestsInboxProps {
   scope: "admin" | "professional";
   professionalId?: string | null;
@@ -89,11 +112,10 @@ interface RequestsInboxProps {
 }
 
 /**
- * Bandeja de solicitudes de telemedicina: header azul de marca con icono,
- * stat cards, chips de filtro por estado con conteos (filtro server-side),
- * agrupación por día y ciclo de revisión de 2 pasos (aprobar → confirmar con
- * cita) más rechazo con motivo obligatorio. Autorización dual en el backend:
- * el profesional actúa sobre sus solicitudes y el admin sobre todas.
+ * Bandeja de solicitudes de telemedicina: header navy con icono, stat cards
+ * con acento de color, chips de filtro por estado con conteos (server-side),
+ * agrupación por día, detalle expandible por solicitud y ciclo de revisión de
+ * 2 pasos (aprobar → confirmar con cita) más rechazo con motivo obligatorio.
  */
 export function RequestsInbox({
   scope,
@@ -104,6 +126,7 @@ export function RequestsInbox({
 }: RequestsInboxProps) {
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
+  const [detail, setDetail] = useState<AppointmentRequestDto | null>(null);
   const [approving, setApproving] = useState<AppointmentRequestDto | null>(
     null,
   );
@@ -181,6 +204,7 @@ export function RequestsInbox({
     try {
       await approveRequest(approving.id);
       setApproving(null);
+      setDetail(null);
       refetchList();
       refetchSummary();
     } catch (err) {
@@ -202,6 +226,7 @@ export function RequestsInbox({
       await rejectRequest(rejecting.id, { reason: rejectionReason.trim() });
       setRejecting(null);
       setRejectionReason("");
+      setDetail(null);
       refetchList();
       refetchSummary();
     } catch (err) {
@@ -234,6 +259,7 @@ export function RequestsInbox({
       setConfirming(null);
       setScheduledStart("");
       setConfirmProfessionalId("");
+      setDetail(null);
       refetchList();
       refetchSummary();
     } catch (err) {
@@ -313,28 +339,28 @@ export function RequestsInbox({
           label="Pendientes"
           value={data ? String(pending) : "—"}
           icon={Clock}
-          variant="navy"
+          variant="warning"
           context="requieren revisión"
         />
         <StatCard
           label="Aprobadas"
           value={String(counts.approved)}
-          icon={CalendarCheck}
-          variant="navy"
+          icon={CheckCheck}
+          variant="primary"
           context="listas para agendar"
         />
         <StatCard
           label="Convertidas"
           value={String(counts.converted)}
           icon={CalendarCheck}
-          variant="navy"
+          variant="success"
           context="se convirtieron en cita"
         />
         <StatCard
           label="Cerradas"
           value={String(counts.rejected + counts.cancelled)}
           icon={XCircle}
-          variant="navy"
+          variant="destructive"
           context="rechazadas o canceladas"
         />
       </div>
@@ -392,6 +418,7 @@ export function RequestsInbox({
         >
           {statusOptions.map((option) => {
             const active = (status || ALL) === option.value;
+            const Icon = statusIcon(option.value);
             return (
               <button
                 key={option.value}
@@ -407,6 +434,7 @@ export function RequestsInbox({
                 )}
                 aria-pressed={active}
               >
+                <Icon className="size-3.5" aria-hidden />
                 {option.label}
                 <span
                   className={cn(
@@ -490,6 +518,7 @@ export function RequestsInbox({
                     onApprove={setApproving}
                     onReject={setRejecting}
                     onConfirm={setConfirming}
+                    onDetail={setDetail}
                   />
                 ))}
               </ul>
@@ -526,6 +555,33 @@ export function RequestsInbox({
         </div>
       )}
 
+      {/* Detalle de la solicitud */}
+      <Dialog
+        open={detail !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetail(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <RequestDetail
+            request={detail}
+            canConfirm={canConfirm || scope === "admin"}
+            onApprove={() => {
+              setDetail(null);
+              setApproving(detail);
+            }}
+            onReject={() => {
+              setDetail(null);
+              setRejecting(detail);
+            }}
+            onConfirm={() => {
+              setDetail(null);
+              setConfirming(detail);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Aprobar */}
       <Dialog
         open={approving !== null}
@@ -533,19 +589,15 @@ export function RequestsInbox({
           if (!open) closeReviewDialogs();
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Check className="size-4 text-[var(--sidebar)]" aria-hidden />
-              Aprobar solicitud
-            </DialogTitle>
-            <DialogDescription>
-              Aprobar la solicitud de{" "}
-              {approving?.specialtyName ?? "telemedicina"} de{" "}
-              {approving?.patientName ?? "el paciente"} la deja lista para
-              agendar la cita. No se crea ninguna cita en este paso.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md">
+          <ModalHeader
+            icon={CheckCheck}
+            tone="approve"
+            title="Aprobar solicitud"
+            description={`La solicitud de ${
+              approving?.specialtyName ?? "telemedicina"
+            } de ${approving?.patientName ?? "el paciente"} quedará lista para agendar.`}
+          />
           {actionError && (
             <p
               role="alert"
@@ -585,20 +637,26 @@ export function RequestsInbox({
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageSquareX className="size-4 text-destructive" aria-hidden />
-              Rechazar solicitud
-            </DialogTitle>
-            <DialogDescription>
-              La solicitud de {rejecting?.specialtyName ?? "telemedicina"} de{" "}
-              {rejecting?.patientName ?? "el paciente"} quedará cerrada. El
-              motivo es obligatorio y se mostrará en el detalle.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md">
+          <ModalHeader
+            icon={XCircle}
+            tone="reject"
+            title="Rechazar solicitud"
+            description={`La solicitud de ${
+              rejecting?.specialtyName ?? "telemedicina"
+            } de ${rejecting?.patientName ?? "el paciente"} quedará cerrada.`}
+          />
           <div className="flex flex-col gap-2">
-            <Label htmlFor="reject-reason">Motivo del rechazo</Label>
+            <Label
+              htmlFor="reject-reason"
+              className="flex items-center gap-1.5"
+            >
+              <MessageSquareX
+                className="size-3.5 text-destructive"
+                aria-hidden
+              />
+              Motivo del rechazo
+            </Label>
             <textarea
               id="reject-reason"
               value={rejectionReason}
@@ -661,20 +719,15 @@ export function RequestsInbox({
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarCheck
-                className="size-4 text-[var(--sidebar)]"
-                aria-hidden
-              />
-              Confirmar solicitud
-            </DialogTitle>
-            <DialogDescription>
-              Agenda la cita de {confirming?.specialtyName ?? "telemedicina"}{" "}
-              para {confirming?.patientName ?? "el paciente"}.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md">
+          <ModalHeader
+            icon={CalendarCheck}
+            tone="confirm"
+            title="Confirmar solicitud"
+            description={`Agenda la cita de ${
+              confirming?.specialtyName ?? "telemedicina"
+            } para ${confirming?.patientName ?? "el paciente"}.`}
+          />
           <div className="flex flex-col gap-3">
             {scope === "admin" && !confirming?.professionalId && (
               <div className="flex flex-col gap-1.5">
@@ -690,7 +743,16 @@ export function RequestsInbox({
               </div>
             )}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="confirm-start">Inicio de la cita</Label>
+              <Label
+                htmlFor="confirm-start"
+                className="flex items-center gap-1.5"
+              >
+                <CalendarClock
+                  className="size-3.5 text-[var(--sidebar)]"
+                  aria-hidden
+                />
+                Inicio de la cita
+              </Label>
               <Input
                 id="confirm-start"
                 type="datetime-local"
@@ -745,18 +807,220 @@ export function RequestsInbox({
   );
 }
 
-function RequestItem({
+/** Cabecera de los modales de acción: fondo navy con icono en caja blanca. */
+function ModalHeader({
+  icon: Icon,
+  tone,
+  title,
+  description,
+}: {
+  icon: LucideIcon;
+  tone: "approve" | "reject" | "confirm";
+  title: string;
+  description: string;
+}) {
+  const iconTone =
+    tone === "reject"
+      ? "bg-white text-destructive"
+      : tone === "approve"
+        ? "bg-white text-success"
+        : "bg-white text-[var(--sidebar)]";
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_94%,var(--primary))] px-4 py-3">
+      <div
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center rounded-lg shadow-sm",
+          iconTone,
+        )}
+      >
+        <Icon className="size-4" aria-hidden />
+      </div>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <DialogTitle className="text-[14px] font-semibold text-white">
+          {title}
+        </DialogTitle>
+        <DialogDescription className="text-[11.5px] leading-snug text-white/75">
+          {description}
+        </DialogDescription>
+      </div>
+    </div>
+  );
+}
+
+/** Detalle completo de una solicitud (modal al pulsar "Detalles"). */
+function RequestDetail({
   request,
   canConfirm,
   onApprove,
   onReject,
   onConfirm,
 }: {
+  request: AppointmentRequestDto | null;
+  canConfirm: boolean;
+  onApprove: () => void;
+  onReject: () => void;
+  onConfirm: () => void;
+}) {
+  if (!request) return null;
+
+  const pending = request.status === "Pending";
+  const reviewable = pending || request.status === "Approved";
+  const color = requestStatusColor(request.status);
+
+  return (
+    <>
+      <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_94%,var(--primary))] px-4 py-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--sidebar)] shadow-sm">
+          <User className="size-4" aria-hidden />
+        </div>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <DialogTitle className="text-[14px] font-semibold text-white">
+            {request.patientName ?? "Paciente"}
+          </DialogTitle>
+          <DialogDescription className="text-[11.5px] leading-snug text-white/75">
+            Solicitud de {request.specialtyName ?? "telemedicina"}
+          </DialogDescription>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <DetailItem
+          icon={Stethoscope}
+          label="Especialidad"
+          value={request.specialtyName ?? "—"}
+        />
+        <DetailItem
+          icon={statusIcon(request.status)}
+          label="Estado"
+          value={
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+              style={{ backgroundColor: color.bg, color: color.text }}
+            >
+              {createElement(statusIcon(request.status), {
+                className: "size-3",
+                "aria-hidden": true,
+              })}
+              {requestStatusLabel[request.status]}
+            </span>
+          }
+        />
+        <DetailItem
+          icon={CalendarClock}
+          label="Solicitada"
+          value={formatDateTime(request.createdAt)}
+        />
+        <DetailItem
+          icon={CalendarCheck}
+          label="Fecha preferida"
+          value={
+            request.preferredStart
+              ? formatDateTime(request.preferredStart)
+              : "Sin preferencia"
+          }
+        />
+        <DetailItem
+          icon={MapPin}
+          label="Ubicación"
+          value={
+            request.locationId ? "Sede registrada en la solicitud" : "A definir"
+          }
+          secondary
+        />
+        <DetailItem
+          icon={FileText}
+          label="Motivo de la consulta"
+          value={request.reason ?? "—"}
+        />
+        {request.status === "Rejected" && request.rejectionReason && (
+          <div className="col-span-2">
+            <DetailItem
+              icon={MessageSquareX}
+              label="Motivo del rechazo"
+              value={
+                <span className="font-medium text-destructive">
+                  {request.rejectionReason}
+                </span>
+              }
+            />
+          </div>
+        )}
+      </div>
+
+      {reviewable && canConfirm && (
+        <DialogFooter className="flex-wrap">
+          <Button
+            variant="outline"
+            onClick={onConfirm}
+            className="gap-1.5 bg-[var(--sidebar)] text-white hover:bg-[var(--sidebar)]/90"
+          >
+            <CalendarClock className="size-4" aria-hidden />
+            Confirmar cita
+          </Button>
+          {pending && (
+            <Button
+              variant="outline"
+              onClick={onApprove}
+              className="gap-1.5 border-success/60 text-success hover:bg-success-soft hover:text-success"
+            >
+              <Check className="size-4" aria-hidden />
+              Aprobar
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            onClick={onReject}
+            className="gap-1.5 border-destructive/70 text-destructive hover:bg-destructive-soft hover:text-destructive"
+          >
+            <XCircle className="size-4" aria-hidden />
+            Rechazar
+          </Button>
+        </DialogFooter>
+      )}
+    </>
+  );
+}
+
+/** Fila de dato con icono para el detalle. */
+function DetailItem({
+  icon: Icon,
+  label,
+  value,
+  secondary,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: React.ReactNode;
+  secondary?: boolean;
+}) {
+  return (
+    <div className={cn("flex flex-col gap-1", secondary && "col-span-2")}>
+      <span className="flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-wider text-muted-foreground">
+        <Icon className="size-3" aria-hidden />
+        {label}
+      </span>
+      <span className="text-[12.5px] leading-snug text-foreground">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function RequestItem({
+  request,
+  canConfirm,
+  onApprove,
+  onReject,
+  onConfirm,
+  onDetail,
+}: {
   request: AppointmentRequestDto;
   canConfirm: boolean;
   onApprove: (request: AppointmentRequestDto) => void;
   onReject: (request: AppointmentRequestDto) => void;
   onConfirm: (request: AppointmentRequestDto) => void;
+  onDetail: (request: AppointmentRequestDto) => void;
 }) {
   const pending = request.status === "Pending";
   const approved = request.status === "Approved";
@@ -766,9 +1030,9 @@ function RequestItem({
   return (
     <li
       className={cn(
-        "flex flex-col gap-3 rounded-2xl border bg-card p-4 transition-all duration-200 sm:flex-row sm:items-center",
+        "group flex flex-col gap-3 rounded-2xl border bg-card p-4 transition-all duration-200 sm:flex-row sm:items-center",
         pending
-          ? "border-l-4 border-border shadow-sm hover:shadow-md"
+          ? "border-l-4 border-border shadow-sm hover:-translate-y-0.5 hover:shadow-md"
           : approved
             ? "border-l-4 border-border/70 hover:shadow-sm"
             : "border-border hover:shadow-sm",
@@ -784,7 +1048,7 @@ function RequestItem({
       <div
         aria-hidden
         className={cn(
-          "flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm",
+          "flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105",
           pending
             ? "bg-[var(--sidebar)] text-white"
             : approved
@@ -840,42 +1104,63 @@ function RequestItem({
       </div>
 
       <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
-        <StatusBadge
-          status={requestStatusLabel[request.status]}
-          color={requestStatusColor(request.status)}
-        />
-        {reviewable && canConfirm && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {pending && (
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-[5px] text-[11.5px] font-semibold"
+          style={{
+            backgroundColor: requestStatusColor(request.status).bg,
+            color: requestStatusColor(request.status).text,
+          }}
+        >
+          {createElement(statusIcon(request.status), {
+            className: "size-3",
+            "aria-hidden": true,
+          })}
+          {requestStatusLabel[request.status]}
+        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="gap-1.5 text-muted-foreground hover:text-[var(--sidebar)]"
+            onClick={() => onDetail(request)}
+            aria-label={`Ver detalle de ${request.patientName ?? "la solicitud"}`}
+          >
+            <Eye className="size-3.5" aria-hidden />
+            Detalles
+          </Button>
+          {reviewable && canConfirm && (
+            <>
+              {pending && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 border-success/60 text-success hover:bg-success-soft hover:text-success"
+                  onClick={() => onApprove(request)}
+                >
+                  <Check className="size-3.5" aria-hidden />
+                  Aprobar
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-1.5 border-success/60 text-success hover:bg-success-soft hover:text-success"
-                onClick={() => onApprove(request)}
+                className="gap-1.5 border-destructive/70 text-destructive hover:bg-destructive-soft hover:text-destructive"
+                onClick={() => onReject(request)}
               >
-                <Check className="size-3.5" aria-hidden />
-                Aprobar
+                <XCircle className="size-3.5" aria-hidden />
+                Rechazar
               </Button>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 border-destructive/70 text-destructive hover:bg-destructive-soft hover:text-destructive"
-              onClick={() => onReject(request)}
-            >
-              <XCircle className="size-3.5" aria-hidden />
-              Rechazar
-            </Button>
-            <Button
-              size="sm"
-              className="gap-1.5 bg-[var(--sidebar)] text-white shadow-sm hover:bg-[var(--sidebar)]/90"
-              onClick={() => onConfirm(request)}
-            >
-              <CalendarClock className="size-3.5" aria-hidden />
-              Confirmar
-            </Button>
-          </div>
-        )}
+              <Button
+                size="sm"
+                className="gap-1.5 bg-[var(--sidebar)] text-white shadow-sm hover:bg-[var(--sidebar)]/90"
+                onClick={() => onConfirm(request)}
+              >
+                <CalendarClock className="size-3.5" aria-hidden />
+                Confirmar
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </li>
   );

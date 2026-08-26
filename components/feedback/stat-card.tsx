@@ -22,45 +22,62 @@ interface StatCardProps {
 
 const variantConfig: Record<
   CardVariant,
-  { iconBg: string; iconColor: string; trendColor: string }
+  {
+    iconBg: string;
+    iconColor: string;
+    trendColor: string;
+    accent: string;
+  }
 > = {
   default: {
     iconBg: "bg-primary",
     iconColor: "text-white",
     trendColor: "text-success",
+    accent: "#3B82F6",
   },
   primary: {
     iconBg: "bg-primary",
     iconColor: "text-white",
     trendColor: "text-primary",
+    accent: "#3B82F6",
   },
   success: {
     iconBg: "bg-success",
     iconColor: "text-white",
     trendColor: "text-success",
+    accent: "#10B981",
   },
   warning: {
     iconBg: "bg-warning",
     iconColor: "text-white",
     trendColor: "text-warning",
+    accent: "#F59E0B",
   },
   destructive: {
     iconBg: "bg-destructive",
     iconColor: "text-white",
     trendColor: "text-destructive",
+    accent: "#EF4444",
   },
   info: {
     iconBg: "bg-info",
     iconColor: "text-white",
     trendColor: "text-info",
+    accent: "#0EA5E9",
   },
   navy: {
     iconBg: "bg-[var(--sidebar)]",
     iconColor: "text-white",
     trendColor: "text-[var(--sidebar)]",
+    accent: "#162032",
   },
 };
 
+/**
+ * Tarjeta de métrica con acento de color por variante: raya superior e
+ * icono en caja de color. El fondo queda neutro (bg-card: blanco en claro,
+ * oscuro en dark) para no competir con los acentos.
+ */
 export function StatCard({
   label,
   value,
@@ -72,10 +89,15 @@ export function StatCard({
   const config = variantConfig[variant];
 
   return (
-    <div className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-md hover:-translate-y-0.5">
+    <div className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-border/70 bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md">
+      <span
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-1"
+        style={{ backgroundColor: config.accent }}
+      />
       <div
         className={cn(
-          "flex size-11 shrink-0 items-center justify-center rounded-xl",
+          "flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm",
           config.iconBg,
         )}
       >
