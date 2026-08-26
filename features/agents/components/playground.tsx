@@ -18,6 +18,7 @@ import { streamChat } from "../services/chat-service";
 import { fetchExecution } from "../services/agents-service";
 import { getAgentIconOption } from "./agent-icon-picker";
 import { Markdown } from "@/components/markdown";
+import { uuid } from "@/lib/uuid";
 
 interface ChatMessage {
   id: string;
@@ -87,11 +88,11 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
     setDetailLoading(false);
 
     const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       role: "user",
       content: text,
     };
-    const assistantId = crypto.randomUUID();
+    const assistantId = uuid();
     setMessages((current) => [
       ...current,
       userMessage,
