@@ -2,6 +2,7 @@
 
 import { CalendarClock, CalendarDays, CalendarRange } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export type RangeKey = "30d" | "60d" | "90d";
@@ -45,6 +46,8 @@ export function RangeToggle({
   onValueChange: (value: RangeKey) => void;
   options?: RangeOption[];
 }) {
+  const t = useT();
+
   return (
     <ToggleGroup
       value={[value]}
@@ -66,7 +69,7 @@ export function RangeToggle({
             }
           >
             <Icon data-icon="inline-start" />
-            {option.label}
+            {t(option.label)}
           </ToggleGroupItem>
         );
       })}

@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Video,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,14 +27,15 @@ import {
 } from "../utils/format";
 
 export function AdminAppointments() {
+  const t = useT();
   const { items, total, page, totalPages, loading, error, setPage } =
     useAdminAppointments();
 
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Citas"
-        description="Todas las citas del módulo"
+        title={t('Citas')}
+        description={t('Todas las citas del módulo')}
         icon={CalendarDays}
       />
 
@@ -54,20 +56,20 @@ export function AdminAppointments() {
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
             <CalendarDays className="size-6 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium text-foreground">No hay citas</p>
+          <p className="text-sm font-medium text-foreground">{t('No hay citas')}</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Paciente</TableHead>
-                <TableHead>Profesional</TableHead>
-                <TableHead>Especialidad</TableHead>
-                <TableHead>Fecha y hora</TableHead>
-                <TableHead>Sede</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acción</TableHead>
+                <TableHead>{t('Paciente')}</TableHead>
+                <TableHead>{t('Profesional')}</TableHead>
+                <TableHead>{t('Especialidad')}</TableHead>
+                <TableHead>{t('Fecha y hora')}</TableHead>
+                <TableHead>{t('Sede')}</TableHead>
+                <TableHead>{t('Estado')}</TableHead>
+                <TableHead className="text-right">{t('Acción')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -89,7 +91,7 @@ export function AdminAppointments() {
                       href={`/appointments/citas/${appointment.id}`}
                       className={buttonVariants({ size: "sm", variant: "ghost" })}
                     >
-                      <Video className="size-3.5" /> Ver
+                      <Video className="size-3.5" /> {t('Ver')}
                     </Link>
                   </TableCell>
                 </TableRow>
@@ -102,13 +104,13 @@ export function AdminAppointments() {
       {totalPages > 1 && !loading && (
         <div className="flex items-center justify-center gap-2">
           <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-            Anterior
+            {t('Anterior')}
           </Button>
           <span className="text-[12px] text-muted-foreground">
-            Página {page} de {totalPages} · {total} citas
+            {t('Página {page} de {totalPages} · {total} citas', { page: String(page), totalPages: String(totalPages), total: String(total) })}
           </span>
           <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
-            Siguiente
+            {t('Siguiente')}
           </Button>
         </div>
       )}

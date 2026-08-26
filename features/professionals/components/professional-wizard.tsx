@@ -16,6 +16,7 @@ import {
   Stethoscope,
   UserRound,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,6 +77,7 @@ const EMPTY: FormState = {
 };
 
 export function ProfessionalWizard() {
+  const t = useT();
   const router = useRouter();
 
   const [step, setStep] = useState(0);
@@ -107,7 +109,7 @@ export function ProfessionalWizard() {
           setForm((f) => ({ ...f, organizationId: orgs[0].id }));
         }
       } catch {
-        if (!cancelled) setError("No se pudieron cargar los catálogos. Intenta nuevamente.");
+        if (!cancelled) setError(t("No se pudieron cargar los catálogos. Intenta nuevamente."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -123,7 +125,7 @@ export function ProfessionalWizard() {
   );
 
   const selectedType = useMemo(
-    () => types.find((t) => t.id === form.professionalTypeId) ?? null,
+    () => types.find((pt) => pt.id === form.professionalTypeId) ?? null,
     [types, form.professionalTypeId],
   );
 
@@ -231,7 +233,7 @@ export function ProfessionalWizard() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "No se pudo crear el profesional. Intenta nuevamente.",
+          : t("No se pudo crear el profesional. Intenta nuevamente."),
       );
     }
   };
@@ -249,7 +251,7 @@ export function ProfessionalWizard() {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-4xl items-center justify-center text-muted-foreground">
         <Loader2 className="mr-2 size-5 animate-spin" />
-        Cargando catálogos...
+        {t("Cargando catálogos...")}
       </div>
     );
   }
@@ -257,8 +259,8 @@ export function ProfessionalWizard() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
       <PageHeader
-        title="Nuevo profesional"
-        description="Crea el perfil, asigna sus clínicas y permisos, y envía la invitación por correo para que complete su acceso."
+        title={t("Nuevo profesional")}
+        description={t("Crea el perfil, asigna sus clínicas y permisos, y envía la invitación por correo para que complete su acceso.")}
         icon={Stethoscope}
       />
 
@@ -281,7 +283,7 @@ export function ProfessionalWizard() {
                 }`}
               >
                 {done ? <CheckCircle2 className="size-3 text-primary" /> : <Icon className="size-3" />}
-                {s.label}
+                {t(s.label)}
               </span>
             </div>
           );
@@ -301,16 +303,15 @@ export function ProfessionalWizard() {
             <div>
               <h2 className="flex items-center gap-2 text-[15px] font-semibold">
                 <UserRound className="size-4 text-primary" />
-                Datos del profesional
+                {t("Datos del profesional")}
               </h2>
               <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-                Solo los datos mínimos: el profesional completará su perfil al recibir la
-                invitación.
+                {t("Solo los datos mínimos: el profesional completará su perfil al recibir la invitación.")}
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nombre">
+              <Field label={t("Nombre")}>
                 <input
                   value={form.firstName}
                   onChange={(e) => setForm({ ...form, firstName: e.target.value })}
@@ -318,7 +319,7 @@ export function ProfessionalWizard() {
                   className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </Field>
-              <Field label="Apellido">
+              <Field label={t("Apellido")}>
                 <input
                   value={form.lastName}
                   onChange={(e) => setForm({ ...form, lastName: e.target.value })}
@@ -326,7 +327,7 @@ export function ProfessionalWizard() {
                   className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </Field>
-              <Field label="Correo electrónico">
+              <Field label={t("Correo electrónico")}>
                 <input
                   type="email"
                   value={form.email}
@@ -335,7 +336,7 @@ export function ProfessionalWizard() {
                   className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </Field>
-              <Field label="Teléfono (opcional)">
+              <Field label={t("Teléfono (opcional)")}>
                 <input
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -347,7 +348,7 @@ export function ProfessionalWizard() {
 
             <div className="mt-6 flex justify-end">
               <Button onClick={() => setStep(1)} disabled={!canContinueStep0}>
-                Continuar
+                {t("Continuar")}
                 <ArrowRight className="size-4" />
               </Button>
             </div>
@@ -360,16 +361,15 @@ export function ProfessionalWizard() {
             <div>
               <h2 className="flex items-center gap-2 text-[15px] font-semibold">
                 <Building2 className="size-4 text-primary" />
-                Organización, clínicas y permisos
+                {t("Organización, clínicas y permisos")}
               </h2>
               <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-                Elige la organización y las clínicas donde trabajará. El rol se asigna
-                <strong> por clínica</strong>: el profesional puede tener permisos distintos
-                en cada una.
+                {t("Elige la organización y las clínicas donde trabajará. El rol se asigna")}
+                <strong>{t(" por clínica")}</strong>{t(": el profesional puede tener permisos distintos en cada una.")}
               </p>
             </div>
 
-            <Field label="Organización">
+            <Field label={t("Organización")}>
               <select
                 value={form.organizationId}
                 onChange={(e) =>
@@ -387,7 +387,7 @@ export function ProfessionalWizard() {
 
             <div className="space-y-3">
               <p className="text-[12.5px] font-semibold text-muted-foreground">
-                Clínicas asignadas
+                {t("Clínicas asignadas")}
               </p>
               {activeOrg?.clinics.map((clinic) => {
                 const assignment = form.clinicAssignments.find((c) => c.clinicId === clinic.id);
@@ -409,7 +409,7 @@ export function ProfessionalWizard() {
                       <span className="min-w-0 flex-1">
                         <span className="block text-[13px] font-semibold">{clinic.name}</span>
                         <span className="block text-[11.5px] text-muted-foreground">
-                          {clinic.locations.length} sede(s)
+                          {t("{count} sede(s)", { count: String(clinic.locations.length) })}
                         </span>
                       </span>
                     </label>
@@ -417,7 +417,7 @@ export function ProfessionalWizard() {
                     {assignment && (
                       <div className="mt-3 space-y-3 pl-7">
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <Field label="Rol en esta clínica">
+                          <Field label={t("Rol en esta clínica")}>
                             <select
                               value={assignment.roleId ?? ""}
                               onChange={(e) =>
@@ -427,7 +427,7 @@ export function ProfessionalWizard() {
                               }
                               className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             >
-                              <option value="">— Sin rol —</option>
+                              <option value="">{t("— Sin rol —")}</option>
                               {roles.map((r) => (
                                 <option key={r.id} value={r.id}>
                                   {r.name}
@@ -450,7 +450,7 @@ export function ProfessionalWizard() {
                               }
                               className="size-4 accent-[#0B2B4A]"
                             />
-                            <span className="text-[12.5px] font-medium">Clínica principal</span>
+                            <span className="text-[12.5px] font-medium">{t("Clínica principal")}</span>
                           </label>
                         </div>
 
@@ -458,7 +458,7 @@ export function ProfessionalWizard() {
                           <div>
                             <p className="mb-1.5 flex items-center gap-1 text-[12px] font-medium text-muted-foreground">
                               <MapPin className="size-3" />
-                              Sedes asignadas
+                              {t("Sedes asignadas")}
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                               {clinic.locations.map((loc) => {
@@ -489,7 +489,7 @@ export function ProfessionalWizard() {
               })}
               {activeOrg && activeOrg.clinics.length === 0 && (
                 <p className="text-[12.5px] text-muted-foreground">
-                  Esta organización no tiene clínicas.
+                  {t("Esta organización no tiene clínicas.")}
                 </p>
               )}
             </div>
@@ -497,10 +497,10 @@ export function ProfessionalWizard() {
             <div className="mt-6 flex items-center justify-between">
               <Button variant="outline" onClick={() => setStep(0)}>
                 <ArrowLeft className="size-4" />
-                Atrás
+                {t("Atrás")}
               </Button>
               <Button onClick={() => setStep(2)} disabled={!canContinueStep1}>
-                Continuar
+                {t("Continuar")}
                 <ArrowRight className="size-4" />
               </Button>
             </div>
@@ -513,31 +513,30 @@ export function ProfessionalWizard() {
             <div>
               <h2 className="flex items-center gap-2 text-[15px] font-semibold">
                 <Stethoscope className="size-4 text-primary" />
-                Profesión y especialidades
+                {t("Profesión y especialidades")}
               </h2>
               <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-                Opcional: si lo dejas vacío, el profesional lo completará al aceptar la
-                invitación (perfil autogestionable).
+                {t("Opcional: si lo dejas vacío, el profesional lo completará al aceptar la invitación (perfil autogestionable).")}
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {types.map((t) => (
+              {types.map((professionalType) => (
                 <button
-                  key={t.id}
+                  key={professionalType.id}
                   type="button"
                   onClick={() => {
-                    setForm({ ...form, professionalTypeId: t.id, specialtyIds: [] });
+                    setForm({ ...form, professionalTypeId: professionalType.id, specialtyIds: [] });
                   }}
                   className={`rounded-xl border p-3 text-left transition-colors ${
-                    form.professionalTypeId === t.id
+                    form.professionalTypeId === professionalType.id
                       ? "border-primary bg-primary/5 ring-1 ring-primary"
                       : "border-border hover:border-primary/40"
                   }`}
                 >
-                  <span className="block text-[13px] font-semibold">{t.name}</span>
+                  <span className="block text-[13px] font-semibold">{professionalType.name}</span>
                   <span className="mt-0.5 block text-[11.5px] text-muted-foreground line-clamp-1">
-                    {t.description}
+                    {professionalType.description}
                   </span>
                 </button>
               ))}
@@ -546,16 +545,16 @@ export function ProfessionalWizard() {
             {selectedType && (
               <div>
                 <h3 className="text-[13.5px] font-semibold">
-                  Especialidades válidas para {selectedType.name}
+                  {t("Especialidades válidas para {type}", { type: selectedType.name })}
                 </h3>
                 <p className="mt-0.5 text-[12px] text-muted-foreground">
-                  Puedes seleccionar una o varias.
+                  {t("Puedes seleccionar una o varias.")}
                 </p>
                 <div className="mt-3 space-y-3">
                   {specialtiesByCategory.map((group) => (
                     <div key={group.category}>
                       <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                        {group.category}
+                        {t(group.category)}
                       </p>
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {group.items.map((s) => {
@@ -586,10 +585,10 @@ export function ProfessionalWizard() {
             <div className="mt-6 flex items-center justify-between">
               <Button variant="outline" onClick={() => setStep(1)}>
                 <ArrowLeft className="size-4" />
-                Atrás
+                {t("Atrás")}
               </Button>
               <Button onClick={() => setStep(3)}>
-                Continuar
+                {t("Continuar")}
                 <ArrowRight className="size-4" />
               </Button>
             </div>
@@ -602,11 +601,10 @@ export function ProfessionalWizard() {
             <div>
               <h2 className="flex items-center gap-2 text-[15px] font-semibold">
                 <Send className="size-4 text-primary" />
-                Revisa y envía
+                {t("Revisa y envía")}
               </h2>
               <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-                Confirma los datos. El profesional recibirá un correo con un enlace seguro
-                para establecer su contraseña y completar su perfil.
+                {t("Confirma los datos. El profesional recibirá un correo con un enlace seguro para establecer su contraseña y completar su perfil.")}
               </p>
             </div>
 
@@ -614,7 +612,7 @@ export function ProfessionalWizard() {
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-[13px] sm:grid-cols-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Nombre
+                    {t("Nombre")}
                   </p>
                   <p className="mt-0.5 font-medium">
                     {form.firstName} {form.lastName}
@@ -622,13 +620,13 @@ export function ProfessionalWizard() {
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Correo
+                    {t("Correo")}
                   </p>
                   <p className="mt-0.5 font-medium">{form.email}</p>
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Organización
+                    {t("Organización")}
                   </p>
                   <p className="mt-0.5 font-medium">{activeOrg?.name}</p>
                 </div>
@@ -636,7 +634,7 @@ export function ProfessionalWizard() {
 
               <div className="border-t border-border p-4">
                 <p className="text-[12px] font-semibold text-muted-foreground">
-                  Clínicas y roles
+                  {t("Clínicas y roles")}
                 </p>
                 <div className="mt-2 space-y-2">
                   {summaryClinics.map(({ clinic, role, locations }) => (
@@ -646,12 +644,12 @@ export function ProfessionalWizard() {
                     >
                       <span className="font-semibold">{clinic!.name}</span>
                       <span className="text-muted-foreground">·</span>
-                      <span>{role?.name ?? "Sin rol"}</span>
+                      <span>{role?.name ?? t("Sin rol")}</span>
                       {locations.length > 0 && (
                         <>
                           <span className="text-muted-foreground">·</span>
                           <span className="text-muted-foreground">
-                            Sedes: {locations.map((l) => l.name).join(", ")}
+                            {t("Sedes:")}: {locations.map((l) => l.name).join(", ")}
                           </span>
                         </>
                       )}
@@ -662,7 +660,7 @@ export function ProfessionalWizard() {
 
               {form.professionalTypeId && (
                 <div className="border-t border-border p-4">
-                  <p className="text-[12px] font-semibold text-muted-foreground">Profesión</p>
+                  <p className="text-[12px] font-semibold text-muted-foreground">{t("Profesión")}</p>
                   <p className="mt-1 text-[12.5px]">
                     {selectedType?.name}
                     {form.specialtyIds.length > 0 &&
@@ -685,11 +683,10 @@ export function ProfessionalWizard() {
               <span>
                 <span className="flex items-center gap-1.5 text-[13px] font-semibold">
                   <MailPlus className="size-4 text-primary" />
-                  Enviar invitación por correo ahora
+                  {t("Enviar invitación por correo ahora")}
                 </span>
                 <span className="mt-0.5 block text-[12px] text-muted-foreground">
-                  El profesional recibirá un enlace de primer acceso (válido por 72 h). Si lo
-                  desactivas, podrás invitarlo después desde su perfil.
+                  {t("El profesional recibirá un enlace de primer acceso (válido por 72 h). Si lo desactivas, podrás invitarlo después desde su perfil.")}
                 </span>
               </span>
             </label>
@@ -697,7 +694,7 @@ export function ProfessionalWizard() {
             <div className="mt-6 flex items-center justify-between">
               <Button variant="outline" onClick={() => setStep(2)}>
                 <ArrowLeft className="size-4" />
-                Atrás
+                {t("Atrás")}
               </Button>
               <Button onClick={submit} disabled={saving}>
                 {saving ? (
@@ -705,7 +702,7 @@ export function ProfessionalWizard() {
                 ) : (
                   <GraduationCap className="size-4" />
                 )}
-                Crear e invitar
+                {t("Crear e invitar")}
               </Button>
             </div>
           </div>

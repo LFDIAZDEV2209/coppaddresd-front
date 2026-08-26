@@ -24,8 +24,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getPatient } from "../services/patients-service";
 import { PatientProfessionalsSection } from "./patient-professionals-section";
 import type { Patient } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 export function PatientDetailPage({ id }: { id: string }) {
+  const t = useT();
   const router = useRouter();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,7 @@ export function PatientDetailPage({ id }: { id: string }) {
           setError(
             cause instanceof Error
               ? cause.message
-              : "Ocurrió un error inesperado.",
+              : t("Ocurrió un error inesperado."),
           );
       })
       .finally(() => {
@@ -52,7 +54,7 @@ export function PatientDetailPage({ id }: { id: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id, reloadKey]);
+  }, [id, reloadKey, t]);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -66,19 +68,19 @@ export function PatientDetailPage({ id }: { id: string }) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
         <p className="text-sm font-semibold text-destructive">
-          No pudimos cargar el paciente
+          {t('No pudimos cargar el paciente')}
         </p>
         <p className="max-w-sm text-xs text-muted-foreground">
-          {error ?? "El paciente no existe o fue eliminado."}
+          {error ?? t("El paciente no existe o fue eliminado.")}
         </p>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={reload}>
             <RefreshCw data-icon="inline-start" />
-            Reintentar
+            {t('Reintentar')}
           </Button>
           <Button variant="outline" size="sm" onClick={() => router.push("/patients")}>
             <ArrowLeft data-icon="inline-start" />
-            Volver al directorio
+            {t('Volver al directorio')}
           </Button>
         </div>
       </div>
@@ -91,15 +93,15 @@ export function PatientDetailPage({ id }: { id: string }) {
           variant="ghost"
           size="sm"
           onClick={() => router.push("/patients")}
-          aria-label="Volver al directorio de pacientes"
+          aria-label={t('Volver al directorio de pacientes')}
         >
           <ArrowLeft data-icon="inline-start" />
-          Directorio
+          {t('Directorio')}
         </Button>
       </div>
       <PageHeader
         title={`${patient.firstName} ${patient.lastName}`}
-        description={patient.medicalRecordNumber ?? "Sin MRN"}
+        description={patient.medicalRecordNumber ?? t("Sin MRN")}
         icon={UserRound}
         actions={
           <>
@@ -110,80 +112,80 @@ export function PatientDetailPage({ id }: { id: string }) {
               onClick={() => router.push(`/patients/${patient.id}/edit`)}
             >
               <Pencil data-icon="inline-start" />
-              Editar
+              {t('Editar')}
             </Button>
           </>
         }
       />
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Summary label="Edad" value={getAge(patient.dateOfBirth)} icon={<CalendarDays />} />
-        <Summary label="Género" value={patient.gender ?? "No registrado"} icon={<UserRound />} />
-        <Summary label="Clínica" value={patient.clinicName ?? "Sin asignar"} icon={<Building2 />} />
-        <Summary label="Aseguradora" value={patient.insurerName ?? "Sin aseguradora"} icon={<Shield />} />
+        <Summary label={t("Edad")} value={getAge(patient.dateOfBirth)} icon={<CalendarDays />} />
+        <Summary label={t("Género")} value={patient.gender ?? t("No registrado")} icon={<UserRound />} />
+        <Summary label={t("Clínica")} value={patient.clinicName ?? t("Sin asignar")} icon={<Building2 />} />
+        <Summary label={t("Aseguradora")} value={patient.insurerName ?? t("Sin aseguradora")} icon={<Shield />} />
       </section>
       <PatientProfessionalsSection patientId={patient.id} />
       <div className="grid gap-4 lg:grid-cols-2">
         <DetailCard
-          title="Datos personales"
+          title={t("Datos personales")}
           icon={UserRound}
           items={[
-            ["Tipo de documento", patient.documentTypeName ?? "No registrado"],
-            ["Número de documento", patient.documentNumber ?? "No registrado"],
-            ["Fecha de nacimiento", formatDate(patient.dateOfBirth)],
-            ["Etnia", patient.ethnicityName ?? "No registrada"],
-            ["Grupo sanguíneo", patient.bloodTypeName ?? "No registrado"],
-            ["Estado civil", patient.maritalStatus ?? "No registrado"],
+            [t("Tipo de documento"), patient.documentTypeName ?? t("No registrado")],
+            [t("Número de documento"), patient.documentNumber ?? t("No registrado")],
+            [t("Fecha de nacimiento"), formatDate(patient.dateOfBirth)],
+            [t("Etnia"), patient.ethnicityName ?? t("No registrada")],
+            [t("Grupo sanguíneo"), patient.bloodTypeName ?? t("No registrado")],
+            [t("Estado civil"), patient.maritalStatus ?? t("No registrado")],
           ]}
         />
         <DetailCard
-          title="Contacto"
+          title={t("Contacto")}
           icon={MapPin}
           items={[
-            ["Teléfono", formatPhone(patient) ?? "No registrado"],
-            ["Correo", patient.email ?? "No registrado"],
+            [t("Teléfono"), formatPhone(patient) ?? t("No registrado")],
+            [t("Correo"), patient.email ?? t("No registrado")],
             [
-              "Dirección",
+              t("Dirección"),
               [patient.address, patient.cityName, patient.stateCode, patient.countryName]
                 .filter(Boolean)
-                .join(", ") || "No registrada",
+                .join(", ") || t("No registrada"),
             ],
-            ["Código postal", patient.postalCode ?? "No registrado"],
+            [t("Código postal"), patient.postalCode ?? t("No registrado")],
           ]}
         />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <DetailCard
-          title="Cobertura"
+          title={t("Cobertura")}
           icon={Shield}
           items={[
-            ["Aseguradora", patient.insurerName ?? "Sin aseguradora"],
-            ["Número de miembro", patient.memberId ?? "No registrado"],
+            [t("Aseguradora"), patient.insurerName ?? t("Sin aseguradora")],
+            [t("Número de miembro"), patient.memberId ?? t("No registrado")],
           ]}
         />
         <DetailCard
-          title="Clínica y sede"
+          title={t("Clínica y sede")}
           icon={Building2}
           items={[
-            ["Clínica", patient.clinicName ?? "Sin asignar"],
-            ["Sede", patient.locationName ?? "No registrada"],
+            [t("Clínica"), patient.clinicName ?? t("Sin asignar")],
+            [t("Sede"), patient.locationName ?? t("No registrada")],
           ]}
         />
       </div>
       <DetailCard
-        title="Estilo de vida e historial"
+        title={t("Estilo de vida e historial")}
         icon={HeartPulse}
         items={[
-          ["Tabaquismo", patient.smokingStatus ?? "No registrado"],
-          ["Consumo de alcohol", patient.alcoholStatus ?? "No registrado"],
-          ["Nivel de ejercicio", patient.exerciseLevel ?? "No registrado"],
-          ["Discapacidad", patient.disability ?? "No registrada"],
-          ["Hospitalizaciones", patient.hospitalizationHistory ?? "No registrado"],
-          ["Cirugías", patient.surgeryHistory ?? "No registradas"],
+          [t("Tabaquismo"), patient.smokingStatus ?? t("No registrado")],
+          [t("Consumo de alcohol"), patient.alcoholStatus ?? t("No registrado")],
+          [t("Nivel de ejercicio"), patient.exerciseLevel ?? t("No registrado")],
+          [t("Discapacidad"), patient.disability ?? t("No registrada")],
+          [t("Hospitalizaciones"), patient.hospitalizationHistory ?? t("No registrado")],
+          [t("Cirugías"), patient.surgeryHistory ?? t("No registradas")],
         ]}
       />
       {patient.notes && (
         <DetailCard
-          title="Notas"
+          title={t("Notas")}
           icon={ClipboardPenLine}
           items={[["", patient.notes]]}
         />
@@ -226,14 +228,15 @@ function DetailCard({
 }
 
 function DiagnosesSection({ patient }: { patient: Patient }) {
+  const t = useT();
   return (
     <section
       className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
-      aria-label="Diagnósticos"
+      aria-label={t("Diagnósticos")}
     >
       <SectionHeader
-        title="Diagnósticos"
-        description={`${patient.diagnoses.length} registrados`}
+        title={t("Diagnósticos")}
+        description={`${patient.diagnoses.length} ${t("registrados")}`}
         icon={Stethoscope}
         variant="primary"
       />
@@ -252,28 +255,29 @@ function DiagnosesSection({ patient }: { patient: Patient }) {
               </div>
               {diagnosis.isPrimary && (
                 <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary">
-                  Principal
+                  {t('Principal')}
                 </span>
               )}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-muted-foreground">Sin diagnósticos registrados.</p>
+        <p className="text-xs text-muted-foreground">{t('Sin diagnósticos registrados.')}</p>
       )}
     </section>
   );
 }
 
 function MedicationsSection({ patient }: { patient: Patient }) {
+  const t = useT();
   return (
     <section
       className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
-      aria-label="Medicamentos"
+      aria-label={t("Medicamentos")}
     >
       <SectionHeader
-        title="Medicamentos"
-        description={`${patient.medications.length} prescritos`}
+        title={t("Medicamentos")}
+        description={`${patient.medications.length} ${t("prescritos")}`}
         icon={ClipboardPenLine}
         variant="primary"
       />
@@ -301,21 +305,22 @@ function MedicationsSection({ patient }: { patient: Patient }) {
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-muted-foreground">Sin medicamentos registrados.</p>
+        <p className="text-xs text-muted-foreground">{t('Sin medicamentos registrados.')}</p>
       )}
     </section>
   );
 }
 
 function AllergiesSection({ patient }: { patient: Patient }) {
+  const t = useT();
   return (
     <section
       className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
-      aria-label="Alergias"
+      aria-label={t("Alergias")}
     >
       <SectionHeader
-        title="Alergias"
-        description={`${patient.allergies.length} registradas`}
+        title={t("Alergias")}
+        description={`${patient.allergies.length} ${t("registradas")}`}
         icon={HeartPulse}
         variant="primary"
       />
@@ -336,39 +341,40 @@ function AllergiesSection({ patient }: { patient: Patient }) {
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-muted-foreground">Sin alergias registradas.</p>
+        <p className="text-xs text-muted-foreground">{t('Sin alergias registradas.')}</p>
       )}
     </section>
   );
 }
 
 function VitalSignsSection({ patient }: { patient: Patient }) {
+  const t = useT();
   const latest = patient.vitalSigns[0];
   return (
     <section
       className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
-      aria-label="Signos vitales"
+      aria-label={t("Signos vitales")}
     >
       <SectionHeader
-        title="Signos vitales"
-        description={latest ? `Última medición · ${formatDate(latest.measuredAt)}` : "Sin mediciones"}
+        title={t("Signos vitales")}
+        description={latest ? `${t("Última medición")} · ${formatDate(latest.measuredAt)}` : t("Sin mediciones")}
         icon={HeartPulse}
         variant="primary"
       />
       {latest ? (
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <VitalStat
-            label="Presión"
+            label={t("Presión")}
             value={latest.systolic ? `${latest.systolic}/${latest.diastolic ?? "—"} mmHg` : "—"}
           />
-          <VitalStat label="Frecuencia cardíaca" value={latest.heartRate ? `${latest.heartRate} lpm` : "—"} />
-          <VitalStat label="Temperatura" value={latest.temperatureC ? `${latest.temperatureC} °C` : "—"} />
-          <VitalStat label="Saturación O₂" value={latest.o2Saturation ? `${latest.o2Saturation} %` : "—"} />
-          <VitalStat label="Estatura" value={latest.heightCm ? `${latest.heightCm} cm` : "—"} />
-          <VitalStat label="Peso" value={latest.weightKg ? `${latest.weightKg} kg` : "—"} />
+          <VitalStat label={t("Frecuencia cardíaca")} value={latest.heartRate ? `${latest.heartRate} lpm` : "—"} />
+          <VitalStat label={t("Temperatura")} value={latest.temperatureC ? `${latest.temperatureC} °C` : "—"} />
+          <VitalStat label={t("Saturación O₂")} value={latest.o2Saturation ? `${latest.o2Saturation} %` : "—"} />
+          <VitalStat label={t("Estatura")} value={latest.heightCm ? `${latest.heightCm} cm` : "—"} />
+          <VitalStat label={t("Peso")} value={latest.weightKg ? `${latest.weightKg} kg` : "—"} />
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">Sin mediciones registradas.</p>
+        <p className="text-xs text-muted-foreground">{t('Sin mediciones registradas.')}</p>
       )}
     </section>
   );

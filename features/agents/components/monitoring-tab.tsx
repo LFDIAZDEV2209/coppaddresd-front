@@ -39,6 +39,7 @@ import {
 import type { AgentExecutionDetail, AgentExecutionSummary } from "../types";
 import { fetchExecution } from "../services/agents-service";
 import { formatDate } from "../services/agents-service";
+import { useT } from "@/providers/i18n-provider";
 import type { MonitoringFilters } from "../hooks/use-agent-monitoring";
 
 interface MonitoringTabProps {
@@ -60,6 +61,7 @@ const statusVariant: Record<string, "default" | "destructive" | "secondary"> = {
 };
 
 export function MonitoringTab({ monitoring }: MonitoringTabProps) {
+  const t = useT();
   const [detail, setDetail] = useState<AgentExecutionDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -87,14 +89,14 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={Activity}
-          label="Ejecuciones"
+          label={t('Ejecuciones')}
           value={String(s.total)}
           color="#2563EB"
           bg="#E5F0FA"
         />
         <MetricCard
           icon={Clock}
-          label="Tiempo promedio"
+          label={t('Tiempo promedio')}
           value={
             monitoring.executions.length > 0
               ? `${Math.round(
@@ -108,14 +110,14 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
         />
         <MetricCard
           icon={Star}
-          label="Tokens (in+out)"
+          label={t('Tokens (in+out)')}
           value={s.tokensTotal.toLocaleString("es-ES")}
           color="#8B5CF6"
           bg="#F1EBF9"
         />
         <MetricCard
           icon={XCircle}
-          label="Errores"
+          label={t('Errores')}
           value={String(s.errors)}
           color={s.errors > 0 ? "#EF4444" : "#10B981"}
           bg={s.errors > 0 ? "#FCEBEC" : "#E6F7EF"}
@@ -124,7 +126,7 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
 
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Filtrar por usuario (ID)"
+          placeholder={t('Filtrar por usuario (ID)')}
           className="h-9 w-[220px]"
           defaultValue={monitoring.filters.userId ?? ""}
           onChange={(event) =>
@@ -140,13 +142,13 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
           }
         >
           <SelectTrigger className="h-9 w-[180px]">
-            <SelectValue placeholder="Estado" />
+            <SelectValue placeholder={t('Estado')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="completado">Completado</SelectItem>
-            <SelectItem value="error">Error</SelectItem>
-            <SelectItem value="ejecutando">Ejecutando</SelectItem>
+            <SelectItem value="all">{t('Todos')}</SelectItem>
+            <SelectItem value="completado">{t('Completado')}</SelectItem>
+            <SelectItem value="error">{t('Error')}</SelectItem>
+            <SelectItem value="ejecutando">{t('Ejecutando')}</SelectItem>
           </SelectContent>
         </Select>
         <Button
@@ -156,10 +158,10 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
           onClick={monitoring.refetch}
         >
           <RefreshCw data-icon="inline-start" className="size-4" />
-          Refrescar
+          {t('Refrescar')}
         </Button>
         <span className="text-[12px] text-muted-foreground">
-          {monitoring.total} ejecución{monitoring.total === 1 ? "" : "es"} (últimos 7 días)
+          {t('{count} ejecución(es) (últimos 7 días)', { count: String(monitoring.total) })}
         </span>
       </div>
 
@@ -174,9 +176,9 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
       ) : monitoring.executions.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border py-12 text-center">
           <Activity className="size-8 text-muted-foreground" />
-          <p className="text-sm font-medium">Sin ejecuciones</p>
+          <p className="text-sm font-medium">{t('Sin ejecuciones')}</p>
           <p className="text-[12.5px] text-muted-foreground">
-            Las conversaciones del agente aparecerán aquí con métricas de uso.
+            {t('Las conversaciones del agente aparecerán aquí con métricas de uso.')}
           </p>
         </div>
       ) : (
@@ -184,13 +186,13 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Modelo</TableHead>
-                <TableHead>Latencia</TableHead>
-                <TableHead>Tokens</TableHead>
-                <TableHead>Feedback</TableHead>
-                <TableHead className="w-16 text-right">Detalle</TableHead>
+                <TableHead>{t('Fecha')}</TableHead>
+                <TableHead>{t('Estado')}</TableHead>
+                <TableHead>{t('Modelo')}</TableHead>
+                <TableHead>{t('Latencia')}</TableHead>
+                <TableHead>{t('Tokens')}</TableHead>
+                <TableHead>{t('Feedback')}</TableHead>
+                <TableHead className="w-16 text-right">{t('Detalle')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -230,7 +232,7 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => openDetail(execution.id)}
-                      aria-label="Ver detalle de ejecución"
+                      aria-label={t('Ver detalle de ejecución')}
                     >
                       <Eye className="size-4" />
                     </Button>
@@ -249,10 +251,10 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
         <DialogContent className="max-h-[92vh] min-w-[700px] max-w-3xl overflow-y-auto p-0">
           <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
             <DialogTitle className="text-base font-semibold">
-              Ejecución {detail?.id.slice(0, 8)}
+              {t('Ejecución {id}', { id: detail?.id.slice(0, 8) ?? '' })}
             </DialogTitle>
             <DialogDescription>
-              {detail ? formatDate(detail.createdAt) : ""} · {detail?.model ?? "modelo desconocido"}
+              {detail ? formatDate(detail.createdAt) : ""} · {detail?.model ?? t('modelo desconocido')}
             </DialogDescription>
           </DialogHeader>
           {detailLoading ? (
@@ -262,23 +264,23 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
           ) : detail ? (
             <div className="flex flex-col gap-4 px-6 py-5">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <DetailChip label="Estado" value={detail.status} />
+                <DetailChip label={t('Estado')} value={detail.status} />
                 <DetailChip
-                  label="Latencia"
+                  label={t('Latencia')}
                   value={detail.latencyMs !== null ? `${detail.latencyMs} ms` : "—"}
                 />
                 <DetailChip
-                  label="Tokens"
+                  label={t('Tokens')}
                   value={`${(detail.tokensIn ?? 0).toLocaleString("es-ES")} → ${(detail.tokensOut ?? 0).toLocaleString("es-ES")}`}
                 />
                 <DetailChip
-                  label="Feedback"
+                  label={t('Feedback')}
                   value={detail.feedbackRating !== null ? `${detail.feedbackRating}/5` : "—"}
                 />
               </div>
 
               {Boolean(detail.output?.answer) && (
-                <Section title="Respuesta">
+                <Section title={t('Respuesta')}>
                   <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">
                     {String(detail.output?.answer)}
                   </p>
@@ -286,7 +288,7 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
               )}
 
               {Boolean(detail.output?.rag_sources) && (
-                <Section title="Fuentes recuperadas (RAG)">
+                <Section title={t('Fuentes recuperadas (RAG)')}>
                   <pre className="max-h-40 overflow-auto rounded-xl bg-muted p-3 font-mono text-[11.5px]">
                     {JSON.stringify(detail.output?.rag_sources, null, 2)}
                   </pre>
@@ -295,7 +297,7 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
 
               {Array.isArray(detail.output?.tools_used) &&
                 detail.output.tools_used.length > 0 && (
-                  <Section title="Tools ejecutadas">
+                  <Section title={t('Tools ejecutadas')}>
                     <div className="flex flex-wrap gap-1.5">
                       {(detail.output.tools_used as string[]).map((tool) => (
                         <Badge key={tool} variant="outline">
@@ -307,7 +309,7 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
                 )}
 
               {detail.experiences.length > 0 && (
-                <Section title="Experiencias generadas">
+                <Section title={t('Experiencias generadas')}>
                   {detail.experiences.map((exp, index) => (
                     <div key={index} className="rounded-lg border border-border bg-background p-3">
                       <p className="text-[12.5px]">
@@ -315,7 +317,7 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
                       </p>
                       <p className="mt-1 text-[12.5px] text-muted-foreground">{exp.response}</p>
                       <div className="mt-1.5 flex items-center gap-2 text-[11.5px] text-muted-foreground">
-                        <Badge variant="secondary">recurrencia {exp.recurrence}</Badge>
+                        <Badge variant="secondary">{t('recurrencia')} {exp.recurrence}</Badge>
                         {exp.rating !== null && <span>rating {exp.rating}</span>}
                       </div>
                     </div>
@@ -324,7 +326,7 @@ export function MonitoringTab({ monitoring }: MonitoringTabProps) {
               )}
 
               {detail.error && (
-                <Section title="Error">
+                <Section title={t('Error')}>
                   <p className="rounded-lg bg-destructive-soft px-3 py-2 text-[12.5px] text-destructive">
                     {detail.error}
                   </p>

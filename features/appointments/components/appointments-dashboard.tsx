@@ -11,6 +11,7 @@ import {
   Video,
 } from "lucide-react";
 import { useAppContext } from "@/providers/context-provider";
+import { useT } from "@/providers/i18n-provider";
 import { hasAppointmentPermission } from "@/lib/config/appointment-permissions";
 import { PageHeader } from "@/components/layout/page-header";
 import { useCurrentUser } from "../hooks/use-current-user";
@@ -57,31 +58,32 @@ export function AppointmentsDashboard() {
  */
 function StaffDashboard() {
   const { can } = useAppContext();
+  const t = useT();
 
   const links = [
     hasAppointmentPermission(can, "Appointments.AgendaView") && {
       href: "/appointments/agenda",
       icon: CalendarDays,
-      label: "Agenda",
-      description: "Agenda de los profesionales",
+      label: t('Agenda'),
+      description: t('Agenda de los profesionales'),
     },
     hasAppointmentPermission(can, "Appointments.RequestsView") && {
       href: "/appointments/solicitudes",
       icon: Inbox,
-      label: "Solicitudes",
-      description: "Solicitudes de los pacientes",
+      label: t('Solicitudes'),
+      description: t('Solicitudes de los pacientes'),
     },
     hasAppointmentPermission(can, "Appointments.AlertsView") && {
       href: "/appointments/alertas",
       icon: Bell,
-      label: "Alertas",
-      description: "Bandeja de notificaciones",
+      label: t('Alertas'),
+      description: t('Bandeja de notificaciones'),
     },
     hasAppointmentPermission(can, "Appointments.View") && {
       href: "/appointments/citas",
       icon: ClipboardList,
-      label: "Citas",
-      description: "Citas del módulo",
+      label: t('Citas'),
+      description: t('Citas del módulo'),
     },
   ].filter(Boolean) as Array<{
     href: string;
@@ -93,8 +95,8 @@ function StaffDashboard() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Citas"
-        description="Módulos disponibles para tu rol"
+        title={t('Citas')}
+        description={t('Módulos disponibles para tu rol')}
         icon={Video}
       />
 

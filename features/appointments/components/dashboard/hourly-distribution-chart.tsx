@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useT } from "@/providers/i18n-provider";
 import type { HourlyCountDto } from "../../types";
 
 /**
@@ -22,6 +23,8 @@ export function HourlyDistributionChart({
   hourlyDistribution: HourlyCountDto[];
   loading: boolean;
 }) {
+  const t = useT();
+
   if (loading) {
     return <div className="h-56 w-full animate-pulse rounded-xl bg-muted" />;
   }
@@ -36,7 +39,7 @@ export function HourlyDistributionChart({
   if (data.length === 0) {
     return (
       <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-border text-[12.5px] text-muted-foreground">
-        Sin citas en el período
+        {t('Sin citas en el período')}
       </div>
     );
   }
@@ -61,8 +64,8 @@ export function HourlyDistributionChart({
             axisLine={false}
           />
           <Tooltip
-            formatter={(value) => [String(value), "Citas"]}
-            labelFormatter={(label) => `Hora ${label}`}
+            formatter={(value) => [String(value), t('Citas')]}
+            labelFormatter={(label) => `${t('Hora')} ${label}`}
             cursor={{ fill: "var(--muted)", opacity: 0.4 }}
             contentStyle={{
               borderRadius: 12,

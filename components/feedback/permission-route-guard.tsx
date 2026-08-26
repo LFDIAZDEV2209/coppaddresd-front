@@ -7,6 +7,7 @@ import {
   findModuleForPath,
   hasNavPermission,
 } from "@/lib/config/navigation";
+import { useT } from "@/providers/i18n-provider";
 
 /**
  * Guard de rutas por permisos (centralizado en la config de navegación):
@@ -18,6 +19,7 @@ import {
 export function PermissionRouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { can } = useAppContext();
+  const t = useT();
 
   const navModule = findModuleForPath(pathname);
   if (!navModule) {
@@ -35,9 +37,9 @@ export function PermissionRouteGuard({ children }: { children: React.ReactNode }
         <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
           <ShieldAlert className="size-6 text-muted-foreground" />
         </div>
-        <p className="text-sm font-medium text-foreground">Acceso denegado</p>
+        <p className="text-sm font-medium text-foreground">{t("Acceso denegado")}</p>
         <p className="max-w-sm text-[12.5px] text-muted-foreground">
-          No tenés permisos para acceder a esta sección en el contexto actual.
+          {t("No tenés permisos para acceder a esta sección en el contexto actual.")}
         </p>
       </div>
     );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Bot, Plus, Search, Pencil, Trash2, Layers, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ const statusVariant: Record<string, "default" | "destructive" | "secondary"> = {
 };
 
 export function AgentsPageContent() {
+  const t = useT();
   const router = useRouter();
   const {
     agents,
@@ -97,13 +99,13 @@ export function AgentsPageContent() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Agentes AI"
-        description="Gestión de tipos de agente, versiones, conocimiento y monitoreo"
+        title={t('Agentes AI')}
+        description={t('Gestión de tipos de agente, versiones, conocimiento y monitoreo')}
         icon={Bot}
         actions={
           <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary-strong" onClick={openCreate}>
             <Plus className="size-[15px]" />
-            Nuevo agente
+            {t('Nuevo agente')}
           </Button>
         }
       />
@@ -112,14 +114,14 @@ export function AgentsPageContent() {
         <div className="relative w-[280px]">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar agentes..."
+            placeholder={t('Buscar agentes...')}
             className="h-9 pl-9"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
         <span className="text-[12px] text-muted-foreground">
-          {total} tipo{total === 1 ? "" : "s"}
+          {t('{count} tipo(s)', { count: String(total) })}
         </span>
       </div>
 
@@ -155,13 +157,13 @@ export function AgentsPageContent() {
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
             <Bot className="size-6 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium text-foreground">No hay agentes</p>
+          <p className="text-sm font-medium text-foreground">{t('No hay agentes')}</p>
           <p className="text-[12.5px] text-muted-foreground">
-            Crea el primer tipo de agente para comenzar.
+            {t('Crea el primer tipo de agente para comenzar.')}
           </p>
           <Button variant="outline" size="sm" className="mt-2" onClick={openCreate}>
             <Plus data-icon="inline-start" />
-            Nuevo agente
+            {t('Nuevo agente')}
           </Button>
         </div>
       ) : (
@@ -183,7 +185,7 @@ export function AgentsPageContent() {
                 <PaginationItem>
                   <PaginationPrevious
                     href="#"
-                    text="Anterior"
+                    text={t('Anterior')}
                     isActive={false}
                     onClick={(event) => {
                       event.preventDefault();
@@ -208,7 +210,7 @@ export function AgentsPageContent() {
                 <PaginationItem>
                   <PaginationNext
                     href="#"
-                    text="Siguiente"
+                    text={t('Siguiente')}
                     isActive={false}
                     onClick={(event) => {
                       event.preventDefault();
@@ -233,14 +235,13 @@ export function AgentsPageContent() {
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar tipo de agente</AlertDialogTitle>
+            <AlertDialogTitle>{t('Eliminar tipo de agente')}</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Seguro que querés eliminar &quot;{deleting?.name}&quot;? Esta acción no se
-              puede deshacer.
+              {t('¿Seguro que querés eliminar "{name}"? Esta acción no se puede deshacer.', { name: deleting?.name ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingBusy}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletingBusy}>{t('Cancelar')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(event) => {
                 event.preventDefault();
@@ -248,7 +249,7 @@ export function AgentsPageContent() {
               }}
               disabled={deletingBusy}
             >
-              {deletingBusy ? "Eliminando..." : "Eliminar"}
+              {deletingBusy ? t('Eliminando...') : t('Eliminar')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -268,6 +269,7 @@ function AgentCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useT();
   const { icon: Icon, color, bg } = getAgentIcon(agent.iconKey);
 
   return (
@@ -275,7 +277,7 @@ function AgentCard({
       <button
         onClick={onOpen}
         className="flex items-center gap-3 text-left"
-        aria-label={`Abrir detalle de ${agent.name}`}
+        aria-label={t('Abrir detalle de {name}', { name: agent.name })}
       >
         <div
           className="flex size-11 shrink-0 items-center justify-center rounded-xl"
@@ -288,7 +290,7 @@ function AgentCard({
             {agent.name}
           </span>
           <span className="truncate text-[11.5px] text-muted-foreground">
-            {agent.description ?? "Sin descripción"}
+            {agent.description ?? t('Sin descripción')}
           </span>
         </div>
       </button>
@@ -308,7 +310,7 @@ function AgentCard({
           onClick={onOpen}
           className="flex items-center gap-1 text-[12px] font-medium text-primary hover:underline"
         >
-          Ver detalle
+          {t('Ver detalle')}
           <ChevronRight className="size-3.5" />
         </button>
         <div className="flex items-center gap-1">
@@ -316,7 +318,7 @@ function AgentCard({
             variant="ghost"
             size="icon-sm"
             onClick={onEdit}
-            aria-label={`Editar ${agent.name}`}
+            aria-label={t('Editar {name}', { name: agent.name })}
           >
             <Pencil className="size-4" />
           </Button>
@@ -325,7 +327,7 @@ function AgentCard({
             size="icon-sm"
             className="text-muted-foreground hover:text-destructive"
             onClick={onDelete}
-            aria-label={`Eliminar ${agent.name}`}
+            aria-label={t('Eliminar {name}', { name: agent.name })}
           >
             <Trash2 className="size-4" />
           </Button>
@@ -333,7 +335,7 @@ function AgentCard({
       </div>
 
       <p className="text-[10.5px] text-muted-foreground">
-        Creado {formatDate(agent.createdAt)}
+        {t('Creado')} {formatDate(agent.createdAt)}
       </p>
     </div>
   );

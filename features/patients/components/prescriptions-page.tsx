@@ -22,8 +22,10 @@ import {
   fetchPrescriptions,
 } from "../services/prescriptions-service";
 import type { Medication, PatientListItem, Prescription } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 export function PrescriptionsPage() {
+  const t = useT();
   const [patients, setPatients] = useState<PatientListItem[]>([]);
   const [selected, setSelected] = useState<PatientListItem>();
   const [search, setSearch] = useState("");
@@ -39,9 +41,9 @@ export function PrescriptionsPage() {
   useEffect(() => {
     void fetchPatients(1, 50, { search: "", status: "all", insurerId: "all" })
       .then((result) => setPatients(result.data))
-      .catch(() => setError("No pudimos cargar los pacientes."))
+      .catch(() => setError(t("No pudimos cargar los pacientes.")))
       .finally(() => setLoadingPatients(false));
-  }, []);
+  }, [t]);
   const filtered = patients.filter((patient) =>
     `${patient.firstName} ${patient.lastName} ${patient.documentNumber}`
       .toLowerCase()
@@ -55,7 +57,7 @@ export function PrescriptionsPage() {
     try {
       setHistory(await fetchPrescriptions(patient.id));
     } catch {
-      setError("No pudimos cargar el historial de recetas.");
+      setError(t("No pudimos cargar el historial de recetas."));
     } finally {
       setLoadingHistory(false);
     }
@@ -81,7 +83,7 @@ export function PrescriptionsPage() {
       )
     ) {
       setError(
-        "Selecciona un paciente y completa medicamento, dosis y frecuencia.",
+        t("Selecciona un paciente y completa medicamento, dosis y frecuencia."),
       );
       return;
     }
@@ -100,7 +102,7 @@ export function PrescriptionsPage() {
       setInstructions("");
       setSuccess(true);
     } catch {
-      setError("No pudimos guardar la receta. Intenta de nuevo.");
+      setError(t("No pudimos guardar la receta. Intenta de nuevo."));
     } finally {
       setSaving(false);
     }
@@ -109,16 +111,16 @@ export function PrescriptionsPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Recetario"
-        description="Crea y consulta recetas asociadas a tus pacientes"
+        title={t('Recetario')}
+        description={t('Crea y consulta recetas asociadas a tus pacientes')}
         icon={ClipboardPenLine}
       />
       <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4">
           <div>
-            <h2 className="text-base font-bold">Selecciona un paciente</h2>
+            <h2 className="text-base font-bold">{t('Selecciona un paciente')}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Consulta su historial o crea una nueva receta.
+              {t('Consulta su historial o crea una nueva receta.')}
             </p>
           </div>
           <div className="relative">
@@ -127,8 +129,8 @@ export function PrescriptionsPage() {
               className="pl-9"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar paciente..."
-              aria-label="Buscar paciente para receta"
+              placeholder={t('Buscar paciente...')}
+              aria-label={t('Buscar paciente para receta')}
             />
           </div>
           {loadingPatients ? (
@@ -179,32 +181,32 @@ export function PrescriptionsPage() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {selected.documentTypeName ?? ""} {selected.documentNumber} ·{" "}
-                      {selected.insurerName ?? "Sin aseguradora"}
+                      {selected.insurerName ?? t("Sin aseguradora")}
                     </p>
                   </div>
                 </div>
                 <span className="rounded-full bg-info-soft px-3 py-1 text-xs font-semibold text-info-foreground">
-                  {history.length} receta{history.length !== 1 ? "s" : ""}{" "}
-                  registrada{history.length !== 1 ? "s" : ""}
+                  {history.length} {t('receta')}{history.length !== 1 ? t("s") : ""}{" "}
+                  {t('registrada')}{history.length !== 1 ? t("s") : ""}
                 </span>
               </div>
               <div className="rounded-2xl border border-border bg-card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-primary">
-                      Nueva receta
+                      {t('Nueva receta')}
                     </p>
                     <h2 className="mt-1 text-lg font-bold">
-                      Prescripción médica
+                      {t('Prescripción médica')}
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Agrega uno o más medicamentos al tratamiento.
+                      {t('Agrega uno o más medicamentos al tratamiento.')}
                     </p>
                   </div>
                   {success && (
                     <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1.5 text-xs font-semibold text-success-foreground">
                       <CheckCircle2 className="size-3.5" />
-                      Receta guardada
+                      {t('Receta guardada')}
                     </span>
                   )}
                 </div>
@@ -235,15 +237,15 @@ export function PrescriptionsPage() {
                     }}
                   >
                     <Plus data-icon="inline-start" />
-                    Agregar medicamento
+                    {t('Agregar medicamento')}
                   </Button>
                   <div className="flex flex-col gap-1.5">
-                    <Label>Indicaciones generales</Label>
+                    <Label>{t('Indicaciones generales')}</Label>
                     <textarea
                       value={instructions}
                       onChange={(event) => setInstructions(event.target.value)}
                       className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      placeholder="Recomendaciones, controles y señales de alarma"
+                      placeholder={t("Recomendaciones, controles y señales de alarma")}
                     />
                   </div>
                   {error && (
@@ -263,7 +265,7 @@ export function PrescriptionsPage() {
                         setError(null);
                       }}
                     >
-                      Cancelar
+                      {t('Cancelar')}
                     </Button>
                     <Button
                       onClick={() => void save()}
@@ -275,7 +277,7 @@ export function PrescriptionsPage() {
                           data-icon="inline-start"
                         />
                       )}
-                      {saving ? "Guardando..." : "Guardar receta"}
+                      {saving ? t("Guardando...") : t("Guardar receta")}
                     </Button>
                   </div>
                 </div>
@@ -304,24 +306,25 @@ function MedicationRow({
   ) => void;
   onRemove: () => void;
 }) {
+  const t = useT();
   return (
     <div className="rounded-xl border border-border bg-muted/30 p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-bold text-foreground">
-          Medicamento {index + 1}
+          {t('Medicamento')} {index + 1}
         </p>
         <Button
           variant="ghost"
           size="icon-sm"
           className="text-destructive hover:text-destructive"
           onClick={onRemove}
-          aria-label={`Eliminar medicamento ${index + 1}`}
+          aria-label={`${t('Eliminar medicamento')} ${index + 1}`}
         >
           <Trash2 />
         </Button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Medicamento">
+        <Field label={t("Medicamento")}>
           <Input
             value={medication.name}
             onChange={(event) =>
@@ -330,84 +333,84 @@ function MedicationRow({
             placeholder="Ej. Losartán"
           />
         </Field>
-        <Field label="Principio activo">
+        <Field label={t("Principio activo")}>
           <Input
             value={medication.activeIngredient}
             onChange={(event) =>
               onChange(medication.id, "activeIngredient", event.target.value)
             }
-            placeholder="Componente activo"
+            placeholder={t("Componente activo")}
           />
         </Field>
-        <Field label="Presentación">
+        <Field label={t("Presentación")}>
           <Input
             value={medication.presentation}
             onChange={(event) =>
               onChange(medication.id, "presentation", event.target.value)
             }
-            placeholder="Tableta 50 mg"
+            placeholder={t("Tableta 50 mg")}
           />
         </Field>
-        <Field label="Dosis">
+        <Field label={t("Dosis")}>
           <Input
             value={medication.dose}
             onChange={(event) =>
               onChange(medication.id, "dose", event.target.value)
             }
-            placeholder="1 tableta"
+            placeholder={t("1 tableta")}
           />
         </Field>
-        <Field label="Frecuencia">
+        <Field label={t("Frecuencia")}>
           <select
             value={medication.frequency}
             onChange={(event) =>
               onChange(medication.id, "frequency", event.target.value)
             }
           >
-            <option>Cada 8 horas</option>
-            <option>Cada 12 horas</option>
-            <option>Una vez al día</option>
-            <option>Según necesidad</option>
+            <option>{t('Cada 8 horas')}</option>
+            <option>{t('Cada 12 horas')}</option>
+            <option>{t('Una vez al día')}</option>
+            <option>{t('Según necesidad')}</option>
           </select>
         </Field>
-        <Field label="Duración">
+        <Field label={t("Duración")}>
           <Input
             value={medication.duration}
             onChange={(event) =>
               onChange(medication.id, "duration", event.target.value)
             }
-            placeholder="30 días"
+            placeholder={t("30 días")}
           />
         </Field>
-        <Field label="Cantidad">
+        <Field label={t("Cantidad")}>
           <Input
             value={medication.quantity}
             onChange={(event) =>
               onChange(medication.id, "quantity", event.target.value)
             }
-            placeholder="30 tabletas"
+            placeholder={t("30 tabletas")}
           />
         </Field>
-        <Field label="Vía de administración">
+        <Field label={t("Vía de administración")}>
           <select
             value={medication.route}
             onChange={(event) =>
               onChange(medication.id, "route", event.target.value)
             }
           >
-            <option>Oral</option>
-            <option>Tópica</option>
-            <option>Intramuscular</option>
-            <option>Inhalada</option>
+            <option>{t('Oral')}</option>
+            <option>{t('Tópica')}</option>
+            <option>{t('Intramuscular')}</option>
+            <option>{t('Inhalada')}</option>
           </select>
         </Field>
-        <Field label="Indicaciones">
+        <Field label={t("Indicaciones")}>
           <Input
             value={medication.instructions}
             onChange={(event) =>
               onChange(medication.id, "instructions", event.target.value)
             }
-            placeholder="Tomar con alimentos"
+            placeholder={t("Tomar con alimentos")}
           />
         </Field>
       </div>
@@ -422,12 +425,13 @@ function PrescriptionHistory({
   history: Prescription[];
   loading: boolean;
 }) {
+  const t = useT();
   return (
     <section className="rounded-2xl border border-border bg-card p-5">
       <div className="mb-4">
-        <h2 className="text-base font-bold">Historial de recetas</h2>
+        <h2 className="text-base font-bold">{t('Historial de recetas')}</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Recetas emitidas para el paciente seleccionado.
+          {t('Recetas emitidas para el paciente seleccionado.')}
         </p>
       </div>
       {loading ? (
@@ -442,15 +446,15 @@ function PrescriptionHistory({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold">
-                    Receta del {prescription.issuedAt}
+                    {t('Receta del')} {prescription.issuedAt}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Emitida por {prescription.professional}
+                    {t('Emitida por')} {prescription.professional}
                   </p>
                 </div>
                 <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
-                  {prescription.medications.length} medicamento
-                  {prescription.medications.length !== 1 ? "s" : ""}
+                  {prescription.medications.length} {t('medicamento')}
+                  {prescription.medications.length !== 1 ? t("s") : ""}
                 </span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -459,7 +463,7 @@ function PrescriptionHistory({
                     className="rounded-md bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary"
                     key={medication.id}
                   >
-                    {medication.name || "Medicamento sin nombre"} ·{" "}
+                    {medication.name || t("Medicamento sin nombre")} ·{" "}
                     {medication.dose}
                   </span>
                 ))}
@@ -471,7 +475,7 @@ function PrescriptionHistory({
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border py-8 text-center">
           <ClipboardPenLine className="size-6 text-muted-foreground" />
           <p className="text-xs text-muted-foreground">
-            Este paciente aún no tiene recetas registradas.
+            {t('Este paciente aún no tiene recetas registradas.')}
           </p>
         </div>
       )}
@@ -479,15 +483,17 @@ function PrescriptionHistory({
   );
 }
 function EmptyPrescription() {
+  const t = useT();
   return (
     <div className="flex min-h-[460px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card text-center">
       <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
         <UserRound className="size-6" />
       </span>
-      <h2 className="text-sm font-semibold">Selecciona un paciente</h2>
+      <h2 className="text-sm font-semibold">{t('Selecciona un paciente')}</h2>
       <p className="max-w-xs text-xs text-muted-foreground">
-        Elige un paciente de la lista para consultar su historial y crear una
-        receta.
+        {t('Elige un paciente de la lista para consultar su historial y crear una')}
+        {" "}
+        {t('receta.')}
       </p>
     </div>
   );

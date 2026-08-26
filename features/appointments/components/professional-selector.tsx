@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CatalogCombobox } from "@/features/patients/components/catalog-combobox";
+import { useT } from "@/providers/i18n-provider";
 import { fetchProfessionalsCatalog } from "../services/reference-service";
 
 export interface ProfessionalOption {
@@ -30,6 +31,7 @@ export function ProfessionalSelector({
   value: string;
   onChange: (professionalId: string) => void;
 }) {
+  const t = useT();
   const [professionals, setProfessionals] = useState<ProfessionalOption[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -67,9 +69,9 @@ export function ProfessionalSelector({
       onSelect={(item) => onChange(item?.id ?? "")}
       items={professionals}
       getLabel={professionalLabel}
-      placeholder={loading ? "Cargando profesionales…" : "Buscar profesional…"}
-      searchPlaceholder="Buscar por nombre…"
-      emptyText="Sin profesionales activos."
+      placeholder={loading ? t('Cargando profesionales…') : t('Buscar profesional…')}
+      searchPlaceholder={t('Buscar por nombre…')}
+      emptyText={t('Sin profesionales activos.')}
       disabled={disabled}
       className="min-w-56"
     />

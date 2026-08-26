@@ -11,6 +11,7 @@ import {
   Stethoscope,
   Clock,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +41,7 @@ interface RoomPanelProps {
 }
 
 function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
+  const t = useT();
   const router = useRouter();
   const [room, setRoom] = useState<VirtualRoomDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       await refreshRoom();
       onSessionChanged();
     } catch {
-      setError("No se pudo iniciar la sesión.");
+      setError(t('No se pudo iniciar la sesión.'));
     } finally {
       setBusy(false);
     }
@@ -100,7 +102,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       await refreshRoom();
       onSessionChanged();
     } catch {
-      setError("No se pudo finalizar la sesión.");
+      setError(t('No se pudo finalizar la sesión.'));
     } finally {
       setBusy(false);
     }
@@ -117,7 +119,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-[15px] font-semibold text-foreground">
           <Video className="size-4 text-primary" />
-          Sala virtual
+          {t('Sala virtual')}
         </h2>
         {room && (
           <StatusBadge
@@ -128,10 +130,10 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <InfoChip icon={User} label="Paciente" value={appointment.patientName ?? "—"} />
-        <InfoChip icon={Stethoscope} label="Especialidad" value={appointment.specialtyName ?? "—"} />
-        <InfoChip icon={Clock} label="Horario" value={formatRange(appointment.scheduledStart, appointment.scheduledEnd)} />
-        <InfoChip icon={Video} label="Participantes" value={`${participantsConnected} conectados`} />
+        <InfoChip icon={User} label={t('Paciente')} value={appointment.patientName ?? "—"} />
+        <InfoChip icon={Stethoscope} label={t('Especialidad')} value={appointment.specialtyName ?? "—"} />
+        <InfoChip icon={Clock} label={t('Horario')} value={formatRange(appointment.scheduledStart, appointment.scheduledEnd)} />
+        <InfoChip icon={Video} label={t('Participantes')} value={`${participantsConnected} ${t('conectados')}`} />
       </div>
 
       {error && (
@@ -144,18 +146,18 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={handleJoin} className="gap-1.5">
             <PhoneCall className="size-4" />
-            Unirme a la consulta
+            {t('Unirme a la consulta')}
           </Button>
           {appointment.status === "Confirmed" && (
             <Button variant="outline" onClick={handleStart} disabled={busy} className="gap-1.5">
               <Video className="size-4" />
-              Iniciar sesión
+              {t('Iniciar sesión')}
             </Button>
           )}
           {appointment.status === "InProgress" && (
             <Button variant="destructive" onClick={handleEnd} disabled={busy} className="gap-1.5">
               <PhoneOff className="size-4" />
-              Finalizar sesión
+              {t('Finalizar sesión')}
             </Button>
           )}
         </div>
@@ -163,7 +165,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
 
       {!canJoin && (
         <p className="text-[12.5px] text-muted-foreground">
-          La sala solo se habilita para citas confirmadas o en curso.
+          {t('La sala solo se habilita para citas confirmadas o en curso.')}
         </p>
       )}
     </section>
@@ -191,6 +193,7 @@ function InfoChip({
 }
 
 export function AppointmentDetail() {
+  const t = useT();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const appointmentId = params.id;
@@ -212,7 +215,7 @@ export function AppointmentDetail() {
         setError(null);
       } catch {
         if (!active) return;
-        setError("No se pudo cargar la cita.");
+        setError(t('No se pudo cargar la cita.'));
       } finally {
         if (active) setLoading(false);
       }
@@ -220,7 +223,7 @@ export function AppointmentDetail() {
     return () => {
       active = false;
     };
-  }, [appointmentId, refreshKey]);
+  }, [appointmentId, refreshKey, t]);
 
   const isProfessional =
     context?.professional != null && appointment != null &&
@@ -239,10 +242,10 @@ export function AppointmentDetail() {
     return (
       <div className="flex flex-col gap-6 p-6">
         <Button variant="outline" onClick={() => router.back()} className="w-fit gap-1.5">
-          <ArrowLeft className="size-4" /> Volver
+          <ArrowLeft className="size-4" /> {t('Volver')}
         </Button>
         <p className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive" role="alert">
-          {error ?? "Cita no encontrada."}
+          {error ?? t('Cita no encontrada.')}
         </p>
       </div>
     );
@@ -251,12 +254,12 @@ export function AppointmentDetail() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <Button variant="outline" onClick={() => router.back()} className="w-fit gap-1.5">
-        <ArrowLeft className="size-4" /> Volver
+        <ArrowLeft className="size-4" /> {t('Volver')}
       </Button>
 
       <PageHeader
-        title={appointment.patientName ?? "Cita"}
-        description={`${appointment.specialtyName ?? "Especialidad"} · ${formatRange(appointment.scheduledStart, appointment.scheduledEnd)}`}
+        title={appointment.patientName ?? t('Cita')}
+        description={`${appointment.specialtyName ?? t('Especialidad')} · ${formatRange(appointment.scheduledStart, appointment.scheduledEnd)}`}
         icon={Video}
         actions={
           <StatusBadge
@@ -268,7 +271,7 @@ export function AppointmentDetail() {
 
       {!isProfessional && (
         <p className="rounded-xl bg-amber-soft px-4 py-3 text-sm text-amber-700" role="note">
-          Solo el profesional asignado puede gestionar la sala y el encuentro clínico.
+          {t('Solo el profesional asignado puede gestionar la sala y el encuentro clínico.')}
         </p>
       )}
 

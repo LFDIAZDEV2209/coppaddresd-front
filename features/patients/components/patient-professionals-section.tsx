@@ -18,6 +18,7 @@ import {
   removePatientProfessional,
 } from "../services/patients-service";
 import type { PatientProfessionalAssignment } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 /**
  * Profesionales asignados al paciente (relación del dominio "mis pacientes").
@@ -26,6 +27,7 @@ import type { PatientProfessionalAssignment } from "../types";
  * identidad: un profesional clínico solo puede asignarse a sí mismo.
  */
 export function PatientProfessionalsSection({ patientId }: { patientId: string }) {
+  const t = useT();
   const { can } = useAppContext();
   const canManage = can("Patients.Update");
 
@@ -51,7 +53,7 @@ export function PatientProfessionalsSection({ patientId }: { patientId: string }
         setError(null);
       } catch {
         if (!active) return;
-        setError("No pudimos cargar los profesionales asignados.");
+        setError(t("No pudimos cargar los profesionales asignados."));
       } finally {
         if (active) setLoading(false);
       }
@@ -59,7 +61,7 @@ export function PatientProfessionalsSection({ patientId }: { patientId: string }
     return () => {
       active = false;
     };
-  }, [patientId, reloadKey]);
+  }, [patientId, reloadKey, t]);
 
   // Catálogo de profesionales para asignar (solo si puede gestionar).
   useEffect(() => {
@@ -94,7 +96,7 @@ export function PatientProfessionalsSection({ patientId }: { patientId: string }
       setSelectedId("");
       setReloadKey((key) => key + 1);
     } catch {
-      setError("No pudimos asignar el profesional.");
+      setError(t("No pudimos asignar el profesional."));
     } finally {
       setSaving(false);
     }
@@ -107,7 +109,7 @@ export function PatientProfessionalsSection({ patientId }: { patientId: string }
       await removePatientProfessional(patientId, professionalId);
       setReloadKey((key) => key + 1);
     } catch {
-      setError("No pudimos desasignar el profesional.");
+      setError(t("No pudimos desasignar el profesional."));
     } finally {
       setSaving(false);
     }
@@ -119,11 +121,11 @@ export function PatientProfessionalsSection({ patientId }: { patientId: string }
   return (
     <section
       className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
-      aria-label="Profesionales asignados"
+      aria-label={t("Profesionales asignados")}
     >
       <SectionHeader
-        title="Profesionales asignados"
-        description={`${active.length} atienden a este paciente`}
+        title={t("Profesionales asignados")}
+        description={`${active.length} ${t("atienden a este paciente")}`}
         icon={Stethoscope}
         variant="primary"
       />
@@ -166,7 +168,7 @@ export function PatientProfessionalsSection({ patientId }: { patientId: string }
                   className="text-destructive hover:text-destructive"
                   onClick={() => void remove(assignment.professionalId)}
                   disabled={saving}
-                  aria-label={`Desasignar a ${assignment.fullName}`}
+                  aria-label={`${t('Desasignar a')} ${assignment.fullName}`}
                 >
                   <UserMinus />
                 </Button>
@@ -176,14 +178,14 @@ export function PatientProfessionalsSection({ patientId }: { patientId: string }
         </ul>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Sin profesionales asignados. {canManage ? "Asigná uno desde el catálogo." : ""}
+          {t('Sin profesionales asignados.')} {canManage ? t("Asigná uno desde el catálogo.") : ""}
         </p>
       )}
 
       {inactive.length > 0 && (
         <p className="text-[11.5px] text-muted-foreground">
-          {inactive.length} asignación{inactive.length !== 1 ? "es" : ""} inactiva
-          {inactive.length !== 1 ? "s" : ""} (historial conservado).
+          {inactive.length} {t('asignación')}{inactive.length !== 1 ? t("es") : ""} {t("inactiva")}
+          {inactive.length !== 1 ? t("s") : ""} ({t("historial conservado")}).
         </p>
       )}
 
@@ -194,9 +196,9 @@ export function PatientProfessionalsSection({ patientId }: { patientId: string }
               value={selectedId}
               onChange={(event) => setSelectedId(event.target.value)}
               className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Profesional a asignar"
+              aria-label={t("Profesional a asignar")}
             >
-              <option value="">Seleccionar profesional...</option>
+              <option value="">{t('Seleccionar profesional...')}</option>
               {available.map((professional) => (
                 <option key={professional.id} value={professional.id}>
                   {professional.fullName}
@@ -216,12 +218,12 @@ export function PatientProfessionalsSection({ patientId }: { patientId: string }
               ) : (
                 <UserPlus data-icon="inline-start" />
               )}
-              Asignar
+              {t('Asignar')}
             </Button>
           </div>
           {available.length === 0 && catalog.length > 0 && (
             <p className="text-[11.5px] text-muted-foreground">
-              Todos los profesionales del catálogo ya están asignados.
+              {t('Todos los profesionales del catálogo ya están asignados.')}
             </p>
           )}
         </div>

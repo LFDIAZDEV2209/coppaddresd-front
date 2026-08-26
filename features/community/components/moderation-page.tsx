@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCommunity, type FeedPostView } from "../hooks/useCommunity";
+import { useT } from "@/providers/i18n-provider";
 
 const AVATAR_GRADS = [
   "from-sky-500 to-blue-600",
@@ -50,6 +51,7 @@ const EMPTY_FILTERS: FeedFilters = {
 };
 
 export function ModerationPage() {
+  const t = useT();
   // Estado de los inputs del formulario de filtros.
   const [filters, setFilters] = useState<FeedFilters>({
     author: "",
@@ -92,7 +94,7 @@ export function ModerationPage() {
     try {
       await pinPost(view.post.id, !view.post.pinned);
     } catch {
-      setError("No pudimos actualizar la publicación. Intenta de nuevo.");
+      setError(t('No pudimos actualizar la publicación. Intenta de nuevo.'));
     } finally {
       setBusyId(null);
     }
@@ -106,7 +108,7 @@ export function ModerationPage() {
     try {
       await deletePost(target.post.id);
     } catch {
-      setError("No pudimos eliminar la publicación. Intenta de nuevo.");
+      setError(t('No pudimos eliminar la publicación. Intenta de nuevo.'));
     } finally {
       setBusyId(null);
       setDeleteTarget(null);
@@ -116,8 +118,8 @@ export function ModerationPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Moderación de contenido"
-        description="Gestiona las publicaciones de la comunidad"
+        title={t('Moderación de contenido')}
+        description={t('Gestiona las publicaciones de la comunidad')}
         icon={ShieldCheck}
         actions={
           <Button
@@ -131,16 +133,16 @@ export function ModerationPage() {
               data-icon="inline-start"
               className={feedLoading ? "animate-spin" : undefined}
             />
-            Actualizar
+            {t('Actualizar')}
           </Button>
         }
       />
 
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div>
-          <h2 className="text-sm font-semibold">Filtros del feed</h2>
+          <h2 className="text-sm font-semibold">{t('Filtros del feed')}</h2>
           <p className="text-xs text-muted-foreground">
-            Filtra las publicaciones por autor, contenido o rango de fechas.
+            {t('Filtra las publicaciones por autor, contenido o rango de fechas.')}
           </p>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto_auto] lg:items-end">
@@ -149,7 +151,7 @@ export function ModerationPage() {
               htmlFor="filter-author"
               className="text-xs font-medium text-muted-foreground"
             >
-              Autor
+              {t('Autor')}
             </label>
             <Input
               id="filter-author"
@@ -157,8 +159,8 @@ export function ModerationPage() {
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, author: event.target.value }))
               }
-              placeholder="Buscar por usuario…"
-              aria-label="Filtrar por autor"
+              placeholder={t('Buscar por usuario…')}
+              aria-label={t('Filtrar por autor')}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -166,7 +168,7 @@ export function ModerationPage() {
               htmlFor="filter-search"
               className="text-xs font-medium text-muted-foreground"
             >
-              Contenido
+              {t('Contenido')}
             </label>
             <Input
               id="filter-search"
@@ -174,8 +176,8 @@ export function ModerationPage() {
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, search: event.target.value }))
               }
-              placeholder="Buscar por palabra…"
-              aria-label="Filtrar por contenido"
+              placeholder={t('Buscar por palabra…')}
+              aria-label={t('Filtrar por contenido')}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -183,7 +185,7 @@ export function ModerationPage() {
               htmlFor="filter-from"
               className="text-xs font-medium text-muted-foreground"
             >
-              Desde
+              {t('Desde')}
             </label>
             <Input
               id="filter-from"
@@ -192,7 +194,7 @@ export function ModerationPage() {
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, from: event.target.value }))
               }
-              aria-label="Filtrar desde la fecha"
+              aria-label={t('Filtrar desde la fecha')}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -200,7 +202,7 @@ export function ModerationPage() {
               htmlFor="filter-to"
               className="text-xs font-medium text-muted-foreground"
             >
-              Hasta
+              {t('Hasta')}
             </label>
             <Input
               id="filter-to"
@@ -209,15 +211,15 @@ export function ModerationPage() {
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, to: event.target.value }))
               }
-              aria-label="Filtrar hasta la fecha"
+              aria-label={t('Filtrar hasta la fecha')}
             />
           </div>
           <div className="flex items-center gap-2">
             <Button variant="default" size="sm" onClick={applyFilters}>
-              Aplicar
+              {t('Aplicar')}
             </Button>
             <Button variant="secondary" size="sm" onClick={clearFilters}>
-              Limpiar
+              {t('Limpiar')}
             </Button>
           </div>
         </div>
@@ -232,14 +234,14 @@ export function ModerationPage() {
       {feedLoading ? (
         <FeedSkeleton />
       ) : feedError ? (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive-soft p-10 text-center text-sm text-destructive">
-          No pudimos cargar el feed de la comunidad.
-        </div>
+          <div className="rounded-2xl border border-destructive/20 bg-destructive-soft p-10 text-center text-sm text-destructive">
+            {t('No pudimos cargar el feed de la comunidad.')}
+          </div>
       ) : feed.length ? (
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
-            title={`${feed.length} publicaciones recientes`}
-            description="Últimas publicaciones del feed"
+            title={t('{count} publicaciones recientes', { count: String(feed.length) })}
+            description={t('Últimas publicaciones del feed')}
             icon={ShieldCheck}
             variant="primary"
           />
@@ -263,12 +265,12 @@ export function ModerationPage() {
                           {post.profile.displayName}
                         </span>
                         <span className="text-[11px] text-muted-foreground">
-                          {timeAgo(post.createdAt)}
+                          {timeAgo(post.createdAt, t)}
                         </span>
                         {post.pinned && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-[2px] text-[11px] font-semibold text-primary">
                             <Pin className="size-3" />
-                            Fijada
+                            {t('Fijada')}
                           </span>
                         )}
                       </div>
@@ -299,7 +301,7 @@ export function ModerationPage() {
                       ) : (
                         <Pin data-icon="inline-start" />
                       )}
-                      {post.pinned ? "Desfijar" : "Fijar"}
+                      {post.pinned ? t('Desfijar') : t('Fijar')}
                     </Button>
                     <Button
                       variant="destructive"
@@ -308,7 +310,7 @@ export function ModerationPage() {
                       onClick={() => setDeleteTarget(view)}
                     >
                       <Trash2 data-icon="inline-start" />
-                      Eliminar
+                      {t('Eliminar')}
                     </Button>
                   </div>
                 </div>
@@ -318,7 +320,7 @@ export function ModerationPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">
-          Todavía no hay publicaciones en la comunidad.
+          {t('Todavía no hay publicaciones en la comunidad.')}
         </div>
       )}
 
@@ -330,15 +332,15 @@ export function ModerationPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar publicación</AlertDialogTitle>
+            <AlertDialogTitle>{t('Eliminar publicación')}</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget
-                ? `La publicación de ${deleteTarget.post.profile.displayName} dejará de ser visible para la comunidad.`
-                : "Eliminar publicación."}
+                ? t('La publicación de {name} dejará de ser visible para la comunidad.', { name: deleteTarget.post.profile.displayName })
+                : t('Eliminar publicación.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('Cancelar')}</AlertDialogCancel>
             <Button
               variant="destructive"
               size="default"
@@ -346,7 +348,7 @@ export function ModerationPage() {
               onClick={confirmDelete}
             >
               <Trash2 data-icon="inline-start" />
-              Eliminar
+              {t('Eliminar')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -384,15 +386,15 @@ function initials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: (key: string, vars?: Record<string, string>) => string): string {
   const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return "hace un momento";
+  if (seconds < 60) return t('hace un momento');
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `hace ${minutes} min`;
+  if (minutes < 60) return t('hace {count} min', { count: String(minutes) });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `hace ${hours} h`;
+  if (hours < 24) return t('hace {count} h', { count: String(hours) });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `hace ${days} d`;
+  if (days < 30) return t('hace {count} d', { count: String(days) });
   return new Date(iso).toLocaleDateString("es-CO", {
     day: "2-digit",
     month: "short",

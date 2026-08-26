@@ -22,10 +22,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useT } from "@/providers/i18n-provider";
 import { fetchMovements } from "../services/inventory-service";
 import type { InventoryMovement } from "../types";
 
 export function MovementsPage() {
+  const t = useT();
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
   const [search, setSearch] = useState("");
   const [direction, setDirection] = useState<"all" | "Entrada" | "Salida">(
@@ -44,7 +46,7 @@ export function MovementsPage() {
       })
       .catch(() => {
         if (!cancelled)
-          setError("No pudimos cargar el historial de movimientos.");
+          setError(t("No pudimos cargar el historial de movimientos."));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -52,7 +54,7 @@ export function MovementsPage() {
     return () => {
       cancelled = true;
     };
-  }, [search, direction, from, to]);
+  }, [search, direction, from, to, t]);
   const updateSearch = (value: string) => {
     setSearch(value);
     setPage(1);
@@ -82,8 +84,8 @@ export function MovementsPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Movimientos"
-        description="Historial auditable de cada cambio en el inventario"
+        title={t("Movimientos")}
+        description={t("Historial auditable de cada cambio en el inventario")}
         icon={ArrowLeftRight}
       />
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
@@ -92,9 +94,9 @@ export function MovementsPage() {
             <CalendarDays className="size-4" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold">Filtros de auditoría</h2>
+            <h2 className="text-sm font-semibold">{t("Filtros de auditoría")}</h2>
             <p className="text-xs text-muted-foreground">
-              Consulta cuándo, qué y quién modificó el stock.
+              {t("Consulta cuándo, qué y quién modificó el stock.")}
             </p>
           </div>
         </div>
@@ -105,8 +107,8 @@ export function MovementsPage() {
               className="pl-9"
               value={search}
               onChange={(event) => updateSearch(event.target.value)}
-              placeholder="Producto, lote, usuario o referencia"
-              aria-label="Buscar movimientos"
+              placeholder={t("Producto, lote, usuario o referencia")}
+              aria-label={t("Buscar movimientos")}
             />
           </div>
           <select
@@ -114,23 +116,23 @@ export function MovementsPage() {
             onChange={(event) =>
               updateDirection(event.target.value as typeof direction)
             }
-            aria-label="Filtrar tipo de movimiento"
+            aria-label={t("Filtrar tipo de movimiento")}
           >
-            <option value="all">Todos</option>
-            <option>Entrada</option>
-            <option>Salida</option>
+            <option value="all">{t("Todos")}</option>
+            <option value="Entrada">{t("Entrada")}</option>
+            <option value="Salida">{t("Salida")}</option>
           </select>
           <Input
             type="date"
             value={from}
             onChange={(event) => updateFrom(event.target.value)}
-            aria-label="Fecha desde"
+            aria-label={t("Fecha desde")}
           />
           <Input
             type="date"
             value={to}
             onChange={(event) => updateTo(event.target.value)}
-            aria-label="Fecha hasta"
+            aria-label={t("Fecha hasta")}
           />
         </div>
       </section>
@@ -143,21 +145,21 @@ export function MovementsPage() {
       ) : movements.length ? (
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
-            title={`${movements.length} movimientos encontrados`}
-            description={`Del ${from} al ${to}`}
+            title={t("{count} movimientos encontrados", { count: String(movements.length) })}
+            description={t("Del {from} al {to}", { from, to })}
             icon={ArrowLeftRight}
             variant="primary"
           />
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha / referencia</TableHead>
-                <TableHead>Producto</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Cantidad</TableHead>
-                <TableHead>Stock resultante</TableHead>
+                <TableHead>{t("Fecha / referencia")}</TableHead>
+                <TableHead>{t("Producto")}</TableHead>
+                <TableHead>{t("Tipo")}</TableHead>
+                <TableHead>{t("Cantidad")}</TableHead>
+                <TableHead>{t("Stock resultante")}</TableHead>
                 <TableHead className="hidden lg:table-cell">
-                  Usuario / motivo
+                  {t("Usuario / motivo")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -177,7 +179,7 @@ export function MovementsPage() {
                       {movement.productName}
                     </span>
                     <span className="block text-xs text-muted-foreground">
-                      Lote {movement.lot}
+                      {t("Lote")} {movement.lot}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -211,7 +213,7 @@ export function MovementsPage() {
                       {movement.quantity}
                     </span>
                     <span className="text-[11px] text-muted-foreground">
-                      Stock anterior: {movement.stockBefore}
+                      {t("Stock anterior:")} {movement.stockBefore}
                     </span>
                   </TableCell>
                   <TableCell className="text-sm font-semibold">
@@ -230,12 +232,12 @@ export function MovementsPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">
-          No hay movimientos con esos filtros.
+          {t("No hay movimientos con esos filtros.")}
         </div>
       )}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          Página {page} de {totalPages}
+          {t("Página {page} de {totalPages}", { page: String(page), totalPages: String(totalPages) })}
         </span>
         <div className="flex gap-2">
           <Button
@@ -244,7 +246,7 @@ export function MovementsPage() {
             disabled={page === 1}
             onClick={() => setPage((value) => value - 1)}
           >
-            Anterior
+            {t("Anterior")}
           </Button>
           <Button
             variant="outline"
@@ -252,7 +254,7 @@ export function MovementsPage() {
             disabled={page === totalPages}
             onClick={() => setPage((value) => value + 1)}
           >
-            Siguiente
+            {t("Siguiente")}
           </Button>
         </div>
       </div>

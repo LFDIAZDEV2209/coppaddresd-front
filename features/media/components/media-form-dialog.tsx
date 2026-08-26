@@ -28,6 +28,7 @@ import { formatDuration, formatFileSize } from "../services/media-service";
 import { MediaPlayer } from "./media-player";
 import { MediaThumb } from "./media-thumb";
 import { mediaCategoryMeta } from "./media-meta";
+import { useT } from "@/providers/i18n-provider";
 
 interface MediaFormDialogProps {
   open: boolean;
@@ -62,6 +63,7 @@ export function MediaFormDialog({
   onOpenChange,
   onSubmit,
 }: MediaFormDialogProps) {
+  const t = useT();
   const [form, setForm] = useState(() =>
     media
       ? {
@@ -123,11 +125,11 @@ export function MediaFormDialog({
     if (!selected) return;
 
     if (!selected.type.startsWith("image/")) {
-      setValidationError("La miniatura debe ser una imagen (JPG, PNG, WebP...).");
+      setValidationError(t('La miniatura debe ser una imagen (JPG, PNG, WebP...).'));
       return;
     }
     if (selected.size > MAX_THUMBNAIL_BYTES) {
-      setValidationError("La miniatura no puede superar los 2 MB.");
+      setValidationError(t('La miniatura no puede superar los 2 MB.'));
       return;
     }
 
@@ -149,17 +151,17 @@ export function MediaFormDialog({
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form.title.trim()) {
-      setValidationError("El título es obligatorio.");
+      setValidationError(t('El título es obligatorio.'));
       return;
     }
     if (!form.author.trim()) {
-      setValidationError("El autor es obligatorio.");
+      setValidationError(t('El autor es obligatorio.'));
       return;
     }
 
     // En creación el archivo es obligatorio; en edición es opcional (reemplazo).
     if (!media && !file) {
-      setValidationError("Adjunta el archivo de audio o video para continuar.");
+      setValidationError(t('Adjunta el archivo de audio o video para continuar.'));
       return;
     }
 
@@ -217,12 +219,12 @@ export function MediaFormDialog({
             </div>
             <div className="flex flex-col gap-1">
               <DialogTitle>
-                {media ? "Editar medio" : "Nuevo medio"}
+                {media ? t('Editar medio') : t('Nuevo medio')}
               </DialogTitle>
               <DialogDescription>
                 {media
-                  ? "Actualiza la información del medio. Si adjuntás un archivo, se reemplaza el contenido."
-                  : "Adjuntá el archivo: el tipo, la duración y el tamaño se detectan automáticamente."}
+                  ? t('Actualiza la información del medio. Si adjuntás un archivo, se reemplaza el contenido.')
+                  : t('Adjuntá el archivo: el tipo, la duración y el tamaño se detectan automáticamente.')}
               </DialogDescription>
             </div>
           </div>
@@ -231,7 +233,7 @@ export function MediaFormDialog({
           {!media && (
             <div>
               <Label htmlFor="media-file">
-                Archivo (audio o video){" "}
+                {t('Archivo (audio o video)')}{" "}
                 <span className="ml-1 text-destructive" aria-hidden="true">
                   *
                 </span>
@@ -254,7 +256,7 @@ export function MediaFormDialog({
                     <p className="truncate text-sm font-medium">{file.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {detecting
-                        ? "Leyendo metadata del archivo..."
+                        ? t('Leyendo metadata del archivo...')
                         : metadata
                           ? `${metadata.mediaType} · ${formatDuration(metadata.durationSecs)} · ${formatFileSize(metadata.fileSizeBytes)}`
                           : `${formatFileSize(file.size)}`}
@@ -266,7 +268,7 @@ export function MediaFormDialog({
                     size="icon-sm"
                     onClick={clearFile}
                     disabled={uploading}
-                    aria-label="Quitar archivo"
+                    aria-label={t('Quitar archivo')}
                   >
                     <X />
                   </Button>
@@ -281,7 +283,7 @@ export function MediaFormDialog({
                     <UploadCloud className="size-6" />
                   </span>
                   <span className="text-sm font-medium">
-                    Seleccioná el archivo del medio
+                    {t('Seleccioná el archivo del medio')}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     MP3, WAV, M4A, MP4, WebM...
@@ -294,7 +296,7 @@ export function MediaFormDialog({
           {media && (
             <div className="rounded-xl border border-border bg-background p-3">
               <p className="mb-2 text-xs font-semibold text-muted-foreground">
-                Archivo actual
+                {t('Archivo actual')}
               </p>
               <MediaPlayer
                 storageKey={media.storageKey}
@@ -321,7 +323,7 @@ export function MediaFormDialog({
                 disabled={uploading}
               >
                 <UploadCloud data-icon="inline-start" />
-                Reemplazar archivo
+                {t('Reemplazar archivo')}
               </Button>
               <input
                 ref={fileInputRef}
@@ -339,7 +341,7 @@ export function MediaFormDialog({
                   <span className="text-xs text-muted-foreground">
                     {metadata
                       ? `${metadata.mediaType} · ${formatDuration(metadata.durationSecs)}`
-                      : "Leyendo metadata..."}
+                      : t('Leyendo metadata...')}
                   </span>
                   <Button
                     type="button"
@@ -347,7 +349,7 @@ export function MediaFormDialog({
                     size="icon-sm"
                     onClick={clearFile}
                     disabled={uploading}
-                    aria-label="Quitar archivo nuevo"
+                    aria-label={t('Quitar archivo nuevo')}
                   >
                     <X />
                   </Button>
@@ -360,7 +362,7 @@ export function MediaFormDialog({
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-foreground">
-                  {progress >= 100 ? "Subida completada" : "Subiendo archivo..."}
+                  {progress >= 100 ? t('Subida completada') : t('Subiendo archivo...')}
                 </span>
                 <span className="text-muted-foreground">{progress}%</span>
               </div>
@@ -380,7 +382,7 @@ export function MediaFormDialog({
           )}
 
           <div>
-            <Label htmlFor="media-thumbnail">Miniatura (opcional)</Label>
+            <Label htmlFor="media-thumbnail">{t('Miniatura (opcional)')}</Label>
             <input
               ref={thumbInputRef}
               id="media-thumbnail"
@@ -395,7 +397,7 @@ export function MediaFormDialog({
                 {/* eslint-disable-next-line @next/next/no-img-element -- Vista previa local con object URL; el optimizer de next/image no aplica a blob: */}
                 <img
                   src={thumbnailPreview}
-                  alt="Vista previa de la miniatura"
+                  alt={t('Vista previa de la miniatura')}
                   className="size-14 shrink-0 rounded-lg object-cover"
                 />
                 <div className="min-w-0 flex-1">
@@ -403,7 +405,7 @@ export function MediaFormDialog({
                     {thumbnailFile?.name}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Nueva miniatura · se sube al guardar
+                    {t('Nueva miniatura · se sube al guardar')}
                   </p>
                 </div>
                 <Button
@@ -412,7 +414,7 @@ export function MediaFormDialog({
                   size="icon-sm"
                   onClick={clearThumbnail}
                   disabled={uploading}
-                  aria-label="Quitar miniatura nueva"
+                  aria-label={t('Quitar miniatura nueva')}
                 >
                   <X />
                 </Button>
@@ -421,11 +423,11 @@ export function MediaFormDialog({
               <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-background p-3">
                 <MediaThumb
                   storageKey={media.thumbnailKey}
-                  alt={`Miniatura de ${media.title}`}
+                  alt={t('Miniatura de {title}', { title: media.title })}
                   className="size-14 shrink-0 rounded-lg object-cover"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">Miniatura actual</p>
+                  <p className="truncate text-sm font-medium">{t('Miniatura actual')}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {media.thumbnailKey}
                   </p>
@@ -436,7 +438,7 @@ export function MediaFormDialog({
                   size="icon-sm"
                   onClick={clearThumbnail}
                   disabled={uploading}
-                  aria-label="Quitar miniatura"
+                  aria-label={t('Quitar miniatura')}
                 >
                   <X />
                 </Button>
@@ -449,25 +451,25 @@ export function MediaFormDialog({
                 className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary-soft/40 disabled:opacity-50"
               >
                 <ImagePlus className="size-4" />
-                Agregar miniatura
+                {t('Agregar miniatura')}
               </button>
             )}
           </div>
 
           <fieldset className="flex flex-col gap-4">
             <legend className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Información del medio
+              {t('Información del medio')}
             </legend>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Título" required>
+              <Field label={t('Título')} required>
                 <Input
                   value={form.title}
                   onChange={(event) => update("title", event.target.value)}
-                  placeholder="Ej. Bienvenida al programa"
+                  placeholder={t('Ej. Bienvenida al programa')}
                   disabled={uploading}
                 />
               </Field>
-              <Field label="Orden de lección">
+              <Field label={t('Orden de lección')}>
                 <Input
                   type="number"
                   min={0}
@@ -479,15 +481,15 @@ export function MediaFormDialog({
                   disabled={uploading}
                 />
               </Field>
-              <Field label="Autor" required>
+              <Field label={t('Autor')} required>
                 <Input
                   value={form.author}
                   onChange={(event) => update("author", event.target.value)}
-                  placeholder="Ej. Dra. Ana Pérez"
+                  placeholder={t('Ej. Dra. Ana Pérez')}
                   disabled={uploading}
                 />
               </Field>
-              <Field label="Categoría" required>
+              <Field label={t('Categoría')} required>
                 <select
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   value={form.category}
@@ -506,7 +508,7 @@ export function MediaFormDialog({
                   ))}
                 </select>
               </Field>
-              <Field label="Día">
+              <Field label={t('Día')}>
                 <Input
                   type="number"
                   min={1}
@@ -519,7 +521,7 @@ export function MediaFormDialog({
                   disabled={uploading}
                 />
               </Field>
-              <Field label="Mes">
+              <Field label={t('Mes')}>
                 <Input
                   type="number"
                   min={1}
@@ -532,7 +534,7 @@ export function MediaFormDialog({
                   disabled={uploading}
                 />
               </Field>
-              <Field label="Estado" required>
+              <Field label={t('Estado')} required>
                 <select
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   value={form.status}
@@ -544,31 +546,31 @@ export function MediaFormDialog({
                   }
                   disabled={uploading}
                 >
-                  <option value="Draft">Borrador</option>
-                  <option value="Published">Publicado</option>
-                  <option value="Archived">Archivado</option>
+                  <option value="Draft">{t('Borrador')}</option>
+                  <option value="Published">{t('Publicado')}</option>
+                  <option value="Archived">{t('Archivado')}</option>
                 </select>
               </Field>
             </div>
           </fieldset>
 
-          <Field label="Descripción">
+          <Field label={t('Descripción')}>
             <textarea
               className="min-h-20 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               value={form.description ?? ""}
               onChange={(event) =>
                 update("description", event.target.value || null)
               }
-              placeholder="Describe el contenido del medio"
+              placeholder={t('Describe el contenido del medio')}
               disabled={uploading}
             />
           </Field>
 
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium">Publicar de inmediato</span>
+              <span className="text-sm font-medium">{t('Publicar de inmediato')}</span>
               <span className="text-xs text-muted-foreground">
-                Al publicar se fijará la fecha de publicación automáticamente.
+                {t('Al publicar se fijará la fecha de publicación automáticamente.')}
               </span>
             </div>
             <Switch
@@ -577,7 +579,7 @@ export function MediaFormDialog({
                 update("status", checked ? "Published" : "Draft")
               }
               disabled={uploading}
-              aria-label="Publicar de inmediato"
+              aria-label={t('Publicar de inmediato')}
             />
           </div>
 
@@ -597,7 +599,7 @@ export function MediaFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={saving || uploading}
             >
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button type="submit" disabled={saving || uploading}>
               {uploading ? (
@@ -606,7 +608,7 @@ export function MediaFormDialog({
                     className="animate-spin"
                     data-icon="inline-start"
                   />
-                  Subiendo...
+                  {t('Subiendo...')}
                 </>
               ) : saving ? (
                 <>
@@ -614,12 +616,12 @@ export function MediaFormDialog({
                     className="animate-spin"
                     data-icon="inline-start"
                   />
-                  Guardando...
+                  {t('Guardando...')}
                 </>
               ) : media ? (
-                "Guardar cambios"
+                t('Guardar cambios')
               ) : (
-                "Subir y crear medio"
+                t('Subir y crear medio')
               )}
             </Button>
           </DialogFooter>

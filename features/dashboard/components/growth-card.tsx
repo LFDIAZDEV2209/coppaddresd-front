@@ -1,3 +1,4 @@
+import { useT } from "@/providers/i18n-provider";
 import type { GrowthDataPoint } from "../types";
 
 interface GrowthCardProps {
@@ -5,6 +6,7 @@ interface GrowthCardProps {
 }
 
 export function GrowthCard({ data }: GrowthCardProps) {
+  const t = useT();
   const maxValue = Math.max(...data.map((d) => d.value));
 
   return (
@@ -21,7 +23,7 @@ export function GrowthCard({ data }: GrowthCardProps) {
                 <div
                   className="w-[24px] rounded-t-md bg-[var(--chart-4)] transition-all duration-500 hover:shadow-md hover:shadow-[var(--chart-4)]/20"
                   style={{ height: `${heightPercent}%` }}
-                  title={`${point.value} usuarios`}
+                  title={t('{count} usuarios', { count: String(point.value) })}
                 />
               </div>
             </div>

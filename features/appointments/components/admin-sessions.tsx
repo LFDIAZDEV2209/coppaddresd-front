@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   Video,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,14 +22,15 @@ import { useAdminSessions } from "../hooks/use-admin";
 import { sessionStatusColor, sessionStatusLabel, formatDateTime } from "../utils/format";
 
 export function AdminSessions() {
+  const t = useT();
   const { items, total, page, totalPages, loading, error, setPage } =
     useAdminSessions();
 
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Sesiones"
-        description="Sesiones de video realizadas en el módulo de citas"
+        title={t('Sesiones')}
+        description={t('Sesiones de video realizadas en el módulo de citas')}
         icon={Video}
       />
 
@@ -49,9 +51,9 @@ export function AdminSessions() {
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
             <Video className="size-6 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium text-foreground">No hay sesiones</p>
+          <p className="text-sm font-medium text-foreground">{t('No hay sesiones')}</p>
           <p className="text-[12.5px] text-muted-foreground">
-            Las sesiones de video aparecerán cuando se realicen consultas.
+            {t('Las sesiones de video aparecerán cuando se realicen consultas.')}
           </p>
         </div>
       ) : (
@@ -59,13 +61,13 @@ export function AdminSessions() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Paciente</TableHead>
-                <TableHead>Profesional</TableHead>
-                <TableHead>Inicio</TableHead>
-                <TableHead>Fin</TableHead>
-                <TableHead>Duración</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acción</TableHead>
+                <TableHead>{t('Paciente')}</TableHead>
+                <TableHead>{t('Profesional')}</TableHead>
+                <TableHead>{t('Inicio')}</TableHead>
+                <TableHead>{t('Fin')}</TableHead>
+                <TableHead>{t('Duración')}</TableHead>
+                <TableHead>{t('Estado')}</TableHead>
+                <TableHead className="text-right">{t('Acción')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -91,7 +93,7 @@ export function AdminSessions() {
                       href={`/appointments/citas/${session.appointmentId}`}
                       className={buttonVariants({ size: "sm", variant: "ghost" })}
                     >
-                      Ver cita
+                      {t('Ver cita')}
                     </Link>
                   </TableCell>
                 </TableRow>
@@ -104,13 +106,13 @@ export function AdminSessions() {
       {totalPages > 1 && !loading && (
         <div className="flex items-center justify-center gap-2">
           <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-            Anterior
+            {t('Anterior')}
           </Button>
           <span className="text-[12px] text-muted-foreground">
-            Página {page} de {totalPages} · {total} sesiones
+            {t('Página {page} de {totalPages} · {total} sesiones', { page: String(page), totalPages: String(totalPages), total: String(total) })}
           </span>
           <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
-            Siguiente
+            {t('Siguiente')}
           </Button>
         </div>
       )}

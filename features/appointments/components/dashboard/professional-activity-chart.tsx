@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useT } from "@/providers/i18n-provider";
 import type { ProfessionalActivityDto } from "../../types";
 
 /**
@@ -22,6 +23,8 @@ export function ProfessionalActivityChart({
   activity: ProfessionalActivityDto[];
   loading: boolean;
 }) {
+  const t = useT();
+
   if (loading) {
     return <div className="h-56 w-full animate-pulse rounded-xl bg-muted" />;
   }
@@ -29,13 +32,13 @@ export function ProfessionalActivityChart({
   if (activity.length === 0) {
     return (
       <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-border text-[12.5px] text-muted-foreground">
-        Sin actividad en el período
+        {t('Sin actividad en el período')}
       </div>
     );
   }
 
   const data = activity.map((item) => ({
-    name: item.professionalName ?? "Profesional",
+    name: item.professionalName ?? t('Profesional'),
     citas: item.total,
     completadas: item.completed,
   }));
@@ -67,7 +70,7 @@ export function ProfessionalActivityChart({
           <Tooltip
             formatter={(value, name) => [
               String(value),
-              name === "citas" ? "Citas" : "Completadas",
+              name === "citas" ? t('Citas') : t('Completadas'),
             ]}
             cursor={{ fill: "var(--muted)", opacity: 0.4 }}
             contentStyle={{

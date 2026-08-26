@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useT } from "@/providers/i18n-provider";
 import {
   splitBackendErrors,
   validateRoleForm,
@@ -49,6 +50,7 @@ export function RoleFormDialog({
   onOpenChange,
   onSubmit,
 }: RoleFormDialogProps) {
+  const t = useT();
   const [form, setForm] = useState(() =>
     role
       ? {
@@ -115,7 +117,7 @@ export function RoleFormDialog({
         splitBackendErrors(
           err instanceof Error
             ? err.message
-            : "Error inesperado. Intenta de nuevo.",
+            : t("Error inesperado. Intenta de nuevo."),
         ),
       );
     }
@@ -130,11 +132,11 @@ export function RoleFormDialog({
               <Shield className="size-5" />
             </div>
             <div className="flex flex-col gap-1">
-              <DialogTitle>{role ? "Editar rol" : "Nuevo rol"}</DialogTitle>
+              <DialogTitle>{role ? t("Editar rol") : t("Nuevo rol")}</DialogTitle>
               <DialogDescription>
                 {role
-                  ? "Actualizá los datos básicos del rol."
-                  : "Creá un rol y luego asignale permisos desde el panel."}
+                  ? t("Actualizá los datos básicos del rol.")
+                  : t("Creá un rol y luego asignale permisos desde el panel.")}
               </DialogDescription>
             </div>
           </div>
@@ -159,7 +161,7 @@ export function RoleFormDialog({
           )}
 
           <Field
-            label="Nombre"
+            label={t("Nombre")}
             required
             error={touched.has("name") ? fieldErrors.name : ""}
           >
@@ -168,14 +170,14 @@ export function RoleFormDialog({
               value={form.name}
               onChange={(event) => update("name", event.target.value)}
               onBlur={handleBlur("name")}
-              placeholder="Ej. Analista"
+              placeholder={t("Ej. Analista")}
               disabled={saving}
               aria-invalid={Boolean(fieldErrors.name)}
             />
           </Field>
 
           <Field
-            label="Descripción"
+            label={t("Descripción")}
             error={touched.has("description") ? fieldErrors.description : ""}
           >
             <textarea
@@ -184,7 +186,7 @@ export function RoleFormDialog({
               value={form.description}
               onChange={(event) => update("description", event.target.value)}
               onBlur={handleBlur("description")}
-              placeholder="Describí el propósito del rol"
+              placeholder={t("Describí el propósito del rol")}
               disabled={saving}
             />
           </Field>
@@ -192,16 +194,16 @@ export function RoleFormDialog({
           {role && (
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">Rol activo</span>
+                <span className="text-sm font-medium">{t("Rol activo")}</span>
                 <span className="text-xs text-muted-foreground">
-                  Los roles inactivos no pueden asignarse a nuevos usuarios.
+                  {t("Los roles inactivos no pueden asignarse a nuevos usuarios.")}
                 </span>
               </div>
               <Switch
                 checked={form.isActive}
                 onCheckedChange={(checked) => update("isActive", checked)}
                 disabled={saving}
-                aria-label="Rol activo"
+                aria-label={t("Rol activo")}
               />
             </div>
           )}
@@ -213,18 +215,18 @@ export function RoleFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={saving}
             >
-              Cancelar
+              {t("Cancelar")}
             </Button>
             <Button type="submit" disabled={saving}>
               {saving ? (
                 <>
                   <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  Guardando...
+                  {t("Guardando...")}
                 </>
               ) : role ? (
-                "Guardar cambios"
+                t("Guardar cambios")
               ) : (
-                "Crear rol"
+                t("Crear rol")
               )}
             </Button>
           </DialogFooter>
