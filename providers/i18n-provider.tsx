@@ -47,11 +47,15 @@ export function I18nProvider({
 }) {
   const [lang, setLangState] = useState<Language>(initialLang);
 
-  // Mount-only: read localStorage (client override) + sync with backend if logged in.
+  // Mount-only: apply localStorage ONLY when no cookie exists (fresh browser).
+  // When the cookie IS present, the server already rendered the correct language
+  // via initialLang — no flash, no re-render needed.
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'es' || stored === 'en') {
-      setLangState(prev => prev === stored ? prev : stored);
+    if (!document.cookie.includes(`${STORAGE_KEY}=`)) {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === 'es' || stored === 'en') {
+        setLangState(prev => prev === stored ? prev : stored);
+      }
     }
 
     // If logged in, fetch server preference and apply if different.
@@ -99,6 +103,11 @@ export function I18nProvider({
     setAuthChangeListener(handleAuthChange);
     return () => setAuthChangeListener(null);
   }, []);
+
+  // Keep <html lang> in sync for a11y.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const t = useCallback((source: string, params?: Record<string, string>): string => {
     const found = dictionaries[lang][source];

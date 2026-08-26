@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -21,14 +22,18 @@ export const metadata: Metadata = {
   description: "Panel de administración clínica Copp Adresd",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const langCookie = cookieStore.get("copp_lang");
+  const lang = langCookie?.value === "en" ? "en" : "es";
+
   return (
     <html
-      lang="es"
+      lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
@@ -113,7 +118,7 @@ export default function RootLayout({
       />
         <ThemeProvider>
           <AuthProvider>
-            <I18nProvider>
+            <I18nProvider initialLang={lang}>
               <TooltipProvider>
                 {children}
               </TooltipProvider>
