@@ -235,7 +235,7 @@ export function PatientsPage() {
                 size="sm"
                 onClick={retry}
                 disabled={loading}
-                className="bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
               >
                 <RefreshCw
                   data-icon="inline-start"
