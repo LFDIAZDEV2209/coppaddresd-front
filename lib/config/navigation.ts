@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import { hasAppointmentPermission } from "./appointment-permissions";
 import {
   LayoutDashboard,
-  Users,
   ShieldCheck,
   Bot,
   BarChart3,
@@ -38,15 +37,6 @@ import {
   Bell,
   Apple,
   Dumbbell,
-  UserCheck,
-  Send,
-  Radio,
-  Moon,
-  Flame,
-  Map,
-  Trophy,
-  MessageCircle,
-  Share2,
   Sparkles,
 } from "lucide-react";
 
@@ -409,70 +399,10 @@ export const navModules: NavModule[] = [
     color: "#B8860B",
     items: [
       {
-        label: "Panel",
+        label: "Comunidad",
         href: "/community/dashboard",
-        icon: LayoutDashboard,
-        color: "#0E7490",
-      },
-      {
-        label: "Publicaciones",
-        href: "/community/posts",
-        icon: Send,
-        color: "#123B63",
-      },
-      {
-        label: "Feed en vivo",
-        href: "/community/feed",
-        icon: Radio,
-        color: "#EF4444",
-      },
-      {
-        label: "Miembros",
-        href: "/community/members",
-        icon: Users,
-        color: "#0E7490",
-      },
-      {
-        label: "Sin publicar",
-        href: "/community/inactive",
-        icon: Moon,
-        color: "#F59E0B",
-      },
-      {
-        label: "Rachas y logros",
-        href: "/community/streaks",
-        icon: Flame,
-        color: "#EF4444",
-      },
-      {
-        label: "Por región",
-        href: "/community/regions",
-        icon: Map,
-        color: "#10B981",
-      },
-      {
-        label: "Por diagnóstico",
-        href: "/community/diagnostics",
-        icon: Stethoscope,
-        color: "#0E7490",
-      },
-      {
-        label: "Reconocimientos",
-        href: "/community/rewards",
-        icon: Trophy,
+        icon: Sparkles,
         color: "#B8860B",
-      },
-      {
-        label: "Grupos/Chats",
-        href: "/community/groups",
-        icon: MessageCircle,
-        color: "#0E7490",
-      },
-      {
-        label: "Redes ANTARES",
-        href: "/community/networks",
-        icon: Share2,
-        color: "#10B981",
       },
     ],
   },

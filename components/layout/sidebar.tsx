@@ -138,6 +138,7 @@ export function Sidebar({
           <nav className="flex flex-col gap-0.5">
             {navModules.map((mod) => {
               const active = isModuleActive(mod);
+              const single = visibleNavItems(mod, can).length === 1;
               const expanded = expandedModules.has(mod.label) || active;
               const Icon = mod.icon;
 
@@ -163,6 +164,34 @@ export function Sidebar({
                       {t(mod.label)}
                     </TooltipContent>
                   </Tooltip>
+                );
+              }
+
+              if (single) {
+                const onlyItem = visibleNavItems(mod, can)[0];
+                const onlyActive = isActive(onlyItem);
+                return (
+                  <Link
+                    key={mod.label}
+                    href={onlyItem.href}
+                    onClick={onCloseMobile}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-all duration-200 border group",
+                      onlyActive
+                        ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
+                        : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white hover:scale-[1.01] border-transparent",
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "size-[18px] shrink-0 transition-transform duration-200",
+                        onlyActive && "scale-110",
+                      )}
+                    />
+                    <span className="flex-1 text-left tracking-wide">
+                      {t(mod.label)}
+                    </span>
+                  </Link>
                 );
               }
 
