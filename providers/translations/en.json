@@ -1596,5 +1596,10 @@
   "{count} tipo(s)": "{count} type(s)",
   "{total} profesional": "{total} professional",
   "¿Seguro que querés cancelar la cita del": "Are you sure you want to cancel the appointment on",
-  "Último borrador v{version}": "Latest draft v{version}"
+  "Último borrador v{version}": "Latest draft v{version}",
+  "General": "General",
+  "Preferencias generales de la plataforma": "General platform preferences",
+  "Selecciona el idioma de la plataforma": "Select the platform language",
+  "Español": "Spanish",
+  "English": "English"
 }

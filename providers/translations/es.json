@@ -1487,5 +1487,10 @@
   "{count} clínica{s} asignada{s}": "{count} clínica{s} asignada{s}",
   "{count} sede{s}": "{count} sede{s}",
   "Ver todo (contexto global)": "Ver todo (contexto global)",
-  "Mi perfil": "Mi perfil"
+  "Mi perfil": "Mi perfil",
+  "General": "General",
+  "Preferencias generales de la plataforma": "Preferencias generales de la plataforma",
+  "Selecciona el idioma de la plataforma": "Selecciona el idioma de la plataforma",
+  "Español": "Español",
+  "English": "English"
 }
