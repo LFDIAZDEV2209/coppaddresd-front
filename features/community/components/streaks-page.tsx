@@ -105,7 +105,7 @@ export function StreaksPage() {
                 return (
                   <TableRow
                     key={s.id}
-                    style={rank === 1 ? { backgroundColor: "#FFFBEB" } : undefined}
+                    style={rank === 1 ? { backgroundColor: "var(--warning-soft)" } : undefined}
                   >
                     <TableCell className="text-sm font-bold">
                       {RANK_MEDAL[rank] ?? rank}
