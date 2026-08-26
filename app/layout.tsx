@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
+import { I18nProvider } from "@/providers/i18n-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -112,9 +113,11 @@ export default function RootLayout({
       />
         <ThemeProvider>
           <AuthProvider>
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
+            <I18nProvider>
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
+            </I18nProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
