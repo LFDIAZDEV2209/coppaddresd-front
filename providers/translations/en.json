@@ -1728,5 +1728,9 @@
   "Buscar por usuario…": "Search by user...",
   "Borrador": "Draft",
   "Publicado": "Published",
-  "Archivado": "Archived"
+  "Archivado": "Archived",
+  "Filtros de asignaciones": "Assignment filters",
+  "{count} asignaciones encontradas": "{count} assignments found",
+  "Tipo de asignación": "Assignment type",
+  "Fecha de inicio": "Start date"
 }

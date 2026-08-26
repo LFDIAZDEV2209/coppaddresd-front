@@ -270,7 +270,7 @@ export function AssignmentsPage() {
 
       {/* Dialogs */}
       <AssignmentFormDialog
-        key={formOpen ? "new" : "closed"}
+        key={formOpen ? "new" : "form-closed"}
         open={formOpen}
         saving={actionLoading}
         onOpenChange={setFormOpen}
@@ -279,7 +279,7 @@ export function AssignmentsPage() {
 
       {/* Detalle */}
       <AssignmentDetailDialog
-        key={details?.id ?? "closed"}
+        key={details?.id ?? "detail-closed"}
         assignment={details ?? null}
         onClose={() => setDetails(undefined)}
       />
