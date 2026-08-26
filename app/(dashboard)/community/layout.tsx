@@ -1,12 +1,17 @@
 "use client";
 
-import { Provider } from "urql";
-import { communityClient } from "@/features/community/services/client";
+import { ErpProvider } from "@/features/community-erp/erp-provider";
+import { ErpToaster } from "@/features/community-erp/components/erp-toaster";
 
 export default function CommunityLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <Provider value={communityClient}>{children}</Provider>;
+  return (
+    <ErpProvider>
+      {children}
+      <ErpToaster />
+    </ErpProvider>
+  );
 }
