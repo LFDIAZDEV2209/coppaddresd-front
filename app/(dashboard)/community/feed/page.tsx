@@ -1,4 +1,4 @@
-import { FeedPage } from "@/features/community-erp/components/feed-page";
+import { FeedPage } from "@/features/community/components/feed-page";
 
 export default function CommunityFeedPage() {
   return <FeedPage />;

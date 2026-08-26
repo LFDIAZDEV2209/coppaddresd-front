@@ -12,8 +12,8 @@ const ES_PATH = join(ROOT, "providers", "translations", "es.json");
 const KEY_RE = /\bt\(\s*(['"`])((?:(?!\1).)+)\1/g;
 
 const dirs = [
-  "features/community-erp",
-  "app/(dashboard)/community",
+  "features/community",
+  "app/(dashboard)/community","app/(community)",
   "lib/config",
 ];
 

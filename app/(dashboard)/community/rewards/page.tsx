@@ -1,4 +1,4 @@
-import { RewardsPage } from "@/features/community-erp/components/rewards-page";
+import { RewardsPage } from "@/features/community/components/rewards-page";
 
 export default function CommunityRewardsPage() {
   return <RewardsPage />;
