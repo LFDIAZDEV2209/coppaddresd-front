@@ -175,8 +175,9 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Feed reciente */}
-      <section className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+      {/* Feed reciente + Miembros inactivos en una fila */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader title={t("Feed reciente")} description={t("Actividad en tiempo real")} icon={MessageCircle} variant="primary" />
         <div className="flex flex-col divide-y divide-border">
           {feed.map((item) => {
@@ -200,7 +201,7 @@ export function DashboardPage() {
             );
           })}
         </div>
-      </section>
+      </div>
 
       {/* Panel inactivos */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
@@ -261,6 +262,7 @@ export function DashboardPage() {
           </TableBody>
         </Table>
       </div>
+      </section>
     </div>
   );
 }
