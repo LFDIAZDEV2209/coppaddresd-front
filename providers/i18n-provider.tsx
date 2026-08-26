@@ -20,6 +20,7 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 const STORAGE_KEY = 'copp_lang';
 const dictionaries: Record<Language, Record<string, string>> = { es, en };
 const warnedKeys = new Set<string>();
+const missingKeys = new Set<string>();
 
 // Module-level auth listener so AuthProvider can notify without circular imports.
 let onAuthChange: (() => void) | null = null;
@@ -112,9 +113,12 @@ export function I18nProvider({
   const t = useCallback((source: string, params?: Record<string, string>): string => {
     const found = dictionaries[lang][source];
     let translated = found && found.length > 0 ? found : source;
-    if (!found && lang !== 'es' && !warnedKeys.has(source)) {
-      warnedKeys.add(source);
-      console.warn(`[i18n] Missing key for "${lang}":`, source);
+    if (!found && lang !== 'es') {
+      if (!warnedKeys.has(source)) {
+        warnedKeys.add(source);
+        console.warn(`[i18n] Missing key for "${lang}":`, source);
+      }
+      missingKeys.add(source);
     }
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -123,6 +127,22 @@ export function I18nProvider({
     }
     return translated;
   }, [lang]);
+
+  // Dev-only: flush missing keys to /api/i18n/missing for auto-translation.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    const timer = setTimeout(() => {
+      if (missingKeys.size === 0) return;
+      const keys = [...missingKeys].slice(0, 50);
+      missingKeys.clear();
+      void fetch('/api/i18n/missing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keys }),
+      }).catch(() => { /* retry next flush */ });
+    }, 3000);
+    return () => clearTimeout(timer);
+  });
 
   const setLang = useCallback((newLang: Language) => {
     setLangState(newLang);
