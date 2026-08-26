@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { cn } from "@/lib/utils";
 
 /**
@@ -94,6 +95,9 @@ export default function LoginPage() {
           <div className="absolute -top-24 -left-24 size-72 rounded-full bg-primary-soft blur-3xl" />
           <div className="absolute -right-32 bottom-0 size-80 rounded-full bg-success-soft blur-3xl" />
         </div>
+
+        {/* Language Toggle */}
+        <LanguageToggle className="absolute right-6 top-6 z-10 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors sm:right-10" />
 
         {/* Brand */}
         <div className="mb-10 flex items-center gap-3">
