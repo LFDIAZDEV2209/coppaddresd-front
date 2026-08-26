@@ -132,6 +132,69 @@
   --sidebar-active-text: #FFFFFF;
 }
 
+/* === COMMUNITY ERP IMMERSIVE THEME === */
+/* Scoped override: re-themes all token-based shared components (PageHeader,
+   SectionHeader, StatCard, StatusBadge) and charts to the ANTARES ERP palette. */
+.community-erp {
+  --background: #F6F4FB;
+  --foreground: #1E1B35;
+
+  --card: #FFFFFF;
+  --card-foreground: #1E1B35;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #1E1B35;
+
+  --primary: #6D28D9;
+  --primary-foreground: #FFFFFF;
+  --primary-soft: #EDE9FE;
+  --primary-strong: #4C1D95;
+
+  --secondary: #E9E2F7;
+  --secondary-foreground: #4C1D95;
+  --secondary-soft: #F3EFFC;
+
+  --muted: #F0EBFA;
+  --muted-foreground: #6E6391;
+
+  --accent: #1D9E75;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --destructive-soft: #FCEBEC;
+
+  --success: #1D9E75;
+  --success-foreground: #FFFFFF;
+  --success-soft: #E0F5EC;
+
+  --warning: #B8860B;
+  --warning-foreground: #FFFFFF;
+  --warning-soft: #FBF3E0;
+
+  --info: #6D28D9;
+  --info-foreground: #FFFFFF;
+  --info-soft: #EDE9FE;
+
+  --border: #E5DEF3;
+  --input: #E5DEF3;
+  --ring: #6D28D9;
+
+  --chart-1: #6D28D9;
+  --chart-2: #1D9E75;
+  --chart-3: #B8860B;
+  --chart-4: #8B5CF6;
+  --chart-5: #0D1B4B;
+
+  --sidebar: #0D1B4B;
+  --sidebar-foreground: #C7C2E0;
+  --sidebar-active-bg: rgba(109, 40, 217, 0.22);
+  --sidebar-active-border: #8B5CF6;
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-hover: rgba(255, 255, 255, 0.07);
+  --sidebar-muted-foreground: #9489C0;
+}
+
 .dark {
   --background: #0B1120;
   --foreground: #E2E8F0;
