@@ -102,9 +102,10 @@ export function PostsPage() {
       />
 
       {/* Composer - Tarjeta ANTARES con color distintivo */}
-      <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-strong)] shadow-lg shadow-primary/20">
-        <div className="flex items-center gap-3 border-b border-white/15 px-4 py-3.5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-white/15 text-[15px] font-extrabold text-white">
+      <div className="cp-pop relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-strong)] shadow-lg shadow-primary/20">
+        <span className="cp-glow -right-10 -top-14 size-40 bg-[rgba(139,92,246,0.35)]" aria-hidden />
+        <div className="relative flex items-center gap-3 border-b border-white/15 px-4 py-3.5">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-white/15 text-[15px] font-extrabold text-white ring-1 ring-white/25 shadow-lg shadow-black/10">
             A
           </span>
           <div className="flex flex-col">
@@ -112,7 +113,7 @@ export function PostsPage() {
             <span className="text-[12px] text-white/70">{t("El mensaje aparecerá en la app de los miembros")}</span>
           </div>
         </div>
-        <div className="flex flex-col gap-4 p-4">
+        <div className="relative flex flex-col gap-4 p-4">
           {/* Type tabs */}
           <div className="flex flex-wrap gap-2">
             {TIPOS.map((tip) => {
@@ -121,9 +122,9 @@ export function PostsPage() {
                 <button
                   key={tip.key}
                   onClick={() => setType(tip.key)}
-                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px ${
                     type === tip.key
-                      ? "border-white bg-white text-primary"
+                      ? "border-white bg-white text-primary shadow-md shadow-black/10"
                       : "border-white/20 bg-white/10 text-white hover:bg-white/20"
                   }`}
                 >
@@ -171,7 +172,7 @@ export function PostsPage() {
               <span className="text-xs">{t("Dar XP por comentar")}</span>
             </label>
 
-            <Button size="sm" onClick={handlePublish} className="ml-auto bg-[#B8860B] text-white hover:bg-[#A06E0A]">
+            <Button size="sm" onClick={handlePublish} className="ml-auto bg-[#B8860B] text-white shadow-md shadow-[#B8860B]/30 transition-all hover:-translate-y-px hover:bg-[#A06E0A] active:scale-[0.97]">
               <Send data-icon="inline-start" />
               {t("Publicar")}
             </Button>
@@ -181,7 +182,7 @@ export function PostsPage() {
 
       {/* Pinned posts */}
       {pinnedPosts.length > 0 && (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
           <SectionHeader
             title={t("Publicaciones fijadas")}
             description={`${pinnedPosts.length} ${t("publicaciones fijadas activas")}`}
@@ -195,7 +196,7 @@ export function PostsPage() {
               return (
                 <div
                   key={post.id}
-                  className="flex items-start gap-3 rounded-xl border border-border p-3 transition-all hover:shadow-sm"
+                  className="flex items-start gap-3 rounded-xl border border-border p-3 transition-all hover:-translate-y-0.5 hover:border-[#8B5CF6]/40 hover:shadow-md hover:shadow-black/5"
                 >
                   {member ? (
                     <MemberAvatar member={member} subtitle={post.createdAt} />
@@ -252,7 +253,7 @@ export function PostsPage() {
       )}
 
       {/* All posts */}
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
         <SectionHeader
           title={t("Todas las publicaciones")}
           description={`${posts.length} ${t("publicaciones este mes")}`}

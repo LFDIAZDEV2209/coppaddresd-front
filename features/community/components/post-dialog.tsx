@@ -93,7 +93,7 @@ export function PostDialog() {
                 {TIPOS.map((tip) => (
                   <label
                     key={tip.key}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-border p-2.5"
+                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-border p-2.5 transition-all hover:-translate-y-px hover:border-[#8B5CF6]/50 hover:bg-primary-soft/60 has-[[data-checked]]:border-[#8B5CF6] has-[[data-checked]]:bg-primary-soft"
                   >
                     <RadioGroupItem value={tip.key} />
                     <span className="text-sm">{tip.label}</span>
