@@ -26,13 +26,17 @@ import {
   FEED_QUERY,
   ME_QUERY,
   MESSAGE_REACH_QUERY,
+  MODERATE_DELETE_COMMENT,
   MODERATE_DELETE_POST,
   NETWORKS_QUERY,
   PIN_POST,
   PROFILES_QUERY,
   RECOGNITIONS_QUERY,
   REGION_STATS_QUERY,
+  REPORTED_POSTS,
+  REPORT_POST,
   REPLY_TO_COMMENT,
+  RESOLVE_REPORT,
   SEND_BULK_MESSAGE,
   SEND_DIRECT_MESSAGE,
   TOP_STREAKS_QUERY,
@@ -54,6 +58,7 @@ import {
   type MeResult,
   type MessageReachResult,
   type MessageReachWire,
+  type ModerateDeleteCommentResult,
   type ModerateDeletePostResult,
   type NetworkChannelWire,
   type NetworksResult,
@@ -66,7 +71,11 @@ import {
   type RecognitionsResult,
   type RegionStatWire,
   type RegionStatsResult,
+  type ReportedPostWire,
+  type ReportedPostsResult,
+  type ReportPostResult,
   type ReplyToCommentResult,
+  type ResolveReportResult,
   type SendBulkMessageResult,
   type SendDirectMessageResult,
   type TopStreaksResult,
@@ -408,6 +417,13 @@ interface ErpContextValue {
   sendBulkInactive: (message: string) => void;
   addComment: (postId: string, body: string) => void;
   replyToComment: (commentId: string, body: string) => void;
+  deleteComment: (commentId: string) => void;
+  reportPost: (postId: string, reason: string, details?: string) => void;
+  reportedPosts: ReportedPostWire[];
+  reportedPostsLoading: boolean;
+  reportedPostsError: string | undefined;
+  refetchReportedPosts: () => void;
+  resolveReport: (reportId: string) => void;
   toast: (message: string) => void;
   toasts: ToastItem[];
 }
@@ -604,6 +620,23 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   const [, replyToCommentMut] = useMutation<ReplyToCommentResult, { commentId: string; body: string }>(
     REPLY_TO_COMMENT,
   );
+  const [, deleteCommentMut] = useMutation<ModerateDeleteCommentResult, { commentId: string }>(
+    MODERATE_DELETE_COMMENT,
+  );
+  const [, reportPostMut] = useMutation<ReportPostResult, { postId: string; reason: string; details?: string }>(
+    REPORT_POST,
+  );
+  const [, resolveReportMut] = useMutation<ResolveReportResult, { reportId: string }>(
+    RESOLVE_REPORT,
+  );
+
+  const [reportedPostsResult, refetchReportedPosts] = useQuery<
+    ReportedPostsResult,
+    { take?: number; skip?: number }
+  >({
+    query: REPORTED_POSTS,
+    variables: { take: 50, skip: 0 },
+  });
 
   const members = useMemo(
     () => (membersResult.data?.profiles ?? []).map(mapProfile),
@@ -691,6 +724,10 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   const messageReach = useMemo<MessageReach[]>(() => {
     return (messageReachResult.data?.messageReach ?? []).map(mapWireMessageReach);
   }, [messageReachResult.data]);
+
+  const reportedPosts = useMemo<ReportedPostWire[]>(() => {
+    return reportedPostsResult.data?.reportedPosts ?? [];
+  }, [reportedPostsResult.data]);
 
   // --- Mapeo de datos del dashboard (backend → gráficos) ---
 
@@ -963,6 +1000,47 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     [toast, t],
   );
 
+  const deleteComment = useCallback<ErpContextValue["deleteComment"]>(
+    (commentId) => {
+      deleteCommentMut({ commentId }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo eliminar el comentario."));
+        } else {
+          toast(t("Comentario eliminado"));
+          refetchPosts();
+        }
+      });
+    },
+    [toast, t, refetchPosts],
+  );
+
+  const reportPost = useCallback<ErpContextValue["reportPost"]>(
+    (postId, reason, details) => {
+      reportPostMut({ postId, reason, details }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo enviar el reporte. Intenta de nuevo."));
+        } else {
+          toast(t("Reporte enviado correctamente"));
+        }
+      });
+    },
+    [toast, t],
+  );
+
+  const resolveReport = useCallback<ErpContextValue["resolveReport"]>(
+    (reportId) => {
+      resolveReportMut({ reportId }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo resolver el reporte."));
+        } else {
+          toast(t("Reporte resuelto"));
+          refetchReportedPosts();
+        }
+      });
+    },
+    [toast, t, refetchReportedPosts],
+  );
+
   const value = useMemo<ErpContextValue>(
     () => ({
       me,
@@ -1029,6 +1107,13 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       sendBulkInactive,
       addComment,
       replyToComment,
+      deleteComment,
+      reportPost,
+      reportedPosts,
+      reportedPostsLoading: reportedPostsResult.fetching,
+      reportedPostsError: reportedPostsResult.error?.message,
+      refetchReportedPosts,
+      resolveReport,
       toast,
       toasts,
     }),
@@ -1097,6 +1182,12 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       sendBulkInactive,
       addComment,
       replyToComment,
+      deleteComment,
+      reportPost,
+      reportedPostsResult.fetching,
+      reportedPostsResult.error,
+      refetchReportedPosts,
+      resolveReport,
       toast,
       toasts,
     ],

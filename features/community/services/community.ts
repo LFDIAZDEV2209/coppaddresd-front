@@ -513,6 +513,153 @@ export interface ModerateDeletePostResult {
   moderateDeletePost: Pick<Post, "id"> | null;
 }
 
+// --- Consulta de publicación individual ---
+
+export const POST_QUERY = gql`
+  query Post($id: UUID!) {
+    post(id: $id) {
+      id
+      body
+      type
+      destination
+      viewCount
+      pinned
+      createdAt
+      profile {
+        id
+        displayName
+        isSystem
+      }
+      likes {
+        id
+        profileId
+      }
+      comments {
+        id
+        body
+        createdAt
+        postId
+        parentCommentId
+        profile {
+          id
+          displayName
+          isSystem
+        }
+      }
+    }
+  }
+`;
+
+export interface PostQueryResult {
+  post: Post | null;
+}
+
+// --- Eliminación de comentarios ---
+
+export const MODERATE_DELETE_COMMENT = gql`
+  mutation ModerateDeleteComment($commentId: UUID!) {
+    moderateDeleteComment(commentId: $commentId) {
+      id
+    }
+  }
+`;
+
+export interface ModerateDeleteCommentResult {
+  moderateDeleteComment: { id: string } | null;
+}
+
+// --- Reportes de publicaciones ---
+
+export const REPORT_POST = gql`
+  mutation ReportPost($postId: UUID!, $reason: String!, $details: String) {
+    reportPost(postId: $postId, reason: $reason, details: $details) {
+      id
+    }
+  }
+`;
+
+export interface ReportPostResult {
+  reportPost: { id: string } | null;
+}
+
+export const REPORTED_POSTS = gql`
+  query ReportedPosts($take: Int, $skip: Int) {
+    reportedPosts(take: $take, skip: $skip) {
+      post {
+        id
+        body
+        type
+        destination
+        pinned
+        createdAt
+        viewCount
+        profile {
+          id
+          displayName
+          isSystem
+        }
+        likes {
+          id
+          profileId
+        }
+        comments {
+          id
+          body
+          createdAt
+          postId
+          parentCommentId
+          profile {
+            id
+            displayName
+            isSystem
+          }
+        }
+      }
+      reportCount
+      reports {
+        id
+        reason
+        details
+        createdAt
+        reportedBy {
+          id
+          displayName
+        }
+      }
+    }
+  }
+`;
+
+export interface ReportWire {
+  id: string;
+  reason: string;
+  details: string | null;
+  createdAt: string;
+  reportedBy: { id: string; displayName: string };
+}
+
+export interface ReportedPostWire {
+  post: Post;
+  reportCount: number;
+  reports: ReportWire[];
+}
+
+export interface ReportedPostsResult {
+  reportedPosts: ReportedPostWire[];
+}
+
+export const RESOLVE_REPORT = gql`
+  mutation ResolveReport($reportId: UUID!) {
+    resolveReport(reportId: $reportId) {
+      id
+    }
+  }
+`;
+
+export interface ResolveReportResult {
+  resolveReport: { id: string } | null;
+}
+
 export interface AwardXpResult {
   awardXp: Profile[] | null;
 }

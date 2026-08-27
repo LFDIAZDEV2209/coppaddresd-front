@@ -14,8 +14,6 @@ import {
   Heart,
   MessageCircle,
   Eye,
-  Edit,
-  CornerDownRight,
   X,
   Link2,
   Plus,
@@ -47,7 +45,8 @@ import { DESTINOS } from "./post-dialog";
 import { PostDialog } from "./post-dialog";
 import { MemberAvatar, profileName } from "./member-avatar";
 import { CommunityPagination } from "./community-pagination";
-import type { ErpComment, PostType } from "../types";
+import { PostDetailDialog } from "./post-detail-dialog";
+import type { ErpPost, PostType } from "../types";
 
 const TIPOS: { key: PostType; label: string; icon: typeof FileText }[] = [
   { key: "Texto", label: "Texto", icon: FileText },
@@ -67,7 +66,7 @@ const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
 
 export function PostsPage() {
   const t = useT();
-  const { posts, publishPost, togglePin, deletePost, members, addComment, replyToComment } = useErp();
+  const { posts, publishPost, togglePin, deletePost, members } = useErp();
   const [type, setType] = useState<PostType>("Texto");
   const [destination, setDestination] = useState(DESTINOS[0]);
   const [body, setBody] = useState("");
@@ -80,12 +79,12 @@ export function PostsPage() {
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [logroTitle, setLogroTitle] = useState("");
-  // Borradores por post + objetivo de respuesta.
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [replyTo, setReplyTo] = useState<{ postId: string; commentId: string; author: string } | null>(null);
   // Paginación — Todas las publicaciones
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  // Dialog de detalle de publicación
+  const [detailPost, setDetailPost] = useState<ErpPost | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const pinnedPosts = posts.filter((p) => p.pinned);
 
@@ -125,103 +124,9 @@ export function PostsPage() {
     setLogroTitle("");
   };
 
-  const handleSendComment = (postId: string) => {
-    const text = (drafts[postId] ?? "").trim();
-    if (!text) return;
-    if (replyTo && replyTo.postId === postId) {
-      replyToComment(replyTo.commentId, text);
-      setReplyTo(null);
-    } else {
-      addComment(postId, text);
-    }
-    setDrafts((d) => ({ ...d, [postId]: "" }));
-  };
-
-  const findMember = (authorId: string) =>
-    members.find((m) => m.id === authorId);
-
-  const renderComments = (postId: string, comments: ErpComment[]) => {
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSendComment(postId);
-      }
-    };
-    return (
-      <div className="flex flex-col gap-2 border-t border-border bg-muted/20 p-3">
-        {/* Lista de comentarios */}
-        {comments.length === 0 ? (
-          <p className="py-1 text-xs text-muted-foreground">{t("Sin comentarios")}</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {comments.map((c) => {
-              const isReply = Boolean(c.parentCommentId);
-              return (
-                <div
-                  key={c.id}
-                  className={`flex gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors ${
-                    c.isNew ? "animate-feed-slide bg-primary-soft/40" : "hover:bg-muted/40"
-                  } ${isReply ? "ml-6 border-l border-border pl-3" : ""}`}
-                >
-                  {isReply && <CornerDownRight className="mt-0.5 size-3 shrink-0 text-muted-foreground" />}
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary">
-                    {profileName(c.author, c.isSystem, t).slice(0, 2).toUpperCase()}
-                  </span>
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-semibold">{profileName(c.author, c.isSystem, t)}</span>
-                      <span className="text-[11px] text-muted-foreground">{c.createdAt}</span>
-                      {isReply && (
-                        <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
-                          {t("Respuesta")}
-                        </span>
-                      )}
-                    </div>
-                    <p className="whitespace-pre-wrap break-words text-xs text-foreground/90">{c.body}</p>
-                  </div>
-                  <button
-                    onClick={() => setReplyTo({ postId, commentId: c.id, author: profileName(c.author, c.isSystem, t) })}
-                    className="shrink-0 self-start rounded px-1.5 py-0.5 text-[11px] text-primary hover:bg-primary-soft"
-                  >
-                    {t("Responder")}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {/* Indicador de respuesta */}
-        {replyTo && replyTo.postId === postId && (
-          <div className="flex items-center justify-between rounded-lg bg-primary-soft px-2 py-1 text-xs text-primary">
-            <span className="flex items-center gap-1">
-              <CornerDownRight className="size-3" /> {t("Respondiendo a {name}", { name: replyTo.author })}
-            </span>
-            <button onClick={() => setReplyTo(null)} className="rounded p-1 hover:bg-white/50">
-              <X className="size-3" />
-            </button>
-          </div>
-        )}
-        {/* Input */}
-        <div className="flex items-center gap-2">
-          <Input
-            value={drafts[postId] ?? ""}
-            onChange={(e) => setDrafts((d) => ({ ...d, [postId]: e.target.value }))}
-            onKeyDown={handleKeyDown}
-            placeholder={t("Escribe un comentario...")}
-            className="h-8 text-xs"
-          />
-          <Button
-            size="sm"
-            onClick={() => handleSendComment(postId)}
-            disabled={!((drafts[postId] ?? "").trim())}
-            className="h-8 shrink-0"
-          >
-            <Send data-icon="inline-start" className="size-3.5" />
-            {t("Comentar")}
-          </Button>
-        </div>
-      </div>
-    );
+  const openDetail = (post: ErpPost) => {
+    setDetailPost(post);
+    setDetailOpen(true);
   };
 
   return (
@@ -413,7 +318,7 @@ export function PostsPage() {
           />
           <div className="flex flex-col gap-3 p-4">
             {pinnedPosts.map((post) => {
-              const member = findMember(post.authorId);
+              const member = members.find((m) => m.id === post.authorId);
               const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
               return (
                 <div
@@ -441,8 +346,8 @@ export function PostsPage() {
                         <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
                           <Pin className="size-3.5" />
                         </Button>
-                        <Button size="icon-sm" variant="ghost" onClick={() => {}} title={t("Editar")}>
-                          <Edit className="size-3.5" />
+                        <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
+                          <MessageCircle className="size-3.5" />
                         </Button>
                         <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
                           <Trash2 className="size-3.5 text-destructive" />
@@ -471,7 +376,6 @@ export function PostsPage() {
                       </span>
                     </div>
                   </div>
-                  {renderComments(post.id, post.commentsList ?? [])}
                 </div>
               );
             })}
@@ -492,7 +396,7 @@ export function PostsPage() {
             <p className="py-6 text-center text-sm text-muted-foreground">{t("Sin publicaciones")}</p>
           ) : (
             paginatedPosts.map((post) => {
-              const member = findMember(post.authorId);
+              const member = members.find((m) => m.id === post.authorId);
               const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
               return (
                 <div
@@ -534,6 +438,10 @@ export function PostsPage() {
                             <DropdownMenuItem onClick={() => togglePin(post.id)}>
                               {post.pinned ? t("Desfijar") : t("Fijar")}
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openDetail(post)}>
+                              <MessageCircle data-icon="inline-start" className="size-3.5" />
+                              {t("Ver publicación")}
+                            </DropdownMenuItem>
                             <DropdownMenuItem variant="destructive" onClick={() => deletePost(post.id)}>
                               {t("Eliminar")}
                             </DropdownMenuItem>
@@ -565,7 +473,6 @@ export function PostsPage() {
                       </span>
                     </div>
                   </div>
-                  {renderComments(post.id, post.commentsList ?? [])}
                 </div>
               );
             })
@@ -581,6 +488,12 @@ export function PostsPage() {
           />
         )}
       </div>
+
+      <PostDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        post={detailPost}
+      />
     </div>
   );
 }

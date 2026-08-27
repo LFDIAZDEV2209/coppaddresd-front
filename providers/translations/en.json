@@ -2022,5 +2022,20 @@
   "Título del logro": "Título del logro",
   "Ej: Racha de 30 días completada": "Ej: Racha de 30 días completada",
   "Filtrar por diagnóstico": "Filter by diagnosis",
-  "Filtrar por región": "Filter by region"
+  "Filtrar por región": "Filter by region",
+  "Eliminar comentario": "Eliminar comentario",
+  "Detalle de publicación": "Detalle de publicación",
+  "¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer.": "¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer.",
+  "¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.": "¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.",
+  "Reportar comentario": "Reportar comentario",
+  "Razón del reporte": "Razón del reporte",
+  "Detalles adicionales (opcional)": "Detalles adicionales (opcional)",
+  "Enviar reporte": "Enviar reporte",
+  "Ver publicación": "Ver publicación",
+  "No se pudo eliminar el comentario.": "No se pudo eliminar el comentario.",
+  "Comentario eliminado": "Comentario eliminado",
+  "No se pudo enviar el reporte. Intenta de nuevo.": "No se pudo enviar el reporte. Intenta de nuevo.",
+  "Reporte enviado correctamente": "Reporte enviado correctamente",
+  "No se pudo resolver el reporte.": "No se pudo resolver el reporte.",
+  "Reporte resuelto": "Reporte resuelto"
 }
