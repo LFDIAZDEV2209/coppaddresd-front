@@ -33,9 +33,9 @@ export function CommunityErpShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <CommunityTopbar onMenuClick={() => setMobileOpen(true)} />
-        <main className="cp-mesh-bg flex-1 overflow-y-auto p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           {/* key por ruta: re-dispara la entrada de la página en cada navegación */}
-          <div key={pathname} className="cp-rise">
+          <div key={pathname}>
             {children}
           </div>
         </main>
