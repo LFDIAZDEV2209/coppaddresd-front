@@ -1,22 +1,13 @@
 // Tipos del ERP de comunidad (ANTARES). Datos mock en memoria.
 // Convención: comentarios en español, sin valores hardcodeados en componentes.
 
-export type Diagnosis = "DM2" | "Obesidad" | "DM2+HTA" | "Prediabetes";
+// Se amplían a `string` porque el backend devuelve los enums con ligeras
+// variaciones de formato (p.ej. "DM2HTA" vs "DM2+HTA", "Bogota" vs "Bogotá").
+export type Diagnosis = string;
 
-export type RegionName =
-  | "Miami"
-  | "NY"
-  | "Barranquilla"
-  | "Bogotá"
-  | "Orlando"
-  | "CDMX";
+export type RegionName = string;
 
-export type MemberLevel =
-  | "Bienestar"
-  | "Disciplinado"
-  | "Constante"
-  | "Iniciado"
-  | "Explorador";
+export type MemberLevel = string;
 
 export type MemberStatus = "Activo" | "Inactivo";
 
@@ -38,6 +29,8 @@ export interface CommunityMember {
   status: MemberStatus;
   daysSincePost: number; // 0 si está activo
   lastPost: string; // texto relativo, p.ej. "Hace 2 días"
+  risk?: RiskLevel; // nivel de riesgo (derivado del backend)
+  lastPostAt?: string; // ISO del último post (para derivar inactividad)
   topRank?: number; // 1, 2, 3
   courses?: number; // cursos completados (📚)
   shared?: boolean; // compartió su racha
@@ -59,6 +52,8 @@ export interface ErpPost {
   views: number;
 }
 
+// Nota: el backend también emite "video" y "logro" en FeedEventKind; se mapean
+// a este union vía cast y se resguardan en la UI con un fallback.
 export type FeedKind =
   | "foto"
   | "hito"
