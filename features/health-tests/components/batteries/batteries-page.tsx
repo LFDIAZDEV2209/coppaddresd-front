@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
+import { useAuth } from "@/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/feedback/stat-card";
@@ -25,6 +26,8 @@ import { ModuleErrorState } from "../shared/module-states";
  */
 export function BatteriesPage() {
   const t = useT();
+  const { hasPermission } = useAuth();
+  const hasManage = hasPermission("HealthTests.Manage");
   const { data, loading, error, reload } = useCatalog();
   const coverage = useCoverage();
 
@@ -74,14 +77,16 @@ export function BatteriesPage() {
         )}
         icon={Layers}
         actions={
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
-          >
-            <Plus data-icon="inline-start" />
-            {t("Nueva batería")}
-          </Button>
+          hasManage ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
+            >
+              <Plus data-icon="inline-start" />
+              {t("Nueva batería")}
+            </Button>
+          ) : undefined
         }
       />
 

@@ -16,6 +16,7 @@ import {
   ToggleLeft,
 } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
+import { useAuth } from "@/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -47,6 +48,8 @@ import { ModuleErrorState, ModuleEmptyState } from "../shared/module-states";
  */
 export function CatalogPage() {
   const t = useT();
+  const { hasPermission } = useAuth();
+  const hasManage = hasPermission("HealthTests.Manage");
   const { data, loading, error, reload } = useCatalog();
   const [category, setCategory] = useState<TestCategory | "all">("all");
   const [onlyActive, setOnlyActive] = useState(false);
@@ -100,14 +103,16 @@ export function CatalogPage() {
         )}
         icon={FileText}
         actions={
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
-          >
-            <Plus data-icon="inline-start" />
-            {t("Nuevo test")}
-          </Button>
+          hasManage ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
+            >
+              <Plus data-icon="inline-start" />
+              {t("Nuevo test")}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -329,6 +334,11 @@ function TestCatalogCard({ test }: { test: HealthTest }) {
 
 function TestActions({ test }: { test: HealthTest }) {
   const t = useT();
+  const { hasPermission } = useAuth();
+  const hasManage = hasPermission("HealthTests.Manage");
+  if (!hasManage) {
+    return null;
+  }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger

@@ -14,6 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
+import { useAuth } from "@/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
@@ -78,6 +79,8 @@ function statusColor(status: AlertStatus): string {
  */
 export function AlertsPage() {
   const t = useT();
+  const { hasPermission } = useAuth();
+  const canReview = hasPermission("HealthTests.Review");
   const { data, loading, error, reload, changeStatus } = useAlerts();
   const [search, setSearch] = useState("");
   const [severity, setSeverity] = useState<AlertSeverity | "all">("all");
@@ -276,6 +279,7 @@ export function AlertsPage() {
             patients={data.patients}
             tests={data.tests}
             onChangeStatus={changeStatus}
+            canReview={canReview}
           />
         )}
       </section>
@@ -288,11 +292,13 @@ function AlertsTable({
   patients,
   tests,
   onChangeStatus,
+  canReview = true,
 }: {
   alerts: HealthAlert[];
   patients: { id: string; firstName: string; lastName: string }[];
   tests: { id: string; name: string; icon: string }[];
   onChangeStatus: (alertId: string, status: AlertStatus) => void;
+  canReview?: boolean;
 }) {
   const t = useT();
   return (
@@ -399,36 +405,38 @@ function AlertsTable({
                         {t("Perfil")}
                       </Button>
                     )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            aria-label={t("Cambiar estado de la alerta")}
-                          />
-                        }
-                      >
-                        <ClipboardList />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <span className="px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          {t("Cambiar estado")}
-                        </span>
-                        {STATUS_NEXT[alert.status].map((next) => (
-                          <DropdownMenuItem
-                            key={next}
-                            onClick={() => onChangeStatus(alert.id, next)}
-                          >
-                            <span
-                              className="size-2 rounded-full"
-                              style={{ backgroundColor: statusColor(next) }}
+                    {canReview && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              aria-label={t("Cambiar estado de la alerta")}
                             />
-                            {STATUS_LABELS[next]}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          }
+                        >
+                          <ClipboardList />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <span className="px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            {t("Cambiar estado")}
+                          </span>
+                          {STATUS_NEXT[alert.status].map((next) => (
+                            <DropdownMenuItem
+                              key={next}
+                              onClick={() => onChangeStatus(alert.id, next)}
+                            >
+                              <span
+                                className="size-2 rounded-full"
+                                style={{ backgroundColor: statusColor(next) }}
+                              />
+                              {STATUS_LABELS[next]}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

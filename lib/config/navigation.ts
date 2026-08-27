@@ -242,6 +242,7 @@ export const navModules: NavModule[] = [
     label: "Tests de salud",
     icon: HeartPulse,
     color: "#0D9488",
+    permission: ["HealthTests.View", "HealthTests.ViewOwn"],
     items: [
       {
         label: "Dashboard",
