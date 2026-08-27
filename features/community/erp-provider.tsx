@@ -438,7 +438,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     { take: number; skip: number }
   >({
     query: FEED_QUERY,
-    variables: { take: 20, skip: 0 },
+    variables: { take: 100, skip: 0 },
   });
 
   const [feedResult, refetchFeed] = useQuery<
@@ -446,7 +446,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     { take: number; skip: number }
   >({
     query: FEED_EVENTS_QUERY,
-    variables: { take: 20, skip: 0 },
+    variables: { take: 100, skip: 0 },
   });
 
   // Suscripción en tiempo real para el feed en vivo.

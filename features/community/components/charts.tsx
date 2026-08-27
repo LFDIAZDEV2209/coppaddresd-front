@@ -45,12 +45,20 @@ const tooltipStyle = {
   boxShadow: "0 12px 32px rgba(13,27,75,0.16)",
 } as const;
 
-function ChartFrame({ loading, children }: { loading: boolean; children: React.ReactNode }) {
+function ChartFrame({
+  loading,
+  height = "h-56",
+  children,
+}: {
+  loading: boolean;
+  height?: string;
+  children: React.ReactNode;
+}) {
   if (loading) {
-    return <div className="h-56 w-full animate-pulse rounded-xl bg-muted" />;
+    return <div className={`${height} w-full animate-pulse rounded-xl bg-muted`} />;
   }
   return (
-    <div className="h-56 w-full">
+    <div className={`${height} w-full`}>
       <ResponsiveContainer width="100%" height="100%">
         {children as React.ReactElement}
       </ResponsiveContainer>
@@ -86,9 +94,9 @@ export function ActivityLineChart({
           labelFormatter={(l) => `${t("Día")} ${l}`}
           cursor={{ stroke: "var(--border)", strokeDasharray: 3 }}
         />
-        <Area type="monotone" dataKey="posts" name={t("Posts")} stroke="var(--chart-1)" strokeWidth={2} fill="url(#cpLine-posts)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} animationDuration={450} />
-        <Area type="monotone" dataKey="comentarios" name={t("Comentarios")} stroke="var(--chart-2)" strokeWidth={2} fill="url(#cpLine-comentarios)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} animationDuration={450} />
-        <Area type="monotone" dataKey="reacciones" name={t("Reacciones")} stroke="var(--chart-3)" strokeWidth={2} fill="url(#cpLine-reacciones)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} animationDuration={450} />
+        <Area type="linear" dataKey="posts" name={t("Posts")} stroke="var(--chart-1)" strokeWidth={2} fill="url(#cpLine-posts)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} animationDuration={450} />
+        <Area type="linear" dataKey="comentarios" name={t("Comentarios")} stroke="var(--chart-2)" strokeWidth={2} fill="url(#cpLine-comentarios)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} animationDuration={450} />
+        <Area type="linear" dataKey="reacciones" name={t("Reacciones")} stroke="var(--chart-3)" strokeWidth={2} fill="url(#cpLine-reacciones)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} animationDuration={450} />
       </AreaChart>
     </ChartFrame>
   );
@@ -109,10 +117,10 @@ export function PostTypesDoughnut({
           data={data}
           dataKey="value"
           nameKey="name"
-          innerRadius={48}
+          innerRadius={0}
           outerRadius={88}
-          paddingAngle={3}
-          cornerRadius={6}
+          paddingAngle={2}
+          cornerRadius={4}
           stroke="var(--card)"
           strokeWidth={2}
         >
@@ -203,14 +211,16 @@ export function XpLineChart({
   data,
   lines,
   loading = false,
+  height,
 }: {
   data: Record<string, string | number>[];
   lines: { key: string; name: string; color: string }[];
   loading?: boolean;
+  height?: string;
 }) {
   const t = useT();
   return (
-    <ChartFrame loading={loading}>
+    <ChartFrame loading={loading} height={height}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey="label" {...axisProps} minTickGap={16} />
@@ -228,14 +238,16 @@ export function SimpleBarChart({
   data,
   loading = false,
   color = "var(--chart-1)",
+  height,
 }: {
   data: { label: string; value: number }[];
   loading?: boolean;
   color?: string;
+  height?: string;
 }) {
   const t = useT();
   return (
-    <ChartFrame loading={loading}>
+    <ChartFrame loading={loading} height={height}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey="label" {...axisProps} minTickGap={12} />
