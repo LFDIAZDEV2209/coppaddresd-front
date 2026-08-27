@@ -54,22 +54,20 @@ export function HealthTestsDashboard() {
 
   const stats = useMemo(() => {
     if (!data) return null;
-    const { patients, tests, alerts } = data;
+    const { patients, tests, alerts, stats: serverStats } = data;
     const totalAssignments = patients.length * tests.length;
-    const completed = patients.reduce(
-      (acc, p) =>
-        acc + p.results.filter((r) => r.state === "completado").length,
-      0,
-    );
+    // KPIs del backend (/stats): fuentes reales de la BD.
+    const completed = serverStats.completed;
+    const evaluated =
+      serverStats.totalPatients > 0
+        ? Math.min(completed, serverStats.totalPatients)
+        : 0;
     const inProgress = patients.reduce(
       (acc, p) =>
         acc + p.results.filter((r) => r.state === "en-progreso").length,
       0,
     );
-    const evaluated = patients.filter(
-      (p) => p.results.filter((r) => r.state === "completado").length >= 5,
-    ).length;
-    const pending = patients.length - evaluated;
+    const pending = serverStats.withPending;
     const coverage =
       totalAssignments === 0
         ? 0
@@ -77,14 +75,7 @@ export function HealthTestsDashboard() {
     const activeAlerts = alerts.filter(
       (a) => a.status === "activa" || a.status === "en-revision",
     ).length;
-    const atRisk = patients.filter((p) => {
-      const evaluated = p.results.filter((r) => r.score !== null);
-      let worst: RiskLevel = "sin-evaluar";
-      for (const r of evaluated) {
-        if (riskSeverity(r.risk) > riskSeverity(worst)) worst = r.risk;
-      }
-      return worst === "alto" || worst === "critico";
-    }).length;
+    const atRisk = serverStats.highRisk;
     return {
       totalAssignments,
       completed,

@@ -16,7 +16,6 @@ import type {
   PendingPatientRow,
   RiskLevel,
   TestCategory,
-  TestState,
 } from "../types";
 import {
   averageScore,
@@ -62,12 +61,22 @@ export interface HealthTestsApi {
   listProfessionals(): Promise<HealthProfessional[]>;
   listAlerts(): Promise<HealthAlert[]>;
   listBatteries(): Promise<Battery[]>;
+  getStats(): Promise<HealthTestStats>;
   getCoverageTrend(): Promise<CoverageTrendPoint[]>;
   getMasterRows(): Promise<PatientMasterRow[]>;
   getPendingPatients(): Promise<PendingPatientRow[]>;
   getCoverageByTest(): Promise<CoverageByTest[]>;
   getCoverageByCategory(): Promise<CoverageByCategory[]>;
   getIndicatorAggregates(): Promise<IndicatorAggregate[]>;
+}
+
+/** Estadísticas globales del módulo (endpoint /stats del backend). */
+export interface HealthTestStats {
+  totalPatients: number;
+  withPending: number;
+  completed: number;
+  highRisk: number;
+  activeAlerts: number;
 }
 
 // ===================== DTOs del backend (espejo) =====================
@@ -153,6 +162,7 @@ interface AssignmentDto {
   patientName: string | null;
   versionId: string;
   testName: string | null;
+  testCode: string | null;
   batteryAssignmentId: string | null;
   status: string;
   priority: number | null;
@@ -170,6 +180,7 @@ interface EvaluationDto {
   patientId: string;
   versionId: string;
   testName: string | null;
+  testCode: string | null;
   status: string;
   startedAt: string;
   completedAt: string | null;
@@ -381,19 +392,6 @@ function mapPatientListItem(
   };
 }
 
-function stateFromStatus(status: string): TestState {
-  switch (status) {
-    case "completed":
-      return "completado";
-    case "in_progress":
-      return "en-progreso";
-    case "expired":
-      return "vencido";
-    default:
-      return "pendiente";
-  }
-}
-
 function riskFromSeverity(severity: string | null): RiskLevel {
   return RISK_MAP[severity ?? ""] ?? "sin-evaluar";
 }
@@ -425,6 +423,7 @@ function aggregateResults(evaluations: EvaluationDto[]): PatientTestResult[] {
 
     results.push({
       testId: versionId,
+      testCode: evs[0]?.testCode ?? null,
       state: latest ? "completado" : inProgress ? "en-progreso" : "pendiente",
       score: score !== null && score !== undefined ? score : null,
       interpretation: scoreResult?.qualifier ?? "",
@@ -506,6 +505,10 @@ async function listBatteries(): Promise<Battery[]> {
   return response.data.map(mapBattery);
 }
 
+async function getStats(): Promise<HealthTestStats> {
+  return apiFetch<HealthTestStats>(`${BASE}/stats`);
+}
+
 async function getCoverageTrend(): Promise<CoverageTrendPoint[]> {
   // Tendencia derivada de las evaluaciones completadas reales.
   const stats = await apiFetch<StatsDto>(`${BASE}/stats`);
@@ -533,30 +536,24 @@ async function getMasterRows(): Promise<PatientMasterRow[]> {
     ).catch(() => null),
   ]);
 
-  const resultsByPatient = new Map<string, PatientTestResult[]>();
+  // Pacientes con asignaciones: enriquecer con sus evaluaciones reales
+  // (scores/riesgo) vía getPatient. Son pocos (solo los asignados), no N+1.
+  const enrichedById = new Map<string, PatientProfile>();
   if (assignments) {
-    for (const a of assignments.data) {
-      const list = resultsByPatient.get(a.patientId) ?? [];
-      list.push({
-        testId: a.versionId,
-        state: stateFromStatus(a.status),
-        score: null,
-        interpretation: "",
-        risk: "sin-evaluar",
-        updatedAt: a.assignedAt,
-        completedAt: a.completedAt,
-        history: [],
-        details: {},
-      });
-      resultsByPatient.set(a.patientId, list);
-    }
+    const assignedIds = new Set(assignments.data.map((a) => a.patientId));
+    await Promise.all(
+      [...assignedIds].map(async (pid) => {
+        const full = await getPatient(pid).catch(() => null);
+        if (full) enrichedById.set(pid, full);
+      }),
+    );
   }
 
   const rows = patients
     .map((p) => {
       const enriched = {
         ...p,
-        results: resultsByPatient.get(p.id) ?? p.results,
+        results: enrichedById.get(p.id)?.results ?? p.results,
       };
       return buildMasterRow(
         enriched,
@@ -684,6 +681,7 @@ async function getIndicatorAggregates(): Promise<IndicatorAggregate[]> {
     );
     const scores: PatientTestResult[] = evaluated.map((a) => ({
       testId: a.versionId,
+      testCode: a.testCode ?? null,
       state: "completado",
       score: a.priority ?? 0,
       interpretation: "",
@@ -726,6 +724,7 @@ export const healthTestsApi: HealthTestsApi = {
   listProfessionals,
   listAlerts,
   listBatteries,
+  getStats,
   getCoverageTrend,
   getMasterRows,
   getPendingPatients,

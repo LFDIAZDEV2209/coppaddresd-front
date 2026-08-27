@@ -73,6 +73,8 @@ export type PatientStatus = "activo" | "inactivo";
 
 export interface PatientTestResult {
   testId: string;
+  /** Código del instrumento (ej: "orp") para resolver el nombre desde el catálogo. */
+  testCode?: string | null;
   state: TestState;
   /** Score normalizado 0-100 (null si el test no se ha completado). */
   score: number | null;

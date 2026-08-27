@@ -122,9 +122,11 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
   const radarData = patient.results
     .filter((r) => r.score !== null)
     .map((r) => {
-      const test = tests.find((x) => x.id === r.testId);
+      const test = tests.find(
+        (x) => x.id === r.testId || x.code === r.testCode,
+      );
       return {
-        name: test?.name ?? r.testId,
+        name: test?.name ?? r.testCode ?? r.testId,
         score: r.score ?? 0,
       };
     });

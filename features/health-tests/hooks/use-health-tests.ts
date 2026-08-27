@@ -18,6 +18,7 @@ import type {
 import {
   healthTestsApi,
   healthTestMetrics,
+  type HealthTestStats,
 } from "../services/health-tests-service";
 
 /** Estado genérico de carga async (reutilizable por todos los hooks). */
@@ -60,6 +61,7 @@ export interface DashboardData {
   alerts: HealthAlert[];
   professionals: HealthProfessional[];
   coverageTrend: CoverageTrendPoint[];
+  stats: HealthTestStats;
 }
 
 export function useDashboard() {
@@ -68,19 +70,22 @@ export function useDashboard() {
   const alerts = useAsyncData(healthTestsApi.listAlerts);
   const professionals = useAsyncData(healthTestsApi.listProfessionals);
   const trend = useAsyncData(healthTestsApi.getCoverageTrend);
+  const stats = useAsyncData(healthTestsApi.getStats);
 
   const loading =
     patients.loading ||
     tests.loading ||
     alerts.loading ||
     professionals.loading ||
-    trend.loading;
+    trend.loading ||
+    stats.loading;
   const error =
     patients.error ??
     tests.error ??
     alerts.error ??
     professionals.error ??
-    trend.error;
+    trend.error ??
+    stats.error;
 
   const reload = useCallback(() => {
     void patients.reload();
@@ -88,7 +93,8 @@ export function useDashboard() {
     void alerts.reload();
     void professionals.reload();
     void trend.reload();
-  }, [patients, tests, alerts, professionals, trend]);
+    void stats.reload();
+  }, [patients, tests, alerts, professionals, trend, stats]);
 
   const data = useMemo<DashboardData | null>(() => {
     if (
@@ -96,7 +102,8 @@ export function useDashboard() {
       !tests.data ||
       !alerts.data ||
       !professionals.data ||
-      !trend.data
+      !trend.data ||
+      !stats.data
     ) {
       return null;
     }
@@ -106,8 +113,16 @@ export function useDashboard() {
       alerts: alerts.data,
       professionals: professionals.data,
       coverageTrend: trend.data,
+      stats: stats.data,
     };
-  }, [patients.data, tests.data, alerts.data, professionals.data, trend.data]);
+  }, [
+    patients.data,
+    tests.data,
+    alerts.data,
+    professionals.data,
+    trend.data,
+    stats.data,
+  ]);
 
   return { data, loading, error, reload, metrics: healthTestMetrics };
 }
