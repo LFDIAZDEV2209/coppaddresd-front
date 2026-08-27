@@ -30,8 +30,7 @@ export function MemberAvatar({
   const fullName = `${member.firstName} ${member.lastName}`;
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white">
-        {grad(member.id)}
+      <span className={`relative flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white ${grad(member.id)}`}>
         {initials(fullName)}
         {showStreak && member.streak > 0 && (
           <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-warning text-[9px] font-bold text-white ring-2 ring-card">
