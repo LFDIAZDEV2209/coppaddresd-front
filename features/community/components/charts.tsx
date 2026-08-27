@@ -42,7 +42,7 @@ const tooltipStyle = {
   borderRadius: 12,
   border: "1px solid var(--border)",
   fontSize: 12,
-  boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+  boxShadow: "0 12px 32px rgba(13,27,75,0.16)",
 } as const;
 
 function ChartFrame({ loading, children }: { loading: boolean; children: React.ReactNode }) {
@@ -68,7 +68,15 @@ export function ActivityLineChart({
   const t = useT();
   return (
     <ChartFrame loading={loading}>
-      <LineChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+        <defs>
+          {(["posts", "comentarios", "reacciones"] as const).map((k, i) => (
+            <linearGradient key={k} id={`cpLine-${k}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={`var(--chart-${i + 1})`} stopOpacity={0.22} />
+              <stop offset="100%" stopColor={`var(--chart-${i + 1})`} stopOpacity={0} />
+            </linearGradient>
+          ))}
+        </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey="dia" {...axisProps} minTickGap={24} />
         <YAxis {...axisProps} allowDecimals={false} />
@@ -76,11 +84,12 @@ export function ActivityLineChart({
           formatter={(value) => String(value)}
           contentStyle={tooltipStyle}
           labelFormatter={(l) => `${t("Día")} ${l}`}
+          cursor={{ stroke: "var(--border)", strokeDasharray: 3 }}
         />
-        <Line type="monotone" dataKey="posts" name={t("Posts")} stroke="var(--chart-1)" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="comentarios" name={t("Comentarios")} stroke="var(--chart-2)" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="reacciones" name={t("Reacciones")} stroke="var(--chart-3)" strokeWidth={2} dot={false} />
-      </LineChart>
+        <Area type="monotone" dataKey="posts" name={t("Posts")} stroke="var(--chart-1)" strokeWidth={2} fill="url(#cpLine-posts)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} animationDuration={450} />
+        <Area type="monotone" dataKey="comentarios" name={t("Comentarios")} stroke="var(--chart-2)" strokeWidth={2} fill="url(#cpLine-comentarios)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} animationDuration={450} />
+        <Area type="monotone" dataKey="reacciones" name={t("Reacciones")} stroke="var(--chart-3)" strokeWidth={2} fill="url(#cpLine-reacciones)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} animationDuration={450} />
+      </AreaChart>
     </ChartFrame>
   );
 }
@@ -102,7 +111,10 @@ export function PostTypesDoughnut({
           nameKey="name"
           innerRadius={48}
           outerRadius={88}
-          paddingAngle={2}
+          paddingAngle={3}
+          cornerRadius={6}
+          stroke="var(--card)"
+          strokeWidth={2}
         >
           {data.map((_, i) => (
             <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
@@ -125,11 +137,17 @@ export function PeakHoursBar({
   return (
     <ChartFrame loading={loading}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+        <defs>
+          <linearGradient id="cpBar-hora" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.95} />
+            <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.35} />
+          </linearGradient>
+        </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey="hora" {...axisProps} minTickGap={16} interval={2} />
         <YAxis {...axisProps} allowDecimals={false} />
         <Tooltip contentStyle={tooltipStyle} formatter={(value) => String(value)} labelFormatter={(l) => `${t("Hora")} ${l}`} cursor={{ fill: "var(--muted)", opacity: 0.4 }} />
-        <Bar dataKey="valor" name={t("Actividad")} fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={20} />
+        <Bar dataKey="valor" name={t("Actividad")} fill="url(#cpBar-hora)" radius={[5, 5, 0, 0]} maxBarSize={20} />
       </BarChart>
     </ChartFrame>
   );
@@ -149,7 +167,7 @@ export function DiagnosisRadar({
         <PolarGrid stroke="var(--border)" />
         <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }} />
         <PolarRadiusAxis tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} angle={90} />
-        <Radar name={t("Participación")} dataKey="value" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.35} />
+        <Radar name={t("Participación")} dataKey="value" stroke="var(--chart-1)" strokeWidth={2} fill="var(--chart-1)" fillOpacity={0.28} />
         <Tooltip contentStyle={tooltipStyle} formatter={(value) => String(value)} />
       </RadarChart>
     </ChartFrame>
