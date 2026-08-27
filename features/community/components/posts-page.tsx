@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Send,
   Pin,
@@ -17,6 +17,8 @@ import {
   Edit,
   CornerDownRight,
   X,
+  Link2,
+  Plus,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -44,6 +46,7 @@ import { useT } from "@/providers/i18n-provider";
 import { DESTINOS } from "./post-dialog";
 import { PostDialog } from "./post-dialog";
 import { MemberAvatar, profileName } from "./member-avatar";
+import { CommunityPagination } from "./community-pagination";
 import type { ErpComment, PostType } from "../types";
 
 const TIPOS: { key: PostType; label: string; icon: typeof FileText }[] = [
@@ -67,24 +70,59 @@ export function PostsPage() {
   const { posts, publishPost, togglePin, deletePost, members, addComment, replyToComment } = useErp();
   const [type, setType] = useState<PostType>("Texto");
   const [destination, setDestination] = useState(DESTINOS[0]);
-  const [body, setBody] = useState(
-    "Â¡Felicitaciones a Carolina Mendoza por alcanzar 45 dÃ­as de racha consecutiva! Desde el equipo ADRED queremos reconocer su increÃ­ble constancia. Â¡Sigue brillando! ðŸ†",
-  );
-  const [pinned, setPinned] = useState(true);
+  const [body, setBody] = useState("");
+  const [pinned, setPinned] = useState(false);
   const [push, setPush] = useState(false);
   const [giveXp, setGiveXp] = useState(false);
+  // Campos específicos por tipo (frontend-only, se combinan en body al publicar)
+  const [imageUrl, setImageUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  const [logroTitle, setLogroTitle] = useState("");
   // Borradores por post + objetivo de respuesta.
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [replyTo, setReplyTo] = useState<{ postId: string; commentId: string; author: string } | null>(null);
+  // Paginación — Todas las publicaciones
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const pinnedPosts = posts.filter((p) => p.pinned);
 
+  // Paginación sobre posts no-fijados para que la lista no mezcle; si hay pocos fijados se muestran todos
+  const paginatedPosts = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return posts.slice(start, start + pageSize);
+  }, [posts, page, pageSize]);
+
+  const buildBody = () => {
+    const base = body.trim();
+    if (type === "Imagen" && imageUrl.trim()) return `${base}${base ? "\n\n" : ""}🖼️ ${imageUrl.trim()}`;
+    if (type === "Video" && videoUrl.trim()) return `${base}${base ? "\n\n" : ""}🎬 ${videoUrl.trim()}`;
+    if (type === "Encuesta") {
+      const opts = pollOptions.map((o) => o.trim()).filter(Boolean);
+      const poll = `${pollQuestion.trim() ? `📊 ${pollQuestion.trim()}\n` : ""}${opts.map((o, i) => `${i + 1}. ${o}`).join("\n")}`;
+      return `${base}${base && poll ? "\n\n" : ""}${poll}`;
+    }
+    if (type === "Logro" && logroTitle.trim()) return `${base}${base ? "\n\n" : ""}🏆 ${logroTitle.trim()}`;
+    return base;
+  };
+
+  const canPublish = buildBody().length > 0;
+
   const handlePublish = () => {
-    publishPost({ type, destination, body, pinned });
+    const finalBody = buildBody();
+    if (!finalBody) return;
+    publishPost({ type, destination, body: finalBody, pinned });
     setBody("");
     setPinned(false);
     setPush(false);
     setGiveXp(false);
+    setImageUrl("");
+    setVideoUrl("");
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+    setLogroTitle("");
   };
 
   const handleSendComment = (postId: string) => {
@@ -190,7 +228,7 @@ export function PostsPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Publicaciones")}
-        description={t("GestiÃ³n de publicaciones de ANTARES Comunidad ADRED")}
+        description={t("Gestión de publicaciones de ANTARES Comunidad ADRED")}
         icon={Send}
         actions={<PostDialog />}
       />
@@ -203,7 +241,7 @@ export function PostsPage() {
           </span>
           <div className="flex flex-col">
             <span className="text-[15px] font-bold text-white">{t("Nuevo post")}</span>
-            <span className="text-[12px] text-white/70">{t("El mensaje aparecerÃ¡ en la app de los miembros")}</span>
+            <span className="text-[12px] text-white/70">{t("El mensaje aparecerá en la app de los miembros")}</span>
           </div>
         </div>
         <div className="relative flex flex-col gap-4 p-4">
@@ -232,8 +270,99 @@ export function PostsPage() {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={3}
+            placeholder={t("Escribe tu mensaje...")}
             className="border-white/20 bg-white/10 text-sm text-white placeholder:text-white/50 focus-visible:ring-white/40"
           />
+
+          {/* Campos específicos por tipo */}
+          {type === "Imagen" && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-white/90">{t("URL de la imagen")}</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Link2 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
+                  <Input
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
+                  />
+                </div>
+              </div>
+              {imageUrl.trim() && (
+                <div className="overflow-hidden rounded-lg border border-white/20 bg-black/20 p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={imageUrl.trim()} alt={t("Vista previa")} className="max-h-48 w-full rounded object-contain" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+                </div>
+              )}
+            </div>
+          )}
+          {type === "Video" && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-white/90">{t("URL del video")}</Label>
+              <div className="relative">
+                <Link2 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
+                <Input
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
+                />
+              </div>
+            </div>
+          )}
+          {type === "Encuesta" && (
+            <div className="flex flex-col gap-2 rounded-xl border border-white/20 bg-white/10 p-3">
+              <Label className="text-xs text-white/90">{t("Pregunta de la encuesta")}</Label>
+              <Input
+                value={pollQuestion}
+                onChange={(e) => setPollQuestion(e.target.value)}
+                placeholder={t("¿Cuál es tu pregunta?")}
+                className="h-8 border-white/20 bg-white/10 text-xs text-white placeholder:text-white/40"
+              />
+              <Label className="text-xs text-white/90">{t("Opciones")}</Label>
+              {pollOptions.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">{idx + 1}</span>
+                  <Input
+                    value={opt}
+                    onChange={(e) => {
+                      const next = [...pollOptions];
+                      next[idx] = e.target.value;
+                      setPollOptions(next);
+                    }}
+                    placeholder={`${t("Opción")} ${idx + 1}`}
+                    className="h-8 flex-1 border-white/20 bg-white/10 text-xs text-white placeholder:text-white/40"
+                  />
+                  {pollOptions.length > 2 && (
+                    <Button size="icon-sm" variant="ghost" className="text-white/70 hover:bg-white/10 hover:text-white" onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}>
+                      <X className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              {pollOptions.length < 6 && (
+                <Button size="sm" variant="ghost" className="h-7 self-start text-xs text-white/80 hover:bg-white/10 hover:text-white" onClick={() => setPollOptions([...pollOptions, ""])}>
+                  <Plus data-icon="inline-start" className="size-3" />
+                  {t("Añadir opción")}
+                </Button>
+              )}
+            </div>
+          )}
+          {type === "Logro" && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-white/90">{t("Título del logro")}</Label>
+              <div className="relative">
+                <Trophy className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
+                <Input
+                  value={logroTitle}
+                  onChange={(e) => setLogroTitle(e.target.value)}
+                  placeholder={t("Ej: Racha de 30 días completada")}
+                  className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
             <div className="flex items-center gap-2">
@@ -265,7 +394,7 @@ export function PostsPage() {
               <span className="text-xs">{t("Dar XP por comentar")}</span>
             </label>
 
-            <Button size="sm" onClick={handlePublish} className="ml-auto bg-white text-primary transition-all hover:-translate-y-px active:scale-[0.97]">
+            <Button size="sm" onClick={handlePublish} disabled={!canPublish} className="ml-auto bg-white text-primary transition-all hover:-translate-y-px active:scale-[0.97] disabled:opacity-50">
               <Send data-icon="inline-start" />
               {t("Publicar")}
             </Button>
@@ -273,7 +402,7 @@ export function PostsPage() {
         </div>
       </div>
 
-      {/* Pinned posts */}
+      {/* Pinned posts — orden natural: autor arriba, body, meta al pie */}
       {pinnedPosts.length > 0 && (
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
@@ -291,53 +420,55 @@ export function PostsPage() {
                   key={post.id}
                   className="overflow-hidden rounded-xl border border-border transition-all hover:shadow-md hover:shadow-black/5"
                 >
-                  <div className="flex items-start gap-3 p-3">
-                    {member ? (
-                      <MemberAvatar member={member} subtitle={post.createdAt} />
-                    ) : (
+                  <div className="flex flex-col gap-2 p-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                          {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
-                        </span>
-                        <div className="flex min-w-0 flex-col gap-0.5">
-                          <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
-                          <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
-                        </div>
+                        {member ? (
+                          <MemberAvatar member={member} subtitle={post.createdAt} />
+                        ) : (
+                          <>
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                              {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
+                            </span>
+                            <div className="flex min-w-0 flex-col gap-0.5">
+                              <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                              <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
-                    )}
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <StatusBadge
-                          status={t("Fijado")}
-                          color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
-                        />
-                        <span
-                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                          style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
-                        >
-                          {t(post.type)}
-                        </span>
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                          {post.destination}
-                        </span>
+                      <div className="flex shrink-0 gap-1">
+                        <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
+                          <Pin className="size-3.5" />
+                        </Button>
+                        <Button size="icon-sm" variant="ghost" onClick={() => {}} title={t("Editar")}>
+                          <Edit className="size-3.5" />
+                        </Button>
+                        <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
+                          <Trash2 className="size-3.5 text-destructive" />
+                        </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{post.body}</p>
-                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                    </div>
+                    <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <StatusBadge
+                        status={t("Fijado")}
+                        color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                      />
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                      >
+                        {t(post.type)}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {post.destination}
+                      </span>
+                      <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
                         <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
                         <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
                         <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 gap-1">
-                      <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
-                        <Pin className="size-3.5" />
-                      </Button>
-                      <Button size="icon-sm" variant="ghost" onClick={() => {}} title={t("Editar")}>
-                        <Edit className="size-3.5" />
-                      </Button>
-                      <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
-                        <Trash2 className="size-3.5 text-destructive" />
-                      </Button>
+                      </span>
                     </div>
                   </div>
                   {renderComments(post.id, post.commentsList ?? [])}
@@ -348,7 +479,7 @@ export function PostsPage() {
         </div>
       )}
 
-      {/* All posts */}
+      {/* Todas las publicaciones — paginadas, orden natural */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Todas las publicaciones")}
@@ -360,7 +491,7 @@ export function PostsPage() {
           {posts.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">{t("Sin publicaciones")}</p>
           ) : (
-            posts.map((post) => {
+            paginatedPosts.map((post) => {
               const member = findMember(post.authorId);
               const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
               return (
@@ -368,73 +499,70 @@ export function PostsPage() {
                   key={post.id}
                   className="overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-md hover:shadow-black/5"
                 >
-                  <div className="flex items-start gap-3 p-3">
-                    {member ? (
-                      <MemberAvatar member={member} subtitle={post.createdAt} />
-                    ) : (
+                  <div className="flex flex-col gap-2 p-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                          {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
-                        </span>
-                        <div className="flex min-w-0 flex-col gap-0.5">
-                          <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
-                          <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {post.pinned ? (
-                          <StatusBadge
-                            status={t("Fijado")}
-                            color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
-                          />
+                        {member ? (
+                          <MemberAvatar member={member} subtitle={post.createdAt} />
                         ) : (
-                          <StatusBadge
-                            status={t("Activo")}
-                            color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }}
-                          />
+                          <>
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                              {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
+                            </span>
+                            <div className="flex min-w-0 flex-col gap-0.5">
+                              <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                              <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                            </div>
+                          </>
                         )}
-                        <span
-                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                          style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
-                        >
-                          {t(post.type)}
-                        </span>
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                          {post.destination}
-                        </span>
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{post.body}</p>
-                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => togglePin(post.id)}
+                          title={post.pinned ? t("Desfijar") : t("Fijar")}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <Pin className="size-3.5" />
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => togglePin(post.id)}>
+                              {post.pinned ? t("Desfijar") : t("Fijar")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem variant="destructive" onClick={() => deletePost(post.id)}>
+                              {t("Eliminar")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                    <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {post.pinned && (
+                        <StatusBadge
+                          status={t("Fijado")}
+                          color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                        />
+                      )}
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                      >
+                        {t(post.type)}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {post.destination}
+                      </span>
+                      <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
                         <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
                         <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
                         <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        onClick={() => togglePin(post.id)}
-                        title={post.pinned ? t("Desfijar") : t("Fijar")}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <Pin className="size-3.5" />
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
-                          <MoreHorizontal className="size-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => togglePin(post.id)}>
-                            {post.pinned ? t("Desfijar") : t("Fijar")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem variant="destructive" onClick={() => deletePost(post.id)}>
-                            {t("Eliminar")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      </span>
                     </div>
                   </div>
                   {renderComments(post.id, post.commentsList ?? [])}
@@ -443,8 +571,16 @@ export function PostsPage() {
             })
           )}
         </div>
+        {posts.length > 0 && (
+          <CommunityPagination
+            page={page}
+            pageSize={pageSize}
+            total={posts.length}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+          />
+        )}
       </div>
     </div>
   );
 }
-
