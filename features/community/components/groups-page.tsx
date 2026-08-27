@@ -30,7 +30,7 @@ const GROUP_TYPE_COLORS: Record<GroupType, { bg: string; text: string; dot: stri
 
 export function GroupsPage() {
   const t = useT();
-  const { groups, toast } = useErp();
+  const { communityGroups, communityGroupsLoading, toast } = useErp();
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -43,7 +43,7 @@ export function GroupsPage() {
       <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader
           title={t("Grupos")}
-          description={`${groups.length} ${t("grupos activos")}`}
+          description={`${communityGroups.length} ${t("grupos activos")}`}
           icon={MessageCircle}
           variant="primary"
         />
@@ -59,7 +59,7 @@ export function GroupsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {groups.map((g) => {
+            {(communityGroupsLoading ? [] : communityGroups).map((g) => {
               const typeColor = GROUP_TYPE_COLORS[g.type] ?? GROUP_TYPE_COLORS.General;
               return (
                 <TableRow key={g.id} className="transition-colors hover:bg-muted/50">

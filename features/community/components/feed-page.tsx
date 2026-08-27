@@ -28,7 +28,6 @@ import {
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { profileName } from "./member-avatar";
-import { feedToday, mockGroups } from "../mock-data";
 import type { FeedKind } from "../types";
 
 const FEED_ICON: Record<FeedKind, typeof ImageIcon> = {
@@ -57,7 +56,7 @@ const FEED_ICON_BG: Record<FeedKind, string> = {
 
 export function FeedPage() {
   const t = useT();
-  const { feed } = useErp();
+  const { feed, analytics, communityGroups, analyticsLoading } = useErp();
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -121,12 +120,12 @@ export function FeedPage() {
             />
             <div className="flex flex-col gap-3 p-4">
               {[
-                { label: t("Posts publicados"), value: feedToday.posts, color: "var(--primary)" },
-                { label: t("Comentarios"), value: feedToday.comments, color: "var(--success)" },
-                { label: t("Reacciones"), value: feedToday.reactions, color: "var(--destructive)" },
-                { label: t("Nuevos miembros"), value: feedToday.nuevos, color: "#B8860B" },
-                { label: t("Rachas rotas"), value: feedToday.rachasRotas, color: "var(--destructive)" },
-                { label: t("XP entregados"), value: feedToday.xp, color: "#B8860B" },
+                { label: t("Posts publicados"), value: analytics?.feedToday.posts ?? 0, color: "var(--primary)" },
+                { label: t("Comentarios"), value: analytics?.feedToday.comments ?? 0, color: "var(--success)" },
+                { label: t("Reacciones"), value: analytics?.feedToday.reactions ?? 0, color: "var(--destructive)" },
+                { label: t("Nuevos miembros"), value: analytics?.feedToday.newMembers ?? 0, color: "#B8860B" },
+                { label: t("Rachas rotas"), value: analytics?.feedToday.streaksBroken ?? 0, color: "var(--destructive)" },
+                { label: t("XP entregados"), value: (analytics?.feedToday.xpDelivered ?? 0).toLocaleString("es-ES"), color: "#B8860B" },
               ].map((stat) => (
                 <div key={stat.label} className="flex items-center justify-between">
                   <span className="text-xs">{stat.label}</span>
@@ -152,10 +151,10 @@ export function FeedPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockGroups.map((g) => (
+                {(analyticsLoading ? [] : communityGroups).map((g) => (
                   <TableRow key={g.id} className="transition-colors hover:bg-muted/50">
                     <TableCell className="text-xs font-semibold">{g.name}</TableCell>
-                    <TableCell className="text-right text-xs font-bold">{g.posts}</TableCell>
+                    <TableCell className="text-right text-xs font-bold">{g.posts.toLocaleString()}</TableCell>
                     <TableCell className="text-right text-xs">{g.members}</TableCell>
                   </TableRow>
                 ))}
