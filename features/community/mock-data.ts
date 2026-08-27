@@ -657,7 +657,7 @@ export const dashboardKpis = [
 ];
 
 export const streakKpis = [
-  { label: "Racha más larga", value: "45", context: "Carolina M.", trend: { value: "+5", direction: "up" as const } },
+  { label: "Racha más larga", value: "45", context: "", trend: { value: "+5", direction: "up" as const } },
   { label: "Miembros racha >7d", value: "142", context: "+12%", trend: { value: "+12%", direction: "up" as const } },
   { label: "Hitos del mes", value: "38", context: "logros alcanzados", trend: { value: "=0%", direction: "up" as const } },
   { label: "Rachas rotas", value: "6", context: "esta semana", trend: { value: "+2", direction: "up" as const } },
