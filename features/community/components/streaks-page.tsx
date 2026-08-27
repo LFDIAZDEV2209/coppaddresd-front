@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import {
   Flame,
   Trophy,
@@ -23,6 +24,7 @@ import {
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
+import { CommunityPagination } from "./community-pagination";
 import { SimpleBarChart } from "./charts";
 
 const RANK_MEDAL: Record<number, string> = {
@@ -35,6 +37,8 @@ export function StreaksPage() {
   const t = useT();
   const { members, awardXp, toast, streaks, streaksLoading, analytics, feed, analyticsLoading } = useErp();
   const chartData = (analytics?.streakOverview.distribution ?? []).map((d) => ({ label: d.range, value: d.value }));
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const streakKpis = analytics
     ? [
@@ -55,6 +59,14 @@ export function StreaksPage() {
       time: f.time,
       description: f.description,
     }));
+
+  const paginatedStreaks = useMemo(() => {
+    const data = streaksLoading ? [] : streaks;
+    const start = (page - 1) * pageSize;
+    return data.slice(start, start + pageSize);
+  }, [streaks, streaksLoading, page, pageSize]);
+
+  const totalStreaks = streaksLoading ? 0 : streaks.length;
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -86,7 +98,7 @@ export function StreaksPage() {
 
       {/* Ranking + chart */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Ranking table */}
+        {/* Ranking table — paginada */}
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Ranking de rachas")}
@@ -99,16 +111,16 @@ export function StreaksPage() {
               <TableRow>
                 <TableHead className="w-12">#</TableHead>
                 <TableHead>{t("Miembro")}</TableHead>
-                <TableHead className="text-right">{t("Racha")}</TableHead>
-                <TableHead className="text-right hidden md:table-cell">{t("Meta")}</TableHead>
-                <TableHead className="text-right hidden md:table-cell">{t("Compartió")}</TableHead>
-                <TableHead className="text-right">XP</TableHead>
+                <TableHead className="w-[72px] text-right">{t("Racha")}</TableHead>
+                <TableHead className="hidden text-right md:table-cell w-[64px]">{t("Meta")}</TableHead>
+                <TableHead className="hidden text-right md:table-cell w-[80px]">{t("Compartió")}</TableHead>
+                <TableHead className="w-[88px] text-right">XP</TableHead>
                 <TableHead className="w-16 text-right">{t("Premio")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(streaksLoading ? [] : streaks).map((s, i) => {
-                const rank = i + 1;
+              {paginatedStreaks.map((s, i) => {
+                const rank = (page - 1) * pageSize + i + 1;
                 const member = members.find((m) => m.id === s.memberId);
                 const memberObj = member
                   ? { id: member.id, firstName: member.firstName, lastName: member.lastName, streak: s.streak, isSystem: member.isSystem }
@@ -117,24 +129,24 @@ export function StreaksPage() {
                 return (
                   <TableRow
                     key={s.id}
-                    style={rank === 1 ? { backgroundColor: "var(--warning-soft)" } : undefined}
+                    style={rank === 1 && page === 1 ? { backgroundColor: "var(--warning-soft)" } : undefined}
                   >
-                    <TableCell className="text-sm font-bold">
+                    <TableCell className="py-2 text-sm font-bold">
                       {RANK_MEDAL[rank] ?? rank}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2">
                       <MemberAvatar
                         member={memberObj}
                         subtitle={member?.diagnosis ?? ""}
                       />
                     </TableCell>
-                    <TableCell className="text-right text-sm font-bold">
+                    <TableCell className="py-2 text-right text-sm font-bold whitespace-nowrap">
                       🔥 {s.streak}
                     </TableCell>
-                    <TableCell className="hidden text-right md:table-cell text-xs">
+                    <TableCell className="hidden text-right md:table-cell py-2 text-xs">
                       {s.goal}
                     </TableCell>
-                    <TableCell className="hidden text-right md:table-cell">
+                    <TableCell className="hidden text-right md:table-cell py-2">
                       {s.shared ? (
                         <StatusBadge
                           status={t("Sí")}
@@ -147,12 +159,12 @@ export function StreaksPage() {
                         />
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="py-2 text-right">
                       <span className="inline-flex items-center rounded-lg bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-[var(--warning-foreground)]">
                         {s.xp.toLocaleString()}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2">
                       <div className="flex justify-end">
                         <Button
                           size="icon-sm"
@@ -181,6 +193,9 @@ export function StreaksPage() {
               })}
             </TableBody>
           </Table>
+          {totalStreaks > 0 && (
+            <CommunityPagination page={page} pageSize={pageSize} total={totalStreaks} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />
+          )}
         </div>
 
         {/* Sidebar */}

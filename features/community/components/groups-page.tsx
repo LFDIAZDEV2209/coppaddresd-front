@@ -50,11 +50,11 @@ export function GroupsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("Nombre")}</TableHead>
-              <TableHead className="text-right">{t("Miembros")}</TableHead>
-              <TableHead className="text-right">{t("Mensajes")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Tipo")}</TableHead>
-              <TableHead className="hidden text-right md:table-cell">{t("Última actividad")}</TableHead>
+              <TableHead className="w-0">{t("Nombre")}</TableHead>
+              <TableHead className="w-[80px] text-right">{t("Miembros")}</TableHead>
+              <TableHead className="w-[80px] text-right">{t("Mensajes")}</TableHead>
+              <TableHead className="hidden md:table-cell w-[96px]">{t("Tipo")}</TableHead>
+              <TableHead className="hidden lg:table-cell w-[132px] text-right">{t("Última actividad")}</TableHead>
               <TableHead className="w-16 text-right">{t("Acción")}</TableHead>
             </TableRow>
           </TableHeader>
@@ -63,16 +63,16 @@ export function GroupsPage() {
               const typeColor = GROUP_TYPE_COLORS[g.type] ?? GROUP_TYPE_COLORS.General;
               return (
                 <TableRow key={g.id} className="transition-colors hover:bg-muted/50">
-                  <TableCell className="text-xs font-semibold">{g.name}</TableCell>
-                  <TableCell className="text-right text-xs font-bold">{g.members}</TableCell>
-                  <TableCell className="text-right text-xs font-bold">{g.posts.toLocaleString()}</TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="py-2 max-w-[220px] truncate text-xs font-semibold">{g.name}</TableCell>
+                  <TableCell className="py-2 text-right text-xs font-bold">{g.members}</TableCell>
+                  <TableCell className="py-2 text-right text-xs font-bold">{g.posts.toLocaleString()}</TableCell>
+                  <TableCell className="hidden md:table-cell py-2">
                     <StatusBadge status={t(g.type)} color={typeColor} />
                   </TableCell>
-                  <TableCell className="hidden text-right md:table-cell text-xs text-muted-foreground">
+                  <TableCell className="hidden text-right lg:table-cell py-2 text-xs text-muted-foreground whitespace-nowrap">
                     {g.lastActivity}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-2">
                     <div className="flex justify-end">
                       <Button
                         size="icon-sm"

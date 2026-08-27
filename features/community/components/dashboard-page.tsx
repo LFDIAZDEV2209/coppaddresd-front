@@ -85,30 +85,32 @@ export function DashboardPage() {
         }
       />
 
-      {/* Banner de alerta — datos reales del dashboard */}
-      <div className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning text-white shadow-lg shadow-warning/30">
-            <AlertTriangle className="size-5" />
-          </span>
-          <div className="flex flex-col gap-0.5">
-            <p className="text-sm font-semibold text-warning-foreground">
-              {dashboardLoading
-                ? "..."
-                : t("8 miembros inactivos por más de 7 días", { n: String(dashboardInactiveOver7Days) })}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {dashboardLoading
-                ? "..."
-                : t("3 de ellos están en riesgo de abandono. Envía un mensaje antes de 14 días.", { n: String(dashboardInactiveAtRisk) })}
-            </p>
+      {/* Banner de alerta — solo si hay inactivos (umbral > 0) */}
+      {dashboardInactiveOver7Days > 0 && (
+        <div className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning text-white shadow-lg shadow-warning/30">
+              <AlertTriangle className="size-5" />
+            </span>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-sm font-semibold text-warning-foreground">
+                {dashboardLoading
+                  ? "..."
+                  : t("8 miembros inactivos por más de 7 días", { n: String(dashboardInactiveOver7Days) })}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {dashboardLoading
+                  ? "..."
+                  : t("3 de ellos están en riesgo de abandono. Envía un mensaje antes de 14 días.", { n: String(dashboardInactiveAtRisk) })}
+              </p>
+            </div>
           </div>
+          <Button size="sm" className="relative" onClick={() => sendBulkInactive(t("¡Hola! Nos gustaría saber de ti 💙"))}>
+            <Send data-icon="inline-start" />
+            {t("Enviar ahora")}
+          </Button>
         </div>
-        <Button size="sm" className="relative" onClick={() => sendBulkInactive(t("¡Hola! Nos gustaría saber de ti 💙"))}>
-          <Send data-icon="inline-start" />
-          {t("Enviar ahora")}
-        </Button>
-      </div>
+      )}
 
       {/* KPIs — datos reales del dashboard */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -178,19 +180,19 @@ export function DashboardPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("Miembro")}</TableHead>
-                <TableHead className="text-right">{t("Racha")}</TableHead>
-                <TableHead className="hidden text-right sm:table-cell">{t("XP")}</TableHead>
+                <TableHead className="w-0">{t("Miembro")}</TableHead>
+                <TableHead className="w-[72px] text-right">{t("Racha")}</TableHead>
+                <TableHead className="w-[92px] text-right">{t("XP")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {topStreaks.map((m, i) => (
                 <TableRow key={m.id}>
-                  <TableCell>
-                    <MemberAvatar member={m} showStreak subtitle={m.diagnosis} />
+                  <TableCell className="py-2">
+                    <MemberAvatar member={m} showStreak subtitle={`${m.region} · ${m.diagnosis}`} />
                   </TableCell>
-                  <TableCell className="text-right text-sm font-semibold">🔥 {m.streak}</TableCell>
-                  <TableCell className="hidden text-right text-sm sm:table-cell">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ""} {m.xp.toLocaleString()}</TableCell>
+                  <TableCell className="py-2 text-right text-sm font-semibold whitespace-nowrap">🔥 {m.streak}</TableCell>
+                  <TableCell className="py-2 text-right text-sm whitespace-nowrap">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ""} {m.xp.toLocaleString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -243,7 +245,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Panel inactivos */}
+      {/* Panel inactivos — columnas compactas para caber en mitad de ancho */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Miembros inactivos · acción requerida")}
@@ -251,7 +253,7 @@ export function DashboardPage() {
           icon={AlertTriangle}
           variant="primary"
           actions={
-            <Button size="sm" variant="outline" onClick={() => sendBulkInactive(t("Mensaje de reactivación"))}>
+            <Button size="sm" onClick={() => sendBulkInactive(t("Mensaje de reactivación"))}>
               <MessageSquare data-icon="inline-start" />
               {t("Mensaje grupal")}
             </Button>
@@ -261,26 +263,22 @@ export function DashboardPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t("Miembro")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Diagnóstico")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Ciudad")}</TableHead>
-              <TableHead className="text-right">{t("Días sin publicar")}</TableHead>
-              <TableHead className="hidden text-right lg:table-cell">{t("Riesgo")}</TableHead>
-              <TableHead className="w-40 text-right"><span className="sr-only">{t("Acciones")}</span></TableHead>
+              <TableHead className="w-[92px] text-right">{t("Días sin publicar")}</TableHead>
+              <TableHead className="w-[88px] text-right">{t("Riesgo")}</TableHead>
+              <TableHead className="w-[88px] text-right"><span className="sr-only">{t("Acciones")}</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {inactive.map((m) => (
+            {inactive.slice(0, 5).map((m) => (
               <TableRow key={m.id}>
-                <TableCell>
-                  <MemberAvatar member={m} subtitle={m.lastPost} />
+                <TableCell className="py-2">
+                  <MemberAvatar member={m} subtitle={`${m.region} · ${m.diagnosis} · ${m.lastPost}`} />
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-sm">{m.diagnosis}</TableCell>
-                <TableCell className="hidden md:table-cell text-sm">{m.region}</TableCell>
-                <TableCell className="text-right text-sm font-semibold text-destructive">{m.daysSincePost} d</TableCell>
-                <TableCell className="hidden text-right lg:table-cell">
+                <TableCell className="py-2 text-right text-sm font-semibold text-destructive whitespace-nowrap">{m.daysSincePost} d</TableCell>
+                <TableCell className="py-2 text-right">
                   <RiskBadge risk={m.risk ?? "Bajo"} />
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-2">
                   <div className="flex justify-end">
                     <Button size="sm" variant="outline" onClick={() => sendMessage(m.id, t("¡Extrañamos tus publicaciones!"))}>
                       <Send data-icon="inline-start" />

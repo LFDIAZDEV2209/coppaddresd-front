@@ -68,27 +68,27 @@ export function RewardsPage() {
               <TableRow>
                 <TableHead>{t("Miembro")}</TableHead>
                 <TableHead>{t("Tipo")}</TableHead>
-                <TableHead className="text-right">XP</TableHead>
-                <TableHead className="hidden md:table-cell">{t("Estado")}</TableHead>
-                <TableHead className="hidden md:table-cell">{t("Fecha")}</TableHead>
+                <TableHead className="w-[72px] text-right">XP</TableHead>
+                <TableHead className="hidden md:table-cell w-[88px]">{t("Estado")}</TableHead>
+                <TableHead className="hidden md:table-cell w-[96px]">{t("Fecha")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {recognitions.map((r) => (
                 <TableRow key={r.id} className="transition-colors hover:bg-muted/50">
-                  <TableCell className="text-xs font-semibold">{r.member}</TableCell>
-                  <TableCell>
+                  <TableCell className="py-2 max-w-[120px] truncate text-xs font-semibold">{r.member}</TableCell>
+                  <TableCell className="py-2">
                     <StatusBadge
                       status={r.typeLabel}
                       color={{ bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" }}
                     />
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="py-2 text-right">
                     <span className="inline-flex items-center rounded-lg bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-[var(--warning-foreground)]">
                       +{r.xp}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="hidden md:table-cell py-2">
                     <StatusBadge
                       status={t(r.status)}
                       color={
@@ -98,7 +98,7 @@ export function RewardsPage() {
                       }
                     />
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                  <TableCell className="hidden md:table-cell py-2 text-xs text-muted-foreground">
                     {r.date}
                   </TableCell>
                 </TableRow>
@@ -118,8 +118,8 @@ export function RewardsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("Destinatario")}</TableHead>
-                <TableHead className="hidden md:table-cell">{t("Enviado a")}</TableHead>
-                <TableHead>{t("Abiertos")}</TableHead>
+                <TableHead className="hidden md:table-cell w-[80px] text-right">{t("Enviado a")}</TableHead>
+                <TableHead className="w-[110px] text-right">{t("Abiertos")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -129,14 +129,14 @@ export function RewardsPage() {
                 const pct = mr.total === 0 ? 0 : Math.round((mr.reached / mr.total) * 100);
                 return (
                   <TableRow key={mr.scope} className="transition-colors hover:bg-muted/50">
-                    <TableCell>
+                    <TableCell className="py-2">
                       <StatusBadge
                         status={t(scopeLabel)}
                         color={scopeColor}
                       />
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-xs">{mr.total}</TableCell>
-                    <TableCell className="text-xs font-semibold">{mr.reached} ({pct}%)</TableCell>
+                    <TableCell className="hidden md:table-cell py-2 text-right text-xs">{mr.total}</TableCell>
+                    <TableCell className="py-2 text-right text-xs font-semibold">{mr.reached} ({pct}%)</TableCell>
                   </TableRow>
                 );
               })}
@@ -145,7 +145,7 @@ export function RewardsPage() {
         </div>
       </div>
 
-      {/* XP chart */}
+      {/* XP chart — más alto */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("XP entregados desde el ERP este mes")}
@@ -154,6 +154,7 @@ export function RewardsPage() {
         />
         <div className="p-4">
           <XpLineChart
+            height="h-80"
             data={xpData}
             lines={[
               { key: "rachas", name: t("XP por rachas"), color: "var(--warning)" },
