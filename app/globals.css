@@ -195,6 +195,160 @@
   --sidebar-muted-foreground: #9489C0;
 }
 
+/* === ANTARES MOTION & DEPTH SYSTEM === */
+/* Utilities premium para el ERP de comunidad: entradas escalonadas,
+   micro-interacciones y profundidad. Todo respeta prefers-reduced-motion. */
+
+@keyframes cp-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cp-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cp-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cp-pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes cp-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Entrada individual (útil para páginas: se re-dispara cambiando key). */
+.cp-rise {
+  animation: cp-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cp-fade {
+  animation: cp-fade-in 0.4s ease-out both;
+}
+
+.cp-pop {
+  animation: cp-scale-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Entrada escalonada de hijos (grid de KPIs, listas, filas). */
+.cp-stagger > * {
+  animation: cp-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.cp-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.cp-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.cp-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.cp-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.cp-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.cp-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.cp-stagger > *:nth-child(7) { animation-delay: 300ms; }
+.cp-stagger > *:nth-child(8) { animation-delay: 350ms; }
+.cp-stagger > *:nth-child(9) { animation-delay: 400ms; }
+.cp-stagger > *:nth-child(10) { animation-delay: 450ms; }
+.cp-stagger > *:nth-child(11) { animation-delay: 500ms; }
+.cp-stagger > *:nth-child(12) { animation-delay: 550ms; }
+
+/* Tarjeta con profundidad: elevación suave al pasar el cursor. */
+.cp-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.25s ease,
+    border-color 0.2s ease;
+}
+.cp-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(109, 40, 217, 0.28);
+  box-shadow:
+    0 14px 34px -14px rgba(76, 29, 149, 0.22),
+    0 4px 12px -6px rgba(76, 29, 149, 0.10);
+}
+
+/* Punto "en vivo" pulsante (Feed en vivo, badges). */
+.cp-live-dot {
+  animation: cp-pulse-dot 1.8s ease-in-out infinite;
+}
+
+/* Flotación sutil para ornamentos decorativos. */
+.cp-float {
+  animation: cp-float 5s ease-in-out infinite;
+}
+
+/* Fondo con mesh-gradient decorativo (violeta/teal sobre --background). */
+.cp-mesh-bg {
+  background:
+    radial-gradient(1100px 520px at 88% -8%, rgba(139, 92, 246, 0.09), transparent 62%),
+    radial-gradient(900px 480px at -8% 108%, rgba(29, 158, 117, 0.07), transparent 60%),
+    radial-gradient(600px 360px at 50% 118%, rgba(184, 134, 11, 0.05), transparent 65%),
+    var(--background);
+}
+
+/* Glow decorativo reutilizable (orbes en headers hero). */
+.cp-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+  pointer-events: none;
+}
+
+/* Scrollbar fina con tinte de marca dentro del ERP. */
+.community-erp ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.community-erp ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.community-erp ::-webkit-scrollbar-thumb {
+  background: rgba(109, 40, 217, 0.22);
+  border-radius: 9999px;
+}
+.community-erp ::-webkit-scrollbar-thumb:hover {
+  background: rgba(109, 40, 217, 0.38);
+}
+
+/* Accesibilidad: sin movimiento si el usuario lo prefiere. */
+@media (prefers-reduced-motion: reduce) {
+  .community-erp *,
+  .community-erp *::before,
+  .community-erp *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .dark {
   --background: #0B1120;
   --foreground: #E2E8F0;
