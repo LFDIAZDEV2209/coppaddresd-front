@@ -161,19 +161,19 @@
   --accent-foreground: #FFFFFF;
 
   --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
+  --destructive-foreground: #B91C1C;
   --destructive-soft: #FCEBEC;
 
   --success: #1D9E75;
-  --success-foreground: #FFFFFF;
+  --success-foreground: #0E6E56;
   --success-soft: #E0F5EC;
 
   --warning: #B8860B;
-  --warning-foreground: #FFFFFF;
+  --warning-foreground: #8A5F08;
   --warning-soft: #FBF3E0;
 
   --info: #6D28D9;
-  --info-foreground: #FFFFFF;
+  --info-foreground: #4C1D95;
   --info-soft: #EDE9FE;
 
   --border: #E5DEF3;
