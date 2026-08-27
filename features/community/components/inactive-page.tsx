@@ -19,15 +19,14 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import { inactivityData } from "../mock-data";
 import { MemberAvatar } from "./member-avatar";
 import { RiskBadge } from "./risk-badge";
 import { SimpleBarChart } from "./charts";
 
 export function InactivePage() {
   const t = useT();
-  const { inactive, sendMessage, sendBulkInactive, toast } = useErp();
-  const chartData = inactivityData.map((d) => ({ label: d.range, value: d.value }));
+  const { inactive, sendMessage, sendBulkInactive, toast, analytics, analyticsLoading } = useErp();
+  const chartData = (analytics?.inactivityDistribution ?? []).map((d) => ({ label: d.range, value: d.value }));
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
