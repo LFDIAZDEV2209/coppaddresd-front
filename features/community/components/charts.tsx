@@ -74,6 +74,10 @@ export function ActivityLineChart({
   loading?: boolean;
 }) {
   const t = useT();
+  // Escala dinámica del eje Y según el pico máximo de actividad
+  const max = Math.max(...data.flatMap((d) => [d.posts, d.comentarios, d.reacciones]), 0);
+  const step = max <= 20 ? 5 : max <= 100 ? 25 : 50;
+  const domainMax = Math.ceil(max / step) * step || step;
   return (
     <ChartFrame loading={loading}>
       <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
@@ -87,7 +91,7 @@ export function ActivityLineChart({
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey="dia" {...axisProps} minTickGap={24} />
-        <YAxis {...axisProps} allowDecimals={false} />
+        <YAxis {...axisProps} domain={[0, domainMax]} allowDecimals={false} />
         <Tooltip
           formatter={(value) => String(value)}
           contentStyle={tooltipStyle}
@@ -118,11 +122,32 @@ export function PostTypesDoughnut({
           dataKey="value"
           nameKey="name"
           innerRadius={0}
-          outerRadius={88}
-          paddingAngle={2}
-          cornerRadius={4}
+          outerRadius={90}
+          paddingAngle={1}
+          cornerRadius={0}
           stroke="var(--card)"
           strokeWidth={2}
+          labelLine={false}
+          label={(props) => {
+            const { cx, cy, midAngle, outerRadius, percent } = props;
+            // Valores numéricos siempre presentes en Pie render
+            const cxN = cx ?? 0;
+            const cyN = cy ?? 0;
+            const midAngleN = midAngle ?? 0;
+            const outerRadiusN = outerRadius ?? 0;
+            const percentN = percent ?? 0;
+            // No renderizar etiqueta en porciones muy pequeñas
+            if (percentN < 0.05) return null;
+            const RADIAN = Math.PI / 180;
+            const radius = outerRadiusN * 0.55;
+            const x = cxN + radius * Math.cos(-midAngleN * RADIAN);
+            const y = cyN + radius * Math.sin(-midAngleN * RADIAN);
+            return (
+              <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
+                {`${(percentN * 100).toFixed(0)}%`}
+              </text>
+            );
+          }}
         >
           {data.map((_, i) => (
             <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />

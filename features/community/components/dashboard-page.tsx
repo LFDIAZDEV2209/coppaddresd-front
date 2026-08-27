@@ -18,6 +18,7 @@ import {
   Video,
   Award,
 } from "lucide-react";
+
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
@@ -64,8 +65,6 @@ export function DashboardPage() {
     dashboardPostTypeData,
     dashboardPeakHoursData,
     dashboardDiagnosisParticipation,
-    dashboardInactiveOver7Days,
-    dashboardInactiveAtRisk,
     dashboardLoading,
   } = useErp();
   const inactive = members.filter((m) => m.status === "Inactivo");
@@ -84,33 +83,6 @@ export function DashboardPage() {
           </>
         }
       />
-
-      {/* Banner de alerta — solo si hay inactivos (umbral > 0) */}
-      {dashboardInactiveOver7Days > 0 && (
-        <div className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning text-white shadow-lg shadow-warning/30">
-              <AlertTriangle className="size-5" />
-            </span>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-sm font-semibold text-warning-foreground">
-                {dashboardLoading
-                  ? "..."
-                  : t("8 miembros inactivos por más de 7 días", { n: String(dashboardInactiveOver7Days) })}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {dashboardLoading
-                  ? "..."
-                  : t("3 de ellos están en riesgo de abandono. Envía un mensaje antes de 14 días.", { n: String(dashboardInactiveAtRisk) })}
-              </p>
-            </div>
-          </div>
-          <Button size="sm" className="relative" onClick={() => sendBulkInactive(t("¡Hola! Nos gustaría saber de ti 💙"))}>
-            <Send data-icon="inline-start" />
-            {t("Enviar ahora")}
-          </Button>
-        </div>
-      )}
 
       {/* KPIs — datos reales del dashboard */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -156,7 +128,7 @@ export function DashboardPage() {
           <SectionHeader title={t("Tipos de publicaciones")} description={t("Distribución del mes")} icon={PieChart} variant="primary" />
           <div className="p-4">
             <PostTypesDoughnut data={dashboardPostTypeData} loading={dashboardLoading} />
-            <ChartLegend items={dashboardPostTypeData.map((d) => ({ label: `${d.name} ${d.value}%`, color: "var(--chart-1)" }))} />
+            <ChartLegend items={dashboardPostTypeData.map((d) => ({ label: d.name, color: "var(--chart-1)" }))} />
           </div>
         </div>
       </section>
