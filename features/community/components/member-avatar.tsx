@@ -1,4 +1,5 @@
 import { Flame } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import type { CommunityMember } from "../types";
 
 function grad(id: string): string {
@@ -18,16 +19,27 @@ function initials(name: string): string {
   return (first + last).toUpperCase();
 }
 
+/** Returns the display name for a member, localizing the system profile. */
+export function profileName(
+  rawName: string,
+  isSystem: boolean | undefined,
+  t: (key: string) => string,
+): string {
+  return isSystem ? t("Equipo ANTARES") : rawName;
+}
+
 export function MemberAvatar({
   member,
   showStreak = false,
   subtitle,
 }: {
-  member: Pick<CommunityMember, "id" | "firstName" | "lastName" | "streak">;
+  member: Pick<CommunityMember, "id" | "firstName" | "lastName" | "streak" | "isSystem">;
   showStreak?: boolean;
   subtitle?: string;
 }) {
-  const fullName = `${member.firstName} ${member.lastName}`;
+  const t = useT();
+  const rawName = `${member.firstName} ${member.lastName}`;
+  const fullName = profileName(rawName, member.isSystem, t);
   return (
     <div className="flex min-w-0 items-center gap-3">
       <span className={`relative flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white ${grad(member.id)}`}>

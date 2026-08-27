@@ -99,7 +99,7 @@ export function StreaksPage() {
                 const rank = i + 1;
                 const member = members.find((m) => m.id === s.memberId);
                 const memberObj = member
-                  ? { id: member.id, firstName: member.firstName, lastName: member.lastName, streak: s.streak }
+                  ? { id: member.id, firstName: member.firstName, lastName: member.lastName, streak: s.streak, isSystem: member.isSystem }
                   : { id: s.memberId, firstName: s.member.split(" ")[0], lastName: s.member.split(" ").slice(1).join(" "), streak: s.streak };
 
                 return (

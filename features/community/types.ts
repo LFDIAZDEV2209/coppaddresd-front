@@ -34,6 +34,7 @@ export interface CommunityMember {
   topRank?: number; // 1, 2, 3
   courses?: number; // cursos completados (📚)
   shared?: boolean; // compartió su racha
+  isSystem?: boolean; // perfil del sistema ("Equipo ANTARES")
 }
 
 export type PostType = "Texto" | "Imagen" | "Video" | "Encuesta" | "Logro";
@@ -50,6 +51,7 @@ export interface ErpPost {
   reactions: number;
   comments: number;
   views: number;
+  isSystem?: boolean;
 }
 
 // Nota: el backend también emite "video" y "logro" en FeedEventKind; se mapean
@@ -73,6 +75,7 @@ export interface FeedItem {
   description: string;
   time: string;
   xp?: number;
+  isSystem?: boolean;
 }
 
 export type GroupType = "Reto" | "Apoyo" | "Nutrición" | "General" | "Principal";

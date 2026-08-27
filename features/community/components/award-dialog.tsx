@@ -32,6 +32,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { profileName } from "./member-avatar";
 
 const TIPOS = [
   { key: "Puntos XP", label: "Puntos XP", icon: Trophy },
@@ -87,7 +88,7 @@ export function AwardDialog() {
                   <SelectItem value="all">{t("Todos los de la comunidad")}</SelectItem>
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.firstName} {m.lastName}
+                      {profileName(`${m.firstName} ${m.lastName}`, m.isSystem, t)}
                     </SelectItem>
                   ))}
                 </SelectContent>

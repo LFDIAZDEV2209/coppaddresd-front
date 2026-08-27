@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { profileName } from "./member-avatar";
 import { feedToday, mockGroups } from "../mock-data";
 import type { FeedKind } from "../types";
 
@@ -92,7 +93,7 @@ export function FeedPage() {
                   </span>
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="text-[12.5px] leading-relaxed">
-                      <span className="font-semibold">{item.member}</span>{" "}
+                      <span className="font-semibold">{profileName(item.member, item.isSystem, t)}</span>{" "}
                       <span className="text-muted-foreground">{item.description}</span>
                     </span>
                     <span className="text-[10px] text-muted-foreground">{item.time}</span>

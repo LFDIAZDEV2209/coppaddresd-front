@@ -137,6 +137,7 @@ function mapPost(post: Post): ErpPost {
     reactions: post.likes.length,
     comments: post.comments.length,
     views: post.viewCount,
+    isSystem: post.profile.isSystem,
   };
 }
 
@@ -149,6 +150,7 @@ function mapFeedEvent(e: FeedEvent): FeedItem {
     description: e.body,
     time: relativeTime(e.createdAt),
     xp: undefined,
+    isSystem: e.profile.isSystem,
   };
 }
 

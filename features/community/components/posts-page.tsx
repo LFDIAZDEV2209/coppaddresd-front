@@ -48,7 +48,7 @@ import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { DESTINOS } from "./post-dialog";
 import { PostDialog } from "./post-dialog";
-import { MemberAvatar } from "./member-avatar";
+import { MemberAvatar, profileName } from "./member-avatar";
 import type { PostType } from "../types";
 
 const TIPOS: { key: PostType; label: string; icon: typeof FileText }[] = [
@@ -202,10 +202,10 @@ export function PostsPage() {
                   ) : (
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                        {post.author.slice(0, 2).toUpperCase()}
+                        {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
                       </span>
                       <div className="flex min-w-0 flex-col gap-0.5">
-                        <span className="truncate text-sm font-semibold">{post.author}</span>
+                        <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
                         <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
                       </div>
                     </div>
@@ -283,7 +283,7 @@ export function PostsPage() {
                     {member ? (
                       <MemberAvatar member={member} subtitle="" />
                     ) : (
-                      <span className="text-sm font-semibold">{post.author}</span>
+                      <span className="text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
