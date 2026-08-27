@@ -75,7 +75,9 @@ import type {
   NetworkChannel,
   PostType,
   Recognition,
+  RegionName,
   RegionStat,
+  RiskLevel,
   StreakRank,
 } from "./types";
 
@@ -106,6 +108,12 @@ function daysSince(iso: string | null): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
 }
 
+/** Normalize HotChocolate uppercase enum wire values (ALTO → Alto, TEXTO → Texto). */
+function normalizeEnum(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 function mapProfile(p: Profile): CommunityMember {
   const { firstName, lastName } = splitName(p.displayName);
   // Normalizar status del wire ("Active"|"Banned") → ("ACTIVE"|"BANNED")
@@ -115,19 +123,19 @@ function mapProfile(p: Profile): CommunityMember {
     id: p.id,
     firstName,
     lastName,
-    diagnosis: p.diagnosis,
-    region: p.region,
+    diagnosis: normalizeEnum(p.diagnosis),
+    region: normalizeEnum(p.region),
     week: p.week,
     posts: p.postsCount,
     comments: p.commentsCount,
     reactions: p.likesCount,
     xp: p.xpTotal,
     streak: p.currentStreak,
-    level: p.levelName,
+    level: normalizeEnum(p.levelName),
     status: normalizedStatus === "BANNED" ? "Inactivo" : "Activo",
     daysSincePost: daysSince(p.lastPostAt),
     lastPost: relativeTime(p.lastPostAt),
-    risk: p.riskLevel,
+    risk: normalizeEnum(p.riskLevel) as RiskLevel || "Bajo",
     lastPostAt: p.lastPostAt ?? undefined,
     courses: 0,
     shared: false,
@@ -149,8 +157,8 @@ function mapPost(post: Post): ErpPost {
     id: post.id,
     author: post.profile.displayName,
     authorId: post.profile.id,
-    type: post.type as PostType,
-    destination: DEST_LABEL[post.destination] ?? post.destination,
+    type: normalizeEnum(post.type) as PostType,
+    destination: DEST_LABEL[normalizeEnum(post.destination)] ?? DEST_LABEL[post.destination] ?? post.destination,
     body: post.body,
     pinned: post.pinned,
     createdAt: relativeTime(post.createdAt),
