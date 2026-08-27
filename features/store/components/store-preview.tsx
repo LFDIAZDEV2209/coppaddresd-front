@@ -126,7 +126,7 @@ function PreviewCard({ item, featured }: { item: StoreItemListItem; featured?: b
       <div className="relative flex h-32 items-center justify-center bg-gradient-to-br from-primary-soft to-info-soft">
         <ShoppingBag className="size-10 text-primary" />
         {featured && (
-          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-[10px] font-bold text-warning-foreground">
+          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-[10px] font-bold text-white">
             <Sparkles className="size-3" />
             {t('Destacado')}
           </span>

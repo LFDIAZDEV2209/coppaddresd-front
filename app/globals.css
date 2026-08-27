@@ -89,19 +89,19 @@
   --accent-foreground: #FFFFFF;
 
   --destructive: #DC2626;
-  --destructive-foreground: #FFFFFF;
+  --destructive-foreground: #991B1B;
   --destructive-soft: #FEE2E2;
 
   --success: #059669;
-  --success-foreground: #FFFFFF;
+  --success-foreground: #065F46;
   --success-soft: #D1FAE5;
 
   --warning: #D97706;
-  --warning-foreground: #FFFFFF;
+  --warning-foreground: #92400E;
   --warning-soft: #FEF3C7;
 
   --info: #0284C7;
-  --info-foreground: #FFFFFF;
+  --info-foreground: #075985;
   --info-soft: #E0F2FE;
 
   --border: #E2E8F0;
