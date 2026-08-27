@@ -201,12 +201,26 @@ export function DashboardPage() {
       {/* Feed reciente + Miembros inactivos en una fila */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
-        <SectionHeader title={t("Feed reciente")} description={t("Actividad en tiempo real")} icon={MessageCircle} variant="primary" />
+        <SectionHeader
+          title={t("Feed reciente")}
+          description={t("Actividad en tiempo real")}
+          icon={MessageCircle}
+          variant="primary"
+          actions={
+            <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success">
+              <span className="size-2 animate-pulse rounded-full bg-success" />
+              {t("En vivo")}
+            </span>
+          }
+        />
         <div className="flex flex-col divide-y divide-border">
-          {feed.map((item) => {
+          {feed.slice(0, 6).map((item) => {
             const Icon = FEED_ICON[item.kind];
             return (
-              <div key={item.id} className="flex items-center gap-3 p-3 transition-colors hover:bg-muted/50">
+              <div
+                key={item.id}
+                className={`flex items-center gap-3 p-3 transition-colors hover:bg-muted/50 ${item.isNew ? "animate-feed-slide bg-primary-soft/40" : ""}`}
+              >
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
                   <Icon className="size-4" />
                 </span>
@@ -223,6 +237,9 @@ export function DashboardPage() {
               </div>
             );
           })}
+          {feed.length === 0 ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">{t("Sin actividad reciente")}</div>
+          ) : null}
         </div>
       </div>
 

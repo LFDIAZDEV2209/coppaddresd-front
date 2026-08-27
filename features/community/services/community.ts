@@ -377,6 +377,27 @@ export const SEND_DIRECT_MESSAGE = gql`
   }
 `;
 
+export const FEED_EVENT_ADDED_SUB = gql`
+  subscription FeedEventAdded {
+    feedEventAdded {
+      id
+      profileId
+      kind
+      body
+      createdAt
+      profile {
+        id
+        displayName
+        isSystem
+      }
+    }
+  }
+`;
+
+export interface FeedEventAddedResult {
+  feedEventAdded: FeedEvent;
+}
+
 // --- Tipos de resultado ---
 
 export interface MeResult {

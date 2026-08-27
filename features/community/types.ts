@@ -76,6 +76,7 @@ export interface FeedItem {
   time: string;
   xp?: number;
   isSystem?: boolean;
+  isNew?: boolean;
 }
 
 export type GroupType = "Reto" | "Apoyo" | "Nutrición" | "General" | "Principal";

@@ -4,11 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
-import { Provider as UrqlProvider, useMutation, useQuery } from "urql";
+import { Provider as UrqlProvider, useMutation, useQuery, useSubscription } from "urql";
 import { communityClient } from "./services/client";
 import {
   AWARD_XP,
@@ -18,6 +19,7 @@ import {
   CREATE_POST,
   DASHBOARD_STATS_QUERY,
   DIAGNOSTIC_STATS_QUERY,
+  FEED_EVENT_ADDED_SUB,
   FEED_EVENTS_QUERY,
   FEED_QUERY,
   ME_QUERY,
@@ -41,6 +43,7 @@ import {
   type DiagnosticStatWire,
   type DiagnosticStatsResult,
   type FeedEvent,
+  type FeedEventAddedResult,
   type FeedEventsResult,
   type MeResult,
   type MessageReachResult,
@@ -422,6 +425,38 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     variables: { take: 20, skip: 0 },
   });
 
+  // Suscripción en tiempo real para el feed en vivo.
+  const [liveFeedEvents, setLiveFeedEvents] = useState<FeedEvent[]>([]);
+  const [newFeedIds, setNewFeedIds] = useState<Set<string>>(new Set());
+  const [feedSubResult] = useSubscription<FeedEventAddedResult>({
+    query: FEED_EVENT_ADDED_SUB,
+  });
+
+  // Sincroniza eventos del WS con el estado local (datos externos → estado).
+  useEffect(() => {
+    const ev = feedSubResult.data?.feedEventAdded;
+    if (!ev) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLiveFeedEvents((prev) => {
+      if (prev.some((p) => p.id === ev.id)) return prev;
+      return [ev, ...prev].slice(0, 20);
+    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNewFeedIds((prev) => {
+      const next = new Set(prev);
+      next.add(ev.id);
+      return next;
+    });
+    // Quitar el resaltado después de 3s
+    setTimeout(() => {
+      setNewFeedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(ev.id);
+        return next;
+      });
+    }, 3000);
+  }, [feedSubResult.data]);
+
   const [streaksResult, refetchStreaks] = useQuery<
     TopStreaksResult,
     { take: number }
@@ -519,10 +554,17 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     () => (postsResult.data?.feed ?? []).map(mapPost),
     [postsResult.data],
   );
-  const feed = useMemo(
-    () => (feedResult.data?.feedEvents ?? []).map(mapFeedEvent),
-    [feedResult.data],
-  );
+  const feed = useMemo(() => {
+    const base = feedResult.data?.feedEvents ?? [];
+    const live = liveFeedEvents;
+    // Combinar eventos en vivo al inicio, deduplicando por id, y marcar los nuevos
+    const merged: FeedEvent[] = [...live, ...base.filter((b) => !live.some((l) => l.id === b.id))];
+    return merged.map((e) => {
+      const item = mapFeedEvent(e);
+      if (newFeedIds.has(e.id)) item.isNew = true;
+      return item;
+    });
+  }, [feedResult.data, liveFeedEvents, newFeedIds]);
   const streaks = useMemo(
     () => (streaksResult.data?.topStreaks ?? []).map(mapStreak),
     [streaksResult.data],
