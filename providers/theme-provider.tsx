@@ -14,13 +14,13 @@ type Theme = "light" | "dark";
 const ACCENT_PALETTES: Record<string, { light: Record<string, string>; dark: Record<string, string> }> = {
   "#4B0082": {
     // Índigo
-    light: { primary: "#4B0082", strong: "#3D006B", soft: "#EDE5F5", foreground: "#FFFFFF", sidebar: "#1B1133", sidebarForeground: "#CBD5E1" },
-    dark:  { primary: "#4B0082", strong: "#7B4DFF", soft: "#2A1F4D", foreground: "#FFFFFF", sidebar: "#17102E", sidebarForeground: "#94A3B8" },
+    light: { primary: "#4B0082", strong: "#3D006B", soft: "#EDE5F5", foreground: "#FFFFFF", sidebar: "#2A1B4D", sidebarForeground: "#CBD5E1" },
+    dark:  { primary: "#4B0082", strong: "#7B4DFF", soft: "#2A1F4D", foreground: "#FFFFFF", sidebar: "#241648", sidebarForeground: "#94A3B8" },
   },
   "#7C3AED": {
     // Violeta
-    light: { primary: "#7C3AED", strong: "#6D28D9", soft: "#EDE9FE", foreground: "#FFFFFF", sidebar: "#241A44", sidebarForeground: "#CBD5E1" },
-    dark:  { primary: "#7C3AED", strong: "#A78BFA", soft: "#2E1F4D", foreground: "#FFFFFF", sidebar: "#201743", sidebarForeground: "#94A3B8" },
+    light: { primary: "#7C3AED", strong: "#6D28D9", soft: "#EDE9FE", foreground: "#FFFFFF", sidebar: "#3B2370", sidebarForeground: "#CBD5E1" },
+    dark:  { primary: "#7C3AED", strong: "#A78BFA", soft: "#2E1F4D", foreground: "#FFFFFF", sidebar: "#33205F", sidebarForeground: "#94A3B8" },
   },
   "#3B82F6": {
     // Azul (default actual)
@@ -29,23 +29,23 @@ const ACCENT_PALETTES: Record<string, { light: Record<string, string>; dark: Rec
   },
   "#123B63": {
     // Marino
-    light: { primary: "#123B63", strong: "#0B2B4A", soft: "#E5F0FA", foreground: "#FFFFFF", sidebar: "#0F1F33", sidebarForeground: "#CBD5E1" },
-    dark:  { primary: "#123B63", strong: "#3B82F6", soft: "#1E2F4A", foreground: "#FFFFFF", sidebar: "#0D1B2E", sidebarForeground: "#94A3B8" },
+    light: { primary: "#123B63", strong: "#0B2B4A", soft: "#E5F0FA", foreground: "#FFFFFF", sidebar: "#123B63", sidebarForeground: "#CBD5E1" },
+    dark:  { primary: "#123B63", strong: "#3B82F6", soft: "#1E2F4A", foreground: "#FFFFFF", sidebar: "#0F3456", sidebarForeground: "#94A3B8" },
   },
   "#0D9488": {
     // Teal
-    light: { primary: "#0D9488", strong: "#0F766E", soft: "#CCFBF1", foreground: "#FFFFFF", sidebar: "#10282A", sidebarForeground: "#CBD5E1" },
-    dark:  { primary: "#0D9488", strong: "#2DD4BF", soft: "#0F2E2B", foreground: "#FFFFFF", sidebar: "#0E2426", sidebarForeground: "#94A3B8" },
+    light: { primary: "#0D9488", strong: "#0F766E", soft: "#CCFBF1", foreground: "#FFFFFF", sidebar: "#134E4A", sidebarForeground: "#CBD5E1" },
+    dark:  { primary: "#0D9488", strong: "#2DD4BF", soft: "#0F2E2B", foreground: "#FFFFFF", sidebar: "#10413E", sidebarForeground: "#94A3B8" },
   },
   "#10B981": {
     // Esmeralda
-    light: { primary: "#10B981", strong: "#059669", soft: "#D1FAE5", foreground: "#FFFFFF", sidebar: "#0F2A1F", sidebarForeground: "#CBD5E1" },
-    dark:  { primary: "#10B981", strong: "#34D399", soft: "#064E3B", foreground: "#FFFFFF", sidebar: "#0D251C", sidebarForeground: "#94A3B8" },
+    light: { primary: "#10B981", strong: "#059669", soft: "#D1FAE5", foreground: "#FFFFFF", sidebar: "#065F46", sidebarForeground: "#CBD5E1" },
+    dark:  { primary: "#10B981", strong: "#34D399", soft: "#064E3B", foreground: "#FFFFFF", sidebar: "#05503B", sidebarForeground: "#94A3B8" },
   },
   "#F59E0B": {
     // Ámbar
-    light: { primary: "#F59E0B", strong: "#D97706", soft: "#FEF3C7", foreground: "#1A1D2E", sidebar: "#2A2313", sidebarForeground: "#CBD5E1" },
-    dark:  { primary: "#F59E0B", strong: "#FBBF24", soft: "#78350F", foreground: "#FFFFFF", sidebar: "#262113", sidebarForeground: "#94A3B8" },
+    light: { primary: "#F59E0B", strong: "#D97706", soft: "#FEF3C7", foreground: "#1A1D2E", sidebar: "#78350F", sidebarForeground: "#CBD5E1" },
+    dark:  { primary: "#F59E0B", strong: "#FBBF24", soft: "#78350F", foreground: "#FFFFFF", sidebar: "#6B2F0D", sidebarForeground: "#94A3B8" },
   },
 };
 
