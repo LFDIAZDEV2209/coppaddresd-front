@@ -6,8 +6,8 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
+import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import { mockNetworks } from "../mock-data";
 import { XpLineChart } from "./charts";
 
 const CHANNEL_ICONS: Record<string, string> = {
@@ -36,12 +36,13 @@ const CHANNEL_LABEL: Record<string, string> = {
 
 export function NetworksPage() {
   const t = useT();
+  const { networks } = useErp();
 
-  // Build growth chart data from mockNetworks
+  // Build growth chart data from networks
   const months = ["Abr", "May", "Jun", "Jul", "Ago"];
   const growthData = months.map((month) => {
     const point: Record<string, string | number> = { label: month };
-    mockNetworks.forEach((n) => {
+    networks.forEach((n) => {
       point[n.name] = n.growth.find((g) => g.month === month)?.value ?? 0;
     });
     return point;
@@ -64,7 +65,7 @@ export function NetworksPage() {
             variant="primary"
           />
           <div className="cp-stagger flex flex-col gap-2.5 p-4">
-            {mockNetworks.map((ch) => (
+            {networks.map((ch) => (
               <div
                 key={ch.id}
                 className="flex items-center gap-3 rounded-xl p-3 text-white shadow-sm transition-transform hover:-translate-y-0.5"
@@ -94,7 +95,7 @@ export function NetworksPage() {
           <div className="p-4">
             <XpLineChart
               data={growthData}
-              lines={mockNetworks.map((ch) => ({
+              lines={networks.map((ch) => ({
                 key: ch.name,
                 name: ch.name,
                 color: ch.color,

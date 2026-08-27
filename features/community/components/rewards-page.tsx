@@ -19,16 +19,27 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import { xpDeliveredSeries } from "../mock-data";
 import { AwardDialog } from "./award-dialog";
 import { XpLineChart } from "./charts";
 
+const SCOPE_LABELS: Record<string, string> = {
+  TODOS: "Todos",
+  INACTIVOS: "Inactivos",
+  ACTIVOS7: "Activos 7d",
+};
+
+const SCOPE_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
+  TODOS: { bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" },
+  INACTIVOS: { bg: "var(--destructive-soft)", text: "var(--destructive)", dot: "var(--destructive)" },
+  ACTIVOS7: { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" },
+};
+
 export function RewardsPage() {
   const t = useT();
-  const { recognitions } = useErp();
+  const { recognitions, analytics, messageReach } = useErp();
 
-  const xpData = xpDeliveredSeries.map((d) => ({
-    label: d.week,
+  const xpData = (analytics?.xpDeliveredSeries ?? []).map((d) => ({
+    label: d.label,
     rachas: d.rachas,
     posts: d.posts,
     erpAdmin: d.erp,
@@ -109,43 +120,26 @@ export function RewardsPage() {
                 <TableHead>{t("Destinatario")}</TableHead>
                 <TableHead className="hidden md:table-cell">{t("Enviado a")}</TableHead>
                 <TableHead>{t("Abiertos")}</TableHead>
-                <TableHead className="hidden md:table-cell">{t("Fecha")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell>
-                  <StatusBadge
-                    status={t("Todos")}
-                    color={{ bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" }}
-                  />
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-xs">284</TableCell>
-                <TableCell className="text-xs font-semibold">218 (77%)</TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{t("hoy")}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <StatusBadge
-                    status={t("Inactivos")}
-                    color={{ bg: "var(--destructive-soft)", text: "var(--destructive)", dot: "var(--destructive)" }}
-                  />
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-xs">8</TableCell>
-                <TableCell className="text-xs font-semibold">5 (63%)</TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{t("ayer")}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <StatusBadge
-                    status={t("Activos >22d")}
-                    color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }}
-                  />
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-xs">12</TableCell>
-                <TableCell className="text-xs font-semibold">11 (92%)</TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">23 ago</TableCell>
-              </TableRow>
+              {messageReach.map((mr) => {
+                const scopeLabel = SCOPE_LABELS[mr.scope] ?? mr.scope;
+                const scopeColor = SCOPE_COLORS[mr.scope] ?? SCOPE_COLORS.TODOS;
+                const pct = mr.total === 0 ? 0 : Math.round((mr.reached / mr.total) * 100);
+                return (
+                  <TableRow key={mr.scope} className="transition-colors hover:bg-muted/50">
+                    <TableCell>
+                      <StatusBadge
+                        status={t(scopeLabel)}
+                        color={scopeColor}
+                      />
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-xs">{mr.total}</TableCell>
+                    <TableCell className="text-xs font-semibold">{mr.reached} ({pct}%)</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

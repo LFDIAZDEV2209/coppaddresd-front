@@ -16,14 +16,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import { diagnosticKpis, mockDiagnostics } from "../mock-data";
 import { GroupedBarChart } from "./charts";
 
 export function DiagnosticsPage() {
   const t = useT();
+  const { diagnostics, diagnosticsLoading } = useErp();
 
-  const chartData = mockDiagnostics.map((d) => ({
+  const diagnosticKpis = diagnostics.map((d) => ({
+    label: d.diagnosis,
+    value: String(d.members),
+    context: d.adherence > 0 ? `${d.adherence}%` : undefined,
+  }));
+
+  const chartData = diagnostics.map((d) => ({
     label: d.diagnosis,
     postsProm: d.postsPerWeek,
     adherencia: d.adherence,
@@ -46,7 +53,6 @@ export function DiagnosticsPage() {
             label={t(kpi.label)}
             value={kpi.value}
             context={kpi.context ? t(kpi.context) : undefined}
-            trend={kpi.trend}
             icon={Stethoscope}
             variant="info"
           />
@@ -64,6 +70,7 @@ export function DiagnosticsPage() {
           <div className="p-4">
             <GroupedBarChart
               data={chartData}
+              loading={diagnosticsLoading}
               bars={[
                 { key: "postsProm", name: t("Posts semanales prom."), color: "var(--info)" },
                 { key: "adherencia", name: t("Adherencia %"), color: "var(--success)" },
@@ -91,7 +98,7 @@ export function DiagnosticsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockDiagnostics.map((d) => (
+              {(diagnosticsLoading ? [] : diagnostics).map((d) => (
                 <TableRow key={d.diagnosis}>
                   <TableCell className="text-xs font-semibold">{d.diagnosis}</TableCell>
                   <TableCell className="text-right text-xs">{d.members}</TableCell>

@@ -21,7 +21,7 @@ const REGION_COLORS: Record<string, string> = {
 
 export function RegionsPage() {
   const t = useT();
-  const { regions } = useErp();
+  const { regions, regionsLoading } = useErp();
 
   const chartData = regions.map((r) => ({
     label: r.region,
@@ -33,7 +33,7 @@ export function RegionsPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Por región")}
-        description={`${regions.length} ${t("ciudades")} · ${t("3 países")}`}
+        description={`${regions.length} ${t("ciudades")}`}
         icon={Map}
       />
 
@@ -48,6 +48,7 @@ export function RegionsPage() {
           <div className="p-4">
             <GroupedBarChart
               data={chartData}
+              loading={regionsLoading}
               bars={[
                 { key: "members", name: t("Miembros"), color: "var(--primary)" },
                 { key: "postsPerWeek", name: t("Posts/semana"), color: "var(--success)" },
