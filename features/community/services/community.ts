@@ -103,6 +103,50 @@ export interface FeedEvent {
   profile: PostAuthor;
 }
 
+// --- Contrato DashboardStats (Milestone-2) ---
+
+export interface DashboardKpiTrends {
+  activeMembers: number;
+  postsThisMonth: number;
+  participationRate: number;
+  inactiveOver7Days: number;
+}
+
+export interface ActivityDay {
+  dia: number;
+  posts: number;
+  comentarios: number;
+  reacciones: number;
+}
+
+export interface PostTypeCount {
+  type: string;
+  count: number;
+}
+
+export interface PeakHour {
+  hora: number;
+  count: number;
+}
+
+export interface DiagnosisParticipationEntry {
+  diagnosis: ProfileDiagnosis;
+  participation: number;
+}
+
+export interface DashboardStats {
+  activeMembers: number;
+  postsThisMonth: number;
+  participationRate: number;
+  inactiveOver7Days: number;
+  inactiveAtRisk: number;
+  kpiTrends: DashboardKpiTrends;
+  activitySeries: ActivityDay[];
+  postTypes: PostTypeCount[];
+  peakHours: PeakHour[];
+  diagnosisParticipation: DiagnosisParticipationEntry[];
+}
+
 // --- Documentos GraphQL ---
 
 export const ME_QUERY = gql`
@@ -348,4 +392,46 @@ export interface AwardXpResult {
 
 export interface AwardXpAllResult {
   awardXpToAll: Profile[] | null;
+}
+
+// --- Documento dashboardStats ---
+
+export const DASHBOARD_STATS_QUERY = gql`
+  query DashboardStats {
+    dashboardStats {
+      activeMembers
+      postsThisMonth
+      participationRate
+      inactiveOver7Days
+      inactiveAtRisk
+      kpiTrends {
+        activeMembers
+        postsThisMonth
+        participationRate
+        inactiveOver7Days
+      }
+      activitySeries {
+        dia
+        posts
+        comentarios
+        reacciones
+      }
+      postTypes {
+        type
+        count
+      }
+      peakHours {
+        hora
+        count
+      }
+      diagnosisParticipation {
+        diagnosis
+        participation
+      }
+    }
+  }
+`;
+
+export interface DashboardStatsResult {
+  dashboardStats: DashboardStats;
 }

@@ -14,6 +14,7 @@ import {
   AWARD_XP,
   AWARD_XP_ALL,
   CREATE_POST,
+  DASHBOARD_STATS_QUERY,
   FEED_EVENTS_QUERY,
   FEED_QUERY,
   ME_QUERY,
@@ -24,6 +25,7 @@ import {
   type AwardXpAllResult,
   type AwardXpResult,
   type CreatePostResult,
+  type DashboardStatsResult,
   type FeedEvent,
   type FeedEventsResult,
   type MeResult,
@@ -47,6 +49,7 @@ import type {
   ErpPost,
   FeedItem,
   FeedKind,
+  Kpi,
   PostType,
   StreakRank,
 } from "./types";
@@ -208,6 +211,16 @@ interface ErpContextValue {
   streaksLoading: boolean;
   streaksError: string | undefined;
   refetchStreaks: () => void;
+  dashboardKpis: Kpi[];
+  dashboardActivitySeries: { dia: string; posts: number; comentarios: number; reacciones: number }[];
+  dashboardPostTypeData: { name: string; value: number }[];
+  dashboardPeakHoursData: { hora: string; valor: number }[];
+  dashboardDiagnosisParticipation: { subject: string; value: number; fullMark: number }[];
+  dashboardInactiveOver7Days: number;
+  dashboardInactiveAtRisk: number;
+  dashboardLoading: boolean;
+  dashboardError: string | undefined;
+  refetchDashboard: () => void;
   publishPost: (input: {
     type: PostType;
     destination: string;
@@ -272,6 +285,11 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     variables: {},
   });
 
+  const [dashboardResult, refetchDashboard] = useQuery<DashboardStatsResult>({
+    query: DASHBOARD_STATS_QUERY,
+    variables: {},
+  });
+
   const [, createPostMut] = useMutation<
     CreatePostResult,
     { body: string; type: PostType; destination: string }
@@ -310,6 +328,92 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     [streaksResult.data],
   );
   const me = meResult.data?.me ?? null;
+
+  // --- Mapeo de datos del dashboard (backend → gráficos) ---
+
+  const ds = dashboardResult.data?.dashboardStats ?? null;
+
+  const dashboardActivitySeries = useMemo(
+    () =>
+      (ds?.activitySeries ?? []).map((d) => ({
+        dia: String(d.dia),
+        posts: d.posts,
+        comentarios: d.comentarios,
+        reacciones: d.reacciones,
+      })),
+    [ds],
+  );
+
+  const dashboardPostTypeData = useMemo(() => {
+    const pts = ds?.postTypes ?? [];
+    const total = pts.reduce((s, p) => s + p.count, 0);
+    return pts.map((p) => ({
+      name: p.type,
+      value: total === 0 ? 0 : Math.round((p.count / total) * 100),
+    }));
+  }, [ds]);
+
+  const dashboardPeakHoursData = useMemo(
+    () =>
+      (ds?.peakHours ?? []).map((h) => ({
+        hora: `${h.hora}:00`,
+        valor: h.count,
+      })),
+    [ds],
+  );
+
+  const dashboardDiagnosisParticipation = useMemo(() => {
+    const mapDiag = (d: string): string => {
+      if (d === "DM2HTA") return "DM2+HTA";
+      return d;
+    };
+    return (ds?.diagnosisParticipation ?? []).map((dp) => ({
+      subject: mapDiag(dp.diagnosis),
+      value: Math.round(dp.participation),
+      fullMark: 100,
+    }));
+  }, [ds]);
+
+  const dashboardKpis = useMemo<Kpi[]>(() => {
+    if (!ds) return [];
+    const fmtNum = (n: number) => n.toLocaleString("es-ES");
+    const fmtPct = (n: number) => `${Math.round(n)}%`;
+    const trendFor = (delta: number): { value: string; direction: "up" | "down" } | undefined => {
+      if (delta === 0) return undefined;
+      const abs = Math.abs(delta);
+      const rounded = abs % 1 === 0 ? abs.toFixed(0) : abs.toFixed(1).replace(/\.0$/, "");
+      return {
+        value: delta > 0 ? `+${rounded}%` : `-${rounded}%`,
+        direction: delta > 0 ? "up" : "down",
+      };
+    };
+    return [
+      {
+        label: "Miembros activos",
+        value: fmtNum(ds.activeMembers),
+        context: "este mes",
+        trend: trendFor(ds.kpiTrends.activeMembers),
+      },
+      {
+        label: "Publicaciones",
+        value: fmtNum(ds.postsThisMonth),
+        context: "este mes",
+        trend: trendFor(ds.kpiTrends.postsThisMonth),
+      },
+      {
+        label: "Tasa participación",
+        value: fmtPct(ds.participationRate),
+        context: "semanal",
+        trend: trendFor(ds.kpiTrends.participationRate),
+      },
+      {
+        label: "Inactivos >7d",
+        value: fmtNum(ds.inactiveOver7Days),
+        context: "requieren acción",
+        trend: trendFor(ds.kpiTrends.inactiveOver7Days),
+      },
+    ];
+  }, [ds]);
 
   const inactive = useMemo(
     () =>
@@ -446,6 +550,16 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       streaksLoading: streaksResult.fetching,
       streaksError: streaksResult.error?.message,
       refetchStreaks,
+      dashboardKpis,
+      dashboardActivitySeries,
+      dashboardPostTypeData,
+      dashboardPeakHoursData,
+      dashboardDiagnosisParticipation,
+      dashboardInactiveOver7Days: ds?.inactiveOver7Days ?? 0,
+      dashboardInactiveAtRisk: ds?.inactiveAtRisk ?? 0,
+      dashboardLoading: dashboardResult.fetching,
+      dashboardError: dashboardResult.error?.message,
+      refetchDashboard,
       publishPost,
       togglePin,
       deletePost,
@@ -474,6 +588,16 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       streaksResult.fetching,
       streaksResult.error,
       refetchStreaks,
+      dashboardKpis,
+      dashboardActivitySeries,
+      dashboardPostTypeData,
+      dashboardPeakHoursData,
+      dashboardDiagnosisParticipation,
+      ds?.inactiveOver7Days,
+      ds?.inactiveAtRisk,
+      dashboardResult.fetching,
+      dashboardResult.error,
+      refetchDashboard,
       publishPost,
       togglePin,
       deletePost,
