@@ -148,3 +148,42 @@ export interface Kpi {
   context?: string;
   trend?: { value: string; direction: "up" | "down" };
 }
+
+export interface MessageReach {
+  scope: string;
+  total: number;
+  reached: number;
+}
+
+export interface FeedTodayStats {
+  posts: number;
+  comments: number;
+  reactions: number;
+  newMembers: number;
+  streaksBroken: number;
+  xpDelivered: number;
+}
+
+export interface StreakOverview {
+  longestStreak: number;
+  longestProfileId: string;
+  longestProfileName: string;
+  membersOverSevenDays: number;
+  milestonesThisMonth: number;
+  streaksBroken: number;
+  distribution: { range: string; value: number }[];
+}
+
+export interface XpSeriesPoint {
+  label: string;
+  rachas: number;
+  posts: number;
+  erp: number;
+}
+
+export interface CommunityAnalyticsData {
+  feedToday: FeedTodayStats;
+  streakOverview: StreakOverview;
+  inactivityDistribution: { range: string; value: number }[];
+  xpDeliveredSeries: XpSeriesPoint[];
+}

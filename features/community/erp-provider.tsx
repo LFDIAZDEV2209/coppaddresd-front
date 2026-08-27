@@ -13,49 +13,69 @@ import { communityClient } from "./services/client";
 import {
   AWARD_XP,
   AWARD_XP_ALL,
+  COMMUNITY_ANALYTICS_QUERY,
+  COMMUNITY_GROUPS_QUERY,
   CREATE_POST,
   DASHBOARD_STATS_QUERY,
+  DIAGNOSTIC_STATS_QUERY,
   FEED_EVENTS_QUERY,
   FEED_QUERY,
   ME_QUERY,
+  MESSAGE_REACH_QUERY,
   MODERATE_DELETE_POST,
+  NETWORKS_QUERY,
   PIN_POST,
   PROFILES_QUERY,
+  RECOGNITIONS_QUERY,
+  REGION_STATS_QUERY,
   SEND_BULK_MESSAGE,
   SEND_DIRECT_MESSAGE,
   TOP_STREAKS_QUERY,
   type AwardXpAllResult,
   type AwardXpResult,
+  type CommunityAnalyticsResult,
+  type CommunityGroupsResult,
+  type CommunityGroupWire,
   type CreatePostResult,
   type DashboardStatsResult,
+  type DiagnosticStatWire,
+  type DiagnosticStatsResult,
   type FeedEvent,
   type FeedEventsResult,
   type MeResult,
+  type MessageReachResult,
+  type MessageReachWire,
   type ModerateDeletePostResult,
+  type NetworkChannelWire,
+  type NetworksResult,
   type PinPostResult,
   type Post,
   type Profile,
   type ProfilesResult,
   type FeedResult,
+  type RecognitionWire,
+  type RecognitionsResult,
+  type RegionStatWire,
+  type RegionStatsResult,
   type SendBulkMessageResult,
   type SendDirectMessageResult,
   type TopStreaksResult,
 } from "./services/community";
-import {
-  mockDiagnostics,
-  mockGroups,
-  mockNetworks,
-  mockRegions,
-  mockRecognitions,
-} from "./mock-data";
 import { useT } from "@/providers/i18n-provider";
 import type {
+  CommunityAnalyticsData,
+  CommunityGroup,
   CommunityMember,
+  DiagnosticStat,
   ErpPost,
   FeedItem,
   FeedKind,
   Kpi,
+  MessageReach,
+  NetworkChannel,
   PostType,
+  Recognition,
+  RegionStat,
   StreakRank,
 } from "./types";
 
@@ -183,6 +203,93 @@ function toDestinationEnum(friendly: string): string {
   return map[base] ?? "TodasLasComunidades";
 }
 
+// --- Utilidades de mapeo wire → display (reutilizables) ---
+
+function mapDiagnosis(d: string): string {
+  if (d === "DM2HTA") return "DM2+HTA";
+  return d;
+}
+
+const REGION_LABEL: Record<string, string> = {
+  Bogota: "Bogotá",
+};
+
+function formatFollowers(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return String(n);
+}
+
+function deriveGroupType(name: string): "Reto" | "Apoyo" | "Nutrición" | "General" | "Principal" {
+  const lower = name.toLowerCase();
+  if (lower.includes("reto")) return "Reto";
+  if (lower.includes("apoyo")) return "Apoyo";
+  if (lower.includes("cocina") || lower.includes("nutri")) return "Nutrición";
+  if (lower.includes("comunidad") || lower.includes("adred")) return "Principal";
+  return "General";
+}
+
+function mapWireGroup(g: CommunityGroupWire): CommunityGroup {
+  return {
+    id: g.id,
+    name: g.name,
+    members: g.memberCount,
+    posts: g.messageCount,
+    type: deriveGroupType(g.name),
+    lastActivity: relativeTime(g.lastActivityAt),
+  };
+}
+
+function mapWireRegion(r: RegionStatWire, totalMembers: number): RegionStat {
+  return {
+    region: REGION_LABEL[r.region] ?? r.region,
+    members: r.members,
+    postsPerWeek: r.postsPerWeek,
+    percent: totalMembers === 0 ? 0 : Math.round((r.members / totalMembers) * 100),
+  };
+}
+
+function mapWireDiagnostic(d: DiagnosticStatWire): DiagnosticStat {
+  return {
+    diagnosis: mapDiagnosis(d.diagnosis),
+    members: d.members,
+    trend: "",
+    barWidth: 0, // computed after all rows are mapped
+    postsPerWeek: d.postsPerWeek,
+    avgStreak: d.avgStreak,
+    avgXp: d.avgXp,
+    adherence: d.adherence,
+  };
+}
+
+function mapWireRecognition(r: RecognitionWire): Recognition {
+  return {
+    id: r.id,
+    member: r.profile.displayName,
+    memberId: r.profileId,
+    typeLabel: r.typeLabel,
+    xp: r.xp,
+    status: r.status === "Sent" ? "Enviado" : "Pendiente",
+    date: relativeTime(r.createdAt),
+  };
+}
+
+function mapWireNetwork(n: NetworkChannelWire, idx: number): NetworkChannel {
+  return {
+    id: `n-${idx}`,
+    name: n.name,
+    followers: formatFollowers(n.followers),
+    color: n.color,
+    growth: n.growthPoints
+      .slice()
+      .sort((a, b) => a.month.localeCompare(b.month))
+      .map((gp) => ({ month: gp.month, value: gp.value })),
+  };
+}
+
+function mapWireMessageReach(m: MessageReachWire): MessageReach {
+  return { scope: m.scope, total: m.total, reached: m.reached };
+}
+
 // --- Contexto ---
 
 interface ToastItem {
@@ -203,13 +310,15 @@ interface ErpContextValue {
   members: CommunityMember[];
   posts: ErpPost[];
   feed: FeedItem[];
-  groups: typeof mockGroups;
-  networks: typeof mockNetworks;
-  regions: typeof mockRegions;
-  diagnostics: typeof mockDiagnostics;
+  communityGroups: CommunityGroup[];
+  networks: NetworkChannel[];
+  regions: RegionStat[];
+  diagnostics: DiagnosticStat[];
   streaks: StreakRank[];
-  recognitions: typeof mockRecognitions;
+  recognitions: Recognition[];
   inactive: CommunityMember[];
+  analytics: CommunityAnalyticsData | null;
+  messageReach: MessageReach[];
   membersLoading: boolean;
   membersError: string | undefined;
   refetchMembers: () => void;
@@ -222,6 +331,27 @@ interface ErpContextValue {
   streaksLoading: boolean;
   streaksError: string | undefined;
   refetchStreaks: () => void;
+  analyticsLoading: boolean;
+  analyticsError: string | undefined;
+  refetchAnalytics: () => void;
+  regionsLoading: boolean;
+  regionsError: string | undefined;
+  refetchRegions: () => void;
+  diagnosticsLoading: boolean;
+  diagnosticsError: string | undefined;
+  refetchDiagnostics: () => void;
+  recognitionsLoading: boolean;
+  recognitionsError: string | undefined;
+  refetchRecognitions: () => void;
+  networksLoading: boolean;
+  networksError: string | undefined;
+  refetchNetworks: () => void;
+  communityGroupsLoading: boolean;
+  communityGroupsError: string | undefined;
+  refetchCommunityGroups: () => void;
+  messageReachLoading: boolean;
+  messageReachError: string | undefined;
+  refetchMessageReach: () => void;
   dashboardKpis: Kpi[];
   dashboardActivitySeries: { dia: string; posts: number; comentarios: number; reacciones: number }[];
   dashboardPostTypeData: { name: string; value: number }[];
@@ -302,6 +432,47 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     variables: {},
   });
 
+  const [analyticsResult, refetchAnalytics] = useQuery<CommunityAnalyticsResult>({
+    query: COMMUNITY_ANALYTICS_QUERY,
+    variables: {},
+  });
+
+  const [regionStatsResult, refetchRegions] = useQuery<RegionStatsResult>({
+    query: REGION_STATS_QUERY,
+    variables: {},
+  });
+
+  const [diagnosticStatsResult, refetchDiagnostics] = useQuery<DiagnosticStatsResult>({
+    query: DIAGNOSTIC_STATS_QUERY,
+    variables: {},
+  });
+
+  const [recognitionsResult, refetchRecognitions] = useQuery<
+    RecognitionsResult,
+    { take: number; skip: number }
+  >({
+    query: RECOGNITIONS_QUERY,
+    variables: { take: 20, skip: 0 },
+  });
+
+  const [networksResult, refetchNetworks] = useQuery<NetworksResult>({
+    query: NETWORKS_QUERY,
+    variables: {},
+  });
+
+  const [communityGroupsResult, refetchCommunityGroups] = useQuery<
+    CommunityGroupsResult,
+    { take: number; skip: number }
+  >({
+    query: COMMUNITY_GROUPS_QUERY,
+    variables: { take: 50, skip: 0 },
+  });
+
+  const [messageReachResult, refetchMessageReach] = useQuery<MessageReachResult>({
+    query: MESSAGE_REACH_QUERY,
+    variables: {},
+  });
+
   const [, createPostMut] = useMutation<
     CreatePostResult,
     { body: string; type: PostType; destination: string }
@@ -350,6 +521,54 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   );
   const me = meResult.data?.me ?? null;
 
+  // --- Mapeo de datos de analytics (backend → gráficos) ---
+
+  const analytics = useMemo<CommunityAnalyticsData | null>(() => {
+    const ca = analyticsResult.data?.communityAnalytics;
+    if (!ca) return null;
+    return {
+      feedToday: ca.feedToday,
+      streakOverview: ca.streakOverview,
+      inactivityDistribution: ca.inactivityDistribution,
+      xpDeliveredSeries: ca.xpDeliveredSeries,
+    };
+  }, [analyticsResult.data]);
+
+  const regions = useMemo<RegionStat[]>(() => {
+    const wire = regionStatsResult.data?.regionStats ?? [];
+    const totalMembers = wire.reduce((s, r) => s + r.members, 0);
+    return wire.map((r) => mapWireRegion(r, totalMembers));
+  }, [regionStatsResult.data]);
+
+  const diagnostics = useMemo<DiagnosticStat[]>(() => {
+    const wire = diagnosticStatsResult.data?.diagnosticStats ?? [];
+    const mapped = wire.map(mapWireDiagnostic);
+    const maxMembers = Math.max(...mapped.map((d) => d.members), 1);
+    return mapped.map((d) => ({
+      ...d,
+      barWidth: Math.round((d.members / maxMembers) * 100),
+    }));
+  }, [diagnosticStatsResult.data]);
+
+  const recognitions = useMemo<Recognition[]>(() => {
+    return (recognitionsResult.data?.recognitions ?? []).map(mapWireRecognition);
+  }, [recognitionsResult.data]);
+
+  const networks = useMemo<NetworkChannel[]>(() => {
+    return (networksResult.data?.networks ?? [])
+      .slice()
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((n, i) => mapWireNetwork(n, i));
+  }, [networksResult.data]);
+
+  const communityGroups = useMemo<CommunityGroup[]>(() => {
+    return (communityGroupsResult.data?.communityGroups ?? []).map(mapWireGroup);
+  }, [communityGroupsResult.data]);
+
+  const messageReach = useMemo<MessageReach[]>(() => {
+    return (messageReachResult.data?.messageReach ?? []).map(mapWireMessageReach);
+  }, [messageReachResult.data]);
+
   // --- Mapeo de datos del dashboard (backend → gráficos) ---
 
   const ds = dashboardResult.data?.dashboardStats ?? null;
@@ -384,12 +603,8 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   );
 
   const dashboardDiagnosisParticipation = useMemo(() => {
-    const mapDiag = (d: string): string => {
-      if (d === "DM2HTA") return "DM2+HTA";
-      return d;
-    };
     return (ds?.diagnosisParticipation ?? []).map((dp) => ({
-      subject: mapDiag(dp.diagnosis),
+      subject: mapDiagnosis(dp.diagnosis),
       value: Math.round(dp.participation),
       fullMark: 100,
     }));
@@ -564,13 +779,15 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       members,
       posts,
       feed,
-      groups: mockGroups,
-      networks: mockNetworks,
-      regions: mockRegions,
-      diagnostics: mockDiagnostics,
+      communityGroups,
+      networks,
+      regions,
+      diagnostics,
       streaks,
-      recognitions: mockRecognitions,
+      recognitions,
       inactive,
+      analytics,
+      messageReach,
       membersLoading: membersResult.fetching,
       membersError: membersResult.error?.message,
       refetchMembers,
@@ -583,6 +800,27 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       streaksLoading: streaksResult.fetching,
       streaksError: streaksResult.error?.message,
       refetchStreaks,
+      analyticsLoading: analyticsResult.fetching,
+      analyticsError: analyticsResult.error?.message,
+      refetchAnalytics,
+      regionsLoading: regionStatsResult.fetching,
+      regionsError: regionStatsResult.error?.message,
+      refetchRegions,
+      diagnosticsLoading: diagnosticStatsResult.fetching,
+      diagnosticsError: diagnosticStatsResult.error?.message,
+      refetchDiagnostics,
+      recognitionsLoading: recognitionsResult.fetching,
+      recognitionsError: recognitionsResult.error?.message,
+      refetchRecognitions,
+      networksLoading: networksResult.fetching,
+      networksError: networksResult.error?.message,
+      refetchNetworks,
+      communityGroupsLoading: communityGroupsResult.fetching,
+      communityGroupsError: communityGroupsResult.error?.message,
+      refetchCommunityGroups,
+      messageReachLoading: messageReachResult.fetching,
+      messageReachError: messageReachResult.error?.message,
+      refetchMessageReach,
       dashboardKpis,
       dashboardActivitySeries,
       dashboardPostTypeData,
@@ -607,8 +845,15 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       members,
       posts,
       feed,
+      communityGroups,
+      networks,
+      regions,
+      diagnostics,
       streaks,
+      recognitions,
       inactive,
+      analytics,
+      messageReach,
       membersResult.fetching,
       membersResult.error,
       refetchMembers,
@@ -621,6 +866,27 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       streaksResult.fetching,
       streaksResult.error,
       refetchStreaks,
+      analyticsResult.fetching,
+      analyticsResult.error,
+      refetchAnalytics,
+      regionStatsResult.fetching,
+      regionStatsResult.error,
+      refetchRegions,
+      diagnosticStatsResult.fetching,
+      diagnosticStatsResult.error,
+      refetchDiagnostics,
+      recognitionsResult.fetching,
+      recognitionsResult.error,
+      refetchRecognitions,
+      networksResult.fetching,
+      networksResult.error,
+      refetchNetworks,
+      communityGroupsResult.fetching,
+      communityGroupsResult.error,
+      refetchCommunityGroups,
+      messageReachResult.fetching,
+      messageReachResult.error,
+      refetchMessageReach,
       dashboardKpis,
       dashboardActivitySeries,
       dashboardPostTypeData,

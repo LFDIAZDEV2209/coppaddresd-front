@@ -468,3 +468,251 @@ export const DASHBOARD_STATS_QUERY = gql`
 export interface DashboardStatsResult {
   dashboardStats: DashboardStats;
 }
+
+// --- Community Analytics (Milestone-3) ---
+
+export const COMMUNITY_ANALYTICS_QUERY = gql`
+  query CommunityAnalytics {
+    communityAnalytics {
+      feedToday {
+        posts
+        comments
+        reactions
+        newMembers
+        streaksBroken
+        xpDelivered
+      }
+      streakOverview {
+        longestStreak
+        longestProfileId
+        longestProfileName
+        membersOverSevenDays
+        milestonesThisMonth
+        streaksBroken
+        distribution {
+          range
+          value
+        }
+      }
+      inactivityDistribution {
+        range
+        value
+      }
+      xpDeliveredSeries {
+        label
+        rachas
+        posts
+        erp
+      }
+    }
+  }
+`;
+
+export interface FeedTodayData {
+  posts: number;
+  comments: number;
+  reactions: number;
+  newMembers: number;
+  streaksBroken: number;
+  xpDelivered: number;
+}
+
+export interface DistributionBucket {
+  range: string;
+  value: number;
+}
+
+export interface StreakOverviewData {
+  longestStreak: number;
+  longestProfileId: string;
+  longestProfileName: string;
+  membersOverSevenDays: number;
+  milestonesThisMonth: number;
+  streaksBroken: number;
+  distribution: DistributionBucket[];
+}
+
+export interface XpDeliveredSeriesPoint {
+  label: string;
+  rachas: number;
+  posts: number;
+  erp: number;
+}
+
+export interface CommunityAnalytics {
+  feedToday: FeedTodayData;
+  streakOverview: StreakOverviewData;
+  inactivityDistribution: DistributionBucket[];
+  xpDeliveredSeries: XpDeliveredSeriesPoint[];
+}
+
+export interface CommunityAnalyticsResult {
+  communityAnalytics: CommunityAnalytics;
+}
+
+// --- Region Stats ---
+
+export const REGION_STATS_QUERY = gql`
+  query RegionStats {
+    regionStats {
+      region
+      members
+      postsPerWeek
+    }
+  }
+`;
+
+export interface RegionStatWire {
+  region: string;
+  members: number;
+  postsPerWeek: number;
+}
+
+export interface RegionStatsResult {
+  regionStats: RegionStatWire[];
+}
+
+// --- Diagnostic Stats ---
+
+export const DIAGNOSTIC_STATS_QUERY = gql`
+  query DiagnosticStats {
+    diagnosticStats {
+      diagnosis
+      members
+      postsPerWeek
+      avgStreak
+      avgXp
+      adherence
+    }
+  }
+`;
+
+export interface DiagnosticStatWire {
+  diagnosis: string;
+  members: number;
+  postsPerWeek: number;
+  avgStreak: number;
+  avgXp: number;
+  adherence: number;
+}
+
+export interface DiagnosticStatsResult {
+  diagnosticStats: DiagnosticStatWire[];
+}
+
+// --- Recognitions ---
+
+export const RECOGNITIONS_QUERY = gql`
+  query Recognitions($take: Int, $skip: Int) {
+    recognitions(take: $take, skip: $skip) {
+      id
+      profileId
+      typeLabel
+      xp
+      status
+      createdAt
+      profile {
+        id
+        displayName
+        isSystem
+      }
+    }
+  }
+`;
+
+export interface RecognitionWire {
+  id: string;
+  profileId: string;
+  typeLabel: string;
+  xp: number;
+  status: string;
+  createdAt: string;
+  profile: {
+    id: string;
+    displayName: string;
+    isSystem?: boolean;
+  };
+}
+
+export interface RecognitionsResult {
+  recognitions: RecognitionWire[];
+}
+
+// --- Networks ---
+
+export const NETWORKS_QUERY = gql`
+  query Networks {
+    networks {
+      name
+      handle
+      color
+      followers
+      sortOrder
+      growthPoints {
+        month
+        value
+      }
+    }
+  }
+`;
+
+export interface NetworkChannelWire {
+  name: string;
+  handle: string;
+  color: string;
+  followers: number;
+  sortOrder: number;
+  growthPoints: { month: string; value: number }[];
+}
+
+export interface NetworksResult {
+  networks: NetworkChannelWire[];
+}
+
+// --- Community Groups ---
+
+export const COMMUNITY_GROUPS_QUERY = gql`
+  query CommunityGroups($take: Int, $skip: Int) {
+    communityGroups(take: $take, skip: $skip) {
+      id
+      name
+      memberCount
+      messageCount
+      lastActivityAt
+    }
+  }
+`;
+
+export interface CommunityGroupWire {
+  id: string;
+  name: string;
+  memberCount: number;
+  messageCount: number;
+  lastActivityAt: string;
+}
+
+export interface CommunityGroupsResult {
+  communityGroups: CommunityGroupWire[];
+}
+
+// --- Message Reach ---
+
+export const MESSAGE_REACH_QUERY = gql`
+  query MessageReach {
+    messageReach {
+      scope
+      total
+      reached
+    }
+  }
+`;
+
+export interface MessageReachWire {
+  scope: string;
+  total: number;
+  reached: number;
+}
+
+export interface MessageReachResult {
+  messageReach: MessageReachWire[];
+}
