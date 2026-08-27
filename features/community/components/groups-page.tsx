@@ -24,7 +24,7 @@ const GROUP_TYPE_COLORS: Record<GroupType, { bg: string; text: string; dot: stri
   Reto: { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" },
   Apoyo: { bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" },
   Nutrición: { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" },
-  General: { bg: "var(--warning-soft)", text: "#B8860B", dot: "#B8860B" },
+  General: { bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" },
   Principal: { bg: "var(--info-soft)", text: "var(--info-foreground)", dot: "var(--info-foreground)" },
 };
 

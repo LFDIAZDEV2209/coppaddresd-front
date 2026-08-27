@@ -146,7 +146,7 @@ export function MembersPage() {
             {m.topRank && (
               <StatusBadge
                 status={`TOP ${m.topRank}`}
-                color={{ bg: "var(--warning-soft)", text: "#B8860B", dot: "#B8860B" }}
+                color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
               />
             )}
             <div className="flex w-full gap-2">

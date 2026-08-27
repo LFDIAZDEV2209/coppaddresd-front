@@ -40,7 +40,7 @@ const FEED_ICON: Record<FeedKind, typeof ImageIcon> = {
 
 const FEED_ICON_BG: Record<FeedKind, string> = {
   foto: "bg-success-soft text-success-foreground",
-  hito: "bg-warning-soft text-[#B8860B]",
+  hito: "bg-warning-soft text-[var(--warning-foreground)]",
   comentario: "bg-primary-soft text-primary",
   grupo: "bg-warning-soft text-warning-foreground",
   nutriobiotico: "bg-info-soft text-info-foreground",

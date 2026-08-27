@@ -195,7 +195,7 @@ export function StreaksPage() {
             <div className="flex flex-col divide-y divide-border">
               {milestones.map((ms, i) => (
                 <div key={i} className="flex items-start gap-3 p-3">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-[#B8860B]">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-[var(--warning-foreground)]">
                     <Flame className="size-4" />
                   </span>
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
