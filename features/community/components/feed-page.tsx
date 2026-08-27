@@ -11,6 +11,8 @@ import {
   Flame,
   Zap,
   Activity,
+  Video,
+  Award,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -36,6 +38,8 @@ const FEED_ICON: Record<FeedKind, typeof ImageIcon> = {
   nutriobiotico: Pill,
   publicacion: Send,
   racha: Flame,
+  video: Video,
+  logro: Award,
 };
 
 const FEED_ICON_BG: Record<FeedKind, string> = {
@@ -46,6 +50,8 @@ const FEED_ICON_BG: Record<FeedKind, string> = {
   nutriobiotico: "bg-info-soft text-info-foreground",
   publicacion: "bg-primary-soft text-primary",
   racha: "bg-warning-soft text-warning-foreground",
+  video: "bg-info-soft text-info-foreground",
+  logro: "bg-success-soft text-success-foreground",
 };
 
 export function FeedPage() {

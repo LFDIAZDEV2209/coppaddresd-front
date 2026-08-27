@@ -33,7 +33,6 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import { dashboardKpis, activitySeries, postTypeData, peakHoursData, diagnosisParticipation } from "../mock-data";
 import { ActivityLineChart, PostTypesDoughnut, PeakHoursBar, DiagnosisRadar, ChartLegend } from "./charts";
 import { MemberAvatar } from "./member-avatar";
 import { RiskBadge } from "./risk-badge";
@@ -55,7 +54,20 @@ const FEED_ICON: Record<FeedKind, typeof ImageIcon> = {
 
 export function DashboardPage() {
   const t = useT();
-  const { feed, members, sendBulkInactive, sendMessage } = useErp();
+  const {
+    feed,
+    members,
+    sendBulkInactive,
+    sendMessage,
+    dashboardKpis,
+    dashboardActivitySeries,
+    dashboardPostTypeData,
+    dashboardPeakHoursData,
+    dashboardDiagnosisParticipation,
+    dashboardInactiveOver7Days,
+    dashboardInactiveAtRisk,
+    dashboardLoading,
+  } = useErp();
   const inactive = members.filter((m) => m.status === "Inactivo");
   const topStreaks = [...members].sort((a, b) => b.streak - a.streak).slice(0, 5);
 
@@ -73,7 +85,7 @@ export function DashboardPage() {
         }
       />
 
-      {/* Banner de alerta */}
+      {/* Banner de alerta — datos reales del dashboard */}
       <div className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning text-white">
@@ -81,10 +93,14 @@ export function DashboardPage() {
           </span>
           <div className="flex flex-col gap-0.5">
             <p className="text-sm font-semibold text-warning-foreground">
-              {t("8 miembros inactivos por más de 7 días")}
+              {dashboardLoading
+                ? "..."
+                : t("8 miembros inactivos por más de 7 días", { n: String(dashboardInactiveOver7Days) })}
             </p>
             <p className="text-xs text-muted-foreground">
-              {t("3 de ellos están en riesgo de abandono. Envía un mensaje antes de 14 días.")}
+              {dashboardLoading
+                ? "..."
+                : t("3 de ellos están en riesgo de abandono. Envía un mensaje antes de 14 días.", { n: String(dashboardInactiveAtRisk) })}
             </p>
           </div>
         </div>
@@ -94,19 +110,29 @@ export function DashboardPage() {
         </Button>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs — datos reales del dashboard */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {dashboardKpis.map((kpi) => (
-          <StatCard
-            key={kpi.label}
-            label={t(kpi.label)}
-            value={kpi.value}
-            context={kpi.context ? t(kpi.context) : undefined}
-            trend={kpi.trend}
-            icon={LayoutDashboard}
-            variant="info"
-          />
-        ))}
+        {dashboardLoading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 rounded-xl border border-border/60 bg-card p-4">
+                <div className="size-10 shrink-0 animate-pulse rounded-lg bg-muted" />
+                <div className="flex flex-1 flex-col gap-2">
+                  <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+                  <div className="h-5 w-16 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ))
+          : dashboardKpis.map((kpi) => (
+              <StatCard
+                key={kpi.label}
+                label={t(kpi.label)}
+                value={kpi.value}
+                context={kpi.context ? t(kpi.context) : undefined}
+                trend={kpi.trend}
+                icon={LayoutDashboard}
+                variant="info"
+              />
+            ))}
       </section>
 
       {/* Gráficos fila 1 */}
@@ -114,7 +140,7 @@ export function DashboardPage() {
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader title={t("Actividad (30 días)")} description={t("Posts, comentarios y reacciones")} icon={Activity} variant="primary" />
           <div className="p-4">
-            <ActivityLineChart data={activitySeries} />
+            <ActivityLineChart data={dashboardActivitySeries} loading={dashboardLoading} />
             <ChartLegend
               items={[
                 { label: t("Posts"), color: "var(--chart-1)" },
@@ -127,8 +153,8 @@ export function DashboardPage() {
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader title={t("Tipos de publicaciones")} description={t("Distribución del mes")} icon={PieChart} variant="primary" />
           <div className="p-4">
-            <PostTypesDoughnut data={postTypeData} />
-            <ChartLegend items={postTypeData.map((d) => ({ label: `${d.name} ${d.value}%`, color: "var(--chart-1)" }))} />
+            <PostTypesDoughnut data={dashboardPostTypeData} loading={dashboardLoading} />
+            <ChartLegend items={dashboardPostTypeData.map((d) => ({ label: `${d.name} ${d.value}%`, color: "var(--chart-1)" }))} />
           </div>
         </div>
       </section>
@@ -138,13 +164,13 @@ export function DashboardPage() {
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader title={t("Horario pico de actividad")} description={t("Actividad por hora (24h)")} icon={Clock} variant="primary" />
           <div className="p-4">
-            <PeakHoursBar data={peakHoursData} />
+            <PeakHoursBar data={dashboardPeakHoursData} loading={dashboardLoading} />
           </div>
         </div>
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader title={t("Diagnóstico vs Participación")} description={t("Nivel de participación por diagnóstico")} icon={Radar} variant="primary" />
           <div className="p-4">
-            <DiagnosisRadar data={diagnosisParticipation} />
+            <DiagnosisRadar data={dashboardDiagnosisParticipation} loading={dashboardLoading} />
           </div>
         </div>
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
