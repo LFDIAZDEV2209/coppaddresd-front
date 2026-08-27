@@ -35,6 +35,8 @@ const communityAuth = authExchange(async (utils) => ({
 
 /** Cliente GraphQL de la comunidad (urql) con autenticación del ERP. */
 export const communityClient = new Client({
-  url: `${env.communityApiUrl}/graphql`,
+  // El servicio de comunidad expone el endpoint HTTP en /api/v1/community/graphql
+  // y las suscripciones WS en /api/v1/community/subscriptions.
+  url: `${env.communityApiUrl}/api/v1/community/graphql`,
   exchanges: [communityAuth, cacheExchange, fetchExchange],
 });
