@@ -38,9 +38,10 @@ export function InactivePage() {
       />
 
       {/* Warning banner */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="cp-pop relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
+        <span className="cp-glow -right-6 -top-10 size-32 bg-[rgba(184,134,11,0.18)]" />
         <div className="flex items-start gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning text-white">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning text-white shadow-lg shadow-warning/30">
             <AlertTriangle className="size-5" />
           </span>
           <div className="flex flex-col gap-0.5">
@@ -54,6 +55,7 @@ export function InactivePage() {
         </div>
         <Button
           size="sm"
+          className="relative"
           onClick={() => sendBulkInactive(t("¡Hola! Nos gustaría saber de ti 💙"))}
         >
           <Send data-icon="inline-start" />
@@ -63,7 +65,7 @@ export function InactivePage() {
 
       {/* Table + Chart */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
+        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
           <SectionHeader
             title={t("Plan de acción")}
             description={`${inactive.length} ${t("miembros requieren atención")}`}
@@ -87,7 +89,7 @@ export function InactivePage() {
               {inactive.map((m) => {
                 const risk = m.risk ?? "Bajo";
                 return (
-                  <TableRow key={m.id}>
+                  <TableRow key={m.id} className="transition-colors hover:bg-muted/50">
                     <TableCell>
                       <MemberAvatar member={m} subtitle={m.lastPost} />
                     </TableCell>
@@ -133,7 +135,7 @@ export function InactivePage() {
           </Table>
         </div>
 
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
             title={t("Patrones de inactividad")}
             icon={AlertTriangle}

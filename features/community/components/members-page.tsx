@@ -116,11 +116,11 @@ export function MembersPage() {
       </div>
 
       {/* Active member cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="cp-stagger grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {activeMembers.map((m) => (
           <div
             key={m.id}
-            className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center transition-all hover:shadow-sm hover:-translate-y-0.5"
+            className="cp-card flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center"
           >
             <MemberAvatar member={m} showStreak />
             <div className="flex flex-col items-center gap-0.5">
@@ -176,7 +176,7 @@ export function MembersPage() {
       </div>
 
       {/* Engagement table */}
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader
           title={t("Participación")}
           description={t("Tabla de engagement detallada")}
@@ -223,7 +223,7 @@ export function MembersPage() {
                 </TableRow>
               ) : (
                 filtered.map((m) => (
-              <TableRow key={m.id}>
+              <TableRow key={m.id} className="transition-colors hover:bg-muted/50">
                 <TableCell>
                   <MemberAvatar member={m} subtitle="" />
                 </TableCell>
