@@ -15,6 +15,8 @@ import {
   PieChart,
   Clock,
   Radar,
+  Video,
+  Award,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -34,9 +36,10 @@ import { useT } from "@/providers/i18n-provider";
 import { dashboardKpis, activitySeries, postTypeData, peakHoursData, diagnosisParticipation } from "../mock-data";
 import { ActivityLineChart, PostTypesDoughnut, PeakHoursBar, DiagnosisRadar, ChartLegend } from "./charts";
 import { MemberAvatar } from "./member-avatar";
+import { RiskBadge } from "./risk-badge";
 import { PostDialog } from "./post-dialog";
 import { AwardDialog } from "./award-dialog";
-import type { FeedKind, RiskLevel } from "../types";
+import type { FeedKind } from "../types";
 
 const FEED_ICON: Record<FeedKind, typeof ImageIcon> = {
   foto: ImageIcon,
@@ -46,14 +49,8 @@ const FEED_ICON: Record<FeedKind, typeof ImageIcon> = {
   nutriobiotico: Pill,
   publicacion: Send,
   racha: Flame,
-};
-
-const RISK_BY_MEMBER: Record<string, RiskLevel> = {
-  "m-luis": "Alto",
-  "m-rosa": "Medio",
-  "m-manuel": "Medio",
-  "m-teresa": "Bajo",
-  "m-hector": "Bajo",
+  video: Video,
+  logro: Award,
 };
 
 export function DashboardPage() {
@@ -238,16 +235,7 @@ export function DashboardPage() {
                 <TableCell className="hidden md:table-cell text-sm">{m.region}</TableCell>
                 <TableCell className="text-right text-sm font-semibold text-destructive">{m.daysSincePost} d</TableCell>
                 <TableCell className="hidden text-right lg:table-cell">
-                  <StatusBadge
-                    status={RISK_BY_MEMBER[m.id] ?? "Bajo"}
-                    color={
-                      (RISK_BY_MEMBER[m.id] ?? "Bajo") === "Alto"
-                        ? { bg: "var(--destructive-soft)", text: "var(--destructive)", dot: "var(--destructive)" }
-                        : (RISK_BY_MEMBER[m.id] ?? "Bajo") === "Medio"
-                          ? { bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning)" }
-                          : { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }
-                    }
-                  />
+                  <RiskBadge risk={m.risk ?? "Bajo"} />
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end">

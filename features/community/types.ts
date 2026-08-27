@@ -61,7 +61,9 @@ export type FeedKind =
   | "grupo"
   | "nutriobiotico"
   | "publicacion"
-  | "racha";
+  | "racha"
+  | "video"
+  | "logro";
 
 export interface FeedItem {
   id: string;

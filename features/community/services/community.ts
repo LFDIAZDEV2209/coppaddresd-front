@@ -62,9 +62,9 @@ export interface Profile {
   xpTotal: number;
   levelName: string;
   riskLevel: ProfileRiskLevel;
-  posts: number;
-  comments: number;
-  likes: number;
+  postsCount: number;
+  commentsCount: number;
+  likesCount: number;
 }
 
 export interface PostAuthor {
@@ -167,9 +167,9 @@ export const ME_QUERY = gql`
       xpTotal
       levelName
       riskLevel
-      posts
-      comments
-      likes
+      postsCount
+      commentsCount
+      likesCount
     }
   }
 `;
@@ -192,9 +192,9 @@ export const PROFILES_QUERY = gql`
       xpTotal
       levelName
       riskLevel
-      posts
-      comments
-      likes
+      postsCount
+      commentsCount
+      likesCount
     }
   }
 `;
@@ -272,9 +272,9 @@ export const TOP_STREAKS_QUERY = gql`
       xpTotal
       levelName
       riskLevel
-      posts
-      comments
-      likes
+      postsCount
+      commentsCount
+      likesCount
     }
   }
 `;

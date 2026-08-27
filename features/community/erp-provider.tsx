@@ -83,6 +83,9 @@ function daysSince(iso: string | null): number {
 
 function mapProfile(p: Profile): CommunityMember {
   const { firstName, lastName } = splitName(p.displayName);
+  // Normalizar status del wire ("Active"|"Banned") → ("ACTIVE"|"BANNED")
+  const normalizedStatus: "ACTIVE" | "BANNED" =
+    p.status.toUpperCase() === "BANNED" ? "BANNED" : "ACTIVE";
   return {
     id: p.id,
     firstName,
@@ -90,13 +93,13 @@ function mapProfile(p: Profile): CommunityMember {
     diagnosis: p.diagnosis,
     region: p.region,
     week: p.week,
-    posts: p.posts,
-    comments: p.comments,
-    reactions: p.likes,
+    posts: p.postsCount,
+    comments: p.commentsCount,
+    reactions: p.likesCount,
     xp: p.xpTotal,
     streak: p.currentStreak,
     level: p.levelName,
-    status: p.status === "BANNED" ? "Inactivo" : "Activo",
+    status: normalizedStatus === "BANNED" ? "Inactivo" : "Activo",
     daysSincePost: daysSince(p.lastPostAt),
     lastPost: relativeTime(p.lastPostAt),
     risk: p.riskLevel,
