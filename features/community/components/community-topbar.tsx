@@ -7,6 +7,7 @@ import { useT } from "@/providers/i18n-provider";
 import { communityBrand } from "../navigation";
 import { PostDialog } from "./post-dialog";
 import { AwardDialog } from "./award-dialog";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 interface CommunityTopbarProps {
   onMenuClick: () => void;
@@ -47,6 +48,7 @@ export function CommunityTopbar({ onMenuClick }: CommunityTopbarProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-2 md:ml-0">
+        <LanguageToggle className="text-white/80 hover:bg-white/10 hover:text-white" />
         <PostDialog />
         <AwardDialog />
       </div>
