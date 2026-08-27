@@ -15,7 +15,8 @@ import { LegalDocumentsSection } from "./legal-documents-section";
 const accentColors = [
   { name: "Índigo", value: "#4B0082" },
   { name: "Violeta", value: "#7C3AED" },
-  { name: "Azul", value: "#123B63" },
+  { name: "Azul", value: "#3B82F6" },
+  { name: "Marino", value: "#123B63" },
   { name: "Teal", value: "#0D9488" },
   { name: "Esmeralda", value: "#10B981" },
   { name: "Ámbar", value: "#F59E0B" },
@@ -35,12 +36,11 @@ const settingsNav = [
 ];
 
 export function SettingsPageContent() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, accent, setAccent } = useTheme();
   const { lang, setLang } = useI18n();
   const { can } = useAppContext();
   const t = useT();
   const [activeSection, setActiveSection] = useState("Apariencia");
-  const [accent, setAccent] = useState("#123B63");
   const [density, setDensity] = useState("comodo");
   const [sidebarMode, setSidebarMode] = useState("siempre");
 
@@ -177,7 +177,7 @@ export function SettingsPageContent() {
                     key={color.value}
                     onClick={() => setAccent(color.value)}
                     className="flex flex-col items-center gap-1.5"
-                    aria-label={color.name}
+                    aria-label={t(color.name)}
                   >
                     <div
                       className="flex size-7 items-center justify-center rounded-full transition-transform hover:scale-110"
