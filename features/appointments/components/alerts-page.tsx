@@ -20,7 +20,7 @@ import { formatDateTime } from "../utils/format";
 import type { AlertSeverity, AlertType } from "../types";
 
 const severityStyles: Record<AlertSeverity, { label: string; className: string; icon: React.ComponentType<{ className?: string }> }> = {
-  Info: { label: "Info", className: "bg-[#E5F0FA] text-[#123B63]", icon: Info },
+  Info: { label: "Info", className: "bg-[var(--primary-soft)] text-[var(--primary)]", icon: Info },
   Warning: { label: "Advertencia", className: "bg-[#FDF2E3] text-[#9A6A0A]", icon: AlertTriangle },
   Critical: { label: "Crítica", className: "bg-[#FCEBEC] text-[#B42318]", icon: AlertOctagon },
 };

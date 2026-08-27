@@ -88,7 +88,7 @@ export function ProfessionalDirectory() {
         actions={
           <button
             onClick={() => router.push("/professionals/new")}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-[13px] font-semibold text-[#0B2B4A] hover:bg-white/90 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--primary-strong)] hover:bg-white/90 transition-colors"
           >
             <Plus className="size-4" />
             {t("Nuevo profesional")}

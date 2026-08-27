@@ -91,7 +91,7 @@ export const encounterStatusLabel: Record<EncounterStatus, string> = {
 type ColorSet = { bg: string; text: string; dot: string };
 
 const colors = {
-  blue: { bg: "#E5F0FA", text: "#123B63", dot: "#2563EB" },
+  blue: { bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" },
   green: { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" },
   amber: { bg: "#FDF2E3", text: "#9A6A0A", dot: "#F59E0B" },
   red: { bg: "#FCEBEC", text: "#B42318", dot: "#EF4444" },

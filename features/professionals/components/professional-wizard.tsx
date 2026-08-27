@@ -404,7 +404,7 @@ export function ProfessionalWizard() {
                         type="checkbox"
                         checked={selected}
                         onChange={() => toggleClinic(clinic.id)}
-                        className="mt-0.5 size-4 accent-[#0B2B4A]"
+                        className="mt-0.5 size-4 accent-[var(--primary)]"
                       />
                       <span className="min-w-0 flex-1">
                         <span className="block text-[13px] font-semibold">{clinic.name}</span>
@@ -448,7 +448,7 @@ export function ProfessionalWizard() {
                                   })),
                                 }))
                               }
-                              className="size-4 accent-[#0B2B4A]"
+                              className="size-4 accent-[var(--primary)]"
                             />
                             <span className="text-[12.5px] font-medium">{t("Clínica principal")}</span>
                           </label>
@@ -678,7 +678,7 @@ export function ProfessionalWizard() {
                 type="checkbox"
                 checked={form.sendInvitation}
                 onChange={(e) => setForm({ ...form, sendInvitation: e.target.checked })}
-                className="mt-0.5 size-4 accent-[#0B2B4A]"
+                className="mt-0.5 size-4 accent-[var(--primary)]"
               />
               <span>
                 <span className="flex items-center gap-1.5 text-[13px] font-semibold">
