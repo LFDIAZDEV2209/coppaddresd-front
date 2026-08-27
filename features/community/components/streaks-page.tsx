@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import { mockStreaks, streakKpis, streakDistribution } from "../mock-data";
+import { streakKpis, streakDistribution } from "../mock-data";
 import { MemberAvatar } from "./member-avatar";
 import { SimpleBarChart } from "./charts";
 
@@ -34,7 +34,7 @@ const RANK_MEDAL: Record<number, string> = {
 
 export function StreaksPage() {
   const t = useT();
-  const { members, awardXp, toast } = useErp();
+  const { members, awardXp, toast, streaks, streaksLoading } = useErp();
   const chartData = streakDistribution.map((d) => ({ label: d.range, value: d.value }));
 
   const milestones = [
@@ -95,7 +95,7 @@ export function StreaksPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockStreaks.map((s, i) => {
+              {(streaksLoading ? [] : streaks).map((s, i) => {
                 const rank = i + 1;
                 const member = members.find((m) => m.id === s.memberId);
                 const memberObj = member

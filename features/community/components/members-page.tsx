@@ -43,7 +43,7 @@ import { AwardDialog } from "./award-dialog";
 
 export function MembersPage() {
   const t = useT();
-  const { members, sendMessage, toast } = useErp();
+  const { members, sendMessage, toast, membersLoading, membersError } = useErp();
   const [diagFilter, setDiagFilter] = useState("all");
   const [regionFilter, setRegionFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -183,25 +183,46 @@ export function MembersPage() {
           icon={Users}
           variant="primary"
         />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("Miembro")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Diagnóstico")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Región")}</TableHead>
-              <TableHead className="text-right">{t("Posts")}</TableHead>
-              <TableHead className="hidden text-right md:table-cell">{t("Comentarios")}</TableHead>
-              <TableHead className="hidden text-right md:table-cell">{t("Reacciones")}</TableHead>
-              <TableHead className="text-right">{t("Racha")}</TableHead>
-              <TableHead className="hidden text-right md:table-cell">XP</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Nivel")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Último post")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Estado")}</TableHead>
-              <TableHead className="w-10 text-right"><span className="sr-only">{t("Acciones")}</span></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((m) => (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("Miembro")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("Diagnóstico")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("Región")}</TableHead>
+                <TableHead className="text-right">{t("Posts")}</TableHead>
+                <TableHead className="hidden text-right md:table-cell">{t("Comentarios")}</TableHead>
+                <TableHead className="hidden text-right md:table-cell">{t("Reacciones")}</TableHead>
+                <TableHead className="text-right">{t("Racha")}</TableHead>
+                <TableHead className="hidden text-right md:table-cell">XP</TableHead>
+                <TableHead className="hidden md:table-cell">{t("Nivel")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("Último post")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("Estado")}</TableHead>
+                <TableHead className="w-10 text-right"><span className="sr-only">{t("Acciones")}</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {membersError ? (
+                <TableRow>
+                  <TableCell colSpan={12} className="py-10 text-center text-sm text-destructive">
+                    {t("Error al cargar los miembros")}: {membersError}
+                  </TableCell>
+                </TableRow>
+              ) : membersLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={12}>
+                      <div className="h-8 animate-pulse rounded bg-muted" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={12} className="py-10 text-center text-sm text-muted-foreground">
+                    {t("No hay miembros que coincidan con el filtro")}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((m) => (
               <TableRow key={m.id}>
                 <TableCell>
                   <MemberAvatar member={m} subtitle="" />
@@ -260,7 +281,8 @@ export function MembersPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+                ))
+              )}
           </TableBody>
         </Table>
       </div>

@@ -732,6 +732,7 @@
   "encontrada": "found",
   "encontrados": "found",
   "Encuentro clínico": "Clinical encounter",
+  "Encuesta": "Probe",
   "Enfriamiento": "Cool-down",
   "English": "English",
   "entrada": "entry",
@@ -943,6 +944,7 @@
   "Identificación": "Identification",
   "Idioma": "Language",
   "Idioma de la interfaz": "Interface language",
+  "Imagen": "Image",
   "inactiva": "inactive",
   "Inactiva": "Inactive",
   "Inactivo": "Inactive",
@@ -1031,6 +1033,7 @@
   "líneas": "lines",
   "Lista con viñetas": "Bulleted list",
   "Lista numerada": "Numbered list",
+  "Logro": "Achievement",
   "Los apellidos son requeridos.": "Last name is required.",
   "Los eventos de tus citas y solicitudes aparecerán aquí.": "Your appointment and request events will appear here.",
   "Los pacientes con DM2+HTA tienen la mayor participación semanal (9.1 posts) y la racha promedio más alta (21 días). Son los más comprometidos con el programa.": "Los pacientes con DM2+HTA tienen la mayor participación semanal (9.1 posts) y la racha promedio más alta (21 días). Son los más comprometidos con el programa.",
@@ -1798,6 +1801,7 @@
   "Template (biblioteca)": "Template (library)",
   "Tempo (ej: 2-1-2)": "Tempo (e.g. 2-1-2)",
   "Términos y condiciones": "Terms and conditions",
+  "Texto": "Text:",
   "Tiempo promedio": "Average time",
   "Tienda de bienestar": "Wellness store",
   "Tipo": "Type",
@@ -1920,6 +1924,7 @@
   "Versiones": "Versions",
   "Versiones de configuración": "Configuration versions",
   "Vía de administración": "Route of administration",
+  "Video": "video",
   "Vinculá knowledge bases para que el agente responda con su contenido.": "Link knowledge bases so the agent responds using their content.",
   "Virtual": "Virtual",
   "Visibles": "Visible",
@@ -1950,5 +1955,7 @@
   "XP por posts": "XP por posts",
   "XP por rachas": "XP por rachas",
   "XP prom": "XP prom",
-  "y todas sus asignaciones. Esta acción no se puede deshacer.": "and all their assignments. This action cannot be undone."
+  "y todas sus asignaciones. Esta acción no se puede deshacer.": "and all their assignments. This action cannot be undone.",
+  "Error al cargar los miembros": "Error al cargar los miembros",
+  "No hay miembros que coincidan con el filtro": "No hay miembros que coincidan con el filtro"
 }

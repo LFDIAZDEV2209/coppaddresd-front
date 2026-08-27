@@ -1943,5 +1943,7 @@
   "alcanzó": "alcanzó",
   "Volver al ERP": "Volver al ERP",
   "Buscar miembro, post, región…": "Buscar miembro, post, región…",
-  "ANTARES · ERP Comunidad": "ANTARES · ERP Comunidad"
+  "ANTARES · ERP Comunidad": "ANTARES · ERP Comunidad",
+  "Error al cargar los miembros": "Error al cargar los miembros",
+  "No hay miembros que coincidan con el filtro": "No hay miembros que coincidan con el filtro"
 }

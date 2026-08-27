@@ -19,15 +19,14 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import { inactivityData, RISK_BY_MEMBER } from "../mock-data";
+import { inactivityData } from "../mock-data";
 import { MemberAvatar } from "./member-avatar";
 import { RiskBadge } from "./risk-badge";
 import { SimpleBarChart } from "./charts";
 
 export function InactivePage() {
   const t = useT();
-  const { members, sendMessage, sendBulkInactive, toast } = useErp();
-  const inactive = members.filter((m) => m.status === "Inactivo");
+  const { inactive, sendMessage, sendBulkInactive, toast } = useErp();
   const chartData = inactivityData.map((d) => ({ label: d.range, value: d.value }));
 
   return (
@@ -86,7 +85,7 @@ export function InactivePage() {
             </TableHeader>
             <TableBody>
               {inactive.map((m) => {
-                const risk = RISK_BY_MEMBER[m.id] ?? "Bajo";
+                const risk = m.risk ?? "Bajo";
                 return (
                   <TableRow key={m.id}>
                     <TableCell>

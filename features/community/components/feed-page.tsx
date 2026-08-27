@@ -77,8 +77,8 @@ export function FeedPage() {
           />
           <div className="flex flex-col divide-y divide-border max-h-[500px] overflow-y-auto">
             {feed.map((item) => {
-              const Icon = FEED_ICON[item.kind];
-              const iconBg = FEED_ICON_BG[item.kind];
+              const Icon = FEED_ICON[item.kind] ?? Activity;
+              const iconBg = FEED_ICON_BG[item.kind] ?? "bg-muted text-muted-foreground";
               return (
                 <div key={item.id} className="flex items-start gap-3 p-3">
                   <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
