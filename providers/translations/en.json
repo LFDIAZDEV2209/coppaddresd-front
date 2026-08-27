@@ -2001,7 +2001,6 @@
   "Respondiendo a {name}": "Respondiendo a {name}",
   "Escribe un comentario...": "Escribe un comentario...",
   "Comentar": "Comentar",
-  "GestiÃ³n de publicaciones de ANTARES Comunidad ADRED": "GestiÃ³n de publicaciones de ANTARES Comunidad ADRED",
   "El mensaje aparecerÃ¡ en la app de los miembros": "El mensaje aparecerÃ¡ en la app de los miembros",
   "Sin publicaciones": "Sin publicaciones",
   "No se pudo comentar. Intenta de nuevo.": "No se pudo comentar. Intenta de nuevo.",
@@ -2021,5 +2020,7 @@
   "Opción": "Opción",
   "Añadir opción": "Añadir opción",
   "Título del logro": "Título del logro",
-  "Ej: Racha de 30 días completada": "Ej: Racha de 30 días completada"
+  "Ej: Racha de 30 días completada": "Ej: Racha de 30 días completada",
+  "Filtrar por diagnóstico": "Filter by diagnosis",
+  "Filtrar por región": "Filter by region"
 }

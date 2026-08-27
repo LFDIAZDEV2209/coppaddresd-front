@@ -11,6 +11,7 @@ import {
   Trophy,
   MessageCircle,
   Share2,
+  ShieldAlert,
 } from "lucide-react";
 
 export interface ErpNavItem {
@@ -20,6 +21,8 @@ export interface ErpNavItem {
   icon: LucideIcon;
   badge?: string;
   badgeColor?: "purple" | "red";
+  /** Color opcional del icono (p. ej. moderación en destructive). */
+  color?: string;
 }
 
 export interface ErpNavSection {
@@ -52,6 +55,8 @@ export const erpNavSections: ErpNavSection[] = [
       { label: "Reconocimientos", href: "/community/rewards", icon: Trophy },
       { label: "Grupos/Chats", href: "/community/groups", icon: MessageCircle },
       { label: "Redes ANTARES", href: "/community/networks", icon: Share2 },
+      // Moderación de contenido comunitario
+      { label: "Moderación", href: "/community/moderation", icon: ShieldAlert, color: "var(--destructive)" },
     ],
   },
 ];

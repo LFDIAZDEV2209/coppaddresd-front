@@ -91,8 +91,8 @@ export function MembersPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">
           <Select value={diagFilter} onValueChange={(v) => { if (v !== null) { setDiagFilter(v); setCardsPage(1); setTablePage(1); } }}>
-            <SelectTrigger className="h-8 w-auto min-w-[160px] text-xs">
-              <SelectValue placeholder={t("Diagnóstico")} />
+            <SelectTrigger className="h-8 w-auto min-w-[180px] text-xs">
+              <SelectValue placeholder={t("Filtrar por diagnóstico")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("Todos los diagnósticos")}</SelectItem>
@@ -105,8 +105,8 @@ export function MembersPage() {
           </Select>
 
           <Select value={regionFilter} onValueChange={(v) => { if (v !== null) { setRegionFilter(v); setCardsPage(1); setTablePage(1); } }}>
-            <SelectTrigger className="h-8 w-auto min-w-[160px] text-xs">
-              <SelectValue placeholder={t("Región")} />
+            <SelectTrigger className="h-8 w-auto min-w-[180px] text-xs">
+              <SelectValue placeholder={t("Filtrar por región")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("Todas las regiones")}</SelectItem>
