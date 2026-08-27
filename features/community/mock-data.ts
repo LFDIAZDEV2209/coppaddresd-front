@@ -227,6 +227,7 @@ export const mockPosts: ErpPost[] = [
     reactions: 212,
     comments: 48,
     views: 1840,
+    commentsList: [],
   },
   {
     id: "p-2",
@@ -240,6 +241,7 @@ export const mockPosts: ErpPost[] = [
     reactions: 134,
     comments: 22,
     views: 980,
+    commentsList: [],
   },
   {
     id: "p-3",
@@ -253,6 +255,7 @@ export const mockPosts: ErpPost[] = [
     reactions: 89,
     comments: 15,
     views: 620,
+    commentsList: [],
   },
   {
     id: "p-4",
@@ -266,6 +269,7 @@ export const mockPosts: ErpPost[] = [
     reactions: 56,
     comments: 9,
     views: 320,
+    commentsList: [],
   },
   {
     id: "p-5",
@@ -279,6 +283,7 @@ export const mockPosts: ErpPost[] = [
     reactions: 71,
     comments: 12,
     views: 410,
+    commentsList: [],
   },
   {
     id: "p-6",
@@ -292,6 +297,7 @@ export const mockPosts: ErpPost[] = [
     reactions: 44,
     comments: 7,
     views: 260,
+    commentsList: [],
   },
   {
     id: "p-7",
@@ -305,6 +311,7 @@ export const mockPosts: ErpPost[] = [
     reactions: 38,
     comments: 5,
     views: 190,
+    commentsList: [],
   },
 ];
 

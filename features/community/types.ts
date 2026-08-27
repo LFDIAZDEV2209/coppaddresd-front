@@ -39,6 +39,18 @@ export interface CommunityMember {
 
 export type PostType = "Texto" | "Imagen" | "Video" | "Encuesta" | "Logro";
 
+export interface ErpComment {
+  id: string;
+  body: string;
+  createdAt: string; // "Hace 2h"
+  postId: string;
+  parentCommentId: string | null;
+  author: string;
+  authorId: string;
+  isSystem?: boolean;
+  isNew?: boolean;
+}
+
 export interface ErpPost {
   id: string;
   author: string;
@@ -52,6 +64,7 @@ export interface ErpPost {
   comments: number;
   views: number;
   isSystem?: boolean;
+  commentsList: ErpComment[];
 }
 
 // Nota: el backend también emite "video" y "logro" en FeedEventKind; se mapean

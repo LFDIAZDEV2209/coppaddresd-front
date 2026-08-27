@@ -12,8 +12,10 @@ import {
 import { Provider as UrqlProvider, useMutation, useQuery, useSubscription } from "urql";
 import { communityClient } from "./services/client";
 import {
+  ADD_COMMENT,
   AWARD_XP,
   AWARD_XP_ALL,
+  COMMENT_ADDED_SUB,
   COMMUNITY_ANALYTICS_QUERY,
   COMMUNITY_GROUPS_QUERY,
   CREATE_POST,
@@ -30,11 +32,15 @@ import {
   PROFILES_QUERY,
   RECOGNITIONS_QUERY,
   REGION_STATS_QUERY,
+  REPLY_TO_COMMENT,
   SEND_BULK_MESSAGE,
   SEND_DIRECT_MESSAGE,
   TOP_STREAKS_QUERY,
+  type AddCommentResult,
   type AwardXpAllResult,
   type AwardXpResult,
+  type CommentAddedResult,
+  type CommentDetail,
   type CommunityAnalyticsResult,
   type CommunityGroupsResult,
   type CommunityGroupWire,
@@ -60,6 +66,7 @@ import {
   type RecognitionsResult,
   type RegionStatWire,
   type RegionStatsResult,
+  type ReplyToCommentResult,
   type SendBulkMessageResult,
   type SendDirectMessageResult,
   type TopStreaksResult,
@@ -70,6 +77,7 @@ import type {
   CommunityGroup,
   CommunityMember,
   DiagnosticStat,
+  ErpComment,
   ErpPost,
   FeedItem,
   FeedKind,
@@ -155,6 +163,19 @@ const DEST_LABEL: Record<string, string> = {
   SoloInactivos: "Solo inactivos",
 };
 
+function mapComment(c: CommentDetail): ErpComment {
+  return {
+    id: c.id,
+    body: c.body,
+    createdAt: relativeTime(c.createdAt),
+    postId: c.postId,
+    parentCommentId: c.parentCommentId,
+    author: c.profile.displayName,
+    authorId: c.profile.id,
+    isSystem: c.profile.isSystem,
+  };
+}
+
 function mapPost(post: Post): ErpPost {
   return {
     id: post.id,
@@ -169,6 +190,7 @@ function mapPost(post: Post): ErpPost {
     comments: post.comments.length,
     views: post.viewCount,
     isSystem: post.profile.isSystem,
+    commentsList: post.comments.map(mapComment),
   };
 }
 
@@ -384,6 +406,8 @@ interface ErpContextValue {
   awardXp: (payload: AwardPayload) => void;
   sendMessage: (memberId: string, message: string) => void;
   sendBulkInactive: (message: string) => void;
+  addComment: (postId: string, body: string) => void;
+  replyToComment: (commentId: string, body: string) => void;
   toast: (message: string) => void;
   toasts: ToastItem[];
 }
@@ -456,6 +480,36 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       });
     }, 3000);
   }, [feedSubResult.data]);
+
+  // Suscripción en tiempo real para comentarios (incluye respuestas).
+  const [liveComments, setLiveComments] = useState<CommentDetail[]>([]);
+  const [newCommentIds, setNewCommentIds] = useState<Set<string>>(new Set());
+  const [commentSubResult] = useSubscription<CommentAddedResult>({
+    query: COMMENT_ADDED_SUB,
+  });
+
+  useEffect(() => {
+    const c = commentSubResult.data?.commentAdded;
+    if (!c) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLiveComments((prev) => {
+      if (prev.some((p) => p.id === c.id)) return prev;
+      return [c, ...prev].slice(0, 100);
+    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNewCommentIds((prev) => {
+      const next = new Set(prev);
+      next.add(c.id);
+      return next;
+    });
+    setTimeout(() => {
+      setNewCommentIds((prev) => {
+        const next = new Set(prev);
+        next.delete(c.id);
+        return next;
+      });
+    }, 3000);
+  }, [commentSubResult.data]);
 
   const [streaksResult, refetchStreaks] = useQuery<
     TopStreaksResult,
@@ -546,14 +600,33 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     { scope: string; body: string }
   >(SEND_BULK_MESSAGE);
 
+  const [, addCommentMut] = useMutation<AddCommentResult, { postId: string; body: string }>(ADD_COMMENT);
+  const [, replyToCommentMut] = useMutation<ReplyToCommentResult, { commentId: string; body: string }>(
+    REPLY_TO_COMMENT,
+  );
+
   const members = useMemo(
     () => (membersResult.data?.profiles ?? []).map(mapProfile),
     [membersResult.data],
   );
-  const posts = useMemo(
-    () => (postsResult.data?.feed ?? []).map(mapPost),
-    [postsResult.data],
-  );
+  const posts = useMemo(() => {
+    const base = postsResult.data?.feed ?? [];
+    // Mezcla comentarios live por postId, deduplicando, y marca isNew.
+    return base.map((p) => {
+      const liveForPost = liveComments.filter(
+        (c) => c.postId === p.id && !p.comments.some((pc) => pc.id === c.id),
+      );
+      const mergedComments = [...liveForPost, ...p.comments];
+      const mapped = mapPost({ ...p, comments: mergedComments } as Post);
+      if (newCommentIds.size > 0) {
+        mapped.commentsList = mapped.commentsList.map((cm) =>
+          newCommentIds.has(cm.id) ? { ...cm, isNew: true } : cm,
+        );
+      }
+      mapped.comments = mapped.commentsList.length;
+      return mapped;
+    });
+  }, [postsResult.data, liveComments, newCommentIds]);
   const feed = useMemo(() => {
     const base = feedResult.data?.feedEvents ?? [];
     const live = liveFeedEvents;
@@ -823,6 +896,73 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     [toast, t],
   );
 
+  const addComment = useCallback<ErpContextValue["addComment"]>(
+    (postId, body) => {
+      if (!body.trim()) return;
+      addCommentMut({ postId, body: body.trim() }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo comentar. Intenta de nuevo."));
+        } else {
+          const c = res.data?.addComment;
+          if (c) {
+            // Optimistic merge inmediato + highlight (también llegará por WS).
+            setLiveComments((prev) => {
+              if (prev.some((p) => p.id === c.id)) return prev;
+              return [c as CommentDetail, ...prev].slice(0, 100);
+            });
+            setNewCommentIds((prev) => {
+              const next = new Set(prev);
+              next.add(c.id);
+              return next;
+            });
+            setTimeout(() => {
+              setNewCommentIds((prev) => {
+                const next = new Set(prev);
+                next.delete(c.id);
+                return next;
+              });
+            }, 3000);
+            toast(t("Comentario publicado"));
+          }
+        }
+      });
+    },
+    [toast, t],
+  );
+
+  const replyToComment = useCallback<ErpContextValue["replyToComment"]>(
+    (commentId, body) => {
+      if (!body.trim()) return;
+      replyToCommentMut({ commentId, body: body.trim() }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo responder. Intenta de nuevo."));
+        } else {
+          const c = res.data?.replyToComment;
+          if (c) {
+            setLiveComments((prev) => {
+              if (prev.some((p) => p.id === c.id)) return prev;
+              return [c as CommentDetail, ...prev].slice(0, 100);
+            });
+            setNewCommentIds((prev) => {
+              const next = new Set(prev);
+              next.add(c.id);
+              return next;
+            });
+            setTimeout(() => {
+              setNewCommentIds((prev) => {
+                const next = new Set(prev);
+                next.delete(c.id);
+                return next;
+              });
+            }, 3000);
+            toast(t("Respuesta publicada"));
+          }
+        }
+      });
+    },
+    [toast, t],
+  );
+
   const value = useMemo<ErpContextValue>(
     () => ({
       me,
@@ -887,6 +1027,8 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       awardXp,
       sendMessage,
       sendBulkInactive,
+      addComment,
+      replyToComment,
       toast,
       toasts,
     }),
@@ -953,6 +1095,8 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       awardXp,
       sendMessage,
       sendBulkInactive,
+      addComment,
+      replyToComment,
       toast,
       toasts,
     ],

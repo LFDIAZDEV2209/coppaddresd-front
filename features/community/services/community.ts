@@ -85,6 +85,15 @@ export interface CommentRef {
   id: string;
 }
 
+export interface CommentDetail {
+  id: string;
+  body: string;
+  createdAt: string;
+  postId: string;
+  parentCommentId: string | null;
+  profile: PostAuthor;
+}
+
 export interface Post {
   id: string;
   body: string;
@@ -95,7 +104,7 @@ export interface Post {
   viewCount: number;
   profile: PostAuthor;
   likes: LikeRef[];
-  comments: CommentRef[];
+  comments: CommentDetail[];
 }
 
 export interface FeedEvent {
@@ -240,6 +249,15 @@ export const FEED_QUERY = gql`
       }
       comments {
         id
+        body
+        createdAt
+        postId
+        parentCommentId
+        profile {
+          id
+          displayName
+          isSystem
+        }
       }
     }
   }
@@ -396,6 +414,69 @@ export const FEED_EVENT_ADDED_SUB = gql`
 
 export interface FeedEventAddedResult {
   feedEventAdded: FeedEvent;
+}
+
+export const ADD_COMMENT = gql`
+  mutation AddComment($postId: UUID!, $body: String!) {
+    addComment(postId: $postId, body: $body) {
+      id
+      body
+      createdAt
+      postId
+      parentCommentId
+      profile {
+        id
+        displayName
+        isSystem
+      }
+    }
+  }
+`;
+
+export const REPLY_TO_COMMENT = gql`
+  mutation ReplyToComment($commentId: UUID!, $body: String!) {
+    replyToComment(commentId: $commentId, body: $body) {
+      id
+      body
+      createdAt
+      postId
+      parentCommentId
+      profile {
+        id
+        displayName
+        isSystem
+      }
+    }
+  }
+`;
+
+export const COMMENT_ADDED_SUB = gql`
+  subscription CommentAdded {
+    commentAdded {
+      id
+      body
+      createdAt
+      postId
+      parentCommentId
+      profile {
+        id
+        displayName
+        isSystem
+      }
+    }
+  }
+`;
+
+export interface AddCommentResult {
+  addComment: CommentDetail;
+}
+
+export interface ReplyToCommentResult {
+  replyToComment: CommentDetail;
+}
+
+export interface CommentAddedResult {
+  commentAdded: CommentDetail;
 }
 
 // --- Tipos de resultado ---

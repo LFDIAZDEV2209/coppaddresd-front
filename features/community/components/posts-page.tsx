@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import {
@@ -15,12 +15,15 @@ import {
   MessageCircle,
   Eye,
   Edit,
+  CornerDownRight,
+  X,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -30,14 +33,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +44,7 @@ import { useT } from "@/providers/i18n-provider";
 import { DESTINOS } from "./post-dialog";
 import { PostDialog } from "./post-dialog";
 import { MemberAvatar, profileName } from "./member-avatar";
-import type { PostType } from "../types";
+import type { ErpComment, PostType } from "../types";
 
 const TIPOS: { key: PostType; label: string; icon: typeof FileText }[] = [
   { key: "Texto", label: "Texto", icon: FileText },
@@ -69,15 +64,18 @@ const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
 
 export function PostsPage() {
   const t = useT();
-  const { posts, publishPost, togglePin, deletePost, members } = useErp();
+  const { posts, publishPost, togglePin, deletePost, members, addComment, replyToComment } = useErp();
   const [type, setType] = useState<PostType>("Texto");
   const [destination, setDestination] = useState(DESTINOS[0]);
   const [body, setBody] = useState(
-    "¡Felicitaciones a Carolina Mendoza por alcanzar 45 días de racha consecutiva! Desde el equipo ADRED queremos reconocer su increíble constancia. ¡Sigue brillando! 🏆",
+    "Â¡Felicitaciones a Carolina Mendoza por alcanzar 45 dÃ­as de racha consecutiva! Desde el equipo ADRED queremos reconocer su increÃ­ble constancia. Â¡Sigue brillando! ðŸ†",
   );
   const [pinned, setPinned] = useState(true);
   const [push, setPush] = useState(false);
   const [giveXp, setGiveXp] = useState(false);
+  // Borradores por post + objetivo de respuesta.
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [replyTo, setReplyTo] = useState<{ postId: string; commentId: string; author: string } | null>(null);
 
   const pinnedPosts = posts.filter((p) => p.pinned);
 
@@ -89,14 +87,110 @@ export function PostsPage() {
     setGiveXp(false);
   };
 
+  const handleSendComment = (postId: string) => {
+    const text = (drafts[postId] ?? "").trim();
+    if (!text) return;
+    if (replyTo && replyTo.postId === postId) {
+      replyToComment(replyTo.commentId, text);
+      setReplyTo(null);
+    } else {
+      addComment(postId, text);
+    }
+    setDrafts((d) => ({ ...d, [postId]: "" }));
+  };
+
   const findMember = (authorId: string) =>
     members.find((m) => m.id === authorId);
+
+  const renderComments = (postId: string, comments: ErpComment[]) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSendComment(postId);
+      }
+    };
+    return (
+      <div className="flex flex-col gap-2 border-t border-border bg-muted/20 p-3">
+        {/* Lista de comentarios */}
+        {comments.length === 0 ? (
+          <p className="py-1 text-xs text-muted-foreground">{t("Sin comentarios")}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {comments.map((c) => {
+              const isReply = Boolean(c.parentCommentId);
+              return (
+                <div
+                  key={c.id}
+                  className={`flex gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors ${
+                    c.isNew ? "animate-feed-slide bg-primary-soft/40" : "hover:bg-muted/40"
+                  } ${isReply ? "ml-6 border-l border-border pl-3" : ""}`}
+                >
+                  {isReply && <CornerDownRight className="mt-0.5 size-3 shrink-0 text-muted-foreground" />}
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary">
+                    {profileName(c.author, c.isSystem, t).slice(0, 2).toUpperCase()}
+                  </span>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-semibold">{profileName(c.author, c.isSystem, t)}</span>
+                      <span className="text-[11px] text-muted-foreground">{c.createdAt}</span>
+                      {isReply && (
+                        <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
+                          {t("Respuesta")}
+                        </span>
+                      )}
+                    </div>
+                    <p className="whitespace-pre-wrap break-words text-xs text-foreground/90">{c.body}</p>
+                  </div>
+                  <button
+                    onClick={() => setReplyTo({ postId, commentId: c.id, author: profileName(c.author, c.isSystem, t) })}
+                    className="shrink-0 self-start rounded px-1.5 py-0.5 text-[11px] text-primary hover:bg-primary-soft"
+                  >
+                    {t("Responder")}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {/* Indicador de respuesta */}
+        {replyTo && replyTo.postId === postId && (
+          <div className="flex items-center justify-between rounded-lg bg-primary-soft px-2 py-1 text-xs text-primary">
+            <span className="flex items-center gap-1">
+              <CornerDownRight className="size-3" /> {t("Respondiendo a {name}", { name: replyTo.author })}
+            </span>
+            <button onClick={() => setReplyTo(null)} className="rounded p-1 hover:bg-white/50">
+              <X className="size-3" />
+            </button>
+          </div>
+        )}
+        {/* Input */}
+        <div className="flex items-center gap-2">
+          <Input
+            value={drafts[postId] ?? ""}
+            onChange={(e) => setDrafts((d) => ({ ...d, [postId]: e.target.value }))}
+            onKeyDown={handleKeyDown}
+            placeholder={t("Escribe un comentario...")}
+            className="h-8 text-xs"
+          />
+          <Button
+            size="sm"
+            onClick={() => handleSendComment(postId)}
+            disabled={!((drafts[postId] ?? "").trim())}
+            className="h-8 shrink-0"
+          >
+            <Send data-icon="inline-start" className="size-3.5" />
+            {t("Comentar")}
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Publicaciones")}
-        description={t("Gestión de publicaciones de ANTARES Comunidad ADRED")}
+        description={t("GestiÃ³n de publicaciones de ANTARES Comunidad ADRED")}
         icon={Send}
         actions={<PostDialog />}
       />
@@ -109,7 +203,7 @@ export function PostsPage() {
           </span>
           <div className="flex flex-col">
             <span className="text-[15px] font-bold text-white">{t("Nuevo post")}</span>
-            <span className="text-[12px] text-white/70">{t("El mensaje aparecerá en la app de los miembros")}</span>
+            <span className="text-[12px] text-white/70">{t("El mensaje aparecerÃ¡ en la app de los miembros")}</span>
           </div>
         </div>
         <div className="relative flex flex-col gap-4 p-4">
@@ -195,55 +289,58 @@ export function PostsPage() {
               return (
                 <div
                   key={post.id}
-                  className="flex items-start gap-3 rounded-xl border border-border p-3 transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/5"
+                  className="overflow-hidden rounded-xl border border-border transition-all hover:shadow-md hover:shadow-black/5"
                 >
-                  {member ? (
-                    <MemberAvatar member={member} subtitle={post.createdAt} />
-                  ) : (
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                        {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
-                      </span>
-                      <div className="flex min-w-0 flex-col gap-0.5">
-                        <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
-                        <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                  <div className="flex items-start gap-3 p-3">
+                    {member ? (
+                      <MemberAvatar member={member} subtitle={post.createdAt} />
+                    ) : (
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                          {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                          <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StatusBadge
+                          status={t("Fijado")}
+                          color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                        />
+                        <span
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                          style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                        >
+                          {t(post.type)}
+                        </span>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {post.destination}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{post.body}</p>
+                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                        <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
+                        <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
                       </div>
                     </div>
-                  )}
-                  <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <StatusBadge
-                        status={t("Fijado")}
-                        color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
-                      />
-                      <span
-                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                        style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
-                      >
-                        {t(post.type)}
-                      </span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                        {post.destination}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{post.body}</p>
-                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                      <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
-                      <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
-                      <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
+                    <div className="flex shrink-0 gap-1">
+                      <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
+                        <Pin className="size-3.5" />
+                      </Button>
+                      <Button size="icon-sm" variant="ghost" onClick={() => {}} title={t("Editar")}>
+                        <Edit className="size-3.5" />
+                      </Button>
+                      <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
+                        <Trash2 className="size-3.5 text-destructive" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
-                      <Pin className="size-3.5" />
-                    </Button>
-                    <Button size="icon-sm" variant="ghost" onClick={() => {}} title={t("Editar")}>
-                      <Edit className="size-3.5" />
-                    </Button>
-                    <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
-                      <Trash2 className="size-3.5 text-destructive" />
-                    </Button>
-                  </div>
+                  {renderComments(post.id, post.commentsList ?? [])}
                 </div>
               );
             })}
@@ -259,61 +356,63 @@ export function PostsPage() {
           icon={FileText}
           variant="primary"
         />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("Autor")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Tipo")}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t("Contenido")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Comunidad")}</TableHead>
-              <TableHead className="text-right"><Heart className="size-3 inline" /></TableHead>
-              <TableHead className="text-right"><MessageCircle className="size-3 inline" /></TableHead>
-              <TableHead className="text-right hidden md:table-cell"><Eye className="size-3 inline" /></TableHead>
-              <TableHead className="hidden md:table-cell">{t("Estado")}</TableHead>
-              <TableHead className="w-10 text-right"><span className="sr-only">{t("Acciones")}</span></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {posts.map((post) => {
+        <div className="flex flex-col gap-3 p-4">
+          {posts.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">{t("Sin publicaciones")}</p>
+          ) : (
+            posts.map((post) => {
               const member = findMember(post.authorId);
               const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
               return (
-                <TableRow key={post.id}>
-                  <TableCell>
+                <div
+                  key={post.id}
+                  className="overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-md hover:shadow-black/5"
+                >
+                  <div className="flex items-start gap-3 p-3">
                     {member ? (
-                      <MemberAvatar member={member} subtitle="" />
+                      <MemberAvatar member={member} subtitle={post.createdAt} />
                     ) : (
-                      <span className="text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                          {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                          <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                        </div>
+                      </div>
                     )}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <span
-                      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                      style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
-                    >
-                      {t(post.type)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-xs text-muted-foreground max-w-[200px] truncate">
-                    {post.body}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-xs">{post.destination}</TableCell>
-                  <TableCell className="text-right text-xs">{post.reactions}</TableCell>
-                  <TableCell className="text-right text-xs">{post.comments}</TableCell>
-                  <TableCell className="hidden md:table-cell text-right text-xs">{post.views}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex items-center gap-2">
-                      {post.pinned ? (
-                        <StatusBadge
-                          status={t("Fijado")}
-                          color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
-                        />
-                      ) : (
-                        <StatusBadge
-                          status={t("Activo")}
-                          color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }}
-                        />
-                      )}
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {post.pinned ? (
+                          <StatusBadge
+                            status={t("Fijado")}
+                            color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                          />
+                        ) : (
+                          <StatusBadge
+                            status={t("Activo")}
+                            color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }}
+                          />
+                        )}
+                        <span
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                          style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                        >
+                          {t(post.type)}
+                        </span>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {post.destination}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{post.body}</p>
+                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                        <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
+                        <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
                       <Button
                         size="icon-sm"
                         variant="ghost"
@@ -323,34 +422,29 @@ export function PostsPage() {
                       >
                         <Pin className="size-3.5" />
                       </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end">
                       <DropdownMenu>
                         <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
-                            <MoreHorizontal className="size-4" />
-                          </DropdownMenuTrigger>
+                          <MoreHorizontal className="size-4" />
+                        </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => togglePin(post.id)}>
                             {post.pinned ? t("Desfijar") : t("Fijar")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => deletePost(post.id)}
-                          >
+                          <DropdownMenuItem variant="destructive" onClick={() => deletePost(post.id)}>
                             {t("Eliminar")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                  {renderComments(post.id, post.commentsList ?? [])}
+                </div>
               );
-            })}
-          </TableBody>
-        </Table>
+            })
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
