@@ -35,13 +35,12 @@ const TIPOS: { key: PostType; label: string }[] = [
 ];
 
 export const DESTINOS = [
-  "Todas las comunidades",
-  "Comunidad ADRED",
-  "Reto caminata 30 días",
-  "Apoyo emocional",
-  "Cocina saludable",
-  "Solo inactivos",
-  "Solo activos",
+  "🌐 Todas las comunidades (284)",
+  "🏥 Comunidad ADRED",
+  "🏃 Reto caminata 30 días",
+  "🧠 Apoyo emocional",
+  "🥗 Cocina saludable",
+  "😴 Solo inactivos",
 ];
 
 export function PostDialog() {

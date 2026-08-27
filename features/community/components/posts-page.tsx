@@ -101,14 +101,17 @@ export function PostsPage() {
         actions={<PostDialog />}
       />
 
-      {/* Composer */}
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
-        <SectionHeader
-          title={t("Nuevo post")}
-          description={t("El mensaje aparecerá en la app de los miembros")}
-          icon={Send}
-          variant="primary"
-        />
+      {/* Composer - Tarjeta ANTARES con color distintivo */}
+      <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-strong)] shadow-lg shadow-primary/20">
+        <div className="flex items-center gap-3 border-b border-white/15 px-4 py-3.5">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-white/15 text-[15px] font-extrabold text-white">
+            A
+          </span>
+          <div className="flex flex-col">
+            <span className="text-[15px] font-bold text-white">{t("Nuevo post")}</span>
+            <span className="text-[12px] text-white/70">{t("El mensaje aparecerá en la app de los miembros")}</span>
+          </div>
+        </div>
         <div className="flex flex-col gap-4 p-4">
           {/* Type tabs */}
           <div className="flex flex-wrap gap-2">
@@ -120,8 +123,8 @@ export function PostsPage() {
                   onClick={() => setType(tip.key)}
                   className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all ${
                     type === tip.key
-                      ? "border-primary bg-primary-soft text-primary"
-                      : "border-border bg-muted text-muted-foreground hover:bg-muted/80"
+                      ? "border-white bg-white text-primary"
+                      : "border-white/20 bg-white/10 text-white hover:bg-white/20"
                   }`}
                 >
                   <Icon className="size-3.5" />
@@ -135,14 +138,14 @@ export function PostsPage() {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={3}
-            className="text-sm"
+            className="border-white/20 bg-white/10 text-sm text-white placeholder:text-white/50 focus-visible:ring-[#B8860B]"
           />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
             <div className="flex items-center gap-2">
-              <Label className="text-xs whitespace-nowrap">{t("Destino")}</Label>
+              <Label className="text-xs whitespace-nowrap text-white/80">{t("Destino")}</Label>
               <Select value={destination} onValueChange={(v) => { if (v !== null) setDestination(v); }}>
-                <SelectTrigger className="h-8 w-auto min-w-[180px] text-xs">
+                <SelectTrigger className="h-8 w-auto min-w-[180px] border-white/20 bg-white/10 text-xs text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -155,29 +158,20 @@ export function PostsPage() {
               </Select>
             </div>
 
-            <label className="flex items-center gap-2">
-              <Checkbox
-                checked={pinned}
-                onCheckedChange={(c) => setPinned(Boolean(c))}
-              />
+            <label className="flex items-center gap-2 text-white">
+              <Checkbox checked={pinned} onCheckedChange={(c) => setPinned(Boolean(c))} className="border-white/40" />
               <span className="text-xs">{t("Fijar al tope")}</span>
             </label>
-            <label className="flex items-center gap-2">
-              <Checkbox
-                checked={push}
-                onCheckedChange={(c) => setPush(Boolean(c))}
-              />
+            <label className="flex items-center gap-2 text-white">
+              <Checkbox checked={push} onCheckedChange={(c) => setPush(Boolean(c))} className="border-white/40" />
               <span className="text-xs">{t("Push notification")}</span>
             </label>
-            <label className="flex items-center gap-2">
-              <Checkbox
-                checked={giveXp}
-                onCheckedChange={(c) => setGiveXp(Boolean(c))}
-              />
+            <label className="flex items-center gap-2 text-white">
+              <Checkbox checked={giveXp} onCheckedChange={(c) => setGiveXp(Boolean(c))} className="border-white/40" />
               <span className="text-xs">{t("Dar XP por comentar")}</span>
             </label>
 
-            <Button size="sm" onClick={handlePublish} className="ml-auto">
+            <Button size="sm" onClick={handlePublish} className="ml-auto bg-[#B8860B] text-white hover:bg-[#A06E0A]">
               <Send data-icon="inline-start" />
               {t("Publicar")}
             </Button>
@@ -308,17 +302,28 @@ export function PostsPage() {
                   <TableCell className="text-right text-xs">{post.comments}</TableCell>
                   <TableCell className="hidden md:table-cell text-right text-xs">{post.views}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {post.pinned ? (
-                      <StatusBadge
-                        status={t("Fijado")}
-                        color={{ bg: "var(--warning-soft)", text: "#B8860B", dot: "#B8860B" }}
-                      />
-                    ) : (
-                      <StatusBadge
-                        status={t("Activo")}
-                        color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }}
-                      />
-                    )}
+                    <div className="flex items-center gap-2">
+                      {post.pinned ? (
+                        <StatusBadge
+                          status={t("Fijado")}
+                          color={{ bg: "var(--warning-soft)", text: "#B8860B", dot: "#B8860B" }}
+                        />
+                      ) : (
+                        <StatusBadge
+                          status={t("Activo")}
+                          color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }}
+                        />
+                      )}
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        onClick={() => togglePin(post.id)}
+                        title={post.pinned ? t("Desfijar") : t("Fijar")}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <Pin className="size-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end">
