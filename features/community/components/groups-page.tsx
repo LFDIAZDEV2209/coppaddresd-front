@@ -40,7 +40,7 @@ export function GroupsPage() {
         icon={MessageCircle}
       />
 
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader
           title={t("Grupos")}
           description={`${groups.length} ${t("grupos activos")}`}
@@ -62,7 +62,7 @@ export function GroupsPage() {
             {groups.map((g) => {
               const typeColor = GROUP_TYPE_COLORS[g.type] ?? GROUP_TYPE_COLORS.General;
               return (
-                <TableRow key={g.id}>
+                <TableRow key={g.id} className="transition-colors hover:bg-muted/50">
                   <TableCell className="text-xs font-semibold">{g.name}</TableCell>
                   <TableCell className="text-right text-xs font-bold">{g.members}</TableCell>
                   <TableCell className="text-right text-xs font-bold">{g.posts.toLocaleString()}</TableCell>

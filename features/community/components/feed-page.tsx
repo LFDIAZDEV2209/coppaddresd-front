@@ -69,7 +69,7 @@ export function FeedPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Feed list */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
+        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
           <SectionHeader
             title={t("Actividad reciente")}
             description={t("Últimos 2 días de actividad")}
@@ -78,16 +78,16 @@ export function FeedPage() {
             actions={
               <StatusBadge
                 status={t("En vivo")}
-                color={{ bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" }}
+                color={{ bg: "var(--destructive-soft)", text: "var(--destructive)", dot: "var(--destructive)" }}
               />
             }
           />
-          <div className="flex flex-col divide-y divide-border max-h-[500px] overflow-y-auto">
+          <div className="cp-stagger flex flex-col divide-y divide-border max-h-[500px] overflow-y-auto">
             {feed.map((item) => {
               const Icon = FEED_ICON[item.kind] ?? Activity;
               const iconBg = FEED_ICON_BG[item.kind] ?? "bg-muted text-muted-foreground";
               return (
-                <div key={item.id} className="flex items-start gap-3 p-3">
+                <div key={item.id} className="flex items-start gap-3 p-3 transition-colors hover:bg-muted/50">
                   <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
                     <Icon className="size-4" />
                   </span>
@@ -113,7 +113,7 @@ export function FeedPage() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           {/* Hoy en números */}
-          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
               title={t("Hoy en números")}
               icon={Zap}
@@ -137,7 +137,7 @@ export function FeedPage() {
           </div>
 
           {/* Grupos más activos */}
-          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
               title={t("Grupos más activos hoy")}
               icon={MessageCircle}
@@ -153,7 +153,7 @@ export function FeedPage() {
               </TableHeader>
               <TableBody>
                 {mockGroups.map((g) => (
-                  <TableRow key={g.id}>
+                  <TableRow key={g.id} className="transition-colors hover:bg-muted/50">
                     <TableCell className="text-xs font-semibold">{g.name}</TableCell>
                     <TableCell className="text-right text-xs font-bold">{g.posts}</TableCell>
                     <TableCell className="text-right text-xs">{g.members}</TableCell>

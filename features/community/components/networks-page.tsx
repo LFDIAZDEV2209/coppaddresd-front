@@ -57,17 +57,17 @@ export function NetworksPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Channel cards */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
             title={t("Métricas por canal")}
             icon={Share2}
             variant="primary"
           />
-          <div className="flex flex-col gap-2.5 p-4">
+          <div className="cp-stagger flex flex-col gap-2.5 p-4">
             {mockNetworks.map((ch) => (
               <div
                 key={ch.id}
-                className="flex items-center gap-3 rounded-xl p-3 text-white"
+                className="flex items-center gap-3 rounded-xl p-3 text-white shadow-sm transition-transform hover:-translate-y-0.5"
                 style={{ backgroundColor: ch.color }}
               >
                 <span className="text-2xl">{CHANNEL_ICONS[ch.name] ?? "🌐"}</span>
@@ -85,7 +85,7 @@ export function NetworksPage() {
         </div>
 
         {/* Growth chart */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
             title={t("Crecimiento de canales")}
             icon={TrendingUp}

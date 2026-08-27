@@ -45,7 +45,7 @@ export function RewardsPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Individual recognitions */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
             title={t("Otorgar reconocimiento individual")}
             icon={Award}
@@ -64,7 +64,7 @@ export function RewardsPage() {
             </TableHeader>
             <TableBody>
               {recognitions.map((r) => (
-                <TableRow key={r.id}>
+                <TableRow key={r.id} className="transition-colors hover:bg-muted/50">
                   <TableCell className="text-xs font-semibold">{r.member}</TableCell>
                   <TableCell>
                     <StatusBadge
@@ -73,7 +73,7 @@ export function RewardsPage() {
                     />
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="inline-flex items-center rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-2 py-0.5 text-[11px] font-bold text-white">
+                    <span className="inline-flex items-center rounded-lg bg-gradient-to-r from-[#B8860B] to-[#D9A929] px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
                       +{r.xp}
                     </span>
                   </TableCell>
@@ -97,7 +97,7 @@ export function RewardsPage() {
         </div>
 
         {/* Mass messages */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
             title={t("Mensajes masivos enviados")}
             icon={Send}
@@ -152,7 +152,7 @@ export function RewardsPage() {
       </div>
 
       {/* XP chart */}
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader
           title={t("XP entregados desde el ERP este mes")}
           icon={TrendingUp}
