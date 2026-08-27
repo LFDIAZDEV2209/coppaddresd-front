@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import {
   Map,
   Globe,
@@ -10,12 +11,18 @@ import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { GroupedBarChart } from "./charts";
 
+const RegionsMap = dynamic(() => import("./regions-map").then((m) => m.RegionsMap), {
+  ssr: false,
+  loading: () => <div className="h-[320px] w-full animate-pulse rounded-xl bg-muted" />,
+});
+
 const REGION_COLORS: Record<string, string> = {
   Miami: "var(--primary)",
   NY: "var(--success)",
   Barranquilla: "var(--warning-foreground)",
   Orlando: "var(--warning)",
   Bogotá: "var(--info)",
+  Bogota: "var(--info)",
   CDMX: "var(--destructive)",
 };
 
@@ -37,71 +44,53 @@ export function RegionsPage() {
         icon={Map}
       />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Chart */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
-          <SectionHeader
-            title={t("Miembros y engagement por ciudad")}
-            icon={Map}
-            variant="primary"
+      {/* Fila 1: Miembros y engagement — ancho completo */}
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+        <SectionHeader
+          title={t("Miembros y engagement por ciudad")}
+          icon={Map}
+          variant="primary"
+        />
+        <div className="p-4">
+          <GroupedBarChart
+            data={chartData}
+            loading={regionsLoading}
+            bars={[
+              { key: "members", name: t("Miembros"), color: "var(--primary)" },
+              { key: "postsPerWeek", name: t("Posts/semana"), color: "var(--success)" },
+            ]}
           />
-          <div className="p-4">
-            <GroupedBarChart
-              data={chartData}
-              loading={regionsLoading}
-              bars={[
-                { key: "members", name: t("Miembros"), color: "var(--primary)" },
-                { key: "postsPerWeek", name: t("Posts/semana"), color: "var(--success)" },
-              ]}
-            />
-          </div>
         </div>
+      </div>
 
-        {/* Region legend */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
-          <SectionHeader
-            title={t("Mapa de presencia")}
-            icon={Globe}
-            variant="primary"
-          />
-          <div className="flex flex-col gap-4 p-4">
-            {/* Map placeholder */}
-            <div className="relative flex h-[180px] items-center justify-center rounded-xl bg-gradient-to-br from-info-soft to-primary-soft">
-              <div className="flex flex-col items-center gap-2">
-                <Globe className="size-8 text-primary" />
-                <span className="text-xs text-muted-foreground text-center">
-                  Miami · New York · Orlando<br />
-                  Barranquilla · Bogotá · CDMX
+      {/* Fila 2: Mapa — ancho completo con react-leaflet */}
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+        <SectionHeader
+          title={t("Mapa de presencia")}
+          icon={Globe}
+          variant="primary"
+        />
+        <div className="flex flex-col gap-4 p-4">
+          <RegionsMap regions={regions} />
+
+          {/* Leyenda */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {regions.map((r) => (
+              <div key={r.region} className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5">
+                <span
+                  className="size-3 shrink-0 rounded-full"
+                  style={{ backgroundColor: REGION_COLORS[r.region] ?? "var(--muted)" }}
+                />
+                <span className="flex-1 truncate text-xs font-medium">{r.region}</span>
+                <span className="text-xs font-bold">{r.members}</span>
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold"
+                  style={{ backgroundColor: "var(--muted)", color: "var(--muted-foreground)" }}
+                >
+                  {r.percent}%
                 </span>
               </div>
-              {/* Colored dots */}
-              <div className="absolute top-[30px] left-[60px] size-4 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: REGION_COLORS.Miami }} title="Miami" />
-              <div className="absolute top-[20px] left-[90px] size-3.5 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: REGION_COLORS.NY }} title="New York" />
-              <div className="absolute top-[40px] left-[75px] size-3 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: REGION_COLORS.Orlando }} title="Orlando" />
-              <div className="absolute top-[70px] left-[35px] size-4 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: REGION_COLORS.Barranquilla }} title="Barranquilla" />
-              <div className="absolute top-[85px] left-[50px] size-2.5 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: REGION_COLORS.Bogotá }} title="Bogotá" />
-              <div className="absolute top-[60px] left-[20px] size-2.5 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: REGION_COLORS.CDMX }} title="CDMX" />
-            </div>
-
-            {/* Legend list */}
-            <div className="flex flex-col gap-2">
-              {regions.map((r) => (
-                <div key={r.region} className="flex items-center gap-2">
-                  <span
-                    className="size-3 shrink-0 rounded-full"
-                    style={{ backgroundColor: REGION_COLORS[r.region] ?? "var(--muted)" }}
-                  />
-                  <span className="flex-1 text-xs">{r.region}</span>
-                  <span className="text-xs font-bold">{r.members}</span>
-                  <span
-                    className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold"
-                    style={{ backgroundColor: "var(--muted)", color: "var(--muted-foreground)" }}
-                  >
-                    {r.percent}%
-                  </span>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </div>

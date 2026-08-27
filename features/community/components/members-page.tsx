@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Users,
   Send,
@@ -40,6 +40,7 @@ import { mockDiagnostics, mockRegions } from "../mock-data";
 import { MemberAvatar } from "./member-avatar";
 import { LevelBadge } from "./level-badge";
 import { AwardDialog } from "./award-dialog";
+import { CommunityPagination } from "./community-pagination";
 
 export function MembersPage() {
   const t = useT();
@@ -47,6 +48,10 @@ export function MembersPage() {
   const [diagFilter, setDiagFilter] = useState("all");
   const [regionFilter, setRegionFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [cardsPage, setCardsPage] = useState(1);
+  const [cardsPageSize, setCardsPageSize] = useState(10);
+  const [tablePage, setTablePage] = useState(1);
+  const [tablePageSize, setTablePageSize] = useState(10);
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
@@ -63,6 +68,16 @@ export function MembersPage() {
 
   const activeMembers = filtered.filter((m) => m.status === "Activo");
 
+  const paginatedCards = useMemo(() => {
+    const start = (cardsPage - 1) * cardsPageSize;
+    return activeMembers.slice(start, start + cardsPageSize);
+  }, [activeMembers, cardsPage, cardsPageSize]);
+
+  const paginatedTable = useMemo(() => {
+    const start = (tablePage - 1) * tablePageSize;
+    return filtered.slice(start, start + tablePageSize);
+  }, [filtered, tablePage, tablePageSize]);
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
@@ -75,7 +90,7 @@ export function MembersPage() {
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">
-          <Select value={diagFilter} onValueChange={(v) => { if (v !== null) setDiagFilter(v); }}>
+          <Select value={diagFilter} onValueChange={(v) => { if (v !== null) { setDiagFilter(v); setCardsPage(1); setTablePage(1); } }}>
             <SelectTrigger className="h-8 w-auto min-w-[160px] text-xs">
               <SelectValue placeholder={t("Diagnóstico")} />
             </SelectTrigger>
@@ -89,7 +104,7 @@ export function MembersPage() {
             </SelectContent>
           </Select>
 
-          <Select value={regionFilter} onValueChange={(v) => { if (v !== null) setRegionFilter(v); }}>
+          <Select value={regionFilter} onValueChange={(v) => { if (v !== null) { setRegionFilter(v); setCardsPage(1); setTablePage(1); } }}>
             <SelectTrigger className="h-8 w-auto min-w-[160px] text-xs">
               <SelectValue placeholder={t("Región")} />
             </SelectTrigger>
@@ -108,74 +123,83 @@ export function MembersPage() {
           <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setCardsPage(1); setTablePage(1); }}
             placeholder={t("Buscar miembro...")}
             className="h-8 pl-8 text-xs"
           />
         </div>
       </div>
 
-      {/* Active member cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {activeMembers.map((m) => (
-          <div
-            key={m.id}
-            className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center transition-all hover:shadow-lg hover:shadow-black/5"
-          >
-            <MemberAvatar member={m} showStreak />
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[11px] text-muted-foreground">
-                {m.diagnosis} · {m.region} · {t("Semana")} {m.week}
-              </span>
-            </div>
-            <div className="flex items-center justify-center gap-4 text-center">
-              <div className="flex flex-col items-center">
-                <span className="text-sm font-bold">{m.posts}</span>
-                <span className="text-[9px] uppercase text-muted-foreground">{t("Posts")}</span>
+      {/* Active member cards — paginadas */}
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <SectionHeader title={t("Miembros activos")} description={`${activeMembers.length} ${t("miembros")}`} icon={Users} variant="primary" />
+        <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+          {paginatedCards.map((m) => (
+            <div
+              key={m.id}
+              className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center transition-all hover:shadow-lg hover:shadow-black/5"
+            >
+              <MemberAvatar member={m} showStreak />
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[11px] text-muted-foreground">
+                  {m.diagnosis} · {m.region} · {t("Semana")} {m.week}
+                </span>
               </div>
-              <div className="flex flex-col items-center">
-                <span className="text-sm font-bold">{(m.xp / 1000).toFixed(0)}K</span>
-                <span className="text-[9px] uppercase text-muted-foreground">XP</span>
+              <div className="flex items-center justify-center gap-4 text-center">
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-bold">{m.posts}</span>
+                  <span className="text-[9px] uppercase text-muted-foreground">{t("Posts")}</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-bold">{(m.xp / 1000).toFixed(0)}K</span>
+                  <span className="text-[9px] uppercase text-muted-foreground">XP</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-bold">{m.streak}🔥</span>
+                  <span className="text-[9px] uppercase text-muted-foreground">{t("Racha")}</span>
+                </div>
               </div>
-              <div className="flex flex-col items-center">
-                <span className="text-sm font-bold">{m.streak}🔥</span>
-                <span className="text-[9px] uppercase text-muted-foreground">{t("Racha")}</span>
+              <LevelBadge level={m.level} />
+              {m.topRank && (
+                <StatusBadge
+                  status={`TOP ${m.topRank}`}
+                  color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                />
+              )}
+              <div className="flex w-full gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    sendMessage(m.id, t("¡Hola! Nos gustaría saber de ti 💙"));
+                    toast(t("Mensaje enviado"));
+                  }}
+                >
+                  <Send data-icon="inline-start" />
+                  {t("Mensaje")}
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => toast(t("Premio enviado a") + " " + m.firstName)}
+                >
+                  <Trophy data-icon="inline-start" />
+                  {t("Premiar")}
+                </Button>
               </div>
             </div>
-            <LevelBadge level={m.level} />
-            {m.topRank && (
-              <StatusBadge
-                status={`TOP ${m.topRank}`}
-                color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
-              />
-            )}
-            <div className="flex w-full gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  sendMessage(m.id, t("¡Hola! Nos gustaría saber de ti 💙"));
-                  toast(t("Mensaje enviado"));
-                }}
-              >
-                <Send data-icon="inline-start" />
-                {t("Mensaje")}
-              </Button>
-              <Button
-                size="sm"
-                className="flex-1"
-                onClick={() => toast(t("Premio enviado a") + " " + m.firstName)}
-              >
-                <Trophy data-icon="inline-start" />
-                {t("Premiar")}
-              </Button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        {activeMembers.length === 0 && (
+          <p className="pb-6 text-center text-sm text-muted-foreground">{t("No hay miembros que coincidan con el filtro")}</p>
+        )}
+        {activeMembers.length > 0 && (
+          <CommunityPagination page={cardsPage} pageSize={cardsPageSize} total={activeMembers.length} onPageChange={setCardsPage} onPageSizeChange={(s) => { setCardsPageSize(s); setCardsPage(1); }} />
+        )}
       </div>
 
-      {/* Engagement table */}
+      {/* Engagement table — paginada */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Participación")}
@@ -222,29 +246,29 @@ export function MembersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((m) => (
+                paginatedTable.map((m) => (
               <TableRow key={m.id} className="transition-colors hover:bg-muted/50">
-                <TableCell>
+                <TableCell className="py-2">
                   <MemberAvatar member={m} subtitle="" />
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-xs">{m.diagnosis}</TableCell>
-                <TableCell className="hidden md:table-cell text-xs">{m.region}</TableCell>
-                <TableCell className="text-right text-xs font-semibold">{m.posts}</TableCell>
-                <TableCell className="hidden text-right md:table-cell text-xs">{m.comments}</TableCell>
-                <TableCell className="hidden text-right md:table-cell text-xs">{m.reactions}</TableCell>
-                <TableCell className="text-right text-xs">
+                <TableCell className="hidden md:table-cell py-2 text-xs">{m.diagnosis}</TableCell>
+                <TableCell className="hidden md:table-cell py-2 text-xs">{m.region}</TableCell>
+                <TableCell className="py-2 text-right text-xs font-semibold">{m.posts}</TableCell>
+                <TableCell className="hidden text-right md:table-cell py-2 text-xs">{m.comments}</TableCell>
+                <TableCell className="hidden text-right md:table-cell py-2 text-xs">{m.reactions}</TableCell>
+                <TableCell className="py-2 text-right text-xs">
                   {m.streak > 0 ? `🔥 ${m.streak}` : "💤 0"}
                 </TableCell>
-                <TableCell className="hidden text-right md:table-cell text-xs font-semibold">
+                <TableCell className="hidden text-right md:table-cell py-2 text-xs font-semibold">
                   {m.xp.toLocaleString()}
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="hidden md:table-cell py-2">
                   <LevelBadge level={m.level} />
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                <TableCell className="hidden md:table-cell py-2 text-xs text-muted-foreground">
                   {m.lastPost}
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="hidden md:table-cell py-2">
                   <StatusBadge
                     status={t(m.status)}
                     color={
@@ -254,7 +278,7 @@ export function MembersPage() {
                     }
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-2">
                   <div className="flex justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
@@ -285,6 +309,9 @@ export function MembersPage() {
               )}
           </TableBody>
         </Table>
+        {filtered.length > 0 && (
+          <CommunityPagination page={tablePage} pageSize={tablePageSize} total={filtered.length} onPageChange={setTablePage} onPageSizeChange={(s) => { setTablePageSize(s); setTablePage(1); }} />
+        )}
       </div>
     </div>
   );

@@ -3,12 +3,13 @@
 import {
   Share2,
   TrendingUp,
+  BarChart3,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import { XpLineChart } from "./charts";
+import { XpLineChart, SimpleBarChart } from "./charts";
 
 const CHANNEL_ICONS: Record<string, string> = {
   TikTok: "🎵",
@@ -46,6 +47,15 @@ export function NetworksPage() {
       point[n.name] = n.growth.find((g) => g.month === month)?.value ?? 0;
     });
     return point;
+  });
+
+  // Seguidores por canal — barra simple para segunda fila completa
+  const followersData = networks.map((n) => {
+    // followers es string "48.2K" — convertir a número aproximado
+    const raw = n.followers.replace("K", "");
+    const num = parseFloat(raw);
+    const value = n.followers.includes("K") ? Math.round(num * 1000) : Math.round(num);
+    return { label: n.name, value };
   });
 
   return (
@@ -102,6 +112,19 @@ export function NetworksPage() {
               }))}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Segunda fila completa — alcance total por canal */}
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+        <SectionHeader
+          title={t("Alcance total por canal")}
+          description={t("Comparativa de seguidores/miembros actuales")}
+          icon={BarChart3}
+          variant="primary"
+        />
+        <div className="p-4">
+          <SimpleBarChart data={followersData} color="var(--primary)" />
         </div>
       </div>
     </div>
