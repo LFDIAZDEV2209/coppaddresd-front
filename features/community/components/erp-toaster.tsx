@@ -10,9 +10,13 @@ export function ErpToaster() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="animate-slide-up rounded-xl bg-[var(--sidebar)] px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-white/10"
+          className="cp-pop flex items-center gap-2.5 rounded-xl bg-[var(--sidebar)] px-4 py-3 text-sm font-medium text-white shadow-xl ring-1 ring-white/10"
         >
-          {toast.message}
+          <span
+            className="size-1.5 shrink-0 rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#1D9E75]"
+            aria-hidden="true"
+          />
+          <span>{toast.message}</span>
         </div>
       ))}
     </div>

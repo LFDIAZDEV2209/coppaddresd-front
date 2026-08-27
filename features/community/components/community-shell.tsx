@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { CommunitySidebar } from "./community-sidebar";
 import { CommunityTopbar } from "./community-topbar";
 
 export function CommunityErpShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <div className="community-erp flex h-screen overflow-hidden bg-background text-foreground">
@@ -31,7 +33,12 @@ export function CommunityErpShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <CommunityTopbar onMenuClick={() => setMobileOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        <main className="cp-mesh-bg flex-1 overflow-y-auto p-4 sm:p-6">
+          {/* key por ruta: re-dispara la entrada de la página en cada navegación */}
+          <div key={pathname} className="cp-rise">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );
