@@ -68,7 +68,7 @@ export function FeedPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Feed list */}
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Actividad reciente")}
             description={t("Últimos 2 días de actividad")}
@@ -81,7 +81,7 @@ export function FeedPage() {
               />
             }
           />
-          <div className="cp-stagger flex flex-col divide-y divide-border max-h-[500px] overflow-y-auto">
+          <div className="flex flex-col divide-y divide-border max-h-[500px] overflow-y-auto">
             {feed.map((item) => {
               const Icon = FEED_ICON[item.kind] ?? Activity;
               const iconBg = FEED_ICON_BG[item.kind] ?? "bg-muted text-muted-foreground";
@@ -112,7 +112,7 @@ export function FeedPage() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           {/* Hoy en números */}
-          <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Hoy en números")}
               icon={Zap}
@@ -123,9 +123,9 @@ export function FeedPage() {
                 { label: t("Posts publicados"), value: analytics?.feedToday.posts ?? 0, color: "var(--primary)" },
                 { label: t("Comentarios"), value: analytics?.feedToday.comments ?? 0, color: "var(--success)" },
                 { label: t("Reacciones"), value: analytics?.feedToday.reactions ?? 0, color: "var(--destructive)" },
-                { label: t("Nuevos miembros"), value: analytics?.feedToday.newMembers ?? 0, color: "#B8860B" },
+                { label: t("Nuevos miembros"), value: analytics?.feedToday.newMembers ?? 0, color: "var(--warning)" },
                 { label: t("Rachas rotas"), value: analytics?.feedToday.streaksBroken ?? 0, color: "var(--destructive)" },
-                { label: t("XP entregados"), value: (analytics?.feedToday.xpDelivered ?? 0).toLocaleString("es-ES"), color: "#B8860B" },
+                { label: t("XP entregados"), value: (analytics?.feedToday.xpDelivered ?? 0).toLocaleString("es-ES"), color: "var(--warning)" },
               ].map((stat) => (
                 <div key={stat.label} className="flex items-center justify-between">
                   <span className="text-xs">{stat.label}</span>
@@ -136,7 +136,7 @@ export function FeedPage() {
           </div>
 
           {/* Grupos más activos */}
-          <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Grupos más activos hoy")}
               icon={MessageCircle}

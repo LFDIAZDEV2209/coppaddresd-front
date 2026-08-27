@@ -40,7 +40,7 @@ export function GroupsPage() {
         icon={MessageCircle}
       />
 
-      <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Grupos")}
           description={`${communityGroups.length} ${t("grupos activos")}`}

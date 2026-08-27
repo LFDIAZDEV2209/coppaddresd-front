@@ -14,7 +14,7 @@ const REGION_COLORS: Record<string, string> = {
   Miami: "var(--primary)",
   NY: "var(--success)",
   Barranquilla: "var(--warning-foreground)",
-  Orlando: "#B8860B",
+  Orlando: "var(--warning)",
   Bogotá: "var(--info)",
   CDMX: "var(--destructive)",
 };
@@ -39,7 +39,7 @@ export function RegionsPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Chart */}
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Miembros y engagement por ciudad")}
             icon={Map}
@@ -58,7 +58,7 @@ export function RegionsPage() {
         </div>
 
         {/* Region legend */}
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Mapa de presencia")}
             icon={Globe}
@@ -68,7 +68,7 @@ export function RegionsPage() {
             {/* Map placeholder */}
             <div className="relative flex h-[180px] items-center justify-center rounded-xl bg-gradient-to-br from-info-soft to-primary-soft">
               <div className="flex flex-col items-center gap-2">
-                <Globe className="cp-float size-8 text-primary" />
+                <Globe className="size-8 text-primary" />
                 <span className="text-xs text-muted-foreground text-center">
                   Miami · New York · Orlando<br />
                   Barranquilla · Bogotá · CDMX

@@ -86,9 +86,8 @@ export function DashboardPage() {
       />
 
       {/* Banner de alerta — datos reales del dashboard */}
-      <div className="cp-pop relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
-        <span className="cp-glow -left-8 -top-10 size-28 bg-[rgba(184,134,11,0.18)]" aria-hidden />
-        <div className="relative flex items-start gap-3">
+      <div className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning text-white shadow-lg shadow-warning/30">
             <AlertTriangle className="size-5" />
           </span>
@@ -112,7 +111,7 @@ export function DashboardPage() {
       </div>
 
       {/* KPIs — datos reales del dashboard */}
-      <section className="cp-stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {dashboardLoading
           ? Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 rounded-xl border border-border/60 bg-card p-4">
@@ -138,7 +137,7 @@ export function DashboardPage() {
 
       {/* Gráficos fila 1 */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Actividad (30 días)")} description={t("Posts, comentarios y reacciones")} icon={Activity} variant="primary" />
           <div className="p-4">
             <ActivityLineChart data={dashboardActivitySeries} loading={dashboardLoading} />
@@ -151,7 +150,7 @@ export function DashboardPage() {
             />
           </div>
         </div>
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Tipos de publicaciones")} description={t("Distribución del mes")} icon={PieChart} variant="primary" />
           <div className="p-4">
             <PostTypesDoughnut data={dashboardPostTypeData} loading={dashboardLoading} />
@@ -162,19 +161,19 @@ export function DashboardPage() {
 
       {/* Hora pico · Diagnóstico · Top rachas en una sola fila */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Horario pico de actividad")} description={t("Actividad por hora (24h)")} icon={Clock} variant="primary" />
           <div className="p-4">
             <PeakHoursBar data={dashboardPeakHoursData} loading={dashboardLoading} />
           </div>
         </div>
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Diagnóstico vs Participación")} description={t("Nivel de participación por diagnóstico")} icon={Radar} variant="primary" />
           <div className="p-4">
             <DiagnosisRadar data={dashboardDiagnosisParticipation} loading={dashboardLoading} />
           </div>
         </div>
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Top rachas activas")} description={t("Miembros con mayor racha")} icon={Flame} variant="primary" />
           <Table>
             <TableHeader>
@@ -201,7 +200,7 @@ export function DashboardPage() {
 
       {/* Feed reciente + Miembros inactivos en una fila */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader title={t("Feed reciente")} description={t("Actividad en tiempo real")} icon={MessageCircle} variant="primary" />
         <div className="flex flex-col divide-y divide-border">
           {feed.map((item) => {
@@ -228,7 +227,7 @@ export function DashboardPage() {
       </div>
 
       {/* Panel inactivos */}
-      <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Miembros inactivos · acción requerida")}
           description={t("Envía un mensaje para reactivarlos")}

@@ -37,8 +37,7 @@ export function InactivePage() {
       />
 
       {/* Warning banner */}
-      <div className="cp-pop relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
-        <span className="cp-glow -right-6 -top-10 size-32 bg-[rgba(184,134,11,0.18)]" />
+      <div className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning text-white shadow-lg shadow-warning/30">
             <AlertTriangle className="size-5" />
@@ -64,7 +63,7 @@ export function InactivePage() {
 
       {/* Table + Chart */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Plan de acción")}
             description={`${inactive.length} ${t("miembros requieren atención")}`}
@@ -134,7 +133,7 @@ export function InactivePage() {
           </Table>
         </div>
 
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Patrones de inactividad")}
             icon={AlertTriangle}

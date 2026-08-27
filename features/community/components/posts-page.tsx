@@ -101,9 +101,8 @@ export function PostsPage() {
         actions={<PostDialog />}
       />
 
-      {/* Composer - Tarjeta ANTARES con color distintivo */}
-      <div className="cp-pop relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-strong)] shadow-lg shadow-primary/20">
-        <span className="cp-glow -right-10 -top-14 size-40 bg-[rgba(139,92,246,0.35)]" aria-hidden />
+      {/* Composer - Tarjeta con color distintivo */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-strong)] shadow-lg shadow-primary/20">
         <div className="relative flex items-center gap-3 border-b border-white/15 px-4 py-3.5">
           <span className="flex size-9 items-center justify-center rounded-xl bg-white/15 text-[15px] font-extrabold text-white ring-1 ring-white/25 shadow-lg shadow-black/10">
             A
@@ -139,7 +138,7 @@ export function PostsPage() {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={3}
-            className="border-white/20 bg-white/10 text-sm text-white placeholder:text-white/50 focus-visible:ring-[#B8860B]"
+            className="border-white/20 bg-white/10 text-sm text-white placeholder:text-white/50 focus-visible:ring-white/40"
           />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
@@ -172,7 +171,7 @@ export function PostsPage() {
               <span className="text-xs">{t("Dar XP por comentar")}</span>
             </label>
 
-            <Button size="sm" onClick={handlePublish} className="ml-auto bg-[#B8860B] text-white shadow-md shadow-[#B8860B]/30 transition-all hover:-translate-y-px hover:bg-[#A06E0A] active:scale-[0.97]">
+            <Button size="sm" onClick={handlePublish} className="ml-auto bg-white text-primary transition-all hover:-translate-y-px active:scale-[0.97]">
               <Send data-icon="inline-start" />
               {t("Publicar")}
             </Button>
@@ -182,7 +181,7 @@ export function PostsPage() {
 
       {/* Pinned posts */}
       {pinnedPosts.length > 0 && (
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Publicaciones fijadas")}
             description={`${pinnedPosts.length} ${t("publicaciones fijadas activas")}`}
@@ -196,7 +195,7 @@ export function PostsPage() {
               return (
                 <div
                   key={post.id}
-                  className="flex items-start gap-3 rounded-xl border border-border p-3 transition-all hover:-translate-y-0.5 hover:border-[#8B5CF6]/40 hover:shadow-md hover:shadow-black/5"
+                  className="flex items-start gap-3 rounded-xl border border-border p-3 transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/5"
                 >
                   {member ? (
                     <MemberAvatar member={member} subtitle={post.createdAt} />
@@ -253,7 +252,7 @@ export function PostsPage() {
       )}
 
       {/* All posts */}
-      <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all">
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Todas las publicaciones")}
           description={`${posts.length} ${t("publicaciones este mes")}`}

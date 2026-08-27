@@ -58,13 +58,13 @@ export function NetworksPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Channel cards */}
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Métricas por canal")}
             icon={Share2}
             variant="primary"
           />
-          <div className="cp-stagger flex flex-col gap-2.5 p-4">
+          <div className="flex flex-col gap-2.5 p-4">
             {networks.map((ch) => (
               <div
                 key={ch.id}
@@ -86,7 +86,7 @@ export function NetworksPage() {
         </div>
 
         {/* Growth chart */}
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Crecimiento de canales")}
             icon={TrendingUp}

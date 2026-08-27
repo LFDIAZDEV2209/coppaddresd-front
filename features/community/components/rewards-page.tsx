@@ -56,7 +56,7 @@ export function RewardsPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Individual recognitions */}
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Otorgar reconocimiento individual")}
             icon={Award}
@@ -84,7 +84,7 @@ export function RewardsPage() {
                     />
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="inline-flex items-center rounded-lg bg-gradient-to-r from-[#B8860B] to-[#D9A929] px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
+                    <span className="inline-flex items-center rounded-lg bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-[var(--warning-foreground)]">
                       +{r.xp}
                     </span>
                   </TableCell>
@@ -108,7 +108,7 @@ export function RewardsPage() {
         </div>
 
         {/* Mass messages */}
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Mensajes masivos enviados")}
             icon={Send}
@@ -146,7 +146,7 @@ export function RewardsPage() {
       </div>
 
       {/* XP chart */}
-      <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("XP entregados desde el ERP este mes")}
           icon={TrendingUp}
@@ -156,7 +156,7 @@ export function RewardsPage() {
           <XpLineChart
             data={xpData}
             lines={[
-              { key: "rachas", name: t("XP por rachas"), color: "#B8860B" },
+              { key: "rachas", name: t("XP por rachas"), color: "var(--warning)" },
               { key: "posts", name: t("XP por posts"), color: "var(--primary)" },
               { key: "erpAdmin", name: t("XP por ERP"), color: "var(--success)" },
             ]}

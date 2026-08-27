@@ -71,7 +71,7 @@ export function StreaksPage() {
       />
 
       {/* KPIs */}
-      <section className="cp-stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {streakKpis.map((kpi) => (
           <StatCard
             key={kpi.label}
@@ -87,7 +87,7 @@ export function StreaksPage() {
       {/* Ranking + chart */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Ranking table */}
-        <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Ranking de rachas")}
             description={t("Puedes premiar desde aquí")}
@@ -148,7 +148,7 @@ export function StreaksPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className="inline-flex items-center rounded-lg bg-gradient-to-r from-[#B8860B] to-[#D9A929] px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
+                      <span className="inline-flex items-center rounded-lg bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-[var(--warning-foreground)]">
                         {s.xp.toLocaleString()}
                       </span>
                     </TableCell>
@@ -186,7 +186,7 @@ export function StreaksPage() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           {/* Streak distribution chart */}
-          <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Distribución de rachas")}
               icon={BarChart3}
@@ -198,7 +198,7 @@ export function StreaksPage() {
           </div>
 
           {/* Hitos alcanzados hoy */}
-          <div className="cp-card flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Hitos alcanzados hoy")}
               icon={Star}
