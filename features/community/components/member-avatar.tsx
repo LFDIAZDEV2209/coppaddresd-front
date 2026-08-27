@@ -3,10 +3,10 @@ import type { CommunityMember } from "../types";
 
 function grad(id: string): string {
   const palette = [
-    "from-sky-500 to-blue-600",
-    "from-violet-500 to-purple-600",
-    "from-emerald-500 to-teal-600",
-    "from-amber-500 to-orange-600",
+    "from-sky-700 to-blue-900",
+    "from-violet-700 to-purple-900",
+    "from-emerald-700 to-teal-900",
+    "from-amber-800 to-orange-900",
   ];
   return palette[id.charCodeAt(0) % palette.length];
 }
