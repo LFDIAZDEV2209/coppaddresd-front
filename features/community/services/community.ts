@@ -44,12 +44,15 @@ export type ProfileRiskLevel = "Alto" | "Medio" | "Bajo";
 
 export type ProfileStatus = "ACTIVE" | "BANNED";
 
+export type MessageScope = "INACTIVE" | "ALL_ACTIVE";
+
 // --- Tipos de resultados del backend ---
 
 export interface Profile {
   id: string;
   userId: string;
   displayName: string;
+  isSystem?: boolean;
   bio: string | null;
   status: ProfileStatus;
   region: ProfileRegion;
@@ -70,6 +73,7 @@ export interface Profile {
 export interface PostAuthor {
   id: string;
   displayName: string;
+  isSystem?: boolean;
 }
 
 export interface LikeRef {
@@ -155,6 +159,7 @@ export const ME_QUERY = gql`
       id
       userId
       displayName
+      isSystem
       bio
       status
       region
@@ -180,6 +185,7 @@ export const PROFILES_QUERY = gql`
       id
       userId
       displayName
+      isSystem
       bio
       status
       region
@@ -226,6 +232,7 @@ export const FEED_QUERY = gql`
       profile {
         id
         displayName
+        isSystem
       }
       likes {
         id
@@ -249,6 +256,7 @@ export const FEED_EVENTS_QUERY = gql`
       profile {
         id
         displayName
+        isSystem
       }
     }
   }
@@ -260,6 +268,7 @@ export const TOP_STREAKS_QUERY = gql`
       id
       userId
       displayName
+      isSystem
       bio
       status
       region
@@ -352,6 +361,22 @@ export const AWARD_XP_ALL = gql`
   }
 `;
 
+export const SEND_BULK_MESSAGE = gql`
+  mutation SendBulkMessage($scope: MessageScope!, $body: String!) {
+    sendBulkMessage(scope: $scope, body: $body)
+  }
+`;
+
+export const SEND_DIRECT_MESSAGE = gql`
+  mutation SendDirectMessage($profileId: UUID!, $body: String!) {
+    sendDirectMessage(profileId: $profileId, body: $body) {
+      id
+      body
+      createdAt
+    }
+  }
+`;
+
 // --- Tipos de resultado ---
 
 export interface MeResult {
@@ -392,6 +417,14 @@ export interface AwardXpResult {
 
 export interface AwardXpAllResult {
   awardXpToAll: Profile[] | null;
+}
+
+export interface SendBulkMessageResult {
+  sendBulkMessage: number;
+}
+
+export interface SendDirectMessageResult {
+  sendDirectMessage: { id: string; body: string; createdAt: string };
 }
 
 // --- Documento dashboardStats ---

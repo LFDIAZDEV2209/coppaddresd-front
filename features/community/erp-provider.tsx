@@ -21,6 +21,8 @@ import {
   MODERATE_DELETE_POST,
   PIN_POST,
   PROFILES_QUERY,
+  SEND_BULK_MESSAGE,
+  SEND_DIRECT_MESSAGE,
   TOP_STREAKS_QUERY,
   type AwardXpAllResult,
   type AwardXpResult,
@@ -35,6 +37,8 @@ import {
   type Profile,
   type ProfilesResult,
   type FeedResult,
+  type SendBulkMessageResult,
+  type SendDirectMessageResult,
   type TopStreaksResult,
 } from "./services/community";
 import {
@@ -44,6 +48,7 @@ import {
   mockRegions,
   mockRecognitions,
 } from "./mock-data";
+import { useT } from "@/providers/i18n-provider";
 import type {
   CommunityMember,
   ErpPost,
@@ -106,6 +111,7 @@ function mapProfile(p: Profile): CommunityMember {
     lastPostAt: p.lastPostAt ?? undefined,
     courses: 0,
     shared: false,
+    isSystem: p.isSystem,
   };
 }
 
@@ -251,6 +257,7 @@ export function ErpProvider({ children }: { children: ReactNode }) {
 }
 
 function ErpDataProvider({ children }: { children: ReactNode }) {
+  const t = useT();
   const [membersResult, refetchMembers] = useQuery<
     ProfilesResult,
     { take: number; skip: number; search?: string }
@@ -313,6 +320,15 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     AwardXpAllResult,
     { amount: number; reason?: string }
   >(AWARD_XP_ALL);
+
+  const [, sendDirectMessageMut] = useMutation<
+    SendDirectMessageResult,
+    { profileId: string; body: string }
+  >(SEND_DIRECT_MESSAGE);
+  const [, sendBulkMessageMut] = useMutation<
+    SendBulkMessageResult,
+    { scope: string; body: string }
+  >(SEND_BULK_MESSAGE);
 
   const members = useMemo(
     () => (membersResult.data?.profiles ?? []).map(mapProfile),
@@ -515,17 +531,29 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
 
   const sendMessage = useCallback<ErpContextValue["sendMessage"]>(
     (memberId, message) => {
-      const target = members.find((m) => m.id === memberId);
-      toast(`Mensaje enviado a ${target?.firstName ?? "miembro"}: ${message}`);
+      sendDirectMessageMut({ profileId: memberId, body: message }).then((res) => {
+        if (res.error) {
+          toast(t("No pudimos enviar el mensaje. Intenta de nuevo."));
+        } else {
+          toast(t("Enviado como Equipo ANTARES"));
+        }
+      });
     },
-    [members, toast],
+    [toast, t],
   );
 
   const sendBulkInactive = useCallback<ErpContextValue["sendBulkInactive"]>(
     (message) => {
-      toast(`Mensaje masivo enviado a ${inactive.length} miembros inactivos`);
+      sendBulkMessageMut({ scope: "INACTIVE", body: message }).then((res) => {
+        if (res.error) {
+          toast(t("No pudimos enviar el mensaje. Intenta de nuevo."));
+        } else {
+          const count = res.data?.sendBulkMessage ?? 0;
+          toast(t("Mensajes enviados: {n}", { n: String(count) }));
+        }
+      });
     },
-    [inactive, toast],
+    [toast, t],
   );
 
   const value = useMemo<ErpContextValue>(
