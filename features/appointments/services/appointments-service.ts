@@ -56,20 +56,31 @@ export interface CreateRequestInput {
   reason: string;
 }
 
-export async function createRequest(input: CreateRequestInput): Promise<AppointmentRequestDto> {
-  return apiFetch<AppointmentRequestDto>(`${TELEMEDICINE_LEGACY_PATH}/requests`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+export async function createRequest(
+  input: CreateRequestInput,
+): Promise<AppointmentRequestDto> {
+  return apiFetch<AppointmentRequestDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/requests`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 export async function fetchRequest(id: string): Promise<AppointmentRequestDto> {
-  return apiFetch<AppointmentRequestDto>(`${TELEMEDICINE_LEGACY_PATH}/requests/${id}`);
+  return apiFetch<AppointmentRequestDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/requests/${id}`,
+  );
 }
 
-export async function fetchMyRequests(patientId?: string): Promise<AppointmentRequestDto[]> {
+export async function fetchMyRequests(
+  patientId?: string,
+): Promise<AppointmentRequestDto[]> {
   const qs = patientId ? `?patientId=${patientId}` : "";
-  return apiFetch<AppointmentRequestDto[]>(`${TELEMEDICINE_LEGACY_PATH}/requests/mine${qs}`);
+  return apiFetch<AppointmentRequestDto[]>(
+    `${TELEMEDICINE_LEGACY_PATH}/requests/mine${qs}`,
+  );
 }
 
 export interface ConfirmRequestInput {
@@ -83,10 +94,49 @@ export async function confirmRequest(
   id: string,
   input: ConfirmRequestInput,
 ): Promise<AppointmentDto> {
-  return apiFetch<AppointmentDto>(`${TELEMEDICINE_LEGACY_PATH}/requests/${id}/confirm`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  return apiFetch<AppointmentDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/requests/${id}/confirm`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+/**
+ * Primer paso del ciclo de revisión de 2: aprueba la solicitud (Pending →
+ * Approved) sin crear cita. Autorización dual en el backend: admin con
+ * Appointments.AdminView o el profesional asignado (identidad del JWT).
+ */
+export async function approveRequest(
+  id: string,
+): Promise<AppointmentRequestDto> {
+  return apiFetch<AppointmentRequestDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/requests/${id}/approve`,
+    { method: "POST" },
+  );
+}
+
+export interface RejectRequestInput {
+  reason: string;
+}
+
+/**
+ * Cierra la solicitud con motivo obligatorio (Pending|Approved → Rejected).
+ * Autorización dual en el backend: admin con Appointments.AdminView o el
+ * profesional asignado (identidad del JWT).
+ */
+export async function rejectRequest(
+  id: string,
+  input: RejectRequestInput,
+): Promise<AppointmentRequestDto> {
+  return apiFetch<AppointmentRequestDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/requests/${id}/reject`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 // --- Citas (agenda del profesional) ---
@@ -101,7 +151,9 @@ export async function fetchAgenda(
     from,
     to,
   });
-  return apiFetch<AppointmentDto[]>(`${APPOINTMENTS_PATH}/agenda?${params.toString()}`);
+  return apiFetch<AppointmentDto[]>(
+    `${APPOINTMENTS_PATH}/agenda?${params.toString()}`,
+  );
 }
 
 export async function fetchAppointment(id: string): Promise<AppointmentDto> {
@@ -155,17 +207,26 @@ export async function rescheduleAppointment(
 
 // --- Sala virtual y sesiones ---
 
-export async function fetchJoinToken(appointmentId: string): Promise<JoinSessionResultDto> {
-  return apiFetch<JoinSessionResultDto>(`${APPOINTMENTS_PATH}/${appointmentId}/join-token`, {
-    method: "POST",
-  });
+export async function fetchJoinToken(
+  appointmentId: string,
+): Promise<JoinSessionResultDto> {
+  return apiFetch<JoinSessionResultDto>(
+    `${APPOINTMENTS_PATH}/${appointmentId}/join-token`,
+    {
+      method: "POST",
+    },
+  );
 }
 
-export async function fetchRoom(appointmentId: string): Promise<VirtualRoomDto> {
+export async function fetchRoom(
+  appointmentId: string,
+): Promise<VirtualRoomDto> {
   return apiFetch<VirtualRoomDto>(`${APPOINTMENTS_PATH}/${appointmentId}/room`);
 }
 
-export async function startSession(appointmentId: string): Promise<AppointmentDto> {
+export async function startSession(
+  appointmentId: string,
+): Promise<AppointmentDto> {
   return apiFetch<AppointmentDto>(
     `${APPOINTMENTS_PATH}/${appointmentId}/session/start`,
     { method: "POST" },
@@ -184,7 +245,9 @@ export async function endSession(
 
 // --- Encuentro clínico ---
 
-export async function fetchEncounter(appointmentId: string): Promise<ClinicalEncounterDto> {
+export async function fetchEncounter(
+  appointmentId: string,
+): Promise<ClinicalEncounterDto> {
   return apiFetch<ClinicalEncounterDto>(
     `${APPOINTMENTS_PATH}/${appointmentId}/encounter`,
   );
@@ -225,19 +288,27 @@ export async function fetchAlerts(
     pageSize: String(options.pageSize ?? 20),
   });
   if (options.unreadOnly) params.set("unreadOnly", "true");
-  return apiFetch<PaginatedAlertsResult>(`${TELEMEDICINE_LEGACY_PATH}/alerts?${params.toString()}`);
+  return apiFetch<PaginatedAlertsResult>(
+    `${TELEMEDICINE_LEGACY_PATH}/alerts?${params.toString()}`,
+  );
 }
 
 export async function fetchAlertsSummary(): Promise<AlertsSummaryDto> {
-  return apiFetch<AlertsSummaryDto>(`${TELEMEDICINE_LEGACY_PATH}/alerts/summary`);
+  return apiFetch<AlertsSummaryDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/alerts/summary`,
+  );
 }
 
 export async function markAlertRead(id: string): Promise<void> {
-  await apiFetch<void>(`${TELEMEDICINE_LEGACY_PATH}/alerts/${id}/read`, { method: "POST" });
+  await apiFetch<void>(`${TELEMEDICINE_LEGACY_PATH}/alerts/${id}/read`, {
+    method: "POST",
+  });
 }
 
 export async function markAllAlertsRead(): Promise<number> {
-  return apiFetch<number>(`${TELEMEDICINE_LEGACY_PATH}/alerts/read-all`, { method: "POST" });
+  return apiFetch<number>(`${TELEMEDICINE_LEGACY_PATH}/alerts/read-all`, {
+    method: "POST",
+  });
 }
 
 export type { AppointmentAlertDto };
@@ -260,6 +331,38 @@ export async function fetchAdminSummary(): Promise<AdminSummaryDto> {
   return apiFetch<AdminSummaryDto>(`${TELEMEDICINE_LEGACY_PATH}/admin/summary`);
 }
 
+// --- "Mis citas" del profesional (por identidad del JWT, requiere perfil clínico) ---
+
+export interface MyAppointmentsFilters {
+  patientId?: string;
+  locationId?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export async function fetchMySummary(): Promise<AdminSummaryDto> {
+  return apiFetch<AdminSummaryDto>(`${TELEMEDICINE_LEGACY_PATH}/me/summary`);
+}
+
+export async function fetchMyAppointments(
+  filters: MyAppointmentsFilters = {},
+): Promise<PaginatedAdminAppointmentsResult> {
+  const params = new URLSearchParams();
+  params.set("page", String(filters.page ?? 1));
+  params.set("pageSize", String(filters.pageSize ?? 20));
+  for (const [key, value] of Object.entries(filters)) {
+    if (value != null && value !== "" && key !== "page" && key !== "pageSize") {
+      params.set(key, String(value));
+    }
+  }
+  return apiFetch<PaginatedAdminAppointmentsResult>(
+    `${TELEMEDICINE_LEGACY_PATH}/me/appointments?${params.toString()}`,
+  );
+}
+
 // --- Analytics del dashboard ---
 
 export interface DashboardAnalyticsFilters {
@@ -274,7 +377,9 @@ export async function fetchAdminAnalytics(
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
   const qs = params.toString();
-  return apiFetch<DashboardAnalyticsDto>(`${TELEMEDICINE_LEGACY_PATH}/admin/analytics${qs ? `?${qs}` : ""}`);
+  return apiFetch<DashboardAnalyticsDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/admin/analytics${qs ? `?${qs}` : ""}`,
+  );
 }
 
 export async function fetchMyAnalytics(
@@ -284,7 +389,9 @@ export async function fetchMyAnalytics(
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
   const qs = params.toString();
-  return apiFetch<DashboardAnalyticsDto>(`${TELEMEDICINE_LEGACY_PATH}/me/analytics${qs ? `?${qs}` : ""}`);
+  return apiFetch<DashboardAnalyticsDto>(
+    `${TELEMEDICINE_LEGACY_PATH}/me/analytics${qs ? `?${qs}` : ""}`,
+  );
 }
 
 export async function fetchAdminAppointments(
@@ -326,6 +433,33 @@ export async function fetchAdminRequests(
   }
   return apiFetch<PaginatedAdminRequestsResult>(
     `${TELEMEDICINE_LEGACY_PATH}/admin/requests?${params.toString()}`,
+  );
+}
+
+// --- "Mis solicitudes" del profesional (por identidad del JWT, requiere perfil clínico) ---
+
+export interface MyRequestsFilters {
+  status?: string;
+  patientId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export async function fetchMyAssignedRequests(
+  filters: MyRequestsFilters = {},
+): Promise<PaginatedAdminRequestsResult> {
+  const params = new URLSearchParams();
+  params.set("page", String(filters.page ?? 1));
+  params.set("pageSize", String(filters.pageSize ?? 20));
+  for (const [key, value] of Object.entries(filters)) {
+    if (value != null && value !== "" && key !== "page" && key !== "pageSize") {
+      params.set(key, String(value));
+    }
+  }
+  return apiFetch<PaginatedAdminRequestsResult>(
+    `${TELEMEDICINE_LEGACY_PATH}/me/requests?${params.toString()}`,
   );
 }
 

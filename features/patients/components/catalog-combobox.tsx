@@ -10,6 +10,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/providers/i18n-provider";
 
 interface CatalogComboboxProps<T extends { id?: string }> {
   /** Item seleccionado (null = sin selección). */
@@ -57,6 +58,7 @@ function CatalogComboboxInner<T extends { id?: string }>({
   minChars = 1,
   debounceMs = REMOTE_DEBOUNCE_MS,
 }: CatalogComboboxProps<T>) {
+  const t = useT();
   const { contains } = Combobox.useFilter();
   const [results, setResults] = React.useState<T[]>([]);
   const [searchValue, setSearchValue] = React.useState("");
@@ -86,18 +88,18 @@ function CatalogComboboxInner<T extends { id?: string }>({
       return (
         <span className="flex items-center gap-2 text-muted-foreground">
           <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
-          Buscando…
+          {t('Buscando…')}
         </span>
       );
     }
     if (failed) {
-      return <span className="text-destructive">No se pudo buscar. Reintenta.</span>;
+      return <span className="text-destructive">{t('No se pudo buscar. Reintenta.')}</span>;
     }
     if (isRemote && !searchValue.trim()) {
-      return <span className="text-muted-foreground">Escribe para buscar…</span>;
+      return <span className="text-muted-foreground">{t('Escribe para buscar…')}</span>;
     }
     return null;
-  }, [failed, isRemote, loading, searchValue]);
+  }, [failed, isRemote, loading, searchValue, t]);
 
   const emptyMessage = React.useMemo(() => {
     if (loading || failed) return null;
@@ -220,7 +222,7 @@ function CatalogComboboxInner<T extends { id?: string }>({
                 <button
                   type="button"
                   onClick={clearSelection}
-                  aria-label="Quitar selección"
+                  aria-label={t('Quitar selección')}
                   className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
                   <XIcon className="size-3.5" />

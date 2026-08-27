@@ -18,6 +18,7 @@ export interface EmployeeListItem {
   status: string;
   isProfessional: boolean;
   professionalTypeName: string | null;
+  specialtyNames: string[];
   clinicNames: string[];
 }
 
@@ -69,23 +70,59 @@ export interface EmployeesFilter {
   status?: string;
   organizationId?: string;
   clinicId?: string;
+  specialtyId?: string;
+  roleId?: string;
 }
 
-export async function fetchEmployees(filter: EmployeesFilter = {}): Promise<PaginatedEmployees> {
+export async function fetchEmployees(
+  filter: EmployeesFilter = {},
+  signal?: AbortSignal,
+): Promise<PaginatedEmployees> {
   const params = new URLSearchParams();
   if (filter.page) params.set("page", String(filter.page));
   if (filter.pageSize) params.set("pageSize", String(filter.pageSize));
   if (filter.search) params.set("search", filter.search);
   if (filter.status) params.set("status", filter.status);
-  if (filter.organizationId) params.set("organizationId", filter.organizationId);
+  if (filter.organizationId)
+    params.set("organizationId", filter.organizationId);
   if (filter.clinicId) params.set("clinicId", filter.clinicId);
+  if (filter.specialtyId) params.set("specialtyId", filter.specialtyId);
+  if (filter.roleId) params.set("roleId", filter.roleId);
   const qs = params.toString();
 
-  return apiFetch<PaginatedEmployees>(`${env.apiUrl}/api/v1/employees${qs ? `?${qs}` : ""}`);
+  return apiFetch<PaginatedEmployees>(
+    `${env.apiUrl}/api/v1/employees${qs ? `?${qs}` : ""}`,
+    { signal },
+  );
+}
+
+/** Desglose por tipo de profesional de las stats del directorio. */
+export interface EmployeeTypeStat {
+  professionalTypeName: string | null;
+  count: number;
+}
+
+/** Stats del directorio (mismo alcance del listado). */
+export interface EmployeeStats {
+  total: number;
+  active: number;
+  invited: number;
+  inactive: number;
+  byType: EmployeeTypeStat[];
+}
+
+export async function fetchEmployeeStats(
+  signal?: AbortSignal,
+): Promise<EmployeeStats> {
+  return apiFetch<EmployeeStats>(`${env.apiUrl}/api/v1/professionals/stats`, {
+    signal,
+  });
 }
 
 export async function fetchEmployee(id: string): Promise<EmployeeDetail> {
-  const data = await apiFetch<EmployeeDetail>(`${env.apiUrl}/api/v1/employees/${id}`);
+  const data = await apiFetch<EmployeeDetail>(
+    `${env.apiUrl}/api/v1/employees/${id}`,
+  );
   return {
     ...data,
     isProfessional: data.professional != null,
@@ -122,7 +159,9 @@ export interface OrganizationTree {
 }
 
 export async function fetchOrganizationTree(): Promise<OrganizationTree[]> {
-  return apiFetch<OrganizationTree[]>(`${env.apiUrl}/api/v1/organizations/tree`);
+  return apiFetch<OrganizationTree[]>(
+    `${env.apiUrl}/api/v1/organizations/tree`,
+  );
 }
 
 // --- Creación orquestada del profesional ---
@@ -193,10 +232,13 @@ export async function createProfessional(
     sendInvitation: input.sendInvitation,
   };
 
-  return apiFetch<CreateProfessionalResult>(`${env.apiUrl}/api/v1/professionals`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  return apiFetch<CreateProfessionalResult>(
+    `${env.apiUrl}/api/v1/professionals`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
 }
 
 // --- Asignaciones scoped (roles + overrides por clínica) ---
@@ -225,7 +267,9 @@ export interface ProfessionalScopes {
 export async function fetchProfessionalScopes(
   id: string,
 ): Promise<ProfessionalScopes> {
-  return apiFetch<ProfessionalScopes>(`${env.apiUrl}/api/v1/professionals/${id}/scopes`);
+  return apiFetch<ProfessionalScopes>(
+    `${env.apiUrl}/api/v1/professionals/${id}/scopes`,
+  );
 }
 
 export async function updateProfessionalScopes(

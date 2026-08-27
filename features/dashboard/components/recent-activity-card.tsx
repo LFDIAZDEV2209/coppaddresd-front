@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useT } from "@/providers/i18n-provider";
 import type { ActivityEvent } from "../types";
 
 interface RecentActivityCardProps {
@@ -6,6 +7,7 @@ interface RecentActivityCardProps {
 }
 
 export function RecentActivityCard({ data }: RecentActivityCardProps) {
+  const t = useT();
   return (
     <div className="flex flex-col">
       <div className="flex flex-col">
@@ -36,7 +38,7 @@ export function RecentActivityCard({ data }: RecentActivityCardProps) {
         href="/settings/audit"
         className="mt-2 text-center text-[12px] font-medium text-primary hover:text-primary-strong transition-colors"
       >
-        Ver toda la actividad →
+        {t('Ver toda la actividad →')}
       </Link>
     </div>
   );

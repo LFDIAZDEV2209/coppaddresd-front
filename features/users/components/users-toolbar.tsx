@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type DataView } from "@/components/feedback/view-toggle";
 import type { UsersFilters } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 interface UsersToolbarProps {
   filters: UsersFilters;
@@ -24,8 +25,8 @@ interface UsersToolbarProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: "active", label: "Activos" },
-  { value: "inactive", label: "Inactivos" },
+  { value: "active", labelKey: "Activos" },
+  { value: "inactive", labelKey: "Inactivos" },
 ] as const;
 
 export function UsersToolbar({
@@ -40,17 +41,18 @@ export function UsersToolbar({
     (filters.status !== "all" ? 1 : 0) +
     (filters.role !== "all" ? 1 : 0);
   const hasActiveFilters = activeFilterCount > 0;
+  const t = useT();
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="relative w-full min-w-[200px] sm:w-[260px]">
         <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar usuarios..."
+          placeholder={t('Buscar usuarios...')}
           value={filters.search}
           onChange={(e) => onFilterChange({ search: e.target.value })}
           className="h-9 bg-card pl-9"
-          aria-label="Buscar usuarios"
+          aria-label={t('Buscar usuarios')}
         />
       </div>
 
@@ -62,13 +64,13 @@ export function UsersToolbar({
       >
         <SelectTrigger className="h-9 w-[170px] bg-card">
           <UserRound className="mr-2 size-3.5 text-muted-foreground" />
-          <SelectValue placeholder="Estado" />
+          <SelectValue placeholder={t('Estado')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Todos los estados</SelectItem>
+          <SelectItem value="all">{t('Todos los estados')}</SelectItem>
           {STATUS_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {t(option.labelKey)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -82,10 +84,10 @@ export function UsersToolbar({
       >
         <SelectTrigger className="h-9 w-[190px] bg-card">
           <UsersRound className="mr-2 size-3.5 text-muted-foreground" />
-          <SelectValue placeholder="Rol" />
+          <SelectValue placeholder={t('Rol')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Todos los roles</SelectItem>
+          <SelectItem value="all">{t('Todos los roles')}</SelectItem>
           {roles.map((role) => (
             <SelectItem key={role} value={role}>
               {role}
@@ -99,7 +101,7 @@ export function UsersToolbar({
           <Badge
             variant="secondary"
             className="h-6 gap-1 px-2 text-[11px]"
-            aria-label={`${activeFilterCount} filtros activos`}
+            aria-label={t('{count} filtros activos', { count: String(activeFilterCount) })}
           >
             <SlidersHorizontal className="size-3" />
             {activeFilterCount}
@@ -113,7 +115,7 @@ export function UsersToolbar({
             }
           >
             <X className="size-3.5" />
-            Limpiar
+            {t('Limpiar')}
           </Button>
         </>
       )}

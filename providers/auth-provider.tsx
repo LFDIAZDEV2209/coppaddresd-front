@@ -15,6 +15,7 @@ import {
   restoreSession,
 } from "@/lib/api/auth-service";
 import { setAccessToken, setSessionInvalidatedHandler } from "@/lib/api/http";
+import { notifyAuthChanged } from "@/providers/i18n-provider";
 import type { AuthSession, LoginResult, LogoutReason } from "@/lib/api/types";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 
@@ -51,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       if (!cancelled) {
         setLoading(false);
+        notifyAuthChanged();
       }
     })();
 
@@ -81,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await apiLogin(email, password, rememberMe);
       if (result.success && result.session) {
         setUser(result.session);
+        notifyAuthChanged();
         router.push("/dashboard");
       }
       return result;
@@ -94,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // es best effort (si el servicio no responde, la cookie caduca sola).
       setUser(null);
       setAccessToken(null);
+      notifyAuthChanged();
       router.push(reason === "expired" ? "/login?expired=1" : "/login");
       void apiLogout();
     },

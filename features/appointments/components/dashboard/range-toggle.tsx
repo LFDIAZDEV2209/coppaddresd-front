@@ -2,6 +2,7 @@
 
 import { CalendarClock, CalendarDays, CalendarRange } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export type RangeKey = "30d" | "60d" | "90d";
@@ -28,6 +29,10 @@ const rangeIcons: Record<RangeKey, LucideIcon> = {
 export const toggleActiveClass =
   "aria-pressed:border-primary-strong aria-pressed:bg-primary-strong aria-pressed:text-primary-foreground aria-pressed:shadow-sm data-[state=on]:border-primary-strong data-[state=on]:bg-primary-strong data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm";
 
+/** Estilo del item activo sobre header navy (píldora blanca con icono navy). */
+export const toggleActiveOnDarkClass =
+  "border-transparent aria-pressed:bg-white aria-pressed:text-[var(--sidebar)] aria-pressed:shadow-sm data-[state=on]:bg-white data-[state=on]:text-[var(--sidebar)] data-[state=on]:shadow-sm";
+
 /** Estilo del item inactivo sobre fondo del color principal (header del dashboard). */
 const rangeInactiveClass =
   "border-transparent bg-white/10 text-primary-foreground hover:bg-white/20 hover:text-primary-foreground data-[state=off]:border-transparent data-[state=off]:bg-white/10 data-[state=off]:text-primary-foreground";
@@ -45,6 +50,8 @@ export function RangeToggle({
   onValueChange: (value: RangeKey) => void;
   options?: RangeOption[];
 }) {
+  const t = useT();
+
   return (
     <ToggleGroup
       value={[value]}
@@ -66,7 +73,7 @@ export function RangeToggle({
             }
           >
             <Icon data-icon="inline-start" />
-            {option.label}
+            {t(option.label)}
           </ToggleGroupItem>
         );
       })}

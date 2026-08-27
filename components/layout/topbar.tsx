@@ -28,6 +28,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { useT } from "@/providers/i18n-provider";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -38,6 +40,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { context, activeClinic, setActiveClinic } = useAppContext();
+  const t = useT();
   const segments = getBreadcrumbSegments(pathname);
 
   return (
@@ -47,7 +50,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <button
           onClick={onMenuClick}
           className="flex items-center justify-center text-white/70 hover:text-white lg:hidden transition-colors"
-          aria-label="Abrir menú"
+          aria-label={t("Abrir menú")}
         >
           <Menu className="size-5" />
         </button>
@@ -66,11 +69,11 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                   href={segment.href}
                   className="text-white/75 hover:text-white transition-colors truncate"
                 >
-                  {segment.label}
+                  {t(segment.label)}
                 </Link>
               ) : (
                 <span className="font-semibold text-white truncate">
-                  {segment.label}
+                  {t(segment.label)}
                 </span>
               )}
             </span>
@@ -85,7 +88,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/55" />
           <input
             type="text"
-            placeholder="Buscar..."
+            placeholder={t("Buscar...")}
             className="h-8 w-[220px] rounded-lg bg-white/10 pl-8 pr-12 text-[12.5px] text-white placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-white/25 focus:bg-white/15 transition-all"
           />
           <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[10px] text-white/60">
@@ -97,7 +100,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <button
           onClick={toggleTheme}
           className="flex size-8 items-center justify-center rounded-lg bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition-colors"
-          aria-label={theme === "light" ? "Modo oscuro" : "Modo claro"}
+          aria-label={theme === "light" ? t("Modo oscuro") : t("Modo claro")}
         >
           {theme === "light" ? (
             <Moon className="size-4" />
@@ -106,10 +109,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           )}
         </button>
 
+        {/* Language Toggle */}
+        <LanguageToggle className="flex h-8 items-center gap-1.5 rounded-lg bg-white/10 px-2.5 text-white/80 hover:bg-white/20 hover:text-white transition-colors" />
+
         {/* Notifications */}
         <button
           className="relative flex size-8 items-center justify-center rounded-lg bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition-colors"
-          aria-label="Notificaciones"
+          aria-label={t("Notificaciones")}
         >
           <Bell className="size-4" />
           <span className="absolute right-1.5 top-1.5 size-[7px] rounded-full bg-destructive ring-2 ring-[var(--sidebar)]" />
@@ -179,7 +185,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                     onClick={() => setActiveClinic(null)}
                     className="text-muted-foreground"
                   >
-                    Ver todo (contexto global)
+                     {t("Ver todo (contexto global)")}
                   </DropdownMenuItem>
                 </>
               )}
@@ -221,16 +227,16 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             </div>
             <DropdownMenuItem render={<Link href="/settings" />}>
               <User className="size-4" />
-              Mi perfil
+              {t("Mi perfil")}
             </DropdownMenuItem>
             <DropdownMenuItem render={<Link href="/settings" />}>
               <Settings className="size-4" />
-              Configuración
+              {t("Configuración")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => logout()} className="text-destructive focus:text-destructive">
               <LogOut className="size-4" />
-              Cerrar sesión
+              {t("Cerrar sesión")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

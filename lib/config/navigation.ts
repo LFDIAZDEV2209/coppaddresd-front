@@ -115,7 +115,7 @@ export const navModules: NavModule[] = [
     ],
   },
   {
-    label: "GestiA3n",
+    label: "Gestión",
     icon: FolderKanban,
     color: "#1F6E9F",
     items: [
@@ -124,7 +124,7 @@ export const navModules: NavModule[] = [
         href: "/users",
         icon: Users,
         color: "#0E7490",
-        permission: "Users.View",
+        permission: "System.AdminSettings",
       },
       {
         label: "Profesionales",
@@ -138,7 +138,7 @@ export const navModules: NavModule[] = [
         href: "/roles",
         icon: ShieldCheck,
         color: "#10B981",
-        permission: "Roles.View",
+        permission: "System.AdminSettings",
       },
     ],
   },

@@ -2,6 +2,7 @@
 
 import { ShieldAlert } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
+import { useT } from "@/providers/i18n-provider";
 import { hasAppointmentPermission } from "@/lib/config/appointment-permissions";
 
 /**
@@ -17,6 +18,7 @@ export function PermissionGate({
   permission: string;
   children: React.ReactNode;
 }) {
+  const t = useT();
   const { hasPermission } = useAuth();
 
   if (hasAppointmentPermission(hasPermission, permission)) {
@@ -28,10 +30,10 @@ export function PermissionGate({
       <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
         <ShieldAlert className="size-6 text-muted-foreground" />
       </div>
-      <p className="text-sm font-medium text-foreground">Acceso denegado</p>
+      <p className="text-sm font-medium text-foreground">{t('Acceso denegado')}</p>
       <p className="max-w-sm text-[12.5px] text-muted-foreground">
-        Necesitás el permiso <code className="rounded bg-muted px-1">{permission}</code>{" "}
-        para ver esta sección.
+        {t('Necesitás el permiso')} <code className="rounded bg-muted px-1">{permission}</code>{" "}
+        {t('para ver esta sección.')}
       </p>
     </div>
   );

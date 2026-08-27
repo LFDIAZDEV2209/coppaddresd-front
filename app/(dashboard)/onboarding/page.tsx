@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, BadgeCheck, GraduationCap, Loader2, Stethoscope } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAppContext } from "@/providers/context-provider";
+import { useT } from "@/providers/i18n-provider";
 import {
   fetchMyProfile,
   updateMyProfile,
@@ -17,6 +18,7 @@ import {
 } from "@/features/professionals/services/professional-catalogs-service";
 import { ApiError } from "@/lib/api/http";
 
+/** Claves de categoría — coinciden con el campo `category` de la API. */
 const SPECIALTY_CATEGORIES = [
   "Medicina",
   "Nutrición",
@@ -30,6 +32,7 @@ const SPECIALTY_CATEGORIES = [
 export default function OnboardingPage() {
   const router = useRouter();
   const { refresh: refreshContext } = useAppContext();
+  const t = useT();
 
   const [types, setTypes] = useState<ProfessionalTypeDto[]>([]);
   const [specialties, setSpecialties] = useState<SpecialtyDto[]>([]);
@@ -63,7 +66,7 @@ export default function OnboardingPage() {
         const firstLicense = prof.professional?.licenses?.[0];
         if (firstLicense?.number) setLicenseNumber(firstLicense.number);
       } catch {
-        if (!cancelled) setError("No se pudieron cargar los datos. Intenta nuevamente.");
+        if (!cancelled) setError(t("No se pudieron cargar los datos. Intenta nuevamente."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -74,7 +77,7 @@ export default function OnboardingPage() {
   }, []);
 
   const selectedType = useMemo(
-    () => types.find((t) => t.id === typeId) ?? null,
+    () => types.find((pt) => pt.id === typeId) ?? null,
     [types, typeId],
   );
 
@@ -121,7 +124,7 @@ export default function OnboardingPage() {
     } catch (err) {
       setSaving(false);
       setError(
-        err instanceof ApiError ? err.message : "No se pudo guardar el perfil. Intenta nuevamente.",
+        err instanceof ApiError ? err.message : t("No se pudo guardar el perfil. Intenta nuevamente."),
       );
     }
   };
@@ -130,7 +133,7 @@ export default function OnboardingPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
         <Loader2 className="mr-2 size-5 animate-spin" />
-        Cargando...
+        {t("Cargando...")}
       </div>
     );
   }
@@ -138,8 +141,8 @@ export default function OnboardingPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <PageHeader
-        title="Completa tu perfil profesional"
-        description="Cuéntanos tu profesión y especialidades para configurar tu cuenta. Es un paso rápido."
+        title={t("Completa tu perfil profesional")}
+        description={t("Cuéntanos tu profesión y especialidades para configurar tu cuenta. Es un paso rápido.")}
         icon={GraduationCap}
       />
 
@@ -153,7 +156,7 @@ export default function OnboardingPage() {
               }`}
             />
             <span className={`text-[11px] font-medium ${step >= s ? "text-foreground" : "text-muted-foreground"}`}>
-              {s === 1 ? "Profesión y especialidad" : "Detalles del perfil"}
+              {s === 1 ? t("Profesión y especialidad") : t("Detalles del perfil")}
             </span>
           </div>
         ))}
@@ -170,29 +173,29 @@ export default function OnboardingPage() {
           <div>
             <h2 className="flex items-center gap-2 text-[15px] font-semibold">
               <Stethoscope className="size-4 text-primary" />
-              ¿Cuál es tu profesión?
+              {t("¿Cuál es tu profesión?")}
             </h2>
             <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-              Selecciona el rol clínico con el que atenderás pacientes.
+              {t("Selecciona el rol clínico con el que atenderás pacientes.")}
             </p>
 
             <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {types.map((t) => (
+              {types.map((pt) => (
                 <button
-                  key={t.id}
+                  key={pt.id}
                   onClick={() => {
-                    setTypeId(t.id);
+                    setTypeId(pt.id);
                     setSelectedSpecialties([]);
                   }}
                   className={`rounded-xl border p-3 text-left transition-colors ${
-                    typeId === t.id
+                    typeId === pt.id
                       ? "border-primary bg-primary/5 ring-1 ring-primary"
                       : "border-border hover:border-primary/40"
                   }`}
                 >
-                  <span className="block text-[13px] font-semibold">{t.name}</span>
+                  <span className="block text-[13px] font-semibold">{pt.name}</span>
                   <span className="mt-0.5 block text-[11.5px] text-muted-foreground line-clamp-1">
-                    {t.description}
+                    {pt.description}
                   </span>
                 </button>
               ))}
@@ -201,10 +204,10 @@ export default function OnboardingPage() {
             {selectedType && (
               <div className="mt-6">
                 <h3 className="text-[13.5px] font-semibold">
-                  Especialidades válidas para {selectedType.name}
+                  {t("Especialidades válidas para {name}", { name: selectedType.name })}
                 </h3>
                 <p className="mt-0.5 text-[12px] text-muted-foreground">
-                  Puedes seleccionar una o varias.
+                  {t("Puedes seleccionar una o varias.")}
                 </p>
 
                 <div className="mt-3 space-y-3">
@@ -244,7 +247,7 @@ export default function OnboardingPage() {
                 disabled={!canContinueStep1}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                Continuar
+                {t("Continuar")}
                 <ArrowRight className="size-4" />
               </button>
             </div>
@@ -253,22 +256,22 @@ export default function OnboardingPage() {
 
         {step === 2 && (
           <div>
-            <h2 className="text-[15px] font-semibold">Detalles del perfil</h2>
+            <h2 className="text-[15px] font-semibold">{t("Detalles del perfil")}</h2>
             <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-              Completa tus datos de contacto y credenciales. Puedes editarlos después.
+              {t("Completa tus datos de contacto y credenciales. Puedes editarlos después.")}
             </p>
 
             <div className="mt-4 space-y-4">
               <div>
                 <label htmlFor="bio" className="mb-1.5 block text-[12.5px] font-medium">
-                  Biografía profesional
+                  {t("Biografía profesional")}
                 </label>
                 <textarea
                   id="bio"
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={3}
-                  placeholder="Cuéntanos tu experiencia y enfoque clínico..."
+                  placeholder={t("Cuéntanos tu experiencia y enfoque clínico...")}
                   className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
@@ -276,7 +279,7 @@ export default function OnboardingPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="phone" className="mb-1.5 block text-[12.5px] font-medium">
-                    Teléfono de contacto
+                    {t("Teléfono de contacto")}
                   </label>
                   <input
                     id="phone"
@@ -288,13 +291,13 @@ export default function OnboardingPage() {
                 </div>
                 <div>
                   <label htmlFor="license" className="mb-1.5 block text-[12.5px] font-medium">
-                    Licencia profesional (opcional)
+                    {t("Licencia profesional (opcional)")}
                   </label>
                   <input
                     id="license"
                     value={licenseNumber}
                     onChange={(e) => setLicenseNumber(e.target.value)}
-                    placeholder="Número de licencia"
+                    placeholder={t("Número de licencia")}
                     className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
                 </div>
@@ -307,7 +310,7 @@ export default function OnboardingPage() {
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-[13px] font-medium hover:bg-muted transition-colors"
               >
                 <ArrowLeft className="size-4" />
-                Atrás
+                {t("Atrás")}
               </button>
               <button
                 onClick={submit}
@@ -315,7 +318,7 @@ export default function OnboardingPage() {
                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-[13px] font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
               >
                 {saving ? <Loader2 className="size-4 animate-spin" /> : <BadgeCheck className="size-4" />}
-                Completar onboarding
+                {t("Completar onboarding")}
               </button>
             </div>
           </div>

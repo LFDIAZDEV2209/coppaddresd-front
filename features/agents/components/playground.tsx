@@ -18,6 +18,8 @@ import { streamChat } from "../services/chat-service";
 import { fetchExecution } from "../services/agents-service";
 import { getAgentIconOption } from "./agent-icon-picker";
 import { Markdown } from "@/components/markdown";
+import { uuid } from "@/lib/uuid";
+import { useT } from "@/providers/i18n-provider";
 
 interface ChatMessage {
   id: string;
@@ -47,6 +49,7 @@ function formatRagSource(source: unknown): string {
 }
 
 export function Playground({ agent, demoUserId }: PlaygroundProps) {
+  const t = useT();
   const icon = getAgentIconOption(agent.iconKey);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -87,11 +90,11 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
     setDetailLoading(false);
 
     const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       role: "user",
       content: text,
     };
-    const assistantId = crypto.randomUUID();
+    const assistantId = uuid();
     setMessages((current) => [
       ...current,
       userMessage,
@@ -134,7 +137,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
       );
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
-      setError("No se pudo conectar con el agente. Intentá de nuevo.");
+      setError(t('No se pudo conectar con el agente. Intentá de nuevo.'));
     } finally {
       setSending(false);
       setMessages((current) =>
@@ -178,7 +181,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
             <div className="flex flex-col gap-px">
               <span className="text-sm font-semibold">{agent.name}</span>
               <span className="text-[11px] text-muted-foreground">
-                v{agent.activeVersionNumber ?? "—"} · demo interactivo
+                {t('v{version} · demo interactivo', { version: String(agent.activeVersionNumber ?? '—') })}
               </span>
             </div>
           </div>
@@ -186,7 +189,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
             <Badge variant="outline" className="hidden sm:inline-flex">
               {agent.status}
             </Badge>
-            <Button variant="ghost" size="icon-sm" onClick={clearChat} aria-label="Limpiar conversación">
+            <Button variant="ghost" size="icon-sm" onClick={clearChat} aria-label={t('Limpiar conversación')}>
               <Trash2 className="size-4" />
             </Button>
           </div>
@@ -203,11 +206,10 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
               </span>
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-semibold text-foreground">
-                  Probá {agent.name}
+                  {t('Probá {name}', { name: agent.name })}
                 </p>
                 <p className="max-w-sm text-[12.5px] text-muted-foreground">
-                  Escribí un mensaje para ver cómo responde con su configuración
-                  actual (instrucciones, herramientas y conocimiento).
+                  {t('Escribí un mensaje para ver cómo responde con su configuración actual (instrucciones, herramientas y conocimiento).')}
                 </p>
               </div>
             </div>
@@ -261,7 +263,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
                 }
               }}
               rows={1}
-              placeholder={`Mensaje para ${agent.name}...`}
+              placeholder={t('Mensaje para {name}...', { name: agent.name })}
               className="max-h-32 min-h-10 flex-1 resize-none rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
               disabled={sending}
             />
@@ -269,7 +271,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
               type="submit"
               size="icon"
               disabled={sending || !input.trim()}
-              aria-label="Enviar mensaje"
+              aria-label={t('Enviar mensaje')}
             >
               {sending ? (
                 <LoaderCircle className="animate-spin" />
@@ -287,7 +289,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
           <Sparkles className="size-4 text-primary" />
           <div className="flex flex-col gap-px">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Nodos del grafo
+              {t('Nodos del grafo')}
             </span>
             <div className="flex flex-wrap gap-1">
               {nodes.length === 0 ? (
@@ -307,7 +309,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
           <FileSearch className="size-4 text-emerald-600" />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Fuentes recuperadas (RAG)
+              {t('Fuentes recuperadas (RAG)')}
             </span>
             {detailLoading ? (
               <Skeleton className="h-4 w-40" />
@@ -323,7 +325,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
               </div>
             ) : (
               <span className="text-[12px] text-muted-foreground">
-                {detail ? "Sin fuentes (sin RAG activo)" : "Enviá un mensaje para ver el detalle."}
+                {detail ? t('Sin fuentes (sin RAG activo)') : t('Enviá un mensaje para ver el detalle.')}
               </span>
             )}
           </div>
@@ -333,7 +335,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
           <Wrench className="size-4 text-violet-600" />
           <div className="flex flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Tools ejecutadas
+              {t('Tools ejecutadas')}
             </span>
             {Array.isArray(toolsUsed) && toolsUsed.length > 0 ? (
               <div className="flex flex-wrap gap-1">
@@ -345,7 +347,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
               </div>
             ) : (
               <span className="text-[12px] text-muted-foreground">
-                {detail ? "Ninguna" : "—"}
+                {detail ? t('Ninguna') : "—"}
               </span>
             )}
           </div>
@@ -355,7 +357,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
           <Gauge className="size-4 text-amber-600" />
           <div className="flex flex-1 flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Uso (última ejecución)
+              {t('Uso (última ejecución)')}
             </span>
             {detailLoading ? (
               <Skeleton className="h-4 w-40" />
@@ -390,7 +392,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
         {Boolean(detail?.output?.answer) && (
           <div className="rounded-xl border border-border bg-card px-4 py-3">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Respuesta del estado
+              {t('Respuesta del estado')}
             </span>
             <div className="mt-1 line-clamp-3 text-[11.5px] text-muted-foreground">
               <Markdown content={String(outputAnswer)} />

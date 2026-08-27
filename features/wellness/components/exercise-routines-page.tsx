@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Dumbbell, Plus, RefreshCw, Trash2, Eye, Pencil } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -46,6 +47,7 @@ import { ExerciseRoutineDetailDialog } from "./exercise-routine-detail";
 import type { ExerciseRoutineListItem } from "../types";
 
 export function ExerciseRoutinesPage() {
+  const t = useT();
   const {
     result,
     loading,
@@ -104,13 +106,13 @@ export function ExerciseRoutinesPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title="Rutinas de ejercicio"
-        description="Gestiona las rutinas de ejercicio para tus pacientes"
+        title={t("Rutinas de ejercicio")}
+        description={t("Gestiona las rutinas de ejercicio para tus pacientes")}
         icon={Dumbbell}
         actions={
           <Button size="sm" onClick={openCreate}>
             <Plus data-icon="inline-start" />
-            Nueva rutina
+            {t("Nueva rutina")}
           </Button>
         }
       />
@@ -128,13 +130,13 @@ export function ExerciseRoutinesPage() {
       {/* Filtros */}
       <section
         className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
-        aria-label="Filtros de rutinas"
+        aria-label={t("Filtros de rutinas")}
       >
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-sm font-semibold">Rutinas de ejercicio</h2>
+            <h2 className="text-sm font-semibold">{t("Rutinas de ejercicio")}</h2>
             <p className="text-xs text-muted-foreground">
-              Filtra por categoría, estado o busca por nombre.
+              {t("Filtra por categoría, estado o busca por nombre.")}
             </p>
           </div>
           <Button
@@ -147,12 +149,12 @@ export function ExerciseRoutinesPage() {
               data-icon="inline-start"
               className={loading ? "animate-spin" : undefined}
             />
-            Actualizar
+            {t("Actualizar")}
           </Button>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input
-            placeholder="Buscar por nombre..."
+            placeholder={t("Buscar por nombre...")}
             value={filters.search}
             onChange={(e) => setFilters({ search: e.target.value })}
             className="h-9 w-full sm:max-w-xs"
@@ -164,10 +166,10 @@ export function ExerciseRoutinesPage() {
             }
           >
             <SelectTrigger className="h-9 w-full sm:w-[160px]">
-              <SelectValue placeholder="Categoría" />
+              <SelectValue placeholder={t("Categoría")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="all">{t("Todas")}</SelectItem>
               {CATEGORY_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -182,14 +184,14 @@ export function ExerciseRoutinesPage() {
             }
           >
             <SelectTrigger className="h-9 w-full sm:w-[160px]">
-              <SelectValue placeholder="Estado" />
+              <SelectValue placeholder={t("Estado")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="Draft">Borrador</SelectItem>
-              <SelectItem value="Active">Activo</SelectItem>
-              <SelectItem value="Completed">Completado</SelectItem>
-              <SelectItem value="Archived">Archivado</SelectItem>
+              <SelectItem value="all">{t("Todos")}</SelectItem>
+              <SelectItem value="Draft">{t("Borrador")}</SelectItem>
+              <SelectItem value="Active">{t("Activo")}</SelectItem>
+              <SelectItem value="Completed">{t("Completado")}</SelectItem>
+              <SelectItem value="Archived">{t("Archivado")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -203,8 +205,8 @@ export function ExerciseRoutinesPage() {
       ) : result && result.data.length > 0 ? (
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
-            title={`${result.total} ${result.total === 1 ? "rutina" : "rutinas"} disponibles`}
-            description="Vista de tabla"
+            title={t("{count} rutinas disponibles", { count: String(result.total) })}
+            description={t("Vista de tabla")}
             icon={Dumbbell}
             variant="primary"
           />
@@ -212,18 +214,18 @@ export function ExerciseRoutinesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nombre</TableHead>
+                  <TableHead>{t("Nombre")}</TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Categoría
+                    {t("Categoría")}
                   </TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Dificultad
+                    {t("Dificultad")}
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">
-                    Duración
+                    {t("Duración")}
                   </TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead>{t("Estado")}</TableHead>
+                  <TableHead className="text-right">{t("Acciones")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -274,7 +276,7 @@ export function ExerciseRoutinesPage() {
                           variant="ghost"
                           size="icon"
                           className="size-8"
-                          title="Ver detalles"
+                          title={t("Ver detalles")}
                           onClick={() => setDetails(routine)}
                         >
                           <Eye className="size-4" />
@@ -283,7 +285,7 @@ export function ExerciseRoutinesPage() {
                           variant="ghost"
                           size="icon"
                           className="size-8"
-                          title="Editar"
+                          title={t("Editar")}
                           onClick={() => openEdit(routine)}
                         >
                           <Pencil className="size-4" />
@@ -292,7 +294,7 @@ export function ExerciseRoutinesPage() {
                           variant="ghost"
                           size="icon"
                           className="size-8 text-destructive"
-                          title="Eliminar"
+                          title={t("Eliminar")}
                           onClick={() => setDeleting(routine)}
                         >
                           <Trash2 className="size-4" />
@@ -313,18 +315,18 @@ export function ExerciseRoutinesPage() {
       {result && result.totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            Página {result.page} de {result.totalPages}
+            {t("Página {page} de {total}", { page: String(result.page), total: String(result.totalPages) })}
           </span>
           <div className="flex items-center gap-3">
             <select
               className="h-8 rounded-md border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={result.pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              aria-label="Rutinas por página"
+              aria-label={t("Rutinas por página")}
             >
-              <option value={10}>10 por página</option>
-              <option value={20}>20 por página</option>
-              <option value={50}>50 por página</option>
+              <option value={10}>{t("10 por página")}</option>
+              <option value={20}>{t("20 por página")}</option>
+              <option value={50}>{t("50 por página")}</option>
             </select>
             <div className="flex gap-2">
               <Button
@@ -333,7 +335,7 @@ export function ExerciseRoutinesPage() {
                 disabled={result.page === 1}
                 onClick={() => setPage(result.page - 1)}
               >
-                Anterior
+                {t("Anterior")}
               </Button>
               <Button
                 variant="outline"
@@ -341,7 +343,7 @@ export function ExerciseRoutinesPage() {
                 disabled={result.page === result.totalPages}
                 onClick={() => setPage(result.page + 1)}
               >
-                Siguiente
+                {t("Siguiente")}
               </Button>
             </div>
           </div>
@@ -357,7 +359,7 @@ export function ExerciseRoutinesPage() {
         onOpenChange={setFormOpen}
         onSubmit={save}
         onCreated={(patientName) =>
-          setCreatedMessage(`Rutina creada y asignada a ${patientName}`)
+          setCreatedMessage(t("Rutina creada y asignada a {patientName}", { patientName }))
         }
       />
 
@@ -377,14 +379,13 @@ export function ExerciseRoutinesPage() {
             <Trash2 />
           </AlertDialogMedia>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar rutina?</AlertDialogTitle>
+            <AlertDialogTitle>{t("¿Eliminar rutina?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminará la rutina &quot;{deleting?.name}&quot; y todos sus
-              ejercicios. Esta acción no se puede deshacer.
+              {t('Se eliminará la rutina "{name}" y todos sus ejercicios. Esta acción no se puede deshacer.', { name: deleting?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
               disabled={actionLoading}
@@ -393,7 +394,7 @@ export function ExerciseRoutinesPage() {
                 setDeleting(undefined);
               }}
             >
-              Eliminar
+              {t("Eliminar")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -434,35 +435,37 @@ function RoutinesErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
       <p className="text-sm font-semibold text-destructive">
-        No pudimos cargar las rutinas
+        {t("No pudimos cargar las rutinas")}
       </p>
       <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
         <RefreshCw data-icon="inline-start" />
-        Reintentar
+        {t("Reintentar")}
       </Button>
     </div>
   );
 }
 
 function RoutinesEmptyState({ onCreate }: { onCreate: () => void }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border py-16 text-center">
       <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
         <Dumbbell className="size-6 text-muted-foreground" />
       </div>
       <div>
-        <p className="text-sm font-semibold">No hay rutinas de ejercicio</p>
+        <p className="text-sm font-semibold">{t("No hay rutinas de ejercicio")}</p>
         <p className="text-xs text-muted-foreground">
-          Crea tu primera rutina para asignarla a tus pacientes.
+          {t("Crea tu primera rutina para asignarla a tus pacientes.")}
         </p>
       </div>
       <Button size="sm" onClick={onCreate}>
         <Plus data-icon="inline-start" />
-        Nueva rutina
+        {t("Nueva rutina")}
       </Button>
     </div>
   );

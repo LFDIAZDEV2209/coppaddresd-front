@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -13,13 +14,12 @@ import {
   Clock,
   User,
   Stethoscope,
-  MapPin,
   CalendarDays,
   Loader2,
   PanelRight,
+  ClipboardList,
   ArrowLeft,
   AlertTriangle,
-  ShieldCheck,
   Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,12 +36,14 @@ import {
   startSession,
   endSession,
 } from "../services/appointments-service";
-import { ClinicalEncounterPanel } from "./clinical-encounter-panel";
+import { ConsultationPanel, PANEL_HEIGHT } from "./consultation-panel";
+import type { ConsultationPanelTab } from "./consultation-panel";
 import {
   appointmentStatusColor,
   appointmentStatusLabel,
   formatDateTime,
   formatRange,
+  formatTime,
   sessionStatusLabel,
 } from "../utils/format";
 import type { AppointmentDto } from "../types";
@@ -58,6 +60,7 @@ const LOCAL_IDENTITY = "__local__";
  * JWT (ver GenerateAccessTokenAsync en el backend).
  */
 export function VirtualRoom() {
+  const t = useT();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const appointmentId = params.id;
@@ -72,8 +75,12 @@ export function VirtualRoom() {
   const [videoOn, setVideoOn] = useState(true);
   const [remoteTiles, setRemoteTiles] = useState<RoomTile[]>([]);
   const [elapsed, setElapsed] = useState(0);
-  const [backendRoomStatus, setBackendRoomStatus] = useState<string | null>(null);
+  const [backendRoomStatus, setBackendRoomStatus] = useState<string | null>(
+    null,
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarTab, setSidebarTab] =
+    useState<ConsultationPanelTab>("participants");
   const [ending, setEnding] = useState(false);
   const [endedReason, setEndedReason] = useState<string | null>(null);
   const [tracksVersion, setTracksVersion] = useState(0);
@@ -90,7 +97,8 @@ export function VirtualRoom() {
     context.professional.id === appointment.professionalId;
 
   const canManage =
-    hasAppointmentPermission(hasPermission, "Appointments.SessionsManage") || isOwner;
+    hasAppointmentPermission(hasPermission, "Appointments.SessionsManage") ||
+    isOwner;
 
   const myIdentity = session?.id ?? null;
   const isProfessionalParticipant = isOwner;
@@ -98,7 +106,8 @@ export function VirtualRoom() {
   const nameFor = useCallback(
     (identity: string, isLocal: boolean): { name: string; role: string } => {
       if (isLocal || identity === myIdentity) {
-        if (isProfessionalParticipant) return { name: "Tú", role: "Profesional" };
+        if (isProfessionalParticipant)
+          return { name: "Tú", role: "Profesional" };
         if (context?.patient) return { name: "Tú", role: "Paciente" };
         return { name: "Tú", role: "Supervisor" };
       }
@@ -130,7 +139,9 @@ export function VirtualRoom() {
         setPhase("ready");
       } catch {
         if (!active) return;
-        setLoadError("No se pudo cargar la cita. Verificá que el enlace sea válido.");
+        setLoadError(
+          "No se pudo cargar la cita. Verificá que el enlace sea válido.",
+        );
         setPhase("ended");
       }
     })();
@@ -143,7 +154,9 @@ export function VirtualRoom() {
 
   const addRemoteTile = useCallback((identity: string) => {
     setRemoteTiles((tiles) =>
-      tiles.some((t) => t.identity === identity) ? tiles : [...tiles, { identity, isLocal: false }],
+      tiles.some((t) => t.identity === identity)
+        ? tiles
+        : [...tiles, { identity, isLocal: false }],
     );
   }, []);
 
@@ -184,7 +197,10 @@ export function VirtualRoom() {
     (participant: TwilioVideo.Participant) => {
       participant.tracks.forEach((publication) => {
         if (publication.track && publication.isTrackEnabled) {
-          attachRemoteTrack(participant.identity, publication.track as TwilioVideo.RemoteTrack);
+          attachRemoteTrack(
+            participant.identity,
+            publication.track as TwilioVideo.RemoteTrack,
+          );
         }
       });
       participant.on("trackSubscribed", (track) =>
@@ -244,7 +260,9 @@ export function VirtualRoom() {
         room.on("disconnected", (disconnectedRoom) => {
           if (roomRef.current !== disconnectedRoom) return;
           setPhase("ended");
-          setEndedReason("Te desconectaste de la sala o la conexión se interrumpió.");
+          setEndedReason(
+            "Te desconectaste de la sala o la conexión se interrumpió.",
+          );
         });
 
         setPhase("connected");
@@ -310,8 +328,7 @@ export function VirtualRoom() {
     if (!room) return;
     const publications = Array.from(room.localParticipant.tracks.values());
     const track = publications.find((p) => p.track?.kind === "audio")?.track as
-      | TwilioVideo.LocalTrack
-      | undefined;
+      TwilioVideo.LocalTrack | undefined;
     if (!track) return;
     if (track.isEnabled) {
       track.disable();
@@ -327,8 +344,7 @@ export function VirtualRoom() {
     if (!room) return;
     const publications = Array.from(room.localParticipant.tracks.values());
     const track = publications.find((p) => p.track?.kind === "video")?.track as
-      | TwilioVideo.LocalTrack
-      | undefined;
+      TwilioVideo.LocalTrack | undefined;
     if (!track) return;
     if (track.isEnabled) {
       track.disable();
@@ -365,7 +381,8 @@ export function VirtualRoom() {
     if (localContainer) {
       localTracksRef.current.forEach((track) => {
         const key = `${LOCAL_IDENTITY}:${track.id}`;
-        if (track.kind !== "video" || attachedTracksRef.current.has(key)) return;
+        if (track.kind !== "video" || attachedTracksRef.current.has(key))
+          return;
         attachedTracksRef.current.add(key);
         localContainer.appendChild(track.attach());
       });
@@ -376,7 +393,8 @@ export function VirtualRoom() {
       if (!container) return;
       tracks.forEach((track) => {
         const key = `${identity}:${track.id}`;
-        if (track.kind !== "video" || attachedTracksRef.current.has(key)) return;
+        if (track.kind !== "video" || attachedTracksRef.current.has(key))
+          return;
         attachedTracksRef.current.add(key);
         container.appendChild(track.attach());
       });
@@ -415,7 +433,10 @@ export function VirtualRoom() {
 
   // --- Helpers de render ---
 
-  const localLabel = useMemo(() => nameFor(myIdentity ?? "", true), [nameFor, myIdentity]);
+  const localLabel = useMemo(
+    () => nameFor(myIdentity ?? "", true),
+    [nameFor, myIdentity],
+  );
   const totalTiles = remoteTiles.length + 1;
 
   const formatElapsed = (seconds: number) => {
@@ -429,19 +450,44 @@ export function VirtualRoom() {
   const renderTile = (tile: RoomTile) => {
     const info = nameFor(tile.identity, tile.isLocal);
     const showPlaceholder = !tile.isLocal || !videoOn;
+    const initials = info.name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("");
     return (
       <div
         key={tile.identity}
-        className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-950"
+        className="relative h-full min-h-0 w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
       >
         {showPlaceholder && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="flex size-16 items-center justify-center rounded-2xl bg-white/10">
-              <User className="size-8 text-slate-300" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <div className="flex size-16 items-center justify-center rounded-full bg-slate-700/60 ring-4 ring-white/5">
+              {initials ? (
+                <span className="text-lg font-bold text-slate-200">
+                  {initials}
+                </span>
+              ) : (
+                <User className="size-8 text-slate-300" />
+              )}
             </div>
-            <p className="text-[12.5px] font-medium text-slate-400">
-              {tile.isLocal ? "Tu cámara está apagada" : `Esperando a ${info.name.toLowerCase()}…`}
-            </p>
+            <div className="flex flex-col items-center gap-1 px-4 text-center">
+              <p className="text-[13.5px] font-semibold text-slate-100">
+                {info.name}
+              </p>
+              <p className="flex items-center gap-1.5 text-[11.5px] text-slate-400">
+                {tile.isLocal ? (
+                  <>
+                    <VideoOff className="size-3.5" /> Cámara apagada
+                  </>
+                ) : (
+                  <>
+                    <Clock className="size-3.5" /> Esperando conexión…
+                  </>
+                )}
+              </p>
+            </div>
           </div>
         )}
         <div
@@ -456,9 +502,10 @@ export function VirtualRoom() {
           <span className="size-1.5 rounded-full bg-emerald-400" />
           <span className="text-[11px] font-semibold text-white">
             {info.name}
-            {tile.isLocal ? " (tú)" : ""}
           </span>
-          <span className="text-[10.5px] font-medium text-slate-300">· {info.role}</span>
+          <span className="text-[10.5px] font-medium text-slate-300">
+            · {info.role}
+          </span>
         </div>
       </div>
     );
@@ -482,7 +529,11 @@ export function VirtualRoom() {
         <p className="max-w-md text-center text-sm text-slate-300">
           {loadError ?? "Cita no encontrada."}
         </p>
-        <Button variant="outline" onClick={() => router.back()} className="gap-1.5">
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          className="gap-1.5"
+        >
           <ArrowLeft className="size-4" /> Volver
         </Button>
       </div>
@@ -526,8 +577,12 @@ export function VirtualRoom() {
                 <PhoneCall className="size-5 text-teal-300" />
               </div>
               <div>
-                <p className="text-[15px] font-semibold text-white">Sala virtual</p>
-                <p className="text-[12px] text-slate-400">Citas · CoppAddresd</p>
+                <p className="text-[15px] font-semibold text-white">
+                  Sala virtual
+                </p>
+                <p className="text-[12px] text-slate-400">
+                  Citas · CoppAddresd
+                </p>
               </div>
             </div>
             <StatusBadge
@@ -537,34 +592,34 @@ export function VirtualRoom() {
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-teal-500/15">
                   <User className="size-7 text-teal-300" />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-lg font-semibold text-white">
+                  <p className="line-clamp-2 break-words text-lg font-semibold text-white">
                     {appointment.patientName ?? "Paciente"}
                   </p>
-                  <p className="truncate text-[12.5px] text-slate-400">
+                  <p className="truncate text-[12.5px] text-slate-300">
                     {appointment.specialtyName ?? "Especialidad"} ·{" "}
                     {appointment.locationName ?? "Sede"}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <InfoChip
                   icon={CalendarDays}
-                  label="Horario"
-                  value={formatRange(appointment.scheduledStart, appointment.scheduledEnd)}
+                  label={t("Horario")}
+                  value={`${formatTime(appointment.scheduledStart)} – ${formatTime(appointment.scheduledEnd)}`}
                 />
                 <InfoChip
                   icon={Stethoscope}
-                  label="Especialidad"
-                  value={appointment.specialtyName ?? "—"}
+                  label={t("Código de cita")}
+                  value={appointment.id.slice(0, 8).toUpperCase()}
+                  mono
                 />
-                <InfoChip icon={MapPin} label="Sede" value={appointment.locationName ?? "—"} />
               </div>
 
               {connectError && (
@@ -605,15 +660,17 @@ export function VirtualRoom() {
                       Unirme solo con audio
                     </Button>
                   )}
-                  <p className="text-center text-[11.5px] text-slate-500">
-                    Necesitás cámara y micrófono. La sala abre 10 minutos antes de la cita.
+                  <p className="text-center text-[11.5px] text-slate-300">
+                    Necesita cámara y micrófono. La sala abre 15 minutos antes
+                    de la cita.
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2 rounded-xl bg-white/5 px-4 py-4 text-center">
                   <AlertTriangle className="size-5 text-amber-300" />
                   <p className="text-[13px] font-medium text-slate-200">
-                    La sala solo está disponible para citas confirmadas o en curso
+                    La sala solo está disponible para citas confirmadas o en
+                    curso
                   </p>
                   <p className="text-[12px] text-slate-400">
                     Estado actual: {appointmentStatusLabel[appointment.status]}
@@ -626,7 +683,7 @@ export function VirtualRoom() {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="mx-auto gap-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200"
+            className="mx-auto gap-1.5 px-5 py-2.5 text-slate-400 hover:bg-white/5 hover:text-slate-200"
           >
             <ArrowLeft className="size-4" /> Volver a la cita
           </Button>
@@ -645,7 +702,7 @@ export function VirtualRoom() {
             variant="ghost"
             size="icon-sm"
             onClick={leave}
-            aria-label="Salir de la sala"
+            aria-label={t("Salir de la sala")}
             className="text-slate-300 hover:bg-white/10 hover:text-white"
           >
             <PhoneOff className="size-4" />
@@ -656,7 +713,10 @@ export function VirtualRoom() {
               {appointment.specialtyName ?? "Especialidad"}
             </p>
             <p className="truncate text-[11px] text-slate-400">
-              {formatRange(appointment.scheduledStart, appointment.scheduledEnd)}
+              {formatRange(
+                appointment.scheduledStart,
+                appointment.scheduledEnd,
+              )}
             </p>
           </div>
         </div>
@@ -670,7 +730,9 @@ export function VirtualRoom() {
           </div>
           <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
             <Users className="size-3.5 text-slate-300" />
-            <span className="text-[12px] font-semibold text-white">{totalTiles}</span>
+            <span className="text-[12px] font-semibold text-white">
+              {totalTiles}
+            </span>
           </div>
           {backendRoomStatus && backendRoomStatus !== "Active" && (
             <StatusBadge
@@ -689,9 +751,12 @@ export function VirtualRoom() {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => setSidebarOpen((open) => !open)}
-            aria-label="Panel de participantes y notas"
-            className="text-slate-300 hover:bg-white/10 hover:text-white lg:hidden"
+            onClick={() => {
+              setSidebarTab("participants");
+              setSidebarOpen(true);
+            }}
+            aria-label={t("Abrir panel de participantes y formularios")}
+            className="text-slate-300 hover:bg-white/10 hover:text-white"
           >
             <PanelRight className="size-4" />
           </Button>
@@ -710,7 +775,7 @@ export function VirtualRoom() {
           )}
 
           <div
-            className={`grid w-full gap-3 ${totalTiles >= 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
+            className={`grid min-h-0 w-full flex-1 gap-3 ${totalTiles >= 2 ? "auto-rows-fr grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
           >
             {renderTile({ identity: LOCAL_IDENTITY, isLocal: true })}
             {remoteTiles.map((tile) => renderTile(tile))}
@@ -720,25 +785,49 @@ export function VirtualRoom() {
             <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 py-4">
               <Activity className="size-4 text-slate-500" />
               <p className="text-[12.5px] text-slate-400">
-                Esperando que el paciente se conecte a la sala…
+                {isProfessionalParticipant
+                  ? "Esperando que el paciente se conecte a la sala…"
+                  : "Esperando que el profesional se conecte a la sala…"}
               </p>
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-2 pb-1">
+          <div className="flex flex-wrap items-center justify-center gap-2 pb-1">
+            {canManage && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSidebarTab("forms");
+                  setSidebarOpen(true);
+                }}
+                aria-label={t("Abrir formularios médicos")}
+                className="gap-1.5 border border-white/10 bg-white/[0.06] text-slate-200 hover:bg-white/10 hover:text-white"
+              >
+                <ClipboardList className="size-4" />
+                <span className="hidden sm:inline">{t("Formularios")}</span>
+              </Button>
+            )}
             <ControlButton
               label={audioOn ? "Silenciar" : "Activar micrófono"}
               active={audioOn}
               onClick={toggleAudio}
             >
-              {audioOn ? <Mic className="size-5" /> : <MicOff className="size-5" />}
+              {audioOn ? (
+                <Mic className="size-5" />
+              ) : (
+                <MicOff className="size-5" />
+              )}
             </ControlButton>
             <ControlButton
               label={videoOn ? "Apagar cámara" : "Encender cámara"}
               active={videoOn}
               onClick={toggleVideo}
             >
-              {videoOn ? <Video className="size-5" /> : <VideoOff className="size-5" />}
+              {videoOn ? (
+                <Video className="size-5" />
+              ) : (
+                <VideoOff className="size-5" />
+              )}
             </ControlButton>
             {canManage && (
               <Button
@@ -757,74 +846,27 @@ export function VirtualRoom() {
           </div>
         </main>
 
-        <aside
-          className={`${
-            sidebarOpen
-              ? "fixed inset-y-14 right-0 z-40 w-full max-w-sm border-l border-white/10"
-              : "hidden"
-          } min-w-0 shrink-0 overflow-y-auto bg-slate-900 lg:static lg:block lg:w-[380px] lg:border-l lg:border-white/10`}
-        >
-          <div className="flex flex-col gap-4 p-4">
-            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <h3 className="mb-3 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wider text-slate-300">
-                <Users className="size-3.5" /> Participantes
-              </h3>
-              <div className="flex flex-col gap-2">
-                <ParticipantRow
-                  name={localLabel.name}
-                  role={localLabel.role}
-                  isLocal
-                  connected
-                />
-                {remoteTiles.length === 0 && (
-                  <ParticipantRow
-                    name={
-                      isProfessionalParticipant
-                        ? (appointment.patientName ?? "Paciente")
-                        : (appointment.professionalName ?? "Profesional")
-                    }
-                    role={isProfessionalParticipant ? "Paciente" : "Profesional"}
-                    connected={false}
-                  />
-                )}
-                {remoteTiles.map((tile) => {
-                  const info = nameFor(tile.identity, false);
-                  return (
-                    <ParticipantRow
-                      key={tile.identity}
-                      name={info.name}
-                      role={info.role}
-                      connected
-                    />
-                  );
-                })}
-              </div>
-            </section>
-
-            {canManage && (
-              <div className="rounded-2xl border border-teal-400/20 bg-teal-400/10 p-3">
-                <p className="flex items-center gap-1.5 text-[12px] font-medium text-teal-200">
-                  <ShieldCheck className="size-3.5" /> Sos el profesional de esta cita
-                </p>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-teal-200/70">
-                  Podés registrar el encuentro clínico durante la consulta y finalizarla
-                  cuando termines.
-                </p>
-              </div>
-            )}
-
-            {canManage && <ClinicalEncounterPanel appointmentId={appointment.id} />}
-          </div>
-        </aside>
+        {/* Spacer: empuja el escenario cuando el panel inferior está abierto. */}
+        <div
+          aria-hidden="true"
+          className={`shrink-0 transition-all duration-300 ease-out ${
+            sidebarOpen ? PANEL_HEIGHT : "h-0"
+          }`}
+        />
       </div>
 
-      {sidebarOpen && (
-        <button
-          aria-label="Cerrar panel"
-          className="fixed inset-0 z-30 bg-slate-950/60 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <ConsultationPanel
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        tab={sidebarTab}
+        onTabChange={setSidebarTab}
+        appointment={appointment}
+        patientConnected={remoteTiles.length > 0}
+        isProfessional={isProfessionalParticipant}
+        canManage={canManage}
+        localLabel={localLabel}
+        remoteLabels={remoteTiles.map((tile) => nameFor(tile.identity, false))}
+      />
     </div>
   );
 }
@@ -836,13 +878,18 @@ interface RoomTile {
 
 /** Convierte fechas ISO crudas que llegan dentro de mensajes del backend a formato local. */
 function formatBackendMessage(message: string): string {
-  return message.replace(/\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})/g, (match) =>
-    formatDateTime(match),
+  return message.replace(
+    /\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})/g,
+    (match) => formatDateTime(match),
   );
 }
 
 /** Timeout para operaciones que dependen de permisos/red del navegador. */
-function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  message: string,
+): Promise<T> {
   return Promise.race([
     promise,
     new Promise<never>((_, reject) => {
@@ -855,18 +902,24 @@ function InfoChip({
   icon: Icon,
   label,
   value,
+  mono,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
+  mono?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1 rounded-xl bg-white/5 p-3">
-      <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+      <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-300">
         <Icon className="size-3.5" />
         {label}
       </span>
-      <span className="truncate text-[12.5px] font-semibold text-white">{value}</span>
+      <span
+        className={`truncate text-[12.5px] font-semibold text-white ${mono ? "font-mono" : ""}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -889,50 +942,13 @@ function ControlButton({
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
-      className={`size-11 rounded-full border ${
+      className={`size-11 rounded-full border-2 ${
         active
-          ? "border-white/15 bg-white/10 text-white hover:bg-white/20"
-          : "border-rose-400/30 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25"
+          ? "border-white/30 bg-white/15 text-white shadow-lg shadow-black/30 hover:bg-white/25"
+          : "border-rose-400/50 bg-rose-500/25 text-rose-200 hover:bg-rose-500/35"
       }`}
     >
       {children}
     </Button>
-  );
-}
-
-function ParticipantRow({
-  name,
-  role,
-  connected,
-  isLocal,
-}: {
-  name: string;
-  role: string;
-  connected: boolean;
-  isLocal?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl bg-white/5 px-3 py-2">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-500/20">
-        <User className="size-4 text-teal-300" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-semibold text-white">
-          {name}
-          {isLocal ? " (tú)" : ""}
-        </p>
-        <p className="text-[10.5px] text-slate-400">{role}</p>
-      </div>
-      <span
-        className={`flex shrink-0 items-center gap-1 text-[10.5px] font-medium ${
-          connected ? "text-emerald-400" : "text-slate-500"
-        }`}
-      >
-        <span
-          className={`size-1.5 rounded-full ${connected ? "bg-emerald-400" : "bg-slate-600"}`}
-        />
-        {connected ? "Conectado" : "Esperando"}
-      </span>
-    </div>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarDays, ChevronRight, Video } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AppointmentDto } from "../../types";
@@ -25,6 +26,8 @@ export function UpcomingAppointments({
   emptyMessage?: string;
   hrefBase?: string;
 }) {
+  const t = useT();
+
   if (loading) {
     return (
       <div className="flex flex-col gap-2">
@@ -60,11 +63,11 @@ export function UpcomingAppointments({
               </div>
               <div className="flex min-w-0 flex-col gap-px">
                 <span className="truncate text-[13px] font-semibold text-foreground">
-                  {appointment.patientName ?? "Paciente"}
+                  {appointment.patientName ?? t('Paciente')}
                 </span>
                 <span className="truncate text-[11.5px] text-muted-foreground">
-                  {appointment.professionalName ?? "Profesional"} ·{" "}
-                  {appointment.specialtyName ?? "Especialidad"}
+                  {appointment.professionalName ?? t('Profesional')} ·{" "}
+                  {appointment.specialtyName ?? t('Especialidad')}
                 </span>
               </div>
             </div>

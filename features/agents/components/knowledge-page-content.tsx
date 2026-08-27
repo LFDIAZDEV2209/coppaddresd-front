@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { uuid } from "@/lib/uuid";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -41,6 +42,7 @@ import type { KnowledgeBase, AgentDocument, KnowledgeBaseRequest } from "../type
 import { formatFileSize, formatDate } from "../services/agents-service";
 import { uploadDocumentToStorage } from "../services/upload-agent-document";
 import { useAgentKnowledge } from "../hooks/use-agent-knowledge";
+import { useT } from "@/providers/i18n-provider";
 
 const docStatusVariant: Record<string, "default" | "destructive" | "secondary" | "outline"> = {
   Listo: "default",
@@ -50,6 +52,7 @@ const docStatusVariant: Record<string, "default" | "destructive" | "secondary" |
 };
 
 export function KnowledgePageContent() {
+  const t = useT();
   const knowledge = useAgentKnowledge(undefined, { includeGlobal: true });
   const [createOpen, setCreateOpen] = useState(false);
   const [uploadBase, setUploadBase] = useState<KnowledgeBase | null>(null);
@@ -100,8 +103,8 @@ export function KnowledgePageContent() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Conocimiento"
-        description="Knowledge bases globales y por agente con documentos indexados para RAG"
+        title={t('Conocimiento')}
+        description={t('Knowledge bases globales y por agente con documentos indexados para RAG')}
         icon={BookOpen}
         actions={
           <Button
@@ -110,7 +113,7 @@ export function KnowledgePageContent() {
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-[15px]" />
-            Nueva knowledge base
+            {t('Nueva knowledge base')}
           </Button>
         }
       />
@@ -119,14 +122,14 @@ export function KnowledgePageContent() {
         <div className="relative w-[280px]">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar knowledge bases..."
+            placeholder={t('Buscar knowledge bases...')}
             className="h-9 pl-9"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
         <span className="text-[12px] text-muted-foreground">
-          {filteredBases.length} base{filteredBases.length === 1 ? "" : "s"}
+          {t('{count} base(s)', { count: String(filteredBases.length) })}
         </span>
       </div>
 
@@ -145,13 +148,13 @@ export function KnowledgePageContent() {
       ) : filteredBases.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border py-16 text-center">
           <BookOpen className="size-8 text-muted-foreground" />
-          <p className="text-sm font-medium">Sin knowledge bases</p>
+          <p className="text-sm font-medium">{t('Sin knowledge bases')}</p>
           <p className="text-[12.5px] text-muted-foreground">
-            Crea una base para indexar documentos de conocimiento.
+            {t('Crea una base para indexar documentos de conocimiento.')}
           </p>
           <Button variant="outline" size="sm" className="mt-2" onClick={() => setCreateOpen(true)}>
             <Plus data-icon="inline-start" />
-            Nueva knowledge base
+            {t('Nueva knowledge base')}
           </Button>
         </div>
       ) : (
@@ -170,12 +173,11 @@ export function KnowledgePageContent() {
                   <div className="flex items-center gap-2">
                     <span className="truncate text-sm font-semibold">{base.name}</span>
                     <Badge variant={base.scope === "Global" ? "outline" : "secondary"}>
-                      {base.scope === "Global" ? "Global" : "Agente"}
+                      {base.scope === "Global" ? t('Global') : t('Agente')}
                     </Badge>
                   </div>
                   <p className="truncate text-[12px] text-muted-foreground">
-                    {base.description ?? "Sin descripción"} · {base.documentCount} documento
-                    {base.documentCount === 1 ? "" : "s"}
+                    {base.description ?? t('Sin descripción')} · {t('{count} documento(s)', { count: String(base.documentCount) })}
                   </p>
                 </div>
                 <Button
@@ -189,7 +191,7 @@ export function KnowledgePageContent() {
                   ) : (
                     <FileText className="size-4" data-icon="inline-start" />
                   )}
-                  {docsByBase[base.id] ? "Ocultar" : "Documentos"}
+                  {docsByBase[base.id] ? t('Ocultar') : t('Documentos')}
                 </Button>
                 <Button
                   variant="outline"
@@ -198,7 +200,7 @@ export function KnowledgePageContent() {
                   disabled={knowledge.registeringDoc}
                 >
                   <UploadCloud data-icon="inline-start" className="size-4" />
-                  Subir
+                  {t('Subir')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -206,7 +208,7 @@ export function KnowledgePageContent() {
                   className="text-muted-foreground hover:text-destructive"
                   onClick={() => knowledge.handleDeleteBase(base.id)}
                   disabled={knowledge.deletingId === base.id}
-                  aria-label={`Eliminar ${base.name}`}
+                  aria-label={t('Eliminar {name}', { name: base.name })}
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -216,7 +218,7 @@ export function KnowledgePageContent() {
                 <div className="flex flex-col border-t border-border bg-background/50 px-5 py-3">
                   {docsByBase[base.id].length === 0 ? (
                     <p className="py-2 text-[12.5px] text-muted-foreground">
-                      Sin documentos. Subí el primero.
+                      {t('Sin documentos. Subí el primero.')}
                     </p>
                   ) : (
                     docsByBase[base.id].map((doc) => (
@@ -229,7 +231,7 @@ export function KnowledgePageContent() {
                           <p className="truncate text-[13px] font-medium">{doc.fileName}</p>
                           <p className="text-[11.5px] text-muted-foreground">
                             {formatFileSize(doc.fileSizeBytes)} ·{" "}
-                            {doc.chunksCount !== null ? `${doc.chunksCount} chunks` : "sin indexar"} ·{" "}
+                            {doc.chunksCount !== null ? `${doc.chunksCount} chunks` : t('sin indexar')} ·{" "}
                             {formatDate(doc.createdAt)}
                           </p>
                           {doc.status === "Error" && doc.errorMessage && (
@@ -246,7 +248,7 @@ export function KnowledgePageContent() {
                           size="icon-sm"
                           className="text-muted-foreground hover:text-destructive"
                           onClick={() => setDeletingDoc(doc)}
-                          aria-label={`Eliminar ${doc.fileName}`}
+                          aria-label={t('Eliminar {name}', { name: doc.fileName })}
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -277,7 +279,7 @@ export function KnowledgePageContent() {
           onOpenChange={(open) => !open && setUploadBase(null)}
           uploading={knowledge.registeringDoc}
           onSubmit={async (file) => {
-            const storageKey = `agents/docs/${uploadBase.id}/${crypto.randomUUID()}-${file.name}`;
+            const storageKey = `agents/docs/${uploadBase.id}/${uuid()}-${file.name}`;
             await uploadDocumentToStorage(storageKey, file);
             await knowledge.handleRegisterDocument(uploadBase.id, {
               storageKey,
@@ -296,21 +298,20 @@ export function KnowledgePageContent() {
       <AlertDialog open={deletingDoc !== null} onOpenChange={(open) => !open && setDeletingDoc(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar documento</AlertDialogTitle>
+            <AlertDialogTitle>{t('Eliminar documento')}</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Eliminar &quot;{deletingDoc?.fileName}&quot;? También se quitarán sus chunks del
-              índice de conocimiento.
+              {t('¿Eliminar "{name}"? También se quitarán sus chunks del índice de conocimiento.', { name: deletingDoc?.fileName ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('Cancelar')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(event) => {
                 event.preventDefault();
                 if (deletingDoc) void removeDoc(deletingDoc);
               }}
             >
-              Eliminar
+              {t('Eliminar')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -330,6 +331,7 @@ function CreateKnowledgeBaseDialog({
   creating: boolean;
   onSubmit: (input: KnowledgeBaseRequest) => Promise<void>;
 }) {
+  const t = useT();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -337,7 +339,7 @@ function CreateKnowledgeBaseDialog({
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!name.trim()) {
-      setValidationError("El nombre es obligatorio.");
+      setValidationError(t('El nombre es obligatorio.'));
       return;
     }
     setValidationError(null);
@@ -356,29 +358,29 @@ function CreateKnowledgeBaseDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="min-w-[520px] max-w-md p-0">
         <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
-          <DialogTitle className="text-base font-semibold">Nueva knowledge base global</DialogTitle>
+          <DialogTitle className="text-base font-semibold">{t('Nueva knowledge base global')}</DialogTitle>
           <DialogDescription>
-            El conocimiento global queda disponible para todos los agentes.
+            {t('El conocimiento global queda disponible para todos los agentes.')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4 px-6 py-5">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="kb-name">Nombre</Label>
+            <Label htmlFor="kb-name">{t('Nombre')}</Label>
             <Input
               id="kb-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Ej. Protocolos generales de atención"
+              placeholder={t('Ej. Protocolos generales de atención')}
               disabled={creating}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="kb-desc">Descripción</Label>
+            <Label htmlFor="kb-desc">{t('Descripción')}</Label>
             <Input
               id="kb-desc"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Describe el contenido de la base"
+              placeholder={t('Describe el contenido de la base')}
               disabled={creating}
             />
           </div>
@@ -389,16 +391,16 @@ function CreateKnowledgeBaseDialog({
           )}
           <DialogFooter className="-mx-6 -mb-5 px-6">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={creating}>
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button type="submit" disabled={creating}>
               {creating ? (
                 <>
                   <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  Creando...
+                  {t('Creando...')}
                 </>
               ) : (
-                "Crear base"
+                t('Crear base')
               )}
             </Button>
           </DialogFooter>
@@ -421,6 +423,7 @@ function UploadDocumentDialog({
   uploading: boolean;
   onSubmit: (file: File) => Promise<void>;
 }) {
+  const t = useT();
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -429,7 +432,7 @@ function UploadDocumentDialog({
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!file) {
-      setValidationError("Seleccioná un archivo para subir.");
+      setValidationError(t('Seleccioná un archivo para subir.'));
       return;
     }
     setValidationError(null);
@@ -441,15 +444,15 @@ function UploadDocumentDialog({
       <DialogContent className="min-w-[560px] max-w-lg p-0">
         <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
           <DialogTitle className="text-base font-semibold">
-            Subir documento a &quot;{base.name}&quot;
+            {t('Subir documento a "{name}"', { name: base.name })}
           </DialogTitle>
           <DialogDescription>
-            Se indexa automáticamente: chunking + embeddings en el AI Service.
+            {t('Se indexa automáticamente: chunking + embeddings en el AI Service.')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4 px-6 py-5">
           <div>
-            <Label htmlFor="doc-file">Archivo</Label>
+            <Label htmlFor="doc-file">{t('Archivo')}</Label>
             <input
               ref={fileInputRef}
               id="doc-file"
@@ -480,7 +483,7 @@ function UploadDocumentDialog({
                       setFile(null);
                       if (fileInputRef.current) fileInputRef.current.value = "";
                     }}
-                    aria-label="Quitar archivo"
+                    aria-label={t('Quitar archivo')}
                   >
                     <X />
                   </Button>
@@ -495,7 +498,7 @@ function UploadDocumentDialog({
                 <span className="flex size-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
                   <UploadCloud className="size-6" />
                 </span>
-                <span className="text-sm font-medium">Seleccioná el documento</span>
+                <span className="text-sm font-medium">{t('Seleccioná el documento')}</span>
                 <span className="text-xs text-muted-foreground">Markdown, TXT, PDF, Word</span>
               </button>
             )}
@@ -524,16 +527,16 @@ function UploadDocumentDialog({
 
           <DialogFooter className="-mx-6 -mb-5 px-6">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button type="submit" disabled={uploading || !file}>
               {uploading ? (
                 <>
                   <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  Indexando...
+                  {t('Indexando...')}
                 </>
               ) : (
-                "Subir e indexar"
+                t('Subir e indexar')
               )}
             </Button>
           </DialogFooter>

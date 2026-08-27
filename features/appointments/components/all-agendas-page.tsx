@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Users } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { ProfessionalSelector } from "./professional-selector";
 import { ProfessionalAgenda } from "./professional-agenda";
 
@@ -15,6 +16,7 @@ export function AllAgendasPage({
 }: {
   initialDate?: string | null;
 }) {
+  const t = useT();
   const [professionalId, setProfessionalId] = useState("");
 
   return (
@@ -26,10 +28,10 @@ export function AllAgendasPage({
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <p className="text-[13px] font-semibold text-primary-strong">
-              Agenda de profesionales
+              {t('Agenda de profesionales')}
             </p>
             <p className="text-[11.5px] text-primary-strong/70">
-              Seleccioná un profesional para ver y gestionar sus citas.
+              {t('Seleccioná un profesional para ver y gestionar sus citas.')}
             </p>
           </div>
           <div className="w-full shrink-0 sm:w-72">

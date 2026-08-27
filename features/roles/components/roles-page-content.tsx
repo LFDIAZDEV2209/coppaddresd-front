@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { useAuth } from "@/providers/auth-provider";
+import { useT } from "@/providers/i18n-provider";
 import type { Permission } from "@/features/permissions/types";
 import {
   fetchPermissions,
@@ -42,6 +43,7 @@ import { RoleFormDialog } from "./role-form-dialog";
 import { RolePermissionsPanel } from "./role-permissions-panel";
 
 export function RolesPageContent() {
+  const t = useT();
   const { hasPermission } = useAuth();
   const canCreate = hasPermission("Roles.Create");
   const canUpdate = hasPermission("Roles.Update");
@@ -90,12 +92,12 @@ export function RolesPageContent() {
     } catch (err) {
       setRoles(null);
       setError(
-        err instanceof Error ? err.message : "Error al cargar los roles.",
+        err instanceof Error ? err.message : t("Error al cargar los roles."),
       );
     } finally {
       setLoading(false);
     }
-  }, [applyRoles]);
+  }, [applyRoles, t]);
 
   useEffect(() => {
     const timer = setTimeout(loadData, 0);
@@ -148,7 +150,7 @@ export function RolesPageContent() {
       applyRoles(await fetchRoles());
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : "Error al eliminar el rol.",
+        err instanceof Error ? err.message : t("Error al eliminar el rol."),
       );
       setDeleting(undefined);
     } finally {
@@ -169,8 +171,8 @@ export function RolesPageContent() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Roles y permisos"
-        description="Administración de roles y permisos del sistema"
+        title={t("Roles y permisos")}
+        description={t("Administración de roles y permisos del sistema")}
         icon={ShieldCheck}
         actions={
           canCreate && (
@@ -180,7 +182,7 @@ export function RolesPageContent() {
               onClick={openCreate}
             >
               <Plus className="size-[15px]" />
-              Nuevo rol
+              {t("Nuevo rol")}
             </Button>
           )
         }
@@ -220,16 +222,16 @@ export function RolesPageContent() {
                     </h3>
                   </div>
                   <StatusBadge
-                    status={role.isActive ? "Activo" : "Inactivo"}
+                    status={role.isActive ? t("Activo") : t("Inactivo")}
                     color={getStatusColor(role.isActive)}
                   />
                 </div>
                 <p className="text-[11px] text-muted-foreground line-clamp-2">
-                  {role.description || "Sin descripción"}
+                  {role.description || t("Sin descripción")}
                 </p>
                 <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                   <Key className="size-3" />
-                  <span>Permisos</span>
+                  <span>{t("Permisos")}</span>
                   <span className="ml-auto flex items-center gap-1">
                     <CalendarDays className="size-3" />
                     {formatDate(role.createdAt)}
@@ -241,12 +243,12 @@ export function RolesPageContent() {
           {roles?.length === 0 && (
             <div className="rounded-2xl border border-border bg-card p-6 text-center">
               <p className="text-sm font-medium text-foreground">
-                No hay roles todavía
+                {t("No hay roles todavía")}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {canCreate
-                  ? "Creá el primer rol para comenzar."
-                  : "No hay roles creados."}
+                  ? t("Creá el primer rol para comenzar.")
+                  : t("No hay roles creados.")}
               </p>
             </div>
           )}
@@ -256,7 +258,7 @@ export function RolesPageContent() {
         <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
             title={`Permisos de ${selectedRole?.name ?? ""}`}
-            description="Configurá qué permisos tiene este rol"
+            description={t("Configurá qué permisos tiene este rol")}
             icon={ShieldCheck}
             variant="primary"
             actions={
@@ -269,7 +271,7 @@ export function RolesPageContent() {
                     onClick={() => openEdit(selectedRole)}
                   >
                     <Pencil className="size-[15px]" />
-                    Editar
+                    {t("Editar")}
                   </Button>
                 )}
                 {canDelete && selectedRole && (
@@ -280,7 +282,7 @@ export function RolesPageContent() {
                     onClick={() => setDeleting(selectedRole)}
                   >
                     <Trash2 className="size-[15px]" />
-                    Eliminar
+                    {t("Eliminar")}
                   </Button>
                 )}
               </div>
@@ -313,20 +315,19 @@ export function RolesPageContent() {
             <Trash2 />
           </AlertDialogMedia>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar rol?</AlertDialogTitle>
+            <AlertDialogTitle>{t("¿Eliminar rol?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminará el rol “{deleting?.name}”. Los usuarios que lo tengan
-              asignado perderán sus permisos. Esta acción no se puede deshacer.
+              {t('Se eliminará el rol "{name}". Los usuarios que lo tengan asignado perderán sus permisos. Esta acción no se puede deshacer.', { name: deleting?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={savingRole}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={savingRole}>{t("Cancelar")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
               disabled={savingRole}
               onClick={confirmDelete}
             >
-              {savingRole ? "Eliminando..." : "Eliminar"}
+              {savingRole ? t("Eliminando...") : t("Eliminar")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -358,15 +359,16 @@ function RolesErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-6 py-14 text-center">
       <p className="text-sm font-semibold text-destructive">
-        No pudimos cargar los roles
+        {t("No pudimos cargar los roles")}
       </p>
       <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
         <RefreshCw data-icon="inline-start" />
-        Reintentar
+        {t("Reintentar")}
       </Button>
     </div>
   );

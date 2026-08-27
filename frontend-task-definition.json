@@ -1,0 +1,32 @@
+{
+  "family": "cooppadresd-frontend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::933629770820:role/cooppadresd-ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "933629770820.dkr.ecr.us-east-2.amazonaws.com/cooppadresd-frontend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/cooppadresd-frontend",
+          "awslogs-region": "us-east-2",
+          "awslogs-stream-prefix": "frontend"
+        }
+      }
+    }
+  ]
+}

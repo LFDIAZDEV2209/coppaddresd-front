@@ -7,6 +7,9 @@ import type {
   PatientInput,
   PatientListItem,
   PatientProfessionalAssignment,
+  PatientSortKey,
+  PatientSortDir,
+  PatientStats,
   PaginatedResult,
 } from "../types";
 
@@ -15,7 +18,10 @@ const PATH = `${env.apiUrl}/api/v1/patients`;
 export async function fetchPatients(
   page: number,
   pageSize: number,
-  filters: PatientFilters,
+  filters: PatientFilters & {
+    sortBy?: PatientSortKey | null;
+    sortDir?: PatientSortDir | null;
+  },
   signal?: AbortSignal,
 ): Promise<PaginatedResult<PatientListItem>> {
   const params = new URLSearchParams({
@@ -26,11 +32,22 @@ export async function fetchPatients(
   if (search) params.set("search", search);
   if (filters.status !== "all") params.set("status", filters.status);
   if (filters.insurerId !== "all") params.set("insurerId", filters.insurerId);
+  if (filters.sortBy && filters.sortBy !== "createdAt")
+    params.set("sortBy", filters.sortBy);
+  if (filters.sortDir && filters.sortDir !== "desc")
+    params.set("sortDir", filters.sortDir);
 
   return apiFetch<PaginatedResult<PatientListItem>>(
     `${PATH}?${params.toString()}`,
     { signal },
   );
+}
+
+/** Estadísticas del directorio, scoped por el backend (admin global / propios). */
+export async function fetchPatientStats(
+  signal?: AbortSignal,
+): Promise<PatientStats> {
+  return apiFetch<PatientStats>(`${PATH}/stats`, { signal });
 }
 
 export async function getPatient(id: string): Promise<Patient> {
@@ -63,7 +80,9 @@ export async function deletePatient(id: string): Promise<void> {
 export async function fetchPatientAssignments(
   id: string,
 ): Promise<PatientProfessionalAssignment[]> {
-  return apiFetch<PatientProfessionalAssignment[]>(`${PATH}/${id}/professionals`);
+  return apiFetch<PatientProfessionalAssignment[]>(
+    `${PATH}/${id}/professionals`,
+  );
 }
 
 export async function assignPatientProfessional(
@@ -71,10 +90,13 @@ export async function assignPatientProfessional(
   professionalId: string,
   relationshipType?: string,
 ): Promise<PatientProfessionalAssignment> {
-  return apiFetch<PatientProfessionalAssignment>(`${PATH}/${id}/professionals`, {
-    method: "POST",
-    body: JSON.stringify({ professionalId, relationshipType }),
-  });
+  return apiFetch<PatientProfessionalAssignment>(
+    `${PATH}/${id}/professionals`,
+    {
+      method: "POST",
+      body: JSON.stringify({ professionalId, relationshipType }),
+    },
+  );
 }
 
 export async function removePatientProfessional(
@@ -94,7 +116,9 @@ export async function fetchInsurers(signal?: AbortSignal): Promise<Insurer[]> {
   if (insurersCache && insurersCache.expires > Date.now()) {
     return insurersCache.data;
   }
-  const data = await apiFetch<Insurer[]>(`${env.apiUrl}/api/v1/insurers`, { signal });
+  const data = await apiFetch<Insurer[]>(`${env.apiUrl}/api/v1/insurers`, {
+    signal,
+  });
   insurersCache = { data, expires: Date.now() + INSURERS_TTL_MS };
   return data;
 }

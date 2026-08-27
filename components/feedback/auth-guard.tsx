@@ -4,10 +4,12 @@ import { useAuth } from "@/providers/auth-provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const t = useT();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -27,7 +29,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="size-8 animate-spin text-primary" />
           <span className="text-sm text-muted-foreground">
-            Verificando sesión...
+            {t("Verificando sesión...")}
           </span>
         </div>
       </div>

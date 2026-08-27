@@ -2,6 +2,7 @@
 
 import { LayoutGrid, Rows3 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useT } from "@/providers/i18n-provider";
 
 export type DataView = "table" | "cards";
 
@@ -15,9 +16,13 @@ interface ViewToggleProps {
 export function ViewToggle({
   value,
   onValueChange,
-  tableLabel = "Vista tabla",
-  cardsLabel = "Vista tarjetas",
+  tableLabel,
+  cardsLabel,
 }: ViewToggleProps) {
+  const t = useT();
+  const resolvedTableLabel = tableLabel ?? t("Vista tabla");
+  const resolvedCardsLabel = cardsLabel ?? t("Vista tarjetas");
+
   return (
     <ToggleGroup
       multiple={false}
@@ -26,15 +31,15 @@ export function ViewToggle({
         const view = next[0];
         if (view === "table" || view === "cards") onValueChange(view);
       }}
-      aria-label="Cambiar entre vista de tabla y tarjetas"
+      aria-label={t("Cambiar entre vista de tabla y tarjetas")}
     >
-      <ToggleGroupItem value="table" aria-label={tableLabel} title={tableLabel}>
+      <ToggleGroupItem value="table" aria-label={resolvedTableLabel} title={resolvedTableLabel}>
         <Rows3 data-icon="inline-start" />
-        <span className="hidden md:inline">Tabla</span>
+        <span className="hidden md:inline">{t("Tabla")}</span>
       </ToggleGroupItem>
-      <ToggleGroupItem value="cards" aria-label={cardsLabel} title={cardsLabel}>
+      <ToggleGroupItem value="cards" aria-label={resolvedCardsLabel} title={resolvedCardsLabel}>
         <LayoutGrid data-icon="inline-start" />
-        <span className="hidden md:inline">Tarjetas</span>
+        <span className="hidden md:inline">{t("Tarjetas")}</span>
       </ToggleGroupItem>
     </ToggleGroup>
   );

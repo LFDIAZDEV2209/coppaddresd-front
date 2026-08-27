@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FileAudio, LoaderCircle } from "lucide-react";
 import { getMediaStreamUrl } from "../services/media-service";
 import type { MediaItem } from "../types";
+import { useT } from "@/providers/i18n-provider";
 
 interface MediaPlayerProps {
   storageKey: string;
@@ -23,6 +24,7 @@ export function MediaPlayer({
   className = "",
   preload = "metadata",
 }: MediaPlayerProps) {
+  const t = useT();
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState(false);
 
@@ -46,7 +48,7 @@ export function MediaPlayer({
     return (
       <div className="flex items-center justify-center gap-2 rounded-lg bg-muted px-3 py-6 text-xs text-muted-foreground">
         <FileAudio className="size-4" />
-        No se pudo cargar el medio
+        {t('No se pudo cargar el medio')}
       </div>
     );
   }
@@ -55,7 +57,7 @@ export function MediaPlayer({
     return (
       <div className="flex items-center justify-center gap-2 rounded-lg bg-muted px-3 py-6 text-xs text-muted-foreground">
         <LoaderCircle className="size-4 animate-spin" />
-        Cargando medio...
+        {t('Cargando medio...')}
       </div>
     );
   }

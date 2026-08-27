@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { AgentRuntimeConfigForm, KnowledgeBase } from "../types";
+import { useT } from "@/providers/i18n-provider";
 import {
   parseRuntimeConfig,
   toRuntimeConfigJson,
@@ -61,6 +62,7 @@ export function VersionFormDialog({
   onCreate,
   onUploadInstructions,
 }: VersionFormDialogProps) {
+  const t = useT();
   const [form, setForm] = useState<AgentRuntimeConfigForm>(() =>
     initialConfig ? parseRuntimeConfig(initialConfig) : emptyRuntimeConfig(),
   );
@@ -108,7 +110,7 @@ export function VersionFormDialog({
     const selected = event.target.files?.[0];
     if (!selected) return;
     if (!selected.name.toLowerCase().endsWith(".md") && !selected.name.toLowerCase().endsWith(".txt")) {
-      setValidationError("Las instrucciones deben ser un archivo .md o .txt.");
+      setValidationError(t('Las instrucciones deben ser un archivo .md o .txt.'));
       return;
     }
     setValidationError(null);
@@ -128,13 +130,13 @@ export function VersionFormDialog({
       try {
         JSON.parse(advancedJson);
       } catch {
-        setValidationError("La configuración avanzada debe ser JSON válido.");
+        setValidationError(t('La configuración avanzada debe ser JSON válido.'));
         return;
       }
       configJson = advancedJson;
     } else {
       if (!form.systemPrompt.trim()) {
-        setValidationError("Escribí una descripción del agente (instrucciones) para continuar.");
+        setValidationError(t('Escribí una descripción del agente (instrucciones) para continuar.'));
         return;
       }
       configJson = toRuntimeConfigJson(form);
@@ -157,7 +159,7 @@ export function VersionFormDialog({
         parsed.retrieval_config = retrieval;
         configJson = JSON.stringify(parsed, null, 2);
       } catch {
-        setValidationError("No se pudo subir el documento de instrucciones.");
+        setValidationError(t('No se pudo subir el documento de instrucciones.'));
         return;
       } finally {
         setUploadingInstructions(false);
@@ -179,9 +181,9 @@ export function VersionFormDialog({
               <Sparkles className="size-5" />
             </div>
             <div className="flex flex-col gap-1">
-              <DialogTitle>Nueva versión del agente</DialogTitle>
+              <DialogTitle>{t('Nueva versión del agente')}</DialogTitle>
               <DialogDescription>
-                Configurá el comportamiento sin tocar código: instrucciones, modelo y herramientas.
+                {t('Configurá el comportamiento sin tocar código: instrucciones, modelo y herramientas.')}
               </DialogDescription>
             </div>
           </div>
@@ -191,21 +193,21 @@ export function VersionFormDialog({
           {/* --- Instrucciones (system prompt) --- */}
           <Section
             icon={BrainCircuit}
-            title="Instrucciones del agente"
-            description="Definen la personalidad y cómo responde. Podés escribirlas o subirlas como documento."
+            title={t('Instrucciones del agente')}
+            description={t('Definen la personalidad y cómo responde. Podés escribirlas o subirlas como documento.')}
           >
-            <Field label="Instrucciones (prompt del sistema)">
+            <Field label={t('Instrucciones (prompt del sistema)')}>
               <textarea
                 className="min-h-28 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 value={form.systemPrompt}
                 onChange={(event) => update("systemPrompt", event.target.value)}
-                placeholder="Ej. Sos un asistente de citas médicas de CoppAddresd. Ayudás a agendar, reprogramar y recordar turnos con amabilidad."
+                placeholder={t('Ej. Sos un asistente de citas médicas de CoppAddresd. Ayudás a agendar, reprogramar y recordar turnos con amabilidad.')}
                 disabled={saving || uploadingInstructions}
               />
             </Field>
 
             <div className="flex flex-col gap-1.5">
-              <Label>O subí tus instrucciones como documento (.md)</Label>
+              <Label>{t('O subí tus instrucciones como documento (.md)')}</Label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -222,7 +224,7 @@ export function VersionFormDialog({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{instructionsFile.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      Se indexará con RAG y quedará disponible para el agente.
+                      {t('Se indexará con RAG y quedará disponible para el agente.')}
                     </p>
                   </div>
                   <Button
@@ -230,7 +232,7 @@ export function VersionFormDialog({
                     variant="ghost"
                     size="icon-sm"
                     onClick={clearInstructions}
-                    aria-label="Quitar documento de instrucciones"
+                    aria-label={t('Quitar documento de instrucciones')}
                   >
                     <X />
                   </Button>
@@ -242,17 +244,17 @@ export function VersionFormDialog({
                   className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background px-4 py-3.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary-soft/40"
                 >
                   <UploadCloud className="size-4.5" />
-                  Subir documento de instrucciones (.md)
+                  {t('Subir documento de instrucciones (.md)')}
                 </button>
               )}
             </div>
 
-            <Field label="Contexto adicional (opcional)">
+            <Field label={t('Contexto adicional (opcional)')}>
               <textarea
                 className="min-h-16 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 value={form.extraPrompt ?? ""}
                 onChange={(event) => update("extraPrompt", event.target.value || null)}
-                placeholder="Ej. Reglas extra que siempre debe recordar, sin estar en un documento."
+                placeholder={t('Ej. Reglas extra que siempre debe recordar, sin estar en un documento.')}
                 disabled={saving || uploadingInstructions}
               />
             </Field>
@@ -261,11 +263,11 @@ export function VersionFormDialog({
           {/* --- Modelo --- */}
           <Section
             icon={Settings2}
-            title="Modelo de IA"
-            description="Qué modelo responde. El predeterminado del servicio es la opción segura."
+            title={t('Modelo de IA')}
+            description={t('Qué modelo responde. El predeterminado del servicio es la opción segura.')}
           >
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Modelo">
+              <Field label={t('Modelo')}>
                 <select
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   value={form.model ?? ""}
@@ -279,7 +281,7 @@ export function VersionFormDialog({
                   ))}
                 </select>
               </Field>
-              <Field label="Temperatura (creatividad)">
+              <Field label={t('Temperatura (creatividad)')}>
                 <div className="flex items-center gap-3">
                   <input
                     type="range"
@@ -295,9 +297,9 @@ export function VersionFormDialog({
                     {form.temperature ?? 0.2}
                   </Badge>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  0 = preciso y repetitivo · 1 = creativo y variado
-                </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {t('0 = preciso y repetitivo · 1 = creativo y variado')}
+                  </p>
               </Field>
             </div>
           </Section>
@@ -305,8 +307,8 @@ export function VersionFormDialog({
           {/* --- Herramientas --- */}
           <Section
             icon={Wrench}
-            title="Herramientas disponibles"
-            description="Capacidades extra que el agente puede usar durante la conversación."
+            title={t('Herramientas disponibles')}
+            description={t('Capacidades extra que el agente puede usar durante la conversación.')}
           >
             <div className="grid gap-2 sm:grid-cols-2">
               {TOOL_OPTIONS.map((tool) => (
@@ -333,8 +335,8 @@ export function VersionFormDialog({
                     )}
                   </span>
                   <span className="flex flex-col gap-0.5">
-                    <span className="text-[13px] font-medium">{tool.label}</span>
-                    <span className="text-[11.5px] text-muted-foreground">{tool.description}</span>
+                    <span className="text-[13px] font-medium">{t(tool.label)}</span>
+                    <span className="text-[11.5px] text-muted-foreground">{t(tool.description)}</span>
                   </span>
                 </button>
               ))}
@@ -344,31 +346,31 @@ export function VersionFormDialog({
           {/* --- Conocimiento (RAG) --- */}
           <Section
             icon={BookOpen}
-            title="Conocimiento (documentos)"
-            description="Vinculá knowledge bases para que el agente responda con su contenido."
+            title={t('Conocimiento (documentos)')}
+            description={t('Vinculá knowledge bases para que el agente responda con su contenido.')}
           >
             <div className="flex items-center justify-between rounded-xl border border-border p-3">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">Usar conocimiento de documentos</span>
+                <span className="text-sm font-medium">{t('Usar conocimiento de documentos')}</span>
                 <span className="text-xs text-muted-foreground">
-                  El agente consulta las bases seleccionadas antes de responder.
+                  {t('El agente consulta las bases seleccionadas antes de responder.')}
                 </span>
               </div>
               <Switch
                 checked={form.ragEnabled}
                 onCheckedChange={(checked) => update("ragEnabled", checked)}
                 disabled={saving || uploadingInstructions}
-                aria-label="Usar conocimiento de documentos"
+                aria-label={t('Usar conocimiento de documentos')}
               />
             </div>
 
             {form.ragEnabled && (
               <>
                 <div className="flex flex-col gap-1.5">
-                  <Label>Knowledge bases vinculadas</Label>
+                  <Label>{t('Knowledge bases vinculadas')}</Label>
                   {knowledgeBases.length === 0 ? (
                     <p className="rounded-lg bg-muted px-3 py-2 text-[12.5px] text-muted-foreground">
-                      No hay knowledge bases todavía. Creá una en la pestaña Conocimiento.
+                      {t('No hay knowledge bases todavía. Creá una en la pestaña Conocimiento.')}
                     </p>
                   ) : (
                     <div className="grid gap-2 sm:grid-cols-2">
@@ -398,7 +400,7 @@ export function VersionFormDialog({
                     </div>
                   )}
                 </div>
-                <Field label="Cantidad de fragmentos a consultar (top-k)">
+                <Field label={t('Cantidad de fragmentos a consultar (top-k)')}>
                   <Input
                     type="number"
                     min={1}
@@ -416,27 +418,27 @@ export function VersionFormDialog({
           {/* --- Memoria --- */}
           <Section
             icon={BrainCircuit}
-            title="Memoria del usuario"
-            description="Recordá preferencias y datos del paciente entre conversaciones."
+            title={t('Memoria del usuario')}
+            description={t('Recordá preferencias y datos del paciente entre conversaciones.')}
           >
             <div className="flex items-center justify-between rounded-xl border border-border p-3">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">Guardar memoria del paciente</span>
+                <span className="text-sm font-medium">{t('Guardar memoria del paciente')}</span>
                 <span className="text-xs text-muted-foreground">
-                  Extrae hechos de la conversación y los reutiliza después.
+                  {t('Extrae hechos de la conversación y los reutiliza después.')}
                 </span>
               </div>
               <Switch
                 checked={form.memoryEnabled}
                 onCheckedChange={(checked) => update("memoryEnabled", checked)}
                 disabled={saving || uploadingInstructions}
-                aria-label="Guardar memoria del paciente"
+                aria-label={t('Guardar memoria del paciente')}
               />
             </div>
 
             {form.memoryEnabled && (
               <div className="flex flex-col gap-1.5">
-                <Label>Categorías a recordar</Label>
+                <Label>{t('Categorías a recordar')}</Label>
                 <div className="flex flex-wrap gap-1.5">
                   {MEMORY_CATEGORIES.map((category) => (
                     <button
@@ -457,7 +459,7 @@ export function VersionFormDialog({
                       }`}
                       disabled={saving || uploadingInstructions}
                     >
-                      {category}
+                      {t(category)}
                     </button>
                   ))}
                 </div>
@@ -465,11 +467,11 @@ export function VersionFormDialog({
             )}
           </Section>
 
-          <Field label="Notas de la versión (opcional)">
+          <Field label={t('Notas de la versión (opcional)')}>
             <Input
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Ej. Primera versión con memoria de preferencias"
+              placeholder={t('Ej. Primera versión con memoria de preferencias')}
               disabled={saving || uploadingInstructions}
             />
           </Field>
@@ -488,7 +490,7 @@ export function VersionFormDialog({
               ) : (
                 <Eye data-icon="inline-start" className="size-4" />
               )}
-              {showAdvanced ? "Ocultar configuración avanzada" : "Ver configuración avanzada (JSON)"}
+              {showAdvanced ? t('Ocultar configuración avanzada') : t('Ver configuración avanzada (JSON)')}
             </Button>
             {showAdvanced && (
               <textarea
@@ -515,21 +517,21 @@ export function VersionFormDialog({
 
           <DialogFooter className="-mx-6 -mb-5 px-6">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving || uploadingInstructions}>
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button type="submit" disabled={saving || uploadingInstructions}>
               {uploadingInstructions ? (
                 <>
                   <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  Indexando instrucciones...
+                  {t('Indexando instrucciones...')}
                 </>
               ) : saving ? (
                 <>
                   <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  Creando versión...
+                  {t('Creando versión...')}
                 </>
               ) : (
-                "Crear versión"
+                t('Crear versión')
               )}
             </Button>
           </DialogFooter>

@@ -20,6 +20,7 @@ import {
   Video,
   Zap,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import {
@@ -77,6 +78,7 @@ export function ProfessionalCalendar({
   fixedProfessionalId?: string | null;
   fixedProfessionalName?: string | null;
 }) {
+  const t = useT();
   const { context, loading: userLoading } = useCurrentUser();
   const [view, setView] = useState<CalendarView>("month");
   const [cursor, setCursor] = useState(() => {
@@ -187,16 +189,16 @@ export function ProfessionalCalendar({
   const viewKey = `${view}-${cursor.toDateString()}`;
   const navPrevLabel =
     view === "month"
-      ? "Mes anterior"
+      ? t('Mes anterior')
       : view === "week"
-        ? "Semana anterior"
-        : "Día anterior";
+        ? t('Semana anterior')
+        : t('Día anterior');
   const navNextLabel =
     view === "month"
-      ? "Mes siguiente"
+      ? t('Mes siguiente')
       : view === "week"
-        ? "Semana siguiente"
-        : "Día siguiente";
+        ? t('Semana siguiente')
+        : t('Día siguiente');
 
   if (userLoading) {
     return (
@@ -249,11 +251,11 @@ export function ProfessionalCalendar({
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title="Calendario"
+        title={t('Calendario')}
         description={
           professionalName
-            ? `Citas de ${professionalName}`
-            : "Calendario de citas"
+            ? t('Citas de {name}', { name: professionalName })
+            : t('Calendario de citas')
         }
         icon={CalendarDays}
         actions={
@@ -317,12 +319,11 @@ export function ProfessionalCalendar({
           onClick={goToday}
           className="shadow-sm"
         >
-          <CalendarCheck data-icon="inline-start" /> Hoy
+          <CalendarCheck data-icon="inline-start" /> {t('Hoy')}
         </Button>
         <span className="flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-[11.5px] font-semibold text-primary-strong">
           <CalendarClock className="size-3.5" aria-hidden="true" />
-          {appointments.length} cita{appointments.length === 1 ? "" : "s"} en el
-          rango
+          {appointments.length} cita{appointments.length === 1 ? "" : "s"} {t('en el rango')}
         </span>
       </div>
 
@@ -336,7 +337,7 @@ export function ProfessionalCalendar({
               <Stethoscope className="size-6 text-primary-strong" />
             </div>
             <p className="text-sm font-medium text-foreground">
-              El usuario no es un profesional clínico
+              {t('El usuario no es un profesional clínico')}
             </p>
           </div>
         ) : view === "month" ? (
@@ -535,7 +536,7 @@ export function ProfessionalCalendar({
                     {dayAppointments.length === 0 && (
                       <div className="flex flex-1 items-center justify-center gap-1 text-[10.5px] text-muted-foreground/70">
                         <CalendarX className="size-3.5" aria-hidden="true" />
-                        Sin citas
+                        {t('Sin citas')}
                       </div>
                     )}
                   </div>
@@ -563,7 +564,7 @@ export function ProfessionalCalendar({
                   <CalendarX className="size-6 text-primary-strong" />
                 </div>
                 <p className="text-sm font-medium text-foreground">
-                  Sin citas este día
+                  {t('Sin citas este día')}
                 </p>
               </div>
             ) : (
@@ -589,7 +590,7 @@ export function ProfessionalCalendar({
 
       {loading && (
         <p className="text-center text-[12px] text-muted-foreground">
-          Cargando citas...
+          {t('Cargando citas...')}
         </p>
       )}
     </div>
@@ -687,6 +688,7 @@ function DayDetailDialog({
   appointments: AppointmentDto[];
   onClose: () => void;
 }) {
+  const t = useT();
   const today = new Date();
   const isToday = date.toDateString() === today.toDateString();
   const agendaHref = `/appointments/agenda?fecha=${toDateKey(date)}`;
@@ -713,7 +715,7 @@ function DayDetailDialog({
               </DialogTitle>
               <DialogDescription className="text-[12px]">
                 {appointments.length} cita
-                {appointments.length === 1 ? "" : "s"} programada
+                {appointments.length === 1 ? "" : "s"} {t('programada')}
                 {appointments.length === 1 ? "" : "s"}
               </DialogDescription>
             </div>
@@ -728,7 +730,7 @@ function DayDetailDialog({
               />
             </div>
             <p className="text-[13px] font-medium text-foreground">
-              Sin citas este día
+              {t('Sin citas este día')}
             </p>
           </div>
         ) : (
@@ -744,11 +746,11 @@ function DayDetailDialog({
         )}
         <DialogFooter>
           <DialogClose render={<Button variant="outline" />}>
-            Cerrar
+            {t('Cerrar')}
           </DialogClose>
           <Link href={agendaHref} className={buttonVariants({ size: "sm" })}>
             <CalendarDays data-icon="inline-start" />
-            Ver agenda
+            {t('Ver agenda')}
           </Link>
         </DialogFooter>
       </DialogContent>

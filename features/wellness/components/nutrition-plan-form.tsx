@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { GlassWater, Search, Sparkles } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import { ApiError } from "@/lib/api/http";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,6 +101,7 @@ export function NutritionPlanFormDialog({
   onCreated,
 }: NutritionPlanFormDialogProps) {
   const isEditing = Boolean(plan);
+  const t = useT();
 
   // Form state
   const [name, setName] = useState("");
@@ -362,7 +364,7 @@ const handleSelectPatient = (p: PickerItem) => {
       setGenerateError(
         err instanceof ApiError
           ? err.message
-          : "No se pudo generar el plan. Intenta nuevamente.",
+          : t("No se pudo generar el plan. Intenta nuevamente."),
       );
     } finally {
       setGenerating(false);
@@ -471,13 +473,13 @@ const handleSelectPatient = (p: PickerItem) => {
         <DialogHeader>
           <DialogTitle>
             {isEditing
-              ? "Editar plan de alimentación"
-              : "Nuevo plan de alimentación"}
+              ? t("Editar plan de alimentación")
+              : t("Nuevo plan de alimentación")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Modifica los datos del plan y sus comidas."
-              : "Crea un nuevo plan nutricional con sus días y comidas."}
+              ? t("Modifica los datos del plan y sus comidas.")
+              : t("Crea un nuevo plan nutricional con sus días y comidas.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -486,7 +488,7 @@ const handleSelectPatient = (p: PickerItem) => {
             {/* Paciente (opcional) + generación con IA */}
             <div className="flex flex-col gap-1.5">
               <Label>
-                {isEditing ? "Paciente asociado" : "Paciente (opcional)"}
+                {isEditing ? t("Paciente asociado") : t("Paciente (opcional)")}
               </Label>
               {isEditing ? (
                 // En edición: mostrar el paciente del plan (solo lectura)
@@ -506,19 +508,19 @@ const handleSelectPatient = (p: PickerItem) => {
                       ×
                     </button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-fit"
-                    disabled={generating || saving}
-                    onClick={handleGenerate}
-                  >
-                    <Sparkles data-icon="inline-start" className="size-3" />
-                    {generating
-                      ? "Generando..."
-                      : "Generar plan con IA"}
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-fit"
+                      disabled={generating || saving}
+                      onClick={handleGenerate}
+                    >
+                      <Sparkles data-icon="inline-start" className="size-3" />
+                      {generating
+                        ? t("Generando...")
+                        : t("Generar plan con IA")}
+                    </Button>
                   {generateError && (
                     <p className="text-xs text-destructive">
                       {generateError}
@@ -530,7 +532,7 @@ const handleSelectPatient = (p: PickerItem) => {
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                     <Input
-                      placeholder="Buscar paciente por nombre..."
+                      placeholder={t("Buscar paciente por nombre...")}
                       value={patientSearch}
                       onChange={(e) => {
                         setPatientSearch(e.target.value);
@@ -539,11 +541,11 @@ const handleSelectPatient = (p: PickerItem) => {
                       className="h-9 pl-8"
                     />
                   </div>
-                  {loadingPatients && (
-                    <p className="text-xs text-muted-foreground">
-                      Buscando...
-                    </p>
-                  )}
+                    {loadingPatients && (
+                      <p className="text-xs text-muted-foreground">
+                        {t("Buscando...")}
+                      </p>
+                    )}
                   {patientResults.length > 0 && (
                     <div className="max-h-40 overflow-y-auto rounded-md border border-border">
                       {patientResults.map((p) => (
@@ -567,7 +569,7 @@ const handleSelectPatient = (p: PickerItem) => {
                     !loadingPatients &&
                     patientResults.length === 0 && (
                       <p className="text-xs text-muted-foreground">
-                        No se encontraron pacientes.
+                        {t("No se encontraron pacientes.")}
                       </p>
                     )}
                 </>
@@ -577,37 +579,37 @@ const handleSelectPatient = (p: PickerItem) => {
             {/* Datos básicos */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="plan-name">Nombre *</Label>
+                <Label htmlFor="plan-name">{t("Nombre")} *</Label>
                 <Input
                   id="plan-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ej: Plan keto bajo en carbohidratos"
+                  placeholder={t("Ej: Plan keto bajo en carbohidratos")}
                 />
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="plan-desc">Descripción</Label>
+                <Label htmlFor="plan-desc">{t("Descripción")}</Label>
                 <Textarea
                   id="plan-desc"
                   value={description}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setDescription(e.target.value)
                   }
-                  placeholder="Descripción del plan..."
+                  placeholder={t("Descripción del plan...")}
                   rows={2}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="plan-condition">Condición objetivo</Label>
+                <Label htmlFor="plan-condition">{t("Condición objetivo")}</Label>
                 <Input
                   id="plan-condition"
                   value={targetCondition}
                   onChange={(e) => setTargetCondition(e.target.value)}
-                  placeholder="Ej: Obesidad, Diabetes tipo 2"
+                  placeholder={t("Ej: Obesidad, Diabetes tipo 2")}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="plan-duration">Duración (días) *</Label>
+                <Label htmlFor="plan-duration">{t("Duración (días)")} *</Label>
                 <Input
                   id="plan-duration"
                   type="number"
@@ -618,18 +620,18 @@ const handleSelectPatient = (p: PickerItem) => {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="plan-calories">Calorías diarias objetivo</Label>
+                <Label htmlFor="plan-calories">{t("Calorías diarias objetivo")}</Label>
                 <Input
                   id="plan-calories"
                   type="number"
                   min={0}
                   value={dailyCalorieTarget}
                   onChange={(e) => setDailyCalorieTarget(e.target.value)}
-                  placeholder="Ej: 1800"
+                  placeholder={t("Ej: 1800")}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="plan-protein">Proteína (g/día)</Label>
+                <Label htmlFor="plan-protein">{t("Proteína (g/día)")}</Label>
                 <Input
                   id="plan-protein"
                   type="number"
@@ -637,11 +639,11 @@ const handleSelectPatient = (p: PickerItem) => {
                   step="0.1"
                   value={dailyProteinTarget}
                   onChange={(e) => setDailyProteinTarget(e.target.value)}
-                  placeholder="Ej: 120"
+                  placeholder={t("Ej: 120")}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="plan-carbs">Carbohidratos (g/día)</Label>
+                <Label htmlFor="plan-carbs">{t("Carbohidratos (g/día)")}</Label>
                 <Input
                   id="plan-carbs"
                   type="number"
@@ -649,11 +651,11 @@ const handleSelectPatient = (p: PickerItem) => {
                   step="0.1"
                   value={dailyCarbsTarget}
                   onChange={(e) => setDailyCarbsTarget(e.target.value)}
-                  placeholder="Ej: 200"
+                  placeholder={t("Ej: 200")}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="plan-fat">Grasa (g/día)</Label>
+                <Label htmlFor="plan-fat">{t("Grasa (g/día)")}</Label>
                 <Input
                   id="plan-fat"
                   type="number"
@@ -661,11 +663,11 @@ const handleSelectPatient = (p: PickerItem) => {
                   step="0.1"
                   value={dailyFatTarget}
                   onChange={(e) => setDailyFatTarget(e.target.value)}
-                  placeholder="Ej: 60"
+                  placeholder={t("Ej: 60")}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="plan-fiber">Fibra (g/día)</Label>
+                <Label htmlFor="plan-fiber">{t("Fibra (g/día)")}</Label>
                 <Input
                   id="plan-fiber"
                   type="number"
@@ -673,29 +675,29 @@ const handleSelectPatient = (p: PickerItem) => {
                   step="0.1"
                   value={dailyFiberTarget}
                   onChange={(e) => setDailyFiberTarget(e.target.value)}
-                  placeholder="Ej: 30"
+                  placeholder={t("Ej: 30")}
                 />
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="plan-allergens">Alergias / Restricciones</Label>
+                <Label htmlFor="plan-allergens">{t("Alergias / Restricciones")}</Label>
                 <Input
                   id="plan-allergens"
                   value={allergens}
                   onChange={(e) => setAllergens(e.target.value)}
-                  placeholder="Ej: Gluten, Lactosa, Frutos secos"
+                  placeholder={t("Ej: Gluten, Lactosa, Frutos secos")}
                 />
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="plan-meal-timing">Horarios de comida</Label>
+                <Label htmlFor="plan-meal-timing">{t("Horarios de comida")}</Label>
                 <Input
                   id="plan-meal-timing"
                   value={mealTiming}
                   onChange={(e) => setMealTiming(e.target.value)}
-                  placeholder="Ej: 7:00, 12:00, 15:30, 19:00"
+                  placeholder={t("Ej: 7:00, 12:00, 15:30, 19:00")}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>Estado</Label>
+                <Label>{t("Estado")}</Label>
                 <Select
                   value={status}
                   onValueChange={(v) => setStatus(v as NutritionPlanStatus)}
@@ -714,7 +716,7 @@ const handleSelectPatient = (p: PickerItem) => {
               </div>
               {!isEditing && (
                 <div className="flex flex-col gap-1.5">
-                  <Label>Tipo</Label>
+                  <Label>{t("Tipo")}</Label>
                   <Select
                     value={isTemplate ? "template" : "custom"}
                     onValueChange={(v) => setIsTemplate(v === "template")}
@@ -724,10 +726,10 @@ const handleSelectPatient = (p: PickerItem) => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="template">
-                        Template (biblioteca)
+                        {t("Template (biblioteca)")}
                       </SelectItem>
                       <SelectItem value="custom">
-                        Personalizado (paciente)
+                        {t("Personalizado (paciente)")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -738,10 +740,10 @@ const handleSelectPatient = (p: PickerItem) => {
             {/* Días y comidas */}
             {numDays > 0 && (
               <div className="flex flex-col gap-2">
-                <Label>Días y comidas</Label>
+                <Label>{t("Días y comidas")}</Label>
                 {loadingDetail && (
                   <p className="text-xs text-muted-foreground text-center py-2">
-                    Cargando comidas del plan...
+                    {t("Cargando comidas del plan...")}
                   </p>
                 )}
                 <Tabs value={activeDay} onValueChange={setActiveDay}>
@@ -752,7 +754,7 @@ const handleSelectPatient = (p: PickerItem) => {
                         value={String(d)}
                         className="text-xs"
                       >
-                        Día {d}
+                        {t("Día {day}", { day: String(d) })}
                       </TabsTrigger>
                     ))}
                   </TabsList>
@@ -768,12 +770,12 @@ const handleSelectPatient = (p: PickerItem) => {
                               concepto: agua de esa comida). */}
                           <div className="flex flex-col gap-2 rounded-md bg-muted/50 p-3">
                             <span className="text-xs font-semibold uppercase text-muted-foreground">
-                              Agua del día
+                              {t("Agua del día")}
                             </span>
                             <div className="flex flex-wrap items-end gap-3">
                               <div className="flex flex-col gap-1.5">
                                 <Label htmlFor={`daily-water-${d}`}>
-                                  Meta de agua (ml)
+                                  {t("Meta de agua (ml)")}
                                 </Label>
                                 <Input
                                   id={`daily-water-${d}`}
@@ -802,7 +804,7 @@ const handleSelectPatient = (p: PickerItem) => {
                                 ))}
                               </div>
                               <span className="pb-1 text-xs text-muted-foreground">
-                                ≈ {glasses} vasos de 300 ml
+                                ≈ {t("{glasses} vasos de 300 ml", { glasses: String(glasses) })}
                               </span>
                             </div>
                           </div>
@@ -826,7 +828,7 @@ const handleSelectPatient = (p: PickerItem) => {
                               </div>
                               <div className="grid gap-2 sm:grid-cols-3">
                                 <Input
-                                  placeholder="Descripción (ej: Ensalada de pollo)"
+                                  placeholder={t("Descripción (ej: Ensalada de pollo)")}
                                   value={data.description}
                                   onChange={(e) =>
                                     updateDayMeal(
@@ -839,7 +841,7 @@ const handleSelectPatient = (p: PickerItem) => {
                                   className="h-8 text-sm"
                                 />
                                 <Input
-                                  placeholder="Alimentos (ej: Pollo, aguacate, lechuga)"
+                                  placeholder={t("Alimentos (ej: Pollo, aguacate, lechuga)")}
                                   value={data.foods}
                                   onChange={(e) =>
                                     updateDayMeal(
@@ -853,7 +855,7 @@ const handleSelectPatient = (p: PickerItem) => {
                                 />
                                 <Input
                                   type="number"
-                                  placeholder="Calorías"
+                                  placeholder={t("Calorías")}
                                   value={data.calories}
                                   onChange={(e) =>
                                     updateDayMeal(
@@ -868,7 +870,7 @@ const handleSelectPatient = (p: PickerItem) => {
                                 <Input
                                   type="number"
                                   step="0.1"
-                                  placeholder="Proteína (g)"
+                                  placeholder={t("Proteína (g)")}
                                   value={data.proteinG}
                                   onChange={(e) =>
                                     updateDayMeal(d, meal, "proteinG", e.target.value)
@@ -878,7 +880,7 @@ const handleSelectPatient = (p: PickerItem) => {
                                 <Input
                                   type="number"
                                   step="0.1"
-                                  placeholder="Carbos (g)"
+                                  placeholder={t("Carbos (g)")}
                                   value={data.carbsG}
                                   onChange={(e) =>
                                     updateDayMeal(d, meal, "carbsG", e.target.value)
@@ -888,7 +890,7 @@ const handleSelectPatient = (p: PickerItem) => {
                                 <Input
                                   type="number"
                                   step="0.1"
-                                  placeholder="Grasa (g)"
+                                  placeholder={t("Grasa (g)")}
                                   value={data.fatG}
                                   onChange={(e) =>
                                     updateDayMeal(d, meal, "fatG", e.target.value)
@@ -898,7 +900,7 @@ const handleSelectPatient = (p: PickerItem) => {
                                 <Input
                                   type="number"
                                   step="0.1"
-                                  placeholder="Fibra (g)"
+                                  placeholder={t("Fibra (g)")}
                                   value={data.fiberG}
                                   onChange={(e) =>
                                     updateDayMeal(d, meal, "fiberG", e.target.value)
@@ -907,7 +909,7 @@ const handleSelectPatient = (p: PickerItem) => {
                                 />
                                 <Input
                                   type="number"
-                                  placeholder="Agua (ml)"
+                                  placeholder={t("Agua (ml)")}
                                   value={data.waterMl}
                                   onChange={(e) =>
                                     updateDayMeal(d, meal, "waterMl", e.target.value)
@@ -915,7 +917,7 @@ const handleSelectPatient = (p: PickerItem) => {
                                   className="h-8 text-sm"
                                 />
                                 <Input
-                                  placeholder="Notas"
+                                  placeholder={t("Notas")}
                                   value={data.notes}
                                   onChange={(e) =>
                                     updateDayMeal(
@@ -947,14 +949,14 @@ const handleSelectPatient = (p: PickerItem) => {
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
-            Cancelar
+            {t("Cancelar")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving || !name.trim()}>
             {saving
-              ? "Guardando..."
+              ? t("Guardando...")
               : isEditing
-                ? "Guardar cambios"
-                : "Crear plan"}
+                ? t("Guardar cambios")
+                : t("Crear plan")}
           </Button>
         </DialogFooter>
       </DialogContent>
