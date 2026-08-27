@@ -2037,5 +2037,15 @@
   "No se pudo enviar el reporte. Intenta de nuevo.": "No se pudo enviar el reporte. Intenta de nuevo.",
   "Reporte enviado correctamente": "Reporte enviado correctamente",
   "No se pudo resolver el reporte.": "No se pudo resolver el reporte.",
-  "Reporte resuelto": "Reporte resuelto"
+  "Reporte resuelto": "Reporte resuelto",
+  "reportes": "reportes",
+  "por": "por",
+  "Resolver": "Resolver",
+  "Publicaciones reportadas por incumplimiento de normas": "Publicaciones reportadas por incumplimiento de normas",
+  "Reportes activos": "Reportes activos",
+  "publicaciones reportadas": "publicaciones reportadas",
+  "No se pudieron cargar los reportes. Intenta de nuevo.": "No se pudieron cargar los reportes. Intenta de nuevo.",
+  "Sin reportes": "Sin reportes",
+  "No hay publicaciones reportadas pendientes.": "No hay publicaciones reportadas pendientes.",
+  "¿Estás seguro de que deseas eliminar esta publicación reportada? Esta acción no se puede deshacer.": "¿Estás seguro de que deseas eliminar esta publicación reportada? Esta acción no se puede deshacer."
 }
