@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
-import { useT } from "@/providers/i18n-provider";
+import { useI18n, useT } from "@/providers/i18n-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
 import { CommunityPagination } from "./community-pagination";
 import { SimpleBarChart } from "./charts";
@@ -35,6 +35,13 @@ const RANK_MEDAL: Record<number, string> = {
 
 export function StreaksPage() {
   const t = useT();
+  const { lang } = useI18n();
+  // Mes/año actual localizado (es/en) para el encabezado.
+  const rawMonth = new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-ES", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
+  const monthLabel = rawMonth.charAt(0).toUpperCase() + rawMonth.slice(1);
   const { members, awardXp, toast, streaks, streaksLoading, analytics, feed, analyticsLoading, publishPost } = useErp();
   const chartData = (analytics?.streakOverview.distribution ?? []).map((d) => ({ label: d.range, value: d.value }));
   const [page, setPage] = useState(1);
@@ -49,7 +56,7 @@ export function StreaksPage() {
       ]
     : [];
 
-  const feedMilestones = feed
+  const milestones = feed
     .filter((f) => f.kind === "hito" || f.kind === "racha")
     .slice(0, 5)
     .map((f) => ({
@@ -59,14 +66,6 @@ export function StreaksPage() {
       time: f.time,
       description: f.description,
     }));
-
-  const milestones = feedMilestones.length > 0
-    ? feedMilestones
-    : [
-        { member: "María García", memberId: "mock-1", streak: 30, time: "Hace 2h", description: t("alcanzó 30 días de racha") },
-        { member: "Carlos López", memberId: "mock-2", streak: 14, time: "Hace 4h", description: t("logro desbloqueado") },
-        { member: "Ana Martínez", memberId: "mock-3", streak: 7, time: "Hace 6h", description: t("racha de 7 días") },
-      ];
 
   const paginatedStreaks = useMemo(() => {
     const data = streaksLoading ? [] : streaks;
@@ -96,7 +95,7 @@ export function StreaksPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Rachas y logros")}
-        description={`${members.length} ${t("miembros")} · ${t("Agosto 2026")}`}
+        description={`${members.length} ${t("miembros")} · ${monthLabel}`}
         icon={Flame}
         actions={
           <Button size="sm" onClick={handlePublishRanking}>
@@ -260,6 +259,9 @@ export function StreaksPage() {
                   </div>
                 </div>
               ))}
+              {!analyticsLoading && milestones.length === 0 && (
+                <p className="p-6 text-center text-xs text-muted-foreground">{t("Sin hitos hoy")}</p>
+              )}
             </div>
           </div>
         </div>

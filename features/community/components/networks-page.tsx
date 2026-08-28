@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Share2,
   TrendingUp,
@@ -8,7 +9,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { useErp } from "../erp-provider";
-import { useT } from "@/providers/i18n-provider";
+import { useI18n, useT } from "@/providers/i18n-provider";
 import { XpLineChart, SimpleBarChart } from "./charts";
 
 const CHANNEL_ICONS: Record<string, string> = {
@@ -37,14 +38,29 @@ const CHANNEL_LABEL: Record<string, string> = {
 
 export function NetworksPage() {
   const t = useT();
+  const { lang } = useI18n();
   const { networks } = useErp();
 
-  // Build growth chart data from networks
-  const months = ["Abr", "May", "Jun", "Jul", "Ago"];
-  const growthData = months.map((month) => {
-    const point: Record<string, string | number> = { label: month };
+  // Meses reales presentes en los growthPoints del backend ("yyyy-MM").
+  const monthKeys = useMemo(() => {
+    const set = new Set<string>();
+    networks.forEach((n) => n.growth.forEach((g) => set.add(g.month)));
+    return [...set].sort();
+  }, [networks]);
+
+  // "2026-08" → etiqueta corta localizada (Ago / Aug).
+  const monthLabel = (key: string) => {
+    const [y, m] = key.split("-").map(Number);
+    const date = new Date(Date.UTC(y, (m ?? 1) - 1, 1));
+    return new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-ES", { month: "short" })
+      .format(date)
+      .replace(".", "");
+  };
+
+  const growthData = monthKeys.map((key) => {
+    const point: Record<string, string | number> = { label: monthLabel(key) };
     networks.forEach((n) => {
-      point[n.name] = n.growth.find((g) => g.month === month)?.value ?? 0;
+      point[n.name] = n.growth.find((g) => g.month === key)?.value ?? 0;
     });
     return point;
   });
