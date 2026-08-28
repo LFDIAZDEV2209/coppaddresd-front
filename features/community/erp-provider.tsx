@@ -804,7 +804,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     const pts = ds?.postTypes ?? [];
     const total = pts.reduce((s, p) => s + p.count, 0);
     return pts.map((p) => ({
-      name: p.type,
+      name: normalizeEnum(p.type),
       value: total === 0 ? 0 : Math.round((p.count / total) * 100),
     }));
   }, [ds]);
@@ -889,13 +889,21 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
 
   const publishPost = useCallback<ErpContextValue["publishPost"]>(
     ({ type, destination, body }) => {
+      // HotChocolate 16 serializa enums en SCREAMING_SNAKE_CASE (TEXTO, COMUNIDAD_ADRED)
+      const wireType = String(type).toUpperCase();
+      const pascalDest = toDestinationEnum(destination);
+      const wireDestination = pascalDest.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase();
       createPostMut({
         body,
-        type,
-        destination: toDestinationEnum(destination),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        type: wireType as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        destination: wireDestination as any,
       }).then((res) => {
         if (res.error) {
-          toast("No se pudo publicar la publicación");
+          const msg = res.error.message || "No se pudo publicar la publicación";
+          console.error("[community] createPost failed:", res.error);
+          toast(msg);
         } else {
           toast("Publicación creada correctamente");
           refetchPosts();
