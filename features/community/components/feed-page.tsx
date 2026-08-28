@@ -131,15 +131,15 @@ export function FeedPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-4 self-stretch">
-          {/* Hoy en números */}
-          <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+        <div className="flex flex-col gap-4">
+          {/* Hoy en números — grid compacto 2×3 */}
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Hoy en números")}
               icon={Zap}
               variant="primary"
             />
-            <div className="flex flex-1 flex-col justify-center gap-1 p-5">
+            <div className="grid grid-cols-2 gap-2 p-4">
               {[
                 { label: t("Posts publicados"), value: analytics?.feedToday.posts ?? 0, color: "var(--primary)" },
                 { label: t("Comentarios"), value: analytics?.feedToday.comments ?? 0, color: "var(--success)" },
@@ -148,22 +148,21 @@ export function FeedPage() {
                 { label: t("Rachas rotas"), value: analytics?.feedToday.streaksBroken ?? 0, color: "var(--destructive)" },
                 { label: t("XP entregados"), value: (analytics?.feedToday.xpDelivered ?? 0).toLocaleString("es-ES"), color: "var(--warning)" },
               ].map((stat) => (
-                <div key={stat.label} className="flex items-center justify-between py-1">
-                  <span className="text-xs">{stat.label}</span>
-                  <b className="text-sm" style={{ color: stat.color }}>{stat.value}</b>
+                <div key={stat.label} className="flex flex-col gap-1 rounded-xl bg-muted/60 px-3 py-2.5">
+                  <span className="text-[10.5px] font-medium leading-tight text-muted-foreground">{stat.label}</span>
+                  <b className="text-lg font-bold leading-none" style={{ color: stat.color }}>{stat.value}</b>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Grupos más activos — columnas compactas para caber bien */}
-          <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Grupos más activos hoy")}
               icon={MessageCircle}
               variant="primary"
             />
-            <div className="flex flex-1 flex-col">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -182,7 +181,6 @@ export function FeedPage() {
                 ))}
               </TableBody>
             </Table>
-            </div>
           </div>
         </div>
       </div>
