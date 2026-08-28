@@ -35,7 +35,7 @@ const RANK_MEDAL: Record<number, string> = {
 
 export function StreaksPage() {
   const t = useT();
-  const { members, awardXp, toast, streaks, streaksLoading, analytics, feed, analyticsLoading } = useErp();
+  const { members, awardXp, toast, streaks, streaksLoading, analytics, feed, analyticsLoading, publishPost } = useErp();
   const chartData = (analytics?.streakOverview.distribution ?? []).map((d) => ({ label: d.range, value: d.value }));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -76,6 +76,22 @@ export function StreaksPage() {
 
   const totalStreaks = streaksLoading ? 0 : streaks.length;
 
+  /** Publica el ranking real como publicación de la comunidad. */
+  const handlePublishRanking = () => {
+    const top5 = streaks.slice(0, 5);
+    const lines = top5.map(
+      (s, i) => `${RANK_MEDAL[i + 1] ?? `${i + 1}.`} ${s.member} — 🔥 ${s.streak} · ${s.xp.toLocaleString()} XP`,
+    );
+    const body = [
+      `🏆 ${t("Ranking de rachas de la comunidad")}`,
+      "",
+      ...lines,
+      "",
+      t("¡Sigue publicando para subir en el ranking!"),
+    ].join("\n");
+    publishPost({ type: "Texto", destination: "Todas las comunidades", body, pinned: false });
+  };
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
@@ -83,7 +99,7 @@ export function StreaksPage() {
         description={`${members.length} ${t("miembros")} · ${t("Agosto 2026")}`}
         icon={Flame}
         actions={
-          <Button size="sm" onClick={() => toast(t("Ranking publicado en ANTARES"))}>
+          <Button size="sm" onClick={handlePublishRanking}>
             <TrendingUp data-icon="inline-start" />
             {t("Publicar ranking")}
           </Button>
