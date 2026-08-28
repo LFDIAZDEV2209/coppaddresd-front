@@ -26,6 +26,7 @@ import { useI18n, useT } from "@/providers/i18n-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
 import { CommunityPagination } from "./community-pagination";
 import { SimpleBarChart } from "./charts";
+import { AwardMemberDialog } from "./award-dialog";
 
 const RANK_MEDAL: Record<number, string> = {
   1: "🥇",
@@ -42,7 +43,9 @@ export function StreaksPage() {
     year: "numeric",
   }).format(new Date());
   const monthLabel = rawMonth.charAt(0).toUpperCase() + rawMonth.slice(1);
-  const { members, awardXp, toast, streaks, streaksLoading, analytics, feed, analyticsLoading, publishPost } = useErp();
+  const { members, streaks, streaksLoading, analytics, feed, analyticsLoading, publishPost } = useErp();
+  const [awardTargetId, setAwardTargetId] = useState<string | null>(null);
+  const [awardOpen, setAwardOpen] = useState(false);
   const chartData = (analytics?.streakOverview.distribution ?? []).map((d) => ({ label: d.range, value: d.value }));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -193,17 +196,8 @@ export function StreaksPage() {
                           size="icon-sm"
                           variant="ghost"
                           onClick={() => {
-                            if (member) {
-                              awardXp({
-                                memberId: s.memberId,
-                                typeLabel: "Racha destacada",
-                                xp: 100,
-                                message: `¡${s.streak} días de racha! 🔥`,
-                                publishInFeed: false,
-                              });
-                            } else {
-                              toast(t("Premio enviado a") + " " + s.member);
-                            }
+                            setAwardTargetId(s.memberId);
+                            setAwardOpen(true);
                           }}
                           title={t("Premiar")}
                         >
@@ -266,6 +260,17 @@ export function StreaksPage() {
           </div>
         </div>
       </div>
+
+      {/* Diálogo de premiar (controlado, tipo racha destacada) */}
+      {awardTargetId && (
+        <AwardMemberDialog
+          key={awardTargetId}
+          memberId={awardTargetId}
+          open={awardOpen}
+          onOpenChange={setAwardOpen}
+          initialTipo="Racha destacada"
+        />
+      )}
     </div>
   );
 }

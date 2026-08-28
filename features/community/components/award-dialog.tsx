@@ -47,12 +47,15 @@ interface AwardDialogBodyProps {
   onOpenChange: (open: boolean) => void;
   memberId: string;
   onMemberIdChange: (id: string) => void;
+  /** Tipo de reconocimiento preseleccionado (ej. "Cofre especial"). */
+  initialTipo?: string;
 }
 
-function AwardDialogBody({ open, onOpenChange, memberId, onMemberIdChange }: AwardDialogBodyProps) {
+function AwardDialogBody({ open, onOpenChange, memberId, onMemberIdChange, initialTipo }: AwardDialogBodyProps) {
   const t = useT();
   const { members, awardXp } = useErp();
-  const [tipo, setTipo] = useState<string>("Puntos XP");
+  const defaultTipo = initialTipo ?? "Puntos XP";
+  const [tipo, setTipo] = useState<string>(defaultTipo);
   const [xp, setXp] = useState<number>(150);
   const [message, setMessage] = useState("");
   const [publish, setPublish] = useState(true);
@@ -62,7 +65,7 @@ function AwardDialogBody({ open, onOpenChange, memberId, onMemberIdChange }: Awa
     onOpenChange(false);
     setMessage("");
     setXp(150);
-    setTipo("Puntos XP");
+    setTipo(defaultTipo);
     setPublish(true);
   };
 
@@ -180,10 +183,12 @@ export function AwardMemberDialog({
   memberId,
   open,
   onOpenChange,
+  initialTipo,
 }: {
   memberId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialTipo?: string;
 }) {
   return (
     <AwardDialogBody
@@ -191,6 +196,7 @@ export function AwardMemberDialog({
       onOpenChange={onOpenChange}
       memberId={memberId}
       onMemberIdChange={() => {}}
+      initialTipo={initialTipo}
     />
   );
 }

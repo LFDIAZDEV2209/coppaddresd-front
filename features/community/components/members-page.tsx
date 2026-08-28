@@ -37,14 +37,16 @@ import {
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { mockDiagnostics, mockRegions } from "../mock-data";
-import { MemberAvatar } from "./member-avatar";
+import { MemberAvatar, profileName } from "./member-avatar";
 import { LevelBadge } from "./level-badge";
 import { AwardDialog, AwardMemberDialog } from "./award-dialog";
+import { MessageDialog } from "./message-dialog";
 import { CommunityPagination } from "./community-pagination";
+import type { CommunityMember } from "../types";
 
 export function MembersPage() {
   const t = useT();
-  const { members, sendMessage, toast, membersLoading, membersError } = useErp();
+  const { members, sendMessage, membersLoading, membersError } = useErp();
   const [diagFilter, setDiagFilter] = useState("all");
   const [regionFilter, setRegionFilter] = useState("all");
   // Prefill desde el buscador del topbar (?q=).
@@ -56,6 +58,8 @@ export function MembersPage() {
   const [tablePageSize, setTablePageSize] = useState(5);
   const [awardTarget, setAwardTarget] = useState<string | null>(null);
   const [awardOpen, setAwardOpen] = useState(false);
+  const [msgTarget, setMsgTarget] = useState<CommunityMember | null>(null);
+  const [msgOpen, setMsgOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
@@ -180,8 +184,8 @@ export function MembersPage() {
                   variant="outline"
                   className="flex-1"
                   onClick={() => {
-                    sendMessage(m.id, t("¡Hola! Nos gustaría saber de ti 💙"));
-                    toast(t("Mensaje enviado"));
+                    setMsgTarget(m);
+                    setMsgOpen(true);
                   }}
                 >
                   <Send data-icon="inline-start" />
@@ -298,8 +302,8 @@ export function MembersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => {
-                            sendMessage(m.id, t("¡Hola! Nos gustaría saber de ti 💙"));
-                            toast(t("Mensaje enviado"));
+                            setMsgTarget(m);
+                            setMsgOpen(true);
                           }}
                         >
                           <Send className="size-3.5" />
@@ -335,6 +339,19 @@ export function MembersPage() {
           memberId={awardTarget}
           open={awardOpen}
           onOpenChange={setAwardOpen}
+        />
+      )}
+
+      {/* Diálogo editable antes de enviar el mensaje */}
+      {msgTarget && (
+        <MessageDialog
+          key={msgTarget.id}
+          open={msgOpen}
+          onOpenChange={setMsgOpen}
+          title={t("Mensaje")}
+          description={profileName(`${msgTarget.firstName} ${msgTarget.lastName}`, msgTarget.isSystem, t)}
+          defaultText={t("¡Hola! Nos gustaría saber de ti 💙")}
+          onSend={(text) => sendMessage(msgTarget.id, text)}
         />
       )}
     </div>

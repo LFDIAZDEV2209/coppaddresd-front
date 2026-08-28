@@ -25,14 +25,22 @@ import { MemberAvatar } from "./member-avatar";
 import { RiskBadge } from "./risk-badge";
 import { SimpleBarChart } from "./charts";
 import { CommunityPagination } from "./community-pagination";
+import { MessageDialog } from "./message-dialog";
+import { AwardMemberDialog } from "./award-dialog";
+import type { CommunityMember } from "../types";
 
 export function InactivePage() {
   const t = useT();
-  const { inactive, sendMessage, sendBulkInactive, awardXp, toast, analytics, analyticsLoading } = useErp();
+  const { inactive, sendMessage, sendBulkInactive, analytics, analyticsLoading } = useErp();
   const chartData = (analytics?.inactivityDistribution ?? []).map((d) => ({ label: d.range, value: d.value }));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const paginatedInactive = inactive.slice((page - 1) * pageSize, page * pageSize);
+  const [msgTarget, setMsgTarget] = useState<CommunityMember | null>(null);
+  const [msgOpen, setMsgOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [awardTarget, setAwardTarget] = useState<string | null>(null);
+  const [awardOpen, setAwardOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -61,7 +69,7 @@ export function InactivePage() {
           <Button
             size="sm"
             className="shrink-0 self-start sm:self-center"
-            onClick={() => sendBulkInactive(t("¡Hola! Nos gustaría saber de ti 💙"))}
+            onClick={() => setBulkOpen(true)}
           >
             <Send data-icon="inline-start" />
             {t("Mensaje masivo")}
@@ -109,8 +117,8 @@ export function InactivePage() {
                           size="icon-sm"
                           variant="ghost"
                           onClick={() => {
-                            sendMessage(m.id, t("¡Extrañamos tus publicaciones!"));
-                            toast(t("Mensaje enviado"));
+                            setMsgTarget(m);
+                            setMsgOpen(true);
                           }}
                           title={t("Enviar")}
                         >
@@ -119,15 +127,10 @@ export function InactivePage() {
                         <Button
                           size="icon-sm"
                           variant="ghost"
-                          onClick={() =>
-                            awardXp({
-                              memberId: m.id,
-                              typeLabel: "Cofre especial",
-                              xp: 150,
-                              message: "",
-                              publishInFeed: false,
-                            })
-                          }
+                          onClick={() => {
+                            setAwardTarget(m.id);
+                            setAwardOpen(true);
+                          }}
                           title={t("Cofre")}
                         >
                           <Gift className="size-3.5" />
@@ -149,6 +152,41 @@ export function InactivePage() {
             />
           )}
         </div>
+
+        {/* Diálogo editable antes de enviar el mensaje individual */}
+        {msgTarget && (
+          <MessageDialog
+            key={msgTarget.id}
+            open={msgOpen}
+            onOpenChange={setMsgOpen}
+            title={t("Mensaje")}
+            description={msgTarget.firstName + " " + msgTarget.lastName}
+            defaultText={t("¡Extrañamos tus publicaciones!")}
+            onSend={(text) => sendMessage(msgTarget.id, text)}
+          />
+        )}
+
+        {/* Diálogo editable antes del mensaje masivo */}
+        <MessageDialog
+          key="bulk"
+          open={bulkOpen}
+          onOpenChange={setBulkOpen}
+          title={t("Mensaje masivo")}
+          description={t("Se enviará como Equipo ANTARES a los miembros inactivos")}
+          defaultText={t("¡Hola! Nos gustaría saber de ti 💙")}
+          onSend={(text) => sendBulkInactive(text)}
+        />
+
+        {/* Diálogo de cofre (reconocimiento editable) */}
+        {awardTarget && (
+          <AwardMemberDialog
+            key={awardTarget}
+            memberId={awardTarget}
+            open={awardOpen}
+            onOpenChange={setAwardOpen}
+            initialTipo="Cofre especial"
+          />
+        )}
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
