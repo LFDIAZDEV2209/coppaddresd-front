@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Users,
   Send,
@@ -46,7 +47,9 @@ export function MembersPage() {
   const { members, sendMessage, toast, membersLoading, membersError } = useErp();
   const [diagFilter, setDiagFilter] = useState("all");
   const [regionFilter, setRegionFilter] = useState("all");
-  const [search, setSearch] = useState("");
+  // Prefill desde el buscador del topbar (?q=).
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [cardsPage, setCardsPage] = useState(1);
   const [cardsPageSize, setCardsPageSize] = useState(5);
   const [tablePage, setTablePage] = useState(1);

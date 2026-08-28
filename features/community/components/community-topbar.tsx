@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Menu, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,13 @@ interface CommunityTopbarProps {
 export function CommunityTopbar({ onMenuClick }: CommunityTopbarProps) {
   const router = useRouter();
   const t = useT();
+  const [query, setQuery] = useState("");
+
+  /** Enter → filtra miembros por el término buscado. */
+  const handleSearch = () => {
+    const q = query.trim();
+    if (q) router.push(`/community/members?q=${encodeURIComponent(q)}`);
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-[var(--sidebar)] px-4 text-[var(--sidebar-foreground)]">
@@ -41,6 +49,11 @@ export function CommunityTopbar({ onMenuClick }: CommunityTopbarProps) {
         <input
           className="h-9 w-64 rounded-lg border border-white/15 bg-white/5 pl-9 pr-3 text-[13px] text-white outline-none transition-all placeholder:text-white/50 focus-visible:border-white/30 focus-visible:ring-2 focus-visible:ring-white/20 xl:w-72"
           placeholder={t("Buscar miembro, post, región…")}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearch();
+          }}
         />
       </div>
 

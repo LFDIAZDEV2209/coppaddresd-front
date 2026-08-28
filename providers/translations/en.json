@@ -1255,6 +1255,7 @@
   "No se pudo confirmar la solicitud. Verifica el horario (anticipación mínima) y que no se solape con otra cita.": "Could not confirm the request. Verify the time (minimum lead time) and that it doesn't overlap with another appointment.",
   "No se pudo crear el profesional. Intenta nuevamente.": "Could not create the professional. Please try again.",
   "No se pudo eliminar el comentario.": "Failed to delete comment.",
+  "No se pudo enviar el mensaje. Intenta de nuevo.": "We couldn't send the message. Try again.",
   "No se pudo enviar el reporte. Intenta de nuevo.": "Failed to send report. Try again.",
   "No se pudo enviar la invitación.": "Could not send the invitation.",
   "No se pudo finalizar la sesión.": "Could not end the session.",
