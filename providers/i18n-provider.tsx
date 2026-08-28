@@ -46,20 +46,19 @@ export function I18nProvider({
   children: ReactNode;
   initialLang?: Language;
 }) {
-  const [lang, setLangState] = useState<Language>(initialLang);
-
-  // Mount-only: apply localStorage ONLY when no cookie exists (fresh browser).
-  // When the cookie IS present, the server already rendered the correct language
-  // via initialLang — no flash, no re-render needed.
-  useEffect(() => {
-    if (!document.cookie.includes(`${STORAGE_KEY}=`)) {
+  // Lazy initializer: aplica localStorage SOLO cuando no existe cookie (navegador
+  // fresco). Cuando la cookie existe, el server ya renderizó el idioma correcto
+  // vía initialLang — sin flash ni re-render.
+  const [lang, setLangState] = useState<Language>(() => {
+    if (typeof document !== 'undefined' && !document.cookie.includes(`${STORAGE_KEY}=`)) {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === 'es' || stored === 'en') {
-        setLangState(prev => prev === stored ? prev : stored);
-      }
+      if (stored === 'es' || stored === 'en') return stored;
     }
+    return initialLang;
+  });
 
-    // If logged in, fetch server preference and apply if different.
+  useEffect(() => {
+    // Si hay sesión, obtiene la preferencia del servidor y la aplica si difiere.
     if (getAccessToken()) {
       getPreferences()
         .then((pref) => {

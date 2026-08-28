@@ -1,16 +1,17 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2,
+  Check,
   Copy,
   Loader2,
   MailPlus,
   ShieldCheck,
   Stethoscope,
 } from "lucide-react";
-import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,9 +41,14 @@ export function ProfessionalDetail({ id }: { id: string }) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState<{ kind: "ok" | "error"; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    kind: "ok" | "error";
+    message: string;
+  } | null>(null);
   const [roleByClinic, setRoleByClinic] = useState<Record<string, string>>({});
   const [dirty, setDirty] = useState(false);
+  const [invitationLink, setInvitationLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(
     async (showSpinner = false) => {
@@ -63,7 +69,10 @@ export function ProfessionalDetail({ id }: { id: string }) {
         }
         setDirty(false);
       } catch {
-        setFeedback({ kind: "error", message: t("No se pudo cargar el profesional.") });
+        setFeedback({
+          kind: "error",
+          message: "No se pudo cargar el profesional.",
+        });
       } finally {
         if (showSpinner) setLoading(false);
       }
@@ -93,7 +102,10 @@ export function ProfessionalDetail({ id }: { id: string }) {
         }
       } catch {
         if (!cancelled) {
-          setFeedback({ kind: "error", message: t("No se pudo cargar el profesional.") });
+          setFeedback({
+            kind: "error",
+            message: "No se pudo cargar el profesional.",
+          });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -105,27 +117,46 @@ export function ProfessionalDetail({ id }: { id: string }) {
   }, [id]);
 
   const canManageScopes = useMemo(
-    () => Boolean(employee?.userId) && scopes !== null && !scopes.requiresInvitation,
+    () =>
+      Boolean(employee?.userId) &&
+      scopes !== null &&
+      !scopes.requiresInvitation,
     [employee, scopes],
   );
 
   const onInvite = async () => {
     setBusy(true);
     setFeedback(null);
+    setInvitationLink(null);
     try {
       const result = await inviteEmployee(id);
+      setInvitationLink(result.invitationLink);
       const message = result.invitationLink
-        ? t("Invitación enviada. Enlace (dev): {link}", { link: result.invitationLink })
-        : t("Invitación enviada a {email}. Recibirá el enlace por correo.", { email: employee?.email ?? "" });
+        ? `Invitación enviada. El enlace quedó listo para copiar.`
+        : `Invitación enviada a ${employee?.email}. Recibirá el enlace por correo.`;
       setFeedback({ kind: "ok", message });
       await load(true);
     } catch (err) {
       setFeedback({
         kind: "error",
-        message: err instanceof ApiError ? err.message : t("No se pudo enviar la invitación."),
+        message:
+          err instanceof ApiError
+            ? err.message
+            : "No se pudo enviar la invitación.",
       });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const copyInvitationLink = async () => {
+    if (!invitationLink) return;
+    try {
+      await navigator.clipboard.writeText(invitationLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setFeedback({ kind: "error", message: "No se pudo copiar el enlace." });
     }
   };
 
@@ -133,25 +164,34 @@ export function ProfessionalDetail({ id }: { id: string }) {
     setBusy(true);
     setFeedback(null);
     try {
-      const rolesToApply: Array<{ roleId: string; scopeType: string; scopeId: string | null }> =
-        Object.entries(roleByClinic)
-          .filter(([, roleId]) => roleId)
-          .map(([clinicId, roleId]) => ({
-            roleId,
-            scopeType: "Clinic",
-            scopeId: clinicId,
-          }));
+      const rolesToApply: Array<{
+        roleId: string;
+        scopeType: string;
+        scopeId: string | null;
+      }> = Object.entries(roleByClinic)
+        .filter(([, roleId]) => roleId)
+        .map(([clinicId, roleId]) => ({
+          roleId,
+          scopeType: "Clinic",
+          scopeId: clinicId,
+        }));
 
       await updateProfessionalScopes(id, {
         roles: rolesToApply,
         permissions: scopes?.permissions ?? [],
       });
-      setFeedback({ kind: "ok", message: t("Permisos por clínica actualizados.") });
+      setFeedback({
+        kind: "ok",
+        message: "Permisos por clínica actualizados.",
+      });
       await load();
     } catch (err) {
       setFeedback({
         kind: "error",
-        message: err instanceof ApiError ? err.message : t("No se pudieron guardar los permisos."),
+        message:
+          err instanceof ApiError
+            ? err.message
+            : "No se pudieron guardar los permisos.",
       });
     } finally {
       setBusy(false);
@@ -162,7 +202,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-5xl items-center justify-center text-muted-foreground">
         <Loader2 className="mr-2 size-5 animate-spin" />
-        {t("Cargando...")}
+        Cargando...
       </div>
     );
   }
@@ -175,8 +215,12 @@ export function ProfessionalDetail({ id }: { id: string }) {
           description={t("No se encontró el profesional.")}
           icon={Stethoscope}
         />
-        <Button variant="outline" className="mt-4" onClick={() => router.push("/professionals")}>
-          {t("Volver al directorio")}
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => router.push("/professionals")}
+        >
+          Volver al directorio
         </Button>
       </div>
     );
@@ -187,7 +231,9 @@ export function ProfessionalDetail({ id }: { id: string }) {
       <PageHeader
         title={`${employee.firstName} ${employee.middleName ?? ""} ${employee.lastName}`}
         description={`${employee.email} · ${
-          employee.isProfessional ? (employee.professionalTypeName ?? t("Profesional")) : t("Empleado")
+          employee.isProfessional
+            ? (employee.professionalTypeName ?? "Profesional")
+            : "Empleado"
         }`}
         icon={Stethoscope}
         actions={
@@ -200,7 +246,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
                   : "bg-muted text-muted-foreground"
             }`}
           >
-            {t(STATUS_LABELS[employee.status] ?? employee.status)}
+            {STATUS_LABELS[employee.status] ?? employee.status}
           </span>
         }
       />
@@ -223,23 +269,32 @@ export function ProfessionalDetail({ id }: { id: string }) {
           <section className="rounded-2xl border border-border bg-card">
             <div className="flex items-center gap-2 border-b border-border px-5 py-4">
               <ShieldCheck className="size-4 text-primary" />
-              <h2 className="text-[14px] font-semibold">{t("Permisos por clínica")}</h2>
+              <h2 className="text-[14px] font-semibold">
+                Permisos por clínica
+              </h2>
             </div>
 
             {!employee.userId ? (
               <div className="flex flex-col items-start gap-3 p-5">
                 <p className="text-[13px] text-muted-foreground">
-                  {t("Este profesional aún no tiene usuario. Invítalo para poder asignar sus permisos por clínica.")}
+                  Este profesional aún no tiene usuario. Invítalo para poder
+                  asignar sus permisos por clínica.
                 </p>
                 <Button onClick={onInvite} disabled={busy}>
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : <MailPlus className="size-4" />}
-                  {t("Invitar al profesional")}
+                  {busy ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <MailPlus className="size-4" />
+                  )}
+                  Invitar al profesional
                 </Button>
               </div>
             ) : canManageScopes ? (
               <div className="p-5">
                 <p className="mb-4 text-[12.5px] text-muted-foreground">
-                  {t("El rol se asigna por clínica: el profesional puede tener permisos distintos en cada una. Los cambios aplican de inmediato.")}
+                  El rol se asigna por clínica: el profesional puede tener
+                  permisos distintos en cada una. Los cambios aplican de
+                  inmediato.
                 </p>
                 <div className="space-y-3">
                   {employee.clinics.map((clinic) => (
@@ -253,18 +308,26 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           {clinic.clinicName}
                           {clinic.isPrimary && (
                             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                              {t("Principal")}
+                              Principal
                             </span>
                           )}
                         </p>
                         <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-                          {t(currentRoleName(clinic.clinicId, roleByClinic, scopes, roles))}
+                          {currentRoleName(
+                            clinic.clinicId,
+                            roleByClinic,
+                            scopes,
+                            roles,
+                          )}
                         </p>
                       </div>
                       <select
                         value={roleByClinic[clinic.clinicId] ?? ""}
                         onChange={(e) => {
-                          setRoleByClinic((prev) => ({ ...prev, [clinic.clinicId]: e.target.value }));
+                          setRoleByClinic((prev) => ({
+                            ...prev,
+                            [clinic.clinicId]: e.target.value,
+                          }));
                           setDirty(true);
                         }}
                         className="h-9 w-full rounded-lg border border-border bg-background px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-56"
@@ -282,15 +345,20 @@ export function ProfessionalDetail({ id }: { id: string }) {
 
                 <div className="mt-4 flex justify-end">
                   <Button onClick={onSaveScopes} disabled={busy || !dirty}>
-                    {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
-                    {t("Guardar permisos")}
+                    {busy ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="size-4" />
+                    )}
+                    Guardar permisos
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="p-5">
                 <p className="text-[13px] text-muted-foreground">
-                  {t("No hay clínicas asignadas. Agrega clínicas desde la edición del profesional.")}
+                  No hay clínicas asignadas. Agrega clínicas desde la edición
+                  del profesional.
                 </p>
               </div>
             )}
@@ -301,18 +369,23 @@ export function ProfessionalDetail({ id }: { id: string }) {
         <div className="space-y-5">
           <section className="rounded-2xl border border-border bg-card">
             <div className="border-b border-border px-5 py-4">
-              <h2 className="text-[14px] font-semibold">{t("Invitación")}</h2>
+              <h2 className="text-[14px] font-semibold">Invitación</h2>
             </div>
             <div className="space-y-3 p-5">
               <InfoRow label={t("Organización")} value={employee.organizationName} />
-              <InfoRow label={t("Estado")} value={t(STATUS_LABELS[employee.status] ?? employee.status)} />
+              <InfoRow
+                label={t("Estado")}
+                value={STATUS_LABELS[employee.status] ?? employee.status}
+              />
               {employee.userId ? (
                 <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 px-3 py-2">
                   <span className="text-[12.5px] font-medium text-emerald-700">
-                    {t("Usuario vinculado")}
+                    Usuario vinculado
                   </span>
                   <button
-                    onClick={() => navigator.clipboard.writeText(employee.userId!)}
+                    onClick={() =>
+                      navigator.clipboard.writeText(employee.userId!)
+                    }
                     className="text-[12px] text-muted-foreground hover:text-foreground"
                     aria-label={t("Copiar ID de usuario")}
                   >
@@ -321,8 +394,51 @@ export function ProfessionalDetail({ id }: { id: string }) {
                 </div>
               ) : (
                 <Button className="w-full" onClick={onInvite} disabled={busy}>
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : <MailPlus className="size-4" />}
-                  {t("Invitar")}
+                  {busy ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <MailPlus className="size-4" />
+                  )}
+                  Invitar
+                </Button>
+              )}
+
+              {invitationLink && (
+                <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-muted/40 p-3">
+                  <span className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Enlace de invitación (72 h, un solo uso)
+                  </span>
+                  <code className="break-all font-mono text-[11px] text-foreground">
+                    {invitationLink}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={copyInvitationLink}
+                  >
+                    {copied ? (
+                      <Check className="size-3.5" />
+                    ) : (
+                      <Copy className="size-3.5" />
+                    )}
+                    {copied ? "Copiado" : "Copiar enlace"}
+                  </Button>
+                </div>
+              )}
+
+              {employee.userId && employee.status === "Invited" && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={onInvite}
+                  disabled={busy}
+                >
+                  {busy ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <MailPlus className="size-4" />
+                  )}
+                  Reenviar invitación
                 </Button>
               )}
             </div>
@@ -331,12 +447,13 @@ export function ProfessionalDetail({ id }: { id: string }) {
           {employee.professionalTypeName && (
             <section className="rounded-2xl border border-border bg-card">
               <div className="border-b border-border px-5 py-4">
-                <h2 className="text-[14px] font-semibold">{t("Profesión")}</h2>
+                <h2 className="text-[14px] font-semibold">Profesión</h2>
               </div>
               <div className="space-y-3 p-5">
                 <InfoRow label={t("Tipo")} value={employee.professionalTypeName} />
                 <p className="text-[12px] text-muted-foreground">
-                  {t("El profesional puede completar su perfil y credenciales desde su propio acceso.")}
+                  El profesional puede completar su perfil y credenciales desde
+                  su propio acceso.
                 </p>
               </div>
             </section>

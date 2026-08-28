@@ -29,7 +29,10 @@ export function formatTime(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function formatDate(value: string | null | undefined): string {
@@ -133,7 +136,9 @@ export function requestStatusColor(status: AppointmentRequestStatus): ColorSet {
   }
 }
 
-export function sessionStatusColor(status: TelemedicineSessionStatus): ColorSet {
+export function sessionStatusColor(
+  status: TelemedicineSessionStatus,
+): ColorSet {
   switch (status) {
     case "Active":
       return colors.green;
@@ -149,12 +154,32 @@ export function sessionStatusColor(status: TelemedicineSessionStatus): ColorSet 
   }
 }
 
+/** Tiempo relativo en español (p. ej. "hace 5 min") para bandejas tipo notificaciones. */
+export function timeAgo(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "hace un momento";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `hace ${days} d`;
+  return formatDate(value);
+}
+
 /** Muestra el rango [inicio – fin] en una sola línea. */
 export function formatRange(start: string, end: string): string {
   const from = new Date(start);
   const to = new Date(end);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return "—";
-  const date = from.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+  const date = from.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
   const f = formatTime(start);
   const t = formatTime(end);
   return `${date} · ${f} – ${t}`;

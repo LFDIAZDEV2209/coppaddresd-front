@@ -21,7 +21,8 @@ env:
   ECR_REPOSITORY: cooppadresd-frontend
   ECS_CLUSTER: cooppadresd-cluster
   ECS_SERVICE: cooppadresd-frontend
-  NEXT_PUBLIC_GATEWAY_URL: https://mzdxget3ui.execute-api.us-east-2.amazonaws.com
+  NEXT_PUBLIC_GATEWAY_URL: https://erp.coppadresd.com
+  NEXT_PUBLIC_COMMUNITY_API_URL: https://erp.coppadresd.com/api/v1/community
   NEXT_PUBLIC_APPLICATION_CODE: erp
   NEXT_PUBLIC_SESSION_IDLE_MINUTES: "30"
 
@@ -50,6 +51,7 @@ jobs:
         run: yarn build
         env:
           NEXT_PUBLIC_GATEWAY_URL: ${{ env.NEXT_PUBLIC_GATEWAY_URL }}
+          NEXT_PUBLIC_COMMUNITY_API_URL: ${{ env.NEXT_PUBLIC_COMMUNITY_API_URL }}
           NEXT_PUBLIC_APPLICATION_CODE: ${{ env.NEXT_PUBLIC_APPLICATION_CODE }}
           NEXT_PUBLIC_SESSION_IDLE_MINUTES: ${{ env.NEXT_PUBLIC_SESSION_IDLE_MINUTES }}
 
@@ -73,6 +75,7 @@ jobs:
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_GATEWAY_URL=${{ env.NEXT_PUBLIC_GATEWAY_URL }} \
+            --build-arg NEXT_PUBLIC_COMMUNITY_API_URL=${{ env.NEXT_PUBLIC_COMMUNITY_API_URL }} \
             --build-arg NEXT_PUBLIC_APPLICATION_CODE=${{ env.NEXT_PUBLIC_APPLICATION_CODE }} \
             --build-arg NEXT_PUBLIC_SESSION_IDLE_MINUTES=${{ env.NEXT_PUBLIC_SESSION_IDLE_MINUTES }} \
             -t "${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}" \

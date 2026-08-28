@@ -12,6 +12,10 @@ import {
   fetchAdminRequests,
   fetchAdminSessions,
   fetchAdminSummary,
+  fetchMyAppointments,
+  fetchMySummary,
+  type AdminAppointmentsFilters,
+  type MyAppointmentsFilters,
 } from "../services/appointments-service";
 
 interface UseAdminSummaryReturn {
@@ -21,7 +25,13 @@ interface UseAdminSummaryReturn {
   refetch: () => void;
 }
 
-export function useAdminSummary(): UseAdminSummaryReturn {
+/**
+ * Resumen operativo de telemedicina: global (admin) o del profesional
+ * autenticado según el fetcher (mismo shape de datos, distinto origen).
+ */
+function useSummaryFetcher(
+  fetcher: () => Promise<AdminSummaryDto>,
+): UseAdminSummaryReturn {
   const [summary, setSummary] = useState<AdminSummaryDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +41,7 @@ export function useAdminSummary(): UseAdminSummaryReturn {
     let active = true;
     (async () => {
       try {
-        const result = await fetchAdminSummary();
+        const result = await fetcher();
         if (!active) return;
         setSummary(result);
         setError(null);
@@ -45,7 +55,7 @@ export function useAdminSummary(): UseAdminSummaryReturn {
     return () => {
       active = false;
     };
-  }, [refreshKey]);
+  }, [fetcher, refreshKey]);
 
   const refetch = useCallback(() => {
     setLoading(true);
@@ -53,6 +63,26 @@ export function useAdminSummary(): UseAdminSummaryReturn {
   }, []);
 
   return { summary, loading, error, refetch };
+}
+
+export function useAdminSummary(): UseAdminSummaryReturn {
+  return useSummaryFetcher(fetchAdminSummary);
+}
+
+export function useMySummary(): UseAdminSummaryReturn {
+  return useSummaryFetcher(fetchMySummary);
+}
+
+/**
+ * Resumen operativo según el alcance de la vista de citas: admin → global,
+ * profesional → solo sus datos (KPIs acotados por identidad del JWT).
+ */
+export function useScopedSummary(
+  scope: "admin" | "professional",
+): UseAdminSummaryReturn {
+  return useSummaryFetcher(
+    scope === "professional" ? fetchMySummary : fetchAdminSummary,
+  );
 }
 
 interface UseAdminListReturn<T> {
@@ -68,13 +98,17 @@ interface UseAdminListReturn<T> {
 }
 
 export function useAdminList<T>(
-  loader: (page: number, pageSize: number) => Promise<{
+  loader: (
+    page: number,
+    pageSize: number,
+  ) => Promise<{
     items: T[];
     total: number;
     page: number;
     pageSize: number;
     totalPages: number;
   }>,
+  deps: unknown[] = [],
 ): UseAdminListReturn<T> {
   const [items, setItems] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
@@ -107,7 +141,7 @@ export function useAdminList<T>(
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, refreshKey]);
+  }, [page, pageSize, refreshKey, ...deps]);
 
   const setPage = useCallback((next: number) => {
     setPageState(next);
@@ -119,17 +153,104 @@ export function useAdminList<T>(
     setRefreshKey((key) => key + 1);
   }, []);
 
-  return { items, total, page, pageSize, totalPages, loading, error, setPage, refetch };
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages,
+    loading,
+    error,
+    setPage,
+    refetch,
+  };
 }
 
-export function useAdminAppointments(): UseAdminListReturn<AppointmentDto> {
-  return useAdminList((page, pageSize) => fetchAdminAppointments({ page, pageSize }));
+export function useAdminAppointments(
+  filters: AdminAppointmentsFilters = {},
+): UseAdminListReturn<AppointmentDto> {
+  const filterDeps = [
+    filters.professionalId,
+    filters.patientId,
+    filters.clinicId,
+    filters.locationId,
+    filters.status,
+    filters.from,
+    filters.to,
+  ];
+  const loader = useCallback(
+    (page: number, pageSize: number) =>
+      fetchAdminAppointments({ ...filters, page, pageSize }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      filters.professionalId,
+      filters.patientId,
+      filters.clinicId,
+      filters.locationId,
+      filters.status,
+      filters.from,
+      filters.to,
+    ],
+  );
+  return useAdminList(loader, filterDeps);
+}
+
+/**
+ * Listado de citas según el alcance de la vista: admin → listado global con
+ * filtros; profesional → solo sus citas (alcance por identidad del JWT en el
+ * backend). Mismo shape y paginación para que la UI sea idéntica.
+ */
+export function useScopedAppointments(
+  scope: "admin" | "professional",
+  filters: AdminAppointmentsFilters = {},
+): UseAdminListReturn<AppointmentDto> {
+  const loader = useCallback(
+    (page: number, pageSize: number) => {
+      const base = { page, pageSize };
+      if (scope === "professional") {
+        const scoped: MyAppointmentsFilters = {
+          patientId: filters.patientId,
+          locationId: filters.locationId,
+          status: filters.status,
+          from: filters.from,
+          to: filters.to,
+        };
+        return fetchMyAppointments({ ...scoped, ...base });
+      }
+      return fetchAdminAppointments({ ...filters, ...base });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      scope,
+      filters.professionalId,
+      filters.patientId,
+      filters.clinicId,
+      filters.locationId,
+      filters.status,
+      filters.from,
+      filters.to,
+    ],
+  );
+  return useAdminList(loader, [
+    scope,
+    filters.professionalId,
+    filters.patientId,
+    filters.clinicId,
+    filters.locationId,
+    filters.status,
+    filters.from,
+    filters.to,
+  ]);
 }
 
 export function useAdminRequests(): UseAdminListReturn<AppointmentRequestDto> {
-  return useAdminList((page, pageSize) => fetchAdminRequests({ page, pageSize }));
+  return useAdminList((page, pageSize) =>
+    fetchAdminRequests({ page, pageSize }),
+  );
 }
 
 export function useAdminSessions(): UseAdminListReturn<TelemedicineSessionDto> {
-  return useAdminList((page, pageSize) => fetchAdminSessions({ page, pageSize }));
+  return useAdminList((page, pageSize) =>
+    fetchAdminSessions({ page, pageSize }),
+  );
 }
