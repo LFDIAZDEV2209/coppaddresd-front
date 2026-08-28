@@ -58,7 +58,7 @@ function ChartFrame({
     return <div className={`${height} w-full animate-pulse rounded-xl bg-muted`} />;
   }
   return (
-    <div className={`${height} w-full`}>
+    <div className={`${height ?? "h-56"} w-full`}>
       <ResponsiveContainer width="100%" height="100%">
         {children as React.ReactElement}
       </ResponsiveContainer>
@@ -69,9 +69,11 @@ function ChartFrame({
 export function ActivityLineChart({
   data,
   loading = false,
+  height,
 }: {
   data: { dia: string; posts: number; comentarios: number; reacciones: number }[];
   loading?: boolean;
+  height?: string;
 }) {
   const t = useT();
   // Escala dinámica del eje Y según el pico máximo de actividad
@@ -79,8 +81,8 @@ export function ActivityLineChart({
   const step = max <= 20 ? 5 : max <= 100 ? 25 : 50;
   const domainMax = Math.ceil(max / step) * step || step;
   return (
-    <ChartFrame loading={loading}>
-      <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+    <ChartFrame loading={loading} height={height}>
+      <AreaChart data={data} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
         <defs>
           {(["posts", "comentarios", "reacciones"] as const).map((k, i) => (
             <linearGradient key={k} id={`cpLine-${k}`} x1="0" y1="0" x2="0" y2="1">
@@ -109,13 +111,15 @@ export function ActivityLineChart({
 export function PostTypesDoughnut({
   data,
   loading = false,
+  height,
 }: {
   data: { name: string; value: number }[];
   loading?: boolean;
+  height?: string;
 }) {
   const t = useT();
   return (
-    <ChartFrame loading={loading}>
+    <ChartFrame loading={loading} height={height}>
       <PieChart>
         <Pie
           data={data}
@@ -191,9 +195,11 @@ export function PeakHoursBar({
 export function DiagnosisRadar({
   data,
   loading = false,
+  height,
 }: {
   data: { subject: string; value: number; fullMark: number }[];
   loading?: boolean;
+  height?: string;
 }) {
   const t = useT();
   // Prediabetes arriba, Obesidad abajo, DM2 izquierda, DM2+HTA derecha (opuesto al anterior)
@@ -202,12 +208,13 @@ export function DiagnosisRadar({
   // Si faltase alguno por datos reales, mantiene el resto al final
   const normalized = ordered.filter((d) => order.includes(d.subject)).concat(ordered.filter((d) => !order.includes(d.subject)));
   return (
-    <ChartFrame loading={loading}>
-      <RadarChart data={normalized} outerRadius="65%">
+    <ChartFrame loading={loading} height={height}>
+      <RadarChart data={normalized} cx="50%" cy="50%" outerRadius="62%">
         <PolarGrid stroke="var(--border)" />
-        <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }} />
-        <PolarRadiusAxis tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} angle={90} />
-        <Radar name={t("Participación")} dataKey="value" stroke="var(--chart-1)" strokeWidth={2} fill="var(--chart-1)" fillOpacity={0.28} />
+        <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+        <PolarRadiusAxis tick={false} axisLine={false} angle={90} />
+        <Radar name={t("Participación")} dataKey="value" stroke="var(--chart-1)" strokeWidth={2} fill="var(--chart-1)" fillOpacity={0.22}>
+        </Radar>
         <Tooltip contentStyle={tooltipStyle} formatter={(value) => String(value)} />
       </RadarChart>
     </ChartFrame>
@@ -272,11 +279,14 @@ export function SimpleBarChart({
   data,
   loading = false,
   color = "var(--chart-1)",
+  colors,
   height,
 }: {
   data: { label: string; value: number }[];
   loading?: boolean;
   color?: string;
+  /** Color por barra (índice = posición en data); pisa `color` cuando se define. */
+  colors?: string[];
   height?: string;
 }) {
   const t = useT();
@@ -287,7 +297,9 @@ export function SimpleBarChart({
         <XAxis dataKey="label" {...axisProps} minTickGap={12} />
         <YAxis {...axisProps} allowDecimals={false} />
         <Tooltip contentStyle={tooltipStyle} formatter={(value) => String(value)} cursor={{ fill: "var(--muted)", opacity: 0.4 }} />
-        <Bar dataKey="value" name={t("Valor")} fill={color} radius={[4, 4, 0, 0]} maxBarSize={36} />
+        <Bar dataKey="value" name={t("Valor")} fill={color} radius={[4, 4, 0, 0]} maxBarSize={36}>
+          {colors?.map((c, i) => <Cell key={i} fill={c} />)}
+        </Bar>
       </BarChart>
     </ChartFrame>
   );

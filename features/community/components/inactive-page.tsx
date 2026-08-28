@@ -31,8 +31,14 @@ import type { CommunityMember } from "../types";
 
 export function InactivePage() {
   const t = useT();
-  const { inactive, sendMessage, sendBulkInactive, analytics, analyticsLoading } = useErp();
+  const { inactive, members, sendMessage, sendBulkInactive, analytics, analyticsLoading } = useErp();
   const chartData = (analytics?.inactivityDistribution ?? []).map((d) => ({ label: d.range, value: d.value }));
+  // Riesgo real: clasificación automática (Alto/Medio/Bajo) sobre todos los miembros.
+  const riskData = [
+    { label: t("Alto"), value: members.filter((m) => (m.risk ?? "Bajo") === "Alto").length },
+    { label: t("Medio"), value: members.filter((m) => m.risk === "Medio").length },
+    { label: t("Bajo"), value: members.filter((m) => (m.risk ?? "Bajo") === "Bajo").length },
+  ];
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const paginatedInactive = inactive.slice((page - 1) * pageSize, page * pageSize);
@@ -192,6 +198,7 @@ export function InactivePage() {
           <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Patrones de inactividad")}
+              description={t("Miembros activos según días sin actividad")}
               icon={AlertTriangle}
               variant="primary"
             />
@@ -201,12 +208,17 @@ export function InactivePage() {
           </div>
           <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
-              title={t("Riesgo por días")}
+              title={t("Miembros por nivel de riesgo")}
+              description={t("Clasificación automática según días sin publicar")}
               icon={Clock}
               variant="primary"
             />
             <div className="p-4">
-              <SimpleBarChart data={chartData} color="var(--destructive)" height="h-56" />
+              <SimpleBarChart
+                data={riskData}
+                colors={["var(--destructive)", "var(--warning)", "var(--success)"]}
+                height="h-56"
+              />
             </div>
           </div>
         </div>

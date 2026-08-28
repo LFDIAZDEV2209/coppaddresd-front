@@ -221,6 +221,7 @@ export function StreaksPage() {
           <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Distribución de rachas")}
+              description={t("Miembros activos según días de racha actual")}
               icon={BarChart3}
               variant="primary"
             />
@@ -232,7 +233,8 @@ export function StreaksPage() {
           {/* Hitos alcanzados hoy */}
           <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
-              title={t("Hitos alcanzados hoy")}
+              title={t("Hitos recientes")}
+              description={t("Logros y rachas publicados en el feed")}
               icon={Star}
               variant="primary"
             />
@@ -254,7 +256,7 @@ export function StreaksPage() {
                 </div>
               ))}
               {!analyticsLoading && milestones.length === 0 && (
-                <p className="p-6 text-center text-xs text-muted-foreground">{t("Sin hitos hoy")}</p>
+                <p className="p-6 text-center text-xs text-muted-foreground">{t("Sin hitos recientes")}</p>
               )}
             </div>
           </div>
