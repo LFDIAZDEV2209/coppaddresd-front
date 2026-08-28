@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Send,
   Pin,
@@ -77,6 +77,7 @@ const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
 export function PostsPage() {
   const t = useT();
   const { posts, publishPost, togglePin, deletePost, members } = useErp();
+  // Sin useSearchParams para evitar Suspense; el dashboard abre con ?compose=1
   const [type, setType] = useState<PostType>("Texto");
   const [destination, setDestination] = useState(DESTINOS[0]);
   const [body, setBody] = useState("");
@@ -89,8 +90,12 @@ export function PostsPage() {
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [logroTitle, setLogroTitle] = useState("");
-  // Composer toggle
+  // Composer toggle — auto-abre si ?compose=1 viene del dashboard
   const [showComposer, setShowComposer] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (new URLSearchParams(window.location.search).get("compose") === "1") setShowComposer(true);
+  }, []);
   // Paginación — Todas las publicaciones
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);

@@ -51,7 +51,7 @@ export function DashboardPage() {
         icon={LayoutDashboard}
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => router.push("/community/posts")}>
+            <Button variant="outline" size="sm" onClick={() => router.push("/community/posts?compose=1")}>
               <Plus data-icon="inline-start" />
               {t("Nuevo post")}
             </Button>
@@ -85,12 +85,12 @@ export function DashboardPage() {
             ))}
       </section>
 
-      {/* Gráficos fila 1 — 50/25/25 */}
+      {/* Gráficos fila 1 — 50/25/25, tarjetas de igual altura */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader title={t("Actividad (30 días)")} description={t("Posts, comentarios y reacciones")} icon={Activity} variant="primary" />
-          <div className="p-4">
-            <ActivityLineChart data={dashboardActivitySeries} loading={dashboardLoading} />
+          <div className="flex flex-1 flex-col p-4">
+            <ActivityLineChart data={dashboardActivitySeries} loading={dashboardLoading} height="h-56 min-h-56 flex-1 w-full" />
             <ChartLegend
               items={[
                 { label: t("Posts"), color: "var(--chart-1)" },
@@ -102,19 +102,19 @@ export function DashboardPage() {
         </div>
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Diagnóstico vs Participación")} description={t("Nivel de participación por diagnóstico")} icon={Radar} variant="primary" />
-          <div className="p-4">
-            <DiagnosisRadar data={dashboardDiagnosisParticipation.map((d) => ({ ...d, subject: t(d.subject) }))} loading={dashboardLoading} />
+          <div className="flex flex-1 items-center p-3">
+            <DiagnosisRadar data={dashboardDiagnosisParticipation.map((d) => ({ ...d, subject: t(d.subject) }))} loading={dashboardLoading} height="h-56 min-h-56 w-full" />
           </div>
         </div>
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Tipos de publicaciones")} description={t("Distribución del mes")} icon={PieChart} variant="primary" />
-          <div className="flex items-center gap-3 p-4">
+          <div className="flex flex-1 items-center gap-3 p-3">
             <div className="min-w-0 flex-1">
-              <PostTypesDoughnut data={dashboardPostTypeData} loading={dashboardLoading} />
+              <PostTypesDoughnut data={dashboardPostTypeData} loading={dashboardLoading} height="h-56 min-h-56 w-full" />
             </div>
-            <div className="flex shrink-0 flex-col gap-1.5">
+            <div className="flex shrink-0 flex-col gap-2">
               {dashboardPostTypeData.map((d, i) => (
-                <span key={d.name} className="flex items-center gap-1.5 text-[10px] leading-none text-muted-foreground">
+                <span key={d.name} className="flex items-center gap-1.5 text-[10.5px] leading-none text-muted-foreground">
                   <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                   {t(d.name)}
                 </span>
