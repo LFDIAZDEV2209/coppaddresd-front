@@ -44,7 +44,7 @@ export function RegionsPage() {
         icon={Map}
       />
 
-      {/* Fila 1: Mapa — ancho completo con react-leaflet */}
+      {/* Fila 1: Mapa — SVG offline (sin tiles) */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Distribución geográfica")}

@@ -1101,6 +1101,7 @@
   "Lote": "Lot",
   "Mañana": "Morning",
   "Mapa de presencia": "Mapa de presencia",
+  "Mapa de regiones": "Map of Regions",
   "Marcar como leída: {title}": "Mark as read: {title}",
   "Marcar todas como leídas": "Mark all as read",
   "Marino": "Navy",
@@ -1797,6 +1798,7 @@
   "Sin códigos postales para esta búsqueda.": "No postal codes for this search.",
   "Sin coincidencias en ICD-10.": "No ICD-10 matches found.",
   "Sin comentarios": "Sin comentarios",
+  "Sin datos": "Sin datos",
   "Sin datos de citas": "No appointment data",
   "Sin datos en este período.": "No data for this period.",
   "Sin descripción": "No description",
@@ -2071,5 +2073,5 @@
   "XP por rachas": "XP por rachas",
   "XP prom": "XP prom",
   "y todas sus asignaciones. Esta acción no se puede deshacer.": "and all their assignments. This action cannot be undone.",
-  "Sin datos": "Sin datos"
+  "miembro": "miembro"
 }
