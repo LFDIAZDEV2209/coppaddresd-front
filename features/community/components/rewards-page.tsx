@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import {
   Trophy,
   Award,
@@ -21,6 +22,7 @@ import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { AwardDialog } from "./award-dialog";
 import { XpLineChart } from "./charts";
+import { CommunityPagination } from "./community-pagination";
 
 const SCOPE_LABELS: Record<string, string> = {
   TODOS: "Todos",
@@ -37,6 +39,14 @@ const SCOPE_COLORS: Record<string, { bg: string; text: string; dot: string }> = 
 export function RewardsPage() {
   const t = useT();
   const { recognitions, analytics, messageReach } = useErp();
+
+  // Paginación de reconocimientos individuales (3 por defecto).
+  const [recPage, setRecPage] = useState(1);
+  const [recPageSize, setRecPageSize] = useState(3);
+  const paginatedRecognitions = useMemo(
+    () => recognitions.slice((recPage - 1) * recPageSize, recPage * recPageSize),
+    [recognitions, recPage, recPageSize],
+  );
 
   const xpData = (analytics?.xpDeliveredSeries ?? []).map((d) => ({
     label: d.label,
@@ -81,7 +91,7 @@ export function RewardsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                recognitions.map((r) => (
+                paginatedRecognitions.map((r) => (
                 <TableRow key={r.id} className="transition-colors hover:bg-muted/50">
                   <TableCell className="py-2 max-w-[120px] truncate text-xs font-semibold">{r.member}</TableCell>
                   <TableCell className="py-2">
@@ -113,6 +123,15 @@ export function RewardsPage() {
               )}
             </TableBody>
           </Table>
+          {recognitions.length > 0 && (
+            <CommunityPagination
+              page={recPage}
+              pageSize={recPageSize}
+              total={recognitions.length}
+              onPageChange={setRecPage}
+              onPageSizeChange={(s) => { setRecPageSize(s); setRecPage(1); }}
+            />
+          )}
         </div>
 
         {/* Mass messages */}
