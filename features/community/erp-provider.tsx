@@ -43,6 +43,7 @@ import {
   SEND_GROUP_MESSAGE,
   TOP_STREAKS_QUERY,
   UNBAN_PROFILE,
+  VIEW_POST,
   type AddCommentResult,
   type AwardXpAllResult,
   type AwardXpResult,
@@ -85,6 +86,7 @@ import {
   type SendGroupMessageResult,
   type TopStreaksResult,
   type UnbanProfileResult,
+  type ViewPostResult,
 } from "./services/community";
 import { useT } from "@/providers/i18n-provider";
 import type {
@@ -457,6 +459,7 @@ interface ErpContextValue {
   }) => void;
   togglePin: (id: string) => void;
   deletePost: (id: string) => void;
+  viewPost: (id: string) => void;
   awardXp: (payload: AwardPayload) => void;
   sendMessage: (memberId: string, message: string) => void;
   sendBulkInactive: (message: string) => void;
@@ -665,6 +668,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     SendGroupMessageResult,
     { groupId: string; body: string }
   >(SEND_GROUP_MESSAGE);
+  const [, viewPostMut] = useMutation<ViewPostResult, { id: string }>(VIEW_POST);
 
   const [, addCommentMut] = useMutation<AddCommentResult, { postId: string; body: string }>(ADD_COMMENT);
   const [, replyToCommentMut] = useMutation<ReplyToCommentResult, { commentId: string; body: string }>(
@@ -929,6 +933,16 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       });
     },
     [toast, refetchPosts],
+  );
+
+  // Registra una vista de la publicación (fire-and-forget, silencioso).
+  const viewPost = useCallback<ErpContextValue["viewPost"]>(
+    (id) => {
+      viewPostMut({ id }).then((res) => {
+        if (!res.error) refetchPosts();
+      });
+    },
+    [refetchPosts],
   );
 
   const awardXp = useCallback<ErpContextValue["awardXp"]>(
@@ -1198,6 +1212,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       publishPost,
       togglePin,
       deletePost,
+      viewPost,
       awardXp,
       sendMessage,
       sendBulkInactive,
@@ -1276,6 +1291,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       publishPost,
       togglePin,
       deletePost,
+      viewPost,
       awardXp,
       sendMessage,
       sendBulkInactive,

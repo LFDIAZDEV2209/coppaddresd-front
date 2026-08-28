@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Send,
   Pin,
@@ -67,6 +67,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
     members,
     togglePin,
     deletePost,
+    viewPost,
     addComment,
     replyToComment,
     deleteComment,
@@ -80,6 +81,12 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
   const [reportDialogComment, setReportDialogComment] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
+
+  /** Registra la vista al abrir el diálogo (fire-and-forget). */
+  const postId = post?.id;
+  useEffect(() => {
+    if (open && postId) viewPost(postId);
+  }, [open, postId, viewPost]);
 
   /** Árbol de comentarios: raíces + respuestas anidadas. */
   const commentTree = useMemo(() => {

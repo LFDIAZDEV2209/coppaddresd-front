@@ -349,6 +349,13 @@ export const VIEW_POST = gql`
   }
 `;
 
+export interface ViewPostResult {
+  viewPost: {
+    id: string;
+    viewCount: number;
+  };
+}
+
 export const SEND_GROUP_MESSAGE = gql`
   mutation SendGroupMessage($groupId: UUID!, $body: String!) {
     sendGroupMessage(groupId: $groupId, body: $body) {
