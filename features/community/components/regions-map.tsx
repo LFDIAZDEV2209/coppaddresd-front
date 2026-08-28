@@ -4,13 +4,13 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 const REGION_LATLNG: Record<string, [number, number]> = {
-  Miami: [25.7617, -80.1918],
-  NY: [40.7128, -74.006],
-  Orlando: [28.5383, -81.3792],
-  Barranquilla: [10.9685, -74.7813],
-  "Bogotá": [4.711, -74.0721],
-  Bogota: [4.711, -74.0721],
-  CDMX: [19.4326, -99.1332],
+  Miami: [25.76, -80.19],
+  NY: [40.71, -74.0],
+  Orlando: [28.53, -81.37],
+  Barranquilla: [11.0, -74.8],
+  "Bogotá": [4.71, -74.07],
+  Bogota: [4.71, -74.07],
+  CDMX: [19.43, -99.13],
 };
 
 const REGION_COLOR_HEX: Record<string, string> = {
@@ -26,8 +26,8 @@ const REGION_COLOR_HEX: Record<string, string> = {
 export function RegionsMap({ regions }: { regions: { region: string; members: number }[] }) {
   return (
     <MapContainer
-      center={[18, -78]}
-      zoom={3}
+      center={[39.8, -98.5]}
+      zoom={4}
       scrollWheelZoom={false}
       className="h-[320px] w-full rounded-xl"
       style={{ background: "#EFF2F7" }}

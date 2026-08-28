@@ -44,29 +44,10 @@ export function RegionsPage() {
         icon={Map}
       />
 
-      {/* Fila 1: Miembros y engagement — ancho completo */}
+      {/* Fila 1: Mapa — ancho completo con react-leaflet */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
-          title={t("Miembros y engagement por ciudad")}
-          icon={Map}
-          variant="primary"
-        />
-        <div className="p-4">
-          <GroupedBarChart
-            data={chartData}
-            loading={regionsLoading}
-            bars={[
-              { key: "members", name: t("Miembros"), color: "var(--primary)" },
-              { key: "postsPerWeek", name: t("Posts/semana"), color: "var(--success)" },
-            ]}
-          />
-        </div>
-      </div>
-
-      {/* Fila 2: Mapa — ancho completo con react-leaflet */}
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
-        <SectionHeader
-          title={t("Mapa de presencia")}
+          title={t("Distribución geográfica")}
           icon={Globe}
           variant="primary"
         />
@@ -92,6 +73,25 @@ export function RegionsPage() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Fila 2: Miembros y engagement — ancho completo */}
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+        <SectionHeader
+          title={t("Miembros y engagement por ciudad")}
+          icon={Map}
+          variant="primary"
+        />
+        <div className="p-4">
+          <GroupedBarChart
+            data={chartData}
+            loading={regionsLoading}
+            bars={[
+              { key: "members", name: t("Miembros"), color: "var(--primary)" },
+              { key: "postsPerWeek", name: t("Posts/semana"), color: "var(--success)" },
+            ]}
+          />
         </div>
       </div>
     </div>
