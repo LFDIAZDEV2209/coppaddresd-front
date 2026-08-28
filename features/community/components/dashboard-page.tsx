@@ -95,16 +95,16 @@ export function DashboardPage() {
           </div>
         </div>
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <SectionHeader title={t("Diagnóstico vs Participación")} description={t("Nivel de participación por diagnóstico")} icon={Radar} variant="primary" />
+          <div className="p-4">
+            <DiagnosisRadar data={dashboardDiagnosisParticipation} loading={dashboardLoading} />
+          </div>
+        </div>
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Tipos de publicaciones")} description={t("Distribución del mes")} icon={PieChart} variant="primary" />
           <div className="p-4">
             <PostTypesDoughnut data={dashboardPostTypeData} loading={dashboardLoading} />
             <ChartLegend items={dashboardPostTypeData.map((d, i) => ({ label: d.name, color: CHART_COLORS[i % CHART_COLORS.length] }))} />
-          </div>
-        </div>
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
-          <SectionHeader title={t("Diagnóstico vs Participación")} description={t("Nivel de participación por diagnóstico")} icon={Radar} variant="primary" />
-          <div className="p-4">
-            <DiagnosisRadar data={dashboardDiagnosisParticipation} loading={dashboardLoading} />
           </div>
         </div>
       </section>
