@@ -341,6 +341,37 @@ export const CREATE_POST = gql`
   }
 `;
 
+export const CREATE_ANNOUNCEMENT = gql`
+  mutation CreateAnnouncement(
+    $body: String!
+    $type: PostType!
+    $destination: PostDestination!
+    $pinned: Boolean!
+  ) {
+    createAnnouncement(body: $body, type: $type, destination: $destination, pinned: $pinned) {
+      id
+      body
+      pinned
+      createdAt
+      type
+      destination
+      viewCount
+      profile {
+        id
+        displayName
+        isSystem
+      }
+      likes {
+        id
+        profileId
+      }
+      comments {
+        id
+      }
+    }
+  }
+`;
+
 export const VIEW_POST = gql`
   mutation ViewPost($id: UUID!) {
     viewPost(id: $id) {
@@ -534,6 +565,10 @@ export interface TopStreaksResult {
 
 export interface CreatePostResult {
   createPost: Post | null;
+}
+
+export interface CreateAnnouncementResult {
+  createAnnouncement: Post | null;
 }
 
 export interface PinPostResult {

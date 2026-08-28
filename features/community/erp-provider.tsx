@@ -19,6 +19,7 @@ import {
   COMMENT_ADDED_SUB,
   COMMUNITY_ANALYTICS_QUERY,
   COMMUNITY_GROUPS_QUERY,
+  CREATE_ANNOUNCEMENT,
   CREATE_POST,
   DASHBOARD_STATS_QUERY,
   DIAGNOSTIC_STATS_QUERY,
@@ -53,6 +54,7 @@ import {
   type CommunityAnalyticsResult,
   type CommunityGroupsResult,
   type CommunityGroupWire,
+  type CreateAnnouncementResult,
   type CreatePostResult,
   type DashboardStatsResult,
   type DiagnosticStatWire,
@@ -636,9 +638,9 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   });
 
   const [, createPostMut] = useMutation<
-    CreatePostResult,
+    CreateAnnouncementResult,
     { body: string; type: PostType; destination: string; pinned: boolean }
-  >(CREATE_POST);
+  >(CREATE_ANNOUNCEMENT);
   const [, pinPostMut] = useMutation<
     PinPostResult,
     { id: string; pinned: boolean }
