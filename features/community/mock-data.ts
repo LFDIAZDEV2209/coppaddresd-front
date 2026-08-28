@@ -534,12 +534,15 @@ export const mockNetworks: NetworkChannel[] = [
 ];
 
 export const mockRegions: RegionStat[] = [
-  { region: "Miami", members: 84, postsPerWeek: 7.8, percent: 30 },
-  { region: "NY", members: 67, postsPerWeek: 6.4, percent: 24 },
-  { region: "Barranquilla", members: 52, postsPerWeek: 8.2, percent: 18 },
-  { region: "Orlando", members: 42, postsPerWeek: 5.9, percent: 15 },
-  { region: "Bogotá", members: 28, postsPerWeek: 7.1, percent: 10 },
-  { region: "CDMX", members: 11, postsPerWeek: 4.3, percent: 4 },
+  { region: "Miami", members: 5, postsPerWeek: 7.8, percent: 13 },
+  { region: "NY", members: 5, postsPerWeek: 6.4, percent: 13 },
+  { region: "Barranquilla", members: 5, postsPerWeek: 8.2, percent: 13 },
+  { region: "Orlando", members: 5, postsPerWeek: 5.9, percent: 13 },
+  { region: "Houston", members: 4, postsPerWeek: 6.8, percent: 10 },
+  { region: "Dallas", members: 4, postsPerWeek: 6.1, percent: 10 },
+  { region: "Atlanta", members: 4, postsPerWeek: 5.7, percent: 10 },
+  { region: "Seattle", members: 4, postsPerWeek: 5.2, percent: 10 },
+  { region: "Denver", members: 4, postsPerWeek: 4.9, percent: 10 },
 ];
 
 export const mockDiagnostics: DiagnosticStat[] = [

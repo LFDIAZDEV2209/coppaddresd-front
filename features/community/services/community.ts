@@ -8,8 +8,13 @@ export type ProfileRegion =
   | "Miami"
   | "NY"
   | "Barranquilla"
-  | "Bogota"
   | "Orlando"
+  | "Houston"
+  | "Dallas"
+  | "Atlanta"
+  | "Seattle"
+  | "Denver"
+  | "Bogota"
   | "CDMX";
 
 export type ProfileDiagnosis = "DM2" | "Obesidad" | "DM2HTA" | "Prediabetes";

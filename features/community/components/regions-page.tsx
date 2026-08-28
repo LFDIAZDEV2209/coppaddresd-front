@@ -13,7 +13,7 @@ import { GroupedBarChart } from "./charts";
 
 const RegionsMap = dynamic(() => import("./regions-map").then((m) => m.RegionsMap), {
   ssr: false,
-  loading: () => <div className="h-[360px] w-full animate-pulse rounded-xl bg-muted" />,
+  loading: () => <div className="h-[320px] w-full animate-pulse rounded-xl bg-muted" />,
 });
 
 const REGION_COLORS: Record<string, string> = {
@@ -21,6 +21,11 @@ const REGION_COLORS: Record<string, string> = {
   NY: "var(--success)",
   Barranquilla: "var(--warning-foreground)",
   Orlando: "var(--warning)",
+  Houston: "#7C3AED",
+  Dallas: "#DC2626",
+  Atlanta: "#0E7490",
+  Seattle: "#0EA5E9",
+  Denver: "#F59E0B",
   Bogotá: "var(--info)",
   Bogota: "var(--info)",
   CDMX: "var(--destructive)",
@@ -44,7 +49,7 @@ export function RegionsPage() {
         icon={Map}
       />
 
-      {/* Fila 1: Mapa — SVG offline (sin tiles) */}
+      {/* Fila 1: Mapa — leaflet */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Distribución geográfica")}

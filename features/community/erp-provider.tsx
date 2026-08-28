@@ -265,6 +265,21 @@ const REGION_LABEL: Record<string, string> = {
   Bogota: "Bogotá",
   bogota: "Bogotá",
   BOGOTA: "Bogotá",
+  Houston: "Houston",
+  houston: "Houston",
+  HOUSTON: "Houston",
+  Dallas: "Dallas",
+  dallas: "Dallas",
+  DALLAS: "Dallas",
+  Atlanta: "Atlanta",
+  atlanta: "Atlanta",
+  ATLANTA: "Atlanta",
+  Seattle: "Seattle",
+  seattle: "Seattle",
+  SEATTLE: "Seattle",
+  Denver: "Denver",
+  denver: "Denver",
+  DENVER: "Denver",
 };
 
 function formatFollowers(n: number): string {
@@ -294,7 +309,19 @@ function mapWireGroup(g: CommunityGroupWire): CommunityGroup {
 
 function mapWireRegion(r: RegionStatWire, totalMembers: number): RegionStat {
   const lower = r.region.toLowerCase();
-  const labelLower: Record<string, string> = { bogota: "Bogotá", cdmx: "CDMX", ny: "NY", miami: "Miami", orlando: "Orlando", barranquilla: "Barranquilla" };
+  const labelLower: Record<string, string> = {
+    bogota: "Bogotá",
+    cdmx: "CDMX",
+    ny: "NY",
+    miami: "Miami",
+    orlando: "Orlando",
+    barranquilla: "Barranquilla",
+    houston: "Houston",
+    dallas: "Dallas",
+    atlanta: "Atlanta",
+    seattle: "Seattle",
+    denver: "Denver",
+  };
   const label = labelLower[lower] ?? REGION_LABEL[r.region] ?? r.region;
   return {
     region: label,
