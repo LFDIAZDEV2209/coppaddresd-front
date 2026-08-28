@@ -42,25 +42,25 @@ export function InactivePage() {
         icon={Moon}
       />
 
-      {/* Warning banner — solo si hay inactivos (umbral > 0) */}
+      {/* Warning banner — compact, fits in one row on desktop */}
       {inactive.length > 0 && (
-        <div className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning text-white shadow-lg shadow-warning/30">
-              <AlertTriangle className="size-5" />
+        <div className="flex flex-col gap-2.5 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning text-white">
+              <AlertTriangle className="size-4" />
             </span>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-sm font-semibold text-warning-foreground">
+            <div className="flex flex-col gap-0 min-w-0">
+              <p className="text-[13px] font-semibold leading-tight text-warning-foreground">
                 {t("40% más probabilidad de abandonar si no se reactivan antes de 14 días")}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] leading-tight text-muted-foreground">
                 {t("Envía un mensaje masivo o contacta individualmente.")}
               </p>
             </div>
           </div>
           <Button
             size="sm"
-            className="relative"
+            className="shrink-0 self-start sm:self-center"
             onClick={() => sendBulkInactive(t("¡Hola! Nos gustaría saber de ti 💙"))}
           >
             <Send data-icon="inline-start" />
