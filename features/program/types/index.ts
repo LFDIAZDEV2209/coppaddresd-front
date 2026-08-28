@@ -169,6 +169,79 @@ export interface ClinicalReview {
   decidedAt: string | null;
 }
 
+// --- Program Content Types ---
+
+/** Referencia a un plan nutricional o rutina de ejercicio. */
+export interface ProgramContentItemRef {
+  id: string;
+  code: string;
+  name: string;
+}
+
+/** Contenido semanal de una inscripción al programa. */
+export interface ProgramContentWeek {
+  weekNumber: number;
+  weekStartDateLocal: string;
+  weekEndDateLocal: string;
+  nutritionPlan: ProgramContentItemRef | null;
+  exerciseRoutine: ProgramContentItemRef | null;
+}
+
+/** Respuesta de GET /api/v1/program/enrollments/{id}/content. */
+export interface ProgramContentResponse {
+  enrollmentId: string;
+  patientId: string;
+  templateId: string;
+  totalWeeks: number;
+  startLocalDate: string;
+  weeks: ProgramContentWeek[];
+}
+
+/** Payload para PUT /api/v1/program/enrollments/{id}/content/week/{weekNumber}. */
+export interface SetWeekContentInput {
+  nutritionPlanId: string | null;
+  exerciseRoutineId: string | null;
+}
+
+// --- Enrollment Week (patient completion status) ---
+
+/** Tarea individual de una semana de inscripción con estado real del paciente. */
+export interface EnrollmentWeekTask {
+  taskCode: string;
+  taskLabel: string;
+  points: number;
+  scheduledPoints: number;
+  status: "completed" | "pending";
+  completedAt: string | null;
+  contentRefId?: string | null;
+  contentName?: string | null;
+  detailText?: string | null;
+  routineId?: string | null;
+  nutritionPlanId?: string | null;
+}
+
+/** Día de una semana de inscripción con totales reales vs programados. */
+export interface EnrollmentWeekDay {
+  localDate: string;
+  weekday: number;
+  dayLabel: string;
+  isPerfectDay: boolean;
+  totalPoints: number;
+  maxPoints: number;
+  bonusAwarded: number;
+  tasks: EnrollmentWeekTask[];
+}
+
+/** Respuesta de GET /api/v1/program/enrollments/{id}/week/{weekNumber}. */
+export interface EnrollmentWeekResponse {
+  weekNumber: number;
+  weekStartDateLocal: string;
+  weekEndDateLocal: string;
+  nutritionPlan: { id: string; name: string } | null;
+  exerciseRoutine: { id: string; name: string } | null;
+  days: EnrollmentWeekDay[];
+}
+
 // --- Pagination ---
 
 /** Resultado paginado genérico. */

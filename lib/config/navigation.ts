@@ -417,6 +417,13 @@ export const navModules: NavModule[] = [
         permission: "Program.View",
       },
       {
+        label: "Contenido",
+        href: "/program/content",
+        icon: ClipboardList,
+        color: "#0891B2",
+        permission: "Program.Edit",
+      },
+      {
         label: "Reglas XP",
         href: "/program/xp-rules",
         icon: Zap,
