@@ -9,9 +9,12 @@ import {
   Radar,
 } from "lucide-react";
 
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -24,11 +27,11 @@ import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { ActivityLineChart, PostTypesDoughnut, PeakHoursBar, DiagnosisRadar, ChartLegend, CHART_COLORS } from "./charts";
 import { MemberAvatar } from "./member-avatar";
-import { PostDialog } from "./post-dialog";
 import { AwardDialog } from "./award-dialog";
 
 export function DashboardPage() {
   const t = useT();
+  const router = useRouter();
   const {
     members,
     dashboardKpis,
@@ -48,7 +51,10 @@ export function DashboardPage() {
         icon={LayoutDashboard}
         actions={
           <>
-            <PostDialog />
+            <Button variant="outline" size="sm" onClick={() => router.push("/community/posts")}>
+              <Plus data-icon="inline-start" />
+              {t("Nuevo post")}
+            </Button>
             <AwardDialog />
           </>
         }

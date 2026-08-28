@@ -41,12 +41,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import { DESTINOS } from "./post-dialog";
-import { PostDialog } from "./post-dialog";
 import { MemberAvatar, profileName } from "./member-avatar";
 import { CommunityPagination } from "./community-pagination";
 import { PostDetailDialog } from "./post-detail-dialog";
 import type { ErpPost, PostType } from "../types";
+
+const DESTINOS = [
+  "🌐 Todas las comunidades (284)",
+  "🏥 Comunidad ADRED",
+  "🏃 Reto caminata 30 días",
+  "🧠 Apoyo emocional",
+  "🥗 Cocina saludable",
+  "😴 Solo inactivos",
+];
 
 const TIPOS: { key: PostType; label: string; icon: typeof FileText }[] = [
   { key: "Texto", label: "Texto", icon: FileText },
@@ -79,14 +86,24 @@ export function PostsPage() {
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [logroTitle, setLogroTitle] = useState("");
+  // Composer toggle
+  const [showComposer, setShowComposer] = useState(false);
   // Paginación — Todas las publicaciones
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  // Paginación — Publicaciones fijadas
+  const [pinnedPage, setPinnedPage] = useState(1);
+  const [pinnedPageSize, setPinnedPageSize] = useState(5);
   // Dialog de detalle de publicación
   const [detailPost, setDetailPost] = useState<ErpPost | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
   const pinnedPosts = posts.filter((p) => p.pinned);
+
+  const paginatedPinned = useMemo(() => {
+    const start = (pinnedPage - 1) * pinnedPageSize;
+    return pinnedPosts.slice(start, start + pinnedPageSize);
+  }, [pinnedPosts, pinnedPage, pinnedPageSize]);
 
   // Paginación sobre posts no-fijados para que la lista no mezcle; si hay pocos fijados se muestran todos
   const paginatedPosts = useMemo(() => {
@@ -122,6 +139,7 @@ export function PostsPage() {
     setPollQuestion("");
     setPollOptions(["", ""]);
     setLogroTitle("");
+    setShowComposer(false);
   };
 
   const openDetail = (post: ErpPost) => {
@@ -135,181 +153,197 @@ export function PostsPage() {
         title={t("Publicaciones")}
         description={t("Gestión de publicaciones de ANTARES Comunidad ADRED")}
         icon={Send}
-        actions={<PostDialog />}
+        actions={
+          <Button variant="outline" size="sm" onClick={() => setShowComposer((v) => !v)}>
+            {showComposer ? <X data-icon="inline-start" className="size-3.5" /> : <Plus data-icon="inline-start" />}
+            {showComposer ? t("Cerrar") : t("Nuevo post")}
+          </Button>
+        }
       />
 
-      {/* Composer - Tarjeta con color distintivo */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-strong)] shadow-lg shadow-primary/20">
-        <div className="relative flex items-center gap-3 border-b border-white/15 px-4 py-3.5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-white/15 text-[15px] font-extrabold text-white ring-1 ring-white/25 shadow-lg shadow-black/10">
-            A
-          </span>
-          <div className="flex flex-col">
-            <span className="text-[15px] font-bold text-white">{t("Nuevo post")}</span>
-            <span className="text-[12px] text-white/70">{t("El mensaje aparecerá en la app de los miembros")}</span>
+      {/* Composer - aparece al hacer clic en Nuevo post con animación */}
+      {showComposer && (
+        <div className="relative origin-top overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-strong)] shadow-lg shadow-primary/20 animate-in fade-in slide-in-from-top-2 duration-300 ease-out">
+          <div className="relative flex items-center gap-3 border-b border-white/15 px-4 py-3.5">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-white/15 text-[15px] font-extrabold text-white ring-1 ring-white/25 shadow-lg shadow-black/10">
+              A
+            </span>
+            <div className="flex flex-col">
+              <span className="text-[15px] font-bold text-white">{t("Nuevo post")}</span>
+              <span className="text-[12px] text-white/70">{t("El mensaje aparecerá en la app de los miembros")}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setShowComposer(false)}
+              className="ml-auto text-white/70 hover:bg-white/10 hover:text-white"
+              aria-label={t("Cerrar")}
+            >
+              <X className="size-4" />
+            </Button>
           </div>
-        </div>
-        <div className="relative flex flex-col gap-4 p-4">
-          {/* Type tabs */}
-          <div className="flex flex-wrap gap-2">
-            {TIPOS.map((tip) => {
-              const Icon = tip.icon;
-              return (
-                <button
-                  key={tip.key}
-                  onClick={() => setType(tip.key)}
-                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px ${
-                    type === tip.key
-                      ? "border-white bg-white text-primary shadow-md shadow-black/10"
-                      : "border-white/20 bg-white/10 text-white hover:bg-white/20"
-                  }`}
-                >
-                  <Icon className="size-3.5" />
-                  {t(tip.label)}
-                </button>
-              );
-            })}
-          </div>
+          <div className="relative flex flex-col gap-4 p-4">
+            {/* Type tabs */}
+            <div className="flex flex-wrap gap-2">
+              {TIPOS.map((tip) => {
+                const Icon = tip.icon;
+                return (
+                  <button
+                    key={tip.key}
+                    onClick={() => setType(tip.key)}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px ${
+                      type === tip.key
+                        ? "border-white bg-white text-primary shadow-md shadow-black/10"
+                        : "border-white/20 bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    <Icon className="size-3.5" />
+                    {t(tip.label)}
+                  </button>
+                );
+              })}
+            </div>
 
-          <Textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={3}
-            placeholder={t("Escribe tu mensaje...")}
-            className="border-white/20 bg-white/10 text-sm text-white placeholder:text-white/50 focus-visible:ring-white/40"
-          />
+            <Textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={3}
+              placeholder={t("Escribe tu mensaje...")}
+              className="border-white/20 bg-white/10 text-sm text-white placeholder:text-white/50 focus-visible:ring-white/40"
+            />
 
-          {/* Campos específicos por tipo */}
-          {type === "Imagen" && (
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-white/90">{t("URL de la imagen")}</Label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
+            {/* Campos específicos por tipo */}
+            {type === "Imagen" && (
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-white/90">{t("URL de la imagen")}</Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Link2 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
+                    <Input
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
+                    />
+                  </div>
+                </div>
+                {imageUrl.trim() && (
+                  <div className="overflow-hidden rounded-lg border border-white/20 bg-black/20 p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imageUrl.trim()} alt={t("Vista previa")} className="max-h-48 w-full rounded object-contain" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+                  </div>
+                )}
+              </div>
+            )}
+            {type === "Video" && (
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-white/90">{t("URL del video")}</Label>
+                <div className="relative">
                   <Link2 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
                   <Input
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
                     placeholder="https://..."
                     className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
                   />
                 </div>
               </div>
-              {imageUrl.trim() && (
-                <div className="overflow-hidden rounded-lg border border-white/20 bg-black/20 p-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={imageUrl.trim()} alt={t("Vista previa")} className="max-h-48 w-full rounded object-contain" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
-                </div>
-              )}
-            </div>
-          )}
-          {type === "Video" && (
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-white/90">{t("URL del video")}</Label>
-              <div className="relative">
-                <Link2 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
+            )}
+            {type === "Encuesta" && (
+              <div className="flex flex-col gap-2 rounded-xl border border-white/20 bg-white/10 p-3">
+                <Label className="text-xs text-white/90">{t("Pregunta de la encuesta")}</Label>
                 <Input
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
+                  value={pollQuestion}
+                  onChange={(e) => setPollQuestion(e.target.value)}
+                  placeholder={t("¿Cuál es tu pregunta?")}
+                  className="h-8 border-white/20 bg-white/10 text-xs text-white placeholder:text-white/40"
                 />
+                <Label className="text-xs text-white/90">{t("Opciones")}</Label>
+                {pollOptions.map((opt, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">{idx + 1}</span>
+                    <Input
+                      value={opt}
+                      onChange={(e) => {
+                        const next = [...pollOptions];
+                        next[idx] = e.target.value;
+                        setPollOptions(next);
+                      }}
+                      placeholder={`${t("Opción")} ${idx + 1}`}
+                      className="h-8 flex-1 border-white/20 bg-white/10 text-xs text-white placeholder:text-white/40"
+                    />
+                    {pollOptions.length > 2 && (
+                      <Button size="icon-sm" variant="ghost" className="text-white/70 hover:bg-white/10 hover:text-white" onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}>
+                        <X className="size-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {pollOptions.length < 6 && (
+                  <Button size="sm" variant="ghost" className="h-7 self-start text-xs text-white/80 hover:bg-white/10 hover:text-white" onClick={() => setPollOptions([...pollOptions, ""])}>
+                    <Plus data-icon="inline-start" className="size-3" />
+                    {t("Añadir opción")}
+                  </Button>
+                )}
               </div>
-            </div>
-          )}
-          {type === "Encuesta" && (
-            <div className="flex flex-col gap-2 rounded-xl border border-white/20 bg-white/10 p-3">
-              <Label className="text-xs text-white/90">{t("Pregunta de la encuesta")}</Label>
-              <Input
-                value={pollQuestion}
-                onChange={(e) => setPollQuestion(e.target.value)}
-                placeholder={t("¿Cuál es tu pregunta?")}
-                className="h-8 border-white/20 bg-white/10 text-xs text-white placeholder:text-white/40"
-              />
-              <Label className="text-xs text-white/90">{t("Opciones")}</Label>
-              {pollOptions.map((opt, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">{idx + 1}</span>
+            )}
+            {type === "Logro" && (
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-white/90">{t("Título del logro")}</Label>
+                <div className="relative">
+                  <Trophy className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
                   <Input
-                    value={opt}
-                    onChange={(e) => {
-                      const next = [...pollOptions];
-                      next[idx] = e.target.value;
-                      setPollOptions(next);
-                    }}
-                    placeholder={`${t("Opción")} ${idx + 1}`}
-                    className="h-8 flex-1 border-white/20 bg-white/10 text-xs text-white placeholder:text-white/40"
+                    value={logroTitle}
+                    onChange={(e) => setLogroTitle(e.target.value)}
+                    placeholder={t("Ej: Racha de 30 días completada")}
+                    className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
                   />
-                  {pollOptions.length > 2 && (
-                    <Button size="icon-sm" variant="ghost" className="text-white/70 hover:bg-white/10 hover:text-white" onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}>
-                      <X className="size-3.5" />
-                    </Button>
-                  )}
                 </div>
-              ))}
-              {pollOptions.length < 6 && (
-                <Button size="sm" variant="ghost" className="h-7 self-start text-xs text-white/80 hover:bg-white/10 hover:text-white" onClick={() => setPollOptions([...pollOptions, ""])}>
-                  <Plus data-icon="inline-start" className="size-3" />
-                  {t("Añadir opción")}
-                </Button>
-              )}
-            </div>
-          )}
-          {type === "Logro" && (
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-white/90">{t("Título del logro")}</Label>
-              <div className="relative">
-                <Trophy className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
-                <Input
-                  value={logroTitle}
-                  onChange={(e) => setLogroTitle(e.target.value)}
-                  placeholder={t("Ej: Racha de 30 días completada")}
-                  className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
-                />
               </div>
+            )}
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs whitespace-nowrap text-white/80">{t("Destino")}</Label>
+                <Select value={destination} onValueChange={(v) => { if (v !== null) setDestination(v); }}>
+                  <SelectTrigger className="h-8 w-auto min-w-[180px] border-white/20 bg-white/10 text-xs text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DESTINOS.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <label className="flex items-center gap-2 text-white">
+                <Checkbox checked={pinned} onCheckedChange={(c) => setPinned(Boolean(c))} className="border-white/40" />
+                <span className="text-xs">{t("Fijar al tope")}</span>
+              </label>
+              <label className="flex items-center gap-2 text-white">
+                <Checkbox checked={push} onCheckedChange={(c) => setPush(Boolean(c))} className="border-white/40" />
+                <span className="text-xs">{t("Push notification")}</span>
+              </label>
+              <label className="flex items-center gap-2 text-white">
+                <Checkbox checked={giveXp} onCheckedChange={(c) => setGiveXp(Boolean(c))} className="border-white/40" />
+                <span className="text-xs">{t("Dar XP por comentar")}</span>
+              </label>
+
+              <Button size="sm" onClick={handlePublish} disabled={!canPublish} className="ml-auto bg-white text-primary transition-all hover:-translate-y-px active:scale-[0.97] disabled:opacity-50">
+                <Send data-icon="inline-start" />
+                {t("Publicar")}
+              </Button>
             </div>
-          )}
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
-            <div className="flex items-center gap-2">
-              <Label className="text-xs whitespace-nowrap text-white/80">{t("Destino")}</Label>
-              <Select value={destination} onValueChange={(v) => { if (v !== null) setDestination(v); }}>
-                <SelectTrigger className="h-8 w-auto min-w-[180px] border-white/20 bg-white/10 text-xs text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DESTINOS.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <label className="flex items-center gap-2 text-white">
-              <Checkbox checked={pinned} onCheckedChange={(c) => setPinned(Boolean(c))} className="border-white/40" />
-              <span className="text-xs">{t("Fijar al tope")}</span>
-            </label>
-            <label className="flex items-center gap-2 text-white">
-              <Checkbox checked={push} onCheckedChange={(c) => setPush(Boolean(c))} className="border-white/40" />
-              <span className="text-xs">{t("Push notification")}</span>
-            </label>
-            <label className="flex items-center gap-2 text-white">
-              <Checkbox checked={giveXp} onCheckedChange={(c) => setGiveXp(Boolean(c))} className="border-white/40" />
-              <span className="text-xs">{t("Dar XP por comentar")}</span>
-            </label>
-
-            <Button size="sm" onClick={handlePublish} disabled={!canPublish} className="ml-auto bg-white text-primary transition-all hover:-translate-y-px active:scale-[0.97] disabled:opacity-50">
-              <Send data-icon="inline-start" />
-              {t("Publicar")}
-            </Button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Publicaciones fijadas + Todas las publicaciones — lado a lado */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Pinned posts — siempre renderizar el card */}
+        {/* Pinned posts — paginados */}
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Publicaciones fijadas")}
@@ -318,70 +352,79 @@ export function PostsPage() {
             variant="primary"
           />
           {pinnedPosts.length > 0 ? (
-            <div className="flex flex-col gap-3 p-4">
-              {pinnedPosts.map((post) => {
-                const member = members.find((m) => m.id === post.authorId);
-                const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
-                return (
-                  <div
-                    key={post.id}
-                    className="overflow-hidden rounded-xl border border-border transition-all hover:shadow-md hover:shadow-black/5"
-                  >
-                    <div className="flex flex-col gap-2 p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                          {member ? (
-                            <MemberAvatar member={member} subtitle={post.createdAt} />
-                          ) : (
-                            <>
-                              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                                {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
-                              </span>
-                              <div className="flex min-w-0 flex-col gap-0.5">
-                                <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
-                                <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
-                              </div>
-                            </>
-                          )}
+            <>
+              <div className="flex flex-col gap-3 p-4">
+                {paginatedPinned.map((post) => {
+                  const member = members.find((m) => m.id === post.authorId);
+                  const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
+                  return (
+                    <div
+                      key={post.id}
+                      className="overflow-hidden rounded-xl border border-border transition-all hover:shadow-md hover:shadow-black/5"
+                    >
+                      <div className="flex flex-col gap-2 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            {member ? (
+                              <MemberAvatar member={member} subtitle={post.createdAt} />
+                            ) : (
+                              <>
+                                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                                  {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
+                                </span>
+                                <div className="flex min-w-0 flex-col gap-0.5">
+                                  <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                                  <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 gap-1">
+                            <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
+                              <Pin className="size-3.5" />
+                            </Button>
+                            <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
+                              <MessageCircle className="size-3.5" />
+                            </Button>
+                            <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
+                              <Trash2 className="size-3.5 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex shrink-0 gap-1">
-                          <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
-                            <Pin className="size-3.5" />
-                          </Button>
-                          <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
-                            <MessageCircle className="size-3.5" />
-                          </Button>
-                          <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
-                            <Trash2 className="size-3.5 text-destructive" />
-                          </Button>
+                        <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <StatusBadge
+                            status={t("Fijado")}
+                            color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                          />
+                          <span
+                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                          >
+                            {t(post.type)}
+                          </span>
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                            {post.destination}
+                          </span>
+                          <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
+                            <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                            <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
+                            <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
+                          </span>
                         </div>
-                      </div>
-                      <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <StatusBadge
-                          status={t("Fijado")}
-                          color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
-                        />
-                        <span
-                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                          style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
-                        >
-                          {t(post.type)}
-                        </span>
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                          {post.destination}
-                        </span>
-                        <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
-                          <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
-                          <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
-                          <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
-                        </span>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+              <CommunityPagination
+                page={pinnedPage}
+                pageSize={pinnedPageSize}
+                total={pinnedPosts.length}
+                onPageChange={setPinnedPage}
+                onPageSizeChange={(s) => { setPinnedPageSize(s); setPinnedPage(1); }}
+              />
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
               <Pin className="size-8 text-muted-foreground/40" />
