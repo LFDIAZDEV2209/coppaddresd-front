@@ -59,10 +59,10 @@ export function DiagnosticsPage() {
         ))}
       </section>
 
-      {/* Row 2: 2/3 chart + 1/3 table — taller, fits screen */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Participación vs Adherencia — 2/3 */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
+      {/* Row 2: chart + table — desglose más angosto */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+        {/* Participación vs Adherencia — 3/4 */}
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-3">
           <SectionHeader
             title={t("Participación vs Adherencia por diagnóstico")}
             icon={TrendingUp}
@@ -92,8 +92,8 @@ export function DiagnosticsPage() {
           </div>
         </div>
 
-        {/* Desglose detallado — 1/3 */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-1">
+        {/* Desglose detallado — 1/4 más angosto */}
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-1 lg:max-w-[320px] lg:ml-auto w-full">
           <SectionHeader
             title={t("Desglose detallado")}
             icon={Stethoscope}
@@ -102,22 +102,22 @@ export function DiagnosticsPage() {
           <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("Diagnóstico")}</TableHead>
-                    <TableHead className="text-right">{t("Miembros")}</TableHead>
-                    <TableHead className="text-right">{t("Posts sem")}</TableHead>
-                    <TableHead className="text-right">{t("Racha prom")}</TableHead>
-                    <TableHead className="text-right">{t("XP prom")}</TableHead>
+                  <TableRow className="h-8">
+                    <TableHead className="px-2 text-[11px]">{t("Diagnóstico")}</TableHead>
+                    <TableHead className="px-2 text-right text-[11px]">{t("Miembros")}</TableHead>
+                    <TableHead className="px-2 text-right text-[11px]">{t("Posts sem")}</TableHead>
+                    <TableHead className="px-2 text-right text-[11px]">{t("Racha")}</TableHead>
+                    <TableHead className="px-2 text-right text-[11px]">{t("XP")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(diagnosticsLoading ? [] : diagnostics).map((d) => (
                     <TableRow key={d.diagnosis} className="transition-colors hover:bg-muted/50">
-                      <TableCell className="py-2 text-xs font-semibold">{d.diagnosis}</TableCell>
-                      <TableCell className="py-2 text-right text-xs">{d.members}</TableCell>
-                      <TableCell className="py-2 text-right text-xs">{d.postsPerWeek}</TableCell>
-                      <TableCell className="py-2 text-right text-xs">🔥 {d.avgStreak}d</TableCell>
-                      <TableCell className="py-2 text-right text-xs font-semibold">
+                      <TableCell className="px-2 py-1.5 text-[11px] font-semibold whitespace-nowrap">{d.diagnosis}</TableCell>
+                      <TableCell className="px-2 py-1.5 text-right text-[11px] whitespace-nowrap">{d.members}</TableCell>
+                      <TableCell className="px-2 py-1.5 text-right text-[11px] whitespace-nowrap">{d.postsPerWeek}</TableCell>
+                      <TableCell className="px-2 py-1.5 text-right text-[11px] whitespace-nowrap">🔥 {d.avgStreak}d</TableCell>
+                      <TableCell className="px-2 py-1.5 text-right text-[11px] font-semibold whitespace-nowrap">
                         {d.avgXp.toLocaleString()}
                       </TableCell>
                     </TableRow>
