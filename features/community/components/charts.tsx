@@ -196,9 +196,14 @@ export function DiagnosisRadar({
   loading?: boolean;
 }) {
   const t = useT();
+  // Reordena para que Obesidad/Prediabetes queden arriba/abajo y DM2/DM2+HTA a los lados
+  const order = ["Obesidad", "DM2", "Prediabetes", "DM2+HTA"];
+  const ordered = [...data].sort((a, b) => order.indexOf(a.subject) - order.indexOf(b.subject));
+  // Si faltase alguno por datos reales, mantiene el resto al final
+  const normalized = ordered.filter((d) => order.includes(d.subject)).concat(ordered.filter((d) => !order.includes(d.subject)));
   return (
-    <ChartFrame loading={loading} height="h-44">
-      <RadarChart data={data} outerRadius="60%">
+    <ChartFrame loading={loading}>
+      <RadarChart data={normalized} outerRadius="65%">
         <PolarGrid stroke="var(--border)" />
         <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }} />
         <PolarRadiusAxis tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} angle={90} />
