@@ -3,6 +3,10 @@
  * i18n-scan — scans all t() calls in the codebase and reports keys
  * missing from en.json. Catches single, double, and backtick quotes.
  *
+ * A key en.json sin t() literal NO se considera huérfana si aparece
+ * como literal en cualquier archivo escaneado (uso dinámico vía
+ * t(variable) sobre arrays/consts) o si viene de datos del backend/mock.
+ *
  * Usage:  node scripts/i18n-scan.mjs [--json]
  */
 import { readFileSync, readdirSync } from "fs";
@@ -39,10 +43,12 @@ for (const d of dirs) {
   }
 }
 
-// Collect all t() keys used in code
+// Collect all t() keys used in code + full source blob (para detectar uso dinámico)
 const codeKeys = new Map(); // key → Set of files using it
+let sourceBlob = "";
 for (const f of files) {
   const src = readFileSync(f, "utf8");
+  sourceBlob += src + "\n";
   let m;
   const re = new RegExp(KEY_RE.source, "g");
   while ((m = re.exec(src))) {
@@ -69,17 +75,20 @@ for (const [key, files] of codeKeys) {
   }
 }
 
-// Orphaned: in en.json but not in any code file (informational)
+// Orphaned: en key sin t() literal Y sin ninguna referencia literal en el código.
+// Claves referenciadas dinámicamente (t(variable) sobre arrays/consts o datos
+// del backend/mock que aparecen como literal) se clasifican aparte.
 const orphaned = [];
+const dynamic = [];
 for (const key of Object.keys(en)) {
-  if (!codeKeys.has(key)) {
-    orphaned.push(key);
-  }
+  if (codeKeys.has(key)) continue;
+  if (sourceBlob.includes(key)) dynamic.push(key);
+  else orphaned.push(key);
 }
 
 // Output
 if (process.argv.includes("--json")) {
-  console.log(JSON.stringify({ missing, orphaned }, null, 2));
+  console.log(JSON.stringify({ missing, orphaned, dynamic }, null, 2));
 } else {
   console.log(`\ni18n scan results:`);
   console.log(`  t() calls in code:  ${codeKeys.size}`);
@@ -87,6 +96,7 @@ if (process.argv.includes("--json")) {
   console.log(
     `  Missing from en.json: ${missing.length > 0 ? "\x1b[31m" + missing.length + "\x1b[0m" : "\x1b[32m0\x1b[0m"}`
   );
+  console.log(`  Dynamic keys (used via t(variable)): ${dynamic.length}`);
   console.log(`  Orphaned in en.json:  ${orphaned.length}`);
 
   if (missing.length > 0) {
