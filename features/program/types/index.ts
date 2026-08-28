@@ -112,6 +112,7 @@ export interface ProgramEnrollment {
 export interface ProgramEnrollmentFilters {
   status: "all" | EnrollmentStatus;
   patientId: string;
+  search?: string;
 }
 
 /** Payload para inscribir un paciente (clínico). */

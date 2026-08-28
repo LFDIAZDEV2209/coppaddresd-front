@@ -7,11 +7,17 @@ import {
   Loader2,
   Salad,
   Dumbbell,
+  Search,
+  ArrowLeft,
+  ArrowRight,
+  User,
   X,
+  UserCheck,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -30,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/providers/auth-provider";
 import { useProgramContent } from "../hooks/use-program-content";
+import { fetchProgramEnrollments } from "../services/program-enrollments-service";
 import {
   fetchRoutinesForPicker,
   fetchNutritionPlansForPicker,
@@ -39,62 +46,76 @@ import type {
   ProgramContentWeek,
   SetWeekContentInput,
   ProgramEnrollment,
+  EnrollmentStatus,
 } from "../types";
 import type {
   ExerciseRoutineListItem,
   NutritionPlanListItem,
 } from "@/features/wellness/types";
 
-// --- Componente principal ---
-
 export function ProgramContentPage() {
   const { hasPermission } = useAuth();
   const canEdit = hasPermission("Program.Edit");
 
   const {
-    enrollments,
-    loadingEnrollments,
     content,
     loading,
     error,
-    loadEnrollments,
     selectEnrollment,
     saveWeek,
     retry,
     clear,
   } = useProgramContent();
 
-  const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<string>("");
+  // Estado del listado inicial de pacientes inscritos
+  const [enrollmentsList, setEnrollmentsList] = useState<ProgramEnrollment[]>([]);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | EnrollmentStatus>("Active");
 
-  // Catálogo completo de rutinas y planes para los Selects
+  // Estado de paciente seleccionado para ver su programa
+  const [selectedEnrollment, setSelectedEnrollment] = useState<ProgramEnrollment | null>(null);
+
+  // Catálogo completo de rutinas y planes para los Selects de la semana
   const [availableRoutines, setAvailableRoutines] = useState<ExerciseRoutineListItem[]>([]);
   const [availablePlans, setAvailablePlans] = useState<NutritionPlanListItem[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
 
-  // Cargar inscripciones y catálogo al montar
-  useEffect(() => {
-    loadEnrollments();
-    Promise.all([
-      fetchRoutinesForPicker(1, 100, ""),
-      fetchNutritionPlansForPicker(1, 100, ""),
-    ])
-      .then(([routinesRes, plansRes]) => {
-        setAvailableRoutines(routinesRes.data);
-        setAvailablePlans(plansRes.data);
-      })
-      .catch(() => {});
-  }, [loadEnrollments]);
+  // Cargar primeros 10 pacientes inscritos al buscar o filtrar
+  const loadInitialPatients = useCallback(async (search: string, status: "all" | EnrollmentStatus) => {
+    setLoadingEnrollments(true);
+    try {
+      const res = await fetchProgramEnrollments(1, 10, {
+        status,
+        patientId: "",
+        search: search.trim(),
+      });
+      setEnrollmentsList(res.data);
+    } catch {
+      setEnrollmentsList([]);
+    } finally {
+      setLoadingEnrollments(false);
+    }
+  }, []);
 
-  const handleSelectEnrollment = useCallback(
-    async (id: string) => {
-      setSelectedEnrollmentId(id);
+  // Debounce para el input de búsqueda por nombre / documento
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadInitialPatients(searchQuery, statusFilter);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, statusFilter, loadInitialPatients]);
+
+  // Manejar selección de un paciente de la tabla
+  const handleSelectPatient = useCallback(
+    async (enrollment: ProgramEnrollment) => {
+      setSelectedEnrollment(enrollment);
       setLoadingCatalog(true);
       try {
-        await selectEnrollment(id);
-        const selectedEnr = enrollments.find((e) => e.id === id);
+        await selectEnrollment(enrollment.id);
         const [routinesRes, plansRes] = await Promise.all([
           fetchRoutinesForPicker(1, 100, ""),
-          fetchNutritionPlansForPicker(1, 100, "", undefined, undefined, selectedEnr?.patientId),
+          fetchNutritionPlansForPicker(1, 100, "", undefined, undefined, enrollment.patientId),
         ]);
         setAvailableRoutines(routinesRes.data);
         setAvailablePlans(plansRes.data);
@@ -104,11 +125,11 @@ export function ProgramContentPage() {
         setLoadingCatalog(false);
       }
     },
-    [selectEnrollment, enrollments],
+    [selectEnrollment],
   );
 
-  const handleClearSelection = useCallback(() => {
-    setSelectedEnrollmentId("");
+  const handleBackToList = useCallback(() => {
+    setSelectedEnrollment(null);
     clear();
   }, [clear]);
 
@@ -136,107 +157,224 @@ export function ProgramContentPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title="Contenido del programa"
-        description="Configura el plan nutricional y la rutina de ejercicio de cada semana para una inscripción"
+        description="Configura el plan nutricional y la rutina de ejercicio de cada semana para una inscripción de paciente"
         icon={CalendarDays}
       />
 
-      {/* Selector de inscripción */}
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-xs">
-        <h2 className="text-sm font-semibold mb-3">Seleccionar paciente e inscripción</h2>
+      {/* VISTA 1: Buscador e inicio con los primeros 10 pacientes inscritos */}
+      {!selectedEnrollment ? (
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-xs flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                Pacientes inscritos en programas
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Busca por nombre o número de documento para gestionar el contenido de su programa.
+              </p>
+            </div>
 
-        {loadingEnrollments ? (
-          <Skeleton className="h-10 w-full max-w-md rounded-lg" />
-        ) : enrollments.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            No hay pacientes inscritos en programas activos.
-          </p>
-        ) : (
-          <div className="flex flex-wrap items-center gap-3">
-            <Select
-              value={selectedEnrollmentId}
-              onValueChange={handleSelectEnrollment}
-            >
-              <SelectTrigger className="w-full sm:w-[520px]">
-                <SelectValue placeholder="Buscar y seleccionar paciente...">
-                  {(() => {
-                    const sel = enrollments.find((e) => e.id === selectedEnrollmentId);
-                    if (!sel) return undefined;
-                    const pName = sel.patientFullName || `Paciente (${sel.patientId.substring(0, 8)})`;
-                    const tName = sel.templateName || "Programa";
-                    return `${pName} · ${tName} (Sem ${sel.currentWeekNumber}/${sel.totalWeeks})`;
-                  })()}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {enrollments.map((e: ProgramEnrollment) => {
-                  const patientName = e.patientFullName || `Paciente (${e.patientId.substring(0, 8)})`;
-                  const docText = e.patientDocumentNumber ? ` · Doc: ${e.patientDocumentNumber}` : "";
-                  const templateText = e.templateName || "Programa";
-                  const textLabel = `${patientName}${docText} (${templateText} - Sem ${e.currentWeekNumber}/${e.totalWeeks})`;
+            {/* Input de búsqueda por nombre o documento */}
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nombre o documento..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 text-xs h-9 bg-card"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+              </div>
 
-                  return (
-                    <SelectItem key={e.id} value={e.id} textValue={textLabel}>
-                      <div className="flex flex-col gap-0.5 text-xs py-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-foreground truncate">
-                            {patientName}
-                          </span>
-                          {e.patientDocumentNumber && (
-                            <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded text-muted-foreground font-mono">
-                              {e.patientDocumentNumber}
-                            </span>
-                          )}
-                          <Badge variant="outline" className="text-[10px] py-0 ml-auto shrink-0">
-                            {e.status}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground truncate">
-                          <span>{templateText}</span>
-                          <span>·</span>
-                          <span className="font-medium text-foreground">
-                            Semana {e.currentWeekNumber} de {e.totalWeeks}
-                          </span>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-
-            {selectedEnrollmentId && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearSelection}
-                className="text-muted-foreground"
+              <Select
+                value={statusFilter}
+                onValueChange={(val) => setStatusFilter(val as "all" | EnrollmentStatus)}
               >
-                <X className="mr-1 size-3.5" />
-                Limpiar
-              </Button>
-            )}
+                <SelectTrigger className="h-9 w-36 text-xs bg-card">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active" className="text-xs">Activos</SelectItem>
+                  <SelectItem value="Paused" className="text-xs">Pausados</SelectItem>
+                  <SelectItem value="Completed" className="text-xs">Completados</SelectItem>
+                  <SelectItem value="all" className="text-xs">Todos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        )}
-      </section>
 
-      {/* Vista de contenido */}
-      {!selectedEnrollmentId ? (
-        <ContentEmptyState />
-      ) : loading ? (
-        <ContentSkeleton />
-      ) : error ? (
-        <ContentErrorState message={error} onRetry={handleRetry} />
-      ) : content ? (
-        <ContentTable
-          content={content}
-          canEdit={canEdit}
-          onSaveWeek={saveWeek}
-          enrollmentId={selectedEnrollmentId}
-          availableRoutines={availableRoutines}
-          availablePlans={availablePlans}
-          loadingCatalog={loadingCatalog}
-        />
-      ) : null}
+          {/* Tabla de los primeros 10 pacientes inscritos */}
+          {loadingEnrollments ? (
+            <div className="flex flex-col gap-2 py-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : enrollmentsList.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-12 text-center border border-dashed border-border rounded-xl">
+              <User className="size-8 text-muted-foreground/60" />
+              <p className="text-sm font-semibold text-foreground">
+                No se encontraron pacientes inscritos
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {searchQuery
+                  ? "Intenta con otro término de búsqueda (nombre o documento)."
+                  : "No hay inscripciones activas registradas en este momento."}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Paciente</TableHead>
+                    <TableHead>Programa</TableHead>
+                    <TableHead>Progreso semanal</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Acción</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {enrollmentsList.map((enrollment) => {
+                    const patientName =
+                      enrollment.patientFullName || `Paciente (${enrollment.patientId.substring(0, 8)})`;
+                    const templateName = enrollment.templateName || "Programa de Salud";
+
+                    return (
+                      <TableRow
+                        key={enrollment.id}
+                        className="hover:bg-muted/50 cursor-pointer"
+                        onClick={() => handleSelectPatient(enrollment)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
+                              {patientName.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-xs text-foreground">
+                                {patientName}
+                              </span>
+                              {enrollment.patientDocumentNumber && (
+                                <span className="text-[10px] text-muted-foreground font-mono">
+                                  Doc: {enrollment.patientDocumentNumber}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="text-xs text-muted-foreground">
+                          {templateName}
+                        </TableCell>
+
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                            Semana {enrollment.currentWeekNumber} de {enrollment.totalWeeks}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell>
+                          <Badge
+                            variant={enrollment.status === "Active" ? "default" : "outline"}
+                            className="text-[10px]"
+                          >
+                            {enrollment.status}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectPatient(enrollment);
+                            }}
+                            className="gap-1 text-xs shadow-2xs"
+                          >
+                            <span>Gestionar contenido</span>
+                            <ArrowRight className="size-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </section>
+      ) : (
+        /* VISTA 2: Matriz de contenido del paciente seleccionado */
+        <div className="flex flex-col gap-4">
+          {/* Header con botón de retorno e info del paciente */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBackToList}
+                className="gap-1.5 text-xs"
+              >
+                <ArrowLeft className="size-4" />
+                Volver a la lista de pacientes
+              </Button>
+
+              <div className="h-6 w-px bg-border hidden sm:block" />
+
+              <div className="flex items-center gap-2">
+                <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-sm">
+                  <UserCheck className="size-5" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-sm text-foreground flex items-center gap-2">
+                    {selectedEnrollment.patientFullName || `Paciente (${selectedEnrollment.patientId.substring(0, 8)})`}
+                    {selectedEnrollment.patientDocumentNumber && (
+                      <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded text-muted-foreground font-mono font-normal">
+                        Doc: {selectedEnrollment.patientDocumentNumber}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedEnrollment.templateName || "Programa"} · Semana {selectedEnrollment.currentWeekNumber} de {selectedEnrollment.totalWeeks}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <Badge variant="outline" className="text-xs">
+              Inscripción {selectedEnrollment.id.substring(0, 8)}
+            </Badge>
+          </div>
+
+          {/* Estado de carga / error / tabla de semanas */}
+          {loading ? (
+            <ContentSkeleton />
+          ) : error ? (
+            <ContentErrorState message={error} onRetry={handleRetry} />
+          ) : content ? (
+            <ContentTable
+              content={content}
+              canEdit={canEdit}
+              onSaveWeek={saveWeek}
+              enrollmentId={selectedEnrollment.id}
+              availableRoutines={availableRoutines}
+              availablePlans={availablePlans}
+              loadingCatalog={loadingCatalog}
+            />
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
@@ -268,14 +406,14 @@ function ContentTable({
             Semanas del programa ({content.totalWeeks} semanas)
           </h3>
           <p className="text-xs text-muted-foreground">
-            Asigna el plan nutricional y la rutina de ejercicio para cada semana.
+            Asigna el plan nutricional y la rutina de ejercicio para cada semana del paciente.
           </p>
         </div>
 
         {loadingCatalog && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Loader2 className="size-3.5 animate-spin text-primary" />
-            <span>Cargando catálogo de rutinas...</span>
+            <span>Cargando catálogo del paciente...</span>
           </div>
         )}
       </div>
@@ -592,25 +730,6 @@ function ContentErrorState({
       <Button variant="outline" size="sm" onClick={onRetry}>
         Reintentar
       </Button>
-    </div>
-  );
-}
-
-// --- Empty state ---
-
-function ContentEmptyState() {
-  return (
-    <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border py-16 text-center">
-      <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
-        <CalendarDays className="size-6 text-muted-foreground" />
-      </div>
-      <div>
-        <p className="text-sm font-semibold">Selecciona una inscripción</p>
-        <p className="text-xs text-muted-foreground">
-          Selecciona una inscripción activa para configurar el plan nutricional
-          y la rutina de ejercicio de cada semana.
-        </p>
-      </div>
     </div>
   );
 }
