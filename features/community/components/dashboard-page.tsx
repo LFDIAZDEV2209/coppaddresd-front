@@ -102,9 +102,18 @@ export function DashboardPage() {
         </div>
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Tipos de publicaciones")} description={t("Distribución del mes")} icon={PieChart} variant="primary" />
-          <div className="p-4">
-            <PostTypesDoughnut data={dashboardPostTypeData} loading={dashboardLoading} />
-            <ChartLegend items={dashboardPostTypeData.map((d, i) => ({ label: d.name, color: CHART_COLORS[i % CHART_COLORS.length] }))} />
+          <div className="flex items-center gap-3 p-4">
+            <div className="min-w-0 flex-1">
+              <PostTypesDoughnut data={dashboardPostTypeData} loading={dashboardLoading} />
+            </div>
+            <div className="flex shrink-0 flex-col gap-2">
+              {dashboardPostTypeData.map((d, i) => (
+                <span key={d.name} className="flex items-center gap-2 text-[11.5px] text-muted-foreground">
+                  <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                  {d.name}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
