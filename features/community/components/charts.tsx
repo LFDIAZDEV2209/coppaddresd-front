@@ -169,7 +169,7 @@ export function PeakHoursBar({
   const t = useT();
   return (
     <ChartFrame loading={loading}>
-      <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barCategoryGap="18%">
+      <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: -8 }} barCategoryGap="18%">
         <defs>
           <linearGradient id="cpBar-hora" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.95} />
