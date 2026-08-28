@@ -8,24 +8,28 @@ import worldData from "./world-110m.json";
 import { useT } from "@/providers/i18n-provider";
 
 const REGION_LATLNG: Record<string, [number, number]> = {
-  Miami: [25.76, -80.19],
-  NY: [40.71, -74.0],
-  Orlando: [28.53, -81.37],
-  Barranquilla: [11.0, -74.8],
-  "Bogotá": [4.71, -74.07],
-  Bogota: [4.71, -74.07],
-  CDMX: [19.43, -99.13],
+  miami: [25.76, -80.19],
+  ny: [40.71, -74.0],
+  orlando: [28.53, -81.37],
+  barranquilla: [11.0, -74.8],
+  "bogotá": [4.71, -74.07],
+  bogota: [4.71, -74.07],
+  cdmx: [19.43, -99.13],
 };
 
 const REGION_COLOR_HEX: Record<string, string> = {
-  Miami: "#3B82F6",
-  NY: "#059669",
-  Barranquilla: "#92400E",
-  Orlando: "#D97706",
-  "Bogotá": "#0E7490",
-  Bogota: "#0E7490",
-  CDMX: "#DC2626",
+  miami: "#3B82F6",
+  ny: "#059669",
+  barranquilla: "#92400E",
+  orlando: "#D97706",
+  "bogotá": "#0E7490",
+  bogota: "#0E7490",
+  cdmx: "#DC2626",
 };
+
+function normKey(s: string): string {
+  return s.trim().toLowerCase();
+}
 
 export function RegionsMap({ regions }: { regions: { region: string; members: number }[] }) {
   const t = useT();
@@ -48,28 +52,29 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
 
     const coords: [number, number][] = [];
     for (const r of regions) {
-      const ll = REGION_LATLNG[r.region];
+      const ll = REGION_LATLNG[normKey(r.region)];
       if (ll) coords.push([ll[1], ll[0]]); // [lng, lat]
     }
 
-    if (coords.length >= 2) {
+    if (coords.length >= 1) {
       const geo = {
-        type: "Feature" as const,
-        geometry: { type: "MultiPoint" as const, coordinates: coords },
-        properties: {},
+        type: "FeatureCollection" as const,
+        features: coords.map((c) => ({
+          type: "Feature" as const,
+          geometry: { type: "Point" as const, coordinates: c },
+          properties: {},
+        })),
       };
       projection.fitExtent(
         [
-          [40, 20],
-          [760, 300],
+          [30, 16],
+          [770, 304],
         ],
         geo as never,
       );
-      // Soften: pull zoom ~0.85x to keep surrounding land visible
+      // Soften slightly to keep surrounding land visible
       const s = projection.scale();
-      projection.scale(s * 0.82);
-    } else if (coords.length === 1) {
-      projection.center(coords[0]).scale(420).translate([width / 2, height / 2]);
+      projection.scale(s * 0.88);
     } else {
       // Fallback: show Americas-centered world
       projection.fitExtent(
@@ -92,12 +97,12 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
 
     const projected = regions
       .map((r) => {
-        const ll = REGION_LATLNG[r.region];
+        const ll = REGION_LATLNG[normKey(r.region)];
         if (!ll) return null;
         const p = projection([ll[1], ll[0]]);
         if (!p) return null;
-        const color = REGION_COLOR_HEX[r.region] ?? "#64748B";
-        const radius = 8 + Math.min(r.members / 12, 10);
+        const color = REGION_COLOR_HEX[normKey(r.region)] ?? "#64748B";
+        const radius = 7 + Math.min(r.members / 14, 9);
         return { region: r.region, members: r.members, x: p[0], y: p[1], color, radius };
       })
       .filter(Boolean) as { region: string; members: number; x: number; y: number; color: string; radius: number }[];
@@ -106,8 +111,8 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
   }, [regions]);
 
   return (
-    <div className="relative h-[320px] w-full overflow-hidden rounded-xl bg-[#EFF2F7]">
-      <svg viewBox="0 0 800 320" className="h-full w-full" role="img" aria-label={t("Mapa de regiones")}>
+    <div className="relative h-[360px] w-full overflow-hidden rounded-xl bg-[#EFF2F7]">
+      <svg viewBox="0 0 800 360" className="h-full w-full" role="img" aria-label={t("Mapa de regiones")}>
         {/* Land */}
         <g>
           {countryPaths.map((p) => (
@@ -115,7 +120,7 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
           ))}
         </g>
 
-        {/* Graticule subtle already via land border; markers */}
+        {/* Markers con etiqueta permanente */}
         <g>
           {markers.map((m) => {
             const isHovered = hovered === m.region;
@@ -126,9 +131,8 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
                 onMouseLeave={() => setHovered(null)}
                 className="cursor-pointer"
               >
-                {/* outer pulse when hovered */}
                 {isHovered && (
-                  <circle cx={m.x} cy={m.y} r={m.radius + 6} fill={m.color} opacity={0.18} />
+                  <circle cx={m.x} cy={m.y} r={m.radius + 7} fill={m.color} opacity={0.14} />
                 )}
                 <circle
                   cx={m.x}
@@ -140,21 +144,56 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
                   strokeWidth={2}
                   style={{ filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.18))" }}
                 />
+                {/* Etiqueta permanente */}
+                <g pointerEvents="none">
+                  <rect
+                    x={m.x - 42}
+                    y={m.y + m.radius + 6}
+                    width={84}
+                    height={18}
+                    rx={9}
+                    fill="var(--card)"
+                    stroke="var(--border)"
+                    strokeOpacity={0.9}
+                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.08))" }}
+                  />
+                  <text
+                    x={m.x}
+                    y={m.y + m.radius + 15.5}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={9.5}
+                    fontWeight={700}
+                    fill="var(--foreground)"
+                  >
+                    {m.region}
+                  </text>
+                </g>
+                <text
+                  x={m.x}
+                  y={m.y + m.radius + 29}
+                  textAnchor="middle"
+                  fontSize={8.5}
+                  fontWeight={600}
+                  fill="var(--muted-foreground)"
+                  pointerEvents="none"
+                >
+                  {m.members} {m.members === 1 ? t("miembro") : t("miembros")}
+                </text>
               </g>
             );
           })}
         </g>
 
-        {/* Hover tooltip inside SVG (avoids HTML positioning math) */}
+        {/* Hover tooltip detallado (encima de etiqueta) */}
         {markers
           .filter((m) => hovered === m.region)
           .map((m) => {
             const label = `${m.region} — ${m.members} ${m.members === 1 ? t("miembro") : t("miembros")}`;
-            // Estimate width ~ 6.5px per char at 11px font + 16 padding
             const w = Math.min(220, Math.max(110, label.length * 6.2 + 24));
             const h = 28;
             const tx = Math.min(800 - w - 8, Math.max(8, m.x - w / 2));
-            const ty = Math.max(8, m.y - m.radius - h - 10);
+            const ty = Math.max(8, m.y - m.radius - h - 18);
             return (
               <g key={`tip-${m.region}`} pointerEvents="none">
                 <rect x={tx} y={ty} width={w} height={h} rx={8} fill="var(--card)" stroke="var(--border)" />

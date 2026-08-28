@@ -13,7 +13,7 @@ import { GroupedBarChart } from "./charts";
 
 const RegionsMap = dynamic(() => import("./regions-map").then((m) => m.RegionsMap), {
   ssr: false,
-  loading: () => <div className="h-[320px] w-full animate-pulse rounded-xl bg-muted" />,
+  loading: () => <div className="h-[360px] w-full animate-pulse rounded-xl bg-muted" />,
 });
 
 const REGION_COLORS: Record<string, string> = {
