@@ -9,6 +9,15 @@ import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -19,7 +28,7 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
-import type { GroupType } from "../types";
+import type { CommunityGroup, GroupType } from "../types";
 import { CommunityPagination } from "./community-pagination";
 
 const GROUP_TYPE_COLORS: Record<GroupType, { bg: string; text: string; dot: string }> = {
@@ -32,10 +41,12 @@ const GROUP_TYPE_COLORS: Record<GroupType, { bg: string; text: string; dot: stri
 
 export function GroupsPage() {
   const t = useT();
-  const { communityGroups, communityGroupsLoading, toast } = useErp();
+  const { communityGroups, communityGroupsLoading, sendGroupMessage } = useErp();
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [messageTarget, setMessageTarget] = useState<CommunityGroup | null>(null);
+  const [draft, setDraft] = useState("");
 
   const groups = useMemo(
     () => (communityGroupsLoading ? [] : communityGroups),
@@ -92,7 +103,10 @@ export function GroupsPage() {
                       <Button
                         size="icon-sm"
                         variant="ghost"
-                        onClick={() => toast(t("Mensaje enviado al grupo") + ": " + g.name)}
+                        onClick={() => {
+                          setMessageTarget(g);
+                          setDraft("");
+                        }}
                         title={t("Mensaje")}
                       >
                         <Send className="size-3.5" />
@@ -112,6 +126,47 @@ export function GroupsPage() {
           onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         />
       </div>
+
+      {/* Diálogo de envío de mensaje al grupo */}
+      <Dialog
+        open={messageTarget !== null}
+        onOpenChange={(o) => {
+          if (!o) setMessageTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("Enviar mensaje al grupo")}</DialogTitle>
+            <DialogDescription>
+              {t("Se enviará como Equipo ANTARES al grupo") + ": " + (messageTarget?.name ?? "")}
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={t("Escribe tu mensaje para el grupo…")}
+            rows={4}
+          />
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setMessageTarget(null)}>
+              {t("Cancelar")}
+            </Button>
+            <Button
+              size="sm"
+              disabled={!draft.trim()}
+              onClick={() => {
+                if (!messageTarget) return;
+                sendGroupMessage(messageTarget.id, draft);
+                setMessageTarget(null);
+                setDraft("");
+              }}
+            >
+              <Send data-icon="inline-start" />
+              {t("Enviar")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

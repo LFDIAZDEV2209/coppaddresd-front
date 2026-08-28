@@ -349,6 +349,24 @@ export const VIEW_POST = gql`
   }
 `;
 
+export const SEND_GROUP_MESSAGE = gql`
+  mutation SendGroupMessage($groupId: UUID!, $body: String!) {
+    sendGroupMessage(groupId: $groupId, body: $body) {
+      id
+      body
+      createdAt
+    }
+  }
+`;
+
+export interface SendGroupMessageResult {
+  sendGroupMessage: {
+    id: string;
+    body: string;
+    createdAt: string;
+  };
+}
+
 export const PIN_POST = gql`
   mutation PinPost($id: UUID!, $pinned: Boolean!) {
     pinPost(id: $id, pinned: $pinned) {

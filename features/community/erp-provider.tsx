@@ -40,6 +40,7 @@ import {
   RESOLVE_REPORT,
   SEND_BULK_MESSAGE,
   SEND_DIRECT_MESSAGE,
+  SEND_GROUP_MESSAGE,
   TOP_STREAKS_QUERY,
   UNBAN_PROFILE,
   type AddCommentResult,
@@ -81,6 +82,7 @@ import {
   type ResolveReportResult,
   type SendBulkMessageResult,
   type SendDirectMessageResult,
+  type SendGroupMessageResult,
   type TopStreaksResult,
   type UnbanProfileResult,
 } from "./services/community";
@@ -458,6 +460,7 @@ interface ErpContextValue {
   awardXp: (payload: AwardPayload) => void;
   sendMessage: (memberId: string, message: string) => void;
   sendBulkInactive: (message: string) => void;
+  sendGroupMessage: (groupId: string, body: string) => void;
   addComment: (postId: string, body: string) => void;
   replyToComment: (commentId: string, body: string) => void;
   deleteComment: (commentId: string) => void;
@@ -658,6 +661,10 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     SendBulkMessageResult,
     { scope: string; body: string }
   >(SEND_BULK_MESSAGE);
+  const [, sendGroupMessageMut] = useMutation<
+    SendGroupMessageResult,
+    { groupId: string; body: string }
+  >(SEND_GROUP_MESSAGE);
 
   const [, addCommentMut] = useMutation<AddCommentResult, { postId: string; body: string }>(ADD_COMMENT);
   const [, replyToCommentMut] = useMutation<ReplyToCommentResult, { commentId: string; body: string }>(
@@ -978,6 +985,20 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     [toast, t],
   );
 
+  const sendGroupMessage = useCallback<ErpContextValue["sendGroupMessage"]>(
+    (groupId, body) => {
+      if (!body.trim()) return;
+      sendGroupMessageMut({ groupId, body: body.trim() }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo enviar el mensaje. Intenta de nuevo."));
+        } else {
+          toast(t("Mensaje enviado al grupo"));
+        }
+      });
+    },
+    [toast, t],
+  );
+
   const addComment = useCallback<ErpContextValue["addComment"]>(
     (postId, body) => {
       if (!body.trim()) return;
@@ -1180,6 +1201,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       awardXp,
       sendMessage,
       sendBulkInactive,
+      sendGroupMessage,
       addComment,
       replyToComment,
       deleteComment,
@@ -1257,6 +1279,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       awardXp,
       sendMessage,
       sendBulkInactive,
+      sendGroupMessage,
       addComment,
       replyToComment,
       deleteComment,
