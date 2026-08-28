@@ -106,10 +106,10 @@ export function DashboardPage() {
             <div className="min-w-0 flex-1">
               <PostTypesDoughnut data={dashboardPostTypeData} loading={dashboardLoading} />
             </div>
-            <div className="flex shrink-0 flex-col gap-2">
+            <div className="flex shrink-0 flex-col gap-1.5">
               {dashboardPostTypeData.map((d, i) => (
-                <span key={d.name} className="flex items-center gap-2 text-[11.5px] text-muted-foreground">
-                  <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                <span key={d.name} className="flex items-center gap-1.5 text-[10px] leading-none text-muted-foreground">
+                  <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                   {d.name}
                 </span>
               ))}

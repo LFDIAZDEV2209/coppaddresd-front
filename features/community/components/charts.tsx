@@ -122,7 +122,7 @@ export function PostTypesDoughnut({
           dataKey="value"
           nameKey="name"
           innerRadius={0}
-          outerRadius={90}
+          outerRadius={78}
           paddingAngle={1}
           cornerRadius={0}
           stroke="var(--card)"
