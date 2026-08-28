@@ -98,8 +98,14 @@ export function PostsPage() {
   const [pinnedPage, setPinnedPage] = useState(1);
   const [pinnedPageSize, setPinnedPageSize] = useState(5);
   // Dialog de detalle de publicación
-  const [detailPost, setDetailPost] = useState<ErpPost | null>(null);
+  // Solo guardamos el id: el post se deriva de `posts` para que los
+  // comentarios en vivo (optimistic merge) aparezcan en tiempo real.
+  const [detailPostId, setDetailPostId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const detailPost = useMemo(
+    () => (detailPostId ? posts.find((p) => p.id === detailPostId) ?? null : null),
+    [posts, detailPostId],
+  );
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const pinnedPosts = posts.filter((p) => p.pinned);
@@ -148,7 +154,7 @@ export function PostsPage() {
   };
 
   const openDetail = (post: ErpPost) => {
-    setDetailPost(post);
+    setDetailPostId(post.id);
     setDetailOpen(true);
   };
 
