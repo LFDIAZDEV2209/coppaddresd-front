@@ -24,7 +24,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 
-const CHART_COLORS = [
+export const CHART_COLORS = [
   "var(--chart-1)",
   "var(--chart-2)",
   "var(--chart-3)",
@@ -169,7 +169,7 @@ export function PeakHoursBar({
   const t = useT();
   return (
     <ChartFrame loading={loading}>
-      <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barCategoryGap="18%">
         <defs>
           <linearGradient id="cpBar-hora" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.95} />
@@ -180,7 +180,7 @@ export function PeakHoursBar({
         <XAxis dataKey="hora" {...axisProps} minTickGap={16} interval={2} />
         <YAxis {...axisProps} allowDecimals={false} />
         <Tooltip contentStyle={tooltipStyle} formatter={(value) => String(value)} labelFormatter={(l) => `${t("Hora")} ${l}`} cursor={{ fill: "var(--muted)", opacity: 0.4 }} />
-        <Bar dataKey="valor" name={t("Actividad")} fill="url(#cpBar-hora)" radius={[5, 5, 0, 0]} maxBarSize={20} />
+        <Bar dataKey="valor" name={t("Actividad")} fill="url(#cpBar-hora)" radius={[5, 5, 0, 0]} maxBarSize={32} />
       </BarChart>
     </ChartFrame>
   );
@@ -196,7 +196,7 @@ export function DiagnosisRadar({
   const t = useT();
   return (
     <ChartFrame loading={loading}>
-      <RadarChart data={data} outerRadius="75%">
+      <RadarChart data={data} outerRadius="65%">
         <PolarGrid stroke="var(--border)" />
         <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }} />
         <PolarRadiusAxis tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} angle={90} />
