@@ -116,7 +116,7 @@ export function DashboardPage() {
               {dashboardPostTypeData.map((d, i) => (
                 <span key={d.name} className="flex items-center gap-1.5 text-[10px] leading-none text-muted-foreground">
                   <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                  {d.name}
+                  {t(d.name)}
                 </span>
               ))}
             </div>

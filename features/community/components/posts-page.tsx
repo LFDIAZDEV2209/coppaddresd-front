@@ -317,7 +317,7 @@ export function PostsPage() {
                   <SelectContent>
                     {DESTINOS.map((d) => (
                       <SelectItem key={d} value={d}>
-                        {d}
+                        {t(d)}
                       </SelectItem>
                     ))}
                   </SelectContent>

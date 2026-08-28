@@ -1,4 +1,7 @@
+"use client";
+
 import { StatusBadge } from "@/components/feedback/status-badge";
+import { useT } from "@/providers/i18n-provider";
 import { RISK_ICON } from "../mock-data";
 import type { RiskLevel } from "../types";
 
@@ -11,7 +14,8 @@ const COLORS: Record<string, { bg: string; text: string; dot: string }> = {
 const FALLBACK = COLORS.Bajo;
 
 export function RiskBadge({ risk }: { risk?: RiskLevel | string }) {
+  const t = useT();
   const color = COLORS[risk ?? ""] ?? FALLBACK;
   const icon = RISK_ICON[risk ?? ""] ?? "🟡";
-  return <StatusBadge status={`${icon} ${risk ?? "Bajo"}`} color={color} />;
+  return <StatusBadge status={`${icon} ${t(risk ?? "Bajo")}`} color={color} />;
 }

@@ -2310,5 +2310,7 @@
   "No se pudo restringir el acceso a la comunidad.": "No se pudo restringir el acceso a la comunidad.",
   "Acceso a la comunidad restringido": "Acceso a la comunidad restringido",
   "No se pudo restaurar el acceso.": "No se pudo restaurar el acceso.",
-  "Acceso restaurado": "Acceso restaurado"
+  "Acceso restaurado": "Acceso restaurado",
+  "ERP Comunidad": "ERP Comunidad",
+  "Volver al ERP general": "Volver al ERP general"
 }

@@ -32,7 +32,7 @@ export function CommunitySidebar({ onNavigate }: CommunitySidebarProps) {
             {t(communityBrand)}
           </span>
           <span className="text-[10.5px] font-semibold text-[var(--sidebar-foreground)]">
-            ERP Comunidad
+            {t("ERP Comunidad")}
           </span>
         </div>
       </div>

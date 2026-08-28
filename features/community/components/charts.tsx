@@ -228,7 +228,7 @@ export function GroupedBarChart({
   const t = useT();
   return (
     <ChartFrame loading={loading} height={height}>
-      <BarChart data={data} margin={{ top: 4, right: 12, left: -10, bottom: 4 }} barCategoryGap="16%" barGap={3}>
+      <BarChart data={data} margin={{ top: 8, right: 20, left: 0, bottom: 8 }} barCategoryGap="24%" barGap={6}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey="label" {...axisProps} minTickGap={16} />
         <YAxis {...axisProps} allowDecimals={false} />

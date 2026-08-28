@@ -33,7 +33,7 @@ export function CommunityTopbar({ onMenuClick }: CommunityTopbarProps) {
         onClick={() => router.push("/dashboard")}
         className="ml-1 flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12.5px] font-semibold text-white/90 transition-all hover:bg-white/10 hover:text-white active:scale-[0.97]"
       >
-        {t("Volver al ERP")}
+        {t("Volver al ERP general")}
       </button>
 
       <div className="relative ml-auto hidden md:block">

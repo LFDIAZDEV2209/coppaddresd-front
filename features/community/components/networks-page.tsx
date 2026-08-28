@@ -88,7 +88,7 @@ export function NetworksPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-base font-black">{ch.followers}</div>
-                  <div className="text-[9px] opacity-60">{CHANNEL_LABEL[ch.name] ?? "seguidores"}</div>
+                  <div className="text-[9px] opacity-60">{t(CHANNEL_LABEL[ch.name] ?? "seguidores")}</div>
                 </div>
               </div>
             ))}

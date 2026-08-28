@@ -107,7 +107,7 @@ export function AwardDialog() {
                     >
                       <RadioGroupItem value={tip.key} />
                       <Icon className="size-4 text-primary" />
-                      <span className="text-sm">{tip.label}</span>
+                      <span className="text-sm">{t(tip.label)}</span>
                     </label>
                   );
                 })}

@@ -1,4 +1,7 @@
+"use client";
+
 import { StatusBadge } from "@/components/feedback/status-badge";
+import { useT } from "@/providers/i18n-provider";
 import { LEVEL_ICON } from "../mock-data";
 import type { MemberLevel } from "../types";
 
@@ -11,10 +14,11 @@ const COLORS: Record<MemberLevel, { bg: string; text: string; dot: string }> = {
 };
 
 export function LevelBadge({ level }: { level: MemberLevel }) {
+  const t = useT();
   const color = COLORS[level];
   return (
     <StatusBadge
-      status={`${LEVEL_ICON[level]} ${level}`}
+      status={`${LEVEL_ICON[level]} ${t(level)}`}
       color={color}
     />
   );
