@@ -113,7 +113,7 @@ export function DashboardPage() {
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
         <div className="flex min-h-[340px] flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader title={t("Horario pico de actividad")} description={t("Actividad por hora (24h)")} icon={Clock} variant="primary" />
-          <div className="flex flex-1 flex-col p-0">
+          <div className="flex flex-1 flex-col p-3">
             <PeakHoursBar data={dashboardPeakHoursData} loading={dashboardLoading} height="h-full flex-1 min-h-[280px]" />
           </div>
         </div>
