@@ -228,13 +228,13 @@ export function GroupedBarChart({
   const t = useT();
   return (
     <ChartFrame loading={loading} height={height}>
-      <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 4, right: 12, left: -10, bottom: 4 }} barCategoryGap="16%" barGap={3}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey="label" {...axisProps} minTickGap={16} />
         <YAxis {...axisProps} allowDecimals={false} />
         <Tooltip contentStyle={tooltipStyle} formatter={(value) => String(value)} cursor={{ fill: "var(--muted)", opacity: 0.4 }} />
         {bars.map((b) => (
-          <Bar key={b.key} dataKey={b.key} name={b.name} fill={b.color} radius={[4, 4, 0, 0]} maxBarSize={28} />
+          <Bar key={b.key} dataKey={b.key} name={b.name} fill={b.color} radius={[4, 4, 0, 0]} maxBarSize={34} />
         ))}
       </BarChart>
     </ChartFrame>

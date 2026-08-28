@@ -61,26 +61,28 @@ export function DiagnosticsPage() {
 
       {/* Row 2: chart + table */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Participación vs Adherencia — 2/3 */}
+        {/* Participación vs Adherencia — 2/3, gráfico ocupa todo el alto */}
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Participación vs Adherencia por diagnóstico")}
             icon={TrendingUp}
             variant="primary"
           />
-          <div className="flex flex-1 flex-col p-4">
-            <GroupedBarChart
-              data={chartData}
-              loading={diagnosticsLoading}
-              height="h-[340px]"
-              bars={[
-                { key: "postsProm", name: t("Posts semanales prom."), color: "var(--info)" },
-                { key: "adherencia", name: t("Adherencia %"), color: "var(--success)" },
-                { key: "rachaProm", name: t("Racha prom. (días)"), color: "var(--primary)" },
-              ]}
-            />
-            {/* Insight — footer inside chart card, keeps 2-row fit + readability */}
-            <div className="mt-3 rounded-xl bg-success-soft p-3">
+          <div className="flex flex-1 flex-col gap-0">
+            <div className="flex-1 p-3 pb-1">
+              <GroupedBarChart
+                data={chartData}
+                loading={diagnosticsLoading}
+                height="h-[380px]"
+                bars={[
+                  { key: "postsProm", name: t("Posts semanales prom."), color: "var(--info)" },
+                  { key: "adherencia", name: t("Adherencia %"), color: "var(--success)" },
+                  { key: "rachaProm", name: t("Racha prom. (días)"), color: "var(--primary)" },
+                ]}
+              />
+            </div>
+            {/* Insight — footer compacto */}
+            <div className="mx-3 mb-3 mt-1 rounded-xl bg-success-soft px-3 py-2.5">
               <div className="flex items-start gap-2">
                 <Info className="mt-0.5 size-4 shrink-0 text-success-foreground" />
                 <p className="text-[11.5px] leading-snug text-success-foreground">
