@@ -233,13 +233,13 @@ export function ModerationPage() {
         icon={Shield}
       />
 
-      {/* Header — mismo layout que banner de inactivos, en rojo */}
-      <div className="flex items-center gap-2.5 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2.5">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive text-white">
+      {/* Header — mismo layout que banner de inactivos, en rojo oscuro */}
+      <div className="flex items-center gap-2.5 rounded-xl border border-[#991B1B] bg-destructive-soft px-3 py-2.5">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#991B1B] text-white">
           <AlertTriangle className="size-4" />
         </span>
         <div className="flex flex-col gap-0 min-w-0">
-          <p className="text-[13px] font-semibold leading-tight text-destructive">{t("Reportes activos")}</p>
+          <p className="text-[13px] font-semibold leading-tight text-[#991B1B]">{t("Reportes activos")}</p>
           <p className="text-[11px] leading-tight text-muted-foreground">
             {`${reportedPosts.length} ${t("publicaciones reportadas")}`}
           </p>
