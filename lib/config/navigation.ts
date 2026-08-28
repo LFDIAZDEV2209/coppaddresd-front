@@ -42,6 +42,7 @@ import {
   UserCheck,
   Trophy,
   Zap,
+  GitBranch,
 } from "lucide-react";
 
 export interface NavItem {
@@ -442,6 +443,13 @@ export const navModules: NavModule[] = [
         href: "/program/weaknesses",
         icon: ShieldAlert,
         color: "#DC2626",
+        permission: "Program.Adapt",
+      },
+      {
+        label: "Adaptaciones",
+        href: "/program/adaptations",
+        icon: GitBranch,
+        color: "#D97706",
         permission: "Program.Adapt",
       },
       {
