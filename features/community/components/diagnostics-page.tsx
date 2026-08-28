@@ -92,8 +92,8 @@ export function DiagnosticsPage() {
           </div>
         </div>
 
-        {/* Desglose detallado — 1/3 */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-1">
+        {/* Desglose detallado — 1/3 hugging content */}
+        <div className="flex h-fit flex-col gap-0 self-start overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-1">
           <SectionHeader
             title={t("Desglose detallado")}
             icon={Stethoscope}
