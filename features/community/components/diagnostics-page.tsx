@@ -4,9 +4,6 @@ import {
   Stethoscope,
   TrendingUp,
   Info,
-  Users,
-  Flame,
-  Award,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -131,40 +128,34 @@ export function DiagnosticsPage() {
             </div>
           </div>
 
-          {/* Resumen — llena el hueco debajo del desglose */}
-          {(() => {
-            const totalMembers = diagnostics.reduce((s, d) => s + d.members, 0);
-            const avgAdherence = diagnostics.length ? Math.round(diagnostics.reduce((s, d) => s + d.adherence, 0) / diagnostics.length) : 0;
-            const avgRacha = diagnostics.length ? (diagnostics.reduce((s, d) => s + d.avgStreak, 0) / diagnostics.length).toFixed(1) : "0";
-            const top = [...diagnostics].sort((a, b) => b.postsPerWeek - a.postsPerWeek)[0];
-            return (
-              <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
-                <SectionHeader title={t("Resumen rápido")} icon={Award} variant="secondary" />
-                <div className="grid flex-1 grid-cols-2 gap-3 p-4">
-                  <div className="flex flex-col gap-1 rounded-xl border border-border bg-muted/30 p-3">
-                    <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground"><Users className="size-3.5" /> {t("Total miembros")}</span>
-                    <span className="text-[18px] font-bold leading-none">{totalMembers || "—"}</span>
-                    <span className="text-[11px] text-muted-foreground">{t("en 4 diagnósticos")}</span>
+          {/* Adherencia por diagnóstico — detalle por condición, llena el hueco */}
+          <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+            <SectionHeader title={t("Adherencia por diagnóstico")} icon={TrendingUp} variant="secondary" />
+            <div className="flex flex-1 flex-col gap-3 p-4">
+              {(diagnosticsLoading ? [] : diagnostics).map((d) => (
+                <div key={d.diagnosis} className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[12px] font-semibold">{d.diagnosis}</span>
+                    <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                      <span className="text-[11px] font-bold text-foreground">{d.adherence}%</span>
+                      <span className="hidden sm:inline">· 🔥 {d.avgStreak}d</span>
+                      <span className="hidden sm:inline">· {d.members} {t("miembros")}</span>
+                    </span>
                   </div>
-                  <div className="flex flex-col gap-1 rounded-xl border border-border bg-success-soft p-3">
-                    <span className="flex items-center gap-1.5 text-[11px] font-medium text-success-foreground"><TrendingUp className="size-3.5" /> {t("Adherencia media")}</span>
-                    <span className="text-[18px] font-bold leading-none text-success-foreground">{avgAdherence ? `${avgAdherence}%` : "—"}</span>
-                    <span className="text-[11px] text-success-foreground/70">{t("promedio global")}</span>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-success transition-all" style={{ width: `${Math.min(100, d.adherence)}%` }} />
                   </div>
-                  <div className="flex flex-col gap-1 rounded-xl border border-border bg-primary-soft p-3">
-                    <span className="flex items-center gap-1.5 text-[11px] font-medium text-primary"><Flame className="size-3.5" /> {t("Racha media")}</span>
-                    <span className="text-[18px] font-bold leading-none text-primary">{avgRacha}d</span>
-                    <span className="text-[11px] text-muted-foreground">{t("días promedio")}</span>
-                  </div>
-                  <div className="flex flex-col gap-1 rounded-xl border border-border bg-warning-soft p-3">
-                    <span className="flex items-center gap-1.5 text-[11px] font-medium text-warning-foreground"><Award className="size-3.5" /> {t("Top diagnóstico")}</span>
-                    <span className="truncate text-[13px] font-bold leading-none text-warning-foreground">{top ? top.diagnosis : "—"}</span>
-                    <span className="text-[11px] text-warning-foreground/70">{top ? `${top.postsPerWeek} ${t("posts/sem")}` : ""}</span>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>{d.postsPerWeek} {t("posts/sem")}</span>
+                    <span>{d.avgXp.toLocaleString()} XP {t("promedio")}</span>
                   </div>
                 </div>
-              </div>
-            );
-          })()}
+              ))}
+              {!diagnosticsLoading && diagnostics.length === 0 && (
+                <p className="py-6 text-center text-xs text-muted-foreground">{t("Sin datos")}</p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
