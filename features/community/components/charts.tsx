@@ -211,14 +211,16 @@ export function GroupedBarChart({
   data,
   bars,
   loading = false,
+  height,
 }: {
   data: Record<string, string | number>[];
   bars: { key: string; name: string; color: string }[];
   loading?: boolean;
+  height?: string;
 }) {
   const t = useT();
   return (
-    <ChartFrame loading={loading}>
+    <ChartFrame loading={loading} height={height}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey="label" {...axisProps} minTickGap={16} />
