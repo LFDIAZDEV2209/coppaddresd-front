@@ -9,11 +9,16 @@ import {
   MessageCircle,
   Heart,
   Eye,
+  Ban,
+  UserX,
+  ShieldCheck,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +29,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
@@ -44,15 +57,18 @@ function ReportedPostCard({
   rp,
   onDelete,
   onResolve,
+  onBan,
 }: {
   rp: ReportedPostWire;
   onDelete: (postId: string) => void;
   onResolve: (reportId: string) => void;
+  onBan: (profileId: string, displayName: string, isBanned: boolean) => void;
 }) {
   const t = useT();
   const { members } = useErp();
   const chipColor = TYPE_CHIP_COLORS[rp.post.type] ?? TYPE_CHIP_COLORS.Texto;
   const member = members.find((m) => m.id === rp.post.profile?.id);
+  const isBanned = member?.status === "Inactivo";
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-md hover:shadow-black/5">
@@ -96,6 +112,12 @@ function ReportedPostCard({
           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
             {rp.post.destination}
           </span>
+          {isBanned && (
+            <StatusBadge
+              status={t("Restringido")}
+              color={{ bg: "var(--destructive-soft)", text: "var(--destructive)", dot: "var(--destructive)" }}
+            />
+          )}
           <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1"><Heart className="size-3" /> {rp.post.likes?.length ?? 0}</span>
             <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {rp.post.comments?.length ?? 0}</span>
@@ -134,7 +156,17 @@ function ReportedPostCard({
         </div>
 
         {/* Acciones */}
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
+          {rp.post.profile?.id && !rp.post.profile?.isSystem && (
+            <Button
+              size="sm"
+              variant={isBanned ? "outline" : "destructive"}
+              onClick={() => onBan(rp.post.profile!.id, profileName(rp.post.profile?.displayName ?? "", false, t), isBanned)}
+            >
+              {isBanned ? <ShieldCheck data-icon="inline-start" className="size-3.5" /> : <Ban data-icon="inline-start" className="size-3.5" />}
+              {isBanned ? t("Restaurar acceso") : t("Restringir comunidad")}
+            </Button>
+          )}
           <Button
             size="sm"
             variant="destructive"
@@ -151,8 +183,11 @@ function ReportedPostCard({
 
 export function ModerationPage() {
   const t = useT();
-  const { reportedPosts, reportedPostsLoading, reportedPostsError, refetchReportedPosts, deletePost, resolveReport } = useErp();
+  const { reportedPosts, reportedPostsLoading, reportedPostsError, refetchReportedPosts, deletePost, resolveReport, banProfile, unbanProfile } = useErp();
   const [confirmDeletePost, setConfirmDeletePost] = useState<string | null>(null);
+  const [confirmResolveId, setConfirmResolveId] = useState<string | null>(null);
+  const [banTarget, setBanTarget] = useState<{ id: string; name: string } | null>(null);
+  const [banReason, setBanReason] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
 
@@ -164,8 +199,31 @@ export function ModerationPage() {
   const handleDelete = (postId: string) => {
     deletePost(postId);
     setConfirmDeletePost(null);
-    // Refrescar después de un breve delay para que el backend procese.
     setTimeout(() => refetchReportedPosts(), 500);
+  };
+
+  const handleResolve = (reportId: string) => {
+    resolveReport(reportId);
+    setConfirmResolveId(null);
+  };
+
+  const handleBan = () => {
+    if (!banTarget) return;
+    // Si ya está baneado, restauramos
+    const member = reportedPosts.find((rp) => rp.post.profile?.id === banTarget.id);
+    // No tenemos status aquí fácil, revisamos vía banTarget; el botón decide: si texto es Restaurar ya está baneado → unban
+    // Diferenciamos por razón vacía + estado previo: usamos unban si el botón mostrado era Restaurar
+    // Para simplificar, si el modal fue abierto desde botón Restringir → ban, si fue Restaurar → unban
+    // Detectamos si el miembro está restringido buscando en reportedPosts (no ideal) → mejor comprobar vía reportedPosts no fiable
+    // Usamos lógica: si el modal tiene banReason vacío y el nombre es el mismo, asumimos ban; pero para unban no necesitamos razón.
+    // Para distinguir, el Ban button ahora abre modal solo para ban; para unban hacemos directo.
+    banProfile(banTarget.id, banReason || t("Incumplimiento de normas de la comunidad"));
+    setBanTarget(null);
+    setBanReason("");
+  };
+
+  const handleUnban = (id: string) => {
+    unbanProfile(id);
   };
 
   return (
@@ -217,8 +275,13 @@ export function ModerationPage() {
                 key={rp.post.id}
                 rp={rp}
                 onDelete={setConfirmDeletePost}
-                onResolve={(reportId) => {
-                  resolveReport(reportId);
+                onResolve={setConfirmResolveId}
+                onBan={(profileId, name, isBanned) => {
+                  if (isBanned) {
+                    handleUnban(profileId);
+                  } else {
+                    setBanTarget({ id: profileId, name });
+                  }
                 }}
               />
             ))}
@@ -239,7 +302,7 @@ export function ModerationPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Eliminar publicación")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("¿Estás seguro de que deseas eliminar esta publicación reportada? Esta acción no se puede deshacer.")}
+              {t("¿Estás seguro de que deseas eliminar esta publicación reportada? Esta acción la ocultará de la comunidad y no se podrá deshacer.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -255,6 +318,65 @@ export function ModerationPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog: Resolver reporte — confirma que cumple normas */}
+      <AlertDialog open={Boolean(confirmResolveId)} onOpenChange={(o) => { if (!o) setConfirmResolveId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("Resolver reporte")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("¿Confirmas que este reporte cumple con las normas? Se eliminará el reporte y la publicación permanecerá visible en la comunidad.")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmResolveId) handleResolve(confirmResolveId);
+              }}
+            >
+              <CheckCircle data-icon="inline-start" className="size-3.5" />
+              {t("Confirmar y resolver")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog: Restringir acceso a la comunidad (ban) */}
+      <Dialog open={Boolean(banTarget)} onOpenChange={(o) => { if (!o) { setBanTarget(null); setBanReason(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserX className="size-4 text-destructive" />
+              {t("Restringir acceso a la comunidad")}
+            </DialogTitle>
+            <DialogDescription>
+              {banTarget ? t("Se restringirá el uso de la comunidad para {name}. No podrá publicar ni comentar, pero seguirá teniendo acceso a la plataforma.", { name: banTarget.name }) : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs">{t("Motivo (opcional)")}</Label>
+              <Textarea
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                placeholder={t("Ej: Contenido que incumple las normas de la comunidad")}
+                rows={3}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {t("Esta acción solo restringe el acceso a la comunidad. Podrás restaurarlo en cualquier momento.")}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setBanTarget(null); setBanReason(""); }}>{t("Cancelar")}</Button>
+            <Button variant="destructive" onClick={handleBan}>
+              <Ban data-icon="inline-start" className="size-3.5" />
+              {t("Restringir")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

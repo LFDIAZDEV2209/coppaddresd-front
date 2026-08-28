@@ -568,6 +568,29 @@ export interface ModerateDeleteCommentResult {
   moderateDeleteComment: { id: string } | null;
 }
 
+export const BAN_PROFILE = gql`
+  mutation BanProfile($id: UUID!, $reason: String) {
+    banProfile(id: $id, reason: $reason) {
+      id
+    }
+  }
+`;
+
+export const UNBAN_PROFILE = gql`
+  mutation UnbanProfile($id: UUID!) {
+    unbanProfile(id: $id) {
+      id
+    }
+  }
+`;
+
+export interface BanProfileResult {
+  banProfile: { id: string } | null;
+}
+export interface UnbanProfileResult {
+  unbanProfile: { id: string } | null;
+}
+
 // --- Reportes de publicaciones ---
 
 export const REPORT_POST = gql`

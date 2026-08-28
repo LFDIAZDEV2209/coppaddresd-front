@@ -5,7 +5,6 @@ import {
   Send,
   Pin,
   Trash2,
-  MoreHorizontal,
   FileText,
   Image as ImageIcon,
   Video,
@@ -34,11 +33,15 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
@@ -97,19 +100,21 @@ export function PostsPage() {
   // Dialog de detalle de publicación
   const [detailPost, setDetailPost] = useState<ErpPost | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const pinnedPosts = posts.filter((p) => p.pinned);
+  const nonPinnedPosts = useMemo(() => posts.filter((p) => !p.pinned), [posts]);
 
   const paginatedPinned = useMemo(() => {
     const start = (pinnedPage - 1) * pinnedPageSize;
     return pinnedPosts.slice(start, start + pinnedPageSize);
   }, [pinnedPosts, pinnedPage, pinnedPageSize]);
 
-  // Paginación sobre posts no-fijados para que la lista no mezcle; si hay pocos fijados se muestran todos
+  // Todas las publicaciones = solo no fijadas, para no duplicar las fijadas
   const paginatedPosts = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return posts.slice(start, start + pageSize);
-  }, [posts, page, pageSize]);
+    return nonPinnedPosts.slice(start, start + pageSize);
+  }, [nonPinnedPosts, page, pageSize]);
 
   const buildBody = () => {
     const base = body.trim();
@@ -386,7 +391,7 @@ export function PostsPage() {
                             <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
                               <MessageCircle className="size-3.5" />
                             </Button>
-                            <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
+                            <Button size="icon-sm" variant="ghost" onClick={() => setConfirmDeleteId(post.id)} title={t("Eliminar")}>
                               <Trash2 className="size-3.5 text-destructive" />
                             </Button>
                           </div>
@@ -433,16 +438,16 @@ export function PostsPage() {
           )}
         </div>
 
-        {/* Todas las publicaciones — paginadas, orden natural */}
+        {/* Todas las publicaciones — mismo layout que fijadas, solo no fijadas */}
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Todas las publicaciones")}
-            description={`${posts.length} ${t("publicaciones este mes")}`}
+            description={`${nonPinnedPosts.length} ${t("publicaciones este mes")}`}
             icon={FileText}
             variant="primary"
           />
           <div className="flex flex-col gap-3 p-4">
-            {posts.length === 0 ? (
+            {nonPinnedPosts.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">{t("Sin publicaciones")}</p>
             ) : (
               paginatedPosts.map((post) => {
@@ -451,7 +456,7 @@ export function PostsPage() {
                 return (
                   <div
                     key={post.id}
-                    className="overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-md hover:shadow-black/5"
+                    className="overflow-hidden rounded-xl border border-border transition-all hover:shadow-md hover:shadow-black/5"
                   >
                     <div className="flex flex-col gap-2 p-3">
                       <div className="flex items-start justify-between gap-3">
@@ -470,43 +475,20 @@ export function PostsPage() {
                             </>
                           )}
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            onClick={() => togglePin(post.id)}
-                            title={post.pinned ? t("Desfijar") : t("Fijar")}
-                            className="text-muted-foreground hover:text-foreground"
-                          >
+                        <div className="flex shrink-0 gap-1">
+                          <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Fijar")}>
                             <Pin className="size-3.5" />
                           </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
-                              <MoreHorizontal className="size-4" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => togglePin(post.id)}>
-                                {post.pinned ? t("Desfijar") : t("Fijar")}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openDetail(post)}>
-                                <MessageCircle data-icon="inline-start" className="size-3.5" />
-                                {t("Ver publicación")}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem variant="destructive" onClick={() => deletePost(post.id)}>
-                                {t("Eliminar")}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
+                            <MessageCircle className="size-3.5" />
+                          </Button>
+                          <Button size="icon-sm" variant="ghost" onClick={() => setConfirmDeleteId(post.id)} title={t("Eliminar")}>
+                            <Trash2 className="size-3.5 text-destructive" />
+                          </Button>
                         </div>
                       </div>
                       <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
                       <div className="flex flex-wrap items-center gap-1.5">
-                        {post.pinned && (
-                          <StatusBadge
-                            status={t("Fijado")}
-                            color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
-                          />
-                        )}
                         <span
                           className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
                           style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
@@ -528,11 +510,11 @@ export function PostsPage() {
               })
             )}
           </div>
-          {posts.length > 0 && (
+          {nonPinnedPosts.length > 0 && (
             <CommunityPagination
               page={page}
               pageSize={pageSize}
-              total={posts.length}
+              total={nonPinnedPosts.length}
               onPageChange={setPage}
               onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
             />
@@ -545,6 +527,31 @@ export function PostsPage() {
         onOpenChange={setDetailOpen}
         post={detailPost}
       />
+
+      <AlertDialog open={Boolean(confirmDeleteId)} onOpenChange={(o) => { if (!o) setConfirmDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("Eliminar publicación")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("¿Estás seguro de que deseas eliminar esta publicación? Esta acción ocultará la publicación y no se podrá deshacer.")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (confirmDeleteId) {
+                  deletePost(confirmDeleteId);
+                  setConfirmDeleteId(null);
+                }
+              }}
+            >
+              {t("Eliminar")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

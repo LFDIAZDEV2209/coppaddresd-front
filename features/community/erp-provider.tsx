@@ -15,6 +15,7 @@ import {
   ADD_COMMENT,
   AWARD_XP,
   AWARD_XP_ALL,
+  BAN_PROFILE,
   COMMENT_ADDED_SUB,
   COMMUNITY_ANALYTICS_QUERY,
   COMMUNITY_GROUPS_QUERY,
@@ -40,9 +41,11 @@ import {
   SEND_BULK_MESSAGE,
   SEND_DIRECT_MESSAGE,
   TOP_STREAKS_QUERY,
+  UNBAN_PROFILE,
   type AddCommentResult,
   type AwardXpAllResult,
   type AwardXpResult,
+  type BanProfileResult,
   type CommentAddedResult,
   type CommentDetail,
   type CommunityAnalyticsResult,
@@ -79,6 +82,7 @@ import {
   type SendBulkMessageResult,
   type SendDirectMessageResult,
   type TopStreaksResult,
+  type UnbanProfileResult,
 } from "./services/community";
 import { useT } from "@/providers/i18n-provider";
 import type {
@@ -248,12 +252,19 @@ function toDestinationEnum(friendly: string): string {
 // --- Utilidades de mapeo wire → display (reutilizables) ---
 
 function mapDiagnosis(d: string): string {
-  if (d === "DM2HTA") return "DM2+HTA";
+  if (d.toUpperCase() === "DM2HTA") return "DM2+HTA";
+  // Normaliza capitalización (OBESIDAD → Obesidad)
+  const lower = d.toLowerCase();
+  if (lower === "obesidad") return "Obesidad";
+  if (lower === "dm2") return "DM2";
+  if (lower === "prediabetes") return "Prediabetes";
   return d;
 }
 
 const REGION_LABEL: Record<string, string> = {
   Bogota: "Bogotá",
+  bogota: "Bogotá",
+  BOGOTA: "Bogotá",
 };
 
 function formatFollowers(n: number): string {
@@ -282,8 +293,11 @@ function mapWireGroup(g: CommunityGroupWire): CommunityGroup {
 }
 
 function mapWireRegion(r: RegionStatWire, totalMembers: number): RegionStat {
+  const lower = r.region.toLowerCase();
+  const labelLower: Record<string, string> = { bogota: "Bogotá", cdmx: "CDMX", ny: "NY", miami: "Miami", orlando: "Orlando", barranquilla: "Barranquilla" };
+  const label = labelLower[lower] ?? REGION_LABEL[r.region] ?? r.region;
   return {
-    region: REGION_LABEL[r.region] ?? r.region,
+    region: label,
     members: r.members,
     postsPerWeek: r.postsPerWeek,
     percent: totalMembers === 0 ? 0 : Math.round((r.members / totalMembers) * 100),
@@ -361,6 +375,8 @@ interface ErpContextValue {
   inactive: CommunityMember[];
   analytics: CommunityAnalyticsData | null;
   messageReach: MessageReach[];
+  banProfile: (id: string, reason?: string) => void;
+  unbanProfile: (id: string) => void;
   membersLoading: boolean;
   membersError: string | undefined;
   refetchMembers: () => void;
@@ -629,6 +645,8 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   const [, resolveReportMut] = useMutation<ResolveReportResult, { reportId: string }>(
     RESOLVE_REPORT,
   );
+  const [, banProfileMut] = useMutation<BanProfileResult, { id: string; reason?: string }>(BAN_PROFILE);
+  const [, unbanProfileMut] = useMutation<UnbanProfileResult, { id: string }>(UNBAN_PROFILE);
 
   const [reportedPostsResult, refetchReportedPosts] = useQuery<
     ReportedPostsResult,
@@ -1041,6 +1059,36 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     [toast, t, refetchReportedPosts],
   );
 
+  const banProfile = useCallback<ErpContextValue["banProfile"]>(
+    (id, reason) => {
+      banProfileMut({ id, reason }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo restringir el acceso a la comunidad."));
+        } else {
+          toast(t("Acceso a la comunidad restringido"));
+          refetchMembers();
+          refetchReportedPosts();
+        }
+      });
+    },
+    [toast, t, refetchMembers, refetchReportedPosts],
+  );
+
+  const unbanProfile = useCallback<ErpContextValue["unbanProfile"]>(
+    (id) => {
+      unbanProfileMut({ id }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo restaurar el acceso."));
+        } else {
+          toast(t("Acceso restaurado"));
+          refetchMembers();
+          refetchReportedPosts();
+        }
+      });
+    },
+    [toast, t, refetchMembers, refetchReportedPosts],
+  );
+
   const value = useMemo<ErpContextValue>(
     () => ({
       me,
@@ -1114,6 +1162,8 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       reportedPostsError: reportedPostsResult.error?.message,
       refetchReportedPosts,
       resolveReport,
+      banProfile,
+      unbanProfile,
       toast,
       toasts,
     }),
@@ -1188,6 +1238,8 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       reportedPostsResult.error,
       refetchReportedPosts,
       resolveReport,
+      banProfile,
+      unbanProfile,
       toast,
       toasts,
     ],
