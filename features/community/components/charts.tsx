@@ -196,7 +196,7 @@ export function DiagnosisRadar({
   loading?: boolean;
 }) {
   const t = useT();
-  // Reordena para que Obesidad/Prediabetes queden arriba/abajo y DM2/DM2+HTA a los lados
+  // Prediabetes arriba, Obesidad abajo, DM2 izquierda, DM2+HTA derecha (opuesto al anterior)
   const order = ["Obesidad", "DM2", "Prediabetes", "DM2+HTA"];
   const ordered = [...data].sort((a, b) => order.indexOf(a.subject) - order.indexOf(b.subject));
   // Si faltase alguno por datos reales, mantiene el resto al final
