@@ -28,7 +28,7 @@ import { CommunityPagination } from "./community-pagination";
 
 export function InactivePage() {
   const t = useT();
-  const { inactive, sendMessage, sendBulkInactive, toast, analytics, analyticsLoading } = useErp();
+  const { inactive, sendMessage, sendBulkInactive, awardXp, toast, analytics, analyticsLoading } = useErp();
   const chartData = (analytics?.inactivityDistribution ?? []).map((d) => ({ label: d.range, value: d.value }));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -119,7 +119,15 @@ export function InactivePage() {
                         <Button
                           size="icon-sm"
                           variant="ghost"
-                          onClick={() => toast(t("Cofre enviado a") + " " + m.firstName)}
+                          onClick={() =>
+                            awardXp({
+                              memberId: m.id,
+                              typeLabel: "Cofre especial",
+                              xp: 150,
+                              message: "",
+                              publishInFeed: false,
+                            })
+                          }
                           title={t("Cofre")}
                         >
                           <Gift className="size-3.5" />

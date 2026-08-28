@@ -38,7 +38,7 @@ import { useT } from "@/providers/i18n-provider";
 import { mockDiagnostics, mockRegions } from "../mock-data";
 import { MemberAvatar } from "./member-avatar";
 import { LevelBadge } from "./level-badge";
-import { AwardDialog } from "./award-dialog";
+import { AwardDialog, AwardMemberDialog } from "./award-dialog";
 import { CommunityPagination } from "./community-pagination";
 
 export function MembersPage() {
@@ -51,6 +51,8 @@ export function MembersPage() {
   const [cardsPageSize, setCardsPageSize] = useState(5);
   const [tablePage, setTablePage] = useState(1);
   const [tablePageSize, setTablePageSize] = useState(5);
+  const [awardTarget, setAwardTarget] = useState<string | null>(null);
+  const [awardOpen, setAwardOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
@@ -185,7 +187,10 @@ export function MembersPage() {
                 <Button
                   size="sm"
                   className="flex-1"
-                  onClick={() => toast(t("Premio enviado a") + " " + m.firstName)}
+                  onClick={() => {
+                    setAwardTarget(m.id);
+                    setAwardOpen(true);
+                  }}
                 >
                   <Trophy data-icon="inline-start" />
                   {t("Premiar")}
@@ -298,7 +303,10 @@ export function MembersPage() {
                           {t("Mensaje")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => toast(t("Premio enviado a") + " " + m.firstName)}
+                          onClick={() => {
+                            setAwardTarget(m.id);
+                            setAwardOpen(true);
+                          }}
                         >
                           <Trophy className="size-3.5" />
                           {t("Premiar")}
@@ -316,6 +324,16 @@ export function MembersPage() {
           <CommunityPagination page={tablePage} pageSize={tablePageSize} total={filtered.length} onPageChange={setTablePage} onPageSizeChange={(s) => { setTablePageSize(s); setTablePage(1); }} />
         )}
       </div>
+
+      {/* Diálogo de premiar (controlado, miembro preseleccionado) */}
+      {awardTarget && (
+        <AwardMemberDialog
+          key={awardTarget}
+          memberId={awardTarget}
+          open={awardOpen}
+          onOpenChange={setAwardOpen}
+        />
+      )}
     </div>
   );
 }
