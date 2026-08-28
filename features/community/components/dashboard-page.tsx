@@ -133,7 +133,7 @@ export function DashboardPage() {
               <TableRow>
                 <TableHead className="w-0">{t("Miembro")}</TableHead>
                 <TableHead className="w-[72px] text-right">{t("Racha")}</TableHead>
-                <TableHead className="w-[92px] text-right">{t("XP")}</TableHead>
+                <TableHead className="w-[92px] pr-6 text-right">{t("XP")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -143,7 +143,7 @@ export function DashboardPage() {
                     <MemberAvatar member={m} showStreak subtitle={`${m.region} · ${m.diagnosis}`} />
                   </TableCell>
                   <TableCell className="py-2 text-right text-sm font-semibold whitespace-nowrap">🔥 {m.streak}</TableCell>
-                  <TableCell className="py-2 text-right text-sm whitespace-nowrap">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ""} {m.xp.toLocaleString()}</TableCell>
+                  <TableCell className="py-2 pr-6 text-right text-sm whitespace-nowrap">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ""} {m.xp.toLocaleString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
