@@ -49,9 +49,9 @@ export function MembersPage() {
   const [regionFilter, setRegionFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [cardsPage, setCardsPage] = useState(1);
-  const [cardsPageSize, setCardsPageSize] = useState(10);
+  const [cardsPageSize, setCardsPageSize] = useState(5);
   const [tablePage, setTablePage] = useState(1);
-  const [tablePageSize, setTablePageSize] = useState(10);
+  const [tablePageSize, setTablePageSize] = useState(5);
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
@@ -133,7 +133,7 @@ export function MembersPage() {
       {/* Active member cards — paginadas */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader title={t("Miembros activos")} description={`${activeMembers.length} ${t("miembros")}`} icon={Users} variant="primary" />
-        <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {paginatedCards.map((m) => (
             <div
               key={m.id}
