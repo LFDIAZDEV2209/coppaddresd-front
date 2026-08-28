@@ -316,8 +316,9 @@ export const CREATE_POST = gql`
     $body: String!
     $type: PostType!
     $destination: PostDestination!
+    $pinned: Boolean!
   ) {
-    createPost(body: $body, type: $type, destination: $destination) {
+    createPost(body: $body, type: $type, destination: $destination, pinned: $pinned) {
       id
       body
       pinned

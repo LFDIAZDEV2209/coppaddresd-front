@@ -637,7 +637,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
 
   const [, createPostMut] = useMutation<
     CreatePostResult,
-    { body: string; type: PostType; destination: string }
+    { body: string; type: PostType; destination: string; pinned: boolean }
   >(CREATE_POST);
   const [, pinPostMut] = useMutation<
     PinPostResult,
@@ -888,7 +888,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const publishPost = useCallback<ErpContextValue["publishPost"]>(
-    ({ type, destination, body }) => {
+    ({ type, destination, body, pinned }) => {
       // HotChocolate 16 serializa enums en SCREAMING_SNAKE_CASE (TEXTO, COMUNIDAD_ADRED)
       const wireType = String(type).toUpperCase();
       const pascalDest = toDestinationEnum(destination);
@@ -899,6 +899,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         type: wireType as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         destination: wireDestination as any,
+        pinned: Boolean(pinned),
       }).then((res) => {
         if (res.error) {
           const msg = res.error.message || "No se pudo publicar la publicación";
