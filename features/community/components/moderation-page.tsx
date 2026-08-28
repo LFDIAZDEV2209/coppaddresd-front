@@ -180,7 +180,7 @@ export function ModerationPage() {
         title={t("Reportes activos")}
         description={`${reportedPosts.length} ${t("publicaciones reportadas")}`}
         icon={AlertTriangle}
-        variant="primary"
+        variant="destructive"
       />
 
       {/* Estado de carga */}
