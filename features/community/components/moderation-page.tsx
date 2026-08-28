@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Shield,
   AlertTriangle,
@@ -27,6 +27,7 @@ import {
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
+import { CommunityPagination } from "./community-pagination";
 import type { ReportedPostWire } from "../services/community";
 
 /** Colores de chip por tipo de publicación. */
@@ -152,6 +153,13 @@ export function ModerationPage() {
   const t = useT();
   const { reportedPosts, reportedPostsLoading, reportedPostsError, refetchReportedPosts, deletePost, resolveReport } = useErp();
   const [confirmDeletePost, setConfirmDeletePost] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
+
+  const paginatedPosts = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return reportedPosts.slice(start, start + pageSize);
+  }, [reportedPosts, page, pageSize]);
 
   const handleDelete = (postId: string) => {
     deletePost(postId);
@@ -202,18 +210,27 @@ export function ModerationPage() {
 
       {/* Lista de reportes */}
       {!reportedPostsLoading && !reportedPostsError && reportedPosts.length > 0 && (
-        <div className="flex flex-col gap-3">
-          {reportedPosts.map((rp) => (
-            <ReportedPostCard
-              key={rp.post.id}
-              rp={rp}
-              onDelete={setConfirmDeletePost}
-              onResolve={(reportId) => {
-                resolveReport(reportId);
-              }}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {paginatedPosts.map((rp) => (
+              <ReportedPostCard
+                key={rp.post.id}
+                rp={rp}
+                onDelete={setConfirmDeletePost}
+                onResolve={(reportId) => {
+                  resolveReport(reportId);
+                }}
+              />
+            ))}
+          </div>
+          <CommunityPagination
+            page={page}
+            pageSize={pageSize}
+            total={reportedPosts.length}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          />
+        </>
       )}
 
       {/* AlertDialog: Confirmar eliminación de publicación */}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import {
   MessageCircle,
   Send,
@@ -19,6 +20,7 @@ import {
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import type { GroupType } from "../types";
+import { CommunityPagination } from "./community-pagination";
 
 const GROUP_TYPE_COLORS: Record<GroupType, { bg: string; text: string; dot: string }> = {
   Reto: { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" },
@@ -31,6 +33,19 @@ const GROUP_TYPE_COLORS: Record<GroupType, { bg: string; text: string; dot: stri
 export function GroupsPage() {
   const t = useT();
   const { communityGroups, communityGroupsLoading, toast } = useErp();
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const groups = useMemo(
+    () => (communityGroupsLoading ? [] : communityGroups),
+    [communityGroupsLoading, communityGroups],
+  );
+
+  const paginatedGroups = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return groups.slice(start, start + pageSize);
+  }, [groups, page, pageSize]);
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -59,7 +74,7 @@ export function GroupsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(communityGroupsLoading ? [] : communityGroups).map((g) => {
+            {paginatedGroups.map((g) => {
               const typeColor = GROUP_TYPE_COLORS[g.type] ?? GROUP_TYPE_COLORS.General;
               return (
                 <TableRow key={g.id} className="transition-colors hover:bg-muted/50">
@@ -89,6 +104,13 @@ export function GroupsPage() {
             })}
           </TableBody>
         </Table>
+        <CommunityPagination
+          page={page}
+          pageSize={pageSize}
+          total={groups.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+        />
       </div>
     </div>
   );

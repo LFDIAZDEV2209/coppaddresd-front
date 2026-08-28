@@ -36,6 +36,7 @@ export const erpNavSections: ErpNavSection[] = [
     items: [
       { label: "Panel", href: "/community/dashboard", icon: LayoutDashboard },
       { label: "Publicaciones", href: "/community/posts", icon: Send, badge: "3", badgeColor: "purple" },
+      { label: "Moderación", href: "/community/moderation", icon: ShieldAlert, color: "var(--destructive)" },
       { label: "Feed en vivo", href: "/community/feed", icon: Radio, badge: "12", badgeColor: "red" },
     ],
   },
@@ -55,8 +56,6 @@ export const erpNavSections: ErpNavSection[] = [
       { label: "Reconocimientos", href: "/community/rewards", icon: Trophy },
       { label: "Grupos/Chats", href: "/community/groups", icon: MessageCircle },
       { label: "Redes ANTARES", href: "/community/networks", icon: Share2 },
-      // Moderación de contenido comunitario
-      { label: "Moderación", href: "/community/moderation", icon: ShieldAlert, color: "var(--destructive)" },
     ],
   },
 ];

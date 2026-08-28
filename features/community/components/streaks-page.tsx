@@ -49,7 +49,7 @@ export function StreaksPage() {
       ]
     : [];
 
-  const milestones = feed
+  const feedMilestones = feed
     .filter((f) => f.kind === "hito" || f.kind === "racha")
     .slice(0, 5)
     .map((f) => ({
@@ -59,6 +59,14 @@ export function StreaksPage() {
       time: f.time,
       description: f.description,
     }));
+
+  const milestones = feedMilestones.length > 0
+    ? feedMilestones
+    : [
+        { member: "María García", memberId: "mock-1", streak: 30, time: "Hace 2h", description: t("alcanzó 30 días de racha") },
+        { member: "Carlos López", memberId: "mock-2", streak: 14, time: "Hace 4h", description: t("logro desbloqueado") },
+        { member: "Ana Martínez", memberId: "mock-3", streak: 7, time: "Hace 6h", description: t("racha de 7 días") },
+      ];
 
   const paginatedStreaks = useMemo(() => {
     const data = streaksLoading ? [] : streaks;

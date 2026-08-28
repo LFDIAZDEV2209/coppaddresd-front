@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import {
   Moon,
   Send,
   Gift,
   AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -22,11 +24,15 @@ import { useT } from "@/providers/i18n-provider";
 import { MemberAvatar } from "./member-avatar";
 import { RiskBadge } from "./risk-badge";
 import { SimpleBarChart } from "./charts";
+import { CommunityPagination } from "./community-pagination";
 
 export function InactivePage() {
   const t = useT();
   const { inactive, sendMessage, sendBulkInactive, toast, analytics, analyticsLoading } = useErp();
   const chartData = (analytics?.inactivityDistribution ?? []).map((d) => ({ label: d.range, value: d.value }));
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const paginatedInactive = inactive.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -83,7 +89,7 @@ export function InactivePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inactive.map((m) => {
+              {paginatedInactive.map((m) => {
                 const risk = m.risk ?? "Bajo";
                 return (
                   <TableRow key={m.id} className="transition-colors hover:bg-muted/50">
@@ -125,16 +131,37 @@ export function InactivePage() {
               })}
             </TableBody>
           </Table>
+          {inactive.length > 0 && (
+            <CommunityPagination
+              page={page}
+              pageSize={pageSize}
+              total={inactive.length}
+              onPageChange={setPage}
+              onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+            />
+          )}
         </div>
 
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
-          <SectionHeader
-            title={t("Patrones de inactividad")}
-            icon={AlertTriangle}
-            variant="primary"
-          />
-          <div className="p-4">
-            <SimpleBarChart data={chartData} color="var(--chart-1)" height="h-72" />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+            <SectionHeader
+              title={t("Patrones de inactividad")}
+              icon={AlertTriangle}
+              variant="primary"
+            />
+            <div className="p-4">
+              <SimpleBarChart data={chartData} color="var(--chart-1)" height="h-72" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+            <SectionHeader
+              title={t("Riesgo por días")}
+              icon={Clock}
+              variant="primary"
+            />
+            <div className="p-4">
+              <SimpleBarChart data={chartData} color="var(--destructive)" height="h-56" />
+            </div>
           </div>
         </div>
       </div>

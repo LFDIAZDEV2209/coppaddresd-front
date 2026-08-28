@@ -62,7 +62,7 @@ export function DiagnosticsPage() {
       {/* Row 2: 2/3 chart + 1/3 table — taller, fits screen */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Participación vs Adherencia — 2/3 */}
-        <div className="flex min-h-[400px] flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Participación vs Adherencia por diagnóstico")}
             icon={TrendingUp}
@@ -93,15 +93,14 @@ export function DiagnosticsPage() {
         </div>
 
         {/* Desglose detallado — 1/3 */}
-        <div className="flex h-full min-h-[400px] flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-1">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-1">
           <SectionHeader
             title={t("Desglose detallado")}
             icon={Stethoscope}
             variant="primary"
           />
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <div className="flex-1 overflow-auto">
-              <Table>
+          <div className="overflow-x-auto">
+            <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("Diagnóstico")}</TableHead>
@@ -125,7 +124,6 @@ export function DiagnosticsPage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
           </div>
         </div>
       </div>
