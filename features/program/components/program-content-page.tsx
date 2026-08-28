@@ -91,9 +91,10 @@ export function ProgramContentPage() {
       setLoadingCatalog(true);
       try {
         await selectEnrollment(id);
+        const selectedEnr = enrollments.find((e) => e.id === id);
         const [routinesRes, plansRes] = await Promise.all([
           fetchRoutinesForPicker(1, 100, ""),
-          fetchNutritionPlansForPicker(1, 100, ""),
+          fetchNutritionPlansForPicker(1, 100, "", undefined, undefined, selectedEnr?.patientId),
         ]);
         setAvailableRoutines(routinesRes.data);
         setAvailablePlans(plansRes.data);
@@ -103,7 +104,7 @@ export function ProgramContentPage() {
         setLoadingCatalog(false);
       }
     },
-    [selectEnrollment],
+    [selectEnrollment, enrollments],
   );
 
   const handleClearSelection = useCallback(() => {
@@ -155,25 +156,51 @@ export function ProgramContentPage() {
               value={selectedEnrollmentId}
               onValueChange={handleSelectEnrollment}
             >
-              <SelectTrigger className="w-full sm:w-[420px]">
-                <SelectValue placeholder="Elige un paciente / inscripción..." />
+              <SelectTrigger className="w-full sm:w-[520px]">
+                <SelectValue placeholder="Buscar y seleccionar paciente...">
+                  {(() => {
+                    const sel = enrollments.find((e) => e.id === selectedEnrollmentId);
+                    if (!sel) return undefined;
+                    const pName = sel.patientFullName || `Paciente (${sel.patientId.substring(0, 8)})`;
+                    const tName = sel.templateName || "Programa";
+                    return `${pName} · ${tName} (Sem ${sel.currentWeekNumber}/${sel.totalWeeks})`;
+                  })()}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {enrollments.map((e: ProgramEnrollment) => (
-                  <SelectItem key={e.id} value={e.id} textValue={`Inscripción ${e.id.substring(0, 8)}`}>
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="font-semibold text-foreground">
-                        Inscripción {e.id.substring(0, 8)}
-                      </span>
-                      <span className="text-muted-foreground">
-                        ({e.currentWeekNumber}/{e.totalWeeks} sem)
-                      </span>
-                      <Badge variant="outline" className="text-[10px] py-0">
-                        {e.status}
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
+                {enrollments.map((e: ProgramEnrollment) => {
+                  const patientName = e.patientFullName || `Paciente (${e.patientId.substring(0, 8)})`;
+                  const docText = e.patientDocumentNumber ? ` · Doc: ${e.patientDocumentNumber}` : "";
+                  const templateText = e.templateName || "Programa";
+                  const textLabel = `${patientName}${docText} (${templateText} - Sem ${e.currentWeekNumber}/${e.totalWeeks})`;
+
+                  return (
+                    <SelectItem key={e.id} value={e.id} textValue={textLabel}>
+                      <div className="flex flex-col gap-0.5 text-xs py-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-foreground truncate">
+                            {patientName}
+                          </span>
+                          {e.patientDocumentNumber && (
+                            <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded text-muted-foreground font-mono">
+                              {e.patientDocumentNumber}
+                            </span>
+                          )}
+                          <Badge variant="outline" className="text-[10px] py-0 ml-auto shrink-0">
+                            {e.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground truncate">
+                          <span>{templateText}</span>
+                          <span>·</span>
+                          <span className="font-medium text-foreground">
+                            Semana {e.currentWeekNumber} de {e.totalWeeks}
+                          </span>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
 

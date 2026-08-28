@@ -103,6 +103,8 @@ export async function fetchNutritionPlansForPicker(
   pageSize: number,
   search: string,
   signal?: AbortSignal,
+  isTemplate?: boolean,
+  patientId?: string,
 ): Promise<PaginatedResult<NutritionPlanListItem>> {
   const params = new URLSearchParams({
     page: String(page),
@@ -110,7 +112,8 @@ export async function fetchNutritionPlansForPicker(
   });
   const trimmed = search.trim();
   if (trimmed) params.set("search", trimmed);
-  params.set("isTemplate", "true");
+  if (isTemplate !== undefined) params.set("isTemplate", String(isTemplate));
+  if (patientId) params.set("patientId", patientId);
   params.set("status", "Active");
 
   return apiFetch<PaginatedResult<NutritionPlanListItem>>(

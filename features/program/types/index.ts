@@ -103,6 +103,9 @@ export interface ProgramEnrollment {
   pausedAt: string | null;
   withdrawnAt: string | null;
   createdAt: string;
+  patientFullName?: string;
+  patientDocumentNumber?: string;
+  templateName?: string;
 }
 
 /** Filtros del listado de inscripciones. */
