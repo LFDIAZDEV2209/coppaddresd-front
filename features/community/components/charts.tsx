@@ -188,6 +188,23 @@ export function PeakHoursBar({
   );
 }
 
+function VerticalRadarTick(props: unknown) {
+  const { x = 0, y = 0, payload } = props as { x?: number; y?: number; payload?: { value: string } };
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={10.5}
+      fill="var(--muted-foreground)"
+      transform={`rotate(-90 ${x} ${y})`}
+    >
+      {payload?.value ?? ""}
+    </text>
+  );
+}
+
 export function DiagnosisRadar({
   data,
   loading = false,
@@ -200,7 +217,7 @@ export function DiagnosisRadar({
     <ChartFrame loading={loading}>
       <RadarChart data={data} outerRadius="65%">
         <PolarGrid stroke="var(--border)" />
-        <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }} />
+        <PolarAngleAxis dataKey="subject" tick={VerticalRadarTick as never} />
         <PolarRadiusAxis tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} angle={90} />
         <Radar name={t("Participación")} dataKey="value" stroke="var(--chart-1)" strokeWidth={2} fill="var(--chart-1)" fillOpacity={0.28} />
         <Tooltip contentStyle={tooltipStyle} formatter={(value) => String(value)} />
