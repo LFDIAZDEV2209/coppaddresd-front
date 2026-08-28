@@ -81,7 +81,7 @@ export function PostsPage() {
   const [logroTitle, setLogroTitle] = useState("");
   // Paginación — Todas las publicaciones
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   // Dialog de detalle de publicación
   const [detailPost, setDetailPost] = useState<ErpPost | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -307,8 +307,9 @@ export function PostsPage() {
         </div>
       </div>
 
-      {/* Pinned posts — orden natural: autor arriba, body, meta al pie */}
-      {pinnedPosts.length > 0 && (
+      {/* Publicaciones fijadas + Todas las publicaciones — lado a lado */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Pinned posts — siempre renderizar el card */}
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Publicaciones fijadas")}
@@ -316,177 +317,184 @@ export function PostsPage() {
             icon={Pin}
             variant="primary"
           />
-          <div className="flex flex-col gap-3 p-4">
-            {pinnedPosts.map((post) => {
-              const member = members.find((m) => m.id === post.authorId);
-              const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
-              return (
-                <div
-                  key={post.id}
-                  className="overflow-hidden rounded-xl border border-border transition-all hover:shadow-md hover:shadow-black/5"
-                >
-                  <div className="flex flex-col gap-2 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        {member ? (
-                          <MemberAvatar member={member} subtitle={post.createdAt} />
-                        ) : (
-                          <>
-                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                              {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
-                            </span>
-                            <div className="flex min-w-0 flex-col gap-0.5">
-                              <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
-                              <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
-                            </div>
-                          </>
-                        )}
+          {pinnedPosts.length > 0 ? (
+            <div className="flex flex-col gap-3 p-4">
+              {pinnedPosts.map((post) => {
+                const member = members.find((m) => m.id === post.authorId);
+                const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
+                return (
+                  <div
+                    key={post.id}
+                    className="overflow-hidden rounded-xl border border-border transition-all hover:shadow-md hover:shadow-black/5"
+                  >
+                    <div className="flex flex-col gap-2 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          {member ? (
+                            <MemberAvatar member={member} subtitle={post.createdAt} />
+                          ) : (
+                            <>
+                              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                                {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
+                              </span>
+                              <div className="flex min-w-0 flex-col gap-0.5">
+                                <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                                <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 gap-1">
+                          <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
+                            <Pin className="size-3.5" />
+                          </Button>
+                          <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
+                            <MessageCircle className="size-3.5" />
+                          </Button>
+                          <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
+                            <Trash2 className="size-3.5 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex shrink-0 gap-1">
-                        <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
-                          <Pin className="size-3.5" />
-                        </Button>
-                        <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
-                          <MessageCircle className="size-3.5" />
-                        </Button>
-                        <Button size="icon-sm" variant="ghost" onClick={() => deletePost(post.id)} title={t("Eliminar")}>
-                          <Trash2 className="size-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <StatusBadge
-                        status={t("Fijado")}
-                        color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
-                      />
-                      <span
-                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                        style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
-                      >
-                        {t(post.type)}
-                      </span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                        {post.destination}
-                      </span>
-                      <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
-                        <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
-                        <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Todas las publicaciones — paginadas, orden natural */}
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
-        <SectionHeader
-          title={t("Todas las publicaciones")}
-          description={`${posts.length} ${t("publicaciones este mes")}`}
-          icon={FileText}
-          variant="primary"
-        />
-        <div className="flex flex-col gap-3 p-4">
-          {posts.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">{t("Sin publicaciones")}</p>
-          ) : (
-            paginatedPosts.map((post) => {
-              const member = members.find((m) => m.id === post.authorId);
-              const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
-              return (
-                <div
-                  key={post.id}
-                  className="overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-md hover:shadow-black/5"
-                >
-                  <div className="flex flex-col gap-2 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        {member ? (
-                          <MemberAvatar member={member} subtitle={post.createdAt} />
-                        ) : (
-                          <>
-                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                              {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
-                            </span>
-                            <div className="flex min-w-0 flex-col gap-0.5">
-                              <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
-                              <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => togglePin(post.id)}
-                          title={post.pinned ? t("Desfijar") : t("Fijar")}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Pin className="size-3.5" />
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
-                            <MoreHorizontal className="size-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => togglePin(post.id)}>
-                              {post.pinned ? t("Desfijar") : t("Fijar")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openDetail(post)}>
-                              <MessageCircle data-icon="inline-start" className="size-3.5" />
-                              {t("Ver publicación")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem variant="destructive" onClick={() => deletePost(post.id)}>
-                              {t("Eliminar")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                    <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {post.pinned && (
+                      <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <StatusBadge
                           status={t("Fijado")}
                           color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
                         />
-                      )}
-                      <span
-                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                        style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
-                      >
-                        {t(post.type)}
-                      </span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                        {post.destination}
-                      </span>
-                      <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
-                        <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
-                        <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
-                      </span>
+                        <span
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                          style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                        >
+                          {t(post.type)}
+                        </span>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {post.destination}
+                        </span>
+                        <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
+                          <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                          <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
+                          <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
+              <Pin className="size-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">{t("Sin publicaciones fijadas")}</p>
+            </div>
           )}
         </div>
-        {posts.length > 0 && (
-          <CommunityPagination
-            page={page}
-            pageSize={pageSize}
-            total={posts.length}
-            onPageChange={setPage}
-            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+
+        {/* Todas las publicaciones — paginadas, orden natural */}
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <SectionHeader
+            title={t("Todas las publicaciones")}
+            description={`${posts.length} ${t("publicaciones este mes")}`}
+            icon={FileText}
+            variant="primary"
           />
-        )}
+          <div className="flex flex-col gap-3 p-4">
+            {posts.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">{t("Sin publicaciones")}</p>
+            ) : (
+              paginatedPosts.map((post) => {
+                const member = members.find((m) => m.id === post.authorId);
+                const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
+                return (
+                  <div
+                    key={post.id}
+                    className="overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-md hover:shadow-black/5"
+                  >
+                    <div className="flex flex-col gap-2 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          {member ? (
+                            <MemberAvatar member={member} subtitle={post.createdAt} />
+                          ) : (
+                            <>
+                              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                                {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
+                              </span>
+                              <div className="flex min-w-0 flex-col gap-0.5">
+                                <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                                <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            onClick={() => togglePin(post.id)}
+                            title={post.pinned ? t("Desfijar") : t("Fijar")}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <Pin className="size-3.5" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
+                              <MoreHorizontal className="size-4" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => togglePin(post.id)}>
+                                {post.pinned ? t("Desfijar") : t("Fijar")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openDetail(post)}>
+                                <MessageCircle data-icon="inline-start" className="size-3.5" />
+                                {t("Ver publicación")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem variant="destructive" onClick={() => deletePost(post.id)}>
+                                {t("Eliminar")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                      <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {post.pinned && (
+                          <StatusBadge
+                            status={t("Fijado")}
+                            color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                          />
+                        )}
+                        <span
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                          style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                        >
+                          {t(post.type)}
+                        </span>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {post.destination}
+                        </span>
+                        <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
+                          <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                          <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
+                          <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          {posts.length > 0 && (
+            <CommunityPagination
+              page={page}
+              pageSize={pageSize}
+              total={posts.length}
+              onPageChange={setPage}
+              onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+            />
+          )}
+        </div>
       </div>
 
       <PostDetailDialog
