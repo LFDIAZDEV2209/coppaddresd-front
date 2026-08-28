@@ -59,10 +59,10 @@ export function DiagnosticsPage() {
         ))}
       </section>
 
-      {/* Row 2: chart + table — desglose más angosto */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-        {/* Participación vs Adherencia — 3/4 */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-3">
+      {/* Row 2: chart + table */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Participación vs Adherencia — 2/3 */}
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Participación vs Adherencia por diagnóstico")}
             icon={TrendingUp}
@@ -92,8 +92,8 @@ export function DiagnosticsPage() {
           </div>
         </div>
 
-        {/* Desglose detallado — 1/4 más angosto */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-1 lg:max-w-[320px] lg:ml-auto w-full">
+        {/* Desglose detallado — 1/3 */}
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-1">
           <SectionHeader
             title={t("Desglose detallado")}
             icon={Stethoscope}
