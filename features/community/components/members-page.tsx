@@ -18,7 +18,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   Table,
@@ -92,7 +91,9 @@ export function MembersPage() {
         <div className="flex items-center gap-2">
           <Select value={diagFilter} onValueChange={(v) => { if (v !== null) { setDiagFilter(v); setCardsPage(1); setTablePage(1); } }}>
             <SelectTrigger className="h-8 w-auto min-w-[180px] text-xs">
-              <SelectValue placeholder={t("Filtrar por diagnóstico")} />
+              <span className="flex flex-1 truncate text-left text-xs">
+                {diagFilter === "all" ? t("Todos los diagnósticos") : diagFilter}
+              </span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("Todos los diagnósticos")}</SelectItem>
@@ -106,7 +107,9 @@ export function MembersPage() {
 
           <Select value={regionFilter} onValueChange={(v) => { if (v !== null) { setRegionFilter(v); setCardsPage(1); setTablePage(1); } }}>
             <SelectTrigger className="h-8 w-auto min-w-[180px] text-xs">
-              <SelectValue placeholder={t("Filtrar por región")} />
+              <span className="flex flex-1 truncate text-left text-xs">
+                {regionFilter === "all" ? t("Todas las regiones") : regionFilter}
+              </span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("Todas las regiones")}</SelectItem>
