@@ -38,6 +38,9 @@ function normKey(s: string): string {
 }
 
 export function RegionsMap({ regions }: { regions: { region: string; members: number }[] }) {
+  // Escala de área (r²): el radio crece con la raíz del conteo relativo al máximo.
+  const maxMembers = Math.max(...regions.map((r) => r.members), 1);
+
   return (
     <MapContainer
       center={[39.8, -98.5]}
@@ -55,17 +58,28 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
         const latlng = REGION_LATLNG[key];
         if (!latlng) return null;
         const color = REGION_COLOR_HEX[key] ?? "#64748B";
+        // 6px (mínimo visible) → 22px (el metro con más miembros).
+        const radius = 6 + Math.sqrt(r.members / maxMembers) * 16;
         return (
-          <CircleMarker
-            key={r.region}
-            center={latlng}
-            radius={8 + Math.min(r.members / 12, 10)}
-            pathOptions={{ color: "#fff", weight: 2, fillColor: color, fillOpacity: 0.9 }}
-          >
-            <Popup>
-              <b>{r.region}</b> — {r.members} {r.members === 1 ? "miembro" : "miembros"}
-            </Popup>
-          </CircleMarker>
+          <>
+            {/* Halo translúcido que amplifica la percepción de tamaño */}
+            <CircleMarker
+              key={`${r.region}-halo`}
+              center={latlng}
+              radius={radius * 1.7}
+              pathOptions={{ stroke: false, fillColor: color, fillOpacity: 0.18 }}
+            />
+            <CircleMarker
+              key={r.region}
+              center={latlng}
+              radius={radius}
+              pathOptions={{ color: "#fff", weight: 1.5, fillColor: color, fillOpacity: 0.85 }}
+            >
+              <Popup>
+                <b>{r.region}</b> — {r.members} {r.members === 1 ? "miembro" : "miembros"}
+              </Popup>
+            </CircleMarker>
+          </>
         );
       })}
     </MapContainer>
