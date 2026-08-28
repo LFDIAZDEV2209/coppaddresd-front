@@ -14,7 +14,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { SectionHeader } from "@/components/layout/section-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -234,12 +233,18 @@ export function ModerationPage() {
         icon={Shield}
       />
 
-      <SectionHeader
-        title={t("Reportes activos")}
-        description={`${reportedPosts.length} ${t("publicaciones reportadas")}`}
-        icon={AlertTriangle}
-        variant="destructive"
-      />
+      {/* Header — mismo layout que banner de inactivos, en rojo */}
+      <div className="flex items-center gap-2.5 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2.5">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive text-white">
+          <AlertTriangle className="size-4" />
+        </span>
+        <div className="flex flex-col gap-0 min-w-0">
+          <p className="text-[13px] font-semibold leading-tight text-destructive">{t("Reportes activos")}</p>
+          <p className="text-[11px] leading-tight text-muted-foreground">
+            {`${reportedPosts.length} ${t("publicaciones reportadas")}`}
+          </p>
+        </div>
+      </div>
 
       {/* Estado de carga */}
       {reportedPostsLoading && (
@@ -257,22 +262,12 @@ export function ModerationPage() {
         </div>
       )}
 
-      {/* Sin reportes — mismo estilo que banner de inactivos, en rojo */}
+      {/* Sin reportes */}
       {!reportedPostsLoading && !reportedPostsError && reportedPosts.length === 0 && (
-        <div className="flex flex-col gap-2.5 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive text-white">
-              <CheckCircle className="size-4" />
-            </span>
-            <div className="flex flex-col gap-0 min-w-0">
-              <p className="text-[13px] font-semibold leading-tight text-destructive">
-                {t("Sin publicaciones reportadas")}
-              </p>
-              <p className="text-[11px] leading-tight text-muted-foreground">
-                {t("No hay publicaciones reportadas pendientes.")}
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-12 text-center">
+          <CheckCircle className="size-10 text-success" />
+          <p className="text-sm text-muted-foreground">{t("Sin reportes")}</p>
+          <p className="text-xs text-muted-foreground">{t("No hay publicaciones reportadas pendientes.")}</p>
         </div>
       )}
 
