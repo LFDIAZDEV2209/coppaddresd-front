@@ -616,6 +616,55 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fullcalendar/core@npm:^6.1.21":
+  version: 6.1.21
+  resolution: "@fullcalendar/core@npm:6.1.21"
+  dependencies:
+    preact: "npm:~10.12.1"
+  checksum: 10c0/6856367e4b1aa7941badcd38198efc379aa03c34a1a6c6d97cd4d68fc6f99d26340cbe1007b247cab01af431abbc89ee78a3cb42d67f1e722655e8adca66692e
+  languageName: node
+  linkType: hard
+
+"@fullcalendar/daygrid@npm:^6.1.21, @fullcalendar/daygrid@npm:~6.1.21":
+  version: 6.1.21
+  resolution: "@fullcalendar/daygrid@npm:6.1.21"
+  peerDependencies:
+    "@fullcalendar/core": ~6.1.21
+  checksum: 10c0/8e7a9e25b7390ec9c09970a729259a3882ebd4d5551084d532e330c7584d302e492dc1f15ae100c2430ae885485182dcd9fd75697962ffb1d7ac6f8f74e53407
+  languageName: node
+  linkType: hard
+
+"@fullcalendar/interaction@npm:^6.1.21":
+  version: 6.1.21
+  resolution: "@fullcalendar/interaction@npm:6.1.21"
+  peerDependencies:
+    "@fullcalendar/core": ~6.1.21
+  checksum: 10c0/70167d97ce97a20aca2aa2f271e2941c88a21e0b6b825d0fe8b97fb4d6f527476398cce7091c004db6a42fddc985f8806ed75ee62cf9d6683e5080cffd2e12da
+  languageName: node
+  linkType: hard
+
+"@fullcalendar/react@npm:^6.1.21":
+  version: 6.1.21
+  resolution: "@fullcalendar/react@npm:6.1.21"
+  peerDependencies:
+    "@fullcalendar/core": ~6.1.21
+    react: ^16.7.0 || ^17 || ^18 || ^19
+    react-dom: ^16.7.0 || ^17 || ^18 || ^19
+  checksum: 10c0/7103e724676ea12a43c5020e2581902394c0e3d30ace0a15319d869efc099b0a4e053aac1ab52576e8086649679f616236399996bebd5b36a131e5cb338d6ec3
+  languageName: node
+  linkType: hard
+
+"@fullcalendar/timegrid@npm:^6.1.21":
+  version: 6.1.21
+  resolution: "@fullcalendar/timegrid@npm:6.1.21"
+  dependencies:
+    "@fullcalendar/daygrid": "npm:~6.1.21"
+  peerDependencies:
+    "@fullcalendar/core": ~6.1.21
+  checksum: 10c0/657d3c574c2ba434fee03bfbac70ab1999778476dd8ce1b1506c229aab46f9285188e09cac5a0d036795b3c73476d3e0eaaac05a7d55c742f832668c67e92bf1
+  languageName: node
+  linkType: hard
+
 "@hono/node-server@npm:^1.19.9 || ^2.0.5":
   version: 2.1.1
   resolution: "@hono/node-server@npm:2.1.1"
@@ -3161,6 +3210,11 @@ __metadata:
   dependencies:
     "@base-ui/react": "npm:^1.7.0"
     "@floating-ui/dom": "npm:^1.8.0"
+    "@fullcalendar/core": "npm:^6.1.21"
+    "@fullcalendar/daygrid": "npm:^6.1.21"
+    "@fullcalendar/interaction": "npm:^6.1.21"
+    "@fullcalendar/react": "npm:^6.1.21"
+    "@fullcalendar/timegrid": "npm:^6.1.21"
     "@tailwindcss/postcss": "npm:^4"
     "@tiptap/core": "npm:^3.30.2"
     "@tiptap/pm": "npm:^3.30.2"
@@ -7025,6 +7079,13 @@ __metadata:
   version: 0.2.0
   resolution: "powershell-utils@npm:0.2.0"
   checksum: 10c0/0fa649e933800f33276262646cfb0d2ffcdfdb6a68ff80f5ab66e33c3197d3edf022e774502d5e458aee683702994e6d201fda85958c3cb7ccc413e0746b4373
+  languageName: node
+  linkType: hard
+
+"preact@npm:~10.12.1":
+  version: 10.12.1
+  resolution: "preact@npm:10.12.1"
+  checksum: 10c0/c77a55e897dcf298b7aa13637fed29744d3cf6c083f2832856e8551dbf27303c8b6946569736de16b05cba15c0e44ad404beb236ad9e36583a6fc5e2efad7777
   languageName: node
   linkType: hard
 

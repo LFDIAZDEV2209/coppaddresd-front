@@ -120,6 +120,28 @@ export function appointmentStatusColor(status: AppointmentStatus): ColorSet {
   }
 }
 
+/**
+ * Punto de estado legible sobre fondos CLAROS (chips de filtro, KPIs).
+ * `appointmentStatusColor` usa dot blanco para Confirmed (pensado para la
+ * franja navy); aquí el punto debe contrastar con el fondo del chip.
+ */
+export function appointmentStatusDot(status: AppointmentStatus): string {
+  switch (status) {
+    case "Confirmed":
+      return "#3B82F6";
+    case "InProgress":
+      return "#0E7490";
+    case "Completed":
+      return "#10B981";
+    case "Cancelled":
+      return "#EF4444";
+    case "NoShow":
+      return "#F59E0B";
+    default:
+      return "#64748B";
+  }
+}
+
 export function requestStatusColor(status: AppointmentRequestStatus): ColorSet {
   switch (status) {
     case "Pending":

@@ -1,0 +1,260 @@
+/*
+ * Tema de FullCalendar mapeado a los tokens del ERP (globals.css).
+ * Scoped bajo `.copp-calendar`: nunca toca el resto de la app. Al heredar
+ * las variables de Tailwind, el dark mode del ERP se refleja solo.
+ */
+
+.copp-calendar {
+  /* Paleta base del calendario = tokens del design system */
+  --fc-page-bg-color: transparent;
+  --fc-border-color: var(--border);
+  --fc-neutral-bg-color: var(--card);
+  --fc-today-bg-color: color-mix(in srgb, var(--primary) 6%, transparent);
+  --fc-highlight-color: color-mix(in srgb, var(--primary) 14%, transparent);
+  --fc-now-indicator-color: var(--primary-strong);
+  /* Los eventos se dibujan completos en eventContent → contenedor neutro */
+  --fc-event-bg-color: transparent;
+  --fc-event-border-color: transparent;
+  --fc-event-text-color: inherit;
+  --fc-small-font-size: 11px;
+
+  min-width: 0;
+  font-size: inherit;
+}
+
+/* La grilla nunca debe desbordar su contenedor (flex item: min-width 0 +
+ * box-sizing en las tablas internas de FullCalendar). */
+.copp-calendar .fc-scrollgrid,
+.copp-calendar .fc-daygrid-body,
+.copp-calendar .fc-timegrid-body {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* ── Encabezados de día ─────────────────────────────────────────────── */
+.copp-calendar .fc-col-header-cell {
+  padding: 0;
+  background: var(--card);
+  font-weight: inherit;
+}
+
+.copp-calendar .fc-col-header-cell-cushion {
+  padding: 8px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+
+.copp-calendar .fc-day-today .fc-col-header-cell-cushion {
+  color: var(--primary-strong);
+}
+
+/* Número de día en la vista mes */
+.copp-calendar .fc-daygrid-day-number {
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.copp-calendar .fc-day-today .fc-daygrid-day-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  margin: 4px 0 0 4px;
+  padding: 0;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 700;
+}
+
+/* ── Grilla horaria (semana/día) ────────────────────────────────────── */
+.copp-calendar .fc-timegrid-slot {
+  height: 2.1em;
+}
+
+.copp-calendar .fc-timegrid-slot-label-cushion,
+.copp-calendar .fc-timegrid-axis-cushion {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.copp-calendar .fc-timegrid-axis {
+  background: var(--card);
+}
+
+/* Solo líneas suaves entre horas (sin ruido en los slots menores) */
+.copp-calendar .fc-timegrid-slot-minor {
+  border-top-style: dashed;
+  border-top-color: color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.copp-calendar .fc-timegrid-col.fc-day-today {
+  background: var(--fc-today-bg-color);
+}
+
+/* Indicador de "ahora": línea + esfera del color primario */
+.copp-calendar .fc-timegrid-now-indicator-line {
+  border-top: 2px solid var(--fc-now-indicator-color);
+}
+
+.copp-calendar .fc-timegrid-now-indicator-arrow {
+  display: none;
+}
+
+/* ── Eventos ────────────────────────────────────────────────────────── */
+.copp-calendar .fc-event {
+  cursor: pointer;
+}
+
+.copp-calendar .fc-event:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+  border-radius: 6px;
+}
+
+/* Estado intermedio mientras se arrastra / redimensiona */
+.copp-calendar .fc-event-mirror {
+  box-shadow: 0 8px 20px -6px rgb(0 0 0 / 0.25);
+  opacity: 0.9;
+  z-index: 5;
+}
+
+/* Tarjeta de evento (renderizada por eventContent) */
+.copp-calendar .cal-event {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  border-left: 3px solid transparent;
+  border-radius: 6px;
+  padding: 3px 6px 4px;
+  text-align: left;
+  transition:
+    box-shadow 150ms ease,
+    filter 150ms ease;
+  user-select: none;
+}
+
+.copp-calendar .cal-event:hover {
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.18);
+  filter: brightness(0.97);
+}
+
+.copp-calendar .cal-event-time {
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.copp-calendar .cal-event-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.copp-calendar .cal-event-meta {
+  font-size: 10px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+}
+
+/* Eventos compactos (franjas < 45 min): una sola línea */
+.copp-calendar .cal-event.is-compact {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding-block: 2px;
+}
+
+.copp-calendar .cal-event.is-compact .cal-event-title {
+  display: block;
+  white-space: nowrap;
+  -webkit-line-clamp: 1;
+}
+
+/* Evento "day-dot" para la vista mes */
+.copp-calendar .cal-dot-event {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border-radius: 5px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: filter 150ms ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.copp-calendar .cal-dot-event:hover {
+  filter: brightness(0.96);
+}
+
+/* ── Vista mes: altura de celdas y "+N más" ─────────────────────────── */
+.copp-calendar .fc-daygrid-day-frame {
+  min-height: 108px;
+}
+
+.copp-calendar .fc-daygrid-more-link {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--primary-strong);
+  padding: 2px 6px;
+}
+
+.copp-calendar .fc-daygrid-day.fc-day-today {
+  background: none; /* el anillo de hoy lo pone la celda custom */
+}
+
+/* ── Popover interno de "+N más" de FullCalendar ────────────────────── */
+.copp-calendar .fc-popover {
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.25);
+}
+
+.copp-calendar .fc-popover-header {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+/* Scrollbars discretos dentro del calendario */
+.copp-calendar .fc-scroller::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.copp-calendar .fc-scroller::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  border-radius: 9999px;
+}
+
+.copp-calendar .fc-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
