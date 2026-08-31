@@ -128,9 +128,9 @@ export function Sidebar({
           )}
         </div>
 
-        {/* Navigation Modules */}
-        <ScrollArea className="flex-1 px-2.5 py-2">
-          <nav className="flex flex-col gap-0.5">
+        {/* Navigation Modules — scroll sutil: thumb blanca translúcida, solo visible al hover/scroll */}
+        <ScrollArea className="flex-1 min-h-0 px-2.5 py-2">
+          <nav className="flex flex-col gap-0.5 pb-2">
             {navModules.map((mod) => {
               const active = isModuleActive(mod);
               const expanded = expandedModules.has(mod.label) || active;

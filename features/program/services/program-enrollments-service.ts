@@ -24,6 +24,7 @@ export async function fetchProgramEnrollments(
 
   if (filters.status !== "all") params.set("status", filters.status);
   if (filters.patientId.trim()) params.set("patientId", filters.patientId.trim());
+  if (filters.search?.trim()) params.set("search", filters.search.trim());
 
   return apiFetch<PaginatedResult<ProgramEnrollment>>(
     `${PATH}?${params.toString()}`,

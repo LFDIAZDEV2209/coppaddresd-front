@@ -50,6 +50,7 @@ import {
   PieChart,
   Trophy,
   Zap,
+  GitBranch,
 } from "lucide-react";
 
 export interface NavItem {
@@ -487,6 +488,13 @@ export const navModules: NavModule[] = [
         permission: "Program.View",
       },
       {
+        label: "Contenido",
+        href: "/program/content",
+        icon: ClipboardList,
+        color: "#0891B2",
+        permission: "Program.Edit",
+      },
+      {
         label: "Reglas XP",
         href: "/program/xp-rules",
         icon: Zap,
@@ -505,6 +513,13 @@ export const navModules: NavModule[] = [
         href: "/program/weaknesses",
         icon: ShieldAlert,
         color: "#DC2626",
+        permission: "Program.Adapt",
+      },
+      {
+        label: "Adaptaciones",
+        href: "/program/adaptations",
+        icon: GitBranch,
+        color: "#D97706",
         permission: "Program.Adapt",
       },
       {

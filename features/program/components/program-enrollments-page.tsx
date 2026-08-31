@@ -7,6 +7,7 @@ import {
   Pause,
   Play,
   UserMinus,
+  UserPlus,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -46,6 +47,7 @@ import {
   ENROLLMENT_STATUS_OPTIONS,
 } from "../services/program-enrollments-service";
 import { useAuth } from "@/providers/auth-provider";
+import { ProgramEnrollDialog } from "./program-enroll-dialog";
 
 export function ProgramEnrollmentsPage() {
   const { hasPermission } = useAuth();
@@ -60,6 +62,7 @@ export function ProgramEnrollmentsPage() {
     setFilters,
     setPage,
     setPageSize,
+    enroll,
     pause,
     resume,
     withdraw,
@@ -74,6 +77,7 @@ export function ProgramEnrollmentsPage() {
     id: string;
     name: string;
   } | null>(null);
+  const [enrollOpen, setEnrollOpen] = useState(false);
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -110,18 +114,30 @@ export function ProgramEnrollmentsPage() {
               Filtra por estado o ID de paciente.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={retry}
-            disabled={loading}
-          >
-            <RefreshCw
-              data-icon="inline-start"
-              className={loading ? "animate-spin" : undefined}
-            />
-            Actualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            {canEnroll && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setEnrollOpen(true)}
+              >
+                <UserPlus data-icon="inline-start" />
+                Inscribir
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={retry}
+              disabled={loading}
+            >
+              <RefreshCw
+                data-icon="inline-start"
+                className={loading ? "animate-spin" : undefined}
+              />
+              Actualizar
+            </Button>
+          </div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input
@@ -377,6 +393,14 @@ export function ProgramEnrollmentsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Inscribir paciente */}
+      <ProgramEnrollDialog
+        open={enrollOpen}
+        saving={actionLoading}
+        onOpenChange={setEnrollOpen}
+        onSubmit={enroll}
+      />
     </div>
   );
 }
