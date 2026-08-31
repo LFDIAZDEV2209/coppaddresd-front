@@ -164,7 +164,9 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
 
   const { patient, alerts, evaluations } = data;
   const typification = typifyPatient(patient);
-  const completed = evaluations.filter((e) => e.status === "completed").length;
+  const completed = new Set(
+    evaluations.filter((e) => e.status === "completed").map((e) => e.versionId),
+  ).size;
   const pending = evaluations.filter((e) => e.status === "started").length;
   const patientAlerts = alerts.filter((a) => a.patientId === patient.id);
   const totalTests = patient.results.length;
@@ -176,7 +178,8 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
         testNameFor(patient.results, r.testId, evaluations) ??
         r.testCode ??
         r.testId,
-      score: r.score ?? 0,
+      // Porcentaje (0-100) cuando el instrumento lo provee; fallback al score crudo.
+      score: r.scorePercentage ?? r.score ?? 0,
     }));
 
   const evolutionData = buildEvolution(patient);

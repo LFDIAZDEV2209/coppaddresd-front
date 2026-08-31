@@ -350,7 +350,7 @@ export function usePatientDetail(patientId: string) {
   const evaluations = useAsyncData(() =>
     healthTestsApi.getPatientEvaluations(patientId).then(withAttempts),
   );
-  const alerts = useAsyncData(healthTestsApi.listAlerts);
+  const alerts = useAsyncData(() => healthTestsApi.listAlerts(patientId));
 
   const loading = patient.loading || evaluations.loading || alerts.loading;
   const error = patient.error ?? evaluations.error ?? alerts.error;
@@ -370,7 +370,13 @@ export function usePatientDetail(patientId: string) {
     };
   }, [patient.data, evaluations.data, alerts.data]);
 
-  const notFound = patient.errorCode === "not-found" && !patient.data;
+  const notFound =
+    !data &&
+    (patient.errorCode === "not-found" ||
+      patient.errorCode === "bad-request" ||
+      evaluations.errorCode === "not-found" ||
+      alerts.errorCode === "not-found" ||
+      alerts.errorCode === "bad-request");
 
   return { data, loading, error, notFound, reload };
 }

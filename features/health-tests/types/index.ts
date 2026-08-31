@@ -78,6 +78,8 @@ export interface PatientTestResult {
   state: TestState;
   /** Score normalizado 0-100 (null si el test no se ha completado). */
   score: number | null;
+  /** Porcentaje del score respecto al máximo del instrumento (0-100). */
+  scorePercentage?: number | null;
   /** Interpretación clínica del score según el test. */
   interpretation: string;
   risk: RiskLevel;

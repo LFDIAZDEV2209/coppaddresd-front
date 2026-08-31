@@ -80,7 +80,7 @@ export interface HealthTestsApi {
   listTests(): Promise<HealthTest[]>;
   listIndicators(): Promise<ClinicalIndicator[]>;
   listProfessionals(): Promise<HealthProfessional[]>;
-  listAlerts(): Promise<HealthAlert[]>;
+  listAlerts(patientId?: string): Promise<HealthAlert[]>;
   listBatteries(): Promise<Battery[]>;
   getStats(): Promise<HealthTestStats>;
   getCoverageTrend(): Promise<CoverageTrendPoint[]>;
@@ -307,6 +307,40 @@ interface ProfessionalCatalogItemDto {
   status: string;
 }
 
+// ===== Tabla maestra (endpoint /master del backend, sin N+1) =====
+
+interface MasterPatientIdentityDto {
+  id: string;
+  firstName: string;
+  lastName: string;
+  documentNumber: string | null;
+  gender: string | null;
+  dateOfBirth: string | null;
+  clinicName: string | null;
+  insurerName: string | null;
+  professionalName: string | null;
+  status: string;
+}
+
+interface MasterPatientResultDto {
+  versionId: string;
+  testCode: string | null;
+  testName: string | null;
+  testCategory: string | null;
+  state: "completado" | "en-progreso" | "pendiente";
+  score: number | null;
+  scorePercentage: number | null;
+  qualifier: string | null;
+  severity: string | null;
+  completedAt: string | null;
+}
+
+interface MasterRowDto {
+  patient: MasterPatientIdentityDto;
+  results: MasterPatientResultDto[];
+  alertCount: number;
+}
+
 // ===================== Mapeo de dominio =====================
 
 const CATEGORY_MAP: Record<string, TestCategory> = {
@@ -462,8 +496,8 @@ function mapPatientListItem(
     gender: dto.gender === "Masculino" ? "Masculino" : "Femenino",
     age: ageFromDateOfBirth(dto.dateOfBirth),
     clinic: dto.clinicName ?? "",
-    professionalId: dto.professionalNames[0] ?? "",
-    professionalName: dto.professionalNames[0] ?? "",
+    professionalId: dto.professionalNames?.[0] ?? "",
+    professionalName: dto.professionalNames?.[0] ?? "",
     status: dto.status === "Inactivo" ? "inactivo" : "activo",
     insurance: dto.insurerName ?? "",
     assignedAt: dto.createdAt,
@@ -521,6 +555,7 @@ function aggregateResults(evaluations: EvaluationDto[]): PatientTestResult[] {
       testCode: evs[0]?.testCode ?? null,
       state: latest ? "completado" : inProgress ? "en-progreso" : "pendiente",
       score: score !== null && score !== undefined ? score : null,
+      scorePercentage: latest?.scorePercentage ?? null,
       interpretation: scoreResult?.qualifier ?? "",
       risk: scoreResult?.severity
         ? riskFromSeverity(scoreResult.severity)
@@ -708,9 +743,11 @@ async function listProfessionals(): Promise<HealthProfessional[]> {
   }));
 }
 
-async function listAlerts(): Promise<HealthAlert[]> {
+async function listAlerts(patientId?: string): Promise<HealthAlert[]> {
+  const params = new URLSearchParams({ page: "1", pageSize: "100" });
+  if (patientId) params.set("patientId", patientId);
   const response = await apiFetch<PaginatedDto<AlertDto>>(
-    `${BASE}/alerts?page=1&pageSize=100`,
+    `${BASE}/alerts?${params.toString()}`,
   );
   return response.data.map(mapAlert);
 }
@@ -745,41 +782,45 @@ async function getCoverageTrend(): Promise<CoverageTrendPoint[]> {
 }
 
 async function getMasterRows(): Promise<PatientMasterRow[]> {
-  const [patients, alerts, assignments] = await Promise.all([
-    listPatients(),
-    listAlerts(),
-    apiFetch<PaginatedDto<AssignmentDto>>(
-      `${BASE}/assignments?page=1&pageSize=100`,
-    ).catch(() => null),
-  ]);
+  const rows = await apiFetch<MasterRowDto[]>(`${BASE}/master`);
+  return rows.map(mapMasterRow);
+}
 
-  // Pacientes con asignaciones: enriquecer con sus evaluaciones reales
-  // (scores/riesgo) vía getPatient. Son pocos (solo los asignados), no N+1.
-  const enrichedById = new Map<string, PatientProfile>();
-  if (assignments) {
-    const assignedIds = new Set(assignments.data.map((a) => a.patientId));
-    await Promise.all(
-      [...assignedIds].map(async (pid) => {
-        const full = await getPatient(pid).catch(() => null);
-        if (full) enrichedById.set(pid, full);
-      }),
-    );
-  }
+/** Fila maestra desde el DTO del backend (una sola llamada, sin N+1). */
+function mapMasterRow(dto: MasterRowDto): PatientMasterRow {
+  const patient: PatientProfile = {
+    id: dto.patient.id,
+    firstName: dto.patient.firstName,
+    lastName: dto.patient.lastName,
+    documentNumber: dto.patient.documentNumber ?? "",
+    gender: dto.patient.gender === "Masculino" ? "Masculino" : "Femenino",
+    age: ageFromDateOfBirth(dto.patient.dateOfBirth),
+    clinic: dto.patient.clinicName ?? "",
+    professionalId: "",
+    professionalName: dto.patient.professionalName ?? "",
+    status: dto.patient.status === "Inactivo" ? "inactivo" : "activo",
+    insurance: dto.patient.insurerName ?? "",
+    assignedAt: "",
+    phone: "",
+    email: "",
+    results: dto.results.map(mapMasterResult),
+  };
+  return { ...buildMasterRow(patient, []), alertCount: dto.alertCount };
+}
 
-  const rows = patients
-    .map((p) => {
-      const enriched = {
-        ...p,
-        results: enrichedById.get(p.id)?.results ?? p.results,
-      };
-      return buildMasterRow(
-        enriched,
-        alerts.filter((a) => a.patientId === p.id),
-      );
-    })
-    .filter((r) => r.assignedCount > 0 || r.pendingCount > 0);
-
-  return rows;
+function mapMasterResult(r: MasterPatientResultDto): PatientTestResult {
+  return {
+    testId: r.versionId,
+    testCode: r.testCode,
+    state: r.state,
+    score: r.score,
+    interpretation: r.qualifier ?? "",
+    risk: riskFromSeverity(r.severity),
+    updatedAt: r.completedAt ?? "",
+    completedAt: r.completedAt,
+    history: [],
+    details: {},
+  };
 }
 
 async function getPendingPatients(): Promise<PendingPatientRow[]> {
