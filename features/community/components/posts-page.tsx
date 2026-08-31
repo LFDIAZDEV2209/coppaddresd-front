@@ -16,6 +16,7 @@ import {
   X,
   Link2,
   Plus,
+  Check,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -44,10 +45,82 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
 import { CommunityPagination } from "./community-pagination";
 import { PostDetailDialog } from "./post-detail-dialog";
 import type { ErpPost, PostType } from "../types";
+import type { PollWire } from "../types";
+
+/** Bloque de encuesta inline — opciones tappables antes de votar; después muestra resultados con barra de progreso. */
+function PollBlockInline({
+  poll,
+  myId,
+  onVote,
+}: {
+  poll: PollWire;
+  myId: string | null;
+  onVote: (optionId: string) => void;
+}) {
+  const [voting, setVoting] = useState(false);
+  const myVote = poll.options.find((o) => o.votes.some((v) => v.profileId === myId));
+  const total = poll.options.reduce((acc, o) => acc + o.votes.length, 0);
+
+  const handleVote = (optionId: string) => {
+    if (voting || myVote) return;
+    setVoting(true);
+    try {
+      onVote(optionId);
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/30 p-3">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+        <BarChart3 className="size-3" /> Encuesta
+      </div>
+      {poll.options.map((option) => {
+        const votes = option.votes.length;
+        const pct = total > 0 ? Math.round((votes / total) * 100) : 0;
+        const mine = myVote?.id === option.id;
+        if (!myVote) {
+          return (
+            <button
+              key={option.id}
+              type="button"
+              disabled={voting}
+              onClick={() => handleVote(option.id)}
+              className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left text-xs font-medium transition-all hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
+            >
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[9px] text-muted-foreground" />
+              {option.text}
+            </button>
+          );
+        }
+        return (
+          <div key={option.id} className="relative flex items-center gap-2 overflow-hidden rounded-md border border-border bg-card px-3 py-2">
+            <div
+              className="absolute inset-y-0 left-0 rounded-l-md"
+              style={{ width: `${pct}%`, backgroundColor: mine ? "var(--primary)" : "var(--primary-soft)" }}
+            />
+            <span className="relative flex items-center gap-1.5 text-xs font-medium">
+              {mine && <Check className="size-3 text-primary" />}
+              {option.text}
+            </span>
+            <span className="relative ml-auto text-[10px] font-bold text-muted-foreground">{pct}%</span>
+          </div>
+        );
+      })}
+      <div className="text-[10px] text-muted-foreground">
+        {total === 0
+          ? "Sin votos todavía"
+          : `${total} ${total === 1 ? "voto" : "votos"}${myVote ? " · Ya votaste" : ""}`}
+      </div>
+    </div>
+  );
+}
 
 const DESTINOS = [
   "🌐 Todas las comunidades (284)",
@@ -76,7 +149,9 @@ const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
 
 export function PostsPage() {
   const t = useT();
-  const { posts, publishPost, togglePin, deletePost, members } = useErp();
+  const { can } = useAppContext();
+  const { posts, publishPost, togglePin, deletePost, members, me, votePoll } = useErp();
+  const canModerate = can("Community.Moderate");
   // Sin useSearchParams para evitar Suspense; el dashboard abre con ?compose=1
   const [type, setType] = useState<PostType>("Texto");
   const [destination, setDestination] = useState(DESTINOS[0]);
@@ -170,10 +245,12 @@ export function PostsPage() {
         description={t("Gestión de publicaciones de ANTARES Comunidad ADRED")}
         icon={Send}
         actions={
-          <Button variant="outline" size="sm" onClick={() => setShowComposer((v) => !v)}>
-            {showComposer ? <X data-icon="inline-start" className="size-3.5" /> : <Plus data-icon="inline-start" />}
-            {showComposer ? t("Cerrar") : t("Nuevo post")}
-          </Button>
+          canModerate ? (
+            <Button variant="outline" size="sm" onClick={() => setShowComposer((v) => !v)}>
+              {showComposer ? <X data-icon="inline-start" className="size-3.5" /> : <Plus data-icon="inline-start" />}
+              {showComposer ? t("Cerrar") : t("Nuevo post")}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -396,44 +473,74 @@ export function PostsPage() {
                             )}
                           </div>
                           <div className="flex shrink-0 gap-1">
-                            <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Desfijar")}>
+                        {canModerate && (
+                          <>
+                            <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id, false)} title={t("Desfijar")}>
                               <Pin className="size-3.5" />
-                            </Button>
-                            <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
-                              <MessageCircle className="size-3.5" />
                             </Button>
                             <Button size="icon-sm" variant="ghost" onClick={() => setConfirmDeleteId(post.id)} title={t("Eliminar")}>
                               <Trash2 className="size-3.5 text-destructive" />
                             </Button>
-                          </div>
-                        </div>
-                        <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <StatusBadge
-                            status={t("Fijado")}
-                            color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
-                          />
-                          <span
-                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                            style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
-                          >
-                            {t(post.type)}
-                          </span>
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                            {post.destination}
-                          </span>
-                          <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
-                            <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
-                            <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
-                            <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
-                          </span>
-                        </div>
+                          </>
+                        )}
+                        <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
+                          <MessageCircle className="size-3.5" />
+                        </Button>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-              <CommunityPagination
+                    <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+                    {/* Media rendering */}
+                    {post.imageUrl && post.mediaType === "IMAGE" && (
+                      <div className="overflow-hidden rounded-lg border border-border">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={post.imageUrl}
+                          alt=""
+                          className="w-full object-contain"
+                          style={{ maxHeight: 320 }}
+                        />
+                      </div>
+                    )}
+                    {post.mediaType === "VIDEO" && post.imageUrl && (
+                      <div className="overflow-hidden rounded-lg border border-border">
+                        <video
+                          src={post.imageUrl}
+                          controls
+                          className="w-full"
+                          style={{ maxHeight: 320 }}
+                        />
+                      </div>
+                    )}
+                    {/* Poll rendering */}
+                    {post.poll && (
+                      <PollBlockInline poll={post.poll} myId={me?.id ?? null} onVote={votePoll} />
+                    )}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <StatusBadge
+                        status={t("Fijado")}
+                        color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                      />
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                      >
+                        {t(post.type)}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {post.destination}
+                      </span>
+                      <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                        <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
+                        <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <CommunityPagination
                 page={pinnedPage}
                 pageSize={pinnedPageSize}
                 total={pinnedPosts.length}
@@ -487,39 +594,69 @@ export function PostsPage() {
                           )}
                         </div>
                         <div className="flex shrink-0 gap-1">
-                          <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id)} title={t("Fijar")}>
-                            <Pin className="size-3.5" />
-                          </Button>
-                          <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
-                            <MessageCircle className="size-3.5" />
-                          </Button>
-                          <Button size="icon-sm" variant="ghost" onClick={() => setConfirmDeleteId(post.id)} title={t("Eliminar")}>
-                            <Trash2 className="size-3.5 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                      <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span
-                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                          style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
-                        >
-                          {t(post.type)}
-                        </span>
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                          {post.destination}
-                        </span>
-                        <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
-                          <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
-                          <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
-                          <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
-                        </span>
+                        {canModerate && (
+                          <>
+                            <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id, true)} title={t("Fijar")}>
+                              <Pin className="size-3.5" />
+                            </Button>
+                            <Button size="icon-sm" variant="ghost" onClick={() => setConfirmDeleteId(post.id)} title={t("Eliminar")}>
+                              <Trash2 className="size-3.5 text-destructive" />
+                            </Button>
+                          </>
+                        )}
+                        <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
+                          <MessageCircle className="size-3.5" />
+                        </Button>
                       </div>
                     </div>
+                    <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+                    {/* Media rendering */}
+                    {post.imageUrl && post.mediaType === "IMAGE" && (
+                      <div className="overflow-hidden rounded-lg border border-border">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={post.imageUrl}
+                          alt=""
+                          className="w-full object-contain"
+                          style={{ maxHeight: 320 }}
+                        />
+                      </div>
+                    )}
+                    {post.mediaType === "VIDEO" && post.imageUrl && (
+                      <div className="overflow-hidden rounded-lg border border-border">
+                        <video
+                          src={post.imageUrl}
+                          controls
+                          className="w-full"
+                          style={{ maxHeight: 320 }}
+                        />
+                      </div>
+                    )}
+                    {/* Poll rendering */}
+                    {post.poll && (
+                      <PollBlockInline poll={post.poll} myId={me?.id ?? null} onVote={votePoll} />
+                    )}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                      >
+                        {t(post.type)}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {post.destination}
+                      </span>
+                      <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                        <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
+                        <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
+                      </span>
+                    </div>
                   </div>
-                );
-              })
-            )}
+                </div>
+              );
+            })
+          )}
           </div>
           {nonPinnedPosts.length > 0 && (
             <CommunityPagination

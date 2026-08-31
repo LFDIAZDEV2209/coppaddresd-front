@@ -51,6 +51,18 @@ export interface ErpComment {
   isNew?: boolean;
 }
 
+export interface PollOptionWire {
+  id: string;
+  text: string;
+  position: number;
+  votes: { id: string; profileId: string }[];
+}
+
+export interface PollWire {
+  id: string;
+  options: PollOptionWire[];
+}
+
 export interface ErpPost {
   id: string;
   author: string;
@@ -63,6 +75,9 @@ export interface ErpPost {
   reactions: number;
   comments: number;
   views: number;
+  imageUrl: string | null;
+  mediaType: "IMAGE" | "VIDEO" | null;
+  poll: PollWire | null;
   isSystem?: boolean;
   commentsList: ErpComment[];
 }

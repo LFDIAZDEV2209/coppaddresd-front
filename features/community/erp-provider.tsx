@@ -45,6 +45,7 @@ import {
   TOP_STREAKS_QUERY,
   UNBAN_PROFILE,
   VIEW_POST,
+  VOTE_POLL,
   type AddCommentResult,
   type AwardXpAllResult,
   type AwardXpResult,
@@ -89,6 +90,7 @@ import {
   type TopStreaksResult,
   type UnbanProfileResult,
   type ViewPostResult,
+  type VotePollResult,
 } from "./services/community";
 import { useT } from "@/providers/i18n-provider";
 import type {
@@ -208,6 +210,9 @@ function mapPost(post: Post): ErpPost {
     reactions: post.likes.length,
     comments: post.comments.length,
     views: post.viewCount,
+    imageUrl: post.imageUrl ?? null,
+    mediaType: post.mediaType ?? null,
+    poll: post.poll ?? null,
     isSystem: post.profile.isSystem,
     commentsList: post.comments.map(mapComment),
   };
@@ -459,9 +464,10 @@ interface ErpContextValue {
     body: string;
     pinned: boolean;
   }) => void;
-  togglePin: (id: string) => void;
+  togglePin: (id: string, nextPinned: boolean) => void;
   deletePost: (id: string) => void;
   viewPost: (id: string) => void;
+  votePoll: (optionId: string) => void;
   awardXp: (payload: AwardPayload) => void;
   sendMessage: (memberId: string, message: string) => void;
   sendBulkInactive: (message: string) => void;
@@ -671,6 +677,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     { groupId: string; body: string }
   >(SEND_GROUP_MESSAGE);
   const [, viewPostMut] = useMutation<ViewPostResult, { id: string }>(VIEW_POST);
+  const [, votePollMut] = useMutation<VotePollResult, { optionId: string }>(VOTE_POLL);
 
   const [, addCommentMut] = useMutation<AddCommentResult, { postId: string; body: string }>(ADD_COMMENT);
   const [, replyToCommentMut] = useMutation<ReplyToCommentResult, { commentId: string; body: string }>(
@@ -918,18 +925,18 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   );
 
   const togglePin = useCallback<ErpContextValue["togglePin"]>(
-    (id) => {
-      const current = posts.find((p) => p.id === id);
-      pinPostMut({ id, pinned: !current?.pinned }).then((res) => {
+    (id, nextPinned) => {
+      pinPostMut({ id, pinned: nextPinned }).then((res) => {
         if (res.error) {
-          toast("No se pudo actualizar el fijado");
+          const msg = res.error.message || "No se pudo actualizar el fijado";
+          toast(msg);
         } else {
           toast("Estado de fijado actualizado");
           refetchPosts();
         }
       });
     },
-    [posts, toast, refetchPosts],
+    [toast, refetchPosts],
   );
 
   const deletePost = useCallback<ErpContextValue["deletePost"]>(
@@ -954,6 +961,20 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       });
     },
     [refetchPosts],
+  );
+
+  const votePoll = useCallback<ErpContextValue["votePoll"]>(
+    (optionId) => {
+      votePollMut({ optionId }).then((res) => {
+        if (res.error) {
+          toast(res.error.message || "No se pudo registrar el voto");
+        } else {
+          toast("Voto registrado");
+          refetchPosts();
+        }
+      });
+    },
+    [toast, refetchPosts],
   );
 
   const awardXp = useCallback<ErpContextValue["awardXp"]>(
@@ -1224,6 +1245,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       togglePin,
       deletePost,
       viewPost,
+      votePoll,
       awardXp,
       sendMessage,
       sendBulkInactive,
@@ -1303,6 +1325,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       togglePin,
       deletePost,
       viewPost,
+      votePoll,
       awardXp,
       sendMessage,
       sendBulkInactive,

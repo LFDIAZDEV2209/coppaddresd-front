@@ -227,6 +227,9 @@ export const mockPosts: ErpPost[] = [
     reactions: 212,
     comments: 48,
     views: 1840,
+    imageUrl: null,
+    mediaType: null,
+    poll: null,
     commentsList: [],
   },
   {
@@ -241,6 +244,9 @@ export const mockPosts: ErpPost[] = [
     reactions: 134,
     comments: 22,
     views: 980,
+    imageUrl: null,
+    mediaType: null,
+    poll: null,
     commentsList: [],
   },
   {
@@ -255,6 +261,9 @@ export const mockPosts: ErpPost[] = [
     reactions: 89,
     comments: 15,
     views: 620,
+    imageUrl: null,
+    mediaType: null,
+    poll: null,
     commentsList: [],
   },
   {
@@ -269,6 +278,9 @@ export const mockPosts: ErpPost[] = [
     reactions: 56,
     comments: 9,
     views: 320,
+    imageUrl: null,
+    mediaType: null,
+    poll: null,
     commentsList: [],
   },
   {
@@ -283,6 +295,9 @@ export const mockPosts: ErpPost[] = [
     reactions: 71,
     comments: 12,
     views: 410,
+    imageUrl: null,
+    mediaType: null,
+    poll: null,
     commentsList: [],
   },
   {
@@ -297,6 +312,9 @@ export const mockPosts: ErpPost[] = [
     reactions: 44,
     comments: 7,
     views: 260,
+    imageUrl: null,
+    mediaType: null,
+    poll: null,
     commentsList: [],
   },
   {
@@ -311,6 +329,9 @@ export const mockPosts: ErpPost[] = [
     reactions: 38,
     comments: 5,
     views: 190,
+    imageUrl: null,
+    mediaType: null,
+    poll: null,
     commentsList: [],
   },
 ];

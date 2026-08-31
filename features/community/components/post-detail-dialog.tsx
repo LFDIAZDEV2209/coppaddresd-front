@@ -11,6 +11,8 @@ import {
   CornerDownRight,
   X,
   Flag,
+  BarChart3,
+  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -34,8 +36,80 @@ import {
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
 import type { ErpComment, ErpPost } from "../types";
+import type { PollWire } from "../types";
+
+/** Bloque de encuesta inline — opciones tappables antes de votar; después muestra resultados con barra de progreso. */
+function PollBlockInline({
+  poll,
+  myId,
+  onVote,
+}: {
+  poll: PollWire;
+  myId: string | null;
+  onVote: (optionId: string) => void;
+}) {
+  const [voting, setVoting] = useState(false);
+  const myVote = poll.options.find((o) => o.votes.some((v) => v.profileId === myId));
+  const total = poll.options.reduce((acc, o) => acc + o.votes.length, 0);
+
+  const handleVote = (optionId: string) => {
+    if (voting || myVote) return;
+    setVoting(true);
+    try {
+      onVote(optionId);
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/30 p-3">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+        <BarChart3 className="size-3" /> Encuesta
+      </div>
+      {poll.options.map((option) => {
+        const votes = option.votes.length;
+        const pct = total > 0 ? Math.round((votes / total) * 100) : 0;
+        const mine = myVote?.id === option.id;
+        if (!myVote) {
+          return (
+            <button
+              key={option.id}
+              type="button"
+              disabled={voting}
+              onClick={() => handleVote(option.id)}
+              className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left text-xs font-medium transition-all hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
+            >
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[9px] text-muted-foreground" />
+              {option.text}
+            </button>
+          );
+        }
+        return (
+          <div key={option.id} className="relative flex items-center gap-2 overflow-hidden rounded-md border border-border bg-card px-3 py-2">
+            <div
+              className="absolute inset-y-0 left-0 rounded-l-md"
+              style={{ width: `${pct}%`, backgroundColor: mine ? "var(--primary)" : "var(--primary-soft)" }}
+            />
+            <span className="relative flex items-center gap-1.5 text-xs font-medium">
+              {mine && <Check className="size-3 text-primary" />}
+              {option.text}
+            </span>
+            <span className="relative ml-auto text-[10px] font-bold text-muted-foreground">{pct}%</span>
+          </div>
+        );
+      })}
+      <div className="text-[10px] text-muted-foreground">
+        {total === 0
+          ? "Sin votos todavía"
+          : `${total} ${total === 1 ? "voto" : "votos"}${myVote ? " · Ya votaste" : ""}`}
+      </div>
+    </div>
+  );
+}
 
 /** Colores de chip por tipo de publicación. */
 const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
@@ -63,6 +137,8 @@ interface PostDetailDialogProps {
 
 export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogProps) {
   const t = useT();
+  const { can } = useAppContext();
+  const canModerate = can("Community.Moderate");
   const {
     members,
     togglePin,
@@ -72,6 +148,8 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
     replyToComment,
     deleteComment,
     reportPost,
+    me,
+    votePoll,
   } = useErp();
 
   const [draft, setDraft] = useState("");
@@ -172,13 +250,15 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
             >
               {t("Responder")}
             </button>
-            <button
-              onClick={() => setConfirmDelete(c.id)}
-              className="shrink-0 self-start rounded px-1.5 py-0.5 text-[11px] text-destructive hover:bg-destructive/10"
-              title={t("Eliminar comentario")}
-            >
-              <Trash2 className="size-3" />
-            </button>
+            {canModerate && (
+              <button
+                onClick={() => setConfirmDelete(c.id)}
+                className="shrink-0 self-start rounded px-1.5 py-0.5 text-[11px] text-destructive hover:bg-destructive/10"
+                title={t("Eliminar comentario")}
+              >
+                <Trash2 className="size-3" />
+              </button>
+            )}
           </div>
         </div>
         {children.map((child) => renderComment(child, depth + 1))}
@@ -215,27 +295,58 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
                 )}
               </div>
               <div className="flex shrink-0 gap-1">
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  onClick={() => togglePin(post.id)}
-                  title={post.pinned ? t("Desfijar") : t("Fijar")}
-                >
-                  <Pin className="size-3.5" />
-                </Button>
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  onClick={() => setConfirmDeletePost(true)}
-                  title={t("Eliminar")}
-                >
-                  <Trash2 className="size-3.5 text-destructive" />
-                </Button>
+                {canModerate && (
+                  <>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => togglePin(post.id, !post.pinned)}
+                      title={post.pinned ? t("Desfijar") : t("Fijar")}
+                    >
+                      <Pin className="size-3.5" />
+                    </Button>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => setConfirmDeletePost(true)}
+                      title={t("Eliminar")}
+                    >
+                      <Trash2 className="size-3.5 text-destructive" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Body del post */}
             <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+
+            {/* Media rendering */}
+            {post.imageUrl && post.mediaType === "IMAGE" && (
+              <div className="overflow-hidden rounded-lg border border-border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={post.imageUrl}
+                  alt=""
+                  className="w-full object-contain"
+                  style={{ maxHeight: 320 }}
+                />
+              </div>
+            )}
+            {post.mediaType === "VIDEO" && post.imageUrl && (
+              <div className="overflow-hidden rounded-lg border border-border">
+                <video
+                  src={post.imageUrl}
+                  controls
+                  className="w-full"
+                  style={{ maxHeight: 320 }}
+                />
+              </div>
+            )}
+            {/* Poll rendering */}
+            {post.poll && (
+              <PollBlockInline poll={post.poll} myId={me?.id ?? null} onVote={votePoll} />
+            )}
 
             {/* Chips de metadata */}
             <div className="flex flex-wrap items-center gap-1.5">
