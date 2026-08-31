@@ -94,7 +94,7 @@ export const encounterStatusLabel: Record<EncounterStatus, string> = {
 type ColorSet = { bg: string; text: string; dot: string };
 
 const colors = {
-  blue: { bg: "#162032", text: "#FFFFFF", dot: "#FFFFFF" },
+  blue: { bg: "var(--sidebar)", text: "#FFFFFF", dot: "#FFFFFF" },
   green: { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" },
   amber: { bg: "#FDF2E3", text: "#9A6A0A", dot: "#F59E0B" },
   red: { bg: "#FCEBEC", text: "#B42318", dot: "#EF4444" },
@@ -117,6 +117,28 @@ export function appointmentStatusColor(status: AppointmentStatus): ColorSet {
       return colors.amber;
     default:
       return colors.gray;
+  }
+}
+
+/**
+ * Punto de estado legible sobre fondos CLAROS (chips de filtro, KPIs).
+ * `appointmentStatusColor` usa dot blanco para Confirmed (pensado para la
+ * franja navy); aquí el punto debe contrastar con el fondo del chip.
+ */
+export function appointmentStatusDot(status: AppointmentStatus): string {
+  switch (status) {
+    case "Confirmed":
+      return "var(--primary)";
+    case "InProgress":
+      return "#0E7490";
+    case "Completed":
+      return "#10B981";
+    case "Cancelled":
+      return "#EF4444";
+    case "NoShow":
+      return "#F59E0B";
+    default:
+      return "#64748B";
   }
 }
 
