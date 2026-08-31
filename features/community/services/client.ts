@@ -1,7 +1,8 @@
 "use client";
 
 import { authExchange } from "@urql/exchange-auth";
-import { cacheExchange, Client, fetchExchange } from "urql";
+import { cacheExchange, Client, fetchExchange, subscriptionExchange } from "urql";
+import { createClient as createWSClient } from "graphql-ws";
 import {
   getAccessToken,
   refreshAccessToken,
@@ -33,8 +34,56 @@ const communityAuth = authExchange(async (utils) => ({
   },
 }));
 
+function getWsUrl(): string {
+  const httpUrl = env.communityApiUrl;
+  const wsBase = httpUrl.replace(/^http/, "ws");
+  return `${wsBase}/api/v1/community/subscriptions`;
+}
+
+const wsClient =
+  typeof window !== "undefined"
+    ? createWSClient({
+        url: getWsUrl(),
+        lazy: true,
+        retryAttempts: 5,
+        connectionParams: () => {
+          const token = getAccessToken();
+          return token ? { Authorization: `Bearer ${token}` } : {};
+        },
+      })
+    : null;
+
+const communitySubscriptionExchange = subscriptionExchange({
+  forwardSubscription(request) {
+    if (!wsClient) {
+      return {
+        subscribe(sink) {
+          sink.error(new Error("WebSocket no disponible en servidor"));
+          return { unsubscribe() {} };
+        },
+      };
+    }
+    const input = {
+      query: request.query as string,
+      variables: request.variables as Record<string, unknown> | undefined,
+    };
+    return {
+      subscribe(sink) {
+        const unsubscribe = wsClient.subscribe(input, {
+          next: (value) => sink.next(value as never),
+          error: (err) => sink.error(err as never),
+          complete: () => sink.complete(),
+        });
+        return { unsubscribe };
+      },
+    };
+  },
+});
+
 /** Cliente GraphQL de la comunidad (urql) con autenticación del ERP. */
 export const communityClient = new Client({
-  url: `${env.communityApiUrl}/graphql`,
-  exchanges: [communityAuth, cacheExchange, fetchExchange],
+  // El servicio de comunidad expone el endpoint HTTP en /api/v1/community/graphql
+  // y las suscripciones WS en /api/v1/community/subscriptions.
+  url: `${env.communityApiUrl}/api/v1/community/graphql`,
+  exchanges: [communityAuth, cacheExchange, communitySubscriptionExchange, fetchExchange],
 });

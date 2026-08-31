@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { Markdown } from "@/components/markdown";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import {
   getLegalDocument,
   listAllLegalDocumentVersions,
@@ -41,6 +42,7 @@ const BLANK = "blank";
 
 export function LegalDocumentsSection() {
   const t = useT();
+  const { can } = useAppContext();
   const [documents, setDocuments] = useState<LegalDocumentSummary[]>([]);
   const [allVersions, setAllVersions] = useState<DocumentVersionListItem[]>([]);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
@@ -262,16 +264,18 @@ export function LegalDocumentsSection() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-white/20 bg-white/5 text-white hover:bg-white/10"
-              onClick={startNewDocument}
-            >
-              <Plus data-icon="inline-start" />
-              {t("Nuevo documento")}
-            </Button>
-            <Button size="sm" className="bg-success text-white hover:bg-success/90" onClick={openPublish} disabled={!hasDrafts || publishing}>
+            {can("LegalDocuments.Manage") && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-white/20 bg-white/5 text-white hover:bg-white/10"
+                onClick={startNewDocument}
+              >
+                <Plus data-icon="inline-start" />
+                {t("Nuevo documento")}
+              </Button>
+            )}
+            <Button size="sm" className="bg-success text-white hover:bg-success/90" onClick={openPublish} disabled={!hasDrafts || publishing || !can("LegalDocuments.Manage")}>
               <Rocket data-icon="inline-start" />
               {t("Publicar")}
             </Button>
@@ -408,7 +412,7 @@ export function LegalDocumentsSection() {
                     />
                   </div>
                   <div className="flex justify-end">
-                    <Button onClick={() => void saveDraft()} disabled={saving || !code.trim() || !title.trim() || !content.trim()}>
+                    <Button onClick={() => void saveDraft()} disabled={saving || !code.trim() || !title.trim() || !content.trim() || !can("LegalDocuments.Manage")}>
                       <Save data-icon="inline-start" />
                       {saving ? t("Guardando...") : t("Guardar borrador")}
                     </Button>
@@ -429,6 +433,7 @@ export function LegalDocumentsSection() {
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={!can("LegalDocuments.Manage")}
                       onClick={() => {
                         setPreviewVersionId(null);
                         setContent("");
@@ -489,7 +494,7 @@ export function LegalDocumentsSection() {
                           <Eye data-icon="inline-start" />
                           {t("Ver")}
                         </Button>
-                        {!item.isPublished && (
+                        {!item.isPublished && can("LegalDocuments.Manage") && (
                           <Button size="sm" className="bg-success text-white hover:bg-success/90" disabled={publishing} onClick={() => { openDocument(item.documentCode); setPublishVersionId(item.versionId); setPublishOpen(true); }}>
                             <Rocket data-icon="inline-start" />
                             {t("Publicar")}

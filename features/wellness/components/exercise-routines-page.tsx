@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Dumbbell, Plus, RefreshCw, Trash2, Eye, Pencil } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -48,6 +49,7 @@ import type { ExerciseRoutineListItem } from "../types";
 
 export function ExerciseRoutinesPage() {
   const t = useT();
+  const { can } = useAppContext();
   const {
     result,
     loading,
@@ -110,10 +112,12 @@ export function ExerciseRoutinesPage() {
         description={t("Gestiona las rutinas de ejercicio para tus pacientes")}
         icon={Dumbbell}
         actions={
-          <Button size="sm" onClick={openCreate}>
-            <Plus data-icon="inline-start" />
-            {t("Nueva rutina")}
-          </Button>
+          can("Wellness.Manage") ? (
+            <Button size="sm" onClick={openCreate}>
+              <Plus data-icon="inline-start" />
+              {t("Nueva rutina")}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -281,24 +285,28 @@ export function ExerciseRoutinesPage() {
                         >
                           <Eye className="size-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          title={t("Editar")}
-                          onClick={() => openEdit(routine)}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-destructive"
-                          title={t("Eliminar")}
-                          onClick={() => setDeleting(routine)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
+                        {can("Wellness.Manage") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            title={t("Editar")}
+                            onClick={() => openEdit(routine)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                        )}
+                        {can("Wellness.Manage") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-destructive"
+                            title={t("Eliminar")}
+                            onClick={() => setDeleting(routine)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -452,6 +460,7 @@ function RoutinesErrorState({
 
 function RoutinesEmptyState({ onCreate }: { onCreate: () => void }) {
   const t = useT();
+  const { can } = useAppContext();
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border py-16 text-center">
       <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
@@ -463,10 +472,12 @@ function RoutinesEmptyState({ onCreate }: { onCreate: () => void }) {
           {t("Crea tu primera rutina para asignarla a tus pacientes.")}
         </p>
       </div>
-      <Button size="sm" onClick={onCreate}>
-        <Plus data-icon="inline-start" />
-        {t("Nueva rutina")}
-      </Button>
+      {can("Wellness.Manage") && (
+        <Button size="sm" onClick={onCreate}>
+          <Plus data-icon="inline-start" />
+          {t("Nueva rutina")}
+        </Button>
+      )}
     </div>
   );
 }

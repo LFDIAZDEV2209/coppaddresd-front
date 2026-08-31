@@ -1,0 +1,1038 @@
+﻿"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  Send,
+  Pin,
+  Trash2,
+  FileText,
+  Image as ImageIcon,
+  Video,
+  BarChart3,
+  Trophy,
+  Heart,
+  MessageCircle,
+  Eye,
+  EyeOff,
+  X,
+  Link2,
+  Plus,
+  Check,
+  ChevronUp,
+  ChevronDown,
+  Users,
+  Flag,
+  Repeat,
+} from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
+import { StatusBadge } from "@/components/feedback/status-badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useErp } from "../erp-provider";
+import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
+import { MemberAvatar, profileName } from "./member-avatar";
+import { CommunityPagination } from "./community-pagination";
+import { PostDetailDialog } from "./post-detail-dialog";
+import { MediaLightbox } from "./media-lightbox";
+import type { ErpPost, PostType } from "../types";
+import type { PollWire } from "../types";
+
+/** Bloque de encuesta inline — solo lectura en ERP; muestra opciones, barras, votos. */
+function PollBlockInline({
+  poll,
+  myId,
+  canModerate,
+}: {
+  poll: PollWire;
+  myId: string | null;
+  canModerate: boolean;
+}) {
+  const [showVoters, setShowVoters] = useState(false);
+  const myVote = poll.options.find((o) => o.votes.some((v) => v.profileId === myId));
+  const total = poll.options.reduce((acc, o) => acc + o.votes.length, 0);
+
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/30 p-3">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+        <BarChart3 className="size-3" /> Encuesta
+      </div>
+      {poll.options.map((option) => {
+        const votes = option.votes.length;
+        const pct = total > 0 ? Math.round((votes / total) * 100) : 0;
+        const mine = myVote?.id === option.id;
+        return (
+          <div key={option.id} className="relative flex items-center gap-2 overflow-hidden rounded-md border border-border bg-card px-3 py-2">
+            <div
+              className="absolute inset-y-0 left-0 rounded-l-md transition-all"
+              style={{ width: `${pct}%`, backgroundColor: mine ? "var(--primary)" : "var(--primary-soft)" }}
+            />
+            <span className="relative flex items-center gap-1.5 text-xs font-medium">
+              {mine && <Check className="size-3 text-primary" />}
+              {option.text}
+            </span>
+            <span className="relative ml-auto text-[10px] font-bold text-muted-foreground">{pct}%</span>
+          </div>
+        );
+      })}
+      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+        <span>
+          {total === 0
+            ? "Sin votos todavía"
+            : `${total} ${total === 1 ? "voto" : "votos"}${myVote ? " · Ya votaste" : ""}`}
+        </span>
+        {canModerate && total > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowVoters((v) => !v)}
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-primary hover:bg-primary-soft"
+          >
+            {showVoters ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+            {showVoters ? "Ocultar votantes" : "Ver votantes"}
+          </button>
+        )}
+      </div>
+      {/* Votantes expandibles */}
+      {showVoters && (
+        <div className="flex flex-col gap-1 rounded-md border border-border bg-card p-2">
+          {poll.options.map((option) => (
+            <div key={option.id} className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-semibold text-muted-foreground">{option.text}</span>
+              {option.votes.length === 0 ? (
+                <span className="text-[10px] text-muted-foreground/60">Sin votos</span>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {option.votes.map((v) => (
+                    <span
+                      key={v.id}
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground"
+                    >
+                      <Users className="size-2.5 text-muted-foreground" />
+                      {v.profile?.displayName ?? v.profileId}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const DESTINOS = [
+  "🌐 Todas las comunidades (284)",
+  "🏥 Comunidad ADRED",
+  "🏃 Reto caminata 30 días",
+  "🧠 Apoyo emocional",
+  "🥗 Cocina saludable",
+  "😴 Solo inactivos",
+];
+
+const TIPOS: { key: PostType; label: string; icon: typeof FileText }[] = [
+  { key: "Texto", label: "Texto", icon: FileText },
+  { key: "Imagen", label: "Imagen", icon: ImageIcon },
+  { key: "Video", label: "Video", icon: Video },
+  { key: "Encuesta", label: "Encuesta", icon: BarChart3 },
+  { key: "Logro", label: "Logro", icon: Trophy },
+];
+
+/** Normalize HotChocolate uppercase enum wire values. */
+function normalizeEnum(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
+  Texto: { bg: "var(--info-soft)", text: "var(--info-foreground)" },
+  Imagen: { bg: "var(--success-soft)", text: "var(--success-foreground)" },
+  Video: { bg: "var(--primary-soft)", text: "var(--primary)" },
+  Encuesta: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
+  Logro: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
+};
+
+export function PostsPage() {
+  const t = useT();
+  const { can } = useAppContext();
+  const { posts, publishPost, togglePin, deletePost, members, me, reorderPinned, reportPost, repostPost, unrepostPost, sortBy, setSortBy, interval, setInterval, fetchPostReposts, postReposts, postRepostsLoading } = useErp();
+  const canModerate = can("Community.Moderate");
+  // Sin useSearchParams para evitar Suspense; el dashboard abre con ?compose=1
+  const [type, setType] = useState<PostType>("Texto");
+  const [destination, setDestination] = useState(DESTINOS[0]);
+  const [body, setBody] = useState("");
+  const [pinned, setPinned] = useState(false);
+  const [push, setPush] = useState(false);
+  const [giveXp, setGiveXp] = useState(false);
+  // Campos específicos por tipo (frontend-only, se combinan en body al publicar)
+  const [imageUrl, setImageUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  const [logroTitle, setLogroTitle] = useState("");
+  // Composer toggle — auto-abre si ?compose=1 viene del dashboard
+  const [showComposer, setShowComposer] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (new URLSearchParams(window.location.search).get("compose") === "1") setShowComposer(true);
+  }, []);
+  // Paginación — Todas las publicaciones
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  // Paginación — Publicaciones fijadas
+  const [pinnedPage, setPinnedPage] = useState(1);
+  const [pinnedPageSize, setPinnedPageSize] = useState(5);
+  // Dialog de detalle de publicación
+  // Solo guardamos el id: el post se deriva de `posts` para que los
+  // comentarios en vivo (optimistic merge) aparezcan en tiempo real.
+  const [detailPostId, setDetailPostId] = useState<string | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const detailPost = useMemo(
+    () => (detailPostId ? posts.find((p) => p.id === detailPostId) ?? null : null),
+    [posts, detailPostId],
+  );
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Lightbox state
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxType, setLightboxType] = useState<"IMAGE" | "VIDEO" | null>(null);
+  const [lightboxBody, setLightboxBody] = useState<string>("");
+  // Report dialog state
+  const [reportDialogPostId, setReportDialogPostId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  // Repost viewer dialog state
+  const [repostViewerPostId, setRepostViewerPostId] = useState<string | null>(null);
+
+  /** Razones de reporte disponibles. */
+  const REPORT_REASONS = [
+    "Spam",
+    "Contenido inapropiado",
+    "Información falsa",
+    "Acoso o bullying",
+    "Otro",
+  ];
+
+  const openLightbox = (url: string, mediaType: "IMAGE" | "VIDEO", body?: string) => {
+    setLightboxUrl(url);
+    setLightboxType(mediaType);
+    setLightboxBody(body ?? "");
+  };
+
+  const pinnedPosts = posts.filter((p) => p.pinned);
+  const nonPinnedPosts = useMemo(() => posts.filter((p) => !p.pinned), [posts]);
+
+  const paginatedPinned = useMemo(() => {
+    const start = (pinnedPage - 1) * pinnedPageSize;
+    return pinnedPosts.slice(start, start + pinnedPageSize);
+  }, [pinnedPosts, pinnedPage, pinnedPageSize]);
+
+  // Todas las publicaciones = solo no fijadas, para no duplicar las fijadas
+  const paginatedPosts = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return nonPinnedPosts.slice(start, start + pageSize);
+  }, [nonPinnedPosts, page, pageSize]);
+
+  /** Mueve un post fijado arriba o abajo en la lista. */
+  const movePinned = (index: number, direction: "up" | "down") => {
+    const allIds = pinnedPosts.map((p) => p.id);
+    const targetIdx = direction === "up" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= allIds.length) return;
+    const newIds = [...allIds];
+    [newIds[index], newIds[targetIdx]] = [newIds[targetIdx], newIds[index]];
+    reorderPinned(newIds);
+  };
+
+  const buildBody = () => {
+    const base = body.trim();
+    if (type === "Imagen" && imageUrl.trim()) return `${base}${base ? "\n\n" : ""}🖼️ ${imageUrl.trim()}`;
+    if (type === "Video" && videoUrl.trim()) return `${base}${base ? "\n\n" : ""}🎬 ${videoUrl.trim()}`;
+    if (type === "Encuesta") {
+      const opts = pollOptions.map((o) => o.trim()).filter(Boolean);
+      const poll = `${pollQuestion.trim() ? `📊 ${pollQuestion.trim()}\n` : ""}${opts.map((o, i) => `${i + 1}. ${o}`).join("\n")}`;
+      return `${base}${base && poll ? "\n\n" : ""}${poll}`;
+    }
+    if (type === "Logro" && logroTitle.trim()) return `${base}${base ? "\n\n" : ""}🏆 ${logroTitle.trim()}`;
+    return base;
+  };
+
+  const canPublish = buildBody().length > 0;
+
+  const handlePublish = () => {
+    const finalBody = buildBody();
+    if (!finalBody) return;
+    publishPost({ type, destination, body: finalBody, pinned });
+    setBody("");
+    setPinned(false);
+    setPush(false);
+    setGiveXp(false);
+    setImageUrl("");
+    setVideoUrl("");
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+    setLogroTitle("");
+    setShowComposer(false);
+  };
+
+  const openDetail = (post: ErpPost) => {
+    setDetailPostId(post.id);
+    setDetailOpen(true);
+  };
+
+  const handleReportSubmit = () => {
+    if (!reportReason || !reportDialogPostId) return;
+    reportPost(reportDialogPostId, reportReason, reportDetails || undefined);
+    setReportDialogPostId(null);
+    setReportReason("");
+    setReportDetails("");
+  };
+
+  return (
+    <div className="flex flex-col gap-6 p-4 sm:p-6">
+      <PageHeader
+        title={t("Publicaciones")}
+        description={t("Gestión de publicaciones de ANTARES Comunidad ADRED")}
+        icon={Send}
+        actions={
+          canModerate ? (
+            <Button variant="outline" size="sm" onClick={() => setShowComposer((v) => !v)}>
+              {showComposer ? <X data-icon="inline-start" className="size-3.5" /> : <Plus data-icon="inline-start" />}
+              {showComposer ? t("Cerrar") : t("Nuevo post")}
+            </Button>
+          ) : undefined
+        }
+      />
+
+      {/* Composer - aparece al hacer clic en Nuevo post con animación */}
+      {showComposer && (
+        <div className="relative origin-top overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-strong)] shadow-lg shadow-primary/20 animate-in fade-in slide-in-from-top-2 duration-300 ease-out">
+          <div className="relative flex items-center gap-3 border-b border-white/15 px-4 py-3.5">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-white/15 text-[15px] font-extrabold text-white ring-1 ring-white/25 shadow-lg shadow-black/10">
+              A
+            </span>
+            <div className="flex flex-col">
+              <span className="text-[15px] font-bold text-white">{t("Nuevo post")}</span>
+              <span className="text-[12px] text-white/70">{t("El mensaje aparecerá en la app de los miembros")}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setShowComposer(false)}
+              className="ml-auto text-white/70 hover:bg-white/10 hover:text-white"
+              aria-label={t("Cerrar")}
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
+          <div className="relative flex flex-col gap-4 p-4">
+            {/* Type tabs */}
+            <div className="flex flex-wrap gap-2">
+              {TIPOS.map((tip) => {
+                const Icon = tip.icon;
+                return (
+                  <button
+                    key={tip.key}
+                    onClick={() => setType(tip.key)}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px ${
+                      type === tip.key
+                        ? "border-white bg-white text-primary shadow-md shadow-black/10"
+                        : "border-white/20 bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    <Icon className="size-3.5" />
+                    {t(tip.label)}
+                  </button>
+                );
+              })}
+            </div>
+
+            <Textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={3}
+              placeholder={t("Escribe tu mensaje...")}
+              className="border-white/20 bg-white/10 text-sm text-white placeholder:text-white/50 focus-visible:ring-white/40"
+            />
+
+            {/* Campos específicos por tipo */}
+            {type === "Imagen" && (
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-white/90">{t("URL de la imagen")}</Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Link2 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
+                    <Input
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
+                    />
+                  </div>
+                </div>
+                {imageUrl.trim() && (
+                  <div className="overflow-hidden rounded-lg border border-white/20 bg-black/20 p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imageUrl.trim()} alt={t("Vista previa")} className="max-h-48 w-full rounded object-contain" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+                  </div>
+                )}
+              </div>
+            )}
+            {type === "Video" && (
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-white/90">{t("URL del video")}</Label>
+                <div className="relative">
+                  <Link2 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
+                  <Input
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
+                  />
+                </div>
+              </div>
+            )}
+            {type === "Encuesta" && (
+              <div className="flex flex-col gap-2 rounded-xl border border-white/20 bg-white/10 p-3">
+                <Label className="text-xs text-white/90">{t("Pregunta de la encuesta")}</Label>
+                <Input
+                  value={pollQuestion}
+                  onChange={(e) => setPollQuestion(e.target.value)}
+                  placeholder={t("¿Cuál es tu pregunta?")}
+                  className="h-8 border-white/20 bg-white/10 text-xs text-white placeholder:text-white/40"
+                />
+                <Label className="text-xs text-white/90">{t("Opciones")}</Label>
+                {pollOptions.map((opt, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">{idx + 1}</span>
+                    <Input
+                      value={opt}
+                      onChange={(e) => {
+                        const next = [...pollOptions];
+                        next[idx] = e.target.value;
+                        setPollOptions(next);
+                      }}
+                      placeholder={`${t("Opción")} ${idx + 1}`}
+                      className="h-8 flex-1 border-white/20 bg-white/10 text-xs text-white placeholder:text-white/40"
+                    />
+                    {pollOptions.length > 2 && (
+                      <Button size="icon-sm" variant="ghost" className="text-white/70 hover:bg-white/10 hover:text-white" onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}>
+                        <X className="size-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {pollOptions.length < 6 && (
+                  <Button size="sm" variant="ghost" className="h-7 self-start text-xs text-white/80 hover:bg-white/10 hover:text-white" onClick={() => setPollOptions([...pollOptions, ""])}>
+                    <Plus data-icon="inline-start" className="size-3" />
+                    {t("Añadir opción")}
+                  </Button>
+                )}
+              </div>
+            )}
+            {type === "Logro" && (
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-white/90">{t("Título del logro")}</Label>
+                <div className="relative">
+                  <Trophy className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/60" />
+                  <Input
+                    value={logroTitle}
+                    onChange={(e) => setLogroTitle(e.target.value)}
+                    placeholder={t("Ej: Racha de 30 días completada")}
+                    className="h-8 border-white/20 bg-white/10 pl-8 text-xs text-white placeholder:text-white/40"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs whitespace-nowrap text-white/80">{t("Destino")}</Label>
+                <Select value={destination} onValueChange={(v) => { if (v !== null) setDestination(v); }}>
+                  <SelectTrigger className="h-8 w-auto min-w-[180px] border-white/20 bg-white/10 text-xs text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DESTINOS.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {t(d)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <label className="flex items-center gap-2 text-white">
+                <Checkbox checked={pinned} onCheckedChange={(c) => setPinned(Boolean(c))} className="border-white/40" />
+                <span className="text-xs">{t("Fijar al tope")}</span>
+              </label>
+              <label className="flex items-center gap-2 text-white">
+                <Checkbox checked={push} onCheckedChange={(c) => setPush(Boolean(c))} className="border-white/40" />
+                <span className="text-xs">{t("Push notification")}</span>
+              </label>
+              <label className="flex items-center gap-2 text-white">
+                <Checkbox checked={giveXp} onCheckedChange={(c) => setGiveXp(Boolean(c))} className="border-white/40" />
+                <span className="text-xs">{t("Dar XP por comentar")}</span>
+              </label>
+
+              <Button size="sm" onClick={handlePublish} disabled={!canPublish} className="ml-auto bg-white text-primary transition-all hover:-translate-y-px active:scale-[0.97] disabled:opacity-50">
+                <Send data-icon="inline-start" />
+                {t("Publicar")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filter bar — sort + interval for feed */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:gap-4">
+        <span className="text-xs font-semibold text-muted-foreground">{t("Ordenar por")}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { key: "recent", label: t("Más recientes") },
+            { key: "likes", label: t("Más likes") },
+            { key: "comments", label: t("Más comentarios") },
+            { key: "reposts", label: t("Más reposts") },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setSortBy(opt.key)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                sortBy === opt.key
+                  ? "border-primary bg-primary text-white shadow-sm"
+                  : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="h-4 w-px bg-border sm:block hidden" />
+        <span className="text-xs font-semibold text-muted-foreground">{t("Intervalo")}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { key: "all", label: t("Todo") },
+            { key: "7d", label: t("7 días") },
+            { key: "30d", label: t("30 días") },
+            { key: "90d", label: t("90 días") },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setInterval(opt.key)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                interval === opt.key
+                  ? "border-primary bg-primary text-white shadow-sm"
+                  : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Publicaciones fijadas + Todas las publicaciones — lado a lado */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Pinned posts — paginados */}
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <SectionHeader
+            title={t("Publicaciones fijadas")}
+            description={`${pinnedPosts.length} ${t("publicaciones fijadas activas")}`}
+            icon={Pin}
+            variant="primary"
+          />
+          {pinnedPosts.length > 0 ? (
+            <>
+              <div className="flex flex-col gap-3 p-4">
+                {paginatedPinned.map((post, localIdx) => {
+                  const member = members.find((m) => m.id === post.authorId);
+                  const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
+                  const globalIdx = (pinnedPage - 1) * pinnedPageSize + localIdx;
+                  return (
+                    <div
+                      key={post.id}
+                      className="overflow-hidden rounded-xl border border-border transition-all hover:shadow-md hover:shadow-black/5"
+                    >
+                      <div className="flex flex-col gap-2 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            {member ? (
+                              <MemberAvatar member={member} subtitle={post.createdAt} />
+                            ) : (
+                              <>
+                                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                                  {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
+                                </span>
+                                <div className="flex min-w-0 flex-col gap-0.5">
+                                  <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                                  <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 gap-1">
+                        {canModerate && (
+                          <>
+                            {/* Reorder buttons */}
+                            <span className="flex items-center text-[10px] font-bold text-muted-foreground" title={`Prioridad ${globalIdx + 1}`}>
+                              #{globalIdx + 1}
+                            </span>
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              disabled={globalIdx === 0}
+                              onClick={() => movePinned(globalIdx, "up")}
+                              title={t("Mover arriba")}
+                            >
+                              <ChevronUp className="size-3.5" />
+                            </Button>
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              disabled={globalIdx === pinnedPosts.length - 1}
+                              onClick={() => movePinned(globalIdx, "down")}
+                              title={t("Mover abajo")}
+                            >
+                              <ChevronDown className="size-3.5" />
+                            </Button>
+                            <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id, false)} title={t("Desfijar")}>
+                              <Pin className="size-3.5" />
+                            </Button>
+                            <Button size="icon-sm" variant="ghost" onClick={() => setConfirmDeleteId(post.id)} title={t("Eliminar")}>
+                              <Trash2 className="size-3.5 text-destructive" />
+                            </Button>
+                          </>
+                        )}
+                        <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
+                          <MessageCircle className="size-3.5" />
+                        </Button>
+                        {me && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const already = post.repostsList.some((r) => r.profileId === me.id);
+                              if (already) {
+                                unrepostPost(post.id);
+                              } else {
+                                repostPost(post.id);
+                              }
+                            }}
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] transition-all hover:bg-primary/10 ${
+                              post.repostsList.some((r) => r.profileId === me.id)
+                                ? "text-primary font-semibold"
+                                : "text-muted-foreground"
+                            }`}
+                            title={post.repostsList.some((r) => r.profileId === me.id) ? t("Quitar repost") : t("Repostear")}
+                          >
+                            <Repeat className="size-3.5" />
+                            {post.reposts > 0 && <span className="ml-0.5 text-[10px]">{post.reposts}</span>}
+                          </button>
+                        )}
+                        {post.reposts > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => { setRepostViewerPostId(post.id); fetchPostReposts(post.id); }}
+                            className="text-[10px] text-muted-foreground hover:text-primary"
+                          >
+                            {t("Ver reposts")}
+                          </button>
+                        )}
+                        <Button size="icon-sm" variant="ghost" onClick={() => setReportDialogPostId(post.id)} title={t("Reportar publicación")}>
+                          <Flag className="size-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+                    {/* Media — thumbnail + lightbox */}
+                    {post.imageUrl && post.mediaType === "IMAGE" && (
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(post.imageUrl!, "IMAGE", post.body)}
+                        className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={post.imageUrl}
+                          alt=""
+                          className="w-full rounded-lg object-cover transition-transform group-hover:scale-[1.02]"
+                          style={{ maxHeight: 160, maxWidth: 280 }}
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                          Ver imagen completa
+                        </span>
+                      </button>
+                    )}
+                    {post.mediaType === "VIDEO" && post.imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(post.imageUrl!, "VIDEO", post.body)}
+                        className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+                      >
+                        <video
+                          src={post.imageUrl}
+                          muted
+                          className="w-full rounded-lg object-cover"
+                          style={{ maxHeight: 160, maxWidth: 280 }}
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                          Ver video completo
+                        </span>
+                      </button>
+                    )}
+                    {/* Poll rendering */}
+                    {post.poll && (
+                      <PollBlockInline poll={post.poll} myId={me?.id ?? null} canModerate={canModerate} />
+                    )}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <StatusBadge
+                        status={t("Fijado")}
+                        color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                      />
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                      >
+                        {t(post.type)}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {post.destination}
+                      </span>
+                      <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                        <span className="flex items-center gap-1"><Repeat className="size-3" /> {post.reposts}</span>
+                        <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
+                        <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <CommunityPagination
+                page={pinnedPage}
+                pageSize={pinnedPageSize}
+                total={pinnedPosts.length}
+                onPageChange={setPinnedPage}
+                onPageSizeChange={(s) => { setPinnedPageSize(s); setPinnedPage(1); }}
+              />
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
+              <Pin className="size-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">{t("Sin publicaciones fijadas")}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Todas las publicaciones — mismo layout que fijadas, solo no fijadas */}
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <SectionHeader
+            title={t("Todas las publicaciones")}
+            description={`${nonPinnedPosts.length} ${t("publicaciones este mes")}`}
+            icon={FileText}
+            variant="primary"
+          />
+          <div className="flex flex-col gap-3 p-4">
+            {nonPinnedPosts.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">{t("Sin publicaciones")}</p>
+            ) : (
+              paginatedPosts.map((post) => {
+                const member = members.find((m) => m.id === post.authorId);
+                const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
+                return (
+                  <div
+                    key={post.id}
+                    className="overflow-hidden rounded-xl border border-border transition-all hover:shadow-md hover:shadow-black/5"
+                  >
+                    <div className="flex flex-col gap-2 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          {member ? (
+                            <MemberAvatar member={member} subtitle={post.createdAt} />
+                          ) : (
+                            <>
+                              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                                {profileName(post.author, post.isSystem, t).slice(0, 2).toUpperCase()}
+                              </span>
+                              <div className="flex min-w-0 flex-col gap-0.5">
+                                <span className="truncate text-sm font-semibold">{profileName(post.author, post.isSystem, t)}</span>
+                                <span className="truncate text-xs text-muted-foreground">{post.createdAt}</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 gap-1">
+                        {canModerate && (
+                          <>
+                            <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id, true)} title={t("Fijar")}>
+                              <Pin className="size-3.5" />
+                            </Button>
+                            <Button size="icon-sm" variant="ghost" onClick={() => setConfirmDeleteId(post.id)} title={t("Eliminar")}>
+                              <Trash2 className="size-3.5 text-destructive" />
+                            </Button>
+                          </>
+                        )}
+                        <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
+                          <MessageCircle className="size-3.5" />
+                        </Button>
+                        {me && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const already = post.repostsList.some((r) => r.profileId === me.id);
+                              if (already) {
+                                unrepostPost(post.id);
+                              } else {
+                                repostPost(post.id);
+                              }
+                            }}
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] transition-all hover:bg-primary/10 ${
+                              post.repostsList.some((r) => r.profileId === me.id)
+                                ? "text-primary font-semibold"
+                                : "text-muted-foreground"
+                            }`}
+                            title={post.repostsList.some((r) => r.profileId === me.id) ? t("Quitar repost") : t("Repostear")}
+                          >
+                            <Repeat className="size-3.5" />
+                            {post.reposts > 0 && <span className="ml-0.5 text-[10px]">{post.reposts}</span>}
+                          </button>
+                        )}
+                        {post.reposts > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => { setRepostViewerPostId(post.id); fetchPostReposts(post.id); }}
+                            className="text-[10px] text-muted-foreground hover:text-primary"
+                          >
+                            {t("Ver reposts")}
+                          </button>
+                        )}
+                        <Button size="icon-sm" variant="ghost" onClick={() => setReportDialogPostId(post.id)} title={t("Reportar publicación")}>
+                          <Flag className="size-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
+                    {/* Media — thumbnail + lightbox */}
+                    {post.imageUrl && post.mediaType === "IMAGE" && (
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(post.imageUrl!, "IMAGE", post.body)}
+                        className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={post.imageUrl}
+                          alt=""
+                          className="w-full rounded-lg object-cover transition-transform group-hover:scale-[1.02]"
+                          style={{ maxHeight: 160, maxWidth: 280 }}
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                          Ver imagen completa
+                        </span>
+                      </button>
+                    )}
+                    {post.mediaType === "VIDEO" && post.imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(post.imageUrl!, "VIDEO", post.body)}
+                        className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+                      >
+                        <video
+                          src={post.imageUrl}
+                          muted
+                          className="w-full rounded-lg object-cover"
+                          style={{ maxHeight: 160, maxWidth: 280 }}
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                          Ver video completo
+                        </span>
+                      </button>
+                    )}
+                    {/* Poll rendering */}
+                    {post.poll && (
+                      <PollBlockInline poll={post.poll} myId={me?.id ?? null} canModerate={canModerate} />
+                    )}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ backgroundColor: chipColor.bg, color: chipColor.text }}
+                      >
+                        {t(post.type)}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {post.destination}
+                      </span>
+                      <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                        <span className="flex items-center gap-1"><Repeat className="size-3" /> {post.reposts}</span>
+                        <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
+                        <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          </div>
+          {nonPinnedPosts.length > 0 && (
+            <CommunityPagination
+              page={page}
+              pageSize={pageSize}
+              total={nonPinnedPosts.length}
+              onPageChange={setPage}
+              onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+            />
+          )}
+        </div>
+      </div>
+
+      <PostDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        post={detailPost}
+      />
+
+      <MediaLightbox
+        url={lightboxUrl}
+        mediaType={lightboxType}
+        body={lightboxBody}
+        open={Boolean(lightboxUrl)}
+        onOpenChange={(o) => { if (!o) setLightboxUrl(null); }}
+      />
+
+      <AlertDialog open={Boolean(confirmDeleteId)} onOpenChange={(o) => { if (!o) setConfirmDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("Eliminar publicación")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("¿Estás seguro de que deseas eliminar esta publicación? Esta acción ocultará la publicación y no se podrá deshacer.")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (confirmDeleteId) {
+                  deletePost(confirmDeleteId);
+                  setConfirmDeleteId(null);
+                }
+              }}
+            >
+              {t("Eliminar")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog: Reportar publicación */}
+      <Dialog open={Boolean(reportDialogPostId)} onOpenChange={(o) => { if (!o) { setReportDialogPostId(null); setReportReason(""); setReportDetails(""); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("Reportar publicación")}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">{t("Razón del reporte")}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {REPORT_REASONS.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setReportReason(r)}
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                      reportReason === r
+                        ? "border-destructive bg-destructive/10 text-destructive"
+                        : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {t(r)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              rows={3}
+              placeholder={t("Detalles adicionales (opcional)")}
+              className="text-xs"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => { setReportDialogPostId(null); setReportReason(""); setReportDetails(""); }}>
+                {t("Cancelar")}
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={!reportReason}
+                onClick={handleReportSubmit}
+              >
+                <Flag data-icon="inline-start" className="size-3.5" />
+                {t("Enviar reporte")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Ver reposts */}
+      <Dialog open={Boolean(repostViewerPostId)} onOpenChange={(o) => { if (!o) setRepostViewerPostId(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("Reposteado por")}</DialogTitle>
+          </DialogHeader>
+          {postRepostsLoading ? (
+            <div className="flex flex-col gap-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
+              ))}
+            </div>
+          ) : postReposts.length === 0 ? (
+            <p className="py-4 text-center text-xs text-muted-foreground">{t("Sin reposts")}</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+              {postReposts.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {p.displayName?.slice(0, 2).toUpperCase() ?? "?"}
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate text-sm font-medium">{p.displayName}</span>
+                    <span className="text-[10px] text-muted-foreground">{normalizeEnum(p.region)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

@@ -66,7 +66,7 @@ const settingsNav: SettingsNavItem[] = [
     icon: Bell,
     description: "Configura cómo y cuándo quieres recibir notificaciones.",
   },
-  { label: "Documentación", icon: FileText },
+  { label: "Documentación", icon: FileText, permission: "LegalDocuments.View" },
 ];
 
 /** Placeholder para secciones aún no implementadas (nunca contenido falso). */
