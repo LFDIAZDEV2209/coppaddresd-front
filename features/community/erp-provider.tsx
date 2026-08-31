@@ -34,6 +34,7 @@ import {
   NETWORKS_QUERY,
   PIN_POST,
   POST_REPOSTS,
+  PROFILE_TIMELINE,
   PROFILES_QUERY,
   PROFILES_SEARCH_QUERY,
   RECOGNITIONS_QUERY,
@@ -86,6 +87,7 @@ import {
   type Profile,
   type ProfilesResult,
   type FeedResult,
+  type ProfileTimelineResult,
   type RecognitionWire,
   type RecognitionsResult,
   type RegionStatWire,
@@ -129,6 +131,7 @@ import type {
   RegionStat,
   RiskLevel,
   StreakRank,
+  TimelineEntry,
 } from "./types";
 
 // --- Utilidades de mapeo (backend → frontend) ---
@@ -177,6 +180,7 @@ function mapProfile(p: Profile): CommunityMember {
     region: normalizeEnum(p.region),
     week: p.week,
     posts: p.postsCount,
+    reposts: p.reposts?.length ?? 0,
     comments: p.commentsCount,
     reactions: p.likesCount,
     xp: p.xpTotal,
@@ -263,6 +267,65 @@ function mapStreak(p: Profile): StreakRank {
     shared: false,
     xp: p.xpTotal,
   };
+}
+
+/** Convierte un Post del wire a un TimelineEntry normalizado. */
+function wirePostToTimelineEntry(p: Post, isRepost = false, repostedAt?: string): TimelineEntry {
+  return {
+    id: p.id,
+    author: p.profile.displayName,
+    authorId: p.profile.id,
+    type: normalizeEnum(p.type) as PostType,
+    destination: DEST_LABEL[normalizeEnum(p.destination)] ?? DEST_LABEL[p.destination] ?? p.destination,
+    body: p.body,
+    pinned: p.pinned,
+    pinnedOrder: p.pinnedOrder ?? 0,
+    createdAt: p.createdAt,
+    createdAtDisplay: relativeTime(p.createdAt),
+    reactions: p.likes.length,
+    reposts: p.reposts?.length ?? 0,
+    comments: p.comments.length,
+    views: p.viewCount,
+    imageUrl: p.imageUrl ?? null,
+    mediaType: p.mediaType ?? null,
+    poll: p.poll ?? null,
+    isSystem: p.profile.isSystem,
+    isRepost,
+    repostedAt,
+  };
+}
+
+/**
+ * Mezcla los posts propios de un perfil con sus reposts en un timeline único
+ * ordenado cronológicamente (más reciente primero), deduplicado por post.id.
+ * Las entradas reposteadas llevan `isRepost: true`.
+ */
+export function getProfileTimeline(profile: Profile): TimelineEntry[] {
+  const entries: TimelineEntry[] = [];
+  const seenPostIds = new Set<string>();
+
+  // 1. Posts propios
+  for (const p of profile.posts ?? []) {
+    if (seenPostIds.has(p.id)) continue;
+    seenPostIds.add(p.id);
+    entries.push(wirePostToTimelineEntry(p));
+  }
+
+  // 2. Reposts (con el post completo)
+  for (const r of profile.reposts ?? []) {
+    if (seenPostIds.has(r.post.id)) continue;
+    seenPostIds.add(r.post.id);
+    entries.push(wirePostToTimelineEntry(r.post, true, r.createdAt));
+  }
+
+  // 3. Ordenar por fecha de creación (o repostedAt) descendente
+  entries.sort((a, b) => {
+    const dateA = a.isRepost && a.repostedAt ? a.repostedAt : a.createdAt;
+    const dateB = b.isRepost && b.repostedAt ? b.repostedAt : b.createdAt;
+    return new Date(dateB).getTime() - new Date(dateA).getTime();
+  });
+
+  return entries;
 }
 
 // Convierte el destino "amigable" del composer al enum del backend.
@@ -519,6 +582,10 @@ interface ErpContextValue {
   postReposts: Profile[];
   postRepostsLoading: boolean;
   fetchPostReposts: (postId: string) => void;
+  /** Timeline unificado de un perfil (posts + reposts), consultado bajo demanda. */
+  profileTimeline: TimelineEntry[];
+  profileTimelineLoading: boolean;
+  fetchProfileTimeline: (profileId: string) => void;
   sortBy: string;
   setSortBy: (sortBy: string) => void;
   interval: string;
@@ -1362,6 +1429,34 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     return postRepostsResult.data?.postReposts ?? [];
   }, [postRepostsResult.data]);
 
+  // --- Profile timeline query (lazy) ---
+  const [profileTimelineVariables, setProfileTimelineVariables] = useState<{
+    id: string;
+  }>({ id: "" });
+
+  const [profileTimelineResult, reexecuteProfileTimeline] = useQuery<
+    ProfileTimelineResult,
+    { id: string }
+  >({
+    query: PROFILE_TIMELINE,
+    variables: profileTimelineVariables,
+    pause: true,
+  });
+
+  const fetchProfileTimeline = useCallback<ErpContextValue["fetchProfileTimeline"]>(
+    (profileId) => {
+      setProfileTimelineVariables({ id: profileId });
+      reexecuteProfileTimeline({ requestPolicy: "network-only" });
+    },
+    [],
+  );
+
+  const profileTimeline = useMemo(() => {
+    const p = profileTimelineResult.data?.profile;
+    if (!p) return [];
+    return getProfileTimeline(p);
+  }, [profileTimelineResult.data]);
+
   const searchProfiles = useCallback<ErpContextValue["searchProfiles"]>(
     (search, take = 10, skip = 0) => {
       setSearchProfilesVariables({ search, take, skip });
@@ -1506,6 +1601,9 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       postReposts,
       postRepostsLoading: postRepostsResult.fetching,
       fetchPostReposts,
+      profileTimeline,
+      profileTimelineLoading: profileTimelineResult.fetching,
+      fetchProfileTimeline,
       sortBy,
       setSortBy,
       interval,
@@ -1604,6 +1702,9 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       postReposts,
       postRepostsResult.fetching,
       fetchPostReposts,
+      profileTimeline,
+      profileTimelineResult.fetching,
+      fetchProfileTimeline,
       sortBy,
       setSortBy,
       interval,

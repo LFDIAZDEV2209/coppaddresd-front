@@ -21,6 +21,7 @@ export interface CommunityMember {
   region: RegionName;
   week: number; // semana en el programa
   posts: number;
+  reposts: number;
   comments: number;
   reactions: number;
   xp: number;
@@ -219,4 +220,28 @@ export interface CommunityAnalyticsData {
   streakOverview: StreakOverview;
   inactivityDistribution: { range: string; value: number }[];
   xpDeliveredSeries: XpSeriesPoint[];
+}
+
+/** Entrada unificada de timeline: post propio o repostado, para perfil. */
+export interface TimelineEntry {
+  id: string;
+  author: string;
+  authorId: string;
+  type: PostType;
+  destination: string;
+  body: string;
+  pinned: boolean;
+  pinnedOrder: number;
+  createdAt: string; // ISO
+  createdAtDisplay: string; // "Hace 2h"
+  reactions: number;
+  reposts: number;
+  comments: number;
+  views: number;
+  imageUrl: string | null;
+  mediaType: "IMAGE" | "VIDEO" | null;
+  poll: PollWire | null;
+  isSystem?: boolean;
+  isRepost: boolean;
+  repostedAt?: string; // ISO del momento en que fue reposteado
 }

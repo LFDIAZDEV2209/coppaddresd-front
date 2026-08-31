@@ -8,6 +8,7 @@ import {
   Trophy,
   MoreHorizontal,
   Search,
+  Repeat,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -43,6 +44,7 @@ import { LevelBadge } from "./level-badge";
 import { AwardDialog, AwardMemberDialog } from "./award-dialog";
 import { MessageDialog } from "./message-dialog";
 import { CommunityPagination } from "./community-pagination";
+import { ProfileTimelineDialog } from "./profile-timeline-dialog";
 import type { CommunityMember } from "../types";
 
 export function MembersPage() {
@@ -63,6 +65,8 @@ export function MembersPage() {
   const [awardOpen, setAwardOpen] = useState(false);
   const [msgTarget, setMsgTarget] = useState<CommunityMember | null>(null);
   const [msgOpen, setMsgOpen] = useState(false);
+  const [timelineTarget, setTimelineTarget] = useState<CommunityMember | null>(null);
+  const [timelineOpen, setTimelineOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return members.filter((m) => {
@@ -166,6 +170,12 @@ export function MembersPage() {
                   <span className="text-[9px] uppercase text-muted-foreground">{t("Posts")}</span>
                 </div>
                 <div className="flex flex-col items-center">
+                  <span className="text-sm font-bold">{m.reposts}</span>
+                  <span className="text-[9px] uppercase text-muted-foreground">
+                    <Repeat className="inline size-2.5 align-middle" />
+                  </span>
+                </div>
+                <div className="flex flex-col items-center">
                   <span className="text-sm font-bold">{(m.xp / 1000).toFixed(0)}K</span>
                   <span className="text-[9px] uppercase text-muted-foreground">XP</span>
                 </div>
@@ -182,6 +192,18 @@ export function MembersPage() {
                 />
               )}
               <div className="flex w-full gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setTimelineTarget(m);
+                    setTimelineOpen(true);
+                  }}
+                >
+                  <Repeat data-icon="inline-start" />
+                  {t("Timeline")}
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -234,6 +256,7 @@ export function MembersPage() {
                 <TableHead className="hidden md:table-cell">{t("Diagnóstico")}</TableHead>
                 <TableHead className="hidden md:table-cell">{t("Región")}</TableHead>
                 <TableHead className="text-right">{t("Posts")}</TableHead>
+                <TableHead className="text-right">{t("Reposts")}</TableHead>
                 <TableHead className="hidden text-right md:table-cell">{t("Comentarios")}</TableHead>
                 <TableHead className="hidden text-right md:table-cell">{t("Reacciones")}</TableHead>
                 <TableHead className="text-right">{t("Racha")}</TableHead>
@@ -247,21 +270,21 @@ export function MembersPage() {
             <TableBody>
               {membersError ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="py-10 text-center text-sm text-destructive">
+                  <TableCell colSpan={13} className="py-10 text-center text-sm text-destructive">
                     {t("Error al cargar los miembros")}: {membersError}
                   </TableCell>
                 </TableRow>
               ) : membersLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={12}>
+                    <TableCell colSpan={13}>
                       <div className="h-8 animate-pulse rounded bg-muted" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="py-10 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={13} className="py-10 text-center text-sm text-muted-foreground">
                     {t("No hay miembros que coincidan con el filtro")}
                   </TableCell>
                 </TableRow>
@@ -274,6 +297,12 @@ export function MembersPage() {
                 <TableCell className="hidden md:table-cell py-2 text-xs">{m.diagnosis}</TableCell>
                 <TableCell className="hidden md:table-cell py-2 text-xs">{m.region}</TableCell>
                 <TableCell className="py-2 text-right text-xs font-semibold">{m.posts}</TableCell>
+                <TableCell className="py-2 text-right text-xs font-semibold">
+                  <span className="flex items-center justify-end gap-0.5">
+                    <Repeat className="size-3 text-muted-foreground" />
+                    {m.reposts}
+                  </span>
+                </TableCell>
                 <TableCell className="hidden text-right md:table-cell py-2 text-xs">{m.comments}</TableCell>
                 <TableCell className="hidden text-right md:table-cell py-2 text-xs">{m.reactions}</TableCell>
                 <TableCell className="py-2 text-right text-xs">
@@ -359,6 +388,17 @@ export function MembersPage() {
           description={profileName(`${msgTarget.firstName} ${msgTarget.lastName}`, msgTarget.isSystem, t)}
           defaultText={t("¡Hola! Nos gustaría saber de ti 💙")}
           onSend={(text) => sendMessage(msgTarget.id, text)}
+        />
+      )}
+
+      {/* Diálogo de timeline del perfil (posts + reposts) */}
+      {timelineTarget && (
+        <ProfileTimelineDialog
+          key={timelineTarget.id}
+          open={timelineOpen}
+          onOpenChange={setTimelineOpen}
+          profileId={timelineTarget.id}
+          profileName={profileName(`${timelineTarget.firstName} ${timelineTarget.lastName}`, timelineTarget.isSystem, t)}
         />
       )}
     </div>

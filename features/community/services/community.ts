@@ -74,6 +74,10 @@ export interface Profile {
   commentsCount: number;
   likesCount: number;
   avatarUrl?: string | null;
+  /** Publicaciones propias del perfil (cargadas solo en PROFILE_TIMELINE / ME). */
+  posts?: Post[];
+  /** Reposts armados con el post completo (cargados solo en PROFILE_TIMELINE / ME). */
+  reposts?: RepostWithPost[];
 }
 
 export interface PostAuthor {
@@ -123,6 +127,15 @@ export interface PollWire {
 export interface RepostRef {
   id: string;
   profileId: string;
+}
+
+/** Repost armado desde la navegación Profile.reposts (con el post completo). */
+export interface RepostWithPost {
+  id: string;
+  profileId: string;
+  postId: string;
+  createdAt: string;
+  post: Post;
 }
 
 export interface Post {
@@ -220,6 +233,126 @@ export const ME_QUERY = gql`
       postsCount
       commentsCount
       likesCount
+      posts {
+        id
+        body
+        pinned
+        pinnedOrder
+        createdAt
+        type
+        destination
+        viewCount
+        imageUrl
+        mediaType
+        profile {
+          id
+          displayName
+          isSystem
+        }
+        likes {
+          id
+          profileId
+        }
+        reposts {
+          id
+          profileId
+        }
+        comments {
+          id
+          body
+          createdAt
+          postId
+          parentCommentId
+          profile {
+            id
+            displayName
+            isSystem
+          }
+          likes {
+            id
+            profileId
+          }
+          replies {
+            id
+            body
+            createdAt
+            postId
+            parentCommentId
+            profile {
+              id
+              displayName
+              isSystem
+            }
+            likes {
+              id
+              profileId
+            }
+          }
+        }
+      }
+      reposts {
+        id
+        profileId
+        postId
+        createdAt
+        post {
+          id
+          body
+          pinned
+          pinnedOrder
+          createdAt
+          type
+          destination
+          viewCount
+          imageUrl
+          mediaType
+          profile {
+            id
+            displayName
+            isSystem
+          }
+          likes {
+            id
+            profileId
+          }
+          reposts {
+            id
+            profileId
+          }
+          comments {
+            id
+            body
+            createdAt
+            postId
+            parentCommentId
+            profile {
+              id
+              displayName
+              isSystem
+            }
+            likes {
+              id
+              profileId
+            }
+            replies {
+              id
+              body
+              createdAt
+              postId
+              parentCommentId
+              profile {
+                id
+                displayName
+                isSystem
+              }
+              likes {
+                id
+                profileId
+              }
+            }
+          }
+        }
+      }
     }
   }
 `;
@@ -249,6 +382,157 @@ export const PROFILES_QUERY = gql`
     }
   }
 `;
+
+/** Timeline completo de un perfil: propias + reposts armados. */
+export const PROFILE_TIMELINE = gql`
+  query ProfileTimeline($id: UUID!) {
+    profile(id: $id) {
+      id
+      userId
+      displayName
+      isSystem
+      bio
+      status
+      region
+      diagnosis
+      week
+      lastPostAt
+      lastActiveAt
+      currentStreak
+      bestStreak
+      xpTotal
+      levelName
+      riskLevel
+      postsCount
+      commentsCount
+      likesCount
+      posts {
+        id
+        body
+        pinned
+        pinnedOrder
+        createdAt
+        type
+        destination
+        viewCount
+        imageUrl
+        mediaType
+        profile {
+          id
+          displayName
+          isSystem
+        }
+        likes {
+          id
+          profileId
+        }
+        reposts {
+          id
+          profileId
+        }
+        comments {
+          id
+          body
+          createdAt
+          postId
+          parentCommentId
+          profile {
+            id
+            displayName
+            isSystem
+          }
+          likes {
+            id
+            profileId
+          }
+          replies {
+            id
+            body
+            createdAt
+            postId
+            parentCommentId
+            profile {
+              id
+              displayName
+              isSystem
+            }
+            likes {
+              id
+              profileId
+            }
+          }
+        }
+      }
+      reposts {
+        id
+        profileId
+        postId
+        createdAt
+        post {
+          id
+          body
+          pinned
+          pinnedOrder
+          createdAt
+          type
+          destination
+          viewCount
+          imageUrl
+          mediaType
+          profile {
+            id
+            displayName
+            isSystem
+          }
+          likes {
+            id
+            profileId
+          }
+          reposts {
+            id
+            profileId
+          }
+          comments {
+            id
+            body
+            createdAt
+            postId
+            parentCommentId
+            profile {
+              id
+              displayName
+              isSystem
+            }
+            likes {
+              id
+              profileId
+            }
+            replies {
+              id
+              body
+              createdAt
+              postId
+              parentCommentId
+              profile {
+                id
+                displayName
+                isSystem
+              }
+              likes {
+                id
+                profileId
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export interface ProfileTimelineResult {
+  profile: Profile | null;
+}
 
 export const FEED_QUERY = gql`
   query Feed(
