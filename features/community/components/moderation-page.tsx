@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
 import { CommunityPagination } from "./community-pagination";
 import type { ReportedPostWire } from "../services/community";
@@ -57,11 +58,13 @@ function ReportedPostCard({
   onDelete,
   onResolve,
   onBan,
+  canModerate,
 }: {
   rp: ReportedPostWire;
   onDelete: (postId: string) => void;
   onResolve: (reportId: string) => void;
   onBan: (profileId: string, displayName: string, isBanned: boolean) => void;
+  canModerate: boolean;
 }) {
   const t = useT();
   const { members } = useErp();
@@ -140,41 +143,45 @@ function ReportedPostCard({
                 <p className="text-[11px] text-muted-foreground">{r.details}</p>
               )}
               <div className="flex justify-end">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 px-2 text-[10px] text-primary"
-                  onClick={() => onResolve(r.id)}
-                >
-                  <CheckCircle data-icon="inline-start" className="size-2.5" />
-                  {t("Resolver")}
-                </Button>
+                {canModerate && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-[10px] text-primary"
+                    onClick={() => onResolve(r.id)}
+                  >
+                    <CheckCircle data-icon="inline-start" className="size-2.5" />
+                    {t("Resolver")}
+                  </Button>
+                )}
               </div>
             </div>
           ))}
         </div>
 
         {/* Acciones */}
-        <div className="flex flex-wrap justify-end gap-2">
-          {rp.post.profile?.id && !rp.post.profile?.isSystem && (
+        {canModerate && (
+          <div className="flex flex-wrap justify-end gap-2">
+            {rp.post.profile?.id && !rp.post.profile?.isSystem && (
+              <Button
+                size="sm"
+                variant={isBanned ? "outline" : "destructive"}
+                onClick={() => onBan(rp.post.profile!.id, profileName(rp.post.profile?.displayName ?? "", false, t), isBanned)}
+              >
+                {isBanned ? <ShieldCheck data-icon="inline-start" className="size-3.5" /> : <Ban data-icon="inline-start" className="size-3.5" />}
+                {isBanned ? t("Restaurar acceso") : t("Restringir comunidad")}
+              </Button>
+            )}
             <Button
               size="sm"
-              variant={isBanned ? "outline" : "destructive"}
-              onClick={() => onBan(rp.post.profile!.id, profileName(rp.post.profile?.displayName ?? "", false, t), isBanned)}
+              variant="destructive"
+              onClick={() => onDelete(rp.post.id)}
             >
-              {isBanned ? <ShieldCheck data-icon="inline-start" className="size-3.5" /> : <Ban data-icon="inline-start" className="size-3.5" />}
-              {isBanned ? t("Restaurar acceso") : t("Restringir comunidad")}
+              <Trash2 data-icon="inline-start" className="size-3.5" />
+              {t("Eliminar publicación")}
             </Button>
-          )}
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => onDelete(rp.post.id)}
-          >
-            <Trash2 data-icon="inline-start" className="size-3.5" />
-            {t("Eliminar publicación")}
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -182,6 +189,7 @@ function ReportedPostCard({
 
 export function ModerationPage() {
   const t = useT();
+  const { can } = useAppContext();
   const { reportedPosts, reportedPostsLoading, reportedPostsError, refetchReportedPosts, deletePost, resolveReport, banProfile, unbanProfile } = useErp();
   const [confirmDeletePost, setConfirmDeletePost] = useState<string | null>(null);
   const [confirmResolveId, setConfirmResolveId] = useState<string | null>(null);
@@ -189,6 +197,7 @@ export function ModerationPage() {
   const [banReason, setBanReason] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
+  const canModerate = can("Community.Moderate");
 
   const paginatedPosts = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -288,6 +297,7 @@ export function ModerationPage() {
                     setBanTarget({ id: profileId, name });
                   }
                 }}
+                canModerate={canModerate}
               />
             ))}
           </div>

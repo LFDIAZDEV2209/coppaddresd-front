@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import type { CommunityGroup, GroupType } from "../types";
 import { CommunityPagination } from "./community-pagination";
 
@@ -41,7 +42,9 @@ const GROUP_TYPE_COLORS: Record<GroupType, { bg: string; text: string; dot: stri
 
 export function GroupsPage() {
   const t = useT();
+  const { can } = useAppContext();
   const { communityGroups, communityGroupsLoading, sendGroupMessage } = useErp();
+  const canModerate = can("Community.Moderate");
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -100,17 +103,19 @@ export function GroupsPage() {
                   </TableCell>
                   <TableCell className="py-2">
                     <div className="flex justify-end">
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setMessageTarget(g);
-                          setDraft("");
-                        }}
-                        title={t("Mensaje")}
-                      >
-                        <Send className="size-3.5" />
-                      </Button>
+                      {canModerate && (
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setMessageTarget(g);
+                            setDraft("");
+                          }}
+                          title={t("Mensaje")}
+                        >
+                          <Send className="size-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

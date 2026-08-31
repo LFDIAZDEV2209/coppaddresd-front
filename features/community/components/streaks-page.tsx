@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useI18n, useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
 import { CommunityPagination } from "./community-pagination";
 import { SimpleBarChart } from "./charts";
@@ -36,6 +37,7 @@ const RANK_MEDAL: Record<number, string> = {
 
 export function StreaksPage() {
   const t = useT();
+  const { can } = useAppContext();
   const { lang } = useI18n();
   // Mes/año actual localizado (es/en) para el encabezado.
   const rawMonth = new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-ES", {
@@ -46,6 +48,7 @@ export function StreaksPage() {
   const { members, streaks, streaksLoading, analytics, feed, analyticsLoading, publishPost } = useErp();
   const [awardTargetId, setAwardTargetId] = useState<string | null>(null);
   const [awardOpen, setAwardOpen] = useState(false);
+  const canManage = can("Community.Manage");
   const chartData = (analytics?.streakOverview.distribution ?? []).map((d) => ({ label: d.range, value: d.value }));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -101,10 +104,12 @@ export function StreaksPage() {
         description={`${members.length} ${t("miembros")} · ${monthLabel}`}
         icon={Flame}
         actions={
-          <Button size="sm" onClick={handlePublishRanking}>
-            <TrendingUp data-icon="inline-start" />
-            {t("Publicar ranking")}
-          </Button>
+          canManage ? (
+            <Button size="sm" onClick={handlePublishRanking}>
+              <TrendingUp data-icon="inline-start" />
+              {t("Publicar ranking")}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -117,7 +122,7 @@ export function StreaksPage() {
             value={kpi.value}
             context={kpi.context ? t(kpi.context) : undefined}
             icon={Flame}
-            variant="info"
+            variant="primary"
           />
         ))}
       </section>
@@ -192,17 +197,19 @@ export function StreaksPage() {
                     </TableCell>
                     <TableCell className="py-2">
                       <div className="flex justify-end">
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setAwardTargetId(s.memberId);
-                            setAwardOpen(true);
-                          }}
-                          title={t("Premiar")}
-                        >
-                          <Trophy className="size-3.5" />
-                        </Button>
+                        {canManage && (
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setAwardTargetId(s.memberId);
+                              setAwardOpen(true);
+                            }}
+                            title={t("Premiar")}
+                          >
+                            <Trophy className="size-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { mockDiagnostics, mockRegions } from "../mock-data";
 import { MemberAvatar, profileName } from "./member-avatar";
 import { LevelBadge } from "./level-badge";
@@ -46,7 +47,9 @@ import type { CommunityMember } from "../types";
 
 export function MembersPage() {
   const t = useT();
+  const { can } = useAppContext();
   const { members, sendMessage, membersLoading, membersError } = useErp();
+  const canManage = can("Community.Manage");
   const [diagFilter, setDiagFilter] = useState("all");
   const [regionFilter, setRegionFilter] = useState("all");
   // Prefill desde el buscador del topbar (?q=).
@@ -92,7 +95,7 @@ export function MembersPage() {
         title={t("Miembros")}
         description={`${members.length} ${t("miembros en ANTARES Comunidad ADRED")}`}
         icon={Users}
-        actions={<AwardDialog />}
+        actions={canManage ? <AwardDialog /> : undefined}
       />
 
       {/* Filters */}
@@ -183,6 +186,7 @@ export function MembersPage() {
                   size="sm"
                   variant="outline"
                   className="flex-1"
+                  disabled={!canManage}
                   onClick={() => {
                     setMsgTarget(m);
                     setMsgOpen(true);
@@ -194,6 +198,7 @@ export function MembersPage() {
                 <Button
                   size="sm"
                   className="flex-1"
+                  disabled={!canManage}
                   onClick={() => {
                     setAwardTarget(m.id);
                     setAwardOpen(true);
@@ -294,33 +299,35 @@ export function MembersPage() {
                   />
                 </TableCell>
                 <TableCell className="py-2">
-                  <div className="flex justify-end">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
-                          <MoreHorizontal className="size-4" />
-                        </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setMsgTarget(m);
-                            setMsgOpen(true);
-                          }}
-                        >
-                          <Send className="size-3.5" />
-                          {t("Mensaje")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setAwardTarget(m.id);
-                            setAwardOpen(true);
-                          }}
-                        >
-                          <Trophy className="size-3.5" />
-                          {t("Premiar")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                  {canManage && (
+                    <div className="flex justify-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setMsgTarget(m);
+                              setMsgOpen(true);
+                            }}
+                          >
+                            <Send className="size-3.5" />
+                            {t("Mensaje")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setAwardTarget(m.id);
+                              setAwardOpen(true);
+                            }}
+                          >
+                            <Trophy className="size-3.5" />
+                            {t("Premiar")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
                 ))

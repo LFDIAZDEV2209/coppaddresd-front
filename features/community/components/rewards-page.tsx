@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { AwardDialog } from "./award-dialog";
 import { XpLineChart } from "./charts";
 import { CommunityPagination } from "./community-pagination";
@@ -38,7 +39,9 @@ const SCOPE_COLORS: Record<string, { bg: string; text: string; dot: string }> = 
 
 export function RewardsPage() {
   const t = useT();
+  const { can } = useAppContext();
   const { recognitions, analytics, messageReach } = useErp();
+  const canManage = can("Community.Manage");
 
   // Paginación de reconocimientos individuales (3 por defecto).
   const [recPage, setRecPage] = useState(1);
@@ -61,7 +64,7 @@ export function RewardsPage() {
         title={t("Reconocimientos")}
         description={t("Gestión de XP, cofres y mensajes desde el ERP")}
         icon={Trophy}
-        actions={<AwardDialog />}
+        actions={canManage ? <AwardDialog /> : undefined}
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
@@ -71,7 +74,7 @@ export function RewardsPage() {
             title={t("Otorgar reconocimiento individual")}
             icon={Award}
             variant="primary"
-            actions={<AwardDialog />}
+            actions={canManage ? <AwardDialog /> : undefined}
           />
           <Table>
             <TableHeader>

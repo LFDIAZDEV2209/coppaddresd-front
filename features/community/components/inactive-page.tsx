@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { MemberAvatar } from "./member-avatar";
 import { RiskBadge } from "./risk-badge";
 import { SimpleBarChart } from "./charts";
@@ -31,7 +32,10 @@ import type { CommunityMember } from "../types";
 
 export function InactivePage() {
   const t = useT();
+  const { can } = useAppContext();
   const { inactive, members, sendMessage, sendBulkInactive, analytics, analyticsLoading } = useErp();
+  const canModerate = can("Community.Moderate");
+  const canManage = can("Community.Manage");
   const chartData = (analytics?.inactivityDistribution ?? []).map((d) => ({ label: d.range, value: d.value }));
   // Riesgo real: clasificación automática (Alto/Medio/Bajo) sobre todos los miembros.
   const riskData = [
@@ -75,6 +79,7 @@ export function InactivePage() {
           <Button
             size="sm"
             className="shrink-0 self-start sm:self-center"
+            disabled={!canManage}
             onClick={() => setBulkOpen(true)}
           >
             <Send data-icon="inline-start" />
@@ -119,28 +124,32 @@ export function InactivePage() {
                     </TableCell>
                     <TableCell className="py-2">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setMsgTarget(m);
-                            setMsgOpen(true);
-                          }}
-                          title={t("Enviar")}
-                        >
-                          <Send className="size-3.5" />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setAwardTarget(m.id);
-                            setAwardOpen(true);
-                          }}
-                          title={t("Cofre")}
-                        >
-                          <Gift className="size-3.5" />
-                        </Button>
+                        {canModerate && (
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setMsgTarget(m);
+                              setMsgOpen(true);
+                            }}
+                            title={t("Enviar")}
+                          >
+                            <Send className="size-3.5" />
+                          </Button>
+                        )}
+                        {canManage && (
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setAwardTarget(m.id);
+                              setAwardOpen(true);
+                            }}
+                            title={t("Cofre")}
+                          >
+                            <Gift className="size-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

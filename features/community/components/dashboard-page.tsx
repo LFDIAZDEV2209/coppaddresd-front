@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { ActivityLineChart, PostTypesDoughnut, PeakHoursBar, DiagnosisRadar, ChartLegend, CHART_COLORS } from "./charts";
 import { MemberAvatar } from "./member-avatar";
 import { AwardDialog } from "./award-dialog";
@@ -32,6 +33,9 @@ import { AwardDialog } from "./award-dialog";
 export function DashboardPage() {
   const t = useT();
   const router = useRouter();
+  const { can } = useAppContext();
+  const canModerate = can("Community.Moderate");
+  const canManage = can("Community.Manage");
   const {
     members,
     dashboardKpis,
@@ -51,11 +55,13 @@ export function DashboardPage() {
         icon={LayoutDashboard}
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => router.push("/community/posts?compose=1")}>
-              <Plus data-icon="inline-start" />
-              {t("Nuevo post")}
-            </Button>
-            <AwardDialog />
+            {canModerate && (
+              <Button variant="outline" size="sm" onClick={() => router.push("/community/posts?compose=1")}>
+                <Plus data-icon="inline-start" />
+                {t("Nuevo post")}
+              </Button>
+            )}
+            {canManage && <AwardDialog />}
           </>
         }
       />
@@ -80,7 +86,7 @@ export function DashboardPage() {
                 context={kpi.context ? t(kpi.context) : undefined}
                 trend={kpi.trend}
                 icon={LayoutDashboard}
-                variant="info"
+                variant="primary"
               />
             ))}
       </section>
