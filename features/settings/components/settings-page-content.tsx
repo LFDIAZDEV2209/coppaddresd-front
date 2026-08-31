@@ -32,7 +32,7 @@ const settingsNav = [
   { label: "IA", icon: Bot, permission: "System.AdminSettings" },
   { label: "Integraciones", icon: Plug, permission: "System.AdminSettings" },
   { label: "Notificaciones", icon: Bell },
-  { label: "Documentación", icon: FileText },
+  { label: "Documentación", icon: FileText, permission: "LegalDocuments.View" },
 ];
 
 export function SettingsPageContent() {
