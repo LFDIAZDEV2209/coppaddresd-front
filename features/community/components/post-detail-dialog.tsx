@@ -15,6 +15,7 @@ import {
   BarChart3,
   Check,
   Users,
+  Repeat,
 } from "lucide-react";
 import {
   Dialog,
@@ -43,6 +44,12 @@ import { MemberAvatar, profileName } from "./member-avatar";
 import { MediaLightbox } from "./media-lightbox";
 import type { ErpComment, ErpPost } from "../types";
 import type { PollWire } from "../types";
+
+/** Normalize HotChocolate uppercase enum wire values. */
+function normalizeEnum(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
 
 /** Bloque de encuesta inline — solo lectura en ERP; muestra opciones, barras, votos. */
 function PollBlockInline({
@@ -168,6 +175,11 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
     unlikeComment,
     reportComment,
     me,
+    repostPost,
+    unrepostPost,
+    fetchPostReposts,
+    postReposts,
+    postRepostsLoading,
   } = useErp();
 
   const [draft, setDraft] = useState("");
@@ -181,6 +193,8 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
   // Lightbox state
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxType, setLightboxType] = useState<"IMAGE" | "VIDEO" | null>(null);
+  // Repost viewer state
+  const [showRepostViewer, setShowRepostViewer] = useState(false);
 
   const openLightbox = (url: string, mediaType: "IMAGE" | "VIDEO") => {
     setLightboxUrl(url);
@@ -447,6 +461,32 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
                 <span className="flex items-center gap-1">
                   <Heart className="size-3" /> {post.reactions}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!me) return;
+                    const already = post.repostsList.some((r) => r.profileId === me.id);
+                    if (already) unrepostPost(post.id);
+                    else repostPost(post.id);
+                  }}
+                  className={`flex items-center gap-1 transition-all hover:text-primary ${
+                    me && post.repostsList.some((r) => r.profileId === me.id)
+                      ? "text-primary font-semibold"
+                      : ""
+                  }`}
+                  title={me && post.repostsList.some((r) => r.profileId === me.id) ? t("Quitar repost") : t("Repostear")}
+                >
+                  <Repeat className="size-3" /> {post.reposts}
+                </button>
+                {post.reposts > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowRepostViewer(true); fetchPostReposts(post.id); }}
+                    className="text-[10px] text-muted-foreground hover:text-primary"
+                  >
+                    {t("Ver reposts")}
+                  </button>
+                )}
                 <span className="flex items-center gap-1">
                   <MessageCircle className="size-3" /> {post.comments}
                 </span>
@@ -664,6 +704,38 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
         open={Boolean(lightboxUrl)}
         onOpenChange={(o) => { if (!o) setLightboxUrl(null); }}
       />
+
+      {/* Dialog: Ver reposts */}
+      <Dialog open={showRepostViewer} onOpenChange={(o) => setShowRepostViewer(o)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("Reposteado por")}</DialogTitle>
+          </DialogHeader>
+          {postRepostsLoading ? (
+            <div className="flex flex-col gap-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
+              ))}
+            </div>
+          ) : postReposts.length === 0 ? (
+            <p className="py-4 text-center text-xs text-muted-foreground">{t("Sin reposts")}</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+              {postReposts.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {p.displayName?.slice(0, 2).toUpperCase() ?? "?"}
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate text-sm font-medium">{p.displayName}</span>
+                    <span className="text-[10px] text-muted-foreground">{normalizeEnum(p.region)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

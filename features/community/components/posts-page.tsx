@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Users,
   Flag,
+  Repeat,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -164,6 +165,12 @@ const TIPOS: { key: PostType; label: string; icon: typeof FileText }[] = [
   { key: "Logro", label: "Logro", icon: Trophy },
 ];
 
+/** Normalize HotChocolate uppercase enum wire values. */
+function normalizeEnum(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
   Texto: { bg: "var(--info-soft)", text: "var(--info-foreground)" },
   Imagen: { bg: "var(--success-soft)", text: "var(--success-foreground)" },
@@ -175,7 +182,7 @@ const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
 export function PostsPage() {
   const t = useT();
   const { can } = useAppContext();
-  const { posts, publishPost, togglePin, deletePost, members, me, reorderPinned, reportPost } = useErp();
+  const { posts, publishPost, togglePin, deletePost, members, me, reorderPinned, reportPost, repostPost, unrepostPost, sortBy, setSortBy, interval, setInterval, fetchPostReposts, postReposts, postRepostsLoading } = useErp();
   const canModerate = can("Community.Moderate");
   // Sin useSearchParams para evitar Suspense; el dashboard abre con ?compose=1
   const [type, setType] = useState<PostType>("Texto");
@@ -220,6 +227,8 @@ export function PostsPage() {
   const [reportDialogPostId, setReportDialogPostId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
+  // Repost viewer dialog state
+  const [repostViewerPostId, setRepostViewerPostId] = useState<string | null>(null);
 
   /** Razones de reporte disponibles. */
   const REPORT_REASONS = [
@@ -500,6 +509,53 @@ export function PostsPage() {
         </div>
       )}
 
+      {/* Filter bar — sort + interval for feed */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:gap-4">
+        <span className="text-xs font-semibold text-muted-foreground">{t("Ordenar por")}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { key: "recent", label: t("Más recientes") },
+            { key: "likes", label: t("Más likes") },
+            { key: "comments", label: t("Más comentarios") },
+            { key: "reposts", label: t("Más reposts") },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setSortBy(opt.key)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                sortBy === opt.key
+                  ? "border-primary bg-primary text-white shadow-sm"
+                  : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="h-4 w-px bg-border sm:block hidden" />
+        <span className="text-xs font-semibold text-muted-foreground">{t("Intervalo")}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { key: "all", label: t("Todo") },
+            { key: "7d", label: t("7 días") },
+            { key: "30d", label: t("30 días") },
+            { key: "90d", label: t("90 días") },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setInterval(opt.key)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                interval === opt.key
+                  ? "border-primary bg-primary text-white shadow-sm"
+                  : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Publicaciones fijadas + Todas las publicaciones — lado a lado */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Pinned posts — paginados */}
@@ -575,6 +631,37 @@ export function PostsPage() {
                         <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
                           <MessageCircle className="size-3.5" />
                         </Button>
+                        {me && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const already = post.repostsList.some((r) => r.profileId === me.id);
+                              if (already) {
+                                unrepostPost(post.id);
+                              } else {
+                                repostPost(post.id);
+                              }
+                            }}
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] transition-all hover:bg-primary/10 ${
+                              post.repostsList.some((r) => r.profileId === me.id)
+                                ? "text-primary font-semibold"
+                                : "text-muted-foreground"
+                            }`}
+                            title={post.repostsList.some((r) => r.profileId === me.id) ? t("Quitar repost") : t("Repostear")}
+                          >
+                            <Repeat className="size-3.5" />
+                            {post.reposts > 0 && <span className="ml-0.5 text-[10px]">{post.reposts}</span>}
+                          </button>
+                        )}
+                        {post.reposts > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => { setRepostViewerPostId(post.id); fetchPostReposts(post.id); }}
+                            className="text-[10px] text-muted-foreground hover:text-primary"
+                          >
+                            {t("Ver reposts")}
+                          </button>
+                        )}
                         <Button size="icon-sm" variant="ghost" onClick={() => setReportDialogPostId(post.id)} title={t("Reportar publicación")}>
                           <Flag className="size-3.5 text-destructive" />
                         </Button>
@@ -637,6 +724,7 @@ export function PostsPage() {
                       </span>
                       <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
                         <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                        <span className="flex items-center gap-1"><Repeat className="size-3" /> {post.reposts}</span>
                         <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
                         <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
                       </span>
@@ -713,6 +801,37 @@ export function PostsPage() {
                         <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
                           <MessageCircle className="size-3.5" />
                         </Button>
+                        {me && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const already = post.repostsList.some((r) => r.profileId === me.id);
+                              if (already) {
+                                unrepostPost(post.id);
+                              } else {
+                                repostPost(post.id);
+                              }
+                            }}
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] transition-all hover:bg-primary/10 ${
+                              post.repostsList.some((r) => r.profileId === me.id)
+                                ? "text-primary font-semibold"
+                                : "text-muted-foreground"
+                            }`}
+                            title={post.repostsList.some((r) => r.profileId === me.id) ? t("Quitar repost") : t("Repostear")}
+                          >
+                            <Repeat className="size-3.5" />
+                            {post.reposts > 0 && <span className="ml-0.5 text-[10px]">{post.reposts}</span>}
+                          </button>
+                        )}
+                        {post.reposts > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => { setRepostViewerPostId(post.id); fetchPostReposts(post.id); }}
+                            className="text-[10px] text-muted-foreground hover:text-primary"
+                          >
+                            {t("Ver reposts")}
+                          </button>
+                        )}
                         <Button size="icon-sm" variant="ghost" onClick={() => setReportDialogPostId(post.id)} title={t("Reportar publicación")}>
                           <Flag className="size-3.5 text-destructive" />
                         </Button>
@@ -771,6 +890,7 @@ export function PostsPage() {
                       </span>
                       <span className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
                         <span className="flex items-center gap-1"><Heart className="size-3" /> {post.reactions}</span>
+                        <span className="flex items-center gap-1"><Repeat className="size-3" /> {post.reposts}</span>
                         <span className="flex items-center gap-1"><MessageCircle className="size-3" /> {post.comments}</span>
                         <span className="flex items-center gap-1"><Eye className="size-3" /> {post.views}</span>
                       </span>
@@ -879,6 +999,38 @@ export function PostsPage() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Ver reposts */}
+      <Dialog open={Boolean(repostViewerPostId)} onOpenChange={(o) => { if (!o) setRepostViewerPostId(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("Reposteado por")}</DialogTitle>
+          </DialogHeader>
+          {postRepostsLoading ? (
+            <div className="flex flex-col gap-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
+              ))}
+            </div>
+          ) : postReposts.length === 0 ? (
+            <p className="py-4 text-center text-xs text-muted-foreground">{t("Sin reposts")}</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+              {postReposts.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {p.displayName?.slice(0, 2).toUpperCase() ?? "?"}
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate text-sm font-medium">{p.displayName}</span>
+                    <span className="text-[10px] text-muted-foreground">{normalizeEnum(p.region)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
