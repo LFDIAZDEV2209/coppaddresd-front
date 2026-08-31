@@ -33,11 +33,13 @@ import {
   MODERATE_DELETE_POST,
   NETWORKS_QUERY,
   PIN_POST,
+  POST_REPOSTS,
   PROFILES_QUERY,
   PROFILES_SEARCH_QUERY,
   RECOGNITIONS_QUERY,
   REGION_STATS_QUERY,
   REORDER_PINNED_POSTS,
+  REPOST_POST,
   REPORTED_COMMENTS,
   REPORTED_POSTS,
   REPORT_COMMENT,
@@ -51,6 +53,7 @@ import {
   TOP_STREAKS_QUERY,
   UNLIKE_COMMENT,
   UNBAN_PROFILE,
+  UNREPOST_POST,
   VIEW_POST,
   type AddCommentResult,
   type AwardXpAllResult,
@@ -79,6 +82,7 @@ import {
   type NetworksResult,
   type PinPostResult,
   type Post,
+  type PostRepostsResult,
   type Profile,
   type ProfilesResult,
   type FeedResult,
@@ -87,6 +91,7 @@ import {
   type RegionStatWire,
   type RegionStatsResult,
   type ReorderPinnedPostsResult,
+  type RepostPostResult,
   type ReportedCommentWire,
   type ReportedCommentsResult,
   type ReportedPostWire,
@@ -102,6 +107,7 @@ import {
   type TopStreaksResult,
   type UnlikeCommentResult,
   type UnbanProfileResult,
+  type UnrepostPostResult,
   type ViewPostResult,
 } from "./services/community";
 import { useT } from "@/providers/i18n-provider";
@@ -222,6 +228,8 @@ function mapPost(post: Post): ErpPost {
     pinnedOrder: post.pinnedOrder ?? 0,
     createdAt: relativeTime(post.createdAt),
     reactions: post.likes.length,
+    reposts: post.reposts?.length ?? 0,
+    repostsList: post.reposts ?? [],
     comments: post.comments.length,
     views: post.viewCount,
     imageUrl: post.imageUrl ?? null,
@@ -506,6 +514,15 @@ interface ErpContextValue {
   searchProfiles: (search: string, take?: number, skip?: number) => void;
   searchProfilesResult: Profile[];
   searchProfilesLoading: boolean;
+  repostPost: (postId: string) => void;
+  unrepostPost: (postId: string) => void;
+  postReposts: Profile[];
+  postRepostsLoading: boolean;
+  fetchPostReposts: (postId: string) => void;
+  sortBy: string;
+  setSortBy: (sortBy: string) => void;
+  interval: string;
+  setInterval: (interval: string) => void;
   toast: (message: string) => void;
   toasts: ToastItem[];
 }
@@ -531,12 +548,36 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     variables: { take: 50, skip: 0 },
   });
 
+  // --- Feed filter state (must be before postsResult query) ---
+  const [sortBy, setSortBy] = useState<string>("recent");
+  const [interval, setInterval] = useState<string>("all");
+
+  // Compute from/to dates from interval
+  const feedVariables = useMemo(() => {
+    let from: string | undefined;
+    const now = new Date();
+    if (interval === "7d") {
+      from = new Date(now.getTime() - 7 * 86400000).toISOString();
+    } else if (interval === "30d") {
+      from = new Date(now.getTime() - 30 * 86400000).toISOString();
+    } else if (interval === "90d") {
+      from = new Date(now.getTime() - 90 * 86400000).toISOString();
+    }
+    return {
+      take: 100,
+      skip: 0,
+      sortBy: sortBy === "recent" ? undefined : sortBy,
+      from: from ?? undefined,
+      to: undefined,
+    };
+  }, [sortBy, interval]);
+
   const [postsResult, refetchPosts] = useQuery<
     FeedResult,
-    { take: number; skip: number }
+    { take: number; skip: number; sortBy?: string; from?: string; to?: string }
   >({
     query: FEED_QUERY,
-    variables: { take: 100, skip: 0 },
+    variables: feedVariables,
   });
 
   const [feedResult, refetchFeed] = useQuery<
@@ -724,6 +765,10 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   const [, unlikeCommentMut] = useMutation<UnlikeCommentResult, { commentId: string }>(UNLIKE_COMMENT);
   const [, reportCommentMut] = useMutation<ReportCommentResult, { commentId: string; reason: string; details?: string }>(REPORT_COMMENT);
   const [, resolveCommentReportMut] = useMutation<ResolveCommentReportResult, { reportId: string }>(RESOLVE_COMMENT_REPORT);
+
+  // --- Repost mutations ---
+  const [, repostPostMut] = useMutation<RepostPostResult, { postId: string }>(REPOST_POST);
+  const [, unrepostPostMut] = useMutation<UnrepostPostResult, { postId: string }>(UNREPOST_POST);
 
   const [reportedPostsResult, refetchReportedPosts] = useQuery<
     ReportedPostsResult,
@@ -1255,6 +1300,68 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     [toast, t, refetchReportedComments],
   );
 
+  // --- Repost handlers ---
+  const repostPostHandler = useCallback<ErpContextValue["repostPost"]>(
+    (postId) => {
+      repostPostMut({ postId }).then((res) => {
+        if (res.error) {
+          const msg = res.error.message || "No se pudo repostear";
+          if (msg.includes("Ya reposteaste")) {
+            toast("Ya reposteaste esta publicación");
+          } else {
+            toast(msg);
+          }
+        } else {
+          toast("Reposteado correctamente");
+          refetchPosts();
+        }
+      });
+    },
+    [toast, refetchPosts],
+  );
+
+  const unrepostPostHandler = useCallback<ErpContextValue["unrepostPost"]>(
+    (postId) => {
+      unrepostPostMut({ postId }).then((res) => {
+        if (res.error) {
+          toast("No se pudo quitar el repost");
+        } else {
+          toast("Repost eliminado");
+          refetchPosts();
+        }
+      });
+    },
+    [toast, refetchPosts],
+  );
+
+  // --- Post reposts query (lazy) ---
+  const [postRepostsVariables, setPostRepostsVariables] = useState<{
+    postId: string;
+    take: number;
+    skip: number;
+  }>({ postId: "", take: 50, skip: 0 });
+
+  const [postRepostsResult, reexecutePostReposts] = useQuery<
+    PostRepostsResult,
+    { postId: string; take: number; skip: number }
+  >({
+    query: POST_REPOSTS,
+    variables: postRepostsVariables,
+    pause: true,
+  });
+
+  const fetchPostReposts = useCallback<ErpContextValue["fetchPostReposts"]>(
+    (postId) => {
+      setPostRepostsVariables({ postId, take: 50, skip: 0 });
+      reexecutePostReposts({ requestPolicy: "network-only" });
+    },
+    [],
+  );
+
+  const postReposts = useMemo(() => {
+    return postRepostsResult.data?.postReposts ?? [];
+  }, [postRepostsResult.data]);
+
   const searchProfiles = useCallback<ErpContextValue["searchProfiles"]>(
     (search, take = 10, skip = 0) => {
       setSearchProfilesVariables({ search, take, skip });
@@ -1394,6 +1501,15 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       searchProfiles,
       searchProfilesResult: searchProfilesMapped,
       searchProfilesLoading: searchProfilesResult.fetching,
+      repostPost: repostPostHandler,
+      unrepostPost: unrepostPostHandler,
+      postReposts,
+      postRepostsLoading: postRepostsResult.fetching,
+      fetchPostReposts,
+      sortBy,
+      setSortBy,
+      interval,
+      setInterval,
       banProfile,
       unbanProfile,
       toast,
@@ -1483,6 +1599,15 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       searchProfiles,
       searchProfilesResult.fetching,
       searchProfilesResult.error,
+      repostPostHandler,
+      unrepostPostHandler,
+      postReposts,
+      postRepostsResult.fetching,
+      fetchPostReposts,
+      sortBy,
+      setSortBy,
+      interval,
+      setInterval,
       banProfile,
       unbanProfile,
       toast,

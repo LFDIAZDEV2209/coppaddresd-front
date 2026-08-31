@@ -75,6 +75,8 @@ export interface ErpPost {
   pinnedOrder: number;
   createdAt: string; // "Hace 2h"
   reactions: number;
+  reposts: number;
+  repostsList: { id: string; profileId: string }[];
   comments: number;
   views: number;
   imageUrl: string | null;

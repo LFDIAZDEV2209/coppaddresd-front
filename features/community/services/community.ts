@@ -120,6 +120,11 @@ export interface PollWire {
   options: PollOptionWire[];
 }
 
+export interface RepostRef {
+  id: string;
+  profileId: string;
+}
+
 export interface Post {
   id: string;
   body: string;
@@ -134,6 +139,7 @@ export interface Post {
   poll: PollWire | null;
   profile: PostAuthor;
   likes: LikeRef[];
+  reposts: RepostRef[];
   comments: CommentDetail[];
 }
 
@@ -250,12 +256,14 @@ export const FEED_QUERY = gql`
     $skip: Int!
     $author: String
     $search: String
+    $sortBy: String
     $from: DateTime
     $to: DateTime
   ) {
     feed(
       author: $author
       search: $search
+      sortBy: $sortBy
       from: $from
       to: $to
       take: $take
@@ -294,6 +302,10 @@ export const FEED_QUERY = gql`
         isSystem
       }
       likes {
+        id
+        profileId
+      }
+      reposts {
         id
         profileId
       }
@@ -736,6 +748,10 @@ export const POST_QUERY = gql`
         isSystem
       }
       likes {
+        id
+        profileId
+      }
+      reposts {
         id
         profileId
       }
@@ -1276,6 +1292,56 @@ export const REPORT_COMMENT = gql`
 
 export interface ReportCommentResult {
   reportComment: { id: string } | null;
+}
+
+// --- Reposts ---
+
+export const REPOST_POST = gql`
+  mutation RepostPost($postId: UUID!) {
+    repostPost(postId: $postId) {
+      id
+      reposts {
+        id
+        profileId
+      }
+    }
+  }
+`;
+
+export interface RepostPostResult {
+  repostPost: Pick<Post, "id"> & { reposts: RepostRef[] } | null;
+}
+
+export const UNREPOST_POST = gql`
+  mutation UnrepostPost($postId: UUID!) {
+    unrepostPost(postId: $postId) {
+      id
+      reposts {
+        id
+        profileId
+      }
+    }
+  }
+`;
+
+export interface UnrepostPostResult {
+  unrepostPost: Pick<Post, "id"> & { reposts: RepostRef[] } | null;
+}
+
+export const POST_REPOSTS = gql`
+  query PostReposts($postId: UUID!, $take: Int!, $skip: Int!) {
+    postReposts(postId: $postId, take: $take, skip: $skip) {
+      id
+      displayName
+      avatarUrl
+      region
+      status
+    }
+  }
+`;
+
+export interface PostRepostsResult {
+  postReposts: Profile[];
 }
 
 export const REPORTED_COMMENTS = gql`
