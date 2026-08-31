@@ -99,6 +99,23 @@ export interface CommentDetail {
   profile: PostAuthor;
 }
 
+export interface PollVoteWire {
+  id: string;
+  profileId: string;
+}
+
+export interface PollOptionWire {
+  id: string;
+  text: string;
+  position: number;
+  votes: PollVoteWire[];
+}
+
+export interface PollWire {
+  id: string;
+  options: PollOptionWire[];
+}
+
 export interface Post {
   id: string;
   body: string;
@@ -107,6 +124,9 @@ export interface Post {
   type: ProfilePostType;
   destination: ProfilePostDestination;
   viewCount: number;
+  imageUrl: string | null;
+  mediaType: "IMAGE" | "VIDEO" | null;
+  poll: PollWire | null;
   profile: PostAuthor;
   likes: LikeRef[];
   comments: CommentDetail[];
@@ -243,6 +263,20 @@ export const FEED_QUERY = gql`
       type
       destination
       viewCount
+      imageUrl
+      mediaType
+      poll {
+        id
+        options {
+          id
+          text
+          position
+          votes {
+            id
+            profileId
+          }
+        }
+      }
       profile {
         id
         displayName
@@ -415,6 +449,26 @@ export const PIN_POST = gql`
   }
 `;
 
+export const VOTE_POLL = gql`
+  mutation VotePoll($optionId: UUID!) {
+    votePoll(optionId: $optionId) {
+      id
+      poll {
+        id
+        options {
+          id
+          text
+          position
+          votes {
+            id
+            profileId
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const MODERATE_DELETE_POST = gql`
   mutation ModerateDeletePost($id: UUID!) {
     moderateDeletePost(id: $id) {
@@ -575,6 +629,10 @@ export interface PinPostResult {
   pinPost: Pick<Post, "id" | "pinned"> | null;
 }
 
+export interface VotePollResult {
+  votePoll: Pick<Post, "id" | "poll"> | null;
+}
+
 export interface ModerateDeletePostResult {
   moderateDeletePost: Pick<Post, "id"> | null;
 }
@@ -591,6 +649,20 @@ export const POST_QUERY = gql`
       viewCount
       pinned
       createdAt
+      imageUrl
+      mediaType
+      poll {
+        id
+        options {
+          id
+          text
+          position
+          votes {
+            id
+            profileId
+          }
+        }
+      }
       profile {
         id
         displayName
