@@ -424,7 +424,7 @@ export function ModerationPage() {
 
       {/* Búsqueda de miembros */}
       {canModerate && (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-4">
           <SectionHeader
             title={t("Buscar miembro")}
             description={t("Buscar miembros para moderar")}
