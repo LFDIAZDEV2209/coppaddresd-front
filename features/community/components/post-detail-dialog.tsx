@@ -164,6 +164,9 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
     replyToComment,
     deleteComment,
     reportPost,
+    likeComment,
+    unlikeComment,
+    reportComment,
     me,
   } = useErp();
 
@@ -172,6 +175,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // commentId a eliminar
   const [confirmDeletePost, setConfirmDeletePost] = useState(false);
   const [reportDialogComment, setReportDialogComment] = useState<string | null>(null);
+  const [reportDialogPost, setReportDialogPost] = useState<boolean>(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   // Lightbox state
@@ -230,9 +234,14 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
   };
 
   const handleReportSubmit = () => {
-    if (!reportReason || !reportDialogComment) return;
-    reportPost(reportDialogComment, reportReason, reportDetails || undefined);
-    setReportDialogComment(null);
+    if (!reportReason) return;
+    if (reportDialogComment) {
+      reportComment(reportDialogComment, reportReason, reportDetails || undefined);
+      setReportDialogComment(null);
+    } else if (reportDialogPost && post) {
+      reportPost(post.id, reportReason, reportDetails || undefined);
+      setReportDialogPost(false);
+    }
     setReportReason("");
     setReportDetails("");
   };
@@ -268,10 +277,34 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
           </div>
           <div className="flex shrink-0 gap-1">
             <button
+              onClick={() => {
+                const liked = c.likes?.some((l) => l.profileId === me?.id);
+                if (liked) {
+                  unlikeComment(c.id);
+                } else {
+                  likeComment(c.id);
+                }
+              }}
+              className="shrink-0 self-start rounded px-1.5 py-0.5 text-[11px] hover:bg-destructive/10"
+              title={t("Me gusta")}
+            >
+              <Heart className={`size-3 ${c.likes?.some((l) => l.profileId === me?.id) ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />
+              {c.likes?.length ? (
+                <span className="ml-0.5 text-[10px] text-muted-foreground">{c.likes.length}</span>
+              ) : null}
+            </button>
+            <button
               onClick={() => setReplyTo({ commentId: c.id, author: profileName(c.author, c.isSystem, t) })}
               className="shrink-0 self-start rounded px-1.5 py-0.5 text-[11px] text-primary hover:bg-primary-soft"
             >
               {t("Responder")}
+            </button>
+            <button
+              onClick={() => setReportDialogComment(c.id)}
+              className="shrink-0 self-start rounded px-1.5 py-0.5 text-[11px] text-destructive hover:bg-destructive/10"
+              title={t("Reportar comentario")}
+            >
+              <Flag className="size-3" />
             </button>
             {canModerate && (
               <button
@@ -318,6 +351,14 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
                 )}
               </div>
               <div className="flex shrink-0 gap-1">
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={() => setReportDialogPost(true)}
+                  title={t("Reportar publicación")}
+                >
+                  <Flag className="size-3.5 text-destructive" />
+                </Button>
                 {canModerate && (
                   <>
                     <Button
@@ -518,7 +559,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
       </AlertDialog>
 
       {/* Dialog: Reportar comentario */}
-      <Dialog open={Boolean(reportDialogComment)} onOpenChange={(o) => { if (!o) setReportDialogComment(null); }}>
+      <Dialog open={Boolean(reportDialogComment)} onOpenChange={(o) => { if (!o) { setReportDialogComment(null); setReportReason(""); setReportDetails(""); } }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{t("Reportar comentario")}</DialogTitle>
@@ -550,7 +591,57 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
               className="text-xs"
             />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setReportDialogComment(null)}>
+              <Button variant="outline" size="sm" onClick={() => { setReportDialogComment(null); setReportReason(""); setReportDetails(""); }}>
+                {t("Cancelar")}
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={!reportReason}
+                onClick={handleReportSubmit}
+              >
+                <Flag data-icon="inline-start" className="size-3.5" />
+                {t("Enviar reporte")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Reportar publicación */}
+      <Dialog open={reportDialogPost} onOpenChange={(o) => { if (!o) { setReportDialogPost(false); setReportReason(""); setReportDetails(""); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("Reportar publicación")}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">{t("Razón del reporte")}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {REPORT_REASONS.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setReportReason(r)}
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                      reportReason === r
+                        ? "border-destructive bg-destructive/10 text-destructive"
+                        : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {t(r)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              rows={3}
+              placeholder={t("Detalles adicionales (opcional)")}
+              className="text-xs"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => { setReportDialogPost(false); setReportReason(""); setReportDetails(""); }}>
                 {t("Cancelar")}
               </Button>
               <Button

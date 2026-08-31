@@ -21,6 +21,7 @@ import {
   ChevronUp,
   ChevronDown,
   Users,
+  Flag,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -47,6 +48,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { useAppContext } from "@/providers/context-provider";
@@ -168,7 +175,7 @@ const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
 export function PostsPage() {
   const t = useT();
   const { can } = useAppContext();
-  const { posts, publishPost, togglePin, deletePost, members, me, reorderPinned } = useErp();
+  const { posts, publishPost, togglePin, deletePost, members, me, reorderPinned, reportPost } = useErp();
   const canModerate = can("Community.Moderate");
   // Sin useSearchParams para evitar Suspense; el dashboard abre con ?compose=1
   const [type, setType] = useState<PostType>("Texto");
@@ -209,6 +216,19 @@ export function PostsPage() {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxType, setLightboxType] = useState<"IMAGE" | "VIDEO" | null>(null);
   const [lightboxBody, setLightboxBody] = useState<string>("");
+  // Report dialog state
+  const [reportDialogPostId, setReportDialogPostId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+
+  /** Razones de reporte disponibles. */
+  const REPORT_REASONS = [
+    "Spam",
+    "Contenido inapropiado",
+    "Información falsa",
+    "Acoso o bullying",
+    "Otro",
+  ];
 
   const openLightbox = (url: string, mediaType: "IMAGE" | "VIDEO", body?: string) => {
     setLightboxUrl(url);
@@ -274,6 +294,14 @@ export function PostsPage() {
   const openDetail = (post: ErpPost) => {
     setDetailPostId(post.id);
     setDetailOpen(true);
+  };
+
+  const handleReportSubmit = () => {
+    if (!reportReason || !reportDialogPostId) return;
+    reportPost(reportDialogPostId, reportReason, reportDetails || undefined);
+    setReportDialogPostId(null);
+    setReportReason("");
+    setReportDetails("");
   };
 
   return (
@@ -547,6 +575,9 @@ export function PostsPage() {
                         <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
                           <MessageCircle className="size-3.5" />
                         </Button>
+                        <Button size="icon-sm" variant="ghost" onClick={() => setReportDialogPostId(post.id)} title={t("Reportar publicación")}>
+                          <Flag className="size-3.5 text-destructive" />
+                        </Button>
                       </div>
                     </div>
                     <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
@@ -682,6 +713,9 @@ export function PostsPage() {
                         <Button size="icon-sm" variant="ghost" onClick={() => openDetail(post)} title={t("Ver publicación")}>
                           <MessageCircle className="size-3.5" />
                         </Button>
+                        <Button size="icon-sm" variant="ghost" onClick={() => setReportDialogPostId(post.id)} title={t("Reportar publicación")}>
+                          <Flag className="size-3.5 text-destructive" />
+                        </Button>
                       </div>
                     </div>
                     <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
@@ -797,6 +831,56 @@ export function PostsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog: Reportar publicación */}
+      <Dialog open={Boolean(reportDialogPostId)} onOpenChange={(o) => { if (!o) { setReportDialogPostId(null); setReportReason(""); setReportDetails(""); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("Reportar publicación")}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">{t("Razón del reporte")}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {REPORT_REASONS.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setReportReason(r)}
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
+                      reportReason === r
+                        ? "border-destructive bg-destructive/10 text-destructive"
+                        : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {t(r)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              rows={3}
+              placeholder={t("Detalles adicionales (opcional)")}
+              className="text-xs"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => { setReportDialogPostId(null); setReportReason(""); setReportDetails(""); }}>
+                {t("Cancelar")}
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={!reportReason}
+                onClick={handleReportSubmit}
+              >
+                <Flag data-icon="inline-start" className="size-3.5" />
+                {t("Enviar reporte")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
