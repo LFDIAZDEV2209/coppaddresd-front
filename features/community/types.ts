@@ -49,6 +49,7 @@ export interface ErpComment {
   authorId: string;
   isSystem?: boolean;
   isNew?: boolean;
+  likes: { id: string; profileId: string }[];
 }
 
 export interface PollOptionWire {

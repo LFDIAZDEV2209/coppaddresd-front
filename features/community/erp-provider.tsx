@@ -26,6 +26,7 @@ import {
   FEED_EVENT_ADDED_SUB,
   FEED_EVENTS_QUERY,
   FEED_QUERY,
+  LIKE_COMMENT,
   ME_QUERY,
   MESSAGE_REACH_QUERY,
   MODERATE_DELETE_COMMENT,
@@ -33,17 +34,22 @@ import {
   NETWORKS_QUERY,
   PIN_POST,
   PROFILES_QUERY,
+  PROFILES_SEARCH_QUERY,
   RECOGNITIONS_QUERY,
   REGION_STATS_QUERY,
   REORDER_PINNED_POSTS,
+  REPORTED_COMMENTS,
   REPORTED_POSTS,
+  REPORT_COMMENT,
   REPORT_POST,
   REPLY_TO_COMMENT,
+  RESOLVE_COMMENT_REPORT,
   RESOLVE_REPORT,
   SEND_BULK_MESSAGE,
   SEND_DIRECT_MESSAGE,
   SEND_GROUP_MESSAGE,
   TOP_STREAKS_QUERY,
+  UNLIKE_COMMENT,
   UNBAN_PROFILE,
   VIEW_POST,
   type AddCommentResult,
@@ -63,6 +69,7 @@ import {
   type FeedEvent,
   type FeedEventAddedResult,
   type FeedEventsResult,
+  type LikeCommentResult,
   type MeResult,
   type MessageReachResult,
   type MessageReachWire,
@@ -80,15 +87,20 @@ import {
   type RegionStatWire,
   type RegionStatsResult,
   type ReorderPinnedPostsResult,
+  type ReportedCommentWire,
+  type ReportedCommentsResult,
   type ReportedPostWire,
   type ReportedPostsResult,
+  type ReportCommentResult,
   type ReportPostResult,
   type ReplyToCommentResult,
+  type ResolveCommentReportResult,
   type ResolveReportResult,
   type SendBulkMessageResult,
   type SendDirectMessageResult,
   type SendGroupMessageResult,
   type TopStreaksResult,
+  type UnlikeCommentResult,
   type UnbanProfileResult,
   type ViewPostResult,
 } from "./services/community";
@@ -194,6 +206,7 @@ function mapComment(c: CommentDetail): ErpComment {
     author: c.profile.displayName,
     authorId: c.profile.id,
     isSystem: c.profile.isSystem,
+    likes: c.likes ?? [],
   };
 }
 
@@ -482,6 +495,17 @@ interface ErpContextValue {
   reportedPostsError: string | undefined;
   refetchReportedPosts: () => void;
   resolveReport: (reportId: string) => void;
+  likeComment: (commentId: string) => void;
+  unlikeComment: (commentId: string) => void;
+  reportComment: (commentId: string, reason: string, details?: string) => void;
+  reportedComments: ReportedCommentWire[];
+  reportedCommentsLoading: boolean;
+  reportedCommentsError: string | undefined;
+  refetchReportedComments: () => void;
+  resolveCommentReport: (reportId: string) => void;
+  searchProfiles: (search: string, take?: number, skip?: number) => void;
+  searchProfilesResult: Profile[];
+  searchProfilesLoading: boolean;
   toast: (message: string) => void;
   toasts: ToastItem[];
 }
@@ -696,12 +720,40 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   const [, banProfileMut] = useMutation<BanProfileResult, { id: string; reason?: string }>(BAN_PROFILE);
   const [, unbanProfileMut] = useMutation<UnbanProfileResult, { id: string }>(UNBAN_PROFILE);
 
+  const [, likeCommentMut] = useMutation<LikeCommentResult, { commentId: string }>(LIKE_COMMENT);
+  const [, unlikeCommentMut] = useMutation<UnlikeCommentResult, { commentId: string }>(UNLIKE_COMMENT);
+  const [, reportCommentMut] = useMutation<ReportCommentResult, { commentId: string; reason: string; details?: string }>(REPORT_COMMENT);
+  const [, resolveCommentReportMut] = useMutation<ResolveCommentReportResult, { reportId: string }>(RESOLVE_COMMENT_REPORT);
+
   const [reportedPostsResult, refetchReportedPosts] = useQuery<
     ReportedPostsResult,
     { take?: number; skip?: number }
   >({
     query: REPORTED_POSTS,
     variables: { take: 50, skip: 0 },
+  });
+
+  const [reportedCommentsResult, refetchReportedComments] = useQuery<
+    ReportedCommentsResult,
+    { take?: number; skip?: number }
+  >({
+    query: REPORTED_COMMENTS,
+    variables: { take: 50, skip: 0 },
+  });
+
+  const [searchProfilesVariables, setSearchProfilesVariables] = useState<{
+    search?: string;
+    take: number;
+    skip: number;
+  }>({ take: 10, skip: 0 });
+
+  const [searchProfilesResult, reexecuteSearchProfiles] = useQuery<
+    ProfilesResult,
+    { search?: string; take: number; skip: number }
+  >({
+    query: PROFILES_SEARCH_QUERY,
+    variables: searchProfilesVariables,
+    pause: true,
   });
 
   const members = useMemo(
@@ -794,6 +846,18 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   const reportedPosts = useMemo<ReportedPostWire[]>(() => {
     return reportedPostsResult.data?.reportedPosts ?? [];
   }, [reportedPostsResult.data]);
+
+  const reportedComments = useMemo<ReportedCommentWire[]>(() => {
+    return reportedCommentsResult.data?.reportedComments ?? [];
+  }, [reportedCommentsResult.data]);
+
+  const searchProfilesMapped = useMemo(() => {
+    return (searchProfilesResult.data?.profiles ?? []).map((p) => ({
+      ...p,
+      displayName: p.displayName,
+      status: p.status,
+    }));
+  }, [searchProfilesResult.data]);
 
   // --- Mapeo de datos del dashboard (backend → gráficos) ---
 
@@ -1138,6 +1202,67 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     [toast, t],
   );
 
+  const likeComment = useCallback<ErpContextValue["likeComment"]>(
+    (commentId) => {
+      likeCommentMut({ commentId }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo dar like al comentario."));
+        } else {
+          refetchPosts();
+        }
+      });
+    },
+    [toast, t, refetchPosts],
+  );
+
+  const unlikeComment = useCallback<ErpContextValue["unlikeComment"]>(
+    (commentId) => {
+      unlikeCommentMut({ commentId }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo quitar el like."));
+        } else {
+          refetchPosts();
+        }
+      });
+    },
+    [toast, t, refetchPosts],
+  );
+
+  const reportComment = useCallback<ErpContextValue["reportComment"]>(
+    (commentId, reason, details) => {
+      reportCommentMut({ commentId, reason, details }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo enviar el reporte. Intenta de nuevo."));
+        } else {
+          toast(t("Comentario reportado correctamente"));
+        }
+      });
+    },
+    [toast, t],
+  );
+
+  const resolveCommentReport = useCallback<ErpContextValue["resolveCommentReport"]>(
+    (reportId) => {
+      resolveCommentReportMut({ reportId }).then((res) => {
+        if (res.error) {
+          toast(t("No se pudo resolver el reporte."));
+        } else {
+          toast(t("Reporte resuelto"));
+          refetchReportedComments();
+        }
+      });
+    },
+    [toast, t, refetchReportedComments],
+  );
+
+  const searchProfiles = useCallback<ErpContextValue["searchProfiles"]>(
+    (search, take = 10, skip = 0) => {
+      setSearchProfilesVariables({ search, take, skip });
+      reexecuteSearchProfiles({ requestPolicy: "network-only" });
+    },
+    [],
+  );
+
   const resolveReport = useCallback<ErpContextValue["resolveReport"]>(
     (reportId) => {
       resolveReportMut({ reportId }).then((res) => {
@@ -1258,6 +1383,17 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       reportedPostsError: reportedPostsResult.error?.message,
       refetchReportedPosts,
       resolveReport,
+      likeComment,
+      unlikeComment,
+      reportComment,
+      reportedComments,
+      reportedCommentsLoading: reportedCommentsResult.fetching,
+      reportedCommentsError: reportedCommentsResult.error?.message,
+      refetchReportedComments,
+      resolveCommentReport,
+      searchProfiles,
+      searchProfilesResult: searchProfilesMapped,
+      searchProfilesLoading: searchProfilesResult.fetching,
       banProfile,
       unbanProfile,
       toast,
@@ -1337,6 +1473,16 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       reportedPostsResult.error,
       refetchReportedPosts,
       resolveReport,
+      likeComment,
+      unlikeComment,
+      reportComment,
+      reportedCommentsResult.fetching,
+      reportedCommentsResult.error,
+      refetchReportedComments,
+      resolveCommentReport,
+      searchProfiles,
+      searchProfilesResult.fetching,
+      searchProfilesResult.error,
       banProfile,
       unbanProfile,
       toast,

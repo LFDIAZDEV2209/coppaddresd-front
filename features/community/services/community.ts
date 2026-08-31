@@ -73,6 +73,7 @@ export interface Profile {
   postsCount: number;
   commentsCount: number;
   likesCount: number;
+  avatarUrl?: string | null;
 }
 
 export interface PostAuthor {
@@ -97,6 +98,8 @@ export interface CommentDetail {
   postId: string;
   parentCommentId: string | null;
   profile: PostAuthor;
+  likes: LikeRef[];
+  replies: CommentDetail[];
 }
 
 export interface PollVoteWire {
@@ -304,6 +307,42 @@ export const FEED_QUERY = gql`
           id
           displayName
           isSystem
+        }
+        likes {
+          id
+          profileId
+        }
+        replies {
+          id
+          body
+          createdAt
+          postId
+          parentCommentId
+          profile {
+            id
+            displayName
+            isSystem
+          }
+          likes {
+            id
+            profileId
+          }
+          replies {
+            id
+            body
+            createdAt
+            postId
+            parentCommentId
+            profile {
+              id
+              displayName
+              isSystem
+            }
+            likes {
+              id
+              profileId
+            }
+          }
         }
       }
     }
@@ -710,6 +749,42 @@ export const POST_QUERY = gql`
           id
           displayName
           isSystem
+        }
+        likes {
+          id
+          profileId
+        }
+        replies {
+          id
+          body
+          createdAt
+          postId
+          parentCommentId
+          profile {
+            id
+            displayName
+            isSystem
+          }
+          likes {
+            id
+            profileId
+          }
+          replies {
+            id
+            body
+            createdAt
+            postId
+            parentCommentId
+            profile {
+              id
+              displayName
+              isSystem
+            }
+            likes {
+              id
+              profileId
+            }
+          }
         }
       }
     }
@@ -1153,4 +1228,151 @@ export interface MessageReachWire {
 
 export interface MessageReachResult {
   messageReach: MessageReachWire[];
+}
+
+// --- Comment Likes ---
+
+export const LIKE_COMMENT = gql`
+  mutation LikeComment($commentId: UUID!) {
+    likeComment(commentId: $commentId) {
+      id
+      likes {
+        id
+        profileId
+      }
+    }
+  }
+`;
+
+export interface LikeCommentResult {
+  likeComment: { id: string; likes: LikeRef[] } | null;
+}
+
+export const UNLIKE_COMMENT = gql`
+  mutation UnlikeComment($commentId: UUID!) {
+    unlikeComment(commentId: $commentId) {
+      id
+      likes {
+        id
+        profileId
+      }
+    }
+  }
+`;
+
+export interface UnlikeCommentResult {
+  unlikeComment: { id: string; likes: LikeRef[] } | null;
+}
+
+// --- Comment Reports ---
+
+export const REPORT_COMMENT = gql`
+  mutation ReportComment($commentId: UUID!, $reason: String!, $details: String) {
+    reportComment(commentId: $commentId, reason: $reason, details: $details) {
+      id
+    }
+  }
+`;
+
+export interface ReportCommentResult {
+  reportComment: { id: string } | null;
+}
+
+export const REPORTED_COMMENTS = gql`
+  query ReportedComments($take: Int, $skip: Int) {
+    reportedComments(take: $take, skip: $skip) {
+      commentId
+      comment {
+        id
+        body
+        createdAt
+        profile {
+          id
+          displayName
+          avatarUrl
+        }
+      }
+      post {
+        id
+        body
+      }
+      reportCount
+      reports {
+        id
+        reason
+        details
+        createdAt
+        reportedBy {
+          id
+          displayName
+        }
+      }
+    }
+  }
+`;
+
+export interface CommentReportWire {
+  id: string;
+  reason: string;
+  details: string | null;
+  createdAt: string;
+  reportedBy: { id: string; displayName: string };
+}
+
+export interface ReportedCommentWire {
+  commentId: string;
+  comment: {
+    id: string;
+    body: string;
+    createdAt: string;
+    profile: { id: string; displayName: string; avatarUrl?: string | null };
+  };
+  post: { id: string; body: string };
+  reportCount: number;
+  reports: CommentReportWire[];
+}
+
+export interface ReportedCommentsResult {
+  reportedComments: ReportedCommentWire[];
+}
+
+export const RESOLVE_COMMENT_REPORT = gql`
+  mutation ResolveCommentReport($reportId: UUID!) {
+    resolveCommentReport(reportId: $reportId)
+  }
+`;
+
+export interface ResolveCommentReportResult {
+  resolveCommentReport: boolean;
+}
+
+// --- Profiles Search ---
+
+export const PROFILES_SEARCH_QUERY = gql`
+  query ProfilesSearch($search: String, $take: Int, $skip: Int) {
+    profiles(search: $search, take: $take, skip: $skip) {
+      id
+      userId
+      displayName
+      isSystem
+      status
+      region
+      diagnosis
+      avatarUrl
+    }
+  }
+`;
+
+export interface ProfileSearchResult {
+  id: string;
+  displayName: string;
+  isSystem?: boolean;
+  status: string;
+  region: string;
+  diagnosis: string;
+  avatarUrl?: string | null;
+}
+
+export interface ProfilesSearchResult {
+  profiles: ProfileSearchResult[];
 }
