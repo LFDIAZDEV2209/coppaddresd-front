@@ -33,13 +33,13 @@ const variantConfig: Record<
     iconBg: "bg-primary",
     iconColor: "text-white",
     trendColor: "text-success",
-    accent: "#3B82F6",
+    accent: "var(--primary)",
   },
   primary: {
     iconBg: "bg-primary",
     iconColor: "text-white",
     trendColor: "text-primary",
-    accent: "#3B82F6",
+    accent: "var(--primary)",
   },
   success: {
     iconBg: "bg-success",

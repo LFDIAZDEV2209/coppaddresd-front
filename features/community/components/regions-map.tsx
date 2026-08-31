@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -61,16 +62,14 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
         // 6px (mínimo visible) → 22px (el metro con más miembros).
         const radius = 6 + Math.sqrt(r.members / maxMembers) * 16;
         return (
-          <>
+          <Fragment key={r.region}>
             {/* Halo translúcido que amplifica la percepción de tamaño */}
             <CircleMarker
-              key={`${r.region}-halo`}
               center={latlng}
               radius={radius * 1.7}
               pathOptions={{ stroke: false, fillColor: color, fillOpacity: 0.18 }}
             />
             <CircleMarker
-              key={r.region}
               center={latlng}
               radius={radius}
               pathOptions={{ color: "#fff", weight: 1.5, fillColor: color, fillOpacity: 0.85 }}
@@ -79,7 +78,7 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
                 <b>{r.region}</b> — {r.members} {r.members === 1 ? "miembro" : "miembros"}
               </Popup>
             </CircleMarker>
-          </>
+          </Fragment>
         );
       })}
     </MapContainer>

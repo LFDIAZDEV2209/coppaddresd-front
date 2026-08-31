@@ -52,9 +52,9 @@ export function DiagnosticsPage() {
             key={kpi.label}
             label={t(kpi.label)}
             value={kpi.value}
-            context={kpi.context ? t(kpi.context) : undefined}
+            context={kpi.context}
             icon={Stethoscope}
-            variant="info"
+            variant="primary"
           />
         ))}
       </section>
