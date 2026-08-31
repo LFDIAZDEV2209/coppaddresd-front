@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/i18n-provider";
 import { useAuth } from "@/providers/auth-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { erpNavSections, communityBrand } from "../navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -16,9 +17,20 @@ export function CommunitySidebar({ onNavigate }: CommunitySidebarProps) {
   const pathname = usePathname();
   const t = useT();
   const { user } = useAuth();
+  const { can } = useAppContext();
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
+
+  // Filtrar secciones e ítems según permisos del usuario.
+  const visibleSections = erpNavSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter(
+        (item) => !item.permission || can(item.permission),
+      ),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <div className="flex h-full w-[260px] shrink-0 flex-col bg-[var(--sidebar)] text-[var(--sidebar-foreground)]">
@@ -40,7 +52,7 @@ export function CommunitySidebar({ onNavigate }: CommunitySidebarProps) {
       {/* Secciones */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <div className="flex flex-col gap-5">
-          {erpNavSections.map((section) => (
+          {visibleSections.map((section) => (
             <div key={section.label} className="flex flex-col gap-1">
               <span className="px-2.5 pb-1 text-[10.5px] font-bold uppercase tracking-widest text-[var(--sidebar-muted-foreground)]">
                 {t(section.label)}
