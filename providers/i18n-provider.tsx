@@ -110,6 +110,7 @@ export function I18nProvider({
   }, [lang]);
 
   const t = useCallback((source: string, params?: Record<string, string>): string => {
+    if (source == null) return ''; // evitar t(null) / t(undefined)
     const found = dictionaries[lang][source];
     let translated = found && found.length > 0 ? found : source;
     if (!found && lang !== 'es') {

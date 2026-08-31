@@ -32,7 +32,7 @@ export default function DashboardLoading() {
 
       <div className="flex flex-col gap-4 xl:flex-row">
         <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="rounded-none bg-[#0B2B4A] px-5 py-4">
+          <div className="rounded-none bg-[var(--sidebar)] px-5 py-4">
             <Skeleton className="h-5 w-32 bg-white/20" />
             <Skeleton className="mt-1 h-3 w-40 bg-white/10" />
           </div>
@@ -41,7 +41,7 @@ export default function DashboardLoading() {
           </div>
         </div>
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card xl:w-[300px]">
-          <div className="rounded-none bg-[#0B2B4A] px-5 py-4">
+          <div className="rounded-none bg-[var(--sidebar)] px-5 py-4">
             <Skeleton className="h-5 w-28 bg-white/20" />
           </div>
           <div className="p-4 flex flex-col gap-2">
@@ -58,7 +58,7 @@ export default function DashboardLoading() {
             key={i}
             className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card"
           >
-            <div className="rounded-none bg-[#0B2B4A] px-5 py-4">
+            <div className="rounded-none bg-[var(--sidebar)] px-5 py-4">
               <Skeleton className="h-5 w-28 bg-white/20" />
             </div>
             <div className="p-5">

@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarCheck,
-  CalendarClock,
   CalendarDays,
   CalendarRange,
-  CalendarX,
   ClipboardList,
+  Search,
   Stethoscope,
   Video,
   X,
@@ -19,29 +18,20 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { toggleActiveClass } from "./dashboard/range-toggle";
+import { cn } from "@/lib/utils";
 import { AgendaCalendarSwitcher } from "./agenda-calendar-switcher";
+import { AppointmentActionDialogs } from "./calendar/appointment-action-dialogs";
+import { AppointmentEventPopover } from "./calendar/appointment-event-popover";
 import { useCurrentUser } from "../hooks/use-current-user";
 import { useAgenda } from "../hooks/use-agenda";
-import {
-  cancelAppointment,
-  rescheduleAppointment,
-} from "../services/appointments-service";
+import { useAppointmentFilters } from "../hooks/use-appointment-filters";
+import { useAppointmentActions } from "../hooks/use-appointment-actions";
 import {
   appointmentStatusColor,
+  appointmentStatusDot,
   appointmentStatusLabel,
-  formatRange,
   formatTime,
 } from "../utils/format";
 import type { AppointmentStatus, AppointmentDto } from "../types";
@@ -54,7 +44,7 @@ const rangeOptions: Array<{ key: Range; label: string; icon: LucideIcon }> = [
   { key: "month", label: "Mes", icon: CalendarDays },
 ];
 
-/** Estados que aparecen en el resumen rápido, en orden de prioridad. */
+/** Estados que aparecen en el resumen, en orden de prioridad. */
 const summaryStatuses: AppointmentStatus[] = [
   "Confirmed",
   "InProgress",
@@ -64,11 +54,12 @@ const summaryStatuses: AppointmentStatus[] = [
 ];
 
 /**
- * Agenda del profesional en un rango, con acciones de cancelación y
- * reprogramación. Con <paramref name="fixedProfessionalId"/> (vista del
- * administrador: "todas las agendas") usa ese profesional en lugar del
- * contexto del JWT; <paramref name="cancelledBy"/> define el actor de la
- * cancelación (Admin para la vista global).
+ * Agenda del profesional en un rango: timeline agrupada por día con
+ * encabezados sticky, chips de resumen que actúan como filtros, búsqueda y
+ * acciones rápidas (mismas reglas de estado que el calendario). Con
+ * <paramref name="fixedProfessionalId"/> (vista del administrador: "todas
+ * las agendas") usa ese profesional; <paramref name="cancelledBy"/> define
+ * el actor de cancelación/reprogramación.
  */
 export function ProfessionalAgenda({
   fixedProfessionalId = null,
@@ -101,14 +92,21 @@ export function ProfessionalAgenda({
     to,
   );
 
-  const [cancelling, setCancelling] =
-    useState<AppointmentDto | null>(null);
-  const [cancelReason, setCancelReason] = useState("");
-  const [rescheduling, setRescheduling] =
-    useState<AppointmentDto | null>(null);
-  const [newStart, setNewStart] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const filters = useAppointmentFilters(appointments);
+  const actions = useAppointmentActions({
+    actor: cancelledBy,
+    onSuccess: refetch,
+  });
+  const [eventPopover, setEventPopover] = useState<{
+    appointment: AppointmentDto;
+    anchor: Element;
+  } | null>(null);
+
+  // Agrupación por día de las citas FILTRADAS (los KPIs usan el total).
+  const groups = useMemo(
+    () => groupByDay(filters.filtered),
+    [filters.filtered],
+  );
 
   if (userLoading) {
     return (
@@ -119,70 +117,14 @@ export function ProfessionalAgenda({
     );
   }
 
-  const confirmCancel = async () => {
-    if (!cancelling) return;
-    setBusy(true);
-    setActionError(null);
-    try {
-      await cancelAppointment(cancelling.id, {
-        reason: cancelReason.trim() || "Cancelada por el profesional",
-        cancelledBy,
-      });
-      setCancelling(null);
-      setCancelReason("");
-      refetch();
-    } catch {
-      setActionError(
-        t('No se pudo cancelar la cita. Revisa que el estado lo permita.'),
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmReschedule = async () => {
-    if (!rescheduling || !newStart) return;
-    setBusy(true);
-    setActionError(null);
-    try {
-      await rescheduleAppointment(rescheduling.id, {
-        newStart: new Date(newStart).toISOString(),
-        requestedBy: "Professional",
-        reason: "Reprogramada por el profesional",
-      });
-      setRescheduling(null);
-      setNewStart("");
-      refetch();
-    } catch {
-      setActionError(
-        t('No se pudo reprogramar la cita. Verifica el horario y la anticipación.'),
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  // Conteo de citas por estado para el resumen rápido (una sola pasada).
-  const countsByStatus = new Map<AppointmentStatus, number>();
-  for (const appointment of appointments) {
-    countsByStatus.set(
-      appointment.status,
-      (countsByStatus.get(appointment.status) ?? 0) + 1,
-    );
-  }
-  const statusSummary = summaryStatuses.filter(
-    (status) => (countsByStatus.get(status) ?? 0) > 0,
-  );
-  const grouped = groupByDay(appointments);
-
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title={fixedProfessionalId ? t('Agenda') : t('Mi agenda')}
+        title={fixedProfessionalId ? t("Agenda") : t("Mi agenda")}
         description={
           professionalName
-            ? t('Citas de {name}', { name: professionalName })
-            : t('Agenda del profesional')
+            ? t("Citas de {name}", { name: professionalName })
+            : t("Agenda del profesional")
         }
         icon={CalendarDays}
         actions={<AgendaCalendarSwitcher active="agenda" />}
@@ -191,11 +133,14 @@ export function ProfessionalAgenda({
       {!professionalId ? (
         <EmptyState
           icon={Stethoscope}
-          title={t('El usuario no es un profesional clínico')}
-          description={t('La agenda de Citas requiere una asignación clínica en el ERP.')}
+          title={t("El usuario no es un profesional clínico")}
+          description={t(
+            "La agenda de Citas requiere una asignación clínica en el ERP.",
+          )}
         />
       ) : (
         <>
+          {/* Controles: rango + búsqueda */}
           <div className="flex flex-wrap items-center gap-3">
             <ToggleGroup
               value={[range]}
@@ -212,13 +157,7 @@ export function ProfessionalAgenda({
               {rangeOptions.map((option) => {
                 const Icon = option.icon;
                 return (
-                  <ToggleGroupItem
-                    key={option.key}
-                    value={option.key}
-                    className={
-                      range === option.key ? toggleActiveClass : undefined
-                    }
-                  >
+                  <ToggleGroupItem key={option.key} value={option.key}>
                     <Icon data-icon="inline-start" />
                     {option.label}
                   </ToggleGroupItem>
@@ -226,45 +165,87 @@ export function ProfessionalAgenda({
               })}
             </ToggleGroup>
             <span className="text-[12px] text-muted-foreground">
-              {appointments.length} cita{appointments.length === 1 ? "" : "s"}{" "}
-              {t('en el rango')}
+              {appointments.length} cita
+              {appointments.length === 1 ? "" : "s"} {t("en el rango")}
             </span>
+
+            <div className="relative ml-auto">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                type="search"
+                value={filters.query}
+                onChange={(e) => filters.setQuery(e.target.value)}
+                placeholder={t("Buscar paciente")}
+                aria-label={t("Buscar paciente por nombre")}
+                className="h-8 w-44 pl-8 text-[12.5px]"
+              />
+            </div>
           </div>
 
-          {statusSummary.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              {statusSummary.map((status) => {
-                const color = appointmentStatusColor(status);
-                return (
-                  <div
-                    key={status}
-                    className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5"
+          {/* Chips de resumen: clicables, filtran como la toolbar del calendario */}
+          <div className="flex flex-wrap items-center gap-2">
+            {summaryStatuses.map((status) => {
+              const count = filters.countsByStatus.get(status) ?? 0;
+              if (count === 0) return null;
+              const active = filters.statuses?.includes(status) ?? false;
+              const color = appointmentStatusColor(status);
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => filters.toggleStatus(status)}
+                  aria-pressed={active}
+                  className={cn(
+                    "flex items-center gap-2 rounded-full border px-3 py-1.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                    active
+                      ? "border-transparent shadow-sm"
+                      : "border-border bg-card hover:border-primary/40",
+                  )}
+                  style={
+                    active
+                      ? { backgroundColor: color.bg, color: color.text }
+                      : undefined
+                  }
+                >
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: appointmentStatusDot(status) }}
+                    aria-hidden="true"
+                  />
+                  <span className="text-[12px] font-medium">
+                    {appointmentStatusLabel[status]}
+                  </span>
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 text-[11.5px] font-bold",
+                      active ? "" : "text-foreground",
+                    )}
+                    style={
+                      active
+                        ? { backgroundColor: "rgba(0,0,0,0.08)" }
+                        : undefined
+                    }
                   >
-                    <span
-                      className="size-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: color.dot }}
-                      aria-hidden="true"
-                    />
-                    <span className="text-[12px] font-medium text-muted-foreground">
-                      {appointmentStatusLabel[status]}
-                    </span>
-                    <span className="text-[12px] font-bold text-foreground">
-                      {countsByStatus.get(status)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {actionError && (
-            <p
-              className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
-              role="alert"
-            >
-              {actionError}
-            </p>
-          )}
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+            {filters.activeCount > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 gap-1 px-2 text-[11.5px] text-muted-foreground"
+                onClick={filters.clear}
+              >
+                <X className="size-3.5" data-icon="inline-start" />
+                {t("Limpiar filtros")}
+              </Button>
+            )}
+          </div>
 
           {loading ? (
             <div className="flex flex-col gap-2">
@@ -273,195 +254,176 @@ export function ProfessionalAgenda({
               ))}
             </div>
           ) : error ? (
-            <ErrorState message={error} />
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-14 text-center">
+              <p className="text-sm text-foreground">{error}</p>
+              <Button size="sm" variant="outline" onClick={refetch}>
+                {t("Reintentar")}
+              </Button>
+            </div>
           ) : appointments.length === 0 ? (
             <EmptyState
               icon={CalendarDays}
-              title={t('Sin citas en el rango')}
-              description={t('No hay citas programadas para este período.')}
+              title={t("Sin citas en el rango")}
+              description={t("No hay citas programadas para este período.")}
+            />
+          ) : groups.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              title={t("Sin resultados")}
+              description={t(
+                "Ninguna cita coincide con los filtros aplicados.",
+              )}
             />
           ) : (
-            <div className="flex flex-col gap-5">
-              {grouped.map((group) => (
-                <div key={group.key} className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2.5 rounded-xl bg-primary-soft px-3 py-2">
+            <div className="flex flex-col gap-1">
+              {groups.map((group) => (
+                <section key={group.key} className="flex flex-col gap-2">
+                  {/* Encabezado sticky del día */}
+                  <header className="sticky top-0 z-10 -mx-1 flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/95 px-3 py-2 backdrop-blur-sm">
                     <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                       <CalendarCheck className="size-3.5" />
                     </div>
-                    <span className="text-[13px] font-semibold text-primary-strong">
+                    <span className="text-[13px] font-semibold text-foreground">
                       {group.label}
                     </span>
-                    <span className="ml-auto text-[11.5px] font-medium text-primary-strong/80">
+                    <span className="ml-auto text-[11.5px] font-medium text-muted-foreground">
                       {group.items.length} cita
                       {group.items.length === 1 ? "" : "s"}
                     </span>
-                  </div>
+                  </header>
                   {group.items.map((appointment) => (
                     <AppointmentRow
                       key={appointment.id}
                       appointment={appointment}
-                      onOpen={() =>
+                      onOpen={(anchor) =>
+                        setEventPopover({ appointment, anchor })
+                      }
+                      onDetail={() =>
                         router.push(`/appointments/citas/${appointment.id}`)
                       }
                       onJoin={() =>
                         router.push(`/appointments/sala/${appointment.id}`)
                       }
-                      onCancel={() => setCancelling(appointment)}
-                      onReschedule={() => setRescheduling(appointment)}
+                      onCancel={() => actions.openCancel(appointment)}
+                      onReschedule={() => actions.openReschedule(appointment)}
                     />
                   ))}
-                </div>
+                </section>
               ))}
             </div>
           )}
         </>
       )}
 
-      {/* Cancelación */}
-      <Dialog
-        open={cancelling !== null}
-        onOpenChange={(open) => !open && setCancelling(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-                <CalendarX className="size-4" />
-              </span>
-              {t('Cancelar cita')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('¿Seguro que querés cancelar la cita del')}{" "}
-              {cancelling
-                ? formatRange(
-                    cancelling.scheduledStart,
-                    cancelling.scheduledEnd,
-                  )
-                : ""}
-              ?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="cancel-reason">{t('Motivo (opcional)')}</Label>
-            <Input
-              id="cancel-reason"
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              placeholder={t('Motivo de la cancelación')}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setCancelling(null)}
-              disabled={busy}
-            >
-              {t('Volver')}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmCancel}
-              disabled={busy}
-            >
-              {busy ? t('Cancelando...') : t('Cancelar cita')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Popover de evento (mismo componente que el calendario) */}
+      <AppointmentEventPopover
+        appointment={eventPopover?.appointment ?? null}
+        anchor={eventPopover?.anchor ?? null}
+        onOpenChange={(open) => {
+          if (!open) setEventPopover(null);
+        }}
+        onCancel={actions.openCancel}
+        onReschedule={actions.openReschedule}
+        onJoin={(appointment) =>
+          router.push(`/appointments/sala/${appointment.id}`)
+        }
+      />
 
-      {/* Reprogramación */}
-      <Dialog
-        open={rescheduling !== null}
-        onOpenChange={(open) => !open && setRescheduling(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                <CalendarClock className="size-4" />
-              </span>
-              {t('Reprogramar cita')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('Elegí el nuevo horario para la cita.')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="reschedule-start">{t('Nuevo inicio')}</Label>
-            <Input
-              id="reschedule-start"
-              type="datetime-local"
-              value={newStart}
-              onChange={(e) => setNewStart(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRescheduling(null)}
-              disabled={busy}
-            >
-              {t('Volver')}
-            </Button>
-            <Button onClick={confirmReschedule} disabled={busy || !newStart}>
-              {busy ? t('Reprogramando...') : t('Reprogramar')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Cancelación / reprogramación (diálogos compartidos) */}
+      <AppointmentActionDialogs
+        cancelling={actions.cancelling}
+        cancelReason={actions.cancelReason}
+        onCancelReasonChange={actions.setCancelReason}
+        rescheduling={actions.rescheduling}
+        newStart={actions.newStart}
+        onNewStartChange={actions.setNewStart}
+        busy={actions.busy}
+        actionError={actions.actionError}
+        onClose={actions.closeAll}
+        onConfirmCancel={() => void actions.confirmCancel()}
+        onConfirmReschedule={() => void actions.confirmReschedule()}
+      />
     </div>
   );
 }
 
+/**
+ * Fila de la agenda: riel temporal con hora destacada, datos de la cita y
+ * acciones rápidas según estado. El click abre el popover del evento; las
+ * acciones destructivas abren los diálogos compartidos.
+ */
 function AppointmentRow({
   appointment,
   onOpen,
+  onDetail,
   onJoin,
   onCancel,
   onReschedule,
 }: {
   appointment: AppointmentDto;
-  onOpen: () => void;
+  onOpen: (anchor: Element) => void;
+  onDetail: () => void;
   onJoin: () => void;
   onCancel: () => void;
   onReschedule: () => void;
 }) {
   const t = useT();
+  const color = appointmentStatusColor(appointment.status);
   const cancellable =
     appointment.status === "Confirmed" || appointment.status === "Requested";
   const reschedulable = appointment.status === "Confirmed";
   const joinable =
     appointment.status === "Confirmed" || appointment.status === "InProgress";
+  const faded =
+    appointment.status === "Cancelled" || appointment.status === "NoShow";
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:shadow-sm">
+    <div
+      className={cn(
+        "group flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:shadow-sm",
+        faded && "opacity-70",
+      )}
+    >
       <button
-        onClick={onOpen}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        onClick={(e) => onOpen(e.currentTarget)}
+        className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        aria-label={t("Ver detalles de la cita de {name}", {
+          name: appointment.patientName ?? t("Paciente"),
+        })}
       >
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft">
-          <Video className="size-4.5 text-primary" />
-        </div>
-        <div className="flex w-14 shrink-0 flex-col items-start">
-          <span className="text-[13px] font-bold text-foreground">
+        {/* Riel temporal */}
+        <div className="flex w-16 shrink-0 flex-col items-start border-r border-border pr-3">
+          <span className="text-[14px] font-bold text-foreground">
             {formatTime(appointment.scheduledStart)}
           </span>
           <span className="text-[11px] text-muted-foreground">
             {formatTime(appointment.scheduledEnd)}
           </span>
         </div>
+        <div
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl"
+          style={{ backgroundColor: color.bg }}
+          aria-hidden="true"
+        >
+          <Video className="size-4.5" style={{ color: color.dot }} />
+        </div>
         <div className="flex min-w-0 flex-col gap-px">
-          <span className="truncate text-[13.5px] font-semibold text-foreground">
-            {appointment.patientName ?? t('Paciente')}
+          <span
+            className={cn(
+              "truncate text-[13.5px] font-semibold text-foreground",
+              faded && "line-through",
+            )}
+          >
+            {appointment.patientName ?? t("Paciente")}
           </span>
           <span className="truncate text-[12px] text-muted-foreground">
-            {appointment.specialtyName ?? t('Especialidad')} ·{" "}
-            {appointment.locationName ?? t('Sede')}
+            {appointment.specialtyName ?? t("Especialidad")} ·{" "}
+            {appointment.locationName ?? t("Sede")}
           </span>
           {appointment.cancellationReason && (
-              <span className="truncate text-[11.5px] text-muted-foreground/70">
-                {t('Motivo')}: {appointment.cancellationReason}
-              </span>
+            <span className="truncate text-[11.5px] text-muted-foreground/70">
+              {t("Motivo")}: {appointment.cancellationReason}
+            </span>
           )}
         </div>
       </button>
@@ -469,14 +431,14 @@ function AppointmentRow({
       <div className="flex shrink-0 items-center gap-2">
         <StatusBadge
           status={appointmentStatusLabel[appointment.status]}
-          color={appointmentStatusColor(appointment.status)}
+          color={color}
         />
-        <Button size="sm" variant="outline" onClick={onOpen}>
-          <ClipboardList data-icon="inline-start" /> {t('Detalle')}
+        <Button size="sm" variant="outline" onClick={onDetail}>
+          <ClipboardList data-icon="inline-start" /> {t("Detalle")}
         </Button>
         {joinable && (
           <Button size="sm" onClick={onJoin}>
-            <Video data-icon="inline-start" /> {t('Unirme')}
+            <Video data-icon="inline-start" /> {t("Unirme")}
           </Button>
         )}
         {reschedulable && (
@@ -484,9 +446,9 @@ function AppointmentRow({
             size="sm"
             variant="ghost"
             onClick={onReschedule}
-            aria-label={t('Reprogramar')}
+            aria-label={t("Reprogramar")}
           >
-            <CalendarClock data-icon="inline-start" />
+            <CalendarDays data-icon="inline-start" />
           </Button>
         )}
         {cancellable && (
@@ -495,7 +457,7 @@ function AppointmentRow({
             variant="ghost"
             className="text-muted-foreground hover:text-destructive"
             onClick={onCancel}
-            aria-label={t('Cancelar')}
+            aria-label={t("Cancelar")}
           >
             <X data-icon="inline-start" />
           </Button>
@@ -528,7 +490,17 @@ function groupByDay(appointments: AppointmentDto[]): DayGroup[] {
   const today = new Date();
   return [...map.values()]
     .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .map((group) => ({ ...group, label: formatDayHeader(group.date, today) }));
+    .map((group) => ({
+      ...group,
+      items: group.items
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(a.scheduledStart).getTime() -
+            new Date(b.scheduledStart).getTime(),
+        ),
+      label: formatDayHeader(group.date, today),
+    }));
 }
 
 /** Etiqueta del día: Hoy / Mañana / Ayer o "lunes, 25 de agosto". */
@@ -601,16 +573,5 @@ function EmptyState({
         {description}
       </p>
     </div>
-  );
-}
-
-function ErrorState({ message }: { message: string }) {
-  return (
-    <p
-      className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
-      role="alert"
-    >
-      {message}
-    </p>
   );
 }

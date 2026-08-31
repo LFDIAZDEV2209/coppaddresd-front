@@ -46,6 +46,7 @@ import type { ProductListItem } from "@/features/inventory/types";
 import type { CreateStoreItemInput, StoreItemListItem, UpdateStoreItemInput } from "../types";
 import { useStore, fetchAvailableProducts } from "../hooks/use-store";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 
 export function StorePage() {
   const {
@@ -64,6 +65,7 @@ export function StorePage() {
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<StoreItemListItem | undefined>();
   const t = useT();
+  const { can } = useAppContext();
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -72,10 +74,12 @@ export function StorePage() {
         description={t('Administra los productos que se muestran en el marketplace del paciente')}
         icon={Store}
         actions={
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus data-icon="inline-start" />
-            {t('Agregar producto')}
-          </Button>
+          can("Store.Manage") ? (
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus data-icon="inline-start" />
+              {t('Agregar producto')}
+            </Button>
+          ) : undefined
         }
       />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -127,7 +131,9 @@ export function StorePage() {
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card py-16 text-center">
           <ShoppingBag className="size-8 text-muted-foreground" />
           <p className="text-sm font-semibold">{t('No hay productos en la tienda')}</p>
-          <Button size="sm" onClick={() => setAddOpen(true)}>{t('Agregar primer producto')}</Button>
+          {can("Store.Manage") && (
+            <Button size="sm" onClick={() => setAddOpen(true)}>{t('Agregar primer producto')}</Button>
+          )}
         </div>
       )}
       {result && result.totalPages > 1 && (
@@ -159,6 +165,7 @@ function StoreTable({
   onRestore: (id: string) => void;
 }) {
   const t = useT();
+  const { can } = useAppContext();
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
       <SectionHeader title={`${items.length} ${t('productos')}`} description={t('Estado de la tienda')} icon={ShoppingBag} variant="primary" />
@@ -199,6 +206,7 @@ function StoreTable({
                 />
               </TableCell>
               <TableCell>
+                {can("Store.Manage") && (
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={t('Acciones de {name}', { name: item.productName })} />}>
                     <MoreHorizontal />
@@ -218,6 +226,7 @@ function StoreTable({
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                )}
               </TableCell>
             </TableRow>
           ))}

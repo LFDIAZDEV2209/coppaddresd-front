@@ -64,140 +64,160 @@
 :root {
   --radius: 0.75rem;
 
-  --background: #EFF2F7;
-  --foreground: #1A1D2E;
+  /* === ACENTO (única fuente de verdad) ===
+     El color de acento de la marca es el azul navy (default #123B63, el "Azul"
+     de la paleta de Settings). Todo el sistema primario y el croma de
+     navegación se DERIVAN de --accent-color con color-mix(): el provider lo
+     sobrescribe inline en <html> en runtime (data style) y todo se recalcula
+     en ambos temas sin tocar componentes. */
+  --accent-color: #123b63;
 
-  --card: #FFFFFF;
-  --card-foreground: #1A1D2E;
+  --background: #eff2f7;
+  --foreground: #1a1d2e;
 
-  --popover: #FFFFFF;
-  --popover-foreground: #1A1D2E;
+  --card: #ffffff;
+  --card-foreground: #1a1d2e;
 
-  --primary: #3B82F6;
-  --primary-foreground: #FFFFFF;
-  --primary-soft: #DBEAFE;
-  --primary-strong: #2563EB;
+  --popover: #ffffff;
+  --popover-foreground: #1a1d2e;
 
-  --secondary: #E2E8F0;
+  --primary: var(--accent-color);
+  --primary-foreground: #ffffff;
+  --primary-soft: color-mix(in srgb, var(--accent-color) 12%, white);
+  --primary-strong: color-mix(in srgb, var(--accent-color) 85%, black);
+
+  --secondary: #e2e8f0;
   --secondary-foreground: #475569;
-  --secondary-soft: #F1F5F9;
+  --secondary-soft: #f1f5f9;
 
-  --muted: #E2E8F0;
-  --muted-foreground: #64748B;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
 
-  --accent: #0EA5E9;
-  --accent-foreground: #FFFFFF;
+  --accent: #0ea5e9;
+  --accent-foreground: #ffffff;
 
-  --destructive: #DC2626;
-  --destructive-foreground: #FFFFFF;
-  --destructive-soft: #FEE2E2;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --destructive-soft: #fee2e2;
 
   --success: #059669;
-  --success-foreground: #FFFFFF;
-  --success-soft: #D1FAE5;
+  --success-foreground: #ffffff;
+  --success-soft: #d1fae5;
 
-  --warning: #D97706;
-  --warning-foreground: #FFFFFF;
-  --warning-soft: #FEF3C7;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --warning-soft: #fef3c7;
 
-  --info: #0284C7;
-  --info-foreground: #FFFFFF;
-  --info-soft: #E0F2FE;
+  --info: #0284c7;
+  --info-foreground: #ffffff;
+  --info-soft: #e0f2fe;
 
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #3B82F6;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: var(--accent-color);
 
-  --chart-1: #3B82F6;
-  --chart-2: #0EA5E9;
+  --chart-1: var(--accent-color);
+  --chart-2: #0ea5e9;
   --chart-3: #059669;
-  --chart-4: #D97706;
-  --chart-5: #DC2626;
+  --chart-4: #d97706;
+  --chart-5: #dc2626;
 
-  --sidebar: #162032;
-  --sidebar-foreground: #CBD5E1;
-  --sidebar-primary: #1E293B;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #1E293B;
-  --sidebar-ring: #3B82F6;
-  --sidebar-muted-foreground: #64748B;
+  /* Croma de navegación: navy de la marca = tinte OSCURO SATURADO del acento.
+     Todo el sidebar (fondo, superficies, textos) deriva del acento para que
+     el cambio de color sea evidente en TODA la interfaz — no solo botones. */
+  --sidebar: color-mix(in srgb, var(--accent-color) 62%, black);
+  --sidebar-foreground: color-mix(in srgb, var(--accent-color) 16%, white);
+  --sidebar-primary: color-mix(in srgb, var(--accent-color) 32%, black);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in srgb, var(--accent-color) 32%, black);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: color-mix(in srgb, var(--accent-color) 32%, black);
+  --sidebar-ring: var(--accent-color);
+  --sidebar-muted-foreground: color-mix(
+    in srgb,
+    var(--accent-color) 28%,
+    #94a3b8
+  );
 
   /* === DESIGN TOKENS === */
-  --surface: #F8FAFC;
+  --surface: #f8fafc;
   --sidebar-hover: rgba(255, 255, 255, 0.08);
-  --sidebar-active-bg: rgba(37, 99, 235, 0.18);
-  --sidebar-active-border: #3B82F6;
-  --sidebar-active-text: #FFFFFF;
+  --sidebar-active-bg: color-mix(in srgb, var(--accent-color) 26%, transparent);
+  --sidebar-active-border: var(--accent-color);
+  --sidebar-active-text: #ffffff;
 }
 
 .dark {
-  --background: #0B1120;
-  --foreground: #E2E8F0;
+  --background: #0b1120;
+  --foreground: #e2e8f0;
 
-  --card: #1E293B;
-  --card-foreground: #E2E8F0;
+  --card: #1e293b;
+  --card-foreground: #e2e8f0;
 
-  --popover: #1E293B;
-  --popover-foreground: #E2E8F0;
+  --popover: #1e293b;
+  --popover-foreground: #e2e8f0;
 
-  --primary: #3B82F6;
-  --primary-foreground: #FFFFFF;
-  --primary-soft: #1E3A5F;
-  --primary-strong: #60A5FA;
+  /* Variantes aclaradas del acento para fondo oscuro (legibilidad). */
+  --primary: color-mix(in srgb, var(--accent-color) 78%, white);
+  --primary-foreground: #ffffff;
+  --primary-soft: color-mix(in srgb, var(--accent-color) 24%, #0b1120);
+  --primary-strong: color-mix(in srgb, var(--accent-color) 60%, white);
 
-  --secondary: #1E293B;
-  --secondary-foreground: #94A3B8;
-  --secondary-soft: #1E293B;
+  --secondary: #1e293b;
+  --secondary-foreground: #94a3b8;
+  --secondary-soft: #1e293b;
 
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
 
-  --accent: #38BDF8;
-  --accent-foreground: #FFFFFF;
+  --accent: #38bdf8;
+  --accent-foreground: #ffffff;
 
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
-  --destructive-soft: #450A0A;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --destructive-soft: #450a0a;
 
-  --success: #34D399;
-  --success-foreground: #FFFFFF;
-  --success-soft: #064E3B;
+  --success: #34d399;
+  --success-foreground: #ffffff;
+  --success-soft: #064e3b;
 
-  --warning: #FBBF24;
-  --warning-foreground: #FFFFFF;
-  --warning-soft: #78350F;
+  --warning: #fbbf24;
+  --warning-foreground: #ffffff;
+  --warning-soft: #78350f;
 
-  --info: #38BDF8;
-  --info-foreground: #FFFFFF;
-  --info-soft: #0C4A6E;
+  --info: #38bdf8;
+  --info-foreground: #ffffff;
+  --info-soft: #0c4a6e;
 
   --border: #334155;
   --input: #334155;
-  --ring: #3B82F6;
+  --ring: color-mix(in srgb, var(--accent-color) 78%, white);
 
-  --chart-1: #60A5FA;
-  --chart-2: #38BDF8;
-  --chart-3: #34D399;
-  --chart-4: #FBBF24;
-  --chart-5: #EF4444;
+  --chart-1: var(--primary);
+  --chart-2: #38bdf8;
+  --chart-3: #34d399;
+  --chart-4: #fbbf24;
+  --chart-5: #ef4444;
 
-  --sidebar: #162032;
-  --sidebar-foreground: #94A3B8;
-  --sidebar-primary: #1E293B;
-  --sidebar-primary-foreground: #E2E8F0;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #E2E8F0;
-  --sidebar-border: #1E293B;
-  --sidebar-ring: #3B82F6;
-  --sidebar-muted-foreground: #64748B;
+  --sidebar: color-mix(in srgb, var(--accent-color) 62%, black);
+  --sidebar-foreground: color-mix(in srgb, var(--accent-color) 20%, #e2e8f0);
+  --sidebar-primary: color-mix(in srgb, var(--accent-color) 34%, black);
+  --sidebar-primary-foreground: #e2e8f0;
+  --sidebar-accent: color-mix(in srgb, var(--accent-color) 34%, black);
+  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar-border: color-mix(in srgb, var(--accent-color) 34%, black);
+  --sidebar-ring: color-mix(in srgb, var(--accent-color) 78%, white);
+  --sidebar-muted-foreground: color-mix(
+    in srgb,
+    var(--accent-color) 30%,
+    #94a3b8
+  );
 
-  --surface: #0F172A;
+  --surface: #0f172a;
   --sidebar-hover: rgba(255, 255, 255, 0.06);
-  --sidebar-active-bg: rgba(59, 130, 246, 0.18);
-  --sidebar-active-border: #3B82F6;
-  --sidebar-active-text: #FFFFFF;
+  --sidebar-active-bg: color-mix(in srgb, var(--accent-color) 28%, transparent);
+  --sidebar-active-border: color-mix(in srgb, var(--accent-color) 78%, white);
+  --sidebar-active-text: #ffffff;
 }
 
 @layer base {
@@ -206,13 +226,28 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-family:
+      var(--font-sans),
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      sans-serif;
   }
   html {
     @apply font-sans;
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family:
+      var(--font-sans),
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      sans-serif;
     letter-spacing: -0.01em;
   }
 }
@@ -234,28 +269,54 @@
 /* === ANIMACIONES === */
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slide-down {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Clases de utilidad para animaciones */
@@ -279,12 +340,24 @@
 .stagger-children > * {
   animation: slide-up 0.3s ease-out both;
 }
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-children > *:nth-child(2) {
+  animation-delay: 50ms;
+}
+.stagger-children > *:nth-child(3) {
+  animation-delay: 100ms;
+}
+.stagger-children > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+.stagger-children > *:nth-child(5) {
+  animation-delay: 200ms;
+}
+.stagger-children > *:nth-child(6) {
+  animation-delay: 250ms;
+}
 
 /* Transiciones suaves para elementos interactivos */
 .transition-smooth {
@@ -293,7 +366,9 @@
 
 /* Hover lift effect */
 .hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .hover-lift:hover {
   transform: translateY(-1px);
@@ -302,7 +377,11 @@
 
 /* Gradient primary para headers y sidebar */
 .bg-primary-gradient {
-  background: linear-gradient(135deg, var(--sidebar) 0%, color-mix(in srgb, var(--sidebar) 80%, var(--primary)) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--sidebar) 0%,
+    color-mix(in srgb, var(--sidebar) 80%, var(--primary)) 100%
+  );
 }
 
 .rich-text-editor .ProseMirror {
@@ -361,4 +440,28 @@
 .rich-text-editor .ProseMirror hr {
   margin: 0.75rem 0;
   border-color: var(--border);
+}
+
+@keyframes feedSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes feedHighlight {
+  0% {
+    background-color: var(--primary-soft);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.animate-feed-slide {
+  animation:
+    feedSlideIn 350ms cubic-bezier(0.22, 1, 0.36, 1),
+    feedHighlight 2000ms ease-out 350ms;
 }

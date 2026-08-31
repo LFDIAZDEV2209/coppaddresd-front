@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { useUnifiedAssignments } from "../hooks/use-unified-assignments";
 import {
   ASSIGNMENT_STATUS_COLORS,
@@ -53,6 +54,7 @@ import type { UnifiedAssignment } from "../types";
 
 export function AssignmentsPage() {
   const t = useT();
+  const { can } = useAppContext();
   const { items, loading, actionLoading, error, remove, retry } =
     useUnifiedAssignments();
 
@@ -89,10 +91,12 @@ export function AssignmentsPage() {
         description={t("Rutinas de ejercicio y planes de alimentación asignados a pacientes")}
         icon={ClipboardList}
         actions={
-          <Button size="sm" onClick={() => setFormOpen(true)}>
-            <Plus data-icon="inline-start" />
-            {t("Nueva asignación")}
-          </Button>
+          can("Wellness.Manage") ? (
+            <Button size="sm" onClick={() => setFormOpen(true)}>
+              <Plus data-icon="inline-start" />
+              {t("Nueva asignación")}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -247,15 +251,17 @@ export function AssignmentsPage() {
                         >
                           <Eye className="size-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-destructive"
-                          title={t("Eliminar")}
-                          onClick={() => setDeleting(item)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
+                        {can("Wellness.Manage") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-destructive"
+                            title={t("Eliminar")}
+                            onClick={() => setDeleting(item)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -367,6 +373,7 @@ function AssignmentsErrorState({
 
 function AssignmentsEmptyState({ onCreate }: { onCreate: () => void }) {
   const t = useT();
+  const { can } = useAppContext();
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border py-16 text-center">
       <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
@@ -378,10 +385,12 @@ function AssignmentsEmptyState({ onCreate }: { onCreate: () => void }) {
           {t("Asigna una rutina de ejercicio o un plan de alimentación a un paciente.")}
         </p>
       </div>
-      <Button size="sm" onClick={onCreate}>
-        <Plus data-icon="inline-start" />
-        {t("Nueva asignación")}
-      </Button>
+      {can("Wellness.Manage") && (
+        <Button size="sm" onClick={onCreate}>
+          <Plus data-icon="inline-start" />
+          {t("Nueva asignación")}
+        </Button>
+      )}
     </div>
   );
 }

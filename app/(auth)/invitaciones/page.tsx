@@ -78,7 +78,7 @@ function InvitationPageContent() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0B2B4A] px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--sidebar)] px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary-strong">
