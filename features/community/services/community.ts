@@ -102,6 +102,7 @@ export interface CommentDetail {
 export interface PollVoteWire {
   id: string;
   profileId: string;
+  profile: { id: string; displayName: string; avatarUrl?: string | null } | null;
 }
 
 export interface PollOptionWire {
@@ -120,6 +121,7 @@ export interface Post {
   id: string;
   body: string;
   pinned: boolean;
+  pinnedOrder: number;
   createdAt: string;
   type: ProfilePostType;
   destination: ProfilePostDestination;
@@ -259,6 +261,7 @@ export const FEED_QUERY = gql`
       id
       body
       pinned
+      pinnedOrder
       createdAt
       type
       destination
@@ -274,6 +277,11 @@ export const FEED_QUERY = gql`
           votes {
             id
             profileId
+            profile {
+              id
+              displayName
+              avatarUrl
+            }
           }
         }
       }
@@ -637,6 +645,20 @@ export interface ModerateDeletePostResult {
   moderateDeletePost: Pick<Post, "id"> | null;
 }
 
+export const REORDER_PINNED_POSTS = gql`
+  mutation ReorderPinnedPosts($orderedIds: [UUID!]!) {
+    reorderPinnedPosts(orderedIds: $orderedIds) {
+      id
+      pinned
+      pinnedOrder
+    }
+  }
+`;
+
+export interface ReorderPinnedPostsResult {
+  reorderPinnedPosts: Pick<Post, "id" | "pinned"> & { pinnedOrder: number }[];
+}
+
 // --- Consulta de publicación individual ---
 
 export const POST_QUERY = gql`
@@ -648,6 +670,7 @@ export const POST_QUERY = gql`
       destination
       viewCount
       pinned
+      pinnedOrder
       createdAt
       imageUrl
       mediaType
@@ -660,6 +683,11 @@ export const POST_QUERY = gql`
           votes {
             id
             profileId
+            profile {
+              id
+              displayName
+              avatarUrl
+            }
           }
         }
       }

@@ -13,10 +13,14 @@ import {
   Heart,
   MessageCircle,
   Eye,
+  EyeOff,
   X,
   Link2,
   Plus,
   Check,
+  ChevronUp,
+  ChevronDown,
+  Users,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -49,32 +53,23 @@ import { useAppContext } from "@/providers/context-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
 import { CommunityPagination } from "./community-pagination";
 import { PostDetailDialog } from "./post-detail-dialog";
+import { MediaLightbox } from "./media-lightbox";
 import type { ErpPost, PostType } from "../types";
 import type { PollWire } from "../types";
 
-/** Bloque de encuesta inline — opciones tappables antes de votar; después muestra resultados con barra de progreso. */
+/** Bloque de encuesta inline — solo lectura en ERP; muestra opciones, barras, votos. */
 function PollBlockInline({
   poll,
   myId,
-  onVote,
+  canModerate,
 }: {
   poll: PollWire;
   myId: string | null;
-  onVote: (optionId: string) => void;
+  canModerate: boolean;
 }) {
-  const [voting, setVoting] = useState(false);
+  const [showVoters, setShowVoters] = useState(false);
   const myVote = poll.options.find((o) => o.votes.some((v) => v.profileId === myId));
   const total = poll.options.reduce((acc, o) => acc + o.votes.length, 0);
-
-  const handleVote = (optionId: string) => {
-    if (voting || myVote) return;
-    setVoting(true);
-    try {
-      onVote(optionId);
-    } finally {
-      setVoting(false);
-    }
-  };
 
   return (
     <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/30 p-3">
@@ -85,24 +80,10 @@ function PollBlockInline({
         const votes = option.votes.length;
         const pct = total > 0 ? Math.round((votes / total) * 100) : 0;
         const mine = myVote?.id === option.id;
-        if (!myVote) {
-          return (
-            <button
-              key={option.id}
-              type="button"
-              disabled={voting}
-              onClick={() => handleVote(option.id)}
-              className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left text-xs font-medium transition-all hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
-            >
-              <span className="flex size-4 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[9px] text-muted-foreground" />
-              {option.text}
-            </button>
-          );
-        }
         return (
           <div key={option.id} className="relative flex items-center gap-2 overflow-hidden rounded-md border border-border bg-card px-3 py-2">
             <div
-              className="absolute inset-y-0 left-0 rounded-l-md"
+              className="absolute inset-y-0 left-0 rounded-l-md transition-all"
               style={{ width: `${pct}%`, backgroundColor: mine ? "var(--primary)" : "var(--primary-soft)" }}
             />
             <span className="relative flex items-center gap-1.5 text-xs font-medium">
@@ -113,11 +94,48 @@ function PollBlockInline({
           </div>
         );
       })}
-      <div className="text-[10px] text-muted-foreground">
-        {total === 0
-          ? "Sin votos todavía"
-          : `${total} ${total === 1 ? "voto" : "votos"}${myVote ? " · Ya votaste" : ""}`}
+      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+        <span>
+          {total === 0
+            ? "Sin votos todavía"
+            : `${total} ${total === 1 ? "voto" : "votos"}${myVote ? " · Ya votaste" : ""}`}
+        </span>
+        {canModerate && total > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowVoters((v) => !v)}
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-primary hover:bg-primary-soft"
+          >
+            {showVoters ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+            {showVoters ? "Ocultar votantes" : "Ver votantes"}
+          </button>
+        )}
       </div>
+      {/* Votantes expandibles */}
+      {showVoters && (
+        <div className="flex flex-col gap-1 rounded-md border border-border bg-card p-2">
+          {poll.options.map((option) => (
+            <div key={option.id} className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-semibold text-muted-foreground">{option.text}</span>
+              {option.votes.length === 0 ? (
+                <span className="text-[10px] text-muted-foreground/60">Sin votos</span>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {option.votes.map((v) => (
+                    <span
+                      key={v.id}
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground"
+                    >
+                      <Users className="size-2.5 text-muted-foreground" />
+                      {v.profile?.displayName ?? v.profileId}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -150,7 +168,7 @@ const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
 export function PostsPage() {
   const t = useT();
   const { can } = useAppContext();
-  const { posts, publishPost, togglePin, deletePost, members, me, votePoll } = useErp();
+  const { posts, publishPost, togglePin, deletePost, members, me, reorderPinned } = useErp();
   const canModerate = can("Community.Moderate");
   // Sin useSearchParams para evitar Suspense; el dashboard abre con ?compose=1
   const [type, setType] = useState<PostType>("Texto");
@@ -187,6 +205,16 @@ export function PostsPage() {
     [posts, detailPostId],
   );
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Lightbox state
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxType, setLightboxType] = useState<"IMAGE" | "VIDEO" | null>(null);
+  const [lightboxBody, setLightboxBody] = useState<string>("");
+
+  const openLightbox = (url: string, mediaType: "IMAGE" | "VIDEO", body?: string) => {
+    setLightboxUrl(url);
+    setLightboxType(mediaType);
+    setLightboxBody(body ?? "");
+  };
 
   const pinnedPosts = posts.filter((p) => p.pinned);
   const nonPinnedPosts = useMemo(() => posts.filter((p) => !p.pinned), [posts]);
@@ -201,6 +229,16 @@ export function PostsPage() {
     const start = (page - 1) * pageSize;
     return nonPinnedPosts.slice(start, start + pageSize);
   }, [nonPinnedPosts, page, pageSize]);
+
+  /** Mueve un post fijado arriba o abajo en la lista. */
+  const movePinned = (index: number, direction: "up" | "down") => {
+    const allIds = pinnedPosts.map((p) => p.id);
+    const targetIdx = direction === "up" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= allIds.length) return;
+    const newIds = [...allIds];
+    [newIds[index], newIds[targetIdx]] = [newIds[targetIdx], newIds[index]];
+    reorderPinned(newIds);
+  };
 
   const buildBody = () => {
     const base = body.trim();
@@ -447,9 +485,10 @@ export function PostsPage() {
           {pinnedPosts.length > 0 ? (
             <>
               <div className="flex flex-col gap-3 p-4">
-                {paginatedPinned.map((post) => {
+                {paginatedPinned.map((post, localIdx) => {
                   const member = members.find((m) => m.id === post.authorId);
                   const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
+                  const globalIdx = (pinnedPage - 1) * pinnedPageSize + localIdx;
                   return (
                     <div
                       key={post.id}
@@ -475,6 +514,28 @@ export function PostsPage() {
                           <div className="flex shrink-0 gap-1">
                         {canModerate && (
                           <>
+                            {/* Reorder buttons */}
+                            <span className="flex items-center text-[10px] font-bold text-muted-foreground" title={`Prioridad ${globalIdx + 1}`}>
+                              #{globalIdx + 1}
+                            </span>
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              disabled={globalIdx === 0}
+                              onClick={() => movePinned(globalIdx, "up")}
+                              title={t("Mover arriba")}
+                            >
+                              <ChevronUp className="size-3.5" />
+                            </Button>
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              disabled={globalIdx === pinnedPosts.length - 1}
+                              onClick={() => movePinned(globalIdx, "down")}
+                              title={t("Mover abajo")}
+                            >
+                              <ChevronDown className="size-3.5" />
+                            </Button>
                             <Button size="icon-sm" variant="ghost" onClick={() => togglePin(post.id, false)} title={t("Desfijar")}>
                               <Pin className="size-3.5" />
                             </Button>
@@ -489,31 +550,45 @@ export function PostsPage() {
                       </div>
                     </div>
                     <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
-                    {/* Media rendering */}
+                    {/* Media — thumbnail + lightbox */}
                     {post.imageUrl && post.mediaType === "IMAGE" && (
-                      <div className="overflow-hidden rounded-lg border border-border">
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(post.imageUrl!, "IMAGE", post.body)}
+                        className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={post.imageUrl}
                           alt=""
-                          className="w-full object-contain"
-                          style={{ maxHeight: 320 }}
+                          className="w-full rounded-lg object-cover transition-transform group-hover:scale-[1.02]"
+                          style={{ maxHeight: 160, maxWidth: 280 }}
                         />
-                      </div>
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                          Ver imagen completa
+                        </span>
+                      </button>
                     )}
                     {post.mediaType === "VIDEO" && post.imageUrl && (
-                      <div className="overflow-hidden rounded-lg border border-border">
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(post.imageUrl!, "VIDEO", post.body)}
+                        className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+                      >
                         <video
                           src={post.imageUrl}
-                          controls
-                          className="w-full"
-                          style={{ maxHeight: 320 }}
+                          muted
+                          className="w-full rounded-lg object-cover"
+                          style={{ maxHeight: 160, maxWidth: 280 }}
                         />
-                      </div>
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                          Ver video completo
+                        </span>
+                      </button>
                     )}
                     {/* Poll rendering */}
                     {post.poll && (
-                      <PollBlockInline poll={post.poll} myId={me?.id ?? null} onVote={votePoll} />
+                      <PollBlockInline poll={post.poll} myId={me?.id ?? null} canModerate={canModerate} />
                     )}
                     <div className="flex flex-wrap items-center gap-1.5">
                       <StatusBadge
@@ -610,31 +685,45 @@ export function PostsPage() {
                       </div>
                     </div>
                     <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
-                    {/* Media rendering */}
+                    {/* Media — thumbnail + lightbox */}
                     {post.imageUrl && post.mediaType === "IMAGE" && (
-                      <div className="overflow-hidden rounded-lg border border-border">
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(post.imageUrl!, "IMAGE", post.body)}
+                        className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={post.imageUrl}
                           alt=""
-                          className="w-full object-contain"
-                          style={{ maxHeight: 320 }}
+                          className="w-full rounded-lg object-cover transition-transform group-hover:scale-[1.02]"
+                          style={{ maxHeight: 160, maxWidth: 280 }}
                         />
-                      </div>
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                          Ver imagen completa
+                        </span>
+                      </button>
                     )}
                     {post.mediaType === "VIDEO" && post.imageUrl && (
-                      <div className="overflow-hidden rounded-lg border border-border">
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(post.imageUrl!, "VIDEO", post.body)}
+                        className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+                      >
                         <video
                           src={post.imageUrl}
-                          controls
-                          className="w-full"
-                          style={{ maxHeight: 320 }}
+                          muted
+                          className="w-full rounded-lg object-cover"
+                          style={{ maxHeight: 160, maxWidth: 280 }}
                         />
-                      </div>
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                          Ver video completo
+                        </span>
+                      </button>
                     )}
                     {/* Poll rendering */}
                     {post.poll && (
-                      <PollBlockInline poll={post.poll} myId={me?.id ?? null} onVote={votePoll} />
+                      <PollBlockInline poll={post.poll} myId={me?.id ?? null} canModerate={canModerate} />
                     )}
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span
@@ -674,6 +763,14 @@ export function PostsPage() {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         post={detailPost}
+      />
+
+      <MediaLightbox
+        url={lightboxUrl}
+        mediaType={lightboxType}
+        body={lightboxBody}
+        open={Boolean(lightboxUrl)}
+        onOpenChange={(o) => { if (!o) setLightboxUrl(null); }}
       />
 
       <AlertDialog open={Boolean(confirmDeleteId)} onOpenChange={(o) => { if (!o) setConfirmDeleteId(null); }}>

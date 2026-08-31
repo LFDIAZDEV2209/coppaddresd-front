@@ -8,11 +8,13 @@ import {
   Heart,
   MessageCircle,
   Eye,
+  EyeOff,
   CornerDownRight,
   X,
   Flag,
   BarChart3,
   Check,
+  Users,
 } from "lucide-react";
 import {
   Dialog,
@@ -38,32 +40,23 @@ import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { useAppContext } from "@/providers/context-provider";
 import { MemberAvatar, profileName } from "./member-avatar";
+import { MediaLightbox } from "./media-lightbox";
 import type { ErpComment, ErpPost } from "../types";
 import type { PollWire } from "../types";
 
-/** Bloque de encuesta inline — opciones tappables antes de votar; después muestra resultados con barra de progreso. */
+/** Bloque de encuesta inline — solo lectura en ERP; muestra opciones, barras, votos. */
 function PollBlockInline({
   poll,
   myId,
-  onVote,
+  canModerate,
 }: {
   poll: PollWire;
   myId: string | null;
-  onVote: (optionId: string) => void;
+  canModerate: boolean;
 }) {
-  const [voting, setVoting] = useState(false);
+  const [showVoters, setShowVoters] = useState(false);
   const myVote = poll.options.find((o) => o.votes.some((v) => v.profileId === myId));
   const total = poll.options.reduce((acc, o) => acc + o.votes.length, 0);
-
-  const handleVote = (optionId: string) => {
-    if (voting || myVote) return;
-    setVoting(true);
-    try {
-      onVote(optionId);
-    } finally {
-      setVoting(false);
-    }
-  };
 
   return (
     <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/30 p-3">
@@ -74,24 +67,10 @@ function PollBlockInline({
         const votes = option.votes.length;
         const pct = total > 0 ? Math.round((votes / total) * 100) : 0;
         const mine = myVote?.id === option.id;
-        if (!myVote) {
-          return (
-            <button
-              key={option.id}
-              type="button"
-              disabled={voting}
-              onClick={() => handleVote(option.id)}
-              className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left text-xs font-medium transition-all hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
-            >
-              <span className="flex size-4 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[9px] text-muted-foreground" />
-              {option.text}
-            </button>
-          );
-        }
         return (
           <div key={option.id} className="relative flex items-center gap-2 overflow-hidden rounded-md border border-border bg-card px-3 py-2">
             <div
-              className="absolute inset-y-0 left-0 rounded-l-md"
+              className="absolute inset-y-0 left-0 rounded-l-md transition-all"
               style={{ width: `${pct}%`, backgroundColor: mine ? "var(--primary)" : "var(--primary-soft)" }}
             />
             <span className="relative flex items-center gap-1.5 text-xs font-medium">
@@ -102,11 +81,48 @@ function PollBlockInline({
           </div>
         );
       })}
-      <div className="text-[10px] text-muted-foreground">
-        {total === 0
-          ? "Sin votos todavía"
-          : `${total} ${total === 1 ? "voto" : "votos"}${myVote ? " · Ya votaste" : ""}`}
+      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+        <span>
+          {total === 0
+            ? "Sin votos todavía"
+            : `${total} ${total === 1 ? "voto" : "votos"}${myVote ? " · Ya votaste" : ""}`}
+        </span>
+        {canModerate && total > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowVoters((v) => !v)}
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-primary hover:bg-primary-soft"
+          >
+            {showVoters ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+            {showVoters ? "Ocultar votantes" : "Ver votantes"}
+          </button>
+        )}
       </div>
+      {/* Votantes expandibles */}
+      {showVoters && (
+        <div className="flex flex-col gap-1 rounded-md border border-border bg-card p-2">
+          {poll.options.map((option) => (
+            <div key={option.id} className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-semibold text-muted-foreground">{option.text}</span>
+              {option.votes.length === 0 ? (
+                <span className="text-[10px] text-muted-foreground/60">Sin votos</span>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {option.votes.map((v) => (
+                    <span
+                      key={v.id}
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground"
+                    >
+                      <Users className="size-2.5 text-muted-foreground" />
+                      {v.profile?.displayName ?? v.profileId}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -149,7 +165,6 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
     deleteComment,
     reportPost,
     me,
-    votePoll,
   } = useErp();
 
   const [draft, setDraft] = useState("");
@@ -159,6 +174,14 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
   const [reportDialogComment, setReportDialogComment] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
+  // Lightbox state
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxType, setLightboxType] = useState<"IMAGE" | "VIDEO" | null>(null);
+
+  const openLightbox = (url: string, mediaType: "IMAGE" | "VIDEO") => {
+    setLightboxUrl(url);
+    setLightboxType(mediaType);
+  };
 
   /** Registra la vista al abrir el diálogo (fire-and-forget). */
   const postId = post?.id;
@@ -321,31 +344,45 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
             {/* Body del post */}
             <p className="whitespace-pre-wrap break-words text-sm text-foreground">{post.body}</p>
 
-            {/* Media rendering */}
+            {/* Media — thumbnail + lightbox */}
             {post.imageUrl && post.mediaType === "IMAGE" && (
-              <div className="overflow-hidden rounded-lg border border-border">
+              <button
+                type="button"
+                onClick={() => openLightbox(post.imageUrl!, "IMAGE")}
+                className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={post.imageUrl}
                   alt=""
-                  className="w-full object-contain"
-                  style={{ maxHeight: 320 }}
+                  className="w-full rounded-lg object-cover transition-transform group-hover:scale-[1.02]"
+                  style={{ maxHeight: 160, maxWidth: 280 }}
                 />
-              </div>
+                <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                  Ver imagen completa
+                </span>
+              </button>
             )}
             {post.mediaType === "VIDEO" && post.imageUrl && (
-              <div className="overflow-hidden rounded-lg border border-border">
+              <button
+                type="button"
+                onClick={() => openLightbox(post.imageUrl!, "VIDEO")}
+                className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
+              >
                 <video
                   src={post.imageUrl}
-                  controls
-                  className="w-full"
-                  style={{ maxHeight: 320 }}
+                  muted
+                  className="w-full rounded-lg object-cover"
+                  style={{ maxHeight: 160, maxWidth: 280 }}
                 />
-              </div>
+                <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-[0px] text-white transition-all group-hover:bg-black/20 group-hover:text-xs">
+                  Ver video completo
+                </span>
+              </button>
             )}
             {/* Poll rendering */}
             {post.poll && (
-              <PollBlockInline poll={post.poll} myId={me?.id ?? null} onVote={votePoll} />
+              <PollBlockInline poll={post.poll} myId={me?.id ?? null} canModerate={canModerate} />
             )}
 
             {/* Chips de metadata */}
@@ -529,6 +566,13 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
           </div>
         </DialogContent>
       </Dialog>
+
+      <MediaLightbox
+        url={lightboxUrl}
+        mediaType={lightboxType}
+        open={Boolean(lightboxUrl)}
+        onOpenChange={(o) => { if (!o) setLightboxUrl(null); }}
+      />
     </>
   );
 }

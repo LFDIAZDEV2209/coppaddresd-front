@@ -55,7 +55,7 @@ export interface PollOptionWire {
   id: string;
   text: string;
   position: number;
-  votes: { id: string; profileId: string }[];
+  votes: { id: string; profileId: string; profile?: { id: string; displayName: string; avatarUrl?: string | null } | null }[];
 }
 
 export interface PollWire {
@@ -71,6 +71,7 @@ export interface ErpPost {
   destination: string; // "Todas las comunidades" etc.
   body: string;
   pinned: boolean;
+  pinnedOrder: number;
   createdAt: string; // "Hace 2h"
   reactions: number;
   comments: number;

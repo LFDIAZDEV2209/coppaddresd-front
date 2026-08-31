@@ -35,6 +35,7 @@ import {
   PROFILES_QUERY,
   RECOGNITIONS_QUERY,
   REGION_STATS_QUERY,
+  REORDER_PINNED_POSTS,
   REPORTED_POSTS,
   REPORT_POST,
   REPLY_TO_COMMENT,
@@ -45,7 +46,6 @@ import {
   TOP_STREAKS_QUERY,
   UNBAN_PROFILE,
   VIEW_POST,
-  VOTE_POLL,
   type AddCommentResult,
   type AwardXpAllResult,
   type AwardXpResult,
@@ -79,6 +79,7 @@ import {
   type RecognitionsResult,
   type RegionStatWire,
   type RegionStatsResult,
+  type ReorderPinnedPostsResult,
   type ReportedPostWire,
   type ReportedPostsResult,
   type ReportPostResult,
@@ -90,7 +91,6 @@ import {
   type TopStreaksResult,
   type UnbanProfileResult,
   type ViewPostResult,
-  type VotePollResult,
 } from "./services/community";
 import { useT } from "@/providers/i18n-provider";
 import type {
@@ -206,6 +206,7 @@ function mapPost(post: Post): ErpPost {
     destination: DEST_LABEL[normalizeEnum(post.destination)] ?? DEST_LABEL[post.destination] ?? post.destination,
     body: post.body,
     pinned: post.pinned,
+    pinnedOrder: post.pinnedOrder ?? 0,
     createdAt: relativeTime(post.createdAt),
     reactions: post.likes.length,
     comments: post.comments.length,
@@ -467,7 +468,7 @@ interface ErpContextValue {
   togglePin: (id: string, nextPinned: boolean) => void;
   deletePost: (id: string) => void;
   viewPost: (id: string) => void;
-  votePoll: (optionId: string) => void;
+  reorderPinned: (orderedIds: string[]) => Promise<void>;
   awardXp: (payload: AwardPayload) => void;
   sendMessage: (memberId: string, message: string) => void;
   sendBulkInactive: (message: string) => void;
@@ -677,7 +678,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     { groupId: string; body: string }
   >(SEND_GROUP_MESSAGE);
   const [, viewPostMut] = useMutation<ViewPostResult, { id: string }>(VIEW_POST);
-  const [, votePollMut] = useMutation<VotePollResult, { optionId: string }>(VOTE_POLL);
+  const [, reorderPinnedMut] = useMutation<ReorderPinnedPostsResult, { orderedIds: string[] }>(REORDER_PINNED_POSTS);
 
   const [, addCommentMut] = useMutation<AddCommentResult, { postId: string; body: string }>(ADD_COMMENT);
   const [, replyToCommentMut] = useMutation<ReplyToCommentResult, { commentId: string; body: string }>(
@@ -963,16 +964,14 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     [refetchPosts],
   );
 
-  const votePoll = useCallback<ErpContextValue["votePoll"]>(
-    (optionId) => {
-      votePollMut({ optionId }).then((res) => {
-        if (res.error) {
-          toast(res.error.message || "No se pudo registrar el voto");
-        } else {
-          toast("Voto registrado");
-          refetchPosts();
-        }
-      });
+  const reorderPinned = useCallback<ErpContextValue["reorderPinned"]>(
+    async (orderedIds) => {
+      const res = await reorderPinnedMut({ orderedIds });
+      if (res.error) {
+        toast(res.error.message || "No se pudo reordenar las publicaciones fijadas");
+      } else {
+        refetchPosts();
+      }
     },
     [toast, refetchPosts],
   );
@@ -1245,7 +1244,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       togglePin,
       deletePost,
       viewPost,
-      votePoll,
+      reorderPinned,
       awardXp,
       sendMessage,
       sendBulkInactive,
@@ -1325,7 +1324,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       togglePin,
       deletePost,
       viewPost,
-      votePoll,
+      reorderPinned,
       awardXp,
       sendMessage,
       sendBulkInactive,
