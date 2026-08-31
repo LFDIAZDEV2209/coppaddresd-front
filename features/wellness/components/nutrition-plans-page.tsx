@@ -11,6 +11,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
+import { useAppContext } from "@/providers/context-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -54,6 +55,7 @@ import type { NutritionPlanListItem } from "../types";
 
 export function NutritionPlansPage() {
   const t = useT();
+  const { can } = useAppContext();
   const {
     result,
     loading,
@@ -118,10 +120,12 @@ export function NutritionPlansPage() {
         description={t("Gestiona los planes nutricionales para tus pacientes")}
         icon={Apple}
         actions={
-          <Button size="sm" onClick={openCreate}>
-            <Plus data-icon="inline-start" />
-            {t("Nuevo plan")}
-          </Button>
+          can("Wellness.Manage") ? (
+            <Button size="sm" onClick={openCreate}>
+              <Plus data-icon="inline-start" />
+              {t("Nuevo plan")}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -288,16 +292,18 @@ export function NutritionPlansPage() {
                         >
                           <Eye className="size-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          title={t("Editar")}
-                          onClick={() => openEdit(plan)}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        {plan.isTemplate && (
+                        {can("Wellness.Manage") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            title={t("Editar")}
+                            onClick={() => openEdit(plan)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                        )}
+                        {plan.isTemplate && can("Wellness.Manage") && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -308,15 +314,17 @@ export function NutritionPlansPage() {
                             <Copy className="size-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-destructive"
-                          title={t("Eliminar")}
-                          onClick={() => setDeleting(plan)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
+                        {can("Wellness.Manage") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-destructive"
+                            title={t("Eliminar")}
+                            onClick={() => setDeleting(plan)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -485,6 +493,7 @@ function PlansErrorState({
 
 function PlansEmptyState({ onCreate }: { onCreate: () => void }) {
   const t = useT();
+  const { can } = useAppContext();
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border py-16 text-center">
       <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
@@ -496,10 +505,12 @@ function PlansEmptyState({ onCreate }: { onCreate: () => void }) {
           {t("Crea tu primer plan nutricional para asignarlo a tus pacientes.")}
         </p>
       </div>
-      <Button size="sm" onClick={onCreate}>
-        <Plus data-icon="inline-start" />
-        {t("Nuevo plan")}
-      </Button>
+      {can("Wellness.Manage") && (
+        <Button size="sm" onClick={onCreate}>
+          <Plus data-icon="inline-start" />
+          {t("Nuevo plan")}
+        </Button>
+      )}
     </div>
   );
 }
