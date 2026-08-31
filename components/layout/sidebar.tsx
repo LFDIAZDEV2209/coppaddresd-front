@@ -14,12 +14,7 @@ import {
 import { useAuth } from "@/providers/auth-provider";
 import { useAppContext } from "@/providers/context-provider";
 import { useT } from "@/providers/i18n-provider";
-import {
-  ChevronDown,
-  ChevronsLeft,
-  LogOut,
-  Settings,
-} from "lucide-react";
+import { ChevronDown, ChevronsLeft, LogOut, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
@@ -133,9 +128,9 @@ export function Sidebar({
           )}
         </div>
 
-        {/* Navigation Modules */}
-        <ScrollArea className="flex-1 px-2.5 py-2">
-          <nav className="flex flex-col gap-0.5">
+        {/* Navigation Modules — scroll sutil: thumb blanca translúcida, solo visible al hover/scroll */}
+        <ScrollArea className="flex-1 min-h-0 px-2.5 py-2">
+          <nav className="flex flex-col gap-0.5 pb-2">
             {navModules.map((mod) => {
               const active = isModuleActive(mod);
               const expanded = expandedModules.has(mod.label) || active;
@@ -218,7 +213,9 @@ export function Sidebar({
                                   : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white border-transparent",
                               )}
                               style={{
-                                animationDelay: expanded ? `${idx * 40}ms` : undefined,
+                                animationDelay: expanded
+                                  ? `${idx * 40}ms`
+                                  : undefined,
                               }}
                             >
                               <ItemIcon className="size-[16px] shrink-0" />
