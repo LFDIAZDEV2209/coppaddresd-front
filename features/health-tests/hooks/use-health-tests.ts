@@ -11,6 +11,7 @@ import type {
   HealthProfessional,
   HealthTest,
   IndicatorAggregate,
+  PatientEvaluation,
   PatientMasterRow,
   PatientProfile,
   PendingPatientRow,
@@ -18,14 +19,17 @@ import type {
 import {
   healthTestsApi,
   healthTestMetrics,
+  withAttempts,
   type HealthTestStats,
 } from "../services/health-tests-service";
+import { ApiError } from "@/lib/api/http";
 
 /** Estado genérico de carga async (reutilizable por todos los hooks). */
 export function useAsyncData<T>(loader: () => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const loaderRef = useRef(loader);
 
   useEffect(() => {
@@ -37,8 +41,10 @@ export function useAsyncData<T>(loader: () => Promise<T>) {
       const result = await loaderRef.current();
       setData(result);
       setError(null);
-    } catch {
+      setErrorCode(null);
+    } catch (e) {
       setError("Intenta de nuevo más tarde.");
+      setErrorCode(e instanceof ApiError ? e.code : null);
     } finally {
       setLoading(false);
     }
@@ -48,7 +54,7 @@ export function useAsyncData<T>(loader: () => Promise<T>) {
     void load();
   }, [load]);
 
-  return { data, loading, error, reload: load };
+  return { data, loading, error, errorCode, reload: load };
 }
 
 /* ------------------------------------------------------------------ */
@@ -335,40 +341,58 @@ export function useMasterPatients() {
 export interface PatientDetailData {
   patient: PatientProfile;
   alerts: HealthAlert[];
-  tests: HealthTest[];
-  professionals: HealthProfessional[];
+  /** Evaluaciones del paciente con número de intento (historial del hub). */
+  evaluations: PatientEvaluation[];
 }
 
 export function usePatientDetail(patientId: string) {
   const patient = useAsyncData(() => healthTestsApi.getPatient(patientId));
+  const evaluations = useAsyncData(() =>
+    healthTestsApi.getPatientEvaluations(patientId).then(withAttempts),
+  );
   const alerts = useAsyncData(healthTestsApi.listAlerts);
-  const tests = useAsyncData(healthTestsApi.listTests);
-  const professionals = useAsyncData(healthTestsApi.listProfessionals);
 
-  const loading =
-    patient.loading || alerts.loading || tests.loading || professionals.loading;
-  const error =
-    patient.error ?? alerts.error ?? tests.error ?? professionals.error;
+  const loading = patient.loading || evaluations.loading || alerts.loading;
+  const error = patient.error ?? evaluations.error ?? alerts.error;
 
   const reload = useCallback(() => {
     void patient.reload();
+    void evaluations.reload();
     void alerts.reload();
-    void tests.reload();
-    void professionals.reload();
-  }, [patient, alerts, tests, professionals]);
+  }, [patient, evaluations, alerts]);
 
   const data = useMemo<PatientDetailData | null>(() => {
-    if (!patient.data || !alerts.data || !tests.data || !professionals.data)
-      return null;
+    if (!patient.data || !evaluations.data || !alerts.data) return null;
     return {
       patient: patient.data,
       alerts: alerts.data as HealthAlert[],
-      tests: tests.data as HealthTest[],
-      professionals: professionals.data as HealthProfessional[],
+      evaluations: evaluations.data as PatientEvaluation[],
     };
-  }, [patient.data, alerts.data, tests.data, professionals.data]);
+  }, [patient.data, evaluations.data, alerts.data]);
 
-  return { data, loading, error, reload };
+  const notFound = patient.errorCode === "not-found" && !patient.data;
+
+  return { data, loading, error, notFound, reload };
+}
+
+/* ------------------------------------------------------------------ */
+/* Detalle de evaluación (resultado individual)                        */
+/* ------------------------------------------------------------------ */
+
+export function useEvaluationDetail(patientId: string, evaluationId: string) {
+  const detail = useAsyncData(() =>
+    healthTestsApi.getEvaluationDetail(patientId, evaluationId),
+  );
+
+  const notFound = detail.errorCode === "not-found" && detail.data === null;
+
+  return {
+    detail: detail.data,
+    loading: detail.loading,
+    error: detail.error,
+    notFound,
+    reload: detail.reload,
+  };
 }
 
 /* ------------------------------------------------------------------ */

@@ -6,10 +6,16 @@ import type {
   CoverageByCategory,
   CoverageByTest,
   CoverageTrendPoint,
+  EvaluationAttemptItem,
+  EvaluationCommentItem,
+  EvaluationDetail,
+  EvaluationResponseItem,
+  EvaluationResultItem,
   HealthAlert,
   HealthProfessional,
   HealthTest,
   IndicatorAggregate,
+  PatientEvaluation,
   PatientMasterRow,
   PatientProfile,
   PatientTestResult,
@@ -56,6 +62,21 @@ const BASE = `${env.apiUrl}/api/v1/health-tests`;
 export interface HealthTestsApi {
   listPatients(): Promise<PatientProfile[]>;
   getPatient(id: string): Promise<PatientProfile | null>;
+  getPatientEvaluations(
+    patientId: string,
+    filters?: {
+      page?: number;
+      pageSize?: number;
+      status?: string;
+      from?: string;
+      to?: string;
+      category?: string;
+    },
+  ): Promise<EvaluationDto[]>;
+  getEvaluationDetail(
+    patientId: string,
+    evaluationId: string,
+  ): Promise<EvaluationDetail | null>;
   listTests(): Promise<HealthTest[]>;
   listIndicators(): Promise<ClinicalIndicator[]>;
   listProfessionals(): Promise<HealthProfessional[]>;
@@ -181,12 +202,64 @@ interface EvaluationDto {
   versionId: string;
   testName: string | null;
   testCode: string | null;
+  testCategory: string | null;
   status: string;
   startedAt: string;
   completedAt: string | null;
   score: number | null;
   scorePercentage: number | null;
   results: ResultDto[];
+}
+
+interface EvaluationDetailDto {
+  id: string;
+  assignmentId: string;
+  patientId: string;
+  versionId: string;
+  versionNumber: number;
+  versionName: string | null;
+  scoringStrategy: string;
+  testName: string | null;
+  testCode: string | null;
+  testCategory: string | null;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  attempt: number;
+  score: number | null;
+  scorePercentage: number | null;
+  results: ResultDto[];
+  responses: ResponseDetailDto[];
+  comments: CommentDto[];
+  attempts: AttemptDto[];
+}
+
+interface ResponseDetailDto {
+  questionId: string;
+  questionCode: string;
+  section: string | null;
+  questionText: string;
+  questionType: string;
+  answerOptionId: string | null;
+  answerOptionText: string | null;
+  answerOptionScore: number | null;
+  valueText: string | null;
+}
+
+interface CommentDto {
+  id: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+}
+
+interface AttemptDto {
+  id: string;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  score: number | null;
+  scorePercentage: number | null;
 }
 
 interface ResultDto {
@@ -212,12 +285,19 @@ interface PatientListItemDto {
   id: string;
   firstName: string;
   lastName: string;
+  documentTypeName: string | null;
   documentNumber: string | null;
+  dateOfBirth: string | null;
   gender: string | null;
+  phoneCountryCode: string | null;
   phoneNumber: string | null;
   email: string | null;
+  clinicId: string | null;
+  clinicName: string | null;
+  insurerName: string | null;
   status: string;
   createdAt: string;
+  professionalNames: string[];
 }
 
 interface ProfessionalCatalogItemDto {
@@ -380,16 +460,31 @@ function mapPatientListItem(
     lastName: dto.lastName,
     documentNumber: dto.documentNumber ?? "",
     gender: dto.gender === "Masculino" ? "Masculino" : "Femenino",
-    age: 0,
-    clinic: "",
-    professionalId: "",
+    age: ageFromDateOfBirth(dto.dateOfBirth),
+    clinic: dto.clinicName ?? "",
+    professionalId: dto.professionalNames[0] ?? "",
+    professionalName: dto.professionalNames[0] ?? "",
     status: dto.status === "Inactivo" ? "inactivo" : "activo",
-    insurance: "",
+    insurance: dto.insurerName ?? "",
     assignedAt: dto.createdAt,
     phone: dto.phoneNumber ?? "",
     email: dto.email ?? "",
     results,
   };
+}
+
+/** Edad calculada desde la fecha de nacimiento (null si no hay fecha). */
+function ageFromDateOfBirth(dateOfBirth: string | null): number {
+  if (!dateOfBirth) return 0;
+  const birth = new Date(dateOfBirth);
+  if (Number.isNaN(birth.getTime())) return 0;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const beforeBirthday =
+    now.getMonth() < birth.getMonth() ||
+    (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
+  if (beforeBirthday) age -= 1;
+  return Math.max(0, age);
 }
 
 function riskFromSeverity(severity: string | null): RiskLevel {
@@ -446,6 +541,93 @@ function aggregateResults(evaluations: EvaluationDto[]): PatientTestResult[] {
   return results;
 }
 
+/** Fila del historial del hub: evaluación + número de intento del test. */
+function mapPatientEvaluation(ev: EvaluationDto): PatientEvaluation {
+  return {
+    id: ev.id,
+    versionId: ev.versionId,
+    testName: ev.testName ?? ev.testCode ?? "Test",
+    testCode: ev.testCode ?? "",
+    testCategory: ev.testCategory ?? "",
+    status: ev.status as PatientEvaluation["status"],
+    startedAt: ev.startedAt,
+    completedAt: ev.completedAt,
+    score: ev.score,
+    scorePercentage: ev.scorePercentage,
+    attempt: 0,
+  };
+}
+
+/** Número de intento por test: orden cronológico entre evaluaciones del mismo versionId. */
+export function withAttempts(
+  evaluations: EvaluationDto[],
+): PatientEvaluation[] {
+  const counters = new Map<string, number>();
+  const sorted = [...evaluations].sort((a, b) =>
+    a.startedAt.localeCompare(b.startedAt),
+  );
+  return sorted.map((ev) => {
+    const n = (counters.get(ev.versionId) ?? 0) + 1;
+    counters.set(ev.versionId, n);
+    return { ...mapPatientEvaluation(ev), attempt: n };
+  });
+}
+
+function mapEvaluationDetail(detail: EvaluationDetailDto): EvaluationDetail {
+  return {
+    id: detail.id,
+    assignmentId: detail.assignmentId,
+    patientId: detail.patientId,
+    versionId: detail.versionId,
+    versionNumber: detail.versionNumber,
+    versionName: detail.versionName,
+    scoringStrategy: detail.scoringStrategy,
+    testName: detail.testName ?? detail.testCode ?? "Test",
+    testCode: detail.testCode ?? "",
+    testCategory: detail.testCategory ?? "",
+    status: detail.status as EvaluationDetail["status"],
+    startedAt: detail.startedAt,
+    completedAt: detail.completedAt,
+    attempt: detail.attempt,
+    score: detail.score,
+    scorePercentage: detail.scorePercentage,
+    results: detail.results.map((r) => ({
+      id: r.id,
+      resultType: r.resultType as EvaluationResultItem["resultType"],
+      code: r.code,
+      label: r.label,
+      value: r.value,
+      qualifier: r.qualifier,
+      severity: r.severity,
+    })),
+    responses: detail.responses.map((r): EvaluationResponseItem => ({
+      questionId: r.questionId,
+      questionCode: r.questionCode,
+      section: r.section,
+      questionText: r.questionText,
+      questionType: r.questionType as EvaluationResponseItem["questionType"],
+      answerOptionId: r.answerOptionId,
+      answerOptionText: r.answerOptionText,
+      answerOptionScore: r.answerOptionScore,
+      valueText: r.valueText,
+    })),
+    comments: detail.comments.map((c): EvaluationCommentItem => ({
+      id: c.id,
+      authorId: c.authorId,
+      body: c.body,
+      createdAt: c.createdAt,
+    })),
+    attempts: detail.attempts.map((a): EvaluationAttemptItem => ({
+      id: a.id,
+      status: a.status as EvaluationAttemptItem["status"],
+      startedAt: a.startedAt,
+      completedAt: a.completedAt,
+      score: a.score,
+      scorePercentage: a.scorePercentage,
+    })),
+  };
+}
+
 // ===================== Cliente API (funciones con nombre) =====================
 
 async function listPatients(): Promise<PatientProfile[]> {
@@ -458,11 +640,46 @@ async function listPatients(): Promise<PatientProfile[]> {
 async function getPatient(id: string): Promise<PatientProfile | null> {
   const [patient, evaluations] = await Promise.all([
     apiFetch<PatientListItemDto>(`${env.apiUrl}/api/v1/patients/${id}`),
-    apiFetch<EvaluationDto[]>(`${BASE}/patients/${id}/evaluations`).catch(
-      () => [] as EvaluationDto[],
-    ),
+    getPatientEvaluations(id).catch(() => []),
   ]);
   return mapPatientListItem(patient, aggregateResults(evaluations));
+}
+
+/** Evaluaciones de un paciente (paginadas, con filtros opcionales). */
+async function getPatientEvaluations(
+  patientId: string,
+  filters?: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    from?: string;
+    to?: string;
+    category?: string;
+  },
+): Promise<EvaluationDto[]> {
+  const params = new URLSearchParams({
+    page: String(filters?.page ?? 1),
+    pageSize: String(filters?.pageSize ?? 100),
+  });
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.from) params.set("from", filters.from);
+  if (filters?.to) params.set("to", filters.to);
+  if (filters?.category) params.set("category", filters.category);
+  const response = await apiFetch<PaginatedDto<EvaluationDto>>(
+    `${BASE}/patients/${patientId}/evaluations?${params.toString()}`,
+  );
+  return response.data;
+}
+
+/** Detalle completo de una evaluación (resultados, respuestas, comentarios, intentos). */
+async function getEvaluationDetail(
+  patientId: string,
+  evaluationId: string,
+): Promise<EvaluationDetail | null> {
+  const detail = await apiFetch<EvaluationDetailDto>(
+    `${BASE}/patients/${patientId}/evaluations/${evaluationId}`,
+  );
+  return mapEvaluationDetail(detail);
 }
 
 async function listTests(): Promise<HealthTest[]> {
@@ -719,6 +936,8 @@ async function getIndicatorAggregates(): Promise<IndicatorAggregate[]> {
 export const healthTestsApi: HealthTestsApi = {
   listPatients,
   getPatient,
+  getPatientEvaluations,
+  getEvaluationDetail,
   listTests,
   listIndicators,
   listProfessionals,

@@ -69,7 +69,7 @@ const variantConfig: Record<
     iconBg: "bg-[var(--sidebar)]",
     iconColor: "text-white",
     trendColor: "text-[var(--sidebar)]",
-    accent: "#162032",
+    accent: "var(--sidebar)",
   },
 };
 

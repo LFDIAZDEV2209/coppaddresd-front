@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
+import { AccentProvider } from "@/providers/accent-provider";
 import { I18nProvider } from "@/providers/i18n-provider";
 import "./globals.css";
 
@@ -44,7 +45,7 @@ export default async function RootLayout({
         className="min-h-full flex flex-col font-sans"
         suppressHydrationWarning
       >
-{/* Guard global de hidratación. Script INLINE PLANO (no next/script):
+        {/* Guard global de hidratación. Script INLINE PLANO (no next/script):
           se serializa tal cual en el HTML y se ejecuta SÍNCRONO durante el
           parseo, ANTES de que React hidrate. Algunas extensiones del navegador
           marcan elementos del DOM (bis_skin_checked, __processed_*) en rondas
@@ -55,9 +56,9 @@ export default async function RootLayout({
           caso teórico de una extensión que re-marca en respuesta a cada
           remoción. También silencia rechazos de promesas de extensiones
           (chrome-extension://) que ensucian la consola en desarrollo. */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `(function () {
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function () {
   var PATTERN = /^(bis_skin_checked|__processed_[a-f0-9-]{8,}__)$/;
   var removals = 0;
   var windowStart = Date.now();
@@ -114,15 +115,32 @@ export default async function RootLayout({
     } catch (err) {}
   });
 })();`,
-        }}
-      />
+          }}
+        />
+        {/* Acento pre-pintura: aplica --accent-color desde localStorage ANTES
+            de que React hidrate, evitando el flash del default navy. El
+            AccentProvider (cliente) mantiene el estado en runtime. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function () {
+  try {
+    var v = localStorage.getItem("copp-accent");
+    if (v && /^#[0-9a-fA-F]{6}$/.test(v)) {
+      var s = document.documentElement.style;
+      s.setProperty("--accent-color", v);
+      s.setProperty("--primary-foreground", v.toUpperCase() === "#F59E0B" ? "#1A1D2E" : "#FFFFFF");
+    }
+  } catch (e) {}
+})();`,
+          }}
+        />
         <ThemeProvider>
           <AuthProvider>
-            <I18nProvider initialLang={lang}>
-              <TooltipProvider>
-                {children}
-              </TooltipProvider>
-            </I18nProvider>
+            <AccentProvider>
+              <I18nProvider initialLang={lang}>
+                <TooltipProvider>{children}</TooltipProvider>
+              </I18nProvider>
+            </AccentProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

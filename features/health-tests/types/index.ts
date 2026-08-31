@@ -106,6 +106,8 @@ export interface PatientProfile {
   age: number;
   clinic: string;
   professionalId: string;
+  /** Nombre del profesional asignado (resuelto por el backend). */
+  professionalName: string;
   status: PatientStatus;
   insurance: string;
   /** Fecha de asignación de la batería de evaluación inicial. */
@@ -114,6 +116,87 @@ export interface PatientProfile {
   email: string;
   /** Estado de cada test de la batería. */
   results: PatientTestResult[];
+}
+
+/** Evaluación del historial del paciente (fila del hub). */
+export interface PatientEvaluation {
+  id: string;
+  versionId: string;
+  testName: string;
+  testCode: string;
+  testCategory: string;
+  status: "started" | "completed" | "abandoned";
+  startedAt: string;
+  completedAt: string | null;
+  score: number | null;
+  scorePercentage: number | null;
+  /** Número de intento (1..n) entre evaluaciones del mismo test. */
+  attempt: number;
+}
+
+/** Resultado persistido de una evaluación (score/subescala/indicador). */
+export interface EvaluationResultItem {
+  id: string;
+  resultType: "score" | "subscale" | "indicator";
+  code: string;
+  label: string;
+  value: number;
+  qualifier: string | null;
+  severity: string | null;
+}
+
+/** Respuesta registrada de una evaluación con contexto de la pregunta. */
+export interface EvaluationResponseItem {
+  questionId: string;
+  questionCode: string;
+  section: string | null;
+  questionText: string;
+  questionType: "scale" | "single" | "multi" | "open";
+  answerOptionId: string | null;
+  answerOptionText: string | null;
+  answerOptionScore: number | null;
+  valueText: string | null;
+}
+
+export interface EvaluationCommentItem {
+  id: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+}
+
+/** Intento del mismo test (comparativa histórica). */
+export interface EvaluationAttemptItem {
+  id: string;
+  status: "started" | "completed" | "abandoned";
+  startedAt: string;
+  completedAt: string | null;
+  score: number | null;
+  scorePercentage: number | null;
+}
+
+/** Detalle completo de una evaluación (ruta /evaluaciones/[evalId]). */
+export interface EvaluationDetail {
+  id: string;
+  assignmentId: string;
+  patientId: string;
+  versionId: string;
+  versionNumber: number;
+  versionName: string | null;
+  scoringStrategy: string;
+  testName: string;
+  testCode: string;
+  testCategory: string;
+  status: "started" | "completed" | "abandoned";
+  startedAt: string;
+  completedAt: string | null;
+  attempt: number;
+  score: number | null;
+  scorePercentage: number | null;
+  results: EvaluationResultItem[];
+  responses: EvaluationResponseItem[];
+  comments: EvaluationCommentItem[];
+  attempts: EvaluationAttemptItem[];
 }
 
 export interface HealthProfessional {

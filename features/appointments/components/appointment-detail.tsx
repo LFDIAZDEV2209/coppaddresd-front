@@ -122,7 +122,11 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
         {room && (
           <StatusBadge
             status={sessionStatusLabel[room.status]}
-            color={room.status === "Active" ? { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" } : { bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" }}
+            color={
+              room.status === "Active"
+                ? { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" }
+                : { bg: "var(--sidebar)", text: "#FFFFFF", dot: "#FFFFFF" }
+            }
           />
         )}
       </div>

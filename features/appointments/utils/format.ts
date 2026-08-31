@@ -94,7 +94,7 @@ export const encounterStatusLabel: Record<EncounterStatus, string> = {
 type ColorSet = { bg: string; text: string; dot: string };
 
 const colors = {
-  blue: { bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" },
+  blue: { bg: "var(--sidebar)", text: "#FFFFFF", dot: "#FFFFFF" },
   green: { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" },
   amber: { bg: "#FDF2E3", text: "#9A6A0A", dot: "#F59E0B" },
   red: { bg: "#FCEBEC", text: "#B42318", dot: "#EF4444" },
@@ -128,7 +128,7 @@ export function appointmentStatusColor(status: AppointmentStatus): ColorSet {
 export function appointmentStatusDot(status: AppointmentStatus): string {
   switch (status) {
     case "Confirmed":
-      return "#3B82F6";
+      return "var(--primary)";
     case "InProgress":
       return "#0E7490";
     case "Completed":
