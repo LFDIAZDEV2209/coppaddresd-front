@@ -125,7 +125,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
             color={
               room.status === "Active"
                 ? { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" }
-                : { bg: "#162032", text: "#FFFFFF", dot: "#FFFFFF" }
+                : { bg: "var(--sidebar)", text: "#FFFFFF", dot: "#FFFFFF" }
             }
           />
         )}

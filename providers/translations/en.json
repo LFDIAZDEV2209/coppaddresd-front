@@ -2116,5 +2116,21 @@
   "Rango siguiente": "Next range",
   "Sin resultados": "No results",
   "Total": "Total",
-  "Ver detalles de la cita de {name}": "View details of the appointment of {name}"
+  "Ver detalles de la cita de {name}": "View details of the appointment of {name}",
+  "IA": "AI",
+  "Integraciones": "Integrations",
+  "Documentación": "Documentation",
+  "Próximamente": "Coming soon",
+  "Índigo": "Indigo",
+  "Violeta": "Violet",
+  "Azul": "Blue",
+  "Teal": "Teal",
+  "Esmeralda": "Emerald",
+  "Ámbar": "Amber",
+  "Secciones de configuración": "Settings sections",
+  "El color de acento se aplica a toda la plataforma y se guarda en tu perfil": "The accent color applies to the whole platform and is saved to your profile",
+  "La seguridad de tu cuenta está protegida por el Auth Service de la plataforma.": "Your account security is protected by the platform's Auth Service.",
+  "Configura los agentes de IA, sus capacidades y el conocimiento disponible.": "Configure the AI agents, their capabilities and the available knowledge.",
+  "Conecta la plataforma con servicios externos (mensajería, almacenamiento, correo).": "Connect the platform with external services (messaging, storage, email).",
+  "Configura cómo y cuándo quieres recibir notificaciones.": "Configure how and when you want to receive notifications."
 }

@@ -14,12 +14,7 @@ import {
 import { useAuth } from "@/providers/auth-provider";
 import { useAppContext } from "@/providers/context-provider";
 import { useT } from "@/providers/i18n-provider";
-import {
-  ChevronDown,
-  ChevronsLeft,
-  LogOut,
-  Settings,
-} from "lucide-react";
+import { ChevronDown, ChevronsLeft, LogOut, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
@@ -173,7 +168,7 @@ export function Sidebar({
                     className={cn(
                       "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-all duration-200 border group",
                       active
-                        ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
+                        ? "bg-white/5 text-white border-white/10"
                         : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white hover:scale-[1.01] border-transparent",
                     )}
                   >
@@ -218,7 +213,9 @@ export function Sidebar({
                                   : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white border-transparent",
                               )}
                               style={{
-                                animationDelay: expanded ? `${idx * 40}ms` : undefined,
+                                animationDelay: expanded
+                                  ? `${idx * 40}ms`
+                                  : undefined,
                               }}
                             >
                               <ItemIcon className="size-[16px] shrink-0" />

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import { RefreshCw, Search, UserCheck, Users } from "lucide-react";
@@ -83,7 +83,7 @@ export function MembersPage() {
       setBanTarget(null);
       setBanReason("");
     } catch {
-      setBanError(t('No pudimos banear al miembro. Intenta de nuevo.'));
+      setBanError(t("No pudimos banear al miembro. Intenta de nuevo."));
     } finally {
       setBusyId(null);
     }
@@ -103,8 +103,8 @@ export function MembersPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title={t('Miembros')}
-        description={t('Administra los miembros de la comunidad y su estado')}
+        title={t("Miembros")}
+        description={t("Administra los miembros de la comunidad y su estado")}
         icon={UserCheck}
       />
 
@@ -115,11 +115,11 @@ export function MembersPage() {
           onChange={(event) =>
             setStatusFilter(event.target.value as StatusFilter)
           }
-          aria-label={t('Filtrar por estado')}
+          aria-label={t("Filtrar por estado")}
         >
-          <option value="Todos">{t('Todos')}</option>
-          <option value="Activos">{t('Activos')}</option>
-          <option value="Baneados">{t('Baneados')}</option>
+          <option value="Todos">{t("Todos")}</option>
+          <option value="Activos">{t("Activos")}</option>
+          <option value="Baneados">{t("Baneados")}</option>
         </select>
 
         <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
@@ -129,8 +129,8 @@ export function MembersPage() {
               className="pl-9"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder={t('Buscar por nombre...')}
-              aria-label={t('Buscar miembros')}
+              placeholder={t("Buscar por nombre...")}
+              aria-label={t("Buscar miembros")}
             />
           </div>
           <Button
@@ -144,7 +144,7 @@ export function MembersPage() {
               data-icon="inline-start"
               className={profilesLoading ? "animate-spin" : undefined}
             />
-            {t('Actualizar')}
+            {t("Actualizar")}
           </Button>
         </div>
       </section>
@@ -153,35 +153,35 @@ export function MembersPage() {
         <MembersSkeleton />
       ) : profilesError ? (
         <div className="rounded-2xl border border-destructive/20 bg-destructive-soft p-10 text-center text-sm text-destructive">
-          {t('No pudimos cargar los miembros.')}
+          {t("No pudimos cargar los miembros.")}
           <div className="mt-3 flex justify-center">
             <Button
               variant="outline"
               size="sm"
               onClick={() => refetchProfiles({ requestPolicy: "network-only" })}
             >
-              {t('Reintentar')}
+              {t("Reintentar")}
             </Button>
           </div>
         </div>
       ) : visible.length ? (
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
-            title={t('{count} miembros', { count: String(visible.length) })}
-            description={t('Miembros registrados en la comunidad')}
+            title={t("{count} miembros", { count: String(visible.length) })}
+            description={t("Miembros registrados en la comunidad")}
             icon={Users}
             variant="primary"
           />
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('Miembro')}</TableHead>
+                <TableHead>{t("Miembro")}</TableHead>
                 <TableHead className="hidden md:table-cell">
-                  {t('Miembro desde')}
+                  {t("Miembro desde")}
                 </TableHead>
-                <TableHead>{t('Estado')}</TableHead>
+                <TableHead>{t("Estado")}</TableHead>
                 <TableHead className="w-40 text-right">
-                  <span className="sr-only">{t('Acciones')}</span>
+                  <span className="sr-only">{t("Acciones")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -205,7 +205,7 @@ export function MembersPage() {
                           </span>
                         ) : (
                           <span className="truncate text-xs text-muted-foreground">
-                            {profile.bio || t('Sin bio')}
+                            {profile.bio || t("Sin bio")}
                           </span>
                         )}
                       </div>
@@ -219,7 +219,7 @@ export function MembersPage() {
                   <TableCell>
                     {profile.status === "ACTIVE" ? (
                       <StatusBadge
-                        status={t('Activo')}
+                        status={t("Activo")}
                         color={{
                           bg: "var(--success-soft)",
                           text: "var(--success-foreground)",
@@ -228,7 +228,7 @@ export function MembersPage() {
                       />
                     ) : (
                       <StatusBadge
-                        status={t('Baneado')}
+                        status={t("Baneado")}
                         color={{
                           bg: "var(--destructive-soft)",
                           text: "var(--destructive)",
@@ -246,7 +246,7 @@ export function MembersPage() {
                           disabled={busyId === profile.id}
                           onClick={() => openBanDialog(profile)}
                         >
-                          {t('Banear')}
+                          {t("Banear")}
                         </Button>
                       ) : (
                         <Button
@@ -255,7 +255,7 @@ export function MembersPage() {
                           disabled={busyId === profile.id}
                           onClick={() => handleUnban(profile)}
                         >
-                          {t('Reactivar')}
+                          {t("Reactivar")}
                         </Button>
                       )}
                     </div>
@@ -270,9 +270,9 @@ export function MembersPage() {
           <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-primary-soft">
             <Users className="size-5 text-primary" />
           </div>
-          <p className="text-sm font-medium">{t('No hay miembros')}</p>
+          <p className="text-sm font-medium">{t("No hay miembros")}</p>
           <p className="text-xs text-muted-foreground">
-            {t('No se encontraron miembros con los filtros aplicados.')}
+            {t("No se encontraron miembros con los filtros aplicados.")}
           </p>
         </div>
       )}
@@ -289,11 +289,14 @@ export function MembersPage() {
       >
         <DialogContent showCloseButton>
           <DialogHeader>
-            <DialogTitle>{t('Banear miembro')}</DialogTitle>
+            <DialogTitle>{t("Banear miembro")}</DialogTitle>
             <DialogDescription>
               {banTarget
-                ? t('Banea a {name}. El miembro perderá el acceso a la comunidad.', { name: banTarget.displayName })
-                : t('Banear miembro.')}
+                ? t(
+                    "Banea a {name}. El miembro perderá el acceso a la comunidad.",
+                    { name: banTarget.displayName },
+                  )
+                : t("Banear miembro.")}
             </DialogDescription>
           </DialogHeader>
           {banError && (
@@ -304,8 +307,8 @@ export function MembersPage() {
           <Input
             value={banReason}
             onChange={(event) => setBanReason(event.target.value)}
-            placeholder={t('Motivo del baneo (opcional)')}
-            aria-label={t('Motivo del baneo')}
+            placeholder={t("Motivo del baneo (opcional)")}
+            aria-label={t("Motivo del baneo")}
           />
           <DialogFooter>
             <Button
@@ -317,7 +320,7 @@ export function MembersPage() {
                 setBanError(null);
               }}
             >
-              {t('Cancelar')}
+              {t("Cancelar")}
             </Button>
             <Button
               variant="destructive"
@@ -325,7 +328,7 @@ export function MembersPage() {
               disabled={busyId === banTarget?.id}
               onClick={confirmBan}
             >
-              {t('Banear')}
+              {t("Banear")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -338,7 +341,7 @@ function MembersSkeleton() {
   return (
     <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex items-center gap-3 bg-[#0B2B4A] px-5 py-4 text-white">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-[#123B63]" />
+        <div className="flex size-9 items-center justify-center rounded-xl bg-[var(--sidebar)]" />
         <Skeleton className="h-4 w-32 rounded-md" />
       </div>
       {[1, 2, 3, 4].map((item) => (

@@ -29,6 +29,8 @@ import { useAuth } from "@/providers/auth-provider";
 import { hasAppointmentPermission } from "@/lib/config/appointment-permissions";
 import { useCurrentUser } from "../hooks/use-current-user";
 import { loadTwilioVideo } from "@/lib/twilio/twilio-loader";
+import { lightenHex, readCssVar } from "@/lib/config/css-vars";
+import { DEFAULT_ACCENT } from "@/lib/config/accent-colors";
 import {
   fetchAppointment,
   fetchJoinToken,
@@ -744,7 +746,17 @@ export function VirtualRoom() {
               color={
                 backendRoomStatus === "Ended"
                   ? { bg: "#3F1D24", text: "#FCA5A5", dot: "#EF4444" }
-                  : { bg: "#1E2A4A", text: "#93C5FD", dot: "#3B82F6" }
+                  : {
+                      bg: readCssVar("--sidebar") || DEFAULT_ACCENT,
+                      text: lightenHex(
+                        readCssVar("--accent-color") || DEFAULT_ACCENT,
+                        0.5,
+                      ),
+                      dot: lightenHex(
+                        readCssVar("--accent-color") || DEFAULT_ACCENT,
+                        0.35,
+                      ),
+                    }
               }
             />
           )}

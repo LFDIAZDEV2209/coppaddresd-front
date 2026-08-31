@@ -2116,5 +2116,21 @@
   "Rango siguiente": "Rango siguiente",
   "Sin resultados": "Sin resultados",
   "Total": "Total",
-  "Ver detalles de la cita de {name}": "Ver detalles de la cita de {name}"
+  "Ver detalles de la cita de {name}": "Ver detalles de la cita de {name}",
+  "IA": "IA",
+  "Integraciones": "Integraciones",
+  "Documentación": "Documentación",
+  "Próximamente": "Próximamente",
+  "Índigo": "Índigo",
+  "Violeta": "Violeta",
+  "Azul": "Azul",
+  "Teal": "Teal",
+  "Esmeralda": "Esmeralda",
+  "Ámbar": "Ámbar",
+  "Secciones de configuración": "Secciones de configuración",
+  "El color de acento se aplica a toda la plataforma y se guarda en tu perfil": "El color de acento se aplica a toda la plataforma y se guarda en tu perfil",
+  "La seguridad de tu cuenta está protegida por el Auth Service de la plataforma.": "La seguridad de tu cuenta está protegida por el Auth Service de la plataforma.",
+  "Configura los agentes de IA, sus capacidades y el conocimiento disponible.": "Configura los agentes de IA, sus capacidades y el conocimiento disponible.",
+  "Conecta la plataforma con servicios externos (mensajería, almacenamiento, correo).": "Conecta la plataforma con servicios externos (mensajería, almacenamiento, correo).",
+  "Configura cómo y cuándo quieres recibir notificaciones.": "Configura cómo y cuándo quieres recibir notificaciones."
 }
