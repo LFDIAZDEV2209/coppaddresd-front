@@ -33,6 +33,7 @@ import {
   Loader2,
   Copy,
   Calendar,
+  Search,
 } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
 import {
@@ -40,12 +41,15 @@ import {
   replaceEnrollmentWeekTasks,
 } from "../services/program-content-service";
 import { fetchRoutinesForPicker } from "@/features/wellness/services/assignments-service";
+import { fetchMediaItems } from "@/features/media/services/media-service";
+import { PodcastPickerDialog } from "./podcast-picker-dialog";
 import type {
   ProgramContentWeek,
   EnrollmentWeekResponse,
   EnrollmentWeekDay,
 } from "../types";
 import type { ExerciseRoutineListItem } from "@/features/wellness/types";
+import type { MediaItem } from "@/features/media/types";
 
 // --- Constantes de tareas ---
 
@@ -105,6 +109,7 @@ interface EditableTaskItem {
   points: number;
   sortOrder: number;
   routineId?: string | null;
+  mediaId?: string | null;
 }
 
 // --- Sub-componente: celda de día en el Panorama Semanal (Modo Lectura) ---
@@ -230,7 +235,14 @@ export function WeekTasksDialog({
   const [availableRoutines, setAvailableRoutines] = useState<
     ExerciseRoutineListItem[]
   >([]);
+  const [availablePodcasts, setAvailablePodcasts] = useState<MediaItem[]>([]);
   const [editableTasks, setEditableTasks] = useState<EditableTaskItem[]>([]);
+  const [pickerState, setPickerState] = useState<{
+    open: boolean;
+    weekday: number;
+    currentMediaId: string | null;
+    dayLabel: string;
+  } | null>(null);
   const initializedRef = useRef(false);
 
   const fetchData = useCallback(async () => {
@@ -256,11 +268,14 @@ export function WeekTasksDialog({
     }
   }, [open, data, fetchData]);
 
-  // Cargar catálogo de rutinas para el modo edición
+  // Cargar catálogo de rutinas y podcasts para el modo edición
   useEffect(() => {
     if (!open) return;
     fetchRoutinesForPicker(1, 100, "")
       .then((res) => setAvailableRoutines(res.data))
+      .catch(() => {});
+    fetchMediaItems(1, 100, { search: "", mediaType: "Podcast", status: "Published" })
+      .then((res) => setAvailablePodcasts(res.data))
       .catch(() => {});
   }, [open]);
 
@@ -301,7 +316,8 @@ export function WeekTasksDialog({
           taskCode: t.taskCode,
           points: t.scheduledPoints,
           sortOrder: idx + 1,
-          routineId: t.routineId ?? t.contentRefId ?? null,
+          routineId: t.taskCode === "ejercicio" ? (t.routineId ?? t.contentRefId ?? null) : null,
+          mediaId: t.taskCode === "podcast" ? (t.contentRefId ?? null) : null,
         });
       });
     });
@@ -323,6 +339,7 @@ export function WeekTasksDialog({
           points: defaultPoints,
           sortOrder: dayTasks.length + 1,
           routineId: null,
+          mediaId: null,
         },
       ];
     });
@@ -360,6 +377,19 @@ export function WeekTasksDialog({
     [],
   );
 
+  const handleUpdateMedia = useCallback(
+    (weekday: number, taskCode: string, mediaId: string | null) => {
+      setEditableTasks((prev) =>
+        prev.map((t) =>
+          t.weekday === weekday && t.taskCode === taskCode
+            ? { ...t, mediaId }
+            : t,
+        ),
+      );
+    },
+    [],
+  );
+
   // --- Atajos de copia rápida en Modo Edición ---
 
   const handleCopyDayToAllWeek = useCallback((sourceWeekday: number) => {
@@ -374,6 +404,7 @@ export function WeekTasksDialog({
             points: st.points,
             sortOrder: idx + 1,
             routineId: st.routineId ?? null,
+            mediaId: st.mediaId ?? null,
           });
         });
       }
@@ -395,6 +426,7 @@ export function WeekTasksDialog({
             points: st.points,
             sortOrder: idx + 1,
             routineId: st.routineId ?? null,
+            mediaId: st.mediaId ?? null,
           });
         });
       }
@@ -413,6 +445,7 @@ export function WeekTasksDialog({
         points: t.points,
         sortOrder: t.sortOrder,
         routineId: t.routineId ?? null,
+        mediaId: t.mediaId ?? null,
       }));
       const result = await replaceEnrollmentWeekTasks(
         enrollmentId,
@@ -753,6 +786,45 @@ export function WeekTasksDialog({
                                     );
                                   })()}
 
+                                {/* Si la tarea es Podcast: Botón selector para abrir el modal paginado y buscable */}
+                                {taskCode === "podcast" && (() => {
+                                  const selectedPodcast = editTask.mediaId
+                                    ? availablePodcasts.find((m) => m.id === editTask.mediaId)
+                                    : null;
+
+                                  const podcastDisplayName = selectedPodcast
+                                    ? selectedPodcast.title
+                                    : editTask.mediaId
+                                      ? "Podcast personalizado asignado"
+                                      : "Por defecto (Seguir secuencia)";
+
+                                  return (
+                                    <div className="flex flex-col gap-1.5">
+                                      <label className="text-xs font-semibold text-foreground">
+                                        Podcast educativo para {DAY_LABELS[wDay]}:
+                                      </label>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() =>
+                                          setPickerState({
+                                            open: true,
+                                            weekday: wDay,
+                                            currentMediaId: editTask.mediaId ?? null,
+                                            dayLabel: DAY_LABELS[wDay],
+                                          })
+                                        }
+                                        className="w-full justify-between h-9 text-xs bg-muted/40 font-normal hover:bg-muted"
+                                      >
+                                        <span className="truncate max-w-[200px] text-left font-medium">
+                                          {podcastDisplayName}
+                                        </span>
+                                        <Search className="size-3.5 shrink-0 text-muted-foreground ml-2" />
+                                      </Button>
+                                    </div>
+                                  );
+                                })()}
+
                                 {/* Configuración de Puntos XP */}
                                 <div className="flex items-center justify-between gap-2 bg-muted/30 p-2 rounded-lg border border-border/50">
                                   <span className="font-medium text-muted-foreground">
@@ -858,6 +930,23 @@ export function WeekTasksDialog({
             </Button>
           )}
         </div>
+
+        {pickerState && (
+          <PodcastPickerDialog
+            open={pickerState.open}
+            onOpenChange={(nextOpen) => {
+              if (!nextOpen) setPickerState(null);
+            }}
+            currentMediaId={pickerState.currentMediaId}
+            dayLabel={pickerState.dayLabel}
+            onSelect={(selectedMediaId, selectedItem) => {
+              handleUpdateMedia(pickerState.weekday, "podcast", selectedMediaId);
+              if (selectedItem && !availablePodcasts.some((p) => p.id === selectedItem.id)) {
+                setAvailablePodcasts((prev) => [selectedItem, ...prev]);
+              }
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
