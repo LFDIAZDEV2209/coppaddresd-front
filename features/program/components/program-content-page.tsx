@@ -57,46 +57,51 @@ export function ProgramContentPage() {
   const { hasPermission } = useAuth();
   const canEdit = hasPermission("Program.Edit");
 
-  const {
-    content,
-    loading,
-    error,
-    selectEnrollment,
-    saveWeek,
-    retry,
-    clear,
-  } = useProgramContent();
+  const { content, loading, error, selectEnrollment, saveWeek, retry, clear } =
+    useProgramContent();
 
   // Estado del listado inicial de pacientes inscritos
-  const [enrollmentsList, setEnrollmentsList] = useState<ProgramEnrollment[]>([]);
+  const [enrollmentsList, setEnrollmentsList] = useState<ProgramEnrollment[]>(
+    [],
+  );
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | EnrollmentStatus>("Active");
+  const [statusFilter, setStatusFilter] = useState<"all" | EnrollmentStatus>(
+    "Active",
+  );
 
   // Estado de paciente seleccionado para ver su programa
-  const [selectedEnrollment, setSelectedEnrollment] = useState<ProgramEnrollment | null>(null);
+  const [selectedEnrollment, setSelectedEnrollment] =
+    useState<ProgramEnrollment | null>(null);
 
   // Catálogo completo de rutinas y planes para los Selects de la semana
-  const [availableRoutines, setAvailableRoutines] = useState<ExerciseRoutineListItem[]>([]);
-  const [availablePlans, setAvailablePlans] = useState<NutritionPlanListItem[]>([]);
+  const [availableRoutines, setAvailableRoutines] = useState<
+    ExerciseRoutineListItem[]
+  >([]);
+  const [availablePlans, setAvailablePlans] = useState<NutritionPlanListItem[]>(
+    [],
+  );
   const [loadingCatalog, setLoadingCatalog] = useState(false);
 
   // Cargar primeros 10 pacientes inscritos al buscar o filtrar
-  const loadInitialPatients = useCallback(async (search: string, status: "all" | EnrollmentStatus) => {
-    setLoadingEnrollments(true);
-    try {
-      const res = await fetchProgramEnrollments(1, 10, {
-        status,
-        patientId: "",
-        search: search.trim(),
-      });
-      setEnrollmentsList(res.data);
-    } catch {
-      setEnrollmentsList([]);
-    } finally {
-      setLoadingEnrollments(false);
-    }
-  }, []);
+  const loadInitialPatients = useCallback(
+    async (search: string, status: "all" | EnrollmentStatus) => {
+      setLoadingEnrollments(true);
+      try {
+        const res = await fetchProgramEnrollments(1, 10, {
+          status,
+          patientId: "",
+          search: search.trim(),
+        });
+        setEnrollmentsList(res.data);
+      } catch {
+        setEnrollmentsList([]);
+      } finally {
+        setLoadingEnrollments(false);
+      }
+    },
+    [],
+  );
 
   // Debounce para el input de búsqueda por nombre / documento
   useEffect(() => {
@@ -115,7 +120,14 @@ export function ProgramContentPage() {
         await selectEnrollment(enrollment.id);
         const [routinesRes, plansRes] = await Promise.all([
           fetchRoutinesForPicker(1, 100, ""),
-          fetchNutritionPlansForPicker(1, 100, "", undefined, undefined, enrollment.patientId),
+          fetchNutritionPlansForPicker(
+            1,
+            100,
+            "",
+            undefined,
+            undefined,
+            enrollment.patientId,
+          ),
         ]);
         setAvailableRoutines(routinesRes.data);
         setAvailablePlans(plansRes.data);
@@ -170,7 +182,8 @@ export function ProgramContentPage() {
                 Pacientes inscritos en programas
               </h2>
               <p className="text-xs text-muted-foreground">
-                Busca por nombre o número de documento para gestionar el contenido de su programa.
+                Busca por nombre o número de documento para gestionar el
+                contenido de su programa.
               </p>
             </div>
 
@@ -197,16 +210,26 @@ export function ProgramContentPage() {
 
               <Select
                 value={statusFilter}
-                onValueChange={(val) => setStatusFilter(val as "all" | EnrollmentStatus)}
+                onValueChange={(val) =>
+                  setStatusFilter(val as "all" | EnrollmentStatus)
+                }
               >
                 <SelectTrigger className="h-9 w-36 text-xs bg-card">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Active" className="text-xs">Activos</SelectItem>
-                  <SelectItem value="Paused" className="text-xs">Pausados</SelectItem>
-                  <SelectItem value="Completed" className="text-xs">Completados</SelectItem>
-                  <SelectItem value="all" className="text-xs">Todos</SelectItem>
+                  <SelectItem value="Active" className="text-xs">
+                    Activos
+                  </SelectItem>
+                  <SelectItem value="Paused" className="text-xs">
+                    Pausados
+                  </SelectItem>
+                  <SelectItem value="Completed" className="text-xs">
+                    Completados
+                  </SelectItem>
+                  <SelectItem value="all" className="text-xs">
+                    Todos
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -246,8 +269,10 @@ export function ProgramContentPage() {
                 <TableBody>
                   {enrollmentsList.map((enrollment) => {
                     const patientName =
-                      enrollment.patientFullName || `Paciente (${enrollment.patientId.substring(0, 8)})`;
-                    const templateName = enrollment.templateName || "Programa de Salud";
+                      enrollment.patientFullName ||
+                      `Paciente (${enrollment.patientId.substring(0, 8)})`;
+                    const templateName =
+                      enrollment.templateName || "Programa de Salud";
 
                     return (
                       <TableRow
@@ -278,14 +303,22 @@ export function ProgramContentPage() {
                         </TableCell>
 
                         <TableCell>
-                          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                            Semana {enrollment.currentWeekNumber} de {enrollment.totalWeeks}
+                          <Badge
+                            variant="secondary"
+                            className="bg-primary/10 text-primary border-primary/20 text-xs"
+                          >
+                            Semana {enrollment.currentWeekNumber} de{" "}
+                            {enrollment.totalWeeks}
                           </Badge>
                         </TableCell>
 
                         <TableCell>
                           <Badge
-                            variant={enrollment.status === "Active" ? "default" : "outline"}
+                            variant={
+                              enrollment.status === "Active"
+                                ? "default"
+                                : "outline"
+                            }
                             className="text-[10px]"
                           >
                             {enrollment.status}
@@ -338,7 +371,8 @@ export function ProgramContentPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-bold text-sm text-foreground flex items-center gap-2">
-                    {selectedEnrollment.patientFullName || `Paciente (${selectedEnrollment.patientId.substring(0, 8)})`}
+                    {selectedEnrollment.patientFullName ||
+                      `Paciente (${selectedEnrollment.patientId.substring(0, 8)})`}
                     {selectedEnrollment.patientDocumentNumber && (
                       <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded text-muted-foreground font-mono font-normal">
                         Doc: {selectedEnrollment.patientDocumentNumber}
@@ -346,7 +380,9 @@ export function ProgramContentPage() {
                     )}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {selectedEnrollment.templateName || "Programa"} · Semana {selectedEnrollment.currentWeekNumber} de {selectedEnrollment.totalWeeks}
+                    {selectedEnrollment.templateName || "Programa"} · Semana{" "}
+                    {selectedEnrollment.currentWeekNumber} de{" "}
+                    {selectedEnrollment.totalWeeks}
                   </span>
                 </div>
               </div>
@@ -406,7 +442,8 @@ function ContentTable({
             Semanas del programa ({content.totalWeeks} semanas)
           </h3>
           <p className="text-xs text-muted-foreground">
-            Asigna el plan nutricional y la rutina de ejercicio para cada semana del paciente.
+            Asigna el plan nutricional y la rutina de ejercicio para cada semana
+            del paciente.
           </p>
         </div>
 
@@ -425,8 +462,12 @@ function ContentTable({
               <TableHead className="w-16">Sem.</TableHead>
               <TableHead>Fechas de la semana</TableHead>
               <TableHead className="min-w-[240px]">Plan nutricional</TableHead>
-              <TableHead className="min-w-[260px]">Rutina de ejercicio</TableHead>
-              {canEdit && <TableHead className="text-right">Acciones</TableHead>}
+              <TableHead className="min-w-[260px]">
+                Rutina de ejercicio
+              </TableHead>
+              {canEdit && (
+                <TableHead className="text-right">Acciones</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -503,35 +544,45 @@ function WeekRow({
 
   // Asegurar que el plan nutricional asignado esté en las opciones del desplegable
   const allPlans = [...availablePlans];
-  if (week.nutritionPlan && !allPlans.some((p) => p.id === week.nutritionPlan!.id)) {
+  if (
+    week.nutritionPlan &&
+    !allPlans.some((p) => p.id === week.nutritionPlan!.id)
+  ) {
     allPlans.unshift({
       id: week.nutritionPlan.id,
       name: week.nutritionPlan.name,
       durationDays: null,
-    } as NutritionPlanListItem);
+    } as unknown as NutritionPlanListItem);
   }
 
   // Asegurar que la rutina asignada esté en las opciones del desplegable
   const allRoutines = [...availableRoutines];
-  if (week.exerciseRoutine && !allRoutines.some((r) => r.id === week.exerciseRoutine!.id)) {
+  if (
+    week.exerciseRoutine &&
+    !allRoutines.some((r) => r.id === week.exerciseRoutine!.id)
+  ) {
     allRoutines.unshift({
       id: week.exerciseRoutine.id,
       name: week.exerciseRoutine.name,
       category: "Asignada",
       difficulty: "",
-    } as ExerciseRoutineListItem);
+    } as unknown as ExerciseRoutineListItem);
   }
 
   const selectedPlanName = nutritionPlanId
-    ? allPlans.find((p) => p.id === nutritionPlanId)?.name ??
-      (nutritionPlanId === week.nutritionPlan?.id ? week.nutritionPlan?.name : null) ??
-      undefined
+    ? (allPlans.find((p) => p.id === nutritionPlanId)?.name ??
+      (nutritionPlanId === week.nutritionPlan?.id
+        ? week.nutritionPlan?.name
+        : null) ??
+      undefined)
     : undefined;
 
   const selectedRoutineName = exerciseRoutineId
-    ? allRoutines.find((r) => r.id === exerciseRoutineId)?.name ??
-      (exerciseRoutineId === week.exerciseRoutine?.id ? week.exerciseRoutine?.name : null) ??
-      undefined
+    ? (allRoutines.find((r) => r.id === exerciseRoutineId)?.name ??
+      (exerciseRoutineId === week.exerciseRoutine?.id
+        ? week.exerciseRoutine?.name
+        : null) ??
+      undefined)
     : undefined;
 
   if (editing) {
@@ -548,7 +599,9 @@ function WeekRow({
         <TableCell>
           <Select
             value={nutritionPlanId ?? "none"}
-            onValueChange={(val) => setNutritionPlanId(val === "none" ? null : val)}
+            onValueChange={(val) =>
+              setNutritionPlanId(val === "none" ? null : val)
+            }
           >
             <SelectTrigger className="w-full text-xs h-8 bg-card">
               <SelectValue placeholder="Seleccionar plan...">
@@ -556,11 +609,20 @@ function WeekRow({
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none" textValue="Sin asignar" className="text-xs text-muted-foreground italic">
+              <SelectItem
+                value="none"
+                label="Sin asignar"
+                className="text-xs text-muted-foreground italic"
+              >
                 Sin asignar (Ninguno)
               </SelectItem>
               {allPlans.map((p) => (
-                <SelectItem key={p.id} value={p.id} textValue={p.name} className="text-xs">
+                <SelectItem
+                  key={p.id}
+                  value={p.id}
+                  label={p.name}
+                  className="text-xs"
+                >
                   <span className="font-semibold">{p.name}</span>
                   {p.durationDays && (
                     <span className="text-[10px] text-muted-foreground ml-1.5">
@@ -577,7 +639,9 @@ function WeekRow({
         <TableCell>
           <Select
             value={exerciseRoutineId ?? "none"}
-            onValueChange={(val) => setExerciseRoutineId(val === "none" ? null : val)}
+            onValueChange={(val) =>
+              setExerciseRoutineId(val === "none" ? null : val)
+            }
           >
             <SelectTrigger className="w-full text-xs h-8 bg-card">
               <SelectValue placeholder="Seleccionar rutina...">
@@ -585,11 +649,20 @@ function WeekRow({
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none" textValue="Sin asignar" className="text-xs text-muted-foreground italic">
+              <SelectItem
+                value="none"
+                label="Sin asignar"
+                className="text-xs text-muted-foreground italic"
+              >
                 Sin asignar (Ninguna)
               </SelectItem>
               {allRoutines.map((r) => (
-                <SelectItem key={r.id} value={r.id} textValue={r.name} className="text-xs">
+                <SelectItem
+                  key={r.id}
+                  value={r.id}
+                  label={r.name}
+                  className="text-xs"
+                >
                   <span className="font-semibold">{r.name}</span>
                   {r.category && (
                     <span className="text-[10px] text-muted-foreground ml-1.5">
@@ -648,7 +721,10 @@ function WeekRow({
             {week.nutritionPlan.name}
           </Badge>
         ) : (
-          <Badge variant="outline" className="text-muted-foreground border-dashed">
+          <Badge
+            variant="outline"
+            className="text-muted-foreground border-dashed"
+          >
             Sin asignar
           </Badge>
         )}
@@ -660,7 +736,10 @@ function WeekRow({
             {week.exerciseRoutine.name}
           </Badge>
         ) : (
-          <Badge variant="outline" className="text-muted-foreground border-dashed">
+          <Badge
+            variant="outline"
+            className="text-muted-foreground border-dashed"
+          >
             Sin asignar
           </Badge>
         )}
@@ -677,7 +756,12 @@ function WeekRow({
               <CalendarDays className="size-3.5" />
               Ver tareas
             </Button>
-            <Button variant="outline" size="sm" onClick={startEdit} className="text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={startEdit}
+              className="text-xs"
+            >
               Editar
             </Button>
           </div>

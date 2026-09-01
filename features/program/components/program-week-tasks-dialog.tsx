@@ -19,12 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   CheckCircle2,
   Circle,
@@ -54,7 +49,11 @@ import type { ExerciseRoutineListItem } from "@/features/wellness/types";
 
 // --- Constantes de tareas ---
 
-const AVAILABLE_TASK_CODES: Array<{ code: string; label: string; defaultPoints: number }> = [
+const AVAILABLE_TASK_CODES: Array<{
+  code: string;
+  label: string;
+  defaultPoints: number;
+}> = [
   { code: "podcast", label: "Podcast educativo", defaultPoints: 80 },
   { code: "vitals", label: "Signos vitales", defaultPoints: 120 },
   { code: "nut", label: "Plan nutricional", defaultPoints: 150 },
@@ -72,8 +71,18 @@ function getTaskLabel(code: string): string {
 function shortDate(dateStr: string): string {
   const [, m, d] = dateStr.split("-").map(Number);
   const months = [
-    "ene", "feb", "mar", "abr", "may", "jun",
-    "jul", "ago", "sep", "oct", "nov", "dic",
+    "ene",
+    "feb",
+    "mar",
+    "abr",
+    "may",
+    "jun",
+    "jul",
+    "ago",
+    "sep",
+    "oct",
+    "nov",
+    "dic",
   ];
   return `${d} ${months[m - 1]}`;
 }
@@ -115,7 +124,9 @@ function DayColumnRead({ day }: { day: EnrollmentWeekDay }) {
 
       {/* Lista de tareas */}
       {day.tasks.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground italic py-2">Sin tareas</p>
+        <p className="text-[11px] text-muted-foreground italic py-2">
+          Sin tareas
+        </p>
       ) : (
         <ul className="flex flex-col gap-1.5">
           {day.tasks.map((task) => {
@@ -133,7 +144,10 @@ function DayColumnRead({ day }: { day: EnrollmentWeekDay }) {
                     ) : (
                       <Circle className="size-3.5 shrink-0 text-muted-foreground/50" />
                     )}
-                    <span className="font-semibold text-foreground truncate" title={displayName}>
+                    <span
+                      className="font-semibold text-foreground truncate"
+                      title={displayName}
+                    >
                       {displayName}
                     </span>
                   </span>
@@ -146,7 +160,10 @@ function DayColumnRead({ day }: { day: EnrollmentWeekDay }) {
                   </span>
                 </div>
                 {task.detailText && (
-                  <span className="text-[10px] text-muted-foreground pl-5 truncate" title={task.detailText}>
+                  <span
+                    className="text-[10px] text-muted-foreground pl-5 truncate"
+                    title={task.detailText}
+                  >
                     {task.detailText}
                   </span>
                 )}
@@ -210,7 +227,9 @@ export function WeekTasksDialog({
   const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("1");
 
-  const [availableRoutines, setAvailableRoutines] = useState<ExerciseRoutineListItem[]>([]);
+  const [availableRoutines, setAvailableRoutines] = useState<
+    ExerciseRoutineListItem[]
+  >([]);
   const [editableTasks, setEditableTasks] = useState<EditableTaskItem[]>([]);
   const initializedRef = useRef(false);
 
@@ -247,13 +266,16 @@ export function WeekTasksDialog({
 
   // Asegurar que la rutina general asignada a la semana esté en la lista
   const allRoutines = [...availableRoutines];
-  if (week.exerciseRoutine && !allRoutines.some((r) => r.id === week.exerciseRoutine!.id)) {
+  if (
+    week.exerciseRoutine &&
+    !allRoutines.some((r) => r.id === week.exerciseRoutine!.id)
+  ) {
     allRoutines.unshift({
       id: week.exerciseRoutine.id,
       name: week.exerciseRoutine.name,
       category: "Asignada",
       difficulty: "",
-    } as ExerciseRoutineListItem);
+    } as unknown as ExerciseRoutineListItem);
   }
 
   // Reiniciar estado al cerrar
@@ -419,7 +441,8 @@ export function WeekTasksDialog({
                 Semana {week.weekNumber}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                Ventana local: {week.weekStartDateLocal} — {week.weekEndDateLocal}
+                Ventana local: {week.weekStartDateLocal} —{" "}
+                {week.weekEndDateLocal}
               </DialogDescription>
             </div>
 
@@ -446,7 +469,10 @@ export function WeekTasksDialog({
                 Plan: {week.nutritionPlan.name}
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-muted-foreground border-dashed text-xs">
+              <Badge
+                variant="outline"
+                className="text-muted-foreground border-dashed text-xs"
+              >
                 Sin plan nutricional asignado
               </Badge>
             )}
@@ -457,13 +483,19 @@ export function WeekTasksDialog({
                 Rutina general: {week.exerciseRoutine.name}
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-muted-foreground border-dashed text-xs">
+              <Badge
+                variant="outline"
+                className="text-muted-foreground border-dashed text-xs"
+              >
                 Sin rutina general asignada
               </Badge>
             )}
 
             {editing && (
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 font-semibold">
+              <Badge
+                variant="secondary"
+                className="bg-primary/10 text-primary border-primary/20 font-semibold"
+              >
                 Modo edición activo (Vista por pestañas)
               </Badge>
             )}
@@ -528,7 +560,9 @@ export function WeekTasksDialog({
               {/* Barra de pestañas para los 7 días */}
               <TabsList className="w-full justify-start overflow-x-auto bg-muted/60 p-1 rounded-xl">
                 {[1, 2, 3, 4, 5, 6, 7].map((wDay) => {
-                  const count = editableTasks.filter((t) => t.weekday === wDay).length;
+                  const count = editableTasks.filter(
+                    (t) => t.weekday === wDay,
+                  ).length;
 
                   return (
                     <TabsTrigger
@@ -548,7 +582,9 @@ export function WeekTasksDialog({
               {/* Panel por cada día */}
               {[1, 2, 3, 4, 5, 6, 7].map((wDay) => {
                 const dayData = data?.days.find((d) => d.weekday === wDay);
-                const dayTasks = editableTasks.filter((t) => t.weekday === wDay);
+                const dayTasks = editableTasks.filter(
+                  (t) => t.weekday === wDay,
+                );
 
                 const dayDateStr = dayData ? shortDate(dayData.localDate) : "";
                 const existingCodes = new Set(dayTasks.map((t) => t.taskCode));
@@ -610,7 +646,8 @@ export function WeekTasksDialog({
                           Sin misiones configuradas para el {DAY_LABELS[wDay]}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Usa el selector desplegable de abajo para agregar una nueva misión.
+                          Usa el selector desplegable de abajo para agregar una
+                          nueva misión.
                         </p>
                       </div>
                     ) : (
@@ -632,7 +669,9 @@ export function WeekTasksDialog({
 
                                 <button
                                   type="button"
-                                  onClick={() => handleRemoveTask(wDay, taskCode)}
+                                  onClick={() =>
+                                    handleRemoveTask(wDay, taskCode)
+                                  }
                                   className="text-muted-foreground hover:text-destructive p-1 rounded-md hover:bg-muted"
                                   title="Eliminar misión"
                                 >
@@ -643,65 +682,82 @@ export function WeekTasksDialog({
                               {/* Detalle y configuración en Modo Edición */}
                               <div className="flex flex-col gap-3 text-xs pt-1">
                                 {/* Si la tarea es Ejercicio: Selector de rutina específica */}
-                                {taskCode === "ejercicio" && (() => {
-                                  const editTaskRoutineName = editTask.routineId
-                                    ? (allRoutines.find((r) => r.id === editTask.routineId)?.name ?? "Rutina seleccionada")
-                                    : (week.exerciseRoutine ? `Usar rutina general (${week.exerciseRoutine.name})` : "Usar rutina general de la semana");
+                                {taskCode === "ejercicio" &&
+                                  (() => {
+                                    const editTaskRoutineName =
+                                      editTask.routineId
+                                        ? (allRoutines.find(
+                                            (r) => r.id === editTask.routineId,
+                                          )?.name ?? "Rutina seleccionada")
+                                        : week.exerciseRoutine
+                                          ? `Usar rutina general (${week.exerciseRoutine.name})`
+                                          : "Usar rutina general de la semana";
 
-                                  return (
-                                    <div className="flex flex-col gap-1.5">
-                                      <label className="text-xs font-semibold text-foreground">
-                                        Rutina de ejercicio específica para {DAY_LABELS[wDay]}:
-                                      </label>
-                                      <Select
-                                        value={editTask.routineId ?? "default"}
-                                        onValueChange={(val) =>
-                                          handleUpdateRoutine(
-                                            wDay,
-                                            taskCode,
-                                            val === "default" ? null : val,
-                                          )
-                                        }
-                                      >
-                                        <SelectTrigger className="w-full text-xs h-9 bg-muted/40">
-                                          <SelectValue placeholder="Usar rutina general">
-                                            {editTaskRoutineName}
-                                          </SelectValue>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem
-                                            value="default"
-                                            textValue={week.exerciseRoutine ? `Rutina general (${week.exerciseRoutine.name})` : "Usar rutina general de la semana"}
-                                            className="text-xs text-muted-foreground italic"
-                                          >
-                                            {week.exerciseRoutine
-                                              ? `Usar rutina general de la semana (${week.exerciseRoutine.name})`
-                                              : "Usar rutina general de la semana"}
-                                          </SelectItem>
-                                          {allRoutines.map((r) => (
+                                    return (
+                                      <div className="flex flex-col gap-1.5">
+                                        <label className="text-xs font-semibold text-foreground">
+                                          Rutina de ejercicio específica para{" "}
+                                          {DAY_LABELS[wDay]}:
+                                        </label>
+                                        <Select
+                                          value={
+                                            editTask.routineId ?? "default"
+                                          }
+                                          onValueChange={(val) =>
+                                            handleUpdateRoutine(
+                                              wDay,
+                                              taskCode,
+                                              val === "default" ? null : val,
+                                            )
+                                          }
+                                        >
+                                          <SelectTrigger className="w-full text-xs h-9 bg-muted/40">
+                                            <SelectValue placeholder="Usar rutina general">
+                                              {editTaskRoutineName}
+                                            </SelectValue>
+                                          </SelectTrigger>
+                                          <SelectContent>
                                             <SelectItem
-                                              key={r.id}
-                                              value={r.id}
-                                              textValue={r.name}
-                                              className="text-xs font-medium"
+                                              value="default"
+                                              label={
+                                                week.exerciseRoutine
+                                                  ? `Rutina general (${week.exerciseRoutine.name})`
+                                                  : "Usar rutina general de la semana"
+                                              }
+                                              className="text-xs text-muted-foreground italic"
                                             >
-                                              <span className="font-semibold">{r.name}</span>
-                                              {r.category && (
-                                                <span className="text-[10px] text-muted-foreground ml-1.5">
-                                                  · {r.category}
-                                                </span>
-                                              )}
+                                              {week.exerciseRoutine
+                                                ? `Usar rutina general de la semana (${week.exerciseRoutine.name})`
+                                                : "Usar rutina general de la semana"}
                                             </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  );
-                                })()}
+                                            {allRoutines.map((r) => (
+                                              <SelectItem
+                                                key={r.id}
+                                                value={r.id}
+                                                label={r.name}
+                                                className="text-xs font-medium"
+                                              >
+                                                <span className="font-semibold">
+                                                  {r.name}
+                                                </span>
+                                                {r.category && (
+                                                  <span className="text-[10px] text-muted-foreground ml-1.5">
+                                                    · {r.category}
+                                                  </span>
+                                                )}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    );
+                                  })()}
 
                                 {/* Configuración de Puntos XP */}
                                 <div className="flex items-center justify-between gap-2 bg-muted/30 p-2 rounded-lg border border-border/50">
-                                  <span className="font-medium text-muted-foreground">Puntos XP a otorgar:</span>
+                                  <span className="font-medium text-muted-foreground">
+                                    Puntos XP a otorgar:
+                                  </span>
                                   <Input
                                     type="number"
                                     min={0}
@@ -711,7 +767,10 @@ export function WeekTasksDialog({
                                       handleUpdatePoints(
                                         wDay,
                                         taskCode,
-                                        Math.max(0, parseInt(e.target.value) || 0),
+                                        Math.max(
+                                          0,
+                                          parseInt(e.target.value) || 0,
+                                        ),
                                       )
                                     }
                                     className="h-7 w-20 px-2 text-right text-xs font-bold bg-card"
@@ -735,11 +794,18 @@ export function WeekTasksDialog({
                         >
                           <SelectTrigger className="w-full h-9 text-xs bg-card border-dashed">
                             <Plus className="mr-1.5 size-4 text-primary" />
-                            <span>Agregar nueva misión para el {DAY_LABELS[wDay]}...</span>
+                            <span>
+                              Agregar nueva misión para el {DAY_LABELS[wDay]}...
+                            </span>
                           </SelectTrigger>
                           <SelectContent>
                             {availableToAdd.map((t) => (
-                              <SelectItem key={t.code} value={t.code} textValue={t.label} className="text-xs">
+                              <SelectItem
+                                key={t.code}
+                                value={t.code}
+                                label={t.label}
+                                className="text-xs"
+                              >
                                 {t.label} ({t.defaultPoints} XP)
                               </SelectItem>
                             ))}
