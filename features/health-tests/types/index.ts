@@ -153,7 +153,7 @@ export interface EvaluationResponseItem {
   questionCode: string;
   section: string | null;
   questionText: string;
-  questionType: "scale" | "single" | "multi" | "open";
+  questionType: "scale" | "single" | "multi" | "open" | "num";
   answerOptionId: string | null;
   answerOptionText: string | null;
   answerOptionScore: number | null;
