@@ -52,6 +52,8 @@ import {
   Trophy,
   Zap,
   GitBranch,
+  Gift,
+  History,
 } from "lucide-react";
 
 export interface NavItem {
@@ -66,6 +68,8 @@ export interface NavItem {
    * ∪ scoped de la clínica activa); la autorización REAL la aplica el backend.
    */
   permission?: string | string[];
+  /** Etiqueta de subgrupo visual en el sidebar expandido. */
+  section?: string;
 }
 
 export interface NavModule {
@@ -479,67 +483,32 @@ export const navModules: NavModule[] = [
     color: "#D97706",
     items: [
       {
-        label: "Plantillas",
-        href: "/program/templates",
+        label: "Dashboard General",
+        href: "/program/dashboard",
+        icon: BarChart3,
+        color: "#123B63",
+        permission: "Program.View",
+      },
+      {
+        label: "Adherencia & Rachas",
+        href: "/program/adherencia",
+        icon: TrendingUp,
+        color: "#1D9E75",
+        permission: "Program.View",
+      },
+      {
+        label: "Gestión del programa",
+        href: "/program/gestion",
         icon: Trophy,
         color: "#D97706",
-        permission: "Program.View",
+        permission: ["Program.View", "Program.Edit"],
       },
       {
-        label: "Inscripciones",
-        href: "/program/enrollments",
-        icon: CalendarDays,
-        color: "#2563EB",
-        permission: "Program.View",
-      },
-      {
-        label: "Contenido",
-        href: "/program/content",
-        icon: ClipboardList,
-        color: "#0891B2",
-        permission: "Program.Edit",
-      },
-      {
-        label: "Reglas XP",
-        href: "/program/xp-rules",
-        icon: Zap,
-        color: "#7C3AED",
-        permission: "Program.Edit",
-      },
-      {
-        label: "Revisiones clínicas",
-        href: "/program/clinical-pending",
-        icon: Stethoscope,
-        color: "#059669",
-        permission: "Program.Adapt",
-      },
-      {
-        label: "Debilidades",
-        href: "/program/weaknesses",
+        label: "Clínica",
+        href: "/program/clinica",
         icon: ShieldAlert,
         color: "#DC2626",
-        permission: "Program.Adapt",
-      },
-      {
-        label: "Adaptaciones",
-        href: "/program/adaptations",
-        icon: GitBranch,
-        color: "#D97706",
-        permission: "Program.Adapt",
-      },
-      {
-        label: "Intervenciones",
-        href: "/program/interventions",
-        icon: ClipboardPenLine,
-        color: "#0891B2",
-        permission: "Program.Adapt",
-      },
-      {
-        label: "Scores",
-        href: "/program/scores",
-        icon: BarChart3,
-        color: "#16A34A",
-        permission: "Program.Edit",
+        permission: ["Program.View", "Program.Adapt"],
       },
     ],
   },

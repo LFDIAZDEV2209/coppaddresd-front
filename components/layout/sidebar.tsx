@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -227,31 +227,62 @@ export function Sidebar({
                   >
                     <div className="overflow-hidden">
                       <div className="mt-1 ml-5 flex flex-col gap-0.5 border-l border-white/10 pl-3 py-0.5">
-                        {visibleNavItems(mod, can).map((item, idx) => {
-                          const ItemIcon = item.icon;
-                          const itemActive = isActive(item);
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={onCloseMobile}
-                              className={cn(
-                                "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all duration-200 border",
-                                itemActive
-                                  ? "bg-[var(--sidebar-active-bg)] font-semibold text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
-                                  : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white border-transparent",
-                              )}
-                              style={{
-                                animationDelay: expanded
-                                  ? `${idx * 40}ms`
-                                  : undefined,
-                              }}
-                            >
-                              <ItemIcon className="size-[16px] shrink-0" />
-                              <span className="truncate">{t(item.label)}</span>
-                            </Link>
-                          );
-                        })}
+                        {
+                          // Pre-compute visible items so we can track section transitions
+                          (() => {
+                            const items = visibleNavItems(mod, can);
+                            let lastSection: string | undefined;
+                            return items.flatMap<React.ReactNode>((item, idx) => {
+                              const ItemIcon = item.icon;
+                              const itemActive = isActive(item);
+                              const elements: React.ReactNode[] = [];
+
+                              // Insert section label when section changes
+                              if (
+                                item.section &&
+                                item.section !== lastSection
+                              ) {
+                                lastSection = item.section;
+                                elements.push(
+                                  <p
+                                    key={`section-${item.section}`}
+                                    className="px-2.5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40"
+                                  >
+                                    {t(item.section)}
+                                  </p>,
+                                );
+                              } else if (item.section) {
+                                lastSection = item.section;
+                              }
+
+                              elements.push(
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  onClick={onCloseMobile}
+                                  className={cn(
+                                    "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all duration-200 border",
+                                    itemActive
+                                      ? "bg-[var(--sidebar-active-bg)] font-semibold text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
+                                      : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white border-transparent",
+                                  )}
+                                  style={{
+                                    animationDelay: expanded
+                                      ? `${idx * 40}ms`
+                                      : undefined,
+                                  }}
+                                >
+                                  <ItemIcon className="size-[16px] shrink-0" />
+                                  <span className="truncate">
+                                    {t(item.label)}
+                                  </span>
+                                </Link>,
+                              );
+
+                              return elements;
+                            });
+                          })()
+                        }
                       </div>
                     </div>
                   </div>
