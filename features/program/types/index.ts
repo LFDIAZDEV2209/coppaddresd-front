@@ -106,6 +106,10 @@ export interface ProgramEnrollment {
   patientFullName?: string;
   patientDocumentNumber?: string;
   templateName?: string;
+  /** Backend snake_case patient name (when available). */
+  patient_name?: string | null;
+  /** camelCase alias for patient name (when backend uses camelCase). */
+  patientName?: string | null;
 }
 
 /** Filtros del listado de inscripciones. */
@@ -118,6 +122,28 @@ export interface ProgramEnrollmentFilters {
 /** Payload para inscribir un paciente (clínico). */
 export interface EnrollPatientInput {
   patientId: string;
+  templateId: string;
+  timezone: string;
+  startLocalDate?: string;
+}
+
+/** Resultado por fila de la inscripción masiva (B13). */
+export interface BulkEnrollRowResult {
+  patientId: string;
+  enrollmentId: string | null;
+  error: string | null;
+}
+
+/** Resultado agregado de la inscripción masiva (B13). */
+export interface BulkEnrollResult {
+  results: BulkEnrollRowResult[];
+  created: number;
+  failed: number;
+}
+
+/** Payload para inscribir masivamente pacientes (B13). */
+export interface BulkEnrollInput {
+  patientIds: string[];
   templateId: string;
   timezone: string;
   startLocalDate?: string;
@@ -154,23 +180,18 @@ export interface UpdateXpRuleInput {
   validUntil: string | null;
 }
 
-// --- Clinical Review Types ---
+// --- Activity Log Types ---
 
-/** Revisión clínica de XP pendiente. */
-export interface ClinicalReview {
+/** Entrada de la bitácora de actividad del módulo (auditoría trigger-based). */
+export interface ActivityLogEntry {
   id: string;
-  patientId: string;
-  metricId: string;
-  metricCode: string;
-  metricName: string;
-  deltaPct: number | null;
-  ruleCode: string;
-  status: string;
-  healthScorePeriodStart: string;
-  healthScorePeriodEnd: string;
-  createdAt: string;
-  decidedBy: string | null;
-  decidedAt: string | null;
+  occurredAt: string;
+  action: "INSERT" | "UPDATE" | "DELETE";
+  tableName: string;
+  recordId: string;
+  actorType: string;
+  actorEmail: string | null;
+  actorRole: string | null;
 }
 
 // --- Program Content Types ---
