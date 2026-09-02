@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, Users, UserRound } from "lucide-react";
+import { Search, Users, UserRound, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
+import { BiometriaPerfil360Detail } from "./biometria-perfil-360-detail";
 import type { PaginatedResult } from "../types";
 
 interface PatientListItem {
@@ -31,6 +33,7 @@ export function ProgramPerfil360Page() {
   const [results, setResults] = useState<PatientListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<PatientListItem | null>(null);
 
   const trimmed = search.trim();
   const hasQuery = trimmed.length >= 2;
@@ -93,7 +96,7 @@ export function ProgramPerfil360Page() {
             />
           </div>
 
-          {!hasQuery ? (
+          {!hasQuery && !selectedPatient ? (
             <p className="text-xs text-muted-foreground">
               Escribe al menos 2 caracteres para buscar.
             </p>
@@ -106,16 +109,20 @@ export function ProgramPerfil360Page() {
               {results.map((p) => {
                 const fullName = `${p.firstName} ${p.lastName}`.trim();
                 const sublabel = p.email ?? p.medicalRecordNumber ?? undefined;
+                const isSelected = selectedPatient?.id === p.id;
                 return (
-                  <Link
+                  <div
                     key={p.id}
-                    href={`/program/patients/${p.id}`}
-                    className="flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted transition-colors"
+                    className={`flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                      isSelected
+                        ? "bg-primary-soft"
+                        : "hover:bg-muted"
+                    }`}
                   >
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary text-xs font-semibold">
                       {initialsOf(p)}
                     </span>
-                    <span className="flex min-w-0 flex-col">
+                    <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-sm font-medium">
                         {fullName}
                       </span>
@@ -125,18 +132,35 @@ export function ProgramPerfil360Page() {
                         </span>
                       )}
                     </span>
-                  </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 shrink-0 text-xs"
+                      onClick={() => setSelectedPatient(p)}
+                    >
+                      {isSelected ? "Seleccionado" : "Ver perfil"}
+                    </Button>
+                    <Link
+                      href={`/program/patients/${p.id}`}
+                      className="shrink-0"
+                    >
+                      <Button variant="outline" size="sm" className="h-7 text-xs">
+                        <ExternalLink className="mr-1 size-3" />
+                        Overview
+                      </Button>
+                    </Link>
+                  </div>
                 );
               })}
             </div>
-          ) : (
+          ) : hasQuery ? (
             <p className="text-xs text-muted-foreground">
               No se encontraron pacientes.
             </p>
-          )}
+          ) : null}
         </div>
 
-        {!hasQuery && !loading && (
+        {!hasQuery && !selectedPatient && !loading && (
           <div className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-10 text-center">
             <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
               <Users className="size-6 text-muted-foreground" />
@@ -151,6 +175,13 @@ export function ProgramPerfil360Page() {
           </div>
         )}
       </section>
+
+      {/* Biometría 360 inline — shown when a patient is selected */}
+      {selectedPatient && (
+        <section aria-label={`Biometría de ${selectedPatient.firstName} ${selectedPatient.lastName}`}>
+          <BiometriaPerfil360Detail patientId={selectedPatient.id} />
+        </section>
+      )}
     </div>
   );
 }
