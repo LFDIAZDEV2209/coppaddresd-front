@@ -5,6 +5,7 @@ import {
   Activity,
   RefreshCw,
   ChevronRight,
+  MoreHorizontal,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -26,6 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInterventions } from "../hooks/use-interventions";
 import { useAuth } from "@/providers/auth-provider";
@@ -42,13 +49,13 @@ const STATUS_OPTIONS: { value: InterventionStatus; label: string }[] = [
 ];
 
 const STATUS_COLOR: Record<string, string> = {
-  detected: "bg-yellow-100 text-yellow-800",
-  evaluated: "bg-blue-100 text-blue-800",
-  recommended: "bg-purple-100 text-purple-800",
-  accepted: "bg-indigo-100 text-indigo-800",
-  in_progress: "bg-orange-100 text-orange-800",
-  completed: "bg-green-100 text-green-800",
-  reevaluation: "bg-amber-100 text-amber-800",
+  detected: "bg-warning-soft text-warning",
+  evaluated: "bg-info-soft text-info-foreground",
+  recommended: "bg-primary-soft text-primary",
+  accepted: "bg-primary-soft text-primary",
+  in_progress: "bg-warning-soft text-warning",
+  completed: "bg-success-soft text-success-foreground",
+  reevaluation: "bg-warning-soft text-warning",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -62,10 +69,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const SEVERITY_COLOR: Record<string, string> = {
-  low: "bg-gray-100 text-gray-700",
-  medium: "bg-yellow-100 text-yellow-800",
-  high: "bg-orange-100 text-orange-800",
-  critical: "bg-red-100 text-red-800",
+  low: "bg-muted text-muted-foreground",
+  medium: "bg-warning-soft text-warning",
+  high: "bg-warning-soft text-warning",
+  critical: "bg-destructive-soft text-destructive",
 };
 
 /** Estados que requieren campo `result` al transicionar. */
@@ -165,19 +172,19 @@ export function ProgramInterventionsPage() {
             icon={Activity}
             variant="primary"
           />
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Título</TableHead>
+                  <TableHead className="whitespace-nowrap">Tipo</TableHead>
+                  <TableHead className="min-w-[220px]">Título</TableHead>
                   <TableHead>Severidad</TableHead>
                   <TableHead className="hidden md:table-cell">Paciente</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead className="hidden lg:table-cell">Recomendada</TableHead>
-                  <TableHead className="hidden lg:table-cell">Completada</TableHead>
-                  <TableHead className="hidden xl:table-cell">XP</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead className="hidden lg:table-cell whitespace-nowrap">Recomendada</TableHead>
+                  <TableHead className="hidden lg:table-cell whitespace-nowrap">Completada</TableHead>
+                  <TableHead className="hidden xl:table-cell text-right">XP</TableHead>
+                  <TableHead className="w-10 text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -189,12 +196,18 @@ export function ProgramInterventionsPage() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">
+                      <div className="flex max-w-[300px] min-w-0 flex-col overflow-hidden lg:max-w-[320px]">
+                        <span
+                          className="truncate text-sm font-medium"
+                          title={intervention.title}
+                        >
                           {intervention.title}
                         </span>
                         {intervention.description && (
-                          <span className="text-xs text-muted-foreground line-clamp-1">
+                          <span
+                            className="truncate text-xs text-muted-foreground"
+                            title={intervention.description}
+                          >
                             {intervention.description}
                           </span>
                         )}
@@ -204,22 +217,46 @@ export function ProgramInterventionsPage() {
                       <Badge
                         className={
                           SEVERITY_COLOR[intervention.severity] ??
-                          "bg-gray-100 text-gray-800"
+                          "bg-muted text-muted-foreground"
                         }
                       >
                         {intervention.severity}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className="text-sm font-mono" title={intervention.patientId}>
-                        {intervention.patientId.slice(0, 8)}…
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {intervention.patient_name ? (
+                          <>
+                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary">
+                              {intervention.patient_name
+                                .split(/\s+/)
+                                .map((w) => w[0])
+                                .slice(0, 2)
+                                .join("")
+                                .toUpperCase()}
+                            </span>
+                            <span
+                              className="truncate text-sm font-medium"
+                              title={intervention.patientId}
+                            >
+                              {intervention.patient_name}
+                            </span>
+                          </>
+                        ) : (
+                          <span
+                            className="text-sm font-mono"
+                            title={intervention.patientId}
+                          >
+                            {intervention.patientId.slice(0, 8)}…
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge
                         className={
                           STATUS_COLOR[intervention.status] ??
-                          "bg-gray-100 text-gray-800"
+                          "bg-muted text-muted-foreground"
                         }
                       >
                         {STATUS_LABELS[intervention.status] ?? intervention.status}
@@ -235,31 +272,30 @@ export function ProgramInterventionsPage() {
                       {intervention.xpAwardedTotal}
                     </TableCell>
                     <TableCell className="text-right">
-                      {canAdapt &&
-                        intervention.status !== "completed" && (
-                          <div className="flex items-center justify-end gap-1">
-                            {STATUS_OPTIONS.filter(
-                              (opt) => opt.value !== intervention.status,
-                            ).map((opt) => (
-                              <Button
+                      {canAdapt && intervention.status !== "completed" ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button variant="ghost" size="icon-sm" aria-label="Cambiar estado">
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent align="end" className="min-w-44">
+                            {STATUS_OPTIONS.filter((opt) => opt.value !== intervention.status).map((opt) => (
+                              <DropdownMenuItem
                                 key={opt.value}
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 gap-1 text-xs"
-                                title={`Cambiar a: ${opt.label}`}
-                                onClick={() =>
-                                  setTransitioning({
-                                    intervention,
-                                    newStatus: opt.value,
-                                  })
-                                }
+                                onClick={() => setTransitioning({ intervention, newStatus: opt.value })}
                               >
                                 {opt.label}
-                                <ChevronRight className="size-3" />
-                              </Button>
+                                <ChevronRight className="ml-auto size-3 opacity-60" />
+                              </DropdownMenuItem>
                             ))}
-                          </div>
-                        )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -272,22 +308,28 @@ export function ProgramInterventionsPage() {
       )}
 
       {/* Paginación */}
-      {result && result.totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            Página {result.page} de {result.totalPages}
-          </span>
+      {result && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-2.5 text-xs text-muted-foreground">
           <div className="flex items-center gap-3">
-            <select
-              className="h-8 rounded-md border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              value={result.pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              aria-label="Intervenciones por página"
-            >
-              <option value={10}>10 por página</option>
-              <option value={20}>20 por página</option>
-              <option value={50}>50 por página</option>
-            </select>
+            <span>
+              Página {result.page} de {result.totalPages}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="hidden sm:inline">Filas por página:</span>
+              <select
+                className="h-7 rounded-md border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={result.pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                aria-label="Intervenciones por página"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2">
             <div className="flex gap-2">
               <Button
                 variant="outline"

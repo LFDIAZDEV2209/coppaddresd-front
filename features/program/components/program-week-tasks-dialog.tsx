@@ -58,7 +58,7 @@ const AVAILABLE_TASK_CODES: Array<{
   { code: "vitals", label: "Signos vitales", defaultPoints: 120 },
   { code: "nut", label: "Plan nutricional", defaultPoints: 150 },
   { code: "ejercicio", label: "Rutina de ejercicio", defaultPoints: 150 },
-  { code: "nutribiotico", label: "Nutribiótico ADRED", defaultPoints: 80 },
+  { code: "nutraceutico", label: "Nutracéutico ADRED", defaultPoints: 80 },
   { code: "emocional", label: "Check-in emocional", defaultPoints: 120 },
 ];
 

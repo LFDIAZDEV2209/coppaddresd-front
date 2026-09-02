@@ -55,11 +55,11 @@ const DIMENSION_LABELS: Record<string, string> = {
 };
 
 const DIMENSION_COLORS: Record<string, string> = {
-  adherence: "bg-blue-500",
-  clinical: "bg-green-500",
-  nutrition: "bg-amber-500",
-  psychology: "bg-purple-500",
-  exercise: "bg-rose-500",
+  adherence: "bg-info",
+  clinical: "bg-success",
+  nutrition: "bg-warning",
+  psychology: "bg-primary",
+  exercise: "bg-destructive",
 };
 
 // --- Componente principal ---
@@ -260,9 +260,9 @@ export function ProgramScoresPage() {
 function TrendIcon({ trend }: { trend: string }) {
   switch (trend) {
     case "up":
-      return <TrendingUp className="size-4 text-green-600" />;
+      return <TrendingUp className="size-4 text-success" />;
     case "down":
-      return <TrendingDown className="size-4 text-red-600" />;
+      return <TrendingDown className="size-4 text-destructive" />;
     default:
       return <Minus className="size-4 text-muted-foreground" />;
   }
@@ -270,9 +270,9 @@ function TrendIcon({ trend }: { trend: string }) {
 
 function TrendBadge({ trend }: { trend: string }) {
   const config = {
-    up: { label: "Mejorando", className: "bg-green-100 text-green-800" },
-    down: { label: "Empeorando", className: "bg-red-100 text-red-800" },
-    stable: { label: "Estable", className: "bg-gray-100 text-gray-800" },
+    up: { label: "Mejorando", className: "bg-success-soft text-success-foreground" },
+    down: { label: "Empeorando", className: "bg-destructive-soft text-destructive" },
+    stable: { label: "Estable", className: "bg-muted text-muted-foreground" },
   } as const;
 
   const c = config[trend as keyof typeof config] ?? config.stable;
@@ -310,6 +310,20 @@ function DimensionBar({
 function ScoresDisplay({ data }: { data: import("../types/scores").ScoresResponse }) {
   const { healthScore, transformationScore } = data;
 
+  if (!healthScore || !transformationScore) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
+        <p className="text-sm font-semibold text-destructive">
+          Los scores recibidos no tienen el formato esperado.
+        </p>
+        <p className="max-w-sm text-xs text-muted-foreground">
+          Intenta calcular de nuevo o contacta al administrador si el problema
+          persiste.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Health Score */}
@@ -340,7 +354,7 @@ function ScoresDisplay({ data }: { data: import("../types/scores").ScoresRespons
               key={key}
               label={DIMENSION_LABELS[key] ?? key}
               value={value}
-              color={DIMENSION_COLORS[key] ?? "bg-gray-500"}
+              color={DIMENSION_COLORS[key] ?? "bg-muted"}
             />
           ))}
         </div>
@@ -405,9 +419,9 @@ function ScoresDisplay({ data }: { data: import("../types/scores").ScoresRespons
                         <span
                           className={
                             detail.delta > 0
-                              ? "text-green-600"
+                              ? "text-success"
                               : detail.delta < 0
-                                ? "text-red-600"
+                                ? "text-destructive"
                                 : ""
                           }
                         >
@@ -419,9 +433,9 @@ function ScoresDisplay({ data }: { data: import("../types/scores").ScoresRespons
                         <span
                           className={
                             detail.deltaPct > 0
-                              ? "text-green-600"
+                              ? "text-success"
                               : detail.deltaPct < 0
-                                ? "text-red-600"
+                                ? "text-destructive"
                                 : ""
                           }
                         >
@@ -431,9 +445,9 @@ function ScoresDisplay({ data }: { data: import("../types/scores").ScoresRespons
                       </TableCell>
                       <TableCell className="text-center">
                         {detail.favorable ? (
-                          <span className="text-green-600 text-sm">✓</span>
+                          <span className="text-success text-sm">✓</span>
                         ) : (
-                          <span className="text-red-600 text-sm">✗</span>
+                          <span className="text-destructive text-sm">✗</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right text-sm font-medium tabular-nums">

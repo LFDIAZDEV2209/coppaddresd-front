@@ -27,6 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useXpRules } from "../hooks/use-xp-rules";
 import { useAuth } from "@/providers/auth-provider";
+import { PagedListFooter } from "./paged-list-footer";
 import type { XpRule, UpdateXpRuleInput } from "../types";
 
 export function ProgramXpRulesPage() {
@@ -35,6 +36,11 @@ export function ProgramXpRulesPage() {
 
   const { rules, loading, actionLoading, error, updateRule, retry } =
     useXpRules();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const totalPages = Math.max(1, Math.ceil(rules.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageRules = rules.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const [editing, setEditing] = useState<XpRule | null>(null);
   const [form, setForm] = useState<UpdateXpRuleInput>({
@@ -141,7 +147,7 @@ export function ProgramXpRulesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rules.map((rule) => (
+                {pageRules.map((rule) => (
                   <TableRow key={rule.id}>
                     <TableCell className="font-mono text-sm">
                       {rule.code}
@@ -175,8 +181,8 @@ export function ProgramXpRulesPage() {
                       <Badge
                         className={
                           rule.active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            ? "bg-success-soft text-success-foreground"
+                            : "bg-muted text-muted-foreground"
                         }
                       >
                         {rule.active ? "Activa" : "Inactiva"}
@@ -200,6 +206,13 @@ export function ProgramXpRulesPage() {
               </TableBody>
             </Table>
           </div>
+          <PagedListFooter
+            page={safePage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+          />
         </div>
       ) : (
         <XpRulesEmptyState />

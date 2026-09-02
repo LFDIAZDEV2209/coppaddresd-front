@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GitBranch, RefreshCw } from "lucide-react";
+import { GitBranch, RefreshCw, MoreHorizontal } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -41,6 +41,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdaptations } from "../hooks/use-adaptations";
 import { useAuth } from "@/providers/auth-provider";
@@ -69,11 +75,11 @@ const KIND_LABELS: Record<AdaptationKind, string> = {
 };
 
 const STATUS_BADGE: Record<AdaptationStatus, string> = {
-  Pending: "bg-yellow-100 text-yellow-800",
-  Approved: "bg-blue-100 text-blue-800",
-  Rejected: "bg-red-100 text-red-800",
-  Applied: "bg-green-100 text-green-800",
-  Superseded: "bg-gray-100 text-gray-700",
+  Pending: "bg-warning-soft text-warning",
+  Approved: "bg-info-soft text-info-foreground",
+  Rejected: "bg-destructive-soft text-destructive",
+  Applied: "bg-success-soft text-success-foreground",
+  Superseded: "bg-muted text-muted-foreground",
 };
 
 const STATUS_LABELS: Record<AdaptationStatus, string> = {
@@ -192,6 +198,7 @@ export function ProgramAdaptationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Paciente</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="hidden md:table-cell">Razón</TableHead>
@@ -203,8 +210,40 @@ export function ProgramAdaptationsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.data.map((adaptation) => (
+                {result.data.map((adaptation) => {
+                  const rawName =
+                    (adaptation.patient_name ??
+                      adaptation.patientName ??
+                      adaptation.PatientName ??
+                      "") as string;
+                  const patientName = rawName.trim() || null;
+                  const initials = patientName
+                    ? patientName
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .map((w) => w[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase()
+                    : "";
+                  return (
                   <TableRow key={adaptation.id}>
+                    <TableCell>
+                      {patientName ? (
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary" aria-hidden>
+                            {initials}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium" title={patientName}>
+                            {patientName}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground" title={adaptation.enrollmentId}>
+                          Paciente — {adaptation.enrollmentId.slice(0, 8)}…
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <span className="text-sm">
                         {KIND_LABELS[adaptation.kind] ?? adaptation.kind}
@@ -231,28 +270,34 @@ export function ProgramAdaptationsPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {canAdapt && adaptation.status === "Pending" && (
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setApproving(adaptation)}
-                          >
-                            Aprobar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setRejecting(adaptation)}
-                          >
-                            Rechazar
-                          </Button>
-                        </div>
+                      {canAdapt && adaptation.status === "Pending" ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button variant="ghost" size="icon" className="size-8" aria-label="Acciones">
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem onClick={() => setApproving(adaptation)}>
+                              Aprobar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => setRejecting(adaptation)}
+                            >
+                              Rechazar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -262,40 +307,44 @@ export function ProgramAdaptationsPage() {
       )}
 
       {/* Paginación */}
-      {result && result.totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            Página {result.page} de {result.totalPages}
-          </span>
+      {result && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-2.5 text-xs text-muted-foreground">
           <div className="flex items-center gap-3">
-            <select
-              className="h-8 rounded-md border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              value={result.pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              aria-label="Adaptaciones por página"
-            >
-              <option value={10}>10 por página</option>
-              <option value={20}>20 por página</option>
-              <option value={50}>50 por página</option>
-            </select>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={result.page === 1}
-                onClick={() => setPage(result.page - 1)}
+            <span>
+              Página {result.page} de {result.totalPages}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="hidden sm:inline">Filas por página:</span>
+              <select
+                className="h-7 rounded-md border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={result.pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                aria-label="Adaptaciones por página"
               >
-                Anterior
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={result.page === result.totalPages}
-                onClick={() => setPage(result.page + 1)}
-              >
-                Siguiente
-              </Button>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
             </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={result.page === 1}
+              onClick={() => setPage(result.page - 1)}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={result.page === result.totalPages}
+              onClick={() => setPage(result.page + 1)}
+            >
+              Siguiente
+            </Button>
           </div>
         </div>
       )}
@@ -306,7 +355,7 @@ export function ProgramAdaptationsPage() {
         onOpenChange={(open) => !open && setApproving(null)}
       >
         <AlertDialogContent>
-          <AlertDialogMedia className="bg-blue-50 text-blue-600">
+          <AlertDialogMedia className="bg-info-soft text-info">
             <GitBranch />
           </AlertDialogMedia>
           <AlertDialogHeader>

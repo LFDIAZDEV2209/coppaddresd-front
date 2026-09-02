@@ -91,13 +91,13 @@ export function ProgramTemplatesPage() {
   const statusColor = (status: string) => {
     switch (status) {
       case "Active":
-        return "bg-green-100 text-green-800";
+        return "bg-success-soft text-success-foreground";
       case "Draft":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-warning-soft text-warning";
       case "Archived":
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -258,7 +258,7 @@ export function ProgramTemplatesPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="size-8 text-green-600"
+                            className="size-8 text-success"
                             title="Publicar"
                             onClick={() => setPublishing(tpl)}
                           >
@@ -289,8 +289,8 @@ export function ProgramTemplatesPage() {
       )}
 
       {/* Paginación */}
-      {result && result.totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+      {result && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-2.5 text-xs text-muted-foreground">
           <span>
             Página {result.page} de {result.totalPages}
           </span>
@@ -301,6 +301,7 @@ export function ProgramTemplatesPage() {
               onChange={(e) => setPageSize(Number(e.target.value))}
               aria-label="Plantillas por página"
             >
+              <option value={5}>5 por página</option>
               <option value={10}>10 por página</option>
               <option value={20}>20 por página</option>
               <option value={50}>50 por página</option>
@@ -351,7 +352,7 @@ export function ProgramTemplatesPage() {
         onOpenChange={(open) => !open && setPublishing(undefined)}
       >
         <AlertDialogContent>
-          <AlertDialogMedia className="bg-green-50 text-green-600">
+          <AlertDialogMedia className="bg-success-soft text-success">
             <Send />
           </AlertDialogMedia>
           <AlertDialogHeader>
@@ -365,7 +366,7 @@ export function ProgramTemplatesPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-success hover:bg-success/90"
               disabled={actionLoading}
               onClick={async () => {
                 if (publishing) await publish(publishing.id);

@@ -133,13 +133,13 @@ export function ProgramTemplateDetailDialog({
   const statusColor = (status: string) => {
     switch (status) {
       case "Active":
-        return "bg-green-100 text-green-800";
+        return "bg-success-soft text-success-foreground";
       case "Draft":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-warning-soft text-warning";
       case "Archived":
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
