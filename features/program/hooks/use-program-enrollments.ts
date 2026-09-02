@@ -33,7 +33,7 @@ interface UseProgramEnrollmentsReturn {
 
 export function useProgramEnrollments(
   initialPage = 1,
-  initialPageSize = 10,
+  initialPageSize = 5,
 ): UseProgramEnrollmentsReturn {
   const [result, setResult] =
     useState<PaginatedResult<ProgramEnrollment> | null>(null);
