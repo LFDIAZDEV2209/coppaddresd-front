@@ -41,6 +41,12 @@ export interface Adaptation {
   appliedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
+  /** Backend snake_case patient name (when available). */
+  patient_name?: string | null;
+  /** Alias camelCase por si el backend serializa con camelCase. */
+  patientName?: string | null;
+  /** PascalCase fallback (System.Text.Json sin naming policy). */
+  PatientName?: string | null;
 }
 
 /** Resultado paginado del listado de adaptaciones. */

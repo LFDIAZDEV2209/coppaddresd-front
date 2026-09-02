@@ -60,6 +60,7 @@ export async function replaceEnrollmentWeekTasks(
     sortOrder: number;
     routineId?: string | null;
     nutritionPlanId?: string | null;
+    mediaId?: string | null;
   }>,
 ): Promise<EnrollmentWeekResponse> {
   return apiFetch<EnrollmentWeekResponse>(

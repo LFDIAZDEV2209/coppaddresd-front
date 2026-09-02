@@ -31,7 +31,7 @@ interface UseAdaptationsReturn {
 
 export function useAdaptations(
   initialPage = 1,
-  initialPageSize = 20,
+  initialPageSize = 5,
 ): UseAdaptationsReturn {
   const [result, setResult] = useState<PaginatedAdaptationsResult | null>(null);
   const [loading, setLoading] = useState(false);

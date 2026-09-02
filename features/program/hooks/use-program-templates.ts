@@ -42,7 +42,7 @@ interface UseProgramTemplatesReturn {
 
 export function useProgramTemplates(
   initialPage = 1,
-  initialPageSize = 10,
+  initialPageSize = 5,
 ): UseProgramTemplatesReturn {
   const [result, setResult] =
     useState<PaginatedResult<ProgramTemplateListItem> | null>(null);

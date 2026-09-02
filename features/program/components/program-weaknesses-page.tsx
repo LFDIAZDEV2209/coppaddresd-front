@@ -73,13 +73,13 @@ export function ProgramWeaknessesPage() {
   const severityBadge = (severity: string) => {
     switch (severity) {
       case "high":
-        return "bg-red-100 text-red-800";
+        return "bg-destructive-soft text-destructive";
       case "medium":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-warning-soft text-warning";
       case "low":
-        return "bg-green-100 text-green-800";
+        return "bg-success-soft text-success-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -150,6 +150,7 @@ export function ProgramWeaknessesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Código</TableHead>
+                  <TableHead className="hidden md:table-cell">Paciente</TableHead>
                   <TableHead>Categoría</TableHead>
                   <TableHead>Severidad</TableHead>
                   <TableHead className="hidden md:table-cell">Título</TableHead>
@@ -167,6 +168,33 @@ export function ProgramWeaknessesPage() {
                   <TableRow key={weakness.id}>
                     <TableCell>
                       <span className="text-sm font-mono">{weakness.code}</span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {weakness.patient_name ? (
+                        <div className="flex items-center gap-2">
+                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary">
+                            {weakness.patient_name
+                              .split(/\s+/)
+                              .map((w) => w[0])
+                              .slice(0, 2)
+                              .join("")
+                              .toUpperCase()}
+                          </span>
+                          <span
+                            className="truncate text-sm font-medium"
+                            title={weakness.patientId}
+                          >
+                            {weakness.patient_name}
+                          </span>
+                        </div>
+                      ) : (
+                        <span
+                          className="text-sm font-mono"
+                          title={weakness.patientId}
+                        >
+                          {weakness.patientId.slice(0, 8)}…
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">{weakness.category}</span>
@@ -272,7 +300,7 @@ export function ProgramWeaknessesPage() {
         onOpenChange={(open) => !open && setConfirming(null)}
       >
         <AlertDialogContent>
-          <AlertDialogMedia className="bg-yellow-50 text-yellow-600">
+          <AlertDialogMedia className="bg-warning-soft text-warning">
             <ShieldAlert />
           </AlertDialogMedia>
           <AlertDialogHeader>

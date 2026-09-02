@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   RefreshCw,
@@ -8,7 +8,11 @@ import {
   Play,
   UserMinus,
   UserPlus,
+  Download,
+  X,
+  MoreHorizontal,
 } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -40,18 +44,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProgramEnrollments } from "../hooks/use-program-enrollments";
 import {
   ENROLLMENT_STATUS_LABELS,
   ENROLLMENT_STATUS_OPTIONS,
+  bulkEnrollPatients,
+  exportEnrollmentsCsv,
 } from "../services/program-enrollments-service";
 import { useAuth } from "@/providers/auth-provider";
 import { ProgramEnrollDialog } from "./program-enroll-dialog";
+import { ProgramBulkEnrollDialog } from "./program-bulk-enroll-dialog";
+import type { BulkEnrollResult } from "../types";
 
 export function ProgramEnrollmentsPage() {
   const { hasPermission } = useAuth();
   const canEnroll = hasPermission("Program.Enroll");
+  const canExport = hasPermission("Program.Export");
 
   const {
     result,
@@ -78,19 +93,67 @@ export function ProgramEnrollmentsPage() {
     name: string;
   } | null>(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
+  const [patientIdInput, setPatientIdInput] = useState(filters.patientId);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [bulkSummary, setBulkSummary] = useState<BulkEnrollResult | null>(
+    null,
+  );
 
-  const statusColor = (status: string) => {
-    switch (status) {
+  const handleBulkSubmit = async (input: Parameters<
+    typeof bulkEnrollPatients
+  >[0]) => {
+    setBulkSaving(true);
+    try {
+      const result = await bulkEnrollPatients(input);
+      setBulkSummary(result);
+      if (result.created > 0) {
+        retry();
+      }
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      await exportEnrollmentsCsv({});
+    } catch (err) {
+      setExportError(
+        err instanceof Error
+          ? err.message
+          : "No pudimos exportar las inscripciones.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Debounce del filtro de patientId: evita un request por tecla.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (patientIdInput !== filters.patientId) {
+        setFilters({ patientId: patientIdInput });
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [patientIdInput, filters.patientId, setFilters]);
+
+  const statusColor = (status: string) => {    switch (status) {
       case "Active":
-        return "bg-green-100 text-green-800";
+        return "bg-success-soft text-success-foreground";
       case "Paused":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-warning-soft text-warning";
       case "Completed":
-        return "bg-blue-100 text-blue-800";
+        return "bg-info-soft text-info-foreground";
       case "Withdrawn":
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -114,15 +177,39 @@ export function ProgramEnrollmentsPage() {
               Filtra por estado o ID de paciente.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {canEnroll && (
+              <>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setEnrollOpen(true)}
+                >
+                  <UserPlus data-icon="inline-start" />
+                  Inscribir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBulkOpen(true)}
+                >
+                  <Users data-icon="inline-start" />
+                  Inscripción masiva
+                </Button>
+              </>
+            )}
+            {canExport && (
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
-                onClick={() => setEnrollOpen(true)}
+                onClick={handleExport}
+                disabled={exporting}
               >
-                <UserPlus data-icon="inline-start" />
-                Inscribir
+                <Download
+                  data-icon="inline-start"
+                  className={exporting ? "animate-pulse" : undefined}
+                />
+                {exporting ? "Exportando..." : "Exportar CSV"}
               </Button>
             )}
             <Button
@@ -142,8 +229,8 @@ export function ProgramEnrollmentsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input
             placeholder="Buscar por patientId..."
-            value={filters.patientId}
-            onChange={(e) => setFilters({ patientId: e.target.value })}
+            value={patientIdInput}
+            onChange={(e) => setPatientIdInput(e.target.value)}
             className="h-9 w-full sm:max-w-xs"
           />
           <Select
@@ -185,7 +272,7 @@ export function ProgramEnrollmentsPage() {
                 <TableRow>
                   <TableHead>Paciente</TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Template
+                    Programa
                   </TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="hidden md:table-cell">Semana</TableHead>
@@ -198,15 +285,61 @@ export function ProgramEnrollmentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.data.map((enrollment) => (
+                {result.data.map((enrollment) => {
+                  const displayName =
+                    enrollment.patientFullName ??
+                    enrollment.patientName ??
+                    enrollment.patient_name ??
+                    null;
+                  return (
                   <TableRow key={enrollment.id}>
                     <TableCell>
-                      <span className="text-sm font-mono" title={enrollment.patientId}>
-                        {enrollment.patientId.slice(0, 8)}…
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {displayName ? (
+                          <>
+                            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                              {displayName
+                                .split(/\s+/)
+                                .map((w) => w[0])
+                                .slice(0, 2)
+                                .join("")
+                                .toUpperCase()}
+                            </span>
+                            {enrollment.patientId ? (
+                              <Link
+                                href={`/program/patients/${enrollment.patientId}`}
+                                className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer"
+                                title={enrollment.patientId}
+                              >
+                                {displayName}
+                              </Link>
+                            ) : (
+                              <span
+                                className="truncate text-sm font-medium"
+                                title={enrollment.patientId}
+                              >
+                                {displayName}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span
+                            className="text-sm font-mono"
+                            title={enrollment.patientId}
+                          >
+                            {enrollment.patientId.slice(0, 8)}…
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm font-mono">
-                      {enrollment.templateId.slice(0, 8)}…
+                    <TableCell className="hidden md:table-cell">
+                      {enrollment.templateName ? (
+                        <Badge variant="outline" className="max-w-[160px] truncate text-xs font-medium">
+                          {enrollment.templateName}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge className={statusColor(enrollment.status)}>
@@ -233,56 +366,69 @@ export function ProgramEnrollmentsPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {canEnroll && enrollment.status === "Active" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            title="Pausar"
-                            onClick={() =>
-                              setPausing({
-                                id: enrollment.id,
-                                name: enrollment.patientId.slice(0, 8),
-                              })
-                            }
-                          >
-                            <Pause className="size-4" />
-                          </Button>
-                        )}
-                        {canEnroll && enrollment.status === "Paused" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 text-green-600"
-                            title="Reanudar"
-                            onClick={() => resume(enrollment.id)}
-                          >
-                            <Play className="size-4" />
-                          </Button>
-                        )}
-                        {canEnroll &&
-                          (enrollment.status === "Active" ||
-                            enrollment.status === "Paused") && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-8 text-destructive"
-                              title="Retirar"
+                              className="size-8"
+                              aria-label="Acciones"
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          }
+                        />
+                        <DropdownMenuContent align="end" className="w-48">
+                          {displayName && enrollment.patientId && (
+                            <DropdownMenuItem
                               onClick={() =>
-                                setWithdrawing({
+                                (window.location.href = `/program/patients/${enrollment.patientId}`)
+                              }
+                            >
+                              Ver paciente
+                            </DropdownMenuItem>
+                          )}
+                          {canEnroll && enrollment.status === "Active" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setPausing({
                                   id: enrollment.id,
-                                  name: enrollment.patientId.slice(0, 8),
+                                  name: displayName ?? enrollment.patientId.slice(0, 8),
                                 })
                               }
                             >
-                              <UserMinus className="size-4" />
-                            </Button>
+                              <Pause className="size-4" /> Pausar inscripción
+                            </DropdownMenuItem>
                           )}
-                      </div>
+                          {canEnroll && enrollment.status === "Paused" && (
+                            <DropdownMenuItem
+                              onClick={() => resume(enrollment.id)}
+                            >
+                              <Play className="size-4" /> Reanudar
+                            </DropdownMenuItem>
+                          )}
+                          {canEnroll &&
+                            (enrollment.status === "Active" ||
+                              enrollment.status === "Paused") && (
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() =>
+                                  setWithdrawing({
+                                    id: enrollment.id,
+                                    name: displayName ?? enrollment.patientId.slice(0, 8),
+                                  })
+                                }
+                              >
+                                <UserMinus className="size-4" /> Retirar
+                              </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -292,8 +438,8 @@ export function ProgramEnrollmentsPage() {
       )}
 
       {/* Paginación */}
-      {result && result.totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+      {result && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-2.5 text-xs text-muted-foreground">
           <span>
             Página {result.page} de {result.totalPages}
           </span>
@@ -304,6 +450,7 @@ export function ProgramEnrollmentsPage() {
               onChange={(e) => setPageSize(Number(e.target.value))}
               aria-label="Inscripciones por página"
             >
+              <option value={5}>5 por página</option>
               <option value={10}>10 por página</option>
               <option value={20}>20 por página</option>
               <option value={50}>50 por página</option>
@@ -336,7 +483,7 @@ export function ProgramEnrollmentsPage() {
         onOpenChange={(open) => !open && setPausing(null)}
       >
         <AlertDialogContent>
-          <AlertDialogMedia className="bg-yellow-50 text-yellow-600">
+          <AlertDialogMedia className="bg-warning-soft text-warning">
             <Pause />
           </AlertDialogMedia>
           <AlertDialogHeader>
@@ -349,7 +496,7 @@ export function ProgramEnrollmentsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-yellow-600 hover:bg-yellow-700"
+              className="bg-warning hover:bg-warning/90"
               disabled={actionLoading}
               onClick={async () => {
                 if (pausing) await pause(pausing.id);
@@ -401,6 +548,75 @@ export function ProgramEnrollmentsPage() {
         onOpenChange={setEnrollOpen}
         onSubmit={enroll}
       />
+
+      {/* Inscripción masiva */}
+      <ProgramBulkEnrollDialog
+        open={bulkOpen}
+        saving={bulkSaving}
+        onOpenChange={setBulkOpen}
+        onSubmit={handleBulkSubmit}
+      />
+
+      {/* Resumen del lote */}
+      {bulkSummary && (
+        <div
+          className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4"
+          role="status"
+        >
+          <div className="min-w-0 flex-1 text-sm">
+            <p className="font-medium">
+              Inscripción masiva: {bulkSummary.created}{" "}
+              {bulkSummary.created === 1 ? "creada" : "creadas"}
+              {bulkSummary.failed > 0 &&
+                `, ${bulkSummary.failed} ${
+                  bulkSummary.failed === 1 ? "fallo" : "fallos"
+                }`}
+              .
+            </p>
+            {bulkSummary.failed > 0 && (
+              <ul className="mt-1 list-inside list-disc text-xs text-muted-foreground">
+                {bulkSummary.results
+                  .filter((r) => r.error)
+                  .slice(0, 5)
+                  .map((r) => (
+                    <li key={r.patientId} className="truncate">
+                      {r.patientId.slice(0, 8)}…: {r.error}
+                    </li>
+                  ))}
+                {bulkSummary.results.filter((r) => r.error).length > 5 && (
+                  <li>… y más fallos.</li>
+                )}
+              </ul>
+            )}
+          </div>
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => setBulkSummary(null)}
+            aria-label="Cerrar resumen"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Error del exporte */}
+      {exportError && (
+        <div
+          className="flex items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-4 text-sm text-destructive"
+          role="alert"
+        >
+          <span className="min-w-0 flex-1">{exportError}</span>
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => setExportError(null)}
+            aria-label="Cerrar"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

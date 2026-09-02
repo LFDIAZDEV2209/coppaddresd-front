@@ -25,6 +25,8 @@ export interface Weakness {
   resolvedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
+  /** Backend snake_case patient name (when available). */
+  patient_name?: string | null;
 }
 
 /** Resultado paginado de una lista de debilidades. */

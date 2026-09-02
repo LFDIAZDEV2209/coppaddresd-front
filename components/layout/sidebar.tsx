@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -85,7 +85,7 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "flex flex-col bg-gradient-to-b from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_85%,#000)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] relative shrink-0 h-screen",
+          "flex flex-col bg-gradient-to-b from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_85%,#000)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] relative shrink-0 h-screen overflow-hidden",
           collapsed ? "w-[68px]" : "w-[236px]",
           mobileOpen ? "fixed inset-y-0 left-0 z-50" : "hidden lg:flex",
         )}
@@ -95,7 +95,7 @@ export function Sidebar({
         {/* Brand Header */}
         <div
           className={cn(
-            "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/8 relative",
+            "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/8 relative shrink-0",
             collapsed ? "h-[80px]" : "h-[90px]",
           )}
         >
@@ -227,31 +227,62 @@ export function Sidebar({
                   >
                     <div className="overflow-hidden">
                       <div className="mt-1 ml-5 flex flex-col gap-0.5 border-l border-white/10 pl-3 py-0.5">
-                        {visibleNavItems(mod, can).map((item, idx) => {
-                          const ItemIcon = item.icon;
-                          const itemActive = isActive(item);
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={onCloseMobile}
-                              className={cn(
-                                "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all duration-200 border",
-                                itemActive
-                                  ? "bg-[var(--sidebar-active-bg)] font-semibold text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
-                                  : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white border-transparent",
-                              )}
-                              style={{
-                                animationDelay: expanded
-                                  ? `${idx * 40}ms`
-                                  : undefined,
-                              }}
-                            >
-                              <ItemIcon className="size-[16px] shrink-0" />
-                              <span className="truncate">{t(item.label)}</span>
-                            </Link>
-                          );
-                        })}
+                        {
+                          // Pre-compute visible items so we can track section transitions
+                          (() => {
+                            const items = visibleNavItems(mod, can);
+                            let lastSection: string | undefined;
+                            return items.flatMap<React.ReactNode>((item, idx) => {
+                              const ItemIcon = item.icon;
+                              const itemActive = isActive(item);
+                              const elements: React.ReactNode[] = [];
+
+                              // Insert section label when section changes
+                              if (
+                                item.section &&
+                                item.section !== lastSection
+                              ) {
+                                lastSection = item.section;
+                                elements.push(
+                                  <p
+                                    key={`section-${item.section}`}
+                                    className="px-2.5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40"
+                                  >
+                                    {t(item.section)}
+                                  </p>,
+                                );
+                              } else if (item.section) {
+                                lastSection = item.section;
+                              }
+
+                              elements.push(
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  onClick={onCloseMobile}
+                                  className={cn(
+                                    "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all duration-200 border",
+                                    itemActive
+                                      ? "bg-[var(--sidebar-active-bg)] font-semibold text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
+                                      : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white border-transparent",
+                                  )}
+                                  style={{
+                                    animationDelay: expanded
+                                      ? `${idx * 40}ms`
+                                      : undefined,
+                                  }}
+                                >
+                                  <ItemIcon className="size-[16px] shrink-0" />
+                                  <span className="truncate">
+                                    {t(item.label)}
+                                  </span>
+                                </Link>,
+                              );
+
+                              return elements;
+                            });
+                          })()
+                        }
                       </div>
                     </div>
                   </div>
@@ -262,7 +293,7 @@ export function Sidebar({
         </ScrollArea>
 
         {/* User Card */}
-        <div className="p-2.5 mt-auto">
+        <div className="p-2.5 mt-auto shrink-0">
           {collapsed ? (
             <div className="flex flex-col gap-2">
               <button

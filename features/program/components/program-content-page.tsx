@@ -37,6 +37,7 @@ import {
 import { useAuth } from "@/providers/auth-provider";
 import { useProgramContent } from "../hooks/use-program-content";
 import { fetchProgramEnrollments } from "../services/program-enrollments-service";
+import { PagedListFooter } from "./paged-list-footer";
 import {
   fetchRoutinesForPicker,
   fetchNutritionPlansForPicker,
@@ -82,6 +83,8 @@ export function ProgramContentPage() {
     [],
   );
   const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [enrollPage, setEnrollPage] = useState(1);
+  const [enrollPageSize, setEnrollPageSize] = useState(5);
 
   // Cargar primeros 10 pacientes inscritos al buscar o filtrar
   const loadInitialPatients = useCallback(
@@ -106,10 +109,15 @@ export function ProgramContentPage() {
   // Debounce para el input de búsqueda por nombre / documento
   useEffect(() => {
     const timer = setTimeout(() => {
+      setEnrollPage(1);
       loadInitialPatients(searchQuery, statusFilter);
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery, statusFilter, loadInitialPatients]);
+
+  const enrollTotalPages = Math.max(1, Math.ceil(enrollmentsList.length / enrollPageSize));
+  const enrollSafePage = Math.min(enrollPage, enrollTotalPages);
+  const pageEnrollments = enrollmentsList.slice((enrollSafePage - 1) * enrollPageSize, enrollSafePage * enrollPageSize);
 
   // Manejar selección de un paciente de la tabla
   const handleSelectPatient = useCallback(
@@ -255,19 +263,20 @@ export function ProgramContentPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Paciente</TableHead>
-                    <TableHead>Programa</TableHead>
-                    <TableHead>Progreso semanal</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acción</TableHead>
+            <>
+              <div className="overflow-hidden rounded-xl border border-border">
+                <Table>
+                  <TableHeader className="[&_tr]:border-b-0">
+                    <TableRow className="bg-slate-900 hover:bg-slate-900">
+                    <TableHead className="text-white font-semibold">Paciente</TableHead>
+                    <TableHead className="text-white font-semibold">Programa</TableHead>
+                    <TableHead className="text-white font-semibold">Progreso semanal</TableHead>
+                    <TableHead className="text-white font-semibold">Estado</TableHead>
+                    <TableHead className="text-right text-white font-semibold">Acción</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {enrollmentsList.map((enrollment) => {
+                  {pageEnrollments.map((enrollment) => {
                     const patientName =
                       enrollment.patientFullName ||
                       `Paciente (${enrollment.patientId.substring(0, 8)})`;
@@ -345,6 +354,14 @@ export function ProgramContentPage() {
                 </TableBody>
               </Table>
             </div>
+            <PagedListFooter
+              page={enrollSafePage}
+              totalPages={enrollTotalPages}
+              onPageChange={setEnrollPage}
+              pageSize={enrollPageSize}
+              onPageSizeChange={(s) => { setEnrollPageSize(s); setEnrollPage(1); }}
+            />
+          </>
           )}
         </section>
       ) : (
@@ -366,7 +383,7 @@ export function ProgramContentPage() {
               <div className="h-6 w-px bg-border hidden sm:block" />
 
               <div className="flex items-center gap-2">
-                <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-sm">
+                <div className="flex size-9 items-center justify-center rounded-xl bg-success-soft text-success font-bold text-sm">
                   <UserCheck className="size-5" />
                 </div>
                 <div className="flex flex-col">
@@ -434,6 +451,11 @@ function ContentTable({
   availablePlans: NutritionPlanListItem[];
   loadingCatalog: boolean;
 }) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const totalPages = Math.max(1, Math.ceil(content.weeks.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageWeeks = content.weeks.slice((safePage - 1) * pageSize, safePage * pageSize);
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-xs flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
@@ -455,23 +477,23 @@ function ContentTable({
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-hidden rounded-xl border border-border">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">Sem.</TableHead>
-              <TableHead>Fechas de la semana</TableHead>
-              <TableHead className="min-w-[240px]">Plan nutricional</TableHead>
-              <TableHead className="min-w-[260px]">
+          <TableHeader className="[&_tr]:border-b-0">
+            <TableRow className="bg-slate-900 hover:bg-slate-900">
+              <TableHead className="w-16 text-white font-semibold">Sem.</TableHead>
+              <TableHead className="text-white font-semibold">Fechas de la semana</TableHead>
+              <TableHead className="min-w-[240px] text-white font-semibold">Plan nutricional</TableHead>
+              <TableHead className="min-w-[260px] text-white font-semibold">
                 Rutina de ejercicio
               </TableHead>
               {canEdit && (
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead className="text-right text-white font-semibold">Acciones</TableHead>
               )}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {content.weeks.map((week) => (
+            {pageWeeks.map((week) => (
               <WeekRow
                 key={week.weekNumber}
                 week={week}
@@ -485,7 +507,13 @@ function ContentTable({
           </TableBody>
         </Table>
       </div>
-
+      <PagedListFooter
+        page={safePage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        pageSize={pageSize}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+      />
       {content.weeks.length === 0 && (
         <p className="text-xs text-muted-foreground text-center py-4">
           Esta inscripción no tiene semanas configuradas.
@@ -716,7 +744,7 @@ function WeekRow({
       </TableCell>
       <TableCell>
         {week.nutritionPlan ? (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
+          <Badge className="bg-success-soft text-success-foreground border-success/30">
             <Salad className="mr-1 size-3" />
             {week.nutritionPlan.name}
           </Badge>
@@ -731,7 +759,7 @@ function WeekRow({
       </TableCell>
       <TableCell>
         {week.exerciseRoutine ? (
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+          <Badge className="bg-info-soft text-info-foreground border-info/30">
             <Dumbbell className="mr-1 size-3" />
             {week.exerciseRoutine.name}
           </Badge>

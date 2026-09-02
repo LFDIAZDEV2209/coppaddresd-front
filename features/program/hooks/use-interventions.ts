@@ -28,7 +28,7 @@ interface UseInterventionsReturn {
 
 export function useInterventions(
   initialPage = 1,
-  initialPageSize = 20,
+  initialPageSize = 5,
 ): UseInterventionsReturn {
   const [result, setResult] =
     useState<PaginatedInterventionsResult | null>(null);
