@@ -713,7 +713,13 @@ function statusColor(status: Patient["status"]) {
       dot: "var(--destructive)",
     },
   };
-  return colors[status];
+  return (
+    colors[status] ?? {
+      bg: "var(--muted)",
+      text: "var(--muted-foreground)",
+      dot: "var(--muted-foreground)",
+    }
+  );
 }
 
 /** ¿El valor es un empty state ("No registrado", "Sin asignar", ...)? */

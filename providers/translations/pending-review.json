@@ -36,5 +36,20 @@
   "Marino": "Marine",
   "Teal": "TEAL",
   "Esmeralda": "Emerald",
-  "Ámbar": "Amber"
+  "Ámbar": "Amber",
+  "Gestión": "Management",
+  "Administración": "Administration",
+  "Catálogo de tests": "Test Catalogue",
+  "Catálogo": "Catalogue",
+  "Previsualización": "Preview",
+  "Planes de alimentación": "Nutrition Programs",
+  "Adaptaciones": "Adaptation",
+  "Auditoría": "Auditing",
+  "Configuración": "Settings",
+  "Cerrar sesión": "Logout",
+  "Abrir menú": "Open menu",
+  "Cambiar a Español": "Switch to Spanish",
+  "Crea el perfil, asigna sus clínicas, permisos y horarios de atención, y envía la invitación por correo.": "Create the profile, assign their clinics, permissions, and hours of operation, and mail the invitation.",
+  "Profesión y especialidades": "Profession and specialties",
+  "Tipo de profesional y áreas que puede atender": "Type of professional and areas they can serve"
 }
