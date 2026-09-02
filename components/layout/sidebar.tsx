@@ -85,7 +85,7 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "flex flex-col bg-gradient-to-b from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_85%,#000)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] relative shrink-0 h-screen",
+          "flex flex-col bg-gradient-to-b from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_85%,#000)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] relative shrink-0 h-screen overflow-hidden",
           collapsed ? "w-[68px]" : "w-[236px]",
           mobileOpen ? "fixed inset-y-0 left-0 z-50" : "hidden lg:flex",
         )}
@@ -95,7 +95,7 @@ export function Sidebar({
         {/* Brand Header */}
         <div
           className={cn(
-            "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/8 relative",
+            "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/8 relative shrink-0",
             collapsed ? "h-[80px]" : "h-[90px]",
           )}
         >
@@ -293,7 +293,7 @@ export function Sidebar({
         </ScrollArea>
 
         {/* User Card */}
-        <div className="p-2.5 mt-auto">
+        <div className="p-2.5 mt-auto shrink-0">
           {collapsed ? (
             <div className="flex flex-col gap-2">
               <button
