@@ -126,7 +126,7 @@ export const TASK_CODE_OPTIONS = [
   { value: "vitals", label: "Signos vitales" },
   { value: "nut", label: "Plan nutricional" },
   { value: "ejercicio", label: "Ejercicio" },
-  { value: "nutribiotico", label: "Nutribiótico" },
+  { value: "nutraceutico", label: "Nutracéutico" },
   { value: "emocional", label: "Evaluación emocional" },
 ] as const;
 

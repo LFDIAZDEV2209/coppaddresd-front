@@ -1,9 +1,11 @@
-import { apiFetch } from "@/lib/api/http";
+import { apiFetch, getAccessToken } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type {
   ProgramEnrollment,
   ProgramEnrollmentFilters,
   EnrollPatientInput,
+  BulkEnrollInput,
+  BulkEnrollResult,
   PaginatedResult,
 } from "../types";
 
@@ -41,6 +43,69 @@ export async function enrollPatient(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+// --- Inscripción masiva (B13) ---
+
+export async function bulkEnrollPatients(
+  input: BulkEnrollInput,
+): Promise<BulkEnrollResult> {
+  return apiFetch<BulkEnrollResult>(`${PATH}/bulk`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+// --- Exporte CSV (B14) ---
+
+export interface ExportEnrollmentsFilters {
+  clinicId?: string;
+  /** Fecha ISO (inclusive). */
+  from?: string;
+  /** Fecha ISO (inclusive). */
+  to?: string;
+}
+
+/**
+ * Descarga el exporte CSV de inscripciones (GET /enrollments/export, stream
+ * text/csv) como archivo. Usa fetch directo con Bearer porque la respuesta no
+ * es JSON (apiFetch lo asumiría).
+ */
+export async function exportEnrollmentsCsv(
+  filters: ExportEnrollmentsFilters,
+): Promise<void> {
+  const params = new URLSearchParams();
+  if (filters.clinicId) params.set("clinicId", filters.clinicId);
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+
+  const response = await fetch(`${PATH}/export?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${getAccessToken() ?? ""}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `No pudimos exportar las inscripciones (HTTP ${response.status}).`,
+    );
+  }
+
+  const blob = await response.blob();
+  const disposition =
+    response.headers.get("Content-Disposition") ?? "attachment";
+  const match = /filename="?([^";]+)"?/.exec(disposition);
+  const url = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = match?.[1] ?? "program-enrollments.csv";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 // --- Pausar / Reanudar / Retirar ---

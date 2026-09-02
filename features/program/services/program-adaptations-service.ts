@@ -11,6 +11,21 @@ const PATH = `${env.apiUrl}/api/v1/program/adaptations`;
 
 // --- Cola de recomendaciones de adaptación ---
 
+function normalizeAdaptation(raw: Adaptation & Record<string, unknown>): Adaptation {
+  const anyRaw = raw as Record<string, unknown>;
+  const name =
+    (anyRaw.patient_name as string | null | undefined) ??
+    (anyRaw.patientName as string | null | undefined) ??
+    (anyRaw.PatientName as string | null | undefined) ??
+    null;
+  const trimmed = typeof name === "string" ? name.trim() : null;
+  return {
+    ...raw,
+    patient_name: trimmed && trimmed.length > 0 ? trimmed : null,
+    patientName: trimmed && trimmed.length > 0 ? trimmed : null,
+  };
+}
+
 export async function fetchAdaptations(
   page: number,
   pageSize: number,
@@ -25,9 +40,13 @@ export async function fetchAdaptations(
     params.set("status", status);
   }
 
-  return apiFetch<PaginatedAdaptationsResult>(`${PATH}?${params.toString()}`, {
+  const result = await apiFetch<PaginatedAdaptationsResult>(`${PATH}?${params.toString()}`, {
     signal,
   });
+  return {
+    ...result,
+    data: (result.data ?? []).map((a) => normalizeAdaptation(a as Adaptation & Record<string, unknown>)),
+  };
 }
 
 // --- Decisión clínica (Approve / Reject) ---
@@ -37,8 +56,9 @@ export async function decideAdaptation(
   decision: AdaptationDecisionAction,
   note?: string,
 ): Promise<Adaptation> {
-  return apiFetch<Adaptation>(`${PATH}/${id}/decide`, {
+  const raw = await apiFetch<Adaptation & Record<string, unknown>>(`${PATH}/${id}/decide`, {
     method: "POST",
     body: JSON.stringify({ decision, note: note ?? null }),
   });
+  return normalizeAdaptation(raw);
 }
