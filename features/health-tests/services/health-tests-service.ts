@@ -928,6 +928,7 @@ function mapMasterRow(dto: MasterRowDto): PatientMasterRow {
 }
 
 function mapMasterResult(r: MasterPatientResultDto): PatientTestResult {
+  const ts = r.completedAt ?? "";
   return {
     testId: r.versionId,
     testCode: r.testCode,
@@ -935,7 +936,7 @@ function mapMasterResult(r: MasterPatientResultDto): PatientTestResult {
     score: r.score,
     interpretation: r.qualifier ?? "",
     risk: riskFromSeverity(r.severity),
-    updatedAt: r.completedAt ?? "",
+    updatedAt: ts,
     completedAt: r.completedAt,
     history: [],
     details: {},
@@ -964,10 +965,15 @@ async function getPendingPatients(): Promise<PendingPatientRow[]> {
         }),
       ),
     ];
-    const earliestAssignedAt = pendingResults.reduce(
-      (min, r) => (r.updatedAt < min ? r.updatedAt : min),
-      pendingResults[0].updatedAt || new Date().toISOString(),
-    );
+    const validDates = pendingResults
+      .map((r) => r.updatedAt)
+      .filter(
+        (d): d is string => Boolean(d) && !Number.isNaN(new Date(d).getTime()),
+      );
+    const earliestAssignedAt =
+      validDates.length > 0
+        ? validDates.reduce((min, d) => (d < min ? d : min), validDates[0])
+        : new Date().toISOString();
     const latestCompletedAt = row.lastEvaluation ?? null;
     const professionalName =
       (row.patient.professionalName &&
@@ -976,13 +982,17 @@ async function getPendingPatients(): Promise<PendingPatientRow[]> {
         : profById.get(row.patient.professionalId)
           ? `${profById.get(row.patient.professionalId)!.firstName} ${profById.get(row.patient.professionalId)!.lastName}`
           : "Sin asignar") || "Sin asignar";
+    const rawDays = daysBetween(earliestAssignedAt, new Date().toISOString());
+    const daysPending = Number.isFinite(rawDays) ? rawDays : 0;
     rows.push({
       patient: row.patient,
       pendingTests,
-      pendingCount: pendingTests.length,
+      pendingCount: Number.isFinite(pendingTests.length)
+        ? pendingTests.length
+        : 0,
       lastTestDate: latestCompletedAt,
       assignedAt: earliestAssignedAt,
-      daysPending: daysBetween(earliestAssignedAt, new Date().toISOString()),
+      daysPending,
       professionalName,
       priority: pendingPriority(row.patient),
       status: row.patient.status,
@@ -990,7 +1000,9 @@ async function getPendingPatients(): Promise<PendingPatientRow[]> {
   }
   return rows.sort((a, b) => {
     const rank = { alta: 0, media: 1, baja: 2 };
-    return rank[a.priority] - rank[b.priority] || b.daysPending - a.daysPending;
+    const aDays = Number.isFinite(a.daysPending) ? a.daysPending : 0;
+    const bDays = Number.isFinite(b.daysPending) ? b.daysPending : 0;
+    return rank[a.priority] - rank[b.priority] || bDays - aDays;
   });
 }
 
