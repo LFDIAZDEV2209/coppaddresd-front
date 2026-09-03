@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, ExternalLink, UserRound } from "lucide-react";
-import Link from "next/link";
+import { RefreshCw, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientOverview } from "../hooks/use-patient-overview";
@@ -12,6 +11,12 @@ import {
   PatientResumenSections,
   PatientClinicaSections,
 } from "./program-patient-overview-page";
+import { EnrollmentContentTab } from "./enrollment-detail/tabs/enrollment-content-tab";
+import { EnrollmentScoresTab } from "./enrollment-detail/tabs/enrollment-scores-tab";
+import { EnrollmentBaselineTab } from "./enrollment-detail/tabs/enrollment-baseline-tab";
+import { EnrollmentXpLedgerTab } from "./enrollment-detail/tabs/enrollment-xp-ledger-tab";
+import { fetchEnrollmentById } from "../services/program-enrollments-service";
+import type { ProgramEnrollment } from "../types";
 import { cn } from "@/lib/utils";
 
 interface ProgramPatientProfile360Props {
@@ -33,10 +38,60 @@ export function ProgramPatientProfile360({
     { key: "biometria", label: "Biometría" },
     { key: "resumen", label: "Resumen" },
     { key: "clinica", label: "Clínica" },
+    { key: "contenido", label: "Contenido semanal" },
+    { key: "scores", label: "Scores clínicos" },
+    { key: "baseline", label: "Línea base" },
+    { key: "xp-ledger", label: "Historial XP" },
   ];
 
-  const headerName =
-    data?.patient_name || patientId.slice(0, 8);
+  const headerName = data?.patient_name || patientId.slice(0, 8);
+  const enrollmentId = data?.enrollment?.enrollment_id ?? null;
+
+  const [enrollment, setEnrollment] = useState<ProgramEnrollment | null>(null);
+  const [enrollmentLoading, setEnrollmentLoading] = useState(false);
+  const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enrollmentId) {
+      setEnrollment(null);
+      setEnrollmentError(null);
+      setEnrollmentLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setEnrollmentLoading(true);
+    setEnrollmentError(null);
+    fetchEnrollmentById(enrollmentId)
+      .then((enr) => {
+        if (!cancelled) setEnrollment(enr);
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setEnrollmentError(
+            err instanceof Error ? err.message : "No se pudo cargar la inscripción.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setEnrollmentLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [enrollmentId]);
+
+  const handleRetryEnrollment = () => {
+    if (!enrollmentId) return;
+    setEnrollmentLoading(true);
+    setEnrollmentError(null);
+    fetchEnrollmentById(enrollmentId)
+      .then(setEnrollment)
+      .catch((err) =>
+        setEnrollmentError(
+          err instanceof Error ? err.message : "No se pudo cargar la inscripción.",
+        ),
+      )
+      .finally(() => setEnrollmentLoading(false));
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -58,20 +113,7 @@ export function ProgramPatientProfile360({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {data?.enrollment?.enrollment_id && (
-            <Link href={`/program/enrollments/${data.enrollment.enrollment_id}`}>
-              <Button variant="outline" size="sm">
-                <ExternalLink data-icon="inline-start" className="size-3.5" />
-                Ver inscripción
-              </Button>
-            </Link>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={retry}
-            disabled={loading}
-          >
+          <Button variant="outline" size="sm" onClick={retry} disabled={loading}>
             <RefreshCw
               data-icon="inline-start"
               className={loading ? "animate-spin" : undefined}
@@ -140,9 +182,105 @@ export function ProgramPatientProfile360({
             ) : null}
           </section>
         )}
+
+        {activeTab === "contenido" && (
+          <section aria-label="Contenido semanal">
+            <EnrollmentDetailTabWrapper
+              enrollmentId={enrollmentId}
+              enrollment={enrollment}
+              loading={enrollmentLoading || loading}
+              error={enrollmentError}
+              onRetry={handleRetryEnrollment}
+            >
+              {(enr) => <EnrollmentContentTab enrollment={enr} />}
+            </EnrollmentDetailTabWrapper>
+          </section>
+        )}
+
+        {activeTab === "scores" && (
+          <section aria-label="Scores clínicos">
+            <EnrollmentDetailTabWrapper
+              enrollmentId={enrollmentId}
+              enrollment={enrollment}
+              loading={enrollmentLoading || loading}
+              error={enrollmentError}
+              onRetry={handleRetryEnrollment}
+            >
+              {(enr) => <EnrollmentScoresTab enrollment={enr} />}
+            </EnrollmentDetailTabWrapper>
+          </section>
+        )}
+
+        {activeTab === "baseline" && (
+          <section aria-label="Línea base">
+            <EnrollmentDetailTabWrapper
+              enrollmentId={enrollmentId}
+              enrollment={enrollment}
+              loading={enrollmentLoading || loading}
+              error={enrollmentError}
+              onRetry={handleRetryEnrollment}
+            >
+              {(enr) => <EnrollmentBaselineTab enrollment={enr} />}
+            </EnrollmentDetailTabWrapper>
+          </section>
+        )}
+
+        {activeTab === "xp-ledger" && (
+          <section aria-label="Historial XP">
+            <EnrollmentDetailTabWrapper
+              enrollmentId={enrollmentId}
+              enrollment={enrollment}
+              loading={enrollmentLoading || loading}
+              error={enrollmentError}
+              onRetry={handleRetryEnrollment}
+            >
+              {(enr) => <EnrollmentXpLedgerTab enrollment={enr} />}
+            </EnrollmentDetailTabWrapper>
+          </section>
+        )}
       </div>
     </div>
   );
+}
+
+function EnrollmentDetailTabWrapper({
+  enrollmentId,
+  enrollment,
+  loading,
+  error,
+  onRetry,
+  children,
+}: {
+  enrollmentId: string | null;
+  enrollment: ProgramEnrollment | null;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  children: (enrollment: ProgramEnrollment) => React.ReactNode;
+}) {
+  if (!enrollmentId) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-14 text-center">
+        <p className="text-sm font-semibold">Sin inscripción activa</p>
+        <p className="max-w-sm text-xs text-muted-foreground">
+          Este paciente no tiene una inscripción activa al programa. Inscríbelo desde el módulo de pacientes para ver el contenido, scores y historial.
+        </p>
+      </div>
+    );
+  }
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-11 w-full rounded-xl" />
+        <Skeleton className="h-40 rounded-2xl" />
+      </div>
+    );
+  }
+  if (error) {
+    return <TabError message={error} onRetry={onRetry} />;
+  }
+  if (!enrollment) return null;
+  return <>{children(enrollment)}</>;
 }
 
 function ResumenSkeleton() {
