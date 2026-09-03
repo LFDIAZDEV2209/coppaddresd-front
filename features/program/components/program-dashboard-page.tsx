@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   BarChart3,
-  Trophy,
   Flame,
   AlertTriangle,
   Users,
@@ -24,8 +23,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -55,32 +52,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useProgramDashboard } from "../hooks/use-program-dashboard";
 import { useBiometriaCommunity } from "../hooks/use-biometria-community";
 import { useBiometriaPatients } from "../hooks/use-biometria-patients";
 import { exportBiometriaCsv } from "../services/program-biometria-service";
 
 import { BiometriaUsaSvgMap } from "./biometria-usa-svg-map";
 import {
-  MISSION_COLORS,
-  MISSION_LABELS,
-  MISSION_ORDER,
-  CLINICAL_COLORS,
   CHART_TOOLTIP,
-  xpCategoryLabel,
-  xpCategoryColor,
 } from "../services/program-erp-constants";
-import { ChartTabs, usePersistedTab } from "./chart-tabs";
-import type {
-  ErpMissionAdherence,
-  ErpStreakBucket,
-  ErpDailyAdherence,
-  ErpLeaderboardEntry,
-  ErpPatientTrend,
-  BiometriaImcBucket,
-  BiometriaGrBodyFatBucket,
-  BiometriaGlucosaBucket,
-} from "../types/erp";
 
 // --- Biometría colors (no hardcoded hex — use CSS vars where possible) ---
 const GLUCOSA_COLORS: Record<string, string> = {
@@ -93,19 +72,37 @@ const GLUCOSA_COLORS: Record<string, string> = {
 
 // --- Componente principal ---
 
-export function ProgramDashboardPage() {
-  const { data: dashData, loading: dashLoading, error: dashError, retry: dashRetry } = useProgramDashboard();
-  const { data: bioData, loading: bioLoading, error: bioError, retry: bioRetry } = useBiometriaCommunity();
+type GeoFilter =
+  | { scope: "city"; cityId: string; label: string }
+  | { scope: "state"; stateAbbr: string; label: string }
+  | null;
 
-  const loading = dashLoading || bioLoading;
-  const error = dashError || bioError;
-  const retry = () => { dashRetry(); bioRetry(); };
+export function ProgramDashboardPage() {
+  const { data: bioData, loading: bioLoading, error: bioError, retry: bioRetry } = useBiometriaCommunity();
+  const [geoFilter, setGeoFilter] = useState<GeoFilter>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const loading = bioLoading;
+  const error = bioError;
+  const retry = () => { bioRetry(); };
+
+  const handleCitySelect = (cityId: string | null, cityName?: string) => {
+    if (!cityId) { setGeoFilter(null); return; }
+    setGeoFilter({ scope: "city", cityId, label: cityName ?? cityId.slice(0, 8) });
+    setTimeout(() => listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  };
+  const handleStateSelect = (stateAbbr: string | null, stateName?: string) => {
+    if (!stateAbbr) { setGeoFilter(null); return; }
+    setGeoFilter({ scope: "state", stateAbbr: stateAbbr.toUpperCase(), label: stateName ?? stateAbbr });
+    setTimeout(() => listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  };
+  const clearGeoFilter = () => setGeoFilter(null);
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title="Dashboard General"
-        description="Vista consolidada: salud comunitaria + adherencia y XP"
+        description="Vista de salud comunitaria del programa"
         icon={BarChart3}
         actions={
           <Button variant="outline" size="sm" onClick={retry} disabled={loading}>
@@ -118,9 +115,9 @@ export function ProgramDashboardPage() {
         }
       />
 
-      {loading && !dashData && !bioData ? (
+      {loading && !bioData ? (
         <DashboardSkeleton />
-      ) : error && !dashData && !bioData ? (
+      ) : error && !bioData ? (
         <DashboardError message={error} onRetry={retry} />
       ) : (
         <>
@@ -129,17 +126,18 @@ export function ProgramDashboardPage() {
 
           {/* --- Mapa + Top Cities + Alertas --- */}
           {bioData && bioData.cities.length > 0 && (
-            <BiometriaMapRow data={bioData} />
+            <BiometriaMapRow data={bioData} onCitySelect={handleCitySelect} onStateSelect={handleStateSelect} />
           )}
 
           {/* --- Distribution charts --- */}
           {bioData && <BiometriaDistributionRow data={bioData} />}
 
           {/* --- Biometría patient list --- */}
-          {bioData && <BiometriaPatientListCard />}
-
-          {/* --- Híbrido: Gamificación secondary row --- */}
-          {dashData && <GamificacionSecondaryRow data={dashData} />}
+          {bioData && (
+            <div ref={listRef}>
+              <BiometriaPatientListCard geoFilter={geoFilter} onClearGeoFilter={clearGeoFilter} />
+            </div>
+          )}
         </>
       )}
     </div>
@@ -184,9 +182,17 @@ function BiometriaKpis({ data }: { data: import("../types/erp").BiometriaCommuni
   );
 }
 
-/** Map + Top 5 ciudades + Alertas críticas */
-function BiometriaMapRow({ data }: { data: import("../types/erp").BiometriaCommunityDto }) {
-  const top5 = [...data.cities].sort((a, b) => b.count - a.count).slice(0, 5);
+/** Map + Top 3 ciudades + Alertas críticas (paginadas 2) */
+function BiometriaMapRow({
+  data,
+  onCitySelect,
+  onStateSelect,
+}: {
+  data: import("../types/erp").BiometriaCommunityDto;
+  onCitySelect: (cityId: string | null, cityName?: string) => void;
+  onStateSelect: (stateAbbr: string | null, stateName?: string) => void;
+}) {
+  const top3 = [...data.cities].sort((a, b) => b.count - a.count).slice(0, 3);
 
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
@@ -199,13 +205,13 @@ function BiometriaMapRow({ data }: { data: import("../types/erp").BiometriaCommu
           variant="primary"
         />
         <div className="p-4">
-          <BiometriaUsaSvgMap cities={data.cities} />
+          <BiometriaUsaSvgMap cities={data.cities} onCitySelect={onCitySelect} onStateSelect={onStateSelect} />
         </div>
       </div>
 
       {/* Sidebar: Top 5 + Alertas */}
       <div className="flex flex-col gap-4">
-        {/* Top 5 ciudades */}
+        {/* Top 3 ciudades */}
         <div className="rounded-2xl border border-border bg-card p-5">
           <SectionHeader
             title="Top ciudades"
@@ -214,8 +220,15 @@ function BiometriaMapRow({ data }: { data: import("../types/erp").BiometriaCommu
             variant="secondary"
           />
           <div className="mt-3 flex flex-col gap-2">
-            {top5.map((c, i) => (
-              <div key={`${c.name}-${c.state_abbr}`} className="flex items-center gap-2">
+            {top3.map((c, i) => (
+              <button
+                key={`${c.name}-${c.state_abbr}`}
+                type="button"
+                onClick={() => c.city_id && onCitySelect(c.city_id, `${c.name}${c.state_abbr ? `, ${c.state_abbr}` : ""}`)}
+                className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors hover:bg-muted disabled:cursor-default disabled:hover:bg-transparent"
+                disabled={!c.city_id}
+                title={c.city_id ? `Ver personas en ${c.name}` : undefined}
+              >
                 <span className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
                   i === 0 ? "bg-warning-soft text-warning" : "bg-muted text-muted-foreground"
                 }`}>
@@ -227,41 +240,16 @@ function BiometriaMapRow({ data }: { data: import("../types/erp").BiometriaCommu
                 <Badge variant="outline" className="shrink-0 text-[10px]">
                   {c.count}
                 </Badge>
-              </div>
+              </button>
             ))}
-            {top5.length === 0 && (
+            {top3.length === 0 && (
               <p className="text-xs text-muted-foreground">Sin datos</p>
             )}
           </div>
         </div>
 
-        {/* Alertas críticas */}
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <SectionHeader
-            title="Alertas críticas"
-            description="Pacientes que requieren atención"
-            icon={AlertTriangle}
-            variant="destructive"
-          />
-          <div className="mt-3 flex flex-col gap-2">
-            {data.alerts.slice(0, 5).map((a) => (
-              <Link
-                key={a.patient_id}
-                href={`/program/gestion?view=perfil-360&patient=${a.patient_id}`}
-                className="flex items-start gap-2 rounded-lg p-2 hover:bg-muted transition-colors"
-              >
-                <span className="mt-0.5 size-2 shrink-0 rounded-full bg-destructive" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-foreground">{a.name}</p>
-                  <p className="truncate text-[11px] text-muted-foreground">{a.reason}</p>
-                </div>
-              </Link>
-            ))}
-            {data.alerts.length === 0 && (
-              <p className="text-xs text-muted-foreground">Sin alertas activas</p>
-            )}
-          </div>
-        </div>
+        {/* Alertas críticas — beautified + paginated 2 */}
+        <AlertasCriticasCard alerts={data.alerts} />
       </div>
     </section>
   );
@@ -369,8 +357,24 @@ function BiometriaDistributionRow({ data }: { data: import("../types/erp").Biome
 }
 
 /** Patient list with filters + CSV export */
-function BiometriaPatientListCard() {
-  const { data, loading, filters, updateFilters } = useBiometriaPatients({ pageSize: 5 });
+function BiometriaPatientListCard({
+  geoFilter,
+  onClearGeoFilter,
+}: {
+  geoFilter: GeoFilter;
+  onClearGeoFilter: () => void;
+}) {
+  const { data, loading, filters, updateFilters } = useBiometriaPatients({
+    pageSize: 5,
+  });
+
+  const geoCityId = geoFilter?.scope === "city" ? geoFilter.cityId : null;
+  const geoStateAbbr = geoFilter?.scope === "state" ? geoFilter.stateAbbr : null;
+  // sync external geo drill-down into the list filters (city/state)
+  useEffect(() => {
+    updateFilters({ cityId: geoCityId, stateAbbr: geoStateAbbr });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoCityId, geoStateAbbr]);
 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
@@ -392,42 +396,81 @@ function BiometriaPatientListCard() {
         }
       />
 
+      {/* Geo active filter chip */}
+      {geoFilter && (
+        <div className="flex items-center gap-2 border-b border-border bg-primary-soft/40 px-5 py-2.5">
+          <span className="text-[11px] font-medium text-muted-foreground">
+            {geoFilter.scope === "city" ? "Ciudad:" : "Estado:"}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-card px-2.5 py-1 text-xs font-semibold text-primary shadow-xs">
+            {geoFilter.label}
+            <button
+              type="button"
+              onClick={onClearGeoFilter}
+              className="ml-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground hover:bg-primary/90"
+              aria-label="Quitar filtro geográfico"
+              title="Quitar filtro"
+            >
+              ✕
+            </button>
+          </span>
+          <span className="ml-auto text-[11px] text-muted-foreground">
+            {data ? `${data.total} persona${data.total !== 1 ? "s" : ""}` : ""}
+          </span>
+        </div>
+      )}
+
       {/* Quick filter chips */}
       <div className="flex flex-wrap gap-1.5 border-b border-border px-5 py-2.5">
         {[
           { key: "all", label: "Todos" },
-          { key: "imc_critico", label: "IMC crítico ≥35" },
+          { key: "imc_critico", label: "IMC crítico" },
           { key: "grasa_alta", label: "Grasa alta" },
           { key: "glucosa_riesgo", label: "Glucosa riesgo" },
           { key: "mejorando", label: "Mejorando" },
-        ].map((chip) => (
-          <button
-            key={chip.key}
-            type="button"
-            onClick={() => {
-              if (chip.key === "all") updateFilters({ imcCategory: "", glucosaCategory: "", gender: "" });
-              else if (chip.key === "imc_critico") updateFilters({ imcCategory: "Obesidad II-III" });
-              else if (chip.key === "grasa_alta") updateFilters({ imcCategory: "Alto" });
-              else if (chip.key === "glucosa_riesgo") updateFilters({ glucosaCategory: "Elevada" });
-              else if (chip.key === "mejorando") updateFilters({ search: "" }); // no filter available; just reset
-            }}
-            className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
-              (chip.key === "all" && !filters.imcCategory && !filters.glucosaCategory && !filters.gender)
-                ? "border-primary bg-primary-soft text-primary"
-                : "border-border bg-muted text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {chip.label}
-          </button>
-        ))}
+        ].map((chip) => {
+          const isActive =
+            (chip.key === "all" && !filters.imcCategory && !filters.grasaCategory && !filters.glucosaCategory && !filters.trend && !filters.gender)
+            || (chip.key === "imc_critico" && filters.imcCategory === "Obesidad" && !filters.grasaCategory && !filters.glucosaCategory && !filters.trend)
+            || (chip.key === "grasa_alta" && filters.grasaCategory === "Alto" && !filters.imcCategory && !filters.glucosaCategory && !filters.trend)
+            || (chip.key === "glucosa_riesgo" && filters.glucosaCategory === "Elevada" && !filters.imcCategory && !filters.grasaCategory && !filters.trend)
+            || (chip.key === "mejorando" && filters.trend === "mejorando" && !filters.imcCategory && !filters.grasaCategory && !filters.glucosaCategory);
+
+          return (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={() => {
+                if (chip.key === "all") {
+                  updateFilters({ imcCategory: "", glucosaCategory: "", grasaCategory: "", trend: "", gender: "" });
+                } else if (chip.key === "imc_critico") {
+                  updateFilters({ imcCategory: "Obesidad", grasaCategory: "", glucosaCategory: "", trend: "" });
+                } else if (chip.key === "grasa_alta") {
+                  updateFilters({ grasaCategory: "Alto", imcCategory: "", glucosaCategory: "", trend: "" });
+                } else if (chip.key === "glucosa_riesgo") {
+                  updateFilters({ glucosaCategory: "Elevada", imcCategory: "", grasaCategory: "", trend: "" });
+                } else if (chip.key === "mejorando") {
+                  updateFilters({ trend: "mejorando", imcCategory: "", grasaCategory: "", glucosaCategory: "" });
+                }
+              }}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                isActive
+                  ? "border-primary bg-primary-soft text-primary"
+                  : "border-border bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {chip.label}
+            </button>
+          );
+        })}
 
         {/* Gender filter */}
         <Select value={filters.gender || "__all__"} onValueChange={(v) => updateFilters({ gender: v === "__all__" ? "" : v ?? "" })}>
           <SelectTrigger className="h-7 w-[100px] text-[11px]">
-            <SelectValue placeholder="Sexo" />
+            <SelectValue placeholder="Género" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all__">Todos</SelectItem>
+            <SelectItem value="__all__">Género</SelectItem>
             <SelectItem value="male">Hombre</SelectItem>
             <SelectItem value="female">Mujer</SelectItem>
           </SelectContent>
@@ -506,10 +549,16 @@ function BiometriaPatientListCard() {
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {p.trend === "up" ? (
-                      <TrendingUp className="size-4 text-success" />
-                    ) : p.trend === "down" ? (
-                      <TrendingDown className="size-4 text-destructive" />
+                    {p.trend === "mejorando" ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-success">
+                        <TrendingUp className="size-3.5" /> Mejorando
+                      </span>
+                    ) : p.trend === "empeorando" ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-destructive">
+                        <TrendingDown className="size-3.5" /> Empeorando
+                      </span>
+                    ) : p.trend === "estable" ? (
+                      <span className="text-xs text-muted-foreground">Estable</span>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
@@ -534,122 +583,12 @@ function BiometriaPatientListCard() {
   );
 }
 
-// ===== GAMIFICACIÓN SECONDARY (below biometría) =====
-
-function GamificacionSecondaryRow({
-  data,
-}: {
-  data: import("../types/erp").ProgramErpDashboardDto;
-}) {
-  const {
-    kpis,
-    adherencia_por_mision_hoy,
-    distribucion_rachas,
-    xp_por_categoria,
-    evolucion_30d,
-    top5,
-    mejoraron,
-    empeoraron,
-  } = data;
-
-  return (
-    <div className="flex flex-col gap-6">
-      {/* Secondary KPIs: XP + Rachas + Riesgo */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          label="XP esta semana"
-          value={kpis.xp_semana.toLocaleString()}
-          icon={Trophy}
-          variant="success"
-          context="Misiones + cofres + clínico"
-        />
-        <StatCard
-          label="Racha > 7 días"
-          value={String(kpis.pacientes_racha_gt7)}
-          icon={Flame}
-          variant="warning"
-          context={`${kpis.total_active} pacientes activos`}
-        />
-        <StatCard
-          label="En riesgo"
-          value={String(kpis.en_riesgo)}
-          icon={AlertTriangle}
-          variant="destructive"
-          context="Requieren seguimiento"
-        />
-      </section>
-
-      {/* Charts Row: Adherencia + XP donut (compact) */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DashboardAdherenciaCard
-          adherenciaPorMision={adherencia_por_mision_hoy}
-          distribucionRachas={distribucion_rachas}
-          distribucionSemanas={data.distribucion_semanas ?? []}
-        />
-
-        {/* XP donut (compact) */}
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <SectionHeader
-            title="XP por categoría"
-            description="Distribución de XP por origen"
-            icon={Trophy}
-            variant="secondary"
-          />
-          <div className="mt-4 h-[240px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={xp_por_categoria.map((x) => ({
-                    name: xpCategoryLabel(x.category),
-                    value: x.total,
-                    color: xpCategoryColor(x.category),
-                  }))}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={85}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {xp_por_categoria.map((x) => (
-                    <Cell key={x.category} fill={xpCategoryColor(x.category)} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  {...CHART_TOOLTIP}
-                  formatter={(value) => [String(value ?? 0), "XP"]}
-                />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </section>
-
-      {/* Tendencias + Pacientes */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DashboardTendenciasCard
-          evolucion30d={evolucion_30d}
-          evolucionXp30d={data.evolucion_xp_30d ?? []}
-          evolucionClinica30d={data.evolucion_clinica_30d ?? []}
-        />
-        <DashboardPacientesCard
-          top5={top5}
-          mejoraron={mejoraron}
-          empeoraron={empeoraron}
-        />
-      </section>
-    </div>
-  );
-}
-
 // ===== HELPER FUNCTIONS =====
 
 function buildGrasaGroupedData(
-  male: BiometriaGrBodyFatBucket[],
-  female: BiometriaGrBodyFatBucket[],
+  male: import("../types/erp").BiometriaGrBodyFatBucket[],
+  female: import("../types/erp").BiometriaGrBodyFatBucket[],
 ): { label: string; Hombre: number; Mujer: number }[] {
-  // Merge by matching labels (Óptimo, Normal, Alto, Obesidad)
   const labels = ["Óptimo", "Normal", "Alto", "Obesidad"];
   return labels.map((label) => ({
     label,
@@ -658,457 +597,88 @@ function buildGrasaGroupedData(
   }));
 }
 
-// ===== EXISTING SUB-COMPONENTS (preserved) =====
-
-/** Card A: Adherencia — tabs for mission / streaks / phase. */
-function DashboardAdherenciaCard({
-  adherenciaPorMision,
-  distribucionRachas,
-  distribucionSemanas,
-}: {
-  adherenciaPorMision: ErpMissionAdherence[];
-  distribucionRachas: ErpStreakBucket[];
-  distribucionSemanas: { label: string; count: number }[];
-}) {
-  const [tab, setTab] = usePersistedTab("dashboard-adherencia", "mision");
-
-  return (
-    <ChartTabs
-      tabs={[
-        { key: "mision", label: "Por misión hoy" },
-        { key: "rachas", label: "Distribución de rachas" },
-        { key: "fase", label: "Por fase/semana" },
-      ]}
-      value={tab}
-      onChange={setTab}
-      title="Adherencia"
-      description="Tendencia y distribución de adherencia"
-      icon={BarChart3}
-    >
-      <div className="h-[240px]">
-        {tab === "mision" && (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={MISSION_ORDER.map((code) => {
-                const m = adherenciaPorMision.find(
-                  (a) => a.task_code === code,
-                );
-                return {
-                  name: MISSION_LABELS[code] ?? code,
-                  pct: m?.pct ?? 0,
-                  color: MISSION_COLORS[code],
-                };
-              })}
-              layout="vertical"
-              margin={{ left: 10, right: 20 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={90}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-              />
-              <Tooltip
-                {...CHART_TOOLTIP}
-                cursor={{ fill: "var(--muted)" }}
-                formatter={(value) => [`${value}%`, "Adherencia"]}
-              />
-              <Bar dataKey="pct" radius={[0, 4, 4, 0]}>
-                {MISSION_ORDER.map((code) => (
-                  <Cell key={code} fill={MISSION_COLORS[code]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-
-        {tab === "rachas" && (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={distribucionRachas}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-              <Tooltip {...CHART_TOOLTIP} cursor={{ fill: "var(--muted)" }} />
-              <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-
-        {tab === "fase" && (
-          distribucionSemanas.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={distribucionSemanas}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                <Tooltip {...CHART_TOOLTIP} cursor={{ fill: "var(--muted)" }} />
-                <Bar dataKey="count" fill="var(--info)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">
-                Sin datos de distribución por fase.
-              </p>
-            </div>
-          )
-        )}
-      </div>
-    </ChartTabs>
-  );
+function initialsOf(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
 }
 
-/** Card B: Tendencias — tabs for adherence / XP / clinical lines. */
-function DashboardTendenciasCard({
-  evolucion30d,
-  evolucionXp30d,
-  evolucionClinica30d,
-}: {
-  evolucion30d: ErpDailyAdherence[];
-  evolucionXp30d: { date: string; value: number }[];
-  evolucionClinica30d: {
-    date: string;
-    bmi_avg: number | null;
-    hba1c_avg: number | null;
-    body_fat_avg: number | null;
-  }[];
-}) {
-  const [tab, setTab] = usePersistedTab("dashboard-tendencias", "adherencia");
-
-  return (
-    <ChartTabs
-      tabs={[
-        { key: "adherencia", label: "Adherencia 30d" },
-        { key: "xp", label: "XP 30d" },
-        { key: "clinico", label: "Mediciones clínicas" },
-      ]}
-      value={tab}
-      onChange={setTab}
-      title="Tendencias"
-      description="Evolución últimos 30 días"
-      icon={TrendingUp}
-    >
-      <div className="h-[280px]">
-        {tab === "adherencia" && (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={evolucion30d}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickFormatter={(v: string) => {
-                  const d = new Date(v);
-                  return `${d.getDate()}/${d.getMonth() + 1}`;
-                }}
-              />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-              <Tooltip
-                {...CHART_TOOLTIP}
-                formatter={(value) => [`${value}%`, "Adherencia"]}
-                labelFormatter={(label) => {
-                  const d = new Date(String(label));
-                  return d.toLocaleDateString("es-ES");
-                }}
-              />
-              <Line type="monotone" dataKey="pct" stroke="var(--primary)" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-
-        {tab === "xp" && (
-          evolucionXp30d.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={evolucionXp30d}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                  tickFormatter={(v: string) => {
-                    const d = new Date(v);
-                    return `${d.getDate()}/${d.getMonth() + 1}`;
-                  }}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                  tickFormatter={(v: number) => {
-                    if (v >= 1000) return `${(v / 1000).toFixed(1)}K`;
-                    return String(v);
-                  }}
-                />
-                <Tooltip
-                  {...CHART_TOOLTIP}
-                  formatter={(value) => {
-                    const num = Number(value);
-                    return [
-                      num >= 1000 ? `${(num / 1000).toFixed(1)}K` : String(num),
-                      "XP",
-                    ];
-                  }}
-                  labelFormatter={(label) => {
-                    const d = new Date(String(label));
-                    return d.toLocaleDateString("es-ES");
-                  }}
-                />
-                <Line type="monotone" dataKey="value" stroke="var(--success)" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">Sin datos de evolución de XP.</p>
-            </div>
-          )
-        )}
-
-        {tab === "clinico" && (
-          evolucionClinica30d.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={evolucionClinica30d}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                  tickFormatter={(v: string) => {
-                    const d = new Date(v);
-                    return `${d.getDate()}/${d.getMonth() + 1}`;
-                  }}
-                />
-                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                <Tooltip
-                  {...CHART_TOOLTIP}
-                  formatter={(value, name) => [Number(value).toFixed(1), name]}
-                  labelFormatter={(label) => {
-                    const d = new Date(String(label));
-                    return d.toLocaleDateString("es-ES");
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="bmi_avg" name="BMI" stroke={CLINICAL_COLORS.bmi} strokeWidth={2} dot={false} connectNulls />
-                <Line type="monotone" dataKey="hba1c_avg" name="HbA1c %" stroke={CLINICAL_COLORS.hba1c} strokeWidth={2} dot={false} connectNulls />
-                <Line type="monotone" dataKey="body_fat_avg" name="% Grasa" stroke={CLINICAL_COLORS.body_fat} strokeWidth={2} dot={false} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">Sin datos de mediciones clínicas.</p>
-            </div>
-          )
-        )}
-      </div>
-    </ChartTabs>
-  );
+function reasonChipClass(reason: string) {
+  const r = reason.toLowerCase();
+  if (r.includes("imc") || r.includes("obesidad")) return "bg-destructive-soft text-destructive border-destructive/20";
+  if (r.includes("glucosa")) return "bg-warning-soft text-warning border-warning/20";
+  if (r.includes("icc") || r.includes("cintura")) return "bg-info-soft text-info border-info/20";
+  return "bg-muted text-muted-foreground border-border";
 }
 
-/** Card D: Pacientes — tabs for top5 / mejoraron / empeoraron. */
-function DashboardPacientesCard({
-  top5,
-  mejoraron,
-  empeoraron,
-}: {
-  top5: ErpLeaderboardEntry[];
-  mejoraron: ErpPatientTrend[];
-  empeoraron: ErpPatientTrend[];
-}) {
-  const [tab, setTab] = usePersistedTab("dashboard-pacientes", "top");
-  const [pageSize, setPageSize] = useState(5);
-  const [topPage, setTopPage] = useState(1);
-  const [trendPage, setTrendPage] = useState(1);
+function AlertasCriticasCard({ alerts }: { alerts: import("../types/erp").BiometriaCommunityDto["alerts"] }) {
+  const PAGE_SIZE = 2;
+  const totalPages = Math.max(1, Math.ceil(alerts.length / PAGE_SIZE));
+  // local page state inside card — keeps map row stateless
+  const [page, setPage] = useState(1);
+  const safePage = Math.min(page, totalPages);
+  const slice = alerts.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setTopPage(1);
-    setTrendPage(1);
-  };
-
-  const topTotalPages = Math.max(1, Math.ceil(top5.length / pageSize));
-  const topSafePage = Math.min(topPage, topTotalPages);
-  const topItems = top5.slice((topSafePage - 1) * pageSize, topSafePage * pageSize);
-
-  const activeTrend = tab === "mejoraron" ? mejoraron : empeoraron;
-  const activeTrendPages = Math.max(1, Math.ceil(activeTrend.length / pageSize));
-  const trendSafePage = Math.min(trendPage, activeTrendPages);
-  const trendItems = activeTrend.slice((trendSafePage - 1) * pageSize, trendSafePage * pageSize);
-
-  const handleTabChange = (key: string) => {
-    setTab(key);
-    setTopPage(1);
-    setTrendPage(1);
-  };
+  // if alerts shrink, clamp page
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
-    <ChartTabs
-      tabs={[
-        { key: "top", label: "Top 5" },
-        { key: "mejoraron", label: "Mejoraron" },
-        { key: "enriesgo", label: "En riesgo" },
-      ]}
-      value={tab}
-      onChange={handleTabChange}
-      title="Pacientes"
-      description="Ranking y evolución del Índice de Salud"
-      icon={Users}
-    >
-      {tab === "top" && (
-        <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">#</TableHead>
-                <TableHead>Paciente</TableHead>
-                <TableHead className="w-24 text-right">XP</TableHead>
-                <TableHead className="hidden w-24 text-right md:table-cell">Adherencia</TableHead>
-                <TableHead className="hidden w-28 md:table-cell">Racha</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {top5.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center">
-                    <Trophy className="mx-auto mb-2 size-8 text-muted-foreground/40" />
-                    <p className="text-sm text-muted-foreground">No hay datos de leaderboard disponibles.</p>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                topItems.map((entry) => (
-                  <TableRow key={entry.patient_id}>
-                    <TableCell>
-                      {entry.rank <= 3 ? (
-                        <span className={`flex size-7 items-center justify-center rounded-full text-[11px] font-bold ${
-                          entry.rank === 1 ? "bg-warning-soft text-warning" : entry.rank === 2 ? "bg-muted text-muted-foreground" : "bg-warning-soft/50 text-warning/80"
-                        }`}>
-                          {entry.rank}
-                        </span>
-                      ) : (
-                        <span className="tabular-nums text-muted-foreground">{entry.rank}</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
-                          {entry.patient_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-                        </span>
-                        {entry.patient_id ? (
-                           <Link href={`/program/gestion?view=perfil-360&patient=${entry.patient_id}`} className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer">
-                            {entry.patient_name}
-                          </Link>
-                        ) : (
-                          <span className="truncate text-sm font-medium">{entry.patient_name}</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">{entry.xp.toLocaleString()}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums md:table-cell">{entry.adherence}%</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Badge className="bg-warning-soft text-warning">
-                        <Flame className="size-3" /> {entry.current_streak}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          {top5.length > 0 && (
-            <PagedListFooter page={topSafePage} totalPages={topTotalPages} onPageChange={setTopPage} pageSize={pageSize} onPageSizeChange={handlePageSizeChange} />
-          )}
-        </>
-      )}
-
-      {tab === "mejoraron" && (
-        <TrendList
-          title="Mejoraron"
-          icon={<TrendingUp className="size-4 text-success" />}
-          entries={trendItems}
-          total={mejoraron.length}
-          page={trendSafePage}
-          totalPages={activeTrendPages}
-          onPageChange={setTrendPage}
-          pageSize={pageSize}
-          onPageSizeChange={handlePageSizeChange}
-          emptyMessage="Ningún paciente mejoró su Índice de Salud respecto al período anterior."
-        />
-      )}
-
-      {tab === "enriesgo" && (
-        <TrendList
-          title="Empeoraron"
-          icon={<TrendingDown className="size-4 text-destructive" />}
-          entries={trendItems}
-          total={empeoraron.length}
-          page={trendSafePage}
-          totalPages={activeTrendPages}
-          onPageChange={setTrendPage}
-          pageSize={pageSize}
-          onPageSizeChange={handlePageSizeChange}
-          emptyMessage="Ningún paciente empeoró su Índice de Salud respecto al período anterior."
-        />
-      )}
-    </ChartTabs>
-  );
-}
-
-function TrendList({
-  title,
-  icon,
-  entries,
-  total,
-  page,
-  totalPages,
-  onPageChange,
-  pageSize,
-  onPageSizeChange,
-  emptyMessage,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  entries: import("../types/erp").ErpPatientTrend[];
-  total: number;
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  pageSize?: number;
-  onPageSizeChange?: (size: number) => void;
-  emptyMessage: string;
-}) {
-  return (
-    <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="flex items-center gap-2 border-b border-border px-5 py-3">
-        {icon}
-        <span className="text-[14px] font-semibold">{title}</span>
-        <Badge variant="outline" className="ml-auto text-[11px]">{total}</Badge>
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="p-5 pb-3">
+        <div className="flex items-center gap-3 rounded-xl bg-destructive-soft px-4 py-3">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+            <AlertTriangle className="size-4" />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate text-[13px] font-semibold text-foreground">Alertas críticas</h3>
+              <Badge variant="outline" className="shrink-0 border-destructive/20 bg-white text-destructive text-[10px] font-bold">
+                {alerts.length}
+              </Badge>
+            </div>
+            <p className="truncate text-[11px] text-muted-foreground">Pacientes que requieren atención</p>
+          </div>
+        </div>
       </div>
-      {entries.length === 0 ? (
-        <div className="flex items-center justify-center py-8">
-          <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+      {alerts.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 px-5 pb-8 pt-4 text-center">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-success-soft">
+            <TrendingUp className="size-5 text-success" />
+          </div>
+          <p className="text-sm font-medium">Sin alertas activas</p>
+          <p className="text-xs text-muted-foreground">Todos los pacientes dentro de rango saludable.</p>
         </div>
       ) : (
         <>
-          <div className="flex flex-col">
-            {entries.map((e) => (
-              <div key={e.patient_id} className="flex items-center gap-3 border-b border-border px-5 py-3 last:border-0">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
-                  {e.patient_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+          <div className="flex flex-col gap-2 px-3 pb-2">
+            {slice.map((a) => (
+              <Link
+                key={a.patient_id}
+                href={`/program/gestion?view=perfil-360&patient=${a.patient_id}`}
+                className="group flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 transition-colors hover:border-destructive/20 hover:bg-destructive-soft/30"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive-soft text-destructive ring-1 ring-destructive/10">
+                  <AlertTriangle className="size-4" />
                 </span>
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  {e.patient_id ? (
-                    <Link href={`/program/gestion?view=perfil-360&patient=${e.patient_id}`} className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer">
-                      {e.patient_name}
-                    </Link>
-                  ) : (
-                    <span className="truncate text-sm font-medium">{e.patient_name}</span>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    Índice de Salud: <span className="tabular-nums">{e.previous_pct}</span> → <span className="font-medium tabular-nums text-foreground">{e.current_pct}</span> puntos
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary ring-1 ring-border">
+                  {initialsOf(a.name)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold leading-tight group-hover:text-foreground">{a.name}</p>
+                  <span className={`mt-1 inline-flex max-w-full truncate rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none ${reasonChipClass(a.reason)}`}>
+                    {a.reason}
                   </span>
                 </div>
-                <Badge className={e.delta_pct >= 0 ? "bg-success-soft text-success-foreground" : "bg-destructive-soft text-destructive"}>
-                  {e.delta_pct >= 0 ? "+" : ""}{e.delta_pct.toFixed(1)}%
-                </Badge>
-              </div>
+              </Link>
             ))}
           </div>
-          <PagedListFooter page={page} totalPages={totalPages} onPageChange={onPageChange} pageSize={pageSize} onPageSizeChange={onPageSizeChange} />
+          {totalPages > 1 && (
+            <div className="border-t border-border">
+              <PagedListFooter page={safePage} totalPages={totalPages} onPageChange={setPage} pageSize={PAGE_SIZE} />
+            </div>
+          )}
         </>
       )}
     </div>
