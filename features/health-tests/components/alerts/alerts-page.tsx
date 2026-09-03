@@ -318,7 +318,6 @@ function AlertsTable({
         <TableBody>
           {alerts.map((alert) => {
             const patient = patients.find((p) => p.id === alert.patientId);
-            const test = tests.find((x) => x.id === alert.testId);
             return (
               <TableRow key={alert.id}>
                 <TableCell>
@@ -341,7 +340,7 @@ function AlertsTable({
                           {patient.firstName} {patient.lastName}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {test?.icon} {test?.name ?? alert.testId}
+                          {alert.indicatorName}
                         </span>
                       </span>
                     </Link>
@@ -359,10 +358,7 @@ function AlertsTable({
                 </TableCell>
                 <TableCell>
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2 py-1 text-[11.5px] font-semibold">
-                    {alert.resultValue}
-                    <span className="text-muted-foreground">
-                      / {alert.threshold}
-                    </span>
+                    {alert.resultValue ? `${alert.resultValue}%` : "—"}
                   </span>
                 </TableCell>
                 <TableCell>

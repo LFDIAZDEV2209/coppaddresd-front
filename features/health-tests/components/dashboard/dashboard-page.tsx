@@ -54,7 +54,7 @@ export function HealthTestsDashboard() {
 
   const stats = useMemo(() => {
     if (!data) return null;
-    const { patients, tests, alerts, stats: serverStats } = data;
+    const { patients, masterRows, tests, alerts, stats: serverStats } = data;
     const totalAssignments = patients.length * tests.length;
     // KPIs del backend (/stats): fuentes reales de la BD.
     const completed = serverStats.completed;
@@ -62,9 +62,10 @@ export function HealthTestsDashboard() {
       serverStats.totalPatients > 0
         ? Math.min(completed, serverStats.totalPatients)
         : 0;
-    const inProgress = patients.reduce(
-      (acc, p) =>
-        acc + p.results.filter((r) => r.state === "en-progreso").length,
+    const inProgress = masterRows.reduce(
+      (acc, row) =>
+        acc +
+        row.patient.results.filter((r) => r.state === "en-progreso").length,
       0,
     );
     const pending = serverStats.withPending;
@@ -146,7 +147,9 @@ export function HealthTestsDashboard() {
     },
   ];
 
-  const riskDistribution = riskDistributionOf(data.patients);
+  const riskDistribution = riskDistributionOf(
+    data.masterRows.map((r) => r.patient),
+  );
 
   const recentAlerts = [...data.alerts]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -547,10 +550,12 @@ function CategoryCoverageChart() {
       { name: string; coverage: number; color: string }
     >();
     for (const test of data.tests) {
-      const completed = data.patients.filter((p) =>
-        p.results.some((r) => r.testId === test.id && r.state === "completado"),
+      const completed = data.masterRows.filter((row) =>
+        row.patient.results.some(
+          (r) => r.testCode === test.code && r.state === "completado",
+        ),
       ).length;
-      const coverage = Math.round((completed / data.patients.length) * 100);
+      const coverage = Math.round((completed / data.masterRows.length) * 100);
       const current = byCategory.get(test.category) ?? {
         name: test.category,
         coverage: 0,

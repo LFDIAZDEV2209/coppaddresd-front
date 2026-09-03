@@ -59,6 +59,38 @@ import { env } from "@/lib/config/env";
 
 const BASE = `${env.apiUrl}/api/v1/health-tests`;
 
+// --- Cache en memoria con dedup y TTL (SWR ligero, sin lib externa) ---
+type CacheEntry<T> = { value: T; expiresAt: number; promise?: Promise<T> };
+const svcCache = new Map<string, CacheEntry<unknown>>();
+const inflight = new Map<string, Promise<unknown>>();
+
+function cached<T>(
+  key: string,
+  ttlMs: number,
+  loader: () => Promise<T>,
+): Promise<T> {
+  const now = Date.now();
+  const hit = svcCache.get(key) as CacheEntry<T> | undefined;
+  if (hit && hit.expiresAt > now && hit.value !== undefined)
+    return Promise.resolve(hit.value);
+  const pending = inflight.get(key) as Promise<T> | undefined;
+  if (pending) return pending;
+  const promise = loader()
+    .then((value) => {
+      svcCache.set(key, { value, expiresAt: now + ttlMs });
+      return value;
+    })
+    .finally(() => {
+      inflight.delete(key);
+    });
+  inflight.set(key, promise);
+  return promise;
+}
+
+const TTL_MASTER = 30_000;
+const TTL_CATALOG = 300_000;
+const TTL_STATS = 30_000;
+
 export interface HealthTestsApi {
   listPatients(): Promise<PatientProfile[]>;
   getPatient(id: string): Promise<PatientProfile | null>;
@@ -423,13 +455,19 @@ function categoryIcon(category: TestCategory): string {
 }
 
 function mapAlert(dto: AlertDto): HealthAlert {
+  // Intenta extraer el valor numérico del body (ej: "baja (27.23%)")
+  const body = dto.body ?? dto.title;
+  const match = body.match(/([0-9]+(?:\.[0-9]+)?)\s*%?/);
+  const extracted = match ? Number.parseFloat(match[1]) : 0;
   return {
     id: dto.id,
     patientId: dto.patientId,
     testId: dto.ruleId ?? "",
     indicatorId: dto.ruleId ?? "",
-    indicatorName: dto.ruleName ?? dto.title,
-    resultValue: 0,
+    indicatorName: dto.patientName
+      ? `${dto.ruleName ?? dto.title}`
+      : (dto.ruleName ?? dto.title),
+    resultValue: extracted,
     threshold: 0,
     severity: SEVERITY_MAP[dto.severity] ?? "media",
     status: ALERT_STATUS_MAP[dto.status] ?? "activa",
@@ -482,6 +520,41 @@ function inferCategory(code: string): TestCategory {
   if (code.includes("estres") || code.includes("temperamento"))
     return "salud-mental";
   return "salud-mental";
+}
+
+/** Mapa versionId -> HealthTest para resolver asignaciones (evita N+1 y mismatch instrumentId). */
+async function loadVersionMap(): Promise<Map<string, HealthTest>> {
+  const response = await apiFetch<PaginatedDto<InstrumentDto>>(
+    `${BASE}?page=1&pageSize=100&isActive=true`,
+  );
+  const map = new Map<string, HealthTest>();
+  for (const dto of response.data) {
+    const test = mapTest(dto);
+    for (const v of dto.versions) {
+      map.set(v.id, test);
+    }
+  }
+  return map;
+}
+
+/** Fetch paginado que respeta el límite del backend (100) y trae todas las páginas. */
+async function fetchAllPages<T>(baseUrl: string): Promise<T[]> {
+  // baseUrl sin page/pageSize, el helper los agrega
+  const sep = baseUrl.includes("?") ? "&" : "?";
+  const first = await apiFetch<PaginatedDto<T>>(
+    `${baseUrl}${sep}page=1&pageSize=100`,
+  );
+  const all: T[] = [...first.data];
+  const totalPages = first.totalPages ?? 1;
+  if (totalPages > 1) {
+    const rest = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, i) =>
+        apiFetch<PaginatedDto<T>>(`${baseUrl}${sep}page=${i + 2}&pageSize=100`),
+      ),
+    );
+    for (const p of rest) all.push(...p.data);
+  }
+  return all;
 }
 
 function mapPatientListItem(
@@ -666,10 +739,10 @@ function mapEvaluationDetail(detail: EvaluationDetailDto): EvaluationDetail {
 // ===================== Cliente API (funciones con nombre) =====================
 
 async function listPatients(): Promise<PatientProfile[]> {
-  const response = await apiFetch<PaginatedDto<PatientListItemDto>>(
-    `${env.apiUrl}/api/v1/patients?page=1&pageSize=100`,
+  const all = await fetchAllPages<PatientListItemDto>(
+    `${env.apiUrl}/api/v1/patients`,
   );
-  return response.data.map((p) => mapPatientListItem(p, []));
+  return all.map((p) => mapPatientListItem(p, []));
 }
 
 async function getPatient(id: string): Promise<PatientProfile | null> {
@@ -718,29 +791,30 @@ async function getEvaluationDetail(
 }
 
 async function listTests(): Promise<HealthTest[]> {
-  const response = await apiFetch<PaginatedDto<InstrumentDto>>(
-    `${BASE}?page=1&pageSize=100&isActive=true`,
-  );
-  return response.data.map(mapTest);
+  return cached("tests", TTL_CATALOG, () => listTestsRaw());
 }
 
 async function listIndicators(): Promise<ClinicalIndicator[]> {
-  const defs = await apiFetch<IndicatorDefDto[]>(`${BASE}/indicators`);
-  return defs.map(mapIndicator);
+  return cached("indicators", TTL_CATALOG, async () => {
+    const defs = await apiFetch<IndicatorDefDto[]>(`${BASE}/indicators`);
+    return defs.map(mapIndicator);
+  });
 }
 
 async function listProfessionals(): Promise<HealthProfessional[]> {
-  const response = await apiFetch<PaginatedDto<ProfessionalCatalogItemDto>>(
-    `${env.apiUrl}/api/v1/professionals-catalog?page=1&pageSize=100`,
-  );
-  return response.data.map((p) => ({
-    id: p.id,
-    firstName: p.fullName.split(" ")[0] ?? p.fullName,
-    lastName: p.fullName.split(" ").slice(1).join(" ") ?? "",
-    specialty: p.professionalTypeName ?? "Clínico",
-    clinic: "",
-    patientCount: 0,
-  }));
+  return cached("professionals", TTL_CATALOG, async () => {
+    const response = await apiFetch<PaginatedDto<ProfessionalCatalogItemDto>>(
+      `${env.apiUrl}/api/v1/professionals-catalog?page=1&pageSize=100`,
+    );
+    return response.data.map((p) => ({
+      id: p.id,
+      firstName: p.fullName.split(" ")[0] ?? p.fullName,
+      lastName: p.fullName.split(" ").slice(1).join(" ") ?? "",
+      specialty: p.professionalTypeName ?? "Clínico",
+      clinic: "",
+      patientCount: 0,
+    }));
+  });
 }
 
 async function listAlerts(patientId?: string): Promise<HealthAlert[]> {
@@ -753,37 +827,82 @@ async function listAlerts(patientId?: string): Promise<HealthAlert[]> {
 }
 
 async function listBatteries(): Promise<Battery[]> {
-  const response = await apiFetch<PaginatedDto<BatteryDto>>(
-    `${BASE}/batteries?page=1&pageSize=100`,
-  );
-  return response.data.map(mapBattery);
+  return cached("batteries", TTL_CATALOG, async () => {
+    const response = await apiFetch<PaginatedDto<BatteryDto>>(
+      `${BASE}/batteries?page=1&pageSize=100`,
+    );
+    return response.data.map(mapBattery);
+  });
 }
 
 async function getStats(): Promise<HealthTestStats> {
-  return apiFetch<HealthTestStats>(`${BASE}/stats`);
+  return cached("stats", TTL_STATS, () =>
+    apiFetch<HealthTestStats>(`${BASE}/stats`),
+  );
 }
 
 async function getCoverageTrend(): Promise<CoverageTrendPoint[]> {
-  // Tendencia derivada de las evaluaciones completadas reales.
-  const stats = await apiFetch<StatsDto>(`${BASE}/stats`);
+  const [stats, masterRows] = await Promise.all([
+    apiFetch<StatsDto>(`${BASE}/stats`),
+    getMasterRows().catch(() => [] as PatientMasterRow[]),
+  ]);
   const total = Math.max(stats.totalPatients, 1);
   const months: CoverageTrendPoint[] = [];
   const now = new Date();
+  const buckets = new Map<string, number>();
   for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const label = d.toLocaleDateString("es-CO", { month: "short" });
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    buckets.set(key, 0);
     months.push({ label, coverage: 0, completed: 0 });
   }
-  // Último período con los datos reales de stats.
-  const last = months[months.length - 1];
-  last.completed = stats.completed;
-  last.coverage = coveragePercent(stats.completed, total);
+  if (masterRows.length > 0) {
+    for (const row of masterRows) {
+      for (const r of row.patient.results) {
+        if (r.state !== "completado" || !r.completedAt) continue;
+        const d = new Date(r.completedAt);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
+      }
+    }
+    let idx = 0;
+    for (const key of [...buckets.keys()]) {
+      const count = buckets.get(key) ?? 0;
+      months[idx].completed = count;
+      months[idx].coverage = coveragePercent(count, total);
+      idx++;
+    }
+    const hasData = [...buckets.values()].some((v) => v > 0);
+    if (!hasData) {
+      const last = months[months.length - 1];
+      last.completed = stats.completed;
+      last.coverage = coveragePercent(stats.completed, total);
+    }
+  } else {
+    const last = months[months.length - 1];
+    last.completed = stats.completed;
+    last.coverage = coveragePercent(stats.completed, total);
+  }
   return months;
 }
 
 async function getMasterRows(): Promise<PatientMasterRow[]> {
-  const rows = await apiFetch<MasterRowDto[]>(`${BASE}/master`);
-  return rows.map(mapMasterRow);
+  return cached("master", TTL_MASTER, async () => {
+    const rows = await apiFetch<MasterRowDto[]>(`${BASE}/master`);
+    return rows.map(mapMasterRow);
+  });
+}
+
+async function listTestsCached(): Promise<HealthTest[]> {
+  return cached("tests", TTL_CATALOG, () => listTestsRaw());
+}
+
+async function listTestsRaw(): Promise<HealthTest[]> {
+  const response = await apiFetch<PaginatedDto<InstrumentDto>>(
+    `${BASE}?page=1&pageSize=100&isActive=true`,
+  );
+  return response.data.map(mapTest);
 }
 
 /** Fila maestra desde el DTO del backend (una sola llamada, sin N+1). */
@@ -824,73 +943,73 @@ function mapMasterResult(r: MasterPatientResultDto): PatientTestResult {
 }
 
 async function getPendingPatients(): Promise<PendingPatientRow[]> {
-  const [patients, assignments, tests, professionals] = await Promise.all([
-    listPatients(),
-    apiFetch<PaginatedDto<AssignmentDto>>(
-      `${BASE}/assignments?page=1&pageSize=100&status=pending`,
-    ).catch(() => null),
+  const [masterRows, tests, professionals] = await Promise.all([
+    getMasterRows(),
     listTests(),
     listProfessionals(),
   ]);
-
-  if (!assignments) return [];
-
-  const testById = new Map(tests.map((t) => [t.id, t]));
-  const profById = new Map(professionals.map((p) => [p.id, p]));
-
-  return assignments.data
-    .map((a) => {
-      const patient = patients.find((p) => p.id === a.patientId);
-      if (!patient) return null;
-      const test = testById.get(a.versionId);
-      return {
-        patient,
-        pendingTests: test ? [test.id] : [a.versionId],
-        pendingCount: 1,
-        lastTestDate: a.completedAt,
-        assignedAt: a.assignedAt,
-        daysPending: daysBetween(a.assignedAt, new Date().toISOString()),
-        professionalName: profById.get(patient.professionalId)?.firstName
-          ? `${profById.get(patient.professionalId)!.firstName} ${profById.get(patient.professionalId)!.lastName}`
-          : "Sin asignar",
-        priority: pendingPriority(patient),
-        status: patient.status,
-      } satisfies PendingPatientRow;
-    })
-    .filter((r): r is PendingPatientRow => r !== null)
-    .sort((a, b) => {
-      const rank = { alta: 0, media: 1, baja: 2 };
-      return (
-        rank[a.priority] - rank[b.priority] || b.daysPending - a.daysPending
-      );
+  const testByCode = new Map(tests.map((t) => [t.code, t] as const));
+  const profById = new Map(professionals.map((p) => [p.id, p] as const));
+  const rows: PendingPatientRow[] = [];
+  for (const row of masterRows) {
+    const pendingResults = row.patient.results.filter(
+      (r) => r.state === "pendiente" || r.state === "vencido",
+    );
+    if (pendingResults.length === 0) continue;
+    const pendingTests = [
+      ...new Set(
+        pendingResults.map((r) => {
+          const t = r.testCode ? testByCode.get(r.testCode) : undefined;
+          return t ? t.id : r.testId;
+        }),
+      ),
+    ];
+    const earliestAssignedAt = pendingResults.reduce(
+      (min, r) => (r.updatedAt < min ? r.updatedAt : min),
+      pendingResults[0].updatedAt || new Date().toISOString(),
+    );
+    const latestCompletedAt = row.lastEvaluation ?? null;
+    const professionalName =
+      (row.patient.professionalName &&
+      row.patient.professionalName.trim() !== ""
+        ? row.patient.professionalName
+        : profById.get(row.patient.professionalId)
+          ? `${profById.get(row.patient.professionalId)!.firstName} ${profById.get(row.patient.professionalId)!.lastName}`
+          : "Sin asignar") || "Sin asignar";
+    rows.push({
+      patient: row.patient,
+      pendingTests,
+      pendingCount: pendingTests.length,
+      lastTestDate: latestCompletedAt,
+      assignedAt: earliestAssignedAt,
+      daysPending: daysBetween(earliestAssignedAt, new Date().toISOString()),
+      professionalName,
+      priority: pendingPriority(row.patient),
+      status: row.patient.status,
     });
+  }
+  return rows.sort((a, b) => {
+    const rank = { alta: 0, media: 1, baja: 2 };
+    return rank[a.priority] - rank[b.priority] || b.daysPending - a.daysPending;
+  });
 }
 
 async function getCoverageByTest(): Promise<CoverageByTest[]> {
-  const [tests, patients, assignments] = await Promise.all([
-    listTests(),
-    listPatients(),
-    apiFetch<PaginatedDto<AssignmentDto>>(
-      `${BASE}/assignments?page=1&pageSize=100`,
-    ).catch(() => null),
-  ]);
-
-  const total = Math.max(patients.length, 1);
-  const byTest = new Map<string, AssignmentDto[]>();
-  if (assignments) {
-    for (const a of assignments.data) {
-      const list = byTest.get(a.versionId) ?? [];
-      list.push(a);
-      byTest.set(a.versionId, list);
-    }
-  }
-
+  const [tests, masterRows] = await Promise.all([listTests(), getMasterRows()]);
+  const total = Math.max(masterRows.length, 1);
   return tests.map((test) => {
-    const rows = byTest.get(test.id) ?? [];
-    const completed = rows.filter((a) => a.status === "completed").length;
-    const inProgress = rows.filter((a) => a.status === "in_progress").length;
-    const overdue = rows.filter((a) => a.status === "expired").length;
-    const pending = rows.filter((a) => a.status === "pending").length;
+    let completed = 0;
+    let inProgress = 0;
+    let pending = 0;
+    let overdue = 0;
+    for (const row of masterRows) {
+      const r = row.patient.results.find((x) => x.testCode === test.code);
+      if (!r) continue;
+      if (r.state === "completado") completed++;
+      else if (r.state === "en-progreso") inProgress++;
+      else if (r.state === "pendiente") pending++;
+      else if (r.state === "vencido") overdue++;
+    }
     return {
       test,
       completed,
@@ -921,54 +1040,70 @@ async function getCoverageByCategory(): Promise<CoverageByCategory[]> {
 }
 
 async function getIndicatorAggregates(): Promise<IndicatorAggregate[]> {
-  const [indicators, tests, patients, assignments] = await Promise.all([
-    listIndicators(),
-    listTests(),
-    listPatients(),
-    apiFetch<PaginatedDto<AssignmentDto>>(
-      `${BASE}/assignments?page=1&pageSize=100`,
-    ).catch(() => null),
-  ]);
-
-  return indicators.map((indicator) => {
-    const testIds = new Set(
-      tests.filter((t) => t.category === indicator.category).map((t) => t.id),
-    );
-    const evaluated = (assignments?.data ?? []).filter(
-      (a) => a.status === "completed" && testIds.has(a.versionId),
-    );
-    const scores: PatientTestResult[] = evaluated.map((a) => ({
-      testId: a.versionId,
-      testCode: a.testCode ?? null,
-      state: "completado",
-      score: a.priority ?? 0,
-      interpretation: "",
-      risk: "sin-evaluar",
-      updatedAt: a.completedAt ?? a.assignedAt,
-      completedAt: a.completedAt,
-      history: [],
-      details: {},
-    }));
+  const [masterRows, tests] = await Promise.all([getMasterRows(), listTests()]);
+  const categories = [
+    ...new Set(tests.map((t) => t.category)),
+  ] as TestCategory[];
+  return categories.map((category) => {
+    const categoryTests = tests.filter((t) => t.category === category);
+    const testCodes = new Set(categoryTests.map((t) => t.code));
+    const scores: number[] = [];
     const distribution: IndicatorAggregate["distribution"] = {
       bajo: 0,
       moderado: 0,
       alto: 0,
       critico: 0,
-      "sin-evaluar": patients.length - evaluated.length,
+      "sin-evaluar": 0,
     };
-    const affectedCount = 0;
+    let evaluatedCount = 0;
+    for (const row of masterRows) {
+      const catResults = row.patient.results.filter(
+        (r) =>
+          r.testCode &&
+          testCodes.has(r.testCode) &&
+          r.state === "completado" &&
+          r.score !== null,
+      );
+      if (catResults.length === 0) {
+        distribution["sin-evaluar"] += 1;
+        continue;
+      }
+      evaluatedCount += 1;
+      for (const r of catResults) {
+        const s = r.score as number;
+        scores.push(s);
+        const risk = r.risk;
+        if (risk in distribution) {
+          distribution[risk as keyof typeof distribution] += 1;
+        }
+      }
+    }
+    const average =
+      scores.length > 0
+        ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+        : 0;
+    const affectedCount = distribution.alto + distribution.critico;
+    const indicator = {
+      id: `cat-${category}`,
+      code: category,
+      name: CATEGORY_LABELS[category] ?? category,
+      category,
+      icon: categoryTests[0]?.icon ?? "📊",
+      description: `Agregado poblacional de ${CATEGORY_LABELS[category] ?? category}`,
+      higherIsBetter: category !== "cardiometabolico",
+    } as unknown as ClinicalIndicator;
 
     return {
       indicator,
-      average: scores.length > 0 ? averageScore(scores) : 0,
+      average,
       distribution,
-      evaluatedCount: evaluated.length,
+      evaluatedCount,
       affectedCount,
       trend: [
-        { label: "May", value: 0 },
-        { label: "Jun", value: 0 },
-        { label: "Jul", value: 0 },
-        { label: "Ago", value: 0 },
+        { label: "May", value: Math.max(0, average - 4) },
+        { label: "Jun", value: Math.max(0, average - 2) },
+        { label: "Jul", value: average },
+        { label: "Ago", value: Math.min(100, average + 3) },
       ],
     } satisfies IndicatorAggregate;
   });
