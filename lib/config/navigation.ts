@@ -635,11 +635,10 @@ export function getBreadcrumbSegments(
     { label: "Copp Adresd", href: "/dashboard" },
   ];
 
-  // Ruta dinámica del panel del paciente: /program/enrollments/[id]
-  const enrollmentDetailMatch = pathname.match(/^\/program\/enrollments\/([^/]+)$/);
-  if (enrollmentDetailMatch) {
-    segments.push({ label: "Inscripciones", href: "/program/enrollments" });
-    segments.push({ label: "Detalle del paciente" });
+  // Rutas legacy de enrollments: redirigen a Gestión · Perfil 360
+  if (pathname.startsWith("/program/enrollments")) {
+    segments.push({ label: "Gestión del programa", href: "/program/gestion" });
+    segments.push({ label: "Perfil 360" });
     return segments;
   }
 

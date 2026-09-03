@@ -125,19 +125,19 @@ export function ProgramScoresPage() {
         icon={BarChart3}
       />
 
-      {/* Aviso de migración (TASK-20): los scores viven en Inscripciones */}
+      {/* Aviso de migración: los scores viven en Perfil 360 */}
       <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
         <Info className="mt-0.5 size-4 shrink-0 text-blue-500" />
         <p>
           Esta página se conserva por compatibilidad. Los scores clínicos ahora
           se consultan desde{" "}
           <Link
-            href="/program/enrollments"
+            href="/program/gestion?view=perfil-360"
             className="font-semibold underline underline-offset-2 hover:text-blue-950"
           >
-            Inscripciones
+            Perfil 360
           </Link>
-          , donde cada paciente tiene su panel completo con todas las secciones.
+          , dentro de la pestaña Scores clínicos de cada paciente.
         </p>
       </div>
 
