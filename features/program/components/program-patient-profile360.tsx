@@ -6,13 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientOverview } from "../hooks/use-patient-overview";
 import { usePersistedTab } from "./chart-tabs";
-import { BiometriaPerfil360Detail } from "./biometria-perfil-360-detail";
+import {
+  BiometriaHeroSections,
+  BiometriaHistorySections,
+  useBiometriaPatient,
+  BiometriaPerfilSkeleton,
+} from "./biometria-perfil-360-detail";
 import {
   PatientResumenSections,
   PatientClinicaSections,
 } from "./program-patient-overview-page";
 import { EnrollmentContentTab } from "./enrollment-detail/tabs/enrollment-content-tab";
-import { EnrollmentScoresTab } from "./enrollment-detail/tabs/enrollment-scores-tab";
 import { EnrollmentBaselineTab } from "./enrollment-detail/tabs/enrollment-baseline-tab";
 import { EnrollmentXpLedgerTab } from "./enrollment-detail/tabs/enrollment-xp-ledger-tab";
 import { fetchEnrollmentById } from "../services/program-enrollments-service";
@@ -28,21 +32,23 @@ export function ProgramPatientProfile360({
   patientId,
   onBack,
 }: ProgramPatientProfile360Props) {
-  const [activeTab, setActiveTab] = usePersistedTab(
-    "perfil360:unified",
-    "biometria",
-  );
+  const [activeTab, setActiveTab] = usePersistedTab("perfil360:unified-v2", "resumen");
   const { data, loading, error, retry } = usePatientOverview(patientId);
+  const {
+    data: biometriaData,
+    loading: biometriaLoading,
+    error: biometriaError,
+  } = useBiometriaPatient(patientId);
 
   const tabs = [
-    { key: "biometria", label: "Biometría" },
     { key: "resumen", label: "Resumen" },
     { key: "clinica", label: "Clínica" },
     { key: "contenido", label: "Contenido semanal" },
-    { key: "scores", label: "Scores clínicos" },
-    { key: "baseline", label: "Línea base" },
     { key: "xp-ledger", label: "Historial XP" },
   ];
+
+  // Fallback when localStorage holds an old key (biometria/scores/baseline)
+  const safeTab = tabs.some((t) => t.key === activeTab) ? activeTab : "resumen";
 
   const headerName = data?.patient_name || patientId.slice(0, 8);
   const enrollmentId = data?.enrollment?.enrollment_id ?? null;
@@ -130,7 +136,7 @@ export function ProgramPatientProfile360({
         className="inline-flex w-fit flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-sm"
       >
         {tabs.map((tab) => {
-          const isActive = activeTab === tab.key;
+          const isActive = safeTab === tab.key;
           return (
             <button
               key={tab.key}
@@ -153,14 +159,21 @@ export function ProgramPatientProfile360({
 
       {/* Tab content */}
       <div>
-        {activeTab === "biometria" && (
-          <section aria-label="Biometría del paciente">
-            <BiometriaPerfil360Detail patientId={patientId} />
-          </section>
-        )}
+        {safeTab === "resumen" && (
+          <section aria-label="Resumen del paciente" className="flex flex-col gap-5">
+            {/* Biometría hero: figura + zonas + mediciones exactas */}
+            {biometriaLoading ? (
+              <BiometriaPerfilSkeleton />
+            ) : biometriaError ? (
+              <div className="rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-5 text-center">
+                <p className="text-sm font-semibold text-destructive">Error al cargar biometría</p>
+                <p className="mt-1 text-xs text-muted-foreground">{biometriaError}</p>
+              </div>
+            ) : biometriaData ? (
+              <BiometriaHeroSections data={biometriaData} />
+            ) : null}
 
-        {activeTab === "resumen" && (
-          <section aria-label="Resumen del paciente">
+            {/* Programa: misiones, radar, evolución 12w, scores */}
             {loading ? (
               <ResumenSkeleton />
             ) : error ? (
@@ -168,22 +181,39 @@ export function ProgramPatientProfile360({
             ) : data ? (
               <PatientResumenSections data={data} />
             ) : null}
+
+            {/* Historial biometría: heatmap + tabla semanal (no duplica ChartTabs 12w) */}
+            {biometriaLoading ? null : biometriaData ? (
+              <BiometriaHistorySections data={biometriaData} />
+            ) : null}
           </section>
         )}
 
-        {activeTab === "clinica" && (
-          <section aria-label="Información clínica del paciente">
+        {safeTab === "clinica" && (
+          <section aria-label="Información clínica del paciente" className="flex flex-col gap-5">
             {loading ? (
               <ResumenSkeleton />
             ) : error ? (
               <TabError message={error} onRetry={retry} />
             ) : data ? (
-              <PatientClinicaSections data={data} />
+              <>
+                <PatientClinicaSections data={data} />
+                {/* Línea base anexada a Clínica */}
+                <EnrollmentDetailTabWrapper
+                  enrollmentId={enrollmentId}
+                  enrollment={enrollment}
+                  loading={enrollmentLoading || loading}
+                  error={enrollmentError}
+                  onRetry={handleRetryEnrollment}
+                >
+                  {(enr) => <EnrollmentBaselineTab enrollment={enr} />}
+                </EnrollmentDetailTabWrapper>
+              </>
             ) : null}
           </section>
         )}
 
-        {activeTab === "contenido" && (
+        {safeTab === "contenido" && (
           <section aria-label="Contenido semanal">
             <EnrollmentDetailTabWrapper
               enrollmentId={enrollmentId}
@@ -197,35 +227,7 @@ export function ProgramPatientProfile360({
           </section>
         )}
 
-        {activeTab === "scores" && (
-          <section aria-label="Scores clínicos">
-            <EnrollmentDetailTabWrapper
-              enrollmentId={enrollmentId}
-              enrollment={enrollment}
-              loading={enrollmentLoading || loading}
-              error={enrollmentError}
-              onRetry={handleRetryEnrollment}
-            >
-              {(enr) => <EnrollmentScoresTab enrollment={enr} />}
-            </EnrollmentDetailTabWrapper>
-          </section>
-        )}
-
-        {activeTab === "baseline" && (
-          <section aria-label="Línea base">
-            <EnrollmentDetailTabWrapper
-              enrollmentId={enrollmentId}
-              enrollment={enrollment}
-              loading={enrollmentLoading || loading}
-              error={enrollmentError}
-              onRetry={handleRetryEnrollment}
-            >
-              {(enr) => <EnrollmentBaselineTab enrollment={enr} />}
-            </EnrollmentDetailTabWrapper>
-          </section>
-        )}
-
-        {activeTab === "xp-ledger" && (
+        {safeTab === "xp-ledger" && (
           <section aria-label="Historial XP">
             <EnrollmentDetailTabWrapper
               enrollmentId={enrollmentId}
@@ -263,7 +265,7 @@ function EnrollmentDetailTabWrapper({
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-14 text-center">
         <p className="text-sm font-semibold">Sin inscripción activa</p>
         <p className="max-w-sm text-xs text-muted-foreground">
-          Este paciente no tiene una inscripción activa al programa. Inscríbelo desde el módulo de pacientes para ver el contenido, scores y historial.
+          Este paciente no tiene una inscripción activa al programa. Inscríbelo desde el módulo de pacientes para ver el contenido y historial.
         </p>
       </div>
     );
@@ -287,7 +289,11 @@ function ResumenSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       <div className="relative overflow-hidden rounded-2xl bg-[#0B2B4A] p-6">
-        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)" }} />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)" }}
+        />
         <div className="flex items-center gap-4">
           <Skeleton className="size-16 rounded-2xl" />
           <div className="flex-1">
@@ -314,9 +320,7 @@ function TabError({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
-      <p className="text-sm font-semibold text-destructive">
-        Error al cargar el perfil
-      </p>
+      <p className="text-sm font-semibold text-destructive">Error al cargar el perfil</p>
       <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
         Reintentar
