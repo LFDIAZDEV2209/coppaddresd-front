@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useCallback, useEffect } from "react";
 import {
   BarChart3,
@@ -58,8 +59,12 @@ import {
 import { useProgramDashboard } from "../hooks/use-program-dashboard";
 import { useBiometriaCommunity } from "../hooks/use-biometria-community";
 import { useBiometriaPatients } from "../hooks/use-biometria-patients";
-import { BiometriaUsaMap } from "./biometria-usa-map";
 import { exportBiometriaCsv } from "../services/program-biometria-service";
+
+const BiometriaLeafletMap = dynamic(
+  () => import("./biometria-leaflet-map").then((m) => m.BiometriaLeafletMap),
+  { ssr: false, loading: () => <Skeleton className="h-[320px] w-full rounded-xl" /> },
+);
 import {
   MISSION_COLORS,
   MISSION_LABELS,
@@ -198,7 +203,7 @@ function BiometriaMapRow({ data }: { data: import("../types/erp").BiometriaCommu
           variant="primary"
         />
         <div className="p-4">
-          <BiometriaUsaMap cities={data.cities} />
+          <BiometriaLeafletMap cities={data.cities} />
         </div>
       </div>
 
