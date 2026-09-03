@@ -183,7 +183,7 @@ export function ProgramTemplateDetailDialog({
               </div>
               <p className="text-xs text-muted-foreground">
                 Código: <span className="font-mono">{template.code}</span> ·{" "}
-                {template.totalWeeks} semanas · v{template.version}
+                {template.totalWeeks} días · v{template.version}
               </p>
               {template.description && (
                 <p className="text-sm text-muted-foreground">

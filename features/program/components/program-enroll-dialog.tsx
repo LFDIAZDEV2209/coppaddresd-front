@@ -29,12 +29,13 @@ import type { ProgramTemplateListItem } from "../types";
 
 // --- Types locales ---
 
-interface PatientListItem {
+/** Paciente devuelto por GET /api/v1/patients?search=... para el picker. */
+interface PatientPickerItem {
   id: string;
   firstName: string;
   lastName: string;
-  email: string | null;
   medicalRecordNumber: string | null;
+  documentNumber: string | null;
 }
 
 interface PickerItem {
@@ -109,14 +110,14 @@ export function ProgramEnrollDialog({
           pageSize: "10",
           search: patientSearch.trim(),
         });
-        const result = await apiFetch<PaginatedResult<PatientListItem>>(
+        const result = await apiFetch<PaginatedResult<PatientPickerItem>>(
           `${env.apiUrl}/api/v1/patients?${params.toString()}`,
         );
         setPatientResults(
           result.data.map((p) => ({
             id: p.id,
             label: `${p.firstName} ${p.lastName}`,
-            sublabel: p.email ?? p.medicalRecordNumber ?? undefined,
+            sublabel: p.documentNumber ?? p.medicalRecordNumber ?? undefined,
           })),
         );
       } catch {
@@ -221,7 +222,7 @@ export function ProgramEnrollDialog({
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                     <Input
-                      placeholder="Buscar paciente por nombre..."
+                      placeholder="Buscar paciente por nombre o documento..."
                       value={patientSearch}
                       onChange={(e) => {
                         setPatientSearch(e.target.value);
@@ -287,7 +288,7 @@ export function ProgramEnrollDialog({
                 <SelectContent>
                   {templateResults.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
-                      {t.name} ({t.totalWeeks} semanas)
+                      {t.name} ({t.totalWeeks} días)
                     </SelectItem>
                   ))}
                   {!loadingTemplates && templateResults.length === 0 && (

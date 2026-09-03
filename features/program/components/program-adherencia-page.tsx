@@ -365,7 +365,7 @@ function AdherenciaRachasCard({
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 {r.patient_id ? (
                   <Link
-                    href={`/program/patients/${r.patient_id}`}
+                    href={`/program/gestion?view=perfil-360&patient=${r.patient_id}`}
                     className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer"
                   >
                     {r.patient_name}
@@ -532,7 +532,7 @@ function AdherenciaTablaSection({
                       <div className="flex min-w-0 flex-col gap-0.5">
                         {row.patient_id ? (
                           <Link
-                            href={`/program/patients/${row.patient_id}`}
+                            href={`/program/gestion?view=perfil-360&patient=${row.patient_id}`}
                             className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer"
                           >
                             {row.patient_name}

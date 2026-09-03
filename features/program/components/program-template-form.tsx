@@ -79,7 +79,7 @@ export function ProgramTemplateFormDialog({
               id="tpl-code"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="ej. default-83w"
+              placeholder="ej. default-83d"
               required
               disabled={isEdit}
             />
@@ -112,7 +112,7 @@ export function ProgramTemplateFormDialog({
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="tpl-weeks" className="text-sm font-medium">
-              Total de semanas *
+              Total de días *
             </label>
             <Input
               id="tpl-weeks"

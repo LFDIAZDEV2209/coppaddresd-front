@@ -201,7 +201,13 @@ export async function apiFetch<T>(
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    if (error instanceof DOMException && error.name === "AbortError") {
+    const isAbort =
+      (error instanceof DOMException && error.name === "AbortError") ||
+      (error instanceof Error && error.name === "AbortError");
+    if (isAbort) {
+      if (externalSignal?.aborted) {
+        throw error;
+      }
       throw new ApiError(
         0,
         "timeout",

@@ -4,13 +4,11 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAppContext } from "@/providers/context-provider";
 import { ProgramViewSwitcher } from "@/features/program/components/program-view-switcher";
 import { ProgramTemplatesPage } from "@/features/program/components/program-templates-page";
-import { ProgramEnrollmentsPage } from "@/features/program/components/program-enrollments-page";
 import { ProgramContentPage } from "@/features/program/components/program-content-page";
 import { ProgramPerfil360Page } from "@/features/program/components/program-perfil360-page";
 
 const GESTION_VIEWS = [
   { value: "plantillas", label: "Plantillas", permission: "Program.View" },
-  { value: "inscripciones", label: "Inscripciones", permission: "Program.View" },
   { value: "contenido", label: "Contenido", permission: "Program.Edit" },
   { value: "perfil-360", label: "Perfil 360", permission: "Program.View" },
 ];
@@ -19,14 +17,12 @@ function getVisibleViews(can: (code: string) => boolean) {
   return GESTION_VIEWS.filter((v) => can(v.permission));
 }
 
-function getComponent(view: string) {
+function getComponent(view: string, patient?: string | null) {
   switch (view) {
-    case "inscripciones":
-      return <ProgramEnrollmentsPage />;
     case "contenido":
       return <ProgramContentPage />;
     case "perfil-360":
-      return <ProgramPerfil360Page />;
+      return <ProgramPerfil360Page initialPatientId={patient} />;
     case "plantillas":
     default:
       return <ProgramTemplatesPage />;
@@ -40,6 +36,7 @@ export default function ProgramGestionRoute() {
   const { can } = useAppContext();
 
   const currentView = searchParams.get("view") ?? "plantillas";
+  const patientParam = searchParams.get("patient");
   const visibleViews = getVisibleViews(can);
   const activeView =
     visibleViews.find((v) => v.value === currentView)?.value ??
@@ -61,7 +58,7 @@ export default function ProgramGestionRoute() {
           onChange={handleChange}
         />
       </div>
-      {getComponent(activeView)}
+      {getComponent(activeView, patientParam)}
     </div>
   );
 }

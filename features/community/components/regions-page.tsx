@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import {
   Map,
   Globe,
@@ -10,11 +9,7 @@ import { SectionHeader } from "@/components/layout/section-header";
 import { useErp } from "../erp-provider";
 import { useT } from "@/providers/i18n-provider";
 import { GroupedBarChart } from "./charts";
-
-const RegionsMap = dynamic(() => import("./regions-map").then((m) => m.RegionsMap), {
-  ssr: false,
-  loading: () => <div className="h-[320px] w-full animate-pulse rounded-xl bg-muted" />,
-});
+import { RegionsMap } from "./regions-vector-map";
 
 const REGION_COLORS: Record<string, string> = {
   Miami: "var(--primary)",

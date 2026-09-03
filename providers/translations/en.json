@@ -2338,7 +2338,7 @@
   "Todos los profesionales": "All professionals",
   "Todos los profesionales del catálogo ya están asignados.": "All professionals in the catalog are already assigned.",
   "Todos los roles": "All roles",
-  "Todos los tests del paciente, sus resultados e intentos": "All the patient's tests, their results and attempts",
+  "Todos los tests del paciente, sus resultados e intentos": "All patient tests, results, and attempts",
   "Todos los tipos": "All types",
   "Tokens": "Tokens",
   "Tokens (in+out)": "Tokens (in+out)",
@@ -2628,5 +2628,11 @@
   "Timeline": "Timeline",
   "Timeline de": "Timeline of",
   "Transmisión estilo broadcast — cualquiera puede unirse y usar el chat (mock).": "Broadcast-style stream — anyone can join and use the chat (mock).",
-  "Tú quedarás como administrador del club. Selecciona moderadores adicionales (opcional).": "You will remain as the club admin. Select additional moderators (optional)."
+  "Tú quedarás como administrador del club. Selecciona moderadores adicionales (opcional).": "You will remain as the club admin. Select additional moderators (optional).",
+  "Mediciones clínicas": "Clinical measurements",
+  "{count} mediciones registradas": "{count} measurements recorded",
+  "No pudimos cargar las mediciones": "We couldn't load the measurements",
+  "Ver menos": "Show less",
+  "Ver historial": "View history",
+  "App móvil": "Mobile app"
 }

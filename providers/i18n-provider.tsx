@@ -114,11 +114,13 @@ export function I18nProvider({
     const found = dictionaries[lang][source];
     let translated = found && found.length > 0 ? found : source;
     if (!found && lang !== 'es') {
-      if (!warnedKeys.has(source)) {
-        warnedKeys.add(source);
-        console.warn(`[i18n] Missing key for "${lang}":`, source);
+      if (process.env.NODE_ENV !== 'production') {
+        if (!warnedKeys.has(source)) {
+          warnedKeys.add(source);
+          console.warn(`[i18n] Missing key for "${lang}":`, source);
+        }
+        missingKeys.add(source);
       }
-      missingKeys.add(source);
     }
     if (params) {
       Object.entries(params).forEach(([key, value]) => {

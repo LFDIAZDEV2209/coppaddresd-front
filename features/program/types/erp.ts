@@ -207,6 +207,144 @@ export interface ProgramErpCofresDto {
   proximos_a_desbloquear?: number;
 }
 
+// ===================== Biometría =====================
+
+export interface BiometriaImcBucket {
+  label: string;
+  count: number;
+}
+
+export interface BiometriaGrBodyFatBucket {
+  label: string;
+  count: number;
+}
+
+export interface BiometriaGrasaDistribution {
+  male: BiometriaGrBodyFatBucket[];
+  female: BiometriaGrBodyFatBucket[];
+}
+
+export interface BiometriaGlucosaBucket {
+  label: string;
+  count: number;
+}
+
+export interface BiometriaWeeklyPoint {
+  week_start: string; // DateOnly → ISO string
+  avg_imc: number | null;
+  avg_grasa: number | null;
+  avg_glucosa: number | null;
+}
+
+export interface BiometriaCityPoint {
+  city_id: string | null;
+  name: string;
+  state_abbr: string | null;
+  count: number;
+  avg_imc: number | null;
+  map_x: number | null;
+  map_y: number | null;
+}
+
+export interface BiometriaAlert {
+  patient_id: string;
+  name: string;
+  reason: string;
+  imc: number | null;
+  glucosa: number | null;
+  icc: number | null;
+}
+
+export interface BiometriaCommunityDto {
+  avg_imc: number | null;
+  avg_grasa: number | null;
+  avg_glucosa: number | null;
+  improving_count: number;
+  imc_distribution: BiometriaImcBucket[];
+  grasa_distribution: BiometriaGrasaDistribution;
+  glucosa_distribution: BiometriaGlucosaBucket[];
+  evolution_weekly: BiometriaWeeklyPoint[];
+  cities: BiometriaCityPoint[];
+  alerts: BiometriaAlert[];
+}
+
+// --- Biometría Patient List ---
+
+export interface BiometriaPatientListItem {
+  patient_id: string;
+  name: string;
+  gender: string | null;
+  age: number | null;
+  city: string | null;
+  weight: number | null;
+  height: number | null;
+  imc: number | null;
+  imc_category: string | null;
+  waist: number | null;
+  hip: number | null;
+  icc: number | null;
+  pct_grasa: number | null;
+  pct_grasa_category: string | null;
+  glucosa: number | null;
+  glucosa_category: string | null;
+  week_number: number | null;
+  streak: number;
+  trend: string | null;
+}
+
+export interface BiometriaWeeklyBiometria {
+  week_start: string;
+  imc: number | null;
+  grasa: number | null;
+  glucosa: number | null;
+  weight: number | null;
+  height: number | null;
+  waist: number | null;
+  hip: number | null;
+  icc: number | null;
+  delta_imc: number | null;
+  delta_grasa: number | null;
+  delta_glucosa: number | null;
+}
+
+export interface BiometriaHeatmapDay {
+  day_index: number;
+  completed: boolean;
+  date: string;
+}
+
+export interface BiometriaExacta {
+  weight: number | null;
+  height: number | null;
+  waist: number | null;
+  hip: number | null;
+  wrist: number | null;
+  icc: number | null;
+  pct_grasa: number | null;
+  pct_magra: number | null;
+}
+
+export interface BiometriaPatientDetail {
+  patient_id: string;
+  name: string;
+  gender: string | null;
+  age: number | null;
+  imc: number | null;
+  imc_category: string | null;
+  trend: string | null;
+  historial_semanal: BiometriaWeeklyBiometria[];
+  adherence_heatmap: BiometriaHeatmapDay[];
+  biometria_exacta: BiometriaExacta | null;
+}
+
+export interface PaginatedBiometriaPatients {
+  data: BiometriaPatientListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 // ===================== Patient Overview (360) =====================
 
 export interface PatientOverviewEnrollment {

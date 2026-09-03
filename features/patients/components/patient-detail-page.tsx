@@ -42,6 +42,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPatient } from "../services/patients-service";
 import { PatientProfessionalsSection } from "./patient-professionals-section";
+import { ClinicalMeasurementsSection } from "./clinical-measurements-section";
 import type { Patient } from "../types";
 
 /** Estilos de la caja de icono por tono semántico (colores representativos). */
@@ -356,6 +357,7 @@ export function PatientDetailPage({ id }: { id: string }) {
       <MedicationsSection patient={patient} />
       <AllergiesSection patient={patient} />
       <VitalSignsSection patient={patient} />
+      <ClinicalMeasurementsSection patientId={patient.id} />
     </div>
   );
 }

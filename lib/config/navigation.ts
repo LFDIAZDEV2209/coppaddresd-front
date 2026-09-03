@@ -40,7 +40,6 @@ import {
   Apple,
   Dumbbell,
   Sparkles,
-  UserCheck,
   HeartPulse,
   Activity,
   BellRing,
@@ -50,10 +49,6 @@ import {
   TrendingUp,
   PieChart,
   Trophy,
-  Zap,
-  GitBranch,
-  Gift,
-  History,
 } from "lucide-react";
 
 export interface NavItem {
@@ -648,6 +643,13 @@ export function getBreadcrumbSegments(
   const segments: { label: string; href?: string }[] = [
     { label: "Copp Adresd", href: "/dashboard" },
   ];
+
+  // Rutas legacy de enrollments: redirigen a Gestión · Perfil 360
+  if (pathname.startsWith("/program/enrollments")) {
+    segments.push({ label: "Gestión del programa", href: "/program/gestion" });
+    segments.push({ label: "Perfil 360" });
+    return segments;
+  }
 
   const allItems = navModules.flatMap((m) => m.items);
   const current = allItems.find((item) => item.href === pathname);

@@ -257,7 +257,7 @@ function TodayContent({
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       {entry.patient_id ? (
                         <Link
-                          href={`/program/patients/${entry.patient_id}`}
+                          href={`/program/gestion?view=perfil-360&patient=${entry.patient_id}`}
                           className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer"
                         >
                           {entry.patient_name}
@@ -430,7 +430,7 @@ function TodayContent({
                       </span>
                       {p.patient_id ? (
                         <Link
-                          href={`/program/patients/${p.patient_id}`}
+                           href={`/program/gestion?view=perfil-360&patient=${p.patient_id}`}
                           className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer"
                         >
                           {p.patient_name}
