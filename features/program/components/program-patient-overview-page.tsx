@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -44,6 +44,7 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
+import { PagedListFooter } from "./paged-list-footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,6 +67,7 @@ import {
   CHART_TOOLTIP,
 } from "../services/program-erp-constants";
 import { ChartTabs, usePersistedTab } from "./chart-tabs";
+import type { BiometriaPatientDetail } from "../types/erp";
 
 // --- Componente principal ---
 
@@ -111,12 +113,14 @@ export function ProgramPatientOverviewPage({
 
 // --- Contenido ---
 
-export function PatientResumenSections({
+export function PatientResumenHero({
   data,
+  biometria,
 }: {
   data: import("../types/erp").PatientOverviewDto;
+  biometria?: BiometriaPatientDetail | null;
 }) {
-  const patientName = data.patient_name ?? "Paciente";
+  const patientName = data.patient_name ?? biometria?.name ?? "Paciente";
   const parts = patientName.split(" ");
   const initialsStr =
     parts.length >= 2
@@ -124,120 +128,148 @@ export function PatientResumenSections({
       : patientName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#0B2B4A] p-6 text-white">
-        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)" }} />
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-[#123B63] text-xl font-bold">
-            {initialsStr}
-          </span>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold">{patientName}</h2>
-            <div className="mt-1 flex flex-wrap gap-2 text-[13px] text-white/70">
-              {data.enrollment && (
-                <>
-                  <span>
-                    Semana {data.enrollment.current_week}/
-                    {data.enrollment.total_weeks}
-                  </span>
-                  <span>·</span>
-                  <span>{data.enrollment.status}</span>
-                </>
-              )}
-              {data.xp && (
-                <>
-                  <span>·</span>
-                  <span>
-                    XP: {data.xp.balance.toLocaleString()} · Nivel{" "}
-                    {data.xp.level}
-                  </span>
-                </>
-              )}
-            </div>
+    <div className="relative overflow-hidden rounded-2xl bg-[#0B2B4A] p-6 text-white">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)" }}
+      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-[#123B63] text-xl font-bold">
+          {initialsStr}
+        </span>
+        <div className="flex-1">
+          <h2 className="text-xl font-bold">{patientName}</h2>
+          <div className="mt-1 flex flex-wrap gap-2 text-[13px] text-white/70">
+            {data.enrollment && (
+              <>
+                <span>
+                  Semana {data.enrollment.current_week}/{data.enrollment.total_weeks}
+                </span>
+                <span>·</span>
+                <span>{data.enrollment.status}</span>
+              </>
+            )}
+            {data.xp && (
+              <>
+                <span>·</span>
+                <span>
+                  XP: {data.xp.balance.toLocaleString()} · Nivel {data.xp.level}
+                </span>
+              </>
+            )}
           </div>
-          {data.streak && (
-            <div className="flex items-center gap-4 text-sm">
-              <div className="text-center">
-                <Flame className="mx-auto mb-0.5 size-5 text-amber-400" />
-                <p className="text-lg font-bold tabular-nums">
-                  {data.streak.current_streak}
-                </p>
-                <p className="text-[11px] text-white/60">Racha</p>
-              </div>
-              <div className="text-center">
-                <Trophy className="mx-auto mb-0.5 size-5 text-green-400" />
-                <p className="text-lg font-bold tabular-nums">
-                  {data.streak.nb_current_streak}
-                </p>
-                <p className="text-[11px] text-white/60">Racha NB</p>
-              </div>
+          {biometria && (biometria.gender || biometria.age || biometria.imc_category || biometria.imc) && (
+            <div className="mt-1.5 flex flex-wrap gap-2 text-[12px] text-white/60">
+              <span>Biometría corporal</span>
+              {biometria.gender && (
+                <>
+                  <span>·</span>
+                  <span>{biometria.gender}</span>
+                </>
+              )}
+              {biometria.age != null && (
+                <>
+                  <span>·</span>
+                  <span>{biometria.age} años</span>
+                </>
+              )}
+              {biometria.imc_category && (
+                <>
+                  <span>·</span>
+                  <span>{biometria.imc_category}</span>
+                </>
+              )}
+              {biometria.imc != null && (
+                <>
+                  <span>·</span>
+                  <span>IMC {biometria.imc.toFixed(1)}</span>
+                </>
+              )}
             </div>
           )}
         </div>
+        {data.streak && (
+          <div className="flex items-center gap-4 text-sm">
+            <div className="text-center">
+              <Flame className="mx-auto mb-0.5 size-5 text-amber-400" />
+              <p className="text-lg font-bold tabular-nums">{data.streak.current_streak}</p>
+              <p className="text-[11px] text-white/60">Racha</p>
+            </div>
+            <div className="text-center">
+              <Trophy className="mx-auto mb-0.5 size-5 text-green-400" />
+              <p className="text-lg font-bold tabular-nums">{data.streak.nb_current_streak}</p>
+              <p className="text-[11px] text-white/60">Racha NB</p>
+            </div>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
 
-      {/* 6 Mission Progress Rings (as bars) */}
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <SectionHeader
-          title="Misiones de hoy"
-          description="Estado actual de cada misión"
-          icon={Target}
-          variant="secondary"
-        />
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-          {data.tareas_hoy.length > 0
-            ? data.tareas_hoy.map((t) => (
-                <div
-                  key={t.task_code}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-border bg-muted/30 p-3"
-                >
+export function PatientResumenBody({
+  data,
+  hideMisiones,
+}: {
+  data: import("../types/erp").PatientOverviewDto;
+  hideMisiones?: boolean;
+}) {
+  return (
+    <>
+      {/* 6 Mission Progress Rings (as bars) — oculto cuando se embebe en el box de biometría */}
+      {!hideMisiones && (
+        <section className="rounded-2xl border border-border bg-card p-5">
+          <SectionHeader
+            title="Misiones de hoy"
+            description="Estado actual de cada misión"
+            icon={Target}
+            variant="secondary"
+          />
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+            {data.tareas_hoy.length > 0
+              ? data.tareas_hoy.map((t) => (
                   <div
-                    className="flex size-12 items-center justify-center rounded-full"
-                    style={{
-                      background: t.completed
-                        ? MISSION_COLORS[t.task_code]
-                        : "var(--muted)",
-                    }}
+                    key={t.task_code}
+                    className="flex flex-col items-center gap-2 rounded-xl border border-border bg-muted/30 p-3"
                   >
-                    {t.completed ? (
-                      <CheckCircle2 className="size-6 text-white" />
-                    ) : (
+                    <div
+                      className="flex size-12 items-center justify-center rounded-full"
+                      style={{
+                        background: t.completed ? MISSION_COLORS[t.task_code] : "var(--muted)",
+                      }}
+                    >
+                      {t.completed ? (
+                        <CheckCircle2 className="size-6 text-white" />
+                      ) : (
+                        <Lock className="size-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <span className="text-xs font-medium">{MISSION_LABELS[t.task_code] ?? t.task_code}</span>
+                    <Badge
+                      className={
+                        t.completed ? "bg-success-soft text-success-foreground" : "bg-muted text-muted-foreground"
+                      }
+                    >
+                      {t.completed ? `+${t.points} XP` : "Pendiente"}
+                    </Badge>
+                  </div>
+                ))
+              : MISSION_ORDER.map((code) => (
+                  <div
+                    key={code}
+                    className="flex flex-col items-center gap-2 rounded-xl border border-border bg-muted/30 p-3"
+                  >
+                    <div className="flex size-12 items-center justify-center rounded-full bg-muted">
                       <Lock className="size-5 text-muted-foreground" />
-                    )}
+                    </div>
+                    <span className="text-xs font-medium">{MISSION_LABELS[code]}</span>
+                    <Badge className="bg-muted text-muted-foreground">Sin datos</Badge>
                   </div>
-                  <span className="text-xs font-medium">
-                    {MISSION_LABELS[t.task_code] ?? t.task_code}
-                  </span>
-                  <Badge
-                    className={
-                      t.completed
-                        ? "bg-success-soft text-success-foreground"
-                        : "bg-muted text-muted-foreground"
-                    }
-                  >
-                    {t.completed ? `+${t.points} XP` : "Pendiente"}
-                  </Badge>
-                </div>
-              ))
-            : MISSION_ORDER.map((code) => (
-                <div
-                  key={code}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-border bg-muted/30 p-3"
-                >
-                  <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                    <Lock className="size-5 text-muted-foreground" />
-                  </div>
-                  <span className="text-xs font-medium">
-                    {MISSION_LABELS[code]}
-                  </span>
-                  <Badge className="bg-muted text-muted-foreground">
-                    Sin datos
-                  </Badge>
-                </div>
-              ))}
-        </div>
-      </section>
+                ))}
+          </div>
+        </section>
+      )}
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Adherencia semanal - Radar chart */}
@@ -253,9 +285,7 @@ export function PatientResumenSections({
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart
                   data={MISSION_ORDER.map((code) => {
-                    const m = data.adherencia_semana.find(
-                      (a) => a.task_code === code,
-                    );
+                    const m = data.adherencia_semana.find((a) => a.task_code === code);
                     return {
                       mission: MISSION_LABELS[code] ?? code,
                       pct: m?.pct ?? 0,
@@ -264,11 +294,7 @@ export function PatientResumenSections({
                 >
                   <PolarGrid stroke="var(--border)" />
                   <PolarAngleAxis dataKey="mission" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
-                  <PolarRadiusAxis
-                    angle={30}
-                    domain={[0, 100]}
-                    tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-                  />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
                   <Radar
                     name="Adherencia"
                     dataKey="pct"
@@ -281,9 +307,7 @@ export function PatientResumenSections({
               </ResponsiveContainer>
             ) : (
               <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-muted-foreground">
-                  Sin datos de adherencia.
-                </p>
+                <p className="text-sm text-muted-foreground">Sin datos de adherencia.</p>
               </div>
             )}
           </div>
@@ -298,15 +322,9 @@ export function PatientResumenSections({
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {data.scores.health && (
             <div className="rounded-2xl border border-border bg-card p-5">
-              <SectionHeader
-                title="Índice de Salud"
-                icon={Stethoscope}
-                variant="secondary"
-              />
+              <SectionHeader title="Índice de Salud" icon={Stethoscope} variant="secondary" />
               <div className="mt-4 flex items-baseline gap-3">
-                <span className="text-4xl font-bold tabular-nums">
-                  {data.scores.health.score}
-                </span>
+                <span className="text-4xl font-bold tabular-nums">{data.scores.health.score}</span>
                 <span className="text-sm text-muted-foreground">/ 100</span>
                 <TrendBadge trend={data.scores.health.trend} />
               </div>
@@ -319,18 +337,14 @@ export function PatientResumenSections({
                   { label: "Ejercicio", value: data.scores.health.score_exercise },
                 ].map((dim) => (
                   <div key={dim.label} className="flex items-center gap-3">
-                    <span className="w-24 text-xs text-muted-foreground">
-                      {dim.label}
-                    </span>
+                    <span className="w-24 text-xs text-muted-foreground">{dim.label}</span>
                     <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                       <div
                         className="h-full rounded-full bg-primary transition-all"
                         style={{ width: `${Math.min(100, Math.max(0, dim.value))}%` }}
                       />
                     </div>
-                    <span className="w-8 text-right text-xs font-medium tabular-nums">
-                      {dim.value}
-                    </span>
+                    <span className="w-8 text-right text-xs font-medium tabular-nums">{dim.value}</span>
                   </div>
                 ))}
               </div>
@@ -338,15 +352,9 @@ export function PatientResumenSections({
           )}
           {data.scores.transformation && (
             <div className="rounded-2xl border border-border bg-card p-5">
-              <SectionHeader
-                title="Índice de Transformación"
-                icon={TrendingUp}
-                variant="secondary"
-              />
+              <SectionHeader title="Índice de Transformación" icon={TrendingUp} variant="secondary" />
               <div className="mt-4 flex items-baseline gap-3">
-                <span className="text-4xl font-bold tabular-nums">
-                  {data.scores.transformation.score}
-                </span>
+                <span className="text-4xl font-bold tabular-nums">{data.scores.transformation.score}</span>
                 <span className="text-sm text-muted-foreground">/ 100</span>
                 <Badge variant="outline" className="text-xs">
                   Semana {data.scores.transformation.week_number}
@@ -375,59 +383,55 @@ export function PatientResumenSections({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {Object.entries(data.scores.transformation.detail).map(
-                        ([code, detail]) => (
-                          <TableRow key={code}>
-                            <TableCell className="font-medium text-sm">
-                              {code}
-                            </TableCell>
-                            <TableCell className="text-right text-sm tabular-nums">
-                              {detail.baseline} {detail.unit}
-                            </TableCell>
-                            <TableCell className="text-right text-sm tabular-nums font-medium">
-                              {detail.current} {detail.unit}
-                            </TableCell>
-                            <TableCell className="text-right text-sm tabular-nums">
-                              <span
-                                className={
-                                  detail.delta > 0
-                                    ? "text-success"
-                                    : detail.delta < 0
-                                      ? "text-destructive"
-                                      : ""
-                                }
-                              >
-                                {detail.delta > 0 ? "+" : ""}
-                                {detail.delta}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-right text-sm tabular-nums">
-                              <span
-                                className={
-                                  detail.delta_pct > 0
-                                    ? "text-success"
-                                    : detail.delta_pct < 0
-                                      ? "text-destructive"
-                                      : ""
-                                }
-                              >
-                                {detail.delta_pct > 0 ? "+" : ""}
-                                {detail.delta_pct}%
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {detail.favorable ? (
-                                <span className="text-success text-sm">✓</span>
-                              ) : (
-                                <span className="text-destructive text-sm">✗</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right text-sm font-medium tabular-nums">
-                              {detail.score}
-                            </TableCell>
-                          </TableRow>
-                        ),
-                      )}
+                      {Object.entries(data.scores.transformation.detail).map(([code, detail]) => (
+                        <TableRow key={code}>
+                          <TableCell className="font-medium text-sm">{code}</TableCell>
+                          <TableCell className="text-right text-sm tabular-nums">
+                            {detail.baseline} {detail.unit}
+                          </TableCell>
+                          <TableCell className="text-right text-sm tabular-nums font-medium">
+                            {detail.current} {detail.unit}
+                          </TableCell>
+                          <TableCell className="text-right text-sm tabular-nums">
+                            <span
+                              className={
+                                detail.delta > 0
+                                  ? "text-success"
+                                  : detail.delta < 0
+                                    ? "text-destructive"
+                                    : ""
+                              }
+                            >
+                              {detail.delta > 0 ? "+" : ""}
+                              {detail.delta}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right text-sm tabular-nums">
+                            <span
+                              className={
+                                detail.delta_pct > 0
+                                  ? "text-success"
+                                  : detail.delta_pct < 0
+                                    ? "text-destructive"
+                                    : ""
+                              }
+                            >
+                              {detail.delta_pct > 0 ? "+" : ""}
+                              {detail.delta_pct}%
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {detail.favorable ? (
+                              <span className="text-success text-sm">✓</span>
+                            ) : (
+                              <span className="text-destructive text-sm">✗</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-medium tabular-nums">
+                            {detail.score}
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </div>
@@ -451,16 +455,11 @@ export function PatientResumenSections({
             <Sparkles className="size-5 text-white" />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-[#7C3AED]">
-              IA · Análisis individual
-            </span>
-            <span className="text-[15px] font-bold text-foreground">
-              Análisis inteligente
-            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-[#7C3AED]">IA · Análisis individual</span>
+            <span className="text-[15px] font-bold text-foreground">Análisis inteligente</span>
             <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-              El análisis IA de este paciente (fortalezas, áreas de mejora,
-              predicciones de racha y riesgo de abandono) estará disponible
-              próximamente.
+              El análisis IA de este paciente (fortalezas, áreas de mejora, predicciones de racha y riesgo de abandono) estará
+              disponible próximamente.
             </p>
             <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-[11px] font-semibold text-info-foreground">
               <Clock className="size-3" />
@@ -469,38 +468,119 @@ export function PatientResumenSections({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-export function PatientClinicaSections({
+export function PatientResumenSections({
   data,
 }: {
   data: import("../types/erp").PatientOverviewDto;
 }) {
   return (
     <div className="flex flex-col gap-6">
-      {/* Clinical Metrics */}
-      <ClinicalMetricsSection metrics={data.mediciones_clinicas} />
+      <PatientResumenHero data={data} />
+      <PatientResumenBody data={data} />
+    </div>
+  );
+}
 
-      {/* Weaknesses + Interventions + Clinical Reviews */}
+function ClinicalMetricsTilesInner({ metrics }: { metrics: import("../types/erp").PatientOverviewClinicalMetricsDto | null }) {
+  if (!metrics) return null;
+  const items: { key: "bmi" | "hba1c" | "body_fat"; label: string; icon: typeof Weight; color: string; threshold: number; thresholdLabel: string }[] = [
+    { key: "bmi", label: "BMI", icon: Weight, color: CLINICAL_COLORS.bmi, threshold: 30, thresholdLabel: "≥ 30" },
+    { key: "hba1c", label: "HbA1c", icon: Droplet, color: CLINICAL_COLORS.hba1c, threshold: 7, thresholdLabel: "≥ 7" },
+    { key: "body_fat", label: "% Grasa", icon: Activity, color: CLINICAL_COLORS.body_fat, threshold: 25, thresholdLabel: "≥ 25" },
+  ];
+  return (
+    <section className="flex flex-col gap-4">
+      <SectionHeader title="Mediciones clínicas" description="Última medición y tendencia" icon={Stethoscope} variant="secondary" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {items.map((item) => {
+          const snap = metrics[item.key];
+          const latest = snap?.latest_value;
+          const delta = snap?.delta_pct;
+          const baseline = snap?.baseline_value;
+          const observed = snap?.observed_at;
+          return (
+            <div key={item.key} className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2">
+                <div className="flex size-9 items-center justify-center rounded-xl" style={{ backgroundColor: `${item.color}20` }}>
+                  <item.icon className="size-5" style={{ color: item.color }} />
+                </div>
+                <span className="text-sm font-semibold">{item.label}</span>
+                {latest !== null && latest !== undefined && (
+                  <Badge variant="outline" className="ml-auto text-[10px]" style={{ borderColor: `${item.color}40`, color: item.color }}>Umbral {item.thresholdLabel}</Badge>
+                )}
+              </div>
+              {latest !== null && latest !== undefined ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold tabular-nums" style={{ color: item.color }}>{latest.toFixed(1)}</span>
+                  {snap?.unit && <span className="text-xs text-muted-foreground">{snap.unit}</span>}
+                  {delta !== null && delta !== undefined && (
+                    <span className={`text-[11px] font-semibold ${delta <= 0 ? "text-success" : "text-destructive"}`}>{delta <= 0 ? "↓" : "↑"} {Math.abs(delta).toFixed(1)}%</span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-2"><span className="text-2xl font-bold text-muted-foreground/50">—</span><span className="text-xs text-muted-foreground">Sin registro</span></div>
+              )}
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                {baseline !== null && baseline !== undefined && <span>Base: {baseline.toFixed(1)}</span>}
+                {observed && <span className="ml-auto">{relativeTime(observed)}</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export function PatientClinicaTop({
+  data,
+}: {
+  data: import("../types/erp").PatientOverviewDto;
+}) {
+  return <ClinicalMetricsTilesInner metrics={data.mediciones_clinicas} />;
+}
+
+const CLINICA_PAGE_SIZE = 5;
+
+export function PatientClinicaBottom({
+  data,
+}: {
+  data: import("../types/erp").PatientOverviewDto;
+}) {
+  const [wPage, setWPage] = useState(1);
+  const [iPage, setIPage] = useState(1);
+  const [rPage, setRPage] = useState(1);
+
+  const wTotal = Math.max(1, Math.ceil(data.weaknesses.length / CLINICA_PAGE_SIZE));
+  const iTotal = Math.max(1, Math.ceil(data.interventions.length / CLINICA_PAGE_SIZE));
+  const rTotal = Math.max(1, Math.ceil(data.clinical_reviews.length / CLINICA_PAGE_SIZE));
+
+  const wSlice = data.weaknesses.slice((wPage - 1) * CLINICA_PAGE_SIZE, wPage * CLINICA_PAGE_SIZE);
+  const iSlice = data.interventions.slice((iPage - 1) * CLINICA_PAGE_SIZE, iPage * CLINICA_PAGE_SIZE);
+  const rSlice = data.clinical_reviews.slice((rPage - 1) * CLINICA_PAGE_SIZE, rPage * CLINICA_PAGE_SIZE);
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Weaknesses + Interventions + Clinical Reviews — same PAGE_SIZE so cards always fit */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Weaknesses */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
             title="Debilidades"
             icon={ShieldAlert}
             variant="primary"
           />
           {data.weaknesses.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <p className="text-sm text-muted-foreground">
-                Sin debilidades detectadas.
-              </p>
+            <div className="flex min-h-[280px] flex-1 items-center justify-center py-8">
+              <p className="text-sm text-muted-foreground">Sin debilidades detectadas.</p>
             </div>
           ) : (
-            <div className="flex flex-col">
-              {data.weaknesses.map((w) => (
+            <div className="flex flex-1 flex-col">
+              {wSlice.map((w) => (
                 <div
                   key={w.id}
                   className="flex items-center gap-3 border-b border-border px-5 py-3 last:border-0"
@@ -521,26 +601,25 @@ export function PatientClinicaSections({
                   </span>
                 </div>
               ))}
+              {wTotal > 1 && <PagedListFooter page={wPage} totalPages={wTotal} onPageChange={setWPage} pageSize={CLINICA_PAGE_SIZE} />}
             </div>
           )}
         </div>
 
         {/* Interventions */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
             title="Intervenciones"
             icon={ClipboardPenLine}
             variant="primary"
           />
           {data.interventions.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <p className="text-sm text-muted-foreground">
-                Sin intervenciones registradas.
-              </p>
+            <div className="flex min-h-[280px] flex-1 items-center justify-center py-8">
+              <p className="text-sm text-muted-foreground">Sin intervenciones registradas.</p>
             </div>
           ) : (
-            <div className="flex flex-col">
-              {data.interventions.map((inv) => (
+            <div className="flex flex-1 flex-col">
+              {iSlice.map((inv) => (
                 <div
                   key={inv.id}
                   className="flex items-center gap-3 border-b border-border px-5 py-3 last:border-0"
@@ -556,26 +635,25 @@ export function PatientClinicaSections({
                   </span>
                 </div>
               ))}
+              {iTotal > 1 && <PagedListFooter page={iPage} totalPages={iTotal} onPageChange={setIPage} pageSize={CLINICA_PAGE_SIZE} />}
             </div>
           )}
         </div>
 
         {/* Clinical Reviews */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
             title="Revisiones clínicas"
             icon={Stethoscope}
             variant="primary"
           />
           {data.clinical_reviews.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <p className="text-sm text-muted-foreground">
-                Sin revisiones pendientes.
-              </p>
+            <div className="flex min-h-[280px] flex-1 items-center justify-center py-8">
+              <p className="text-sm text-muted-foreground">Sin revisiones pendientes.</p>
             </div>
           ) : (
-            <div className="flex flex-col">
-              {data.clinical_reviews.map((cr) => (
+            <div className="flex flex-1 flex-col">
+              {rSlice.map((cr) => (
                 <div
                   key={cr.id}
                   className="flex items-center gap-3 border-b border-border px-5 py-3 last:border-0"
@@ -595,6 +673,7 @@ export function PatientClinicaSections({
                   )}
                 </div>
               ))}
+              {rTotal > 1 && <PagedListFooter page={rPage} totalPages={rTotal} onPageChange={setRPage} pageSize={CLINICA_PAGE_SIZE} />}
             </div>
           )}
         </div>
@@ -629,6 +708,71 @@ export function PatientClinicaSections({
           </Link>
         </div>
       </section>
+    </div>
+  );
+}
+
+export function PatientClinicaSections({
+  data,
+}: {
+  data: import("../types/erp").PatientOverviewDto;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      <PatientClinicaTop data={data} />
+      <PatientClinicaBottom data={data} />
+    </div>
+  );
+}
+
+// --- Reusable exported pieces for Perfil 360 reorder ---
+
+export function ClinicalEvolutionCard({
+  metrics,
+}: {
+  metrics: import("../types/erp").PatientOverviewClinicalMetricsDto | null;
+}) {
+  if (!metrics) return null;
+  const items: { key: "bmi" | "hba1c" | "body_fat"; label: string; color: string }[] = [
+    { key: "bmi", label: "BMI", color: CLINICAL_COLORS.bmi },
+    { key: "hba1c", label: "HbA1c", color: CLINICAL_COLORS.hba1c },
+    { key: "body_fat", label: "% Grasa", color: CLINICAL_COLORS.body_fat },
+  ];
+  const chartData = buildClinicalChartData(metrics);
+  const hasChartData = chartData.length > 0;
+  if (!hasChartData) {
+    return (
+      <div className="flex h-full min-h-[320px] flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="px-4 pt-4">
+          <SectionHeader title="Evolución 12 semanas" description="BMI, HbA1c y % grasa corporal" icon={TrendingUp} variant="secondary" />
+        </div>
+        <div className="flex flex-1 items-center justify-center p-4 text-sm text-muted-foreground">Sin serie 12 semanas</div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-full min-h-[340px] flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="px-4 pt-4">
+        <SectionHeader title="Evolución 12 semanas" description="BMI, HbA1c y % grasa corporal" icon={TrendingUp} variant="secondary" />
+      </div>
+      <div className="flex flex-1 flex-col p-3 pt-2">
+        <div className="min-h-[260px] flex-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="week" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} interval={0} angle={-28} dy={10} height={52} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} width={34} domain={["auto", "auto"]} />
+              <Tooltip {...CHART_TOOLTIP} formatter={(v, n) => [Number(v).toFixed(1), n as string]} labelFormatter={(l) => `Semana: ${l}`} />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconSize={10} />
+              {items.map((it) => {
+                const snap = (metrics as unknown as Record<string, { series_12w?: unknown[] }>)[it.key];
+                if (!snap?.series_12w?.length) return null;
+                return <Line key={it.key} type="monotone" dataKey={it.key} name={it.label} stroke={it.color} strokeWidth={2} dot={{ r: 3 }} connectNulls />;
+              })}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
@@ -806,7 +950,7 @@ function ClinicalMetricsSection({
     <section className="flex flex-col gap-4">
       <SectionHeader
         title="Mediciones clínicas"
-        description="Última medición, tendencia y evolución 12 semanas"
+        description="Última medición y tendencia"
         icon={Stethoscope}
         variant="secondary"
       />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, UserRound } from "lucide-react";
+import { RefreshCw, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientOverview } from "../hooks/use-patient-overview";
@@ -13,8 +13,11 @@ import {
   BiometriaPerfilSkeleton,
 } from "./biometria-perfil-360-detail";
 import {
-  PatientResumenSections,
-  PatientClinicaSections,
+  PatientResumenHero,
+  PatientResumenBody,
+  PatientClinicaTop,
+  PatientClinicaBottom,
+  ClinicalEvolutionCard,
 } from "./program-patient-overview-page";
 import { EnrollmentContentTab } from "./enrollment-detail/tabs/enrollment-content-tab";
 import { EnrollmentBaselineTab } from "./enrollment-detail/tabs/enrollment-baseline-tab";
@@ -26,11 +29,15 @@ import { cn } from "@/lib/utils";
 interface ProgramPatientProfile360Props {
   patientId: string;
   onBack?: () => void;
+  onToggleSearch?: () => void;
+  isSearchOpen?: boolean;
 }
 
 export function ProgramPatientProfile360({
   patientId,
   onBack,
+  onToggleSearch,
+  isSearchOpen,
 }: ProgramPatientProfile360Props) {
   const [activeTab, setActiveTab] = usePersistedTab("perfil360:unified-v2", "resumen");
   const { data, loading, error, retry } = usePatientOverview(patientId);
@@ -43,7 +50,7 @@ export function ProgramPatientProfile360({
   const tabs = [
     { key: "resumen", label: "Resumen" },
     { key: "clinica", label: "Clínica" },
-    { key: "contenido", label: "Contenido semanal" },
+    { key: "contenido", label: "Contenido" },
     { key: "xp-ledger", label: "Historial XP" },
   ];
 
@@ -101,24 +108,55 @@ export function ProgramPatientProfile360({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 sm:p-5">
-        {onBack && (
-          <Button variant="ghost" size="icon" onClick={onBack} aria-label="Volver">
-            ←
-          </Button>
-        )}
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">
-            <UserRound className="size-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{headerName}</p>
-            <p className="truncate text-xs text-muted-foreground">{patientId.slice(0, 8)}</p>
-          </div>
-        </div>
+      {/* Hero azul — reemplaza al PageHeader "Perfil 360" cuando se ve un paciente específico */}
+      {loading ? (
+        <ResumenSkeleton />
+      ) : error ? (
+        <TabError message={error} onRetry={retry} />
+      ) : data ? (
+        <PatientResumenHero data={data} biometria={biometriaData ?? null} />
+      ) : null}
 
+      {/* Fila: tabs + lupa/actualizar en la misma línea */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div
+          role="tablist"
+          aria-label="Vistas del perfil 360"
+          className="inline-flex w-fit flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-sm"
+        >
+          {tabs.map((tab) => {
+            const isActive = safeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(tab.key)}
+                className={cn(
+                  "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg px-5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
         <div className="ml-auto flex items-center gap-2">
+          {onToggleSearch && (
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={onToggleSearch}
+              aria-label={isSearchOpen ? "Ocultar buscador" : "Buscar paciente"}
+              title={isSearchOpen ? "Ocultar buscador" : "Buscar paciente"}
+            >
+              {isSearchOpen ? <X className="size-4" /> : <Search className="size-4" />}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={retry} disabled={loading}>
             <RefreshCw
               data-icon="inline-start"
@@ -129,39 +167,11 @@ export function ProgramPatientProfile360({
         </div>
       </div>
 
-      {/* Segmented tabs */}
-      <div
-        role="tablist"
-        aria-label="Vistas del perfil 360"
-        className="inline-flex w-fit flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-sm"
-      >
-        {tabs.map((tab) => {
-          const isActive = safeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => setActiveTab(tab.key)}
-              className={cn(
-                "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg px-5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Tab content */}
       <div>
         {safeTab === "resumen" && (
           <section aria-label="Resumen del paciente" className="flex flex-col gap-5">
-            {/* Biometría hero: figura + zonas + mediciones exactas */}
+            {/* Biometría: figura + zonas + mediciones exactas en el mismo box */}
             {biometriaLoading ? (
               <BiometriaPerfilSkeleton />
             ) : biometriaError ? (
@@ -170,19 +180,16 @@ export function ProgramPatientProfile360({
                 <p className="mt-1 text-xs text-muted-foreground">{biometriaError}</p>
               </div>
             ) : biometriaData ? (
-              <BiometriaHeroSections data={biometriaData} />
+              <BiometriaHeroSections
+                data={biometriaData}
+                tareasHoy={data ? data.tareas_hoy : undefined}
+              />
             ) : null}
 
-            {/* Programa: misiones, radar, evolución 12w, scores */}
-            {loading ? (
-              <ResumenSkeleton />
-            ) : error ? (
-              <TabError message={error} onRetry={retry} />
-            ) : data ? (
-              <PatientResumenSections data={data} />
-            ) : null}
+            {/* Resto del resumen sin hero (ya renderizado arriba) — Misiones ya va dentro del box de biometría para poblar el espacio en blanco */}
+            {loading ? null : error ? null : data ? <PatientResumenBody data={data} hideMisiones /> : null}
 
-            {/* Historial biometría: heatmap + tabla semanal (no duplica ChartTabs 12w) */}
+            {/* Historial biometría: heatmap + tabla semanal */}
             {biometriaLoading ? null : biometriaData ? (
               <BiometriaHistorySections data={biometriaData} />
             ) : null}
@@ -197,24 +204,31 @@ export function ProgramPatientProfile360({
               <TabError message={error} onRetry={retry} />
             ) : data ? (
               <>
-                <PatientClinicaSections data={data} />
-                {/* Línea base anexada a Clínica */}
-                <EnrollmentDetailTabWrapper
-                  enrollmentId={enrollmentId}
-                  enrollment={enrollment}
-                  loading={enrollmentLoading || loading}
-                  error={enrollmentError}
-                  onRetry={handleRetryEnrollment}
-                >
-                  {(enr) => <EnrollmentBaselineTab enrollment={enr} />}
-                </EnrollmentDetailTabWrapper>
+                <PatientClinicaTop data={data} />
+                <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr] items-start">
+                  <div className="min-w-0">
+                    <ClinicalEvolutionCard metrics={data.mediciones_clinicas} />
+                  </div>
+                  <div className="min-w-0">
+                    <EnrollmentDetailTabWrapper
+                      enrollmentId={enrollmentId}
+                      enrollment={enrollment}
+                      loading={enrollmentLoading || loading}
+                      error={enrollmentError}
+                      onRetry={handleRetryEnrollment}
+                    >
+                      {(enr) => <EnrollmentBaselineTab enrollment={enr} />}
+                    </EnrollmentDetailTabWrapper>
+                  </div>
+                </div>
+                <PatientClinicaBottom data={data} />
               </>
             ) : null}
           </section>
         )}
 
         {safeTab === "contenido" && (
-          <section aria-label="Contenido semanal">
+          <section aria-label="Contenido">
             <EnrollmentDetailTabWrapper
               enrollmentId={enrollmentId}
               enrollment={enrollment}

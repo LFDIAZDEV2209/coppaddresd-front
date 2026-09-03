@@ -37,6 +37,7 @@ export function ProgramPerfil360Page({ initialPatientId }: ProgramPerfil360PageP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<PatientListItem | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
 
   const trimmed = search.trim();
   const hasQuery = trimmed.length >= 2;
@@ -106,39 +107,87 @@ export function ProgramPerfil360Page({ initialPatientId }: ProgramPerfil360PageP
       });
   }, [initialPatientId, selectedPatient?.id]);
 
+  // Cuando se selecciona un paciente, ocultar el buscador por defecto
+  useEffect(() => {
+    if (selectedPatient) setShowSearch(false);
+  }, [selectedPatient?.id]);
+
   if (selectedPatient) {
     return (
       <div className="flex flex-col gap-6 p-4 sm:p-6">
-        <PageHeader
-          title="Perfil 360"
-          description="Busca un paciente para ver su vista integral"
-          icon={UserRound}
-        />
-
-        <section
-          className="rounded-2xl border border-border bg-card p-4 sm:p-5"
-          aria-label="Buscador de paciente"
-        >
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar paciente por nombre..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9 pl-8"
-              aria-label="Buscar paciente"
-            />
-          </div>
-          {hasQuery && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Escribe al menos 2 caracteres para cambiar de paciente.
-            </p>
-          )}
-        </section>
+        {showSearch && (
+          <section
+            className="rounded-2xl border border-border bg-card p-4 sm:p-5"
+            aria-label="Buscador de paciente"
+          >
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar paciente por nombre..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 pl-8"
+                aria-label="Buscar paciente"
+                autoFocus
+              />
+            </div>
+            <div className="mt-2 flex flex-col gap-2">
+              {!hasQuery ? (
+                <p className="text-xs text-muted-foreground">
+                  Escribe al menos 2 caracteres para cambiar de paciente.
+                </p>
+              ) : loading ? (
+                <p className="text-xs text-muted-foreground">Buscando...</p>
+              ) : error ? (
+                <p className="text-xs text-destructive">{error}</p>
+              ) : displayResults.length > 0 ? (
+                <div className="max-h-80 overflow-y-auto rounded-md border border-border">
+                  {displayResults.map((p) => {
+                    const fullName = `${p.firstName} ${p.lastName}`.trim();
+                    const sublabel = p.email ?? p.medicalRecordNumber ?? undefined;
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted"
+                      >
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary">
+                          {initialsOf(p)}
+                        </span>
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <span className="truncate text-sm font-medium">{fullName}</span>
+                          {sublabel && (
+                            <span className="truncate text-xs text-muted-foreground">
+                              {sublabel}
+                            </span>
+                          )}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 shrink-0 text-xs"
+                          onClick={() => {
+                            setSelectedPatient(p);
+                            setShowSearch(false);
+                          }}
+                        >
+                          Ver perfil 360
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">No se encontraron pacientes.</p>
+              )}
+            </div>
+          </section>
+        )}
 
         <ProgramPatientProfile360
           patientId={selectedPatient.id}
           onBack={() => setSelectedPatient(null)}
+          onToggleSearch={() => setShowSearch((v) => !v)}
+          isSearchOpen={showSearch}
         />
       </div>
     );
