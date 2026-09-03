@@ -71,7 +71,13 @@ export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360Detail
   );
   if (!data) return null;
 
-  const gender = (data.gender?.toLowerCase() === "female" ? "female" : "male") as "male" | "female";
+  const raw = String(data.gender ?? "").trim().toLowerCase();
+  const gender: "male" | "female" =
+    raw === "female" || raw === "femenino" || raw === "f" || raw === "mujer"
+      ? "female"
+      : raw === "male" || raw === "masculino" || raw === "m" || raw === "hombre" || raw === ""
+        ? "male"
+        : "male";
   const iccAlto = (data.biometria_exacta?.icc ?? 0) > 0.9;
   const exacta = data.biometria_exacta;
 
