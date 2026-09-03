@@ -19,14 +19,14 @@ function getVisibleViews(can: (code: string) => boolean) {
   return GESTION_VIEWS.filter((v) => can(v.permission));
 }
 
-function getComponent(view: string) {
+function getComponent(view: string, patient?: string | null) {
   switch (view) {
     case "inscripciones":
       return <ProgramEnrollmentsPage />;
     case "contenido":
       return <ProgramContentPage />;
     case "perfil-360":
-      return <ProgramPerfil360Page />;
+      return <ProgramPerfil360Page initialPatientId={patient} />;
     case "plantillas":
     default:
       return <ProgramTemplatesPage />;
@@ -40,6 +40,7 @@ export default function ProgramGestionRoute() {
   const { can } = useAppContext();
 
   const currentView = searchParams.get("view") ?? "plantillas";
+  const patientParam = searchParams.get("patient");
   const visibleViews = getVisibleViews(can);
   const activeView =
     visibleViews.find((v) => v.value === currentView)?.value ??
@@ -61,7 +62,7 @@ export default function ProgramGestionRoute() {
           onChange={handleChange}
         />
       </div>
-      {getComponent(activeView)}
+      {getComponent(activeView, patientParam)}
     </div>
   );
 }

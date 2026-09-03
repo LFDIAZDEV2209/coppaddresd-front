@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Search, Users, UserRound, ExternalLink } from "lucide-react";
+import { Search, Users, UserRound } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
-import { BiometriaPerfil360Detail } from "./biometria-perfil-360-detail";
+import { ProgramPatientProfile360 } from "./program-patient-profile360";
 import type { PaginatedResult } from "../types";
 
 interface PatientListItem {
@@ -28,7 +27,11 @@ function initialsOf(p: PatientListItem): string {
   return fallback || "P";
 }
 
-export function ProgramPerfil360Page() {
+interface ProgramPerfil360PageProps {
+  initialPatientId?: string | null;
+}
+
+export function ProgramPerfil360Page({ initialPatientId }: ProgramPerfil360PageProps) {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<PatientListItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,6 +75,70 @@ export function ProgramPerfil360Page() {
     return () => clearTimeout(timer);
   }, [trimmed]);
 
+  useEffect(() => {
+    if (!initialPatientId || selectedPatient?.id === initialPatientId) return;
+
+    apiFetch<PatientListItem>(
+      `${env.apiUrl}/api/v1/patients/${initialPatientId}`,
+    )
+      .then((p) => {
+        setSelectedPatient({
+          id: p.id,
+          firstName: p.firstName ?? "",
+          lastName: p.lastName ?? "",
+          email: p.email ?? null,
+          medicalRecordNumber: p.medicalRecordNumber ?? null,
+        });
+      })
+      .catch(() => {
+        setSelectedPatient({
+          id: initialPatientId,
+          firstName: "",
+          lastName: "",
+          email: null,
+          medicalRecordNumber: null,
+        });
+      });
+  }, [initialPatientId, selectedPatient?.id]);
+
+  if (selectedPatient) {
+    return (
+      <div className="flex flex-col gap-6 p-4 sm:p-6">
+        <PageHeader
+          title="Perfil 360"
+          description="Busca un paciente para ver su vista integral"
+          icon={UserRound}
+        />
+
+        <section
+          className="rounded-2xl border border-border bg-card p-4 sm:p-5"
+          aria-label="Buscador de paciente"
+        >
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar paciente por nombre..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 pl-8"
+              aria-label="Buscar paciente"
+            />
+          </div>
+          {hasQuery && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Escribe al menos 2 caracteres para cambiar de paciente.
+            </p>
+          )}
+        </section>
+
+        <ProgramPatientProfile360
+          patientId={selectedPatient.id}
+          onBack={() => setSelectedPatient(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
@@ -109,15 +176,10 @@ export function ProgramPerfil360Page() {
               {results.map((p) => {
                 const fullName = `${p.firstName} ${p.lastName}`.trim();
                 const sublabel = p.email ?? p.medicalRecordNumber ?? undefined;
-                const isSelected = selectedPatient?.id === p.id;
                 return (
                   <div
                     key={p.id}
-                    className={`flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
-                      isSelected
-                        ? "bg-primary-soft"
-                        : "hover:bg-muted"
-                    }`}
+                    className="flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted"
                   >
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary text-xs font-semibold">
                       {initialsOf(p)}
@@ -138,17 +200,8 @@ export function ProgramPerfil360Page() {
                       className="h-7 shrink-0 text-xs"
                       onClick={() => setSelectedPatient(p)}
                     >
-                      {isSelected ? "Seleccionado" : "Ver perfil"}
+                      Ver perfil 360
                     </Button>
-                    <Link
-                      href={`/program/patients/${p.id}`}
-                      className="shrink-0"
-                    >
-                      <Button variant="outline" size="sm" className="h-7 text-xs">
-                        <ExternalLink className="mr-1 size-3" />
-                        Overview
-                      </Button>
-                    </Link>
                   </div>
                 );
               })}
@@ -175,13 +228,6 @@ export function ProgramPerfil360Page() {
           </div>
         )}
       </section>
-
-      {/* Biometría 360 inline — shown when a patient is selected */}
-      {selectedPatient && (
-        <section aria-label={`Biometría de ${selectedPatient.firstName} ${selectedPatient.lastName}`}>
-          <BiometriaPerfil360Detail patientId={selectedPatient.id} />
-        </section>
-      )}
     </div>
   );
 }
