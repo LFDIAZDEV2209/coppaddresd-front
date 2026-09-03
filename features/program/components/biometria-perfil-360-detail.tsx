@@ -1,46 +1,43 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Activity,
   TrendingUp,
   TrendingDown,
-  Minus,
-  Download,
   Ruler,
   Weight,
   Droplet,
   ClipboardList,
 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SectionHeader } from "@/components/layout/section-header";
 import { BiometriaFiguraCorporal } from "./biometria-figura-corporal";
 import { fetchBiometriaPatient } from "../services/program-biometria-service";
-import { CHART_TOOLTIP } from "../services/program-erp-constants";
 import type { BiometriaPatientDetail, BiometriaExacta } from "../types/erp";
 
-// --- Component ---
+// --- Shared fetch hook ---
 
-interface BiometriaPerfil360DetailProps {
-  patientId: string;
-}
-
-export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360DetailProps) {
+export function useBiometriaPatient(patientId: string) {
   const [data, setData] = useState<BiometriaPatientDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchBiometriaPatient(patientId)
+      .then((result) => {
+        setData(result);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Error al cargar biometría");
+        setLoading(false);
+      });
+  }, [patientId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,39 +56,32 @@ export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360Detail
           setLoading(false);
         }
       });
-    return () => { cancelled = true; };
-  }, [patientId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [patientId, fetchData]);
 
-  if (loading) return <PerfilSkeleton />;
-  if (error) return (
-    <div className="rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-5 text-center">
-      <p className="text-sm font-semibold text-destructive">Error al cargar biometría</p>
-      <p className="mt-1 text-xs text-muted-foreground">{error}</p>
-    </div>
-  );
-  if (!data) return null;
+  return { data, loading, error, retry: fetchData };
+}
 
-  const raw = String(data.gender ?? "").trim().toLowerCase();
-  const gender: "male" | "female" =
-    raw === "female" || raw === "femenino" || raw === "f" || raw === "mujer"
-      ? "female"
-      : raw === "male" || raw === "masculino" || raw === "m" || raw === "hombre" || raw === ""
-        ? "male"
-        : "male";
+// --- Helpers shared by hero/history ---
+
+function resolveGender(rawGender: string | null | undefined): "male" | "female" {
+  const raw = String(rawGender ?? "").trim().toLowerCase();
+  if (raw === "female" || raw === "femenino" || raw === "f" || raw === "mujer") return "female";
+  return "male";
+}
+
+// --- Hero sections: figura + zonas + mediciones exactas ---
+
+export function BiometriaHeroSections({ data }: { data: BiometriaPatientDetail }) {
+  const gender = resolveGender(data.gender);
   const iccAlto = (data.biometria_exacta?.icc ?? 0) > 0.9;
   const exacta = data.biometria_exacta;
 
-  // Evolution chart data
-  const evoData = data.historial_semanal.map((w) => ({
-    week: w.week_start,
-    imc: w.imc,
-    grasa: w.grasa,
-    glucosa: w.glucosa,
-  }));
-
   return (
     <div className="flex flex-col gap-5">
-      {/* Hero card */}
+      {/* Hero card: figura + zonas */}
       <div className="rounded-2xl border border-border bg-card p-5">
         <SectionHeader
           title="Biometría Corporal"
@@ -100,7 +90,6 @@ export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360Detail
           variant="secondary"
         />
         <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-[200px_1fr]">
-          {/* Figura */}
           <div className="flex flex-col items-center gap-3">
             <BiometriaFiguraCorporal
               gender={gender}
@@ -109,18 +98,12 @@ export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360Detail
               iccAlto={iccAlto}
             />
           </div>
-
-          {/* Body zones + chips */}
           <div className="flex flex-col gap-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Zonas corporales
             </p>
             <div className="flex flex-wrap gap-2">
-              <ZoneChip
-                label="IMC"
-                value={data.imc?.toFixed(1) ?? "—"}
-                category={data.imc_category}
-              />
+              <ZoneChip label="IMC" value={data.imc?.toFixed(1) ?? "—"} category={data.imc_category} />
               <ZoneChip
                 label="% Grasa"
                 value={exacta?.pct_grasa != null ? `${exacta.pct_grasa.toFixed(1)}%` : "—"}
@@ -133,14 +116,14 @@ export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360Detail
               />
               <ZoneChip
                 label="Glucosa"
-                value={data.historial_semanal.length > 0 ? (data.historial_semanal[data.historial_semanal.length - 1].glucosa?.toFixed(1) ?? "—") : "—"}
+                value={
+                  data.historial_semanal.length > 0
+                    ? (data.historial_semanal[data.historial_semanal.length - 1].glucosa?.toFixed(1) ?? "—")
+                    : "—"
+                }
                 category={null}
               />
-              <ZoneChip
-                label="ICC"
-                value={exacta?.icc?.toFixed(2) ?? "—"}
-                category={iccAlto ? "Alto" : null}
-              />
+              <ZoneChip label="ICC" value={exacta?.icc?.toFixed(2) ?? "—"} category={iccAlto ? "Alto" : null} />
             </div>
           </div>
         </div>
@@ -167,85 +150,16 @@ export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360Detail
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Evolution chart: dual axis IMC + Grasa */}
-      {evoData.length > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <SectionHeader
-            title="Evolución semanal"
-            description="IMC y % grasa corporal"
-            icon={TrendingUp}
-            variant="secondary"
-          />
-          <div className="mt-4 h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={evoData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis
-                  dataKey="week"
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                  tickFormatter={(v: string) => {
-                    const d = new Date(v);
-                    return isNaN(d.getTime()) ? v : `${d.getDate()}/${d.getMonth() + 1}`;
-                  }}
-                />
-                <YAxis yAxisId="imc" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                <YAxis yAxisId="grasa" orientation="right" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                <Tooltip
-                  {...CHART_TOOLTIP}
-                  formatter={(value, name) => [Number(value).toFixed(1), name]}
-                  labelFormatter={(label) => {
-                    const d = new Date(String(label));
-                    return isNaN(d.getTime()) ? String(label) : d.toLocaleDateString("es-ES");
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line yAxisId="imc" type="monotone" dataKey="imc" name="IMC" stroke="var(--info)" strokeWidth={2} dot={{ r: 3 }} connectNulls />
-                <Line yAxisId="grasa" type="monotone" dataKey="grasa" name="% Grasa" stroke="var(--warning)" strokeWidth={2} dot={{ r: 3 }} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
+// --- History sections: heatmap 28d + historial semanal ---
 
-      {/* Glucosa area chart */}
-      {evoData.some((w) => w.glucosa != null) && (
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <SectionHeader
-            title="Evolución glucosa"
-            description="Tendencia semanal de glucosa"
-            icon={Droplet}
-            variant="secondary"
-          />
-          <div className="mt-4 h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={evoData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis
-                  dataKey="week"
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                  tickFormatter={(v: string) => {
-                    const d = new Date(v);
-                    return isNaN(d.getTime()) ? v : `${d.getDate()}/${d.getMonth() + 1}`;
-                  }}
-                />
-                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                <Tooltip
-                  {...CHART_TOOLTIP}
-                  formatter={(value) => [Number(value).toFixed(1), "Glucosa"]}
-                  labelFormatter={(label) => {
-                    const d = new Date(String(label));
-                    return isNaN(d.getTime()) ? String(label) : d.toLocaleDateString("es-ES");
-                  }}
-                />
-                <Line type="monotone" dataKey="glucosa" name="Glucosa" stroke="#0E7490" strokeWidth={2} dot={{ r: 3 }} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* Adherence Heatmap 28d */}
+export function BiometriaHistorySections({ data }: { data: BiometriaPatientDetail }) {
+  if (data.adherence_heatmap.length === 0 && data.historial_semanal.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-5">
       {data.adherence_heatmap.length > 0 && (
         <div className="rounded-2xl border border-border bg-card p-5">
           <SectionHeader
@@ -259,9 +173,7 @@ export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360Detail
               <div
                 key={cell.day_index}
                 className={`flex size-8 items-center justify-center rounded text-[10px] font-medium ${
-                  cell.completed
-                    ? "bg-success text-white"
-                    : "bg-muted text-muted-foreground"
+                  cell.completed ? "bg-success text-white" : "bg-muted text-muted-foreground"
                 }`}
                 title={`Día ${cell.day_index}: ${cell.completed ? "Completado" : "Pendiente"}`}
               >
@@ -272,7 +184,6 @@ export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360Detail
         </div>
       )}
 
-      {/* Historial semanal tabla */}
       {data.historial_semanal.length > 0 && (
         <div className="rounded-2xl border border-border bg-card p-5">
           <SectionHeader
@@ -321,6 +232,33 @@ export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360Detail
   );
 }
 
+// --- Composite (keeps old contract, without evolution charts) ---
+
+interface BiometriaPerfil360DetailProps {
+  patientId: string;
+}
+
+export function BiometriaPerfil360Detail({ patientId }: BiometriaPerfil360DetailProps) {
+  const { data, loading, error } = useBiometriaPatient(patientId);
+
+  if (loading) return <PerfilSkeleton />;
+  if (error)
+    return (
+      <div className="rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-5 text-center">
+        <p className="text-sm font-semibold text-destructive">Error al cargar biometría</p>
+        <p className="mt-1 text-xs text-muted-foreground">{error}</p>
+      </div>
+    );
+  if (!data) return null;
+
+  return (
+    <div className="flex flex-col gap-5">
+      <BiometriaHeroSections data={data} />
+      <BiometriaHistorySections data={data} />
+    </div>
+  );
+}
+
 // --- Sub-components ---
 
 function ZoneChip({ label, value, category }: { label: string; value: string; category: string | null }) {
@@ -328,16 +266,20 @@ function ZoneChip({ label, value, category }: { label: string; value: string; ca
     <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-1.5">
       <span className="text-[11px] text-muted-foreground">{label}</span>
       <span className="text-sm font-semibold tabular-nums text-foreground">{value}</span>
-      {category && (
-        <Badge className="bg-info-soft text-info-foreground text-[10px]">
-          {category}
-        </Badge>
-      )}
+      {category && <Badge className="bg-info-soft text-info-foreground text-[10px]">{category}</Badge>}
     </div>
   );
 }
 
-function ExactaTile({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
+function ExactaTile({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex flex-col gap-1 rounded-xl border border-border bg-muted/20 p-3">
       <div className="flex items-center gap-1.5">
@@ -353,11 +295,11 @@ function DeltaBadge({ value }: { value: number | null }) {
   if (value == null) return <span className="text-muted-foreground">—</span>;
   if (value === 0) return <span className="text-muted-foreground">0</span>;
   const positive = value > 0;
-  // For IMC/Grasa/Glucosa, negative delta is usually good (improvement)
   return (
     <span className={`inline-flex items-center gap-0.5 font-semibold ${positive ? "text-destructive" : "text-success"}`}>
       {positive ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-      {positive ? "+" : ""}{value.toFixed(1)}
+      {positive ? "+" : ""}
+      {value.toFixed(1)}
     </span>
   );
 }
@@ -386,9 +328,9 @@ function PerfilSkeleton() {
   return (
     <div className="flex flex-col gap-5">
       <div className="rounded-2xl border border-border bg-card p-5">
-        <Skeleton className="h-5 w-40 mb-4" />
+        <Skeleton className="mb-4 h-5 w-40" />
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[200px_1fr]">
-          <Skeleton className="h-[320px] w-[120px] mx-auto rounded-xl" />
+          <Skeleton className="mx-auto h-[320px] w-[120px] rounded-xl" />
           <div className="flex flex-col gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-8 w-32" />
@@ -397,7 +339,7 @@ function PerfilSkeleton() {
         </div>
       </div>
       <div className="rounded-2xl border border-border bg-card p-5">
-        <Skeleton className="h-5 w-32 mb-4" />
+        <Skeleton className="mb-4 h-5 w-32" />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-xl" />
@@ -405,9 +347,11 @@ function PerfilSkeleton() {
         </div>
       </div>
       <div className="rounded-2xl border border-border bg-card p-5">
-        <Skeleton className="h-5 w-36 mb-4" />
-        <Skeleton className="h-[280px] w-full rounded" />
+        <Skeleton className="mb-4 h-5 w-36" />
+        <Skeleton className="h-[120px] w-full rounded" />
       </div>
     </div>
   );
 }
+
+export { PerfilSkeleton as BiometriaPerfilSkeleton };
