@@ -307,7 +307,7 @@ export function ProgramEnrollmentsPage() {
                             </span>
                             {enrollment.patientId ? (
                               <Link
-                                href={`/program/patients/${enrollment.patientId}`}
+                                href={`/program/gestion?view=perfil-360&patient=${enrollment.patientId}`}
                                 className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer"
                                 title={enrollment.patientId}
                               >
@@ -383,7 +383,7 @@ export function ProgramEnrollmentsPage() {
                           {displayName && enrollment.patientId && (
                             <DropdownMenuItem
                               onClick={() =>
-                                (window.location.href = `/program/patients/${enrollment.patientId}`)
+                                (window.location.href = `/program/gestion?view=perfil-360&patient=${enrollment.patientId}`)
                               }
                             >
                               Ver paciente

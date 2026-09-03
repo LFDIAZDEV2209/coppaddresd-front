@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
       { source: "/program/weaknesses", destination: "/program/clinica?view=debilidades", permanent: false },
       { source: "/program/adaptations", destination: "/program/clinica?view=adaptaciones", permanent: false },
       { source: "/program/interventions", destination: "/program/clinica?view=intervenciones", permanent: false },
+      { source: "/program/patients/:id", destination: "/program/gestion?view=perfil-360&patient=:id", permanent: false },
     ];
   },
 };

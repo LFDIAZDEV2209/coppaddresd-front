@@ -251,7 +251,7 @@ function BiometriaMapRow({ data }: { data: import("../types/erp").BiometriaCommu
             {data.alerts.slice(0, 5).map((a) => (
               <Link
                 key={a.patient_id}
-                href={`/program/patients/${a.patient_id}`}
+                href={`/program/gestion?view=perfil-360&patient=${a.patient_id}`}
                 className="flex items-start gap-2 rounded-lg p-2 hover:bg-muted transition-colors"
               >
                 <span className="mt-0.5 size-2 shrink-0 rounded-full bg-destructive" />
@@ -483,7 +483,7 @@ function BiometriaPatientListCard() {
                 <TableRow key={p.patient_id}>
                   <TableCell>
                     <Link
-                      href={`/program/patients/${p.patient_id}`}
+                      href={`/program/gestion?view=perfil-360&patient=${p.patient_id}`}
                       className="text-sm font-medium hover:text-primary hover:underline"
                     >
                       {p.name}
@@ -993,7 +993,7 @@ function DashboardPacientesCard({
                           {entry.patient_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
                         </span>
                         {entry.patient_id ? (
-                          <Link href={`/program/patients/${entry.patient_id}`} className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer">
+                           <Link href={`/program/gestion?view=perfil-360&patient=${entry.patient_id}`} className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer">
                             {entry.patient_name}
                           </Link>
                         ) : (
@@ -1096,7 +1096,7 @@ function TrendList({
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   {e.patient_id ? (
-                    <Link href={`/program/patients/${e.patient_id}`} className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer">
+                    <Link href={`/program/gestion?view=perfil-360&patient=${e.patient_id}`} className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer">
                       {e.patient_name}
                     </Link>
                   ) : (

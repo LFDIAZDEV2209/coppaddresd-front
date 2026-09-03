@@ -263,7 +263,7 @@ function CofresTablaPaginada({ tabla }: { tabla: ProgramErpCofresDto["tabla"] })
                       </span>
                       {row.patient_id ? (
                         <Link
-                          href={`/program/patients/${row.patient_id}`}
+                          href={`/program/gestion?view=perfil-360&patient=${row.patient_id}`}
                           className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer"
                         >
                           {row.patient_name}
