@@ -110,6 +110,7 @@ export interface ProgramEnrollment {
   patient_name?: string | null;
   /** camelCase alias for patient name (when backend uses camelCase). */
   patientName?: string | null;
+  currentLevel?: string; // derivado del XP en el backend
 }
 
 /** Filtros del listado de inscripciones. */
@@ -276,4 +277,113 @@ export interface PaginatedResult<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+// --- Program Snapshot (espejo de ProgramSnapshotDto del backend) ---
+
+/** Snapshot de gamificación de una inscripción (GET /enrollments/{id}/snapshot). */
+export interface ProgramSnapshot {
+  enrollmentId: string;
+  template: {
+    id: string;
+    code: string;
+    name: string;
+    totalWeeks: number;
+    currentWeekNumber: number;
+    currentWeekStatus: string;
+    currentWeekStartDateLocal: string;
+    currentWeekEndDateLocal: string;
+    streakMinTasks: number;
+    essentialTaskCodes: string[];
+  };
+  todayLocalDate: string;
+  todayPoints: number;
+  todayPointsMax: number;
+  todayBonusAvailable: boolean;
+  xp: {
+    balance: number;
+    level: string;
+    nextLevelAt: number;
+  };
+  streak: {
+    current: number;
+    longest: number;
+    freezesRemaining: number;
+    multiplierActive: number;
+    multiplierEndsAt: string | null;
+    multiplierRemainingHours: number;
+  };
+  nextMilestoneDays: number;
+  streakChests: Array<{
+    days: number;
+    xp: number;
+    granted: boolean;
+    grantedAt: string | null;
+  }> | null;
+}
+
+// --- XP Ledger (UC-B2) ---
+
+/** Entrada del libro mayor de XP (append-only). */
+export interface XpLedgerEntry {
+  id: string;
+  enrollmentId: string;
+  amount: number;
+  reason: string;
+  sourceRefType: string | null;
+  sourceRefId: string | null;
+  ruleCode: string | null;
+  balanceAfter: number;
+  awardedAt: string;
+  grantedBy: string | null;
+  validatedBy: string | null;
+  validatedAt: string | null;
+  multiplierUsed: number | null;
+}
+
+/** Respuesta paginada de GET /enrollments/{id}/xp-ledger. */
+export interface PaginatedXpLedger {
+  data: XpLedgerEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// --- Clinical Baseline (UC-D2) ---
+
+/** Línea base clínica de un paciente. */
+export interface ClinicalBaseline {
+  id: string;
+  patientId: string;
+  metricId: string;
+  metricCode: string;
+  value: number;
+  unitId: string;
+  unitSymbol: string;
+  favorableDirection: "Higher" | "Lower";
+  targetValue: number | null;
+  measuredAt: string;
+  setBy: string;
+  createdAt: string;
+}
+
+/** Payload para crear una línea base clínica. */
+export interface CreateBaselineInput {
+  patientId: string;
+  metricId: string;
+  value: number;
+  unitId: string;
+  favorableDirection: "Higher" | "Lower";
+  measuredAt: string;
+  targetValue?: number | null;
+}
+
+/** Catálogo de métricas clínicas (para selectores de línea base). */
+export interface ClinicalMetric {
+  id: string;
+  code: string;
+  name: string;
+  defaultUnitId: string;
+  defaultUnitSymbol: string;
 }

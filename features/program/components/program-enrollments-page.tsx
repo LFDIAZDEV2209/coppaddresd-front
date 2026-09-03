@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   RefreshCw,
@@ -11,6 +12,8 @@ import {
   Download,
   X,
   MoreHorizontal,
+  ExternalLink,
+  Flame,
 } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
@@ -26,6 +29,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,7 +67,41 @@ import { ProgramEnrollDialog } from "./program-enroll-dialog";
 import { ProgramBulkEnrollDialog } from "./program-bulk-enroll-dialog";
 import type { BulkEnrollResult } from "../types";
 
+// --- Helpers de presentación ---
+
+/** Clases de color por nivel de XP (espejo de XpLevels del backend). */
+function levelColor(level: string): string {
+  const map: Record<string, string> = {
+    Explorador: "bg-slate-100 text-slate-700",
+    Iniciado: "bg-blue-100 text-blue-700",
+    Constante: "bg-cyan-100 text-cyan-700",
+    Disciplinado: "bg-emerald-100 text-emerald-700",
+    Transformación: "bg-amber-100 text-amber-700",
+    Bienestar: "bg-purple-100 text-purple-700",
+    Maestro: "bg-rose-100 text-rose-700",
+  };
+  return map[level] ?? "bg-gray-100 text-gray-700";
+}
+
+/** Iniciales del paciente para el avatar (p. ej. "María Pérez" → "MP"). */
+function patientInitials(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  const first = parts[0]?.charAt(0) ?? "";
+  const last =
+    parts.length > 1 ? parts[parts.length - 1]?.charAt(0) ?? "" : "";
+  return `${first}${last}`.toUpperCase();
+}
+
+/** Progreso semanal en porcentaje (0-100, acotado). */
+function weekProgress(currentWeek: number, totalWeeks: number): number {
+  if (totalWeeks <= 0) return 0;
+  const pct = (currentWeek / totalWeeks) * 100;
+  return Math.min(100, Math.max(0, Math.round(pct)));
+}
+
 export function ProgramEnrollmentsPage() {
+  const router = useRouter();
   const { hasPermission } = useAuth();
   const canEnroll = hasPermission("Program.Enroll");
   const canExport = hasPermission("Program.Export");
@@ -174,7 +212,7 @@ export function ProgramEnrollmentsPage() {
           <div>
             <h2 className="text-sm font-semibold">Inscripciones</h2>
             <p className="text-xs text-muted-foreground">
-              Filtra por estado o ID de paciente.
+              Filtra por nombre/documento, estado o ID de paciente.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -228,6 +266,12 @@ export function ProgramEnrollmentsPage() {
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input
+            placeholder="Buscar por nombre o documento..."
+            value={filters.search ?? ""}
+            onChange={(e) => setFilters({ search: e.target.value })}
+            className="h-9 w-full sm:max-w-xs"
+          />
+          <Input
             placeholder="Buscar por patientId..."
             value={patientIdInput}
             onChange={(e) => setPatientIdInput(e.target.value)}
@@ -274,13 +318,12 @@ export function ProgramEnrollmentsPage() {
                   <TableHead className="hidden md:table-cell">
                     Programa
                   </TableHead>
-                  <TableHead>Estado</TableHead>
                   <TableHead className="hidden md:table-cell">Semana</TableHead>
-                  <TableHead className="hidden lg:table-cell">Racha</TableHead>
-                  <TableHead className="hidden lg:table-cell">XP</TableHead>
                   <TableHead className="hidden lg:table-cell">
-                    Inicio
+                    Nivel / XP
                   </TableHead>
+                  <TableHead className="hidden lg:table-cell">Racha</TableHead>
+                  <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -294,45 +337,36 @@ export function ProgramEnrollmentsPage() {
                   return (
                   <TableRow key={enrollment.id}>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        {displayName ? (
-                          <>
-                            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
-                              {displayName
-                                .split(/\s+/)
-                                .map((w) => w[0])
-                                .slice(0, 2)
-                                .join("")
-                                .toUpperCase()}
+                      <div className="flex items-center gap-3">
+                        <Avatar className="size-8">
+                          <AvatarFallback className="bg-primary-soft text-xs font-bold text-primary">
+                            {displayName
+                              ? displayName.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase()
+                              : patientInitials(enrollment.patientFullName ?? "")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex min-w-0 flex-col">
+                          {displayName && enrollment.patientId ? (
+                            <Link
+                              href={`/program/gestion?view=perfil-360&patient=${enrollment.patientId}`}
+                              className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer"
+                              title={enrollment.patientId}
+                            >
+                              {displayName}
+                            </Link>
+                          ) : (
+                            <span className="truncate text-sm font-medium">
+                              {displayName ?? enrollment.patientFullName ?? "Paciente"}
                             </span>
-                            {enrollment.patientId ? (
-                              <Link
-                                href={`/program/gestion?view=perfil-360&patient=${enrollment.patientId}`}
-                                className="truncate text-sm font-medium hover:text-primary hover:underline cursor-pointer"
-                                title={enrollment.patientId}
-                              >
-                                {displayName}
-                              </Link>
-                            ) : (
-                              <span
-                                className="truncate text-sm font-medium"
-                                title={enrollment.patientId}
-                              >
-                                {displayName}
-                              </span>
-                            )}
-                          </>
-                        ) : (
-                          <span
-                            className="text-sm font-mono"
-                            title={enrollment.patientId}
-                          >
-                            {enrollment.patientId.slice(0, 8)}…
+                          )}
+                          <span className="truncate text-xs text-muted-foreground">
+                            {enrollment.patientDocumentNumber ??
+                              enrollment.patientId?.slice(0, 8)}
                           </span>
-                        )}
+                        </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell className="hidden md:table-cell text-sm">
                       {enrollment.templateName ? (
                         <Badge variant="outline" className="max-w-[160px] truncate text-xs font-medium">
                           {enrollment.templateName}
@@ -341,90 +375,126 @@ export function ProgramEnrollmentsPage() {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="flex w-40 flex-col gap-1">
+                        <span className="text-xs font-medium">
+                          Semana {enrollment.currentWeekNumber} /{" "}
+                          {enrollment.totalWeeks}
+                        </span>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{
+                              width: `${weekProgress(
+                                enrollment.currentWeekNumber,
+                                enrollment.totalWeeks,
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="flex flex-col items-start gap-1">
+                        <Badge
+                          className={levelColor(enrollment.currentLevel ?? "")}
+                        >
+                          {enrollment.currentLevel ?? "—"}
+                        </Badge>
+                        <span className="text-xs font-medium">
+                          {enrollment.xpBalance.toLocaleString()} XP
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="flex items-center gap-1 text-sm">
+                        <Flame className="size-3.5 text-orange-500" />
+                        {enrollment.streakCurrent}
+                        <span className="text-muted-foreground">
+                          / máx {enrollment.streakLongest}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge className={statusColor(enrollment.status)}>
                         {ENROLLMENT_STATUS_LABELS[enrollment.status] ??
                           enrollment.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm">
-                      {enrollment.currentWeekNumber} / {enrollment.totalWeeks}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm">
-                      {enrollment.streakCurrent}
-                      <span className="text-muted-foreground">
-                        {" "}
-                        / máx {enrollment.streakLongest}
-                      </span>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm font-medium">
-                      {enrollment.xpBalance.toLocaleString()} XP
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
-                      {new Date(enrollment.startedAt).toLocaleDateString(
-                        "es-CO",
-                      )}
-                    </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              aria-label="Acciones"
-                            >
-                              <MoreHorizontal className="size-4" />
-                            </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            router.push(
+                              `/program/enrollments/${enrollment.id}`,
+                            )
                           }
-                        />
-                        <DropdownMenuContent align="end" className="w-48">
-                          {displayName && enrollment.patientId && (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                (window.location.href = `/program/gestion?view=perfil-360&patient=${enrollment.patientId}`)
-                              }
-                            >
-                              Ver paciente
-                            </DropdownMenuItem>
-                          )}
-                          {canEnroll && enrollment.status === "Active" && (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                setPausing({
-                                  id: enrollment.id,
-                                  name: displayName ?? enrollment.patientId.slice(0, 8),
-                                })
-                              }
-                            >
-                              <Pause className="size-4" /> Pausar inscripción
-                            </DropdownMenuItem>
-                          )}
-                          {canEnroll && enrollment.status === "Paused" && (
-                            <DropdownMenuItem
-                              onClick={() => resume(enrollment.id)}
-                            >
-                              <Play className="size-4" /> Reanudar
-                            </DropdownMenuItem>
-                          )}
-                          {canEnroll &&
-                            (enrollment.status === "Active" ||
-                              enrollment.status === "Paused") && (
+                        >
+                          <ExternalLink className="size-3.5 mr-1" />
+                          Ver detalle
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8"
+                                aria-label="Acciones"
+                              >
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent align="end" className="w-48">
+                            {displayName && enrollment.patientId && (
                               <DropdownMenuItem
-                                variant="destructive"
                                 onClick={() =>
-                                  setWithdrawing({
+                                  (window.location.href = `/program/gestion?view=perfil-360&patient=${enrollment.patientId}`)
+                                }
+                              >
+                                Ver paciente
+                              </DropdownMenuItem>
+                            )}
+                            {canEnroll && enrollment.status === "Active" && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setPausing({
                                     id: enrollment.id,
-                                    name: displayName ?? enrollment.patientId.slice(0, 8),
+                                    name: displayName ?? enrollment.patientFullName ?? enrollment.patientId.slice(0, 8),
                                   })
                                 }
                               >
-                                <UserMinus className="size-4" /> Retirar
+                                <Pause className="size-4" /> Pausar inscripción
                               </DropdownMenuItem>
                             )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            {canEnroll && enrollment.status === "Paused" && (
+                              <DropdownMenuItem
+                                onClick={() => resume(enrollment.id)}
+                              >
+                                <Play className="size-4" /> Reanudar
+                              </DropdownMenuItem>
+                            )}
+                            {canEnroll &&
+                              (enrollment.status === "Active" ||
+                                enrollment.status === "Paused") && (
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onClick={() =>
+                                    setWithdrawing({
+                                      id: enrollment.id,
+                                      name: displayName ?? enrollment.patientFullName ?? enrollment.patientId.slice(0, 8),
+                                    })
+                                  }
+                                >
+                                  <UserMinus className="size-4" /> Retirar
+                                </DropdownMenuItem>
+                              )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                   );

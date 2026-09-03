@@ -62,6 +62,24 @@ export interface PatientAllergy {
   notes: string | null;
 }
 
+/**
+ * Medición clínica persistida por la app móvil (espejo del DTO del backend
+ * `PatientMeasurementDto`, camelCase en el wire). `batchId` agrupa las
+ * mediciones de un mismo check-in (anchor en `task_completions.vital_signs_batch_id`);
+ * `null` indica una medición sin batch asociado.
+ */
+export interface ClinicalMeasurementDto {
+  id: string;
+  metricCode: string;
+  metricName: string;
+  value: number;
+  unitCode: string;
+  unitSymbol: string;
+  observedAt: string;
+  source: string;
+  batchId: string | null;
+}
+
 /** Medición de signos vitales (unidades SI: cm, kg, °C). */
 export interface PatientVitalSign {
   id: string;

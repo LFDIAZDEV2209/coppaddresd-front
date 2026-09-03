@@ -79,16 +79,25 @@ export function useProgramContent(): UseProgramContentReturn {
 
       try {
         const data = await fetchProgramContent(id, controller.signal);
+        if (controller.signal.aborted) return;
         setContent(data);
       } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (
+          (err instanceof DOMException && err.name === "AbortError") ||
+          (err instanceof Error && err.name === "AbortError") ||
+          controller.signal.aborted
+        ) {
+          return;
+        }
         setError(
           err instanceof Error
             ? err.message
             : "Error al cargar el contenido del programa.",
         );
       } finally {
-        setLoading(false);
+        if (abortRef.current === controller) {
+          setLoading(false);
+        }
       }
     },
     [],

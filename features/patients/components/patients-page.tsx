@@ -265,7 +265,10 @@ export function PatientsPage() {
               setFilters({ status: (value ?? "all") as typeof filters.status })
             }
           >
-            <SelectTrigger className="w-full" aria-label={t("Filtrar por estado")}>
+            <SelectTrigger
+              className="w-full"
+              aria-label={t("Filtrar por estado")}
+            >
               <SelectValue>
                 {filters.status === "all"
                   ? "Todos los estados"
@@ -674,7 +677,9 @@ function PatientCards({
                 </span>
               </span>
               <span className="flex flex-col gap-px">
-                <span className="text-muted-foreground">{t("Aseguradora")}</span>
+                <span className="text-muted-foreground">
+                  {t("Aseguradora")}
+                </span>
                 <span className="truncate font-medium">
                   {patient.insurerName ?? "Sin aseguradora"}
                 </span>
@@ -693,7 +698,9 @@ function PatientCards({
               </span>
               {fullScope && (
                 <span className="flex flex-col gap-px">
-                  <span className="text-muted-foreground">{t("Profesional")}</span>
+                  <span className="text-muted-foreground">
+                    {t("Profesional")}
+                  </span>
                   <span className="line-clamp-1 font-medium">
                     {patient.professionalNames.length > 0
                       ? patient.professionalNames.join(", ")
@@ -957,5 +964,11 @@ function statusColor(status: PatientListItem["status"]) {
       dot: "var(--destructive)",
     },
   };
-  return colors[status];
+  return (
+    colors[status] ?? {
+      bg: "var(--muted)",
+      text: "var(--muted-foreground)",
+      dot: "var(--muted-foreground)",
+    }
+  );
 }

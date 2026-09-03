@@ -34,9 +34,16 @@ export function useScores(): UseScoresReturn {
           periodEndLocalDate,
           controller.signal,
         );
+        if (controller.signal.aborted) return;
         setResult(data);
       } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (
+          (err instanceof DOMException && err.name === "AbortError") ||
+          (err instanceof Error && err.name === "AbortError") ||
+          controller.signal.aborted
+        ) {
+          return;
+        }
         setError(
           err instanceof Error
             ? err.message
@@ -44,7 +51,9 @@ export function useScores(): UseScoresReturn {
         );
         setResult(null);
       } finally {
-        setLoading(false);
+        if (abortRef.current === controller) {
+          setLoading(false);
+        }
       }
     },
     [],

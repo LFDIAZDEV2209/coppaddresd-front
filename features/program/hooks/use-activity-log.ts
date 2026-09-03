@@ -59,9 +59,16 @@ export function useActivityLog(
         filters,
         controller.signal,
       );
+      if (controller.signal.aborted) return;
       setResult(data);
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
+      if (
+        (err instanceof DOMException && err.name === "AbortError") ||
+        (err instanceof Error && err.name === "AbortError") ||
+        controller.signal.aborted
+      ) {
+        return;
+      }
       setError(
         err instanceof Error
           ? err.message
@@ -69,7 +76,9 @@ export function useActivityLog(
       );
       setResult(null);
     } finally {
-      setLoading(false);
+      if (abortRef.current === controller) {
+        setLoading(false);
+      }
     }
   }, [page, pageSize, filters]);
 

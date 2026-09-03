@@ -40,7 +40,6 @@ import {
   Apple,
   Dumbbell,
   Sparkles,
-  UserCheck,
   HeartPulse,
   Activity,
   BellRing,
@@ -50,10 +49,6 @@ import {
   TrendingUp,
   PieChart,
   Trophy,
-  Zap,
-  GitBranch,
-  Gift,
-  History,
 } from "lucide-react";
 
 export interface NavItem {
@@ -639,6 +634,14 @@ export function getBreadcrumbSegments(
   const segments: { label: string; href?: string }[] = [
     { label: "Copp Adresd", href: "/dashboard" },
   ];
+
+  // Ruta dinámica del panel del paciente: /program/enrollments/[id]
+  const enrollmentDetailMatch = pathname.match(/^\/program\/enrollments\/([^/]+)$/);
+  if (enrollmentDetailMatch) {
+    segments.push({ label: "Inscripciones", href: "/program/enrollments" });
+    segments.push({ label: "Detalle del paciente" });
+    return segments;
+  }
 
   const allItems = navModules.flatMap((m) => m.items);
   const current = allItems.find((item) => item.href === pathname);
