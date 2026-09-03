@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, UserRound } from "lucide-react";
+import { RefreshCw, ExternalLink, UserRound } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientOverview } from "../hooks/use-patient-overview";
@@ -57,6 +58,14 @@ export function ProgramPatientProfile360({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          {data?.enrollment?.enrollment_id && (
+            <Link href={`/program/enrollments/${data.enrollment.enrollment_id}`}>
+              <Button variant="outline" size="sm">
+                <ExternalLink data-icon="inline-start" className="size-3.5" />
+                Ver inscripción
+              </Button>
+            </Link>
+          )}
           <Button
             variant="outline"
             size="sm"

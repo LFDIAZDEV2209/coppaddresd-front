@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, RefreshCw, Trophy } from "lucide-react";
+import { ArrowLeft, ExternalLink, RefreshCw, Trophy } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -95,6 +96,14 @@ export function EnrollmentDetailPage({ enrollmentId }: Props) {
         title={patientName}
         description={`${enrollment.templateName ?? "Programa"} · Semana ${enrollment.currentWeekNumber} de ${enrollment.totalWeeks}`}
         icon={Trophy}
+        actions={
+          <Link href={`/program/gestion?view=perfil-360&patient=${enrollment.patientId}`}>
+            <Button variant="outline" size="sm">
+              <ExternalLink data-icon="inline-start" className="size-3.5" />
+              Ver Perfil 360
+            </Button>
+          </Link>
+        }
       />
 
       <EnrollmentTabsNav activeTab={activeTab} onTabChange={setActiveTab} />
