@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type {
-  BiometriaPatientListItem,
   PaginatedBiometriaPatients,
 } from "../types/erp";
 import { fetchBiometriaPatients } from "../services/program-biometria-service";
@@ -14,6 +13,10 @@ export interface BiometriaPatientsFilters {
   gender: string;
   imcCategory: string;
   glucosaCategory: string;
+  grasaCategory: string;
+  trend: string;
+  cityId: string | null;
+  stateAbbr: string | null;
 }
 
 export function useBiometriaPatients(initialFilters?: Partial<BiometriaPatientsFilters>) {
@@ -24,6 +27,10 @@ export function useBiometriaPatients(initialFilters?: Partial<BiometriaPatientsF
     gender: "",
     imcCategory: "",
     glucosaCategory: "",
+    grasaCategory: "",
+    trend: "",
+    cityId: null,
+    stateAbbr: null,
     ...initialFilters,
   });
 
@@ -43,6 +50,10 @@ export function useBiometriaPatients(initialFilters?: Partial<BiometriaPatientsF
         gender: filters.gender,
         imcCategory: filters.imcCategory,
         glucosaCategory: filters.glucosaCategory,
+        grasaCategory: filters.grasaCategory,
+        trend: filters.trend,
+        cityId: filters.cityId,
+        stateAbbr: filters.stateAbbr,
       });
       setData(result);
     } catch (err) {
@@ -70,7 +81,18 @@ export function useBiometriaPatients(initialFilters?: Partial<BiometriaPatientsF
     setFilters((prev) => ({
       ...prev,
       ...patch,
-      page: patch.page ?? (patch.search !== prev.search || patch.gender !== prev.gender || patch.imcCategory !== prev.imcCategory || patch.glucosaCategory !== prev.glucosaCategory ? 1 : prev.page),
+      page: patch.page ?? (
+        patch.search !== prev.search ||
+        patch.gender !== prev.gender ||
+        patch.imcCategory !== prev.imcCategory ||
+        patch.glucosaCategory !== prev.glucosaCategory ||
+        patch.grasaCategory !== prev.grasaCategory ||
+        patch.trend !== prev.trend ||
+        patch.cityId !== prev.cityId ||
+        patch.stateAbbr !== prev.stateAbbr
+          ? 1
+          : prev.page
+      ),
     }));
   }, []);
 

@@ -310,6 +310,7 @@ export interface BiometriaWeeklyBiometria {
 export interface BiometriaHeatmapDay {
   day_index: number;
   completed: boolean;
+  date: string;
 }
 
 export interface BiometriaExacta {

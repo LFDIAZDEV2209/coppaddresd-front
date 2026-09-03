@@ -25,6 +25,10 @@ export async function fetchBiometriaPatients(params: {
   gender?: string;
   imcCategory?: string;
   glucosaCategory?: string;
+  grasaCategory?: string;
+  trend?: string;
+  cityId?: string | null;
+  stateAbbr?: string | null;
   signal?: AbortSignal;
 }): Promise<PaginatedBiometriaPatients> {
   const {
@@ -34,6 +38,10 @@ export async function fetchBiometriaPatients(params: {
     gender,
     imcCategory,
     glucosaCategory,
+    grasaCategory,
+    trend,
+    cityId,
+    stateAbbr,
     signal,
   } = params;
 
@@ -45,6 +53,10 @@ export async function fetchBiometriaPatients(params: {
   if (gender) qs.set("gender", gender);
   if (imcCategory) qs.set("imcCategory", imcCategory);
   if (glucosaCategory) qs.set("glucosaCategory", glucosaCategory);
+  if (grasaCategory) qs.set("grasaCategory", grasaCategory);
+  if (trend) qs.set("trend", trend);
+  if (cityId) qs.set("cityId", cityId);
+  if (stateAbbr) qs.set("stateAbbr", stateAbbr);
 
   return apiFetch<PaginatedBiometriaPatients>(
     `${PATH}/patients?${qs.toString()}`,

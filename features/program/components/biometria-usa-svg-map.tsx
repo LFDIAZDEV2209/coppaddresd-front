@@ -41,10 +41,11 @@ function aggregateByState(cities: BiometriaCityPoint[]): Record<string, StateAgg
 
 interface BiometriaUsaSvgMapProps {
   cities: BiometriaCityPoint[];
-  onCitySelect?: (cityId: string | null) => void;
+  onCitySelect?: (cityId: string | null, cityName?: string) => void;
+  onStateSelect?: (stateAbbr: string | null, stateName?: string) => void;
 }
 
-export function BiometriaUsaSvgMap({ cities, onCitySelect }: BiometriaUsaSvgMapProps) {
+export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: BiometriaUsaSvgMapProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -70,17 +71,24 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect }: BiometriaUsaSvgMapP
   );
 
   const handleCityClick = useCallback(
-    (cityId: string) => {
-      onCitySelect?.(cityId);
+    (cityId: string, cityName?: string) => {
+      onCitySelect?.(cityId, cityName);
       setSelected(null);
     },
     [onCitySelect],
   );
 
+  const handleStateTodosClick = useCallback(() => {
+    if (!selected) return;
+    onStateSelect?.(selected, STATE_NAMES[selected] ?? selected);
+    setSelected(null);
+  }, [selected, onStateSelect]);
+
   const handleClearFilter = useCallback(() => {
     onCitySelect?.(null);
+    onStateSelect?.(null);
     setSelected(null);
-  }, [onCitySelect]);
+  }, [onCitySelect, onStateSelect]);
 
   const hoveredData = hovered ? stateData[hovered] : null;
   const selectedData = selected ? stateData[selected] : null;
@@ -170,7 +178,7 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect }: BiometriaUsaSvgMapP
                 <button
                   key={c.city_id ?? c.name}
                   type="button"
-                  onClick={() => handleCityClick(c.city_id ?? "")}
+                  onClick={() => handleCityClick(c.city_id ?? "", c.name)}
                   className="flex items-center justify-between rounded-md px-2 py-1 text-left text-xs hover:bg-muted transition-colors"
                 >
                   <span className="truncate">{c.name}</span>
@@ -178,13 +186,23 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect }: BiometriaUsaSvgMapP
                 </button>
               ))}
           </div>
-          <button
-            type="button"
-            onClick={handleClearFilter}
-            className="mt-2 w-full rounded-md border border-border px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
-          >
-            Ver todos
-          </button>
+          <div className="mt-2 flex gap-1.5">
+            <button
+              type="button"
+              onClick={handleStateTodosClick}
+              className="flex-1 rounded-md bg-primary px-2 py-1.5 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Ver todos en {STATE_NAMES[selected] ?? selected}
+            </button>
+            <button
+              type="button"
+              onClick={handleClearFilter}
+              className="rounded-md border border-border px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
+              title="Limpiar filtro"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 
