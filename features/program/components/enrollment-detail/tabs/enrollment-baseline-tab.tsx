@@ -57,14 +57,14 @@ export function EnrollmentBaselineTab({ enrollment }: Props) {
   }, [enrollment.id]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Dna className="size-4 text-primary" />
-          <h2 className="text-sm font-semibold">Líneas base clínicas</h2>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <Dna className="size-4 shrink-0 text-primary" />
+          <h2 className="truncate text-sm font-semibold">Líneas base clínicas</h2>
         </div>
         {canEdit && (
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="shrink-0 gap-1">
             <Plus className="size-3.5" />
             Nueva línea base
           </Button>
@@ -72,59 +72,61 @@ export function EnrollmentBaselineTab({ enrollment }: Props) {
       </div>
 
       {loading ? (
-        <Skeleton className="h-40 rounded-2xl" />
+        <Skeleton className="h-28 rounded-2xl" />
       ) : error ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-border py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            No se pudieron cargar las líneas base.
-          </p>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card py-10 text-center">
+          <p className="text-sm text-muted-foreground">No se pudieron cargar las líneas base.</p>
           <Button variant="outline" size="sm" onClick={load}>
             <RefreshCw className="size-3.5" />
             Reintentar
           </Button>
         </div>
       ) : baselines.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            No hay líneas base registradas para este paciente.
-          </p>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 py-8 text-center">
+          <p className="text-sm text-muted-foreground">No hay líneas base registradas para este paciente.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Métrica</TableHead>
-                <TableHead>Valor base</TableHead>
-                <TableHead>Objetivo</TableHead>
-                <TableHead>Dirección favorable</TableHead>
-                <TableHead>Medido el</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {baselines.map((b) => (
-                <TableRow key={b.id}>
-                  <TableCell className="font-medium">{b.metricCode}</TableCell>
-                  <TableCell>
-                    {b.value} {b.unitSymbol}
-                  </TableCell>
-                  <TableCell>
-                    {b.targetValue ? `${b.targetValue} ${b.unitSymbol}` : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {b.favorableDirection === "Higher"
-                        ? "↑ Mayor es mejor"
-                        : "↓ Menor es mejor"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {b.measuredAt}
-                  </TableCell>
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#0B2B4A] hover:bg-[#0B2B4A]">
+                  <TableHead className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-white">Métrica</TableHead>
+                  <TableHead className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-white">Valor base</TableHead>
+                  <TableHead className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-white">Objetivo</TableHead>
+                  <TableHead className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-white">Dirección</TableHead>
+                  <TableHead className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-white">Medido el</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {baselines.map((b) => (
+                  <TableRow key={b.id} className="h-11">
+                    <TableCell className="max-w-[110px] truncate font-mono text-xs font-medium" title={b.metricCode}>
+                      {b.metricCode}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">
+                      {b.value} <span className="text-muted-foreground">{b.unitSymbol}</span>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">
+                      {b.targetValue ? (
+                        <>
+                          {b.targetValue} <span className="text-muted-foreground">{b.unitSymbol}</span>
+                        </>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="whitespace-nowrap text-[10px] font-medium leading-none">
+                        {b.favorableDirection === "Higher" ? "↑ Mayor es mejor" : "↓ Menor es mejor"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">{b.measuredAt}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 

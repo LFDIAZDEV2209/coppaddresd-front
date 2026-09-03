@@ -288,7 +288,7 @@ export function ProgramEnrollDialog({
                 <SelectContent>
                   {templateResults.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
-                      {t.name} ({t.totalWeeks} semanas)
+                      {t.name} ({t.totalWeeks} días)
                     </SelectItem>
                   ))}
                   {!loadingTemplates && templateResults.length === 0 && (

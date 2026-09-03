@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PagedListFooter } from "../../paged-list-footer";
 import { fetchXpLedger } from "../../../services/program-enrollments-service";
 import type { PaginatedXpLedger, ProgramEnrollment } from "../../../types";
 
@@ -26,8 +27,6 @@ const REASON_LABELS: Record<string, string> = {
   Other: "Otro",
 };
 
-const PAGE_SIZE = 20;
-
 interface Props {
   enrollment: ProgramEnrollment;
 }
@@ -35,22 +34,23 @@ interface Props {
 /**
  * Pestaña Historial XP (TASK-17): libro mayor paginado de la inscripción
  * (GET /enrollments/{id}/xp-ledger). Tabla append-only con razón, regla,
- * multiplicador y balance después; paginación anterior/siguiente.
+ * multiplicador y balance después; paginación con selector 10 por defecto.
  */
 export function EnrollmentXpLedgerTab({ enrollment }: Props) {
   const [ledger, setLedger] = useState<PaginatedXpLedger | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   // Guarda contra respuestas obsoletas al navegar rápido entre páginas.
   const requestIdRef = useRef(0);
 
-  const load = async (p: number) => {
+  const load = async (p: number, size = pageSize) => {
     const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(false);
     try {
-      const data = await fetchXpLedger(enrollment.id, p, PAGE_SIZE);
+      const data = await fetchXpLedger(enrollment.id, p, size);
       if (requestIdRef.current !== requestId) return;
       setLedger(data);
       setPage(data.page);
@@ -75,7 +75,13 @@ export function EnrollmentXpLedgerTab({ enrollment }: Props) {
 
   const handlePage = (newPage: number) => {
     setPage(newPage);
-    void load(newPage);
+    void load(newPage, pageSize);
+  };
+
+  const handleSize = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+    void load(1, newSize);
   };
 
   return (
@@ -114,81 +120,52 @@ export function EnrollmentXpLedgerTab({ enrollment }: Props) {
         </div>
       ) : (
         <>
-          <div className="overflow-hidden rounded-2xl border border-border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Razón</TableHead>
-                  <TableHead>Regla</TableHead>
-                  <TableHead className="text-right">XP</TableHead>
-                  <TableHead className="text-right">Multiplicador</TableHead>
-                  <TableHead className="text-right">Balance después</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ledger.data.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                      {new Date(entry.awardedAt).toLocaleString("es-CO", {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      })}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {REASON_LABELS[entry.reason] ?? entry.reason}
-                    </TableCell>
-                    <TableCell>
-                      {entry.ruleCode ? (
-                        <Badge variant="outline" className="font-mono text-[10px]">
-                          {entry.ruleCode}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold text-emerald-600">
-                      +{entry.amount}
-                    </TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground">
-                      {entry.multiplierUsed != null && entry.multiplierUsed !== 1
-                        ? `×${entry.multiplierUsed}`
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-xs">
-                      {entry.balanceAfter.toLocaleString()}
-                    </TableCell>
+          <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-[#0B2B4A] hover:bg-[#0B2B4A]">
+                    <TableHead className="text-white">Fecha</TableHead>
+                    <TableHead className="text-white">Razón</TableHead>
+                    <TableHead className="text-white">Regla</TableHead>
+                    <TableHead className="text-right text-white">XP</TableHead>
+                    <TableHead className="text-right text-white">Multiplicador</TableHead>
+                    <TableHead className="text-right text-white">Balance después</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {ledger.totalPages > 1 && (
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                Página {page} de {ledger.totalPages}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => handlePage(page - 1)}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= ledger.totalPages}
-                  onClick={() => handlePage(page + 1)}
-                >
-                  Siguiente
-                </Button>
-              </div>
+                </TableHeader>
+                <TableBody>
+                  {ledger.data.map((entry) => (
+                    <TableRow key={entry.id}>
+                      <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                        {new Date(entry.awardedAt).toLocaleString("es-CO", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {REASON_LABELS[entry.reason] ?? entry.reason}
+                      </TableCell>
+                      <TableCell>
+                        {entry.ruleCode ? (
+                          <Badge variant="outline" className="font-mono text-[10px]">
+                            {entry.ruleCode}
+                          </Badge>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-emerald-600">+{entry.amount}</TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        {entry.multiplierUsed != null && entry.multiplierUsed !== 1 ? `×${entry.multiplierUsed}` : "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-xs">{entry.balanceAfter.toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          )}
+            <PagedListFooter page={page} totalPages={ledger.totalPages} onPageChange={handlePage} pageSize={pageSize} pageSizeOptions={[5, 10, 20, 50]} onPageSizeChange={handleSize} />
+          </div>
         </>
       )}
     </div>

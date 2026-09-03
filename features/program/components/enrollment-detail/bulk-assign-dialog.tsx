@@ -1,7 +1,7 @@
 "use client";
 
 // Diálogo de asignación en bloque: aplica el mismo plan nutricional y/o
-// rutina de ejercicio a un rango de semanas de la inscripción (UC-C2).
+// rutina de ejercicio a un rango de días de la inscripción (UC-C2).
 // Llama a PUT /api/v1/program/enrollments/{id}/content/range.
 
 import { useState } from "react";
@@ -87,7 +87,7 @@ export function BulkAssignDialog({
         <div className="flex flex-col gap-4">
           <div className="flex gap-3">
             <div className="flex-1">
-              <Label htmlFor="bulk-from-week">Semana desde</Label>
+              <Label htmlFor="bulk-from-week">Día desde</Label>
               <Input
                 id="bulk-from-week"
                 type="number"
@@ -98,7 +98,7 @@ export function BulkAssignDialog({
               />
             </div>
             <div className="flex-1">
-              <Label htmlFor="bulk-to-week">Semana hasta</Label>
+              <Label htmlFor="bulk-to-week">Día hasta</Label>
               <Input
                 id="bulk-to-week"
                 type="number"

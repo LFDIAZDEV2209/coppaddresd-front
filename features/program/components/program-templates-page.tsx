@@ -189,7 +189,7 @@ export function ProgramTemplatesPage() {
                     Código
                   </TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Semanas
+                    Días
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">
                     Versión

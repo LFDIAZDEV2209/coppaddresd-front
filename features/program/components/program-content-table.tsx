@@ -4,11 +4,13 @@
 // Extraídos de program-content-page.tsx para reutilizarse en el panel del
 // paciente (EnrollmentContentTab) y en la página de contenido original.
 
-import { useState, useCallback } from "react";
-import { CalendarDays, Check, Loader2, Salad, Dumbbell } from "lucide-react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { CalendarDays, Check, Loader2, Salad, Dumbbell, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SectionHeader } from "@/components/layout/section-header";
+import { PagedListFooter } from "./paged-list-footer";
 import {
   Table,
   TableBody,
@@ -50,23 +52,38 @@ export function ContentTable({
   availablePlans: NutritionPlanListItem[];
   loadingCatalog: boolean;
 }) {
-  return (
-    <section className="rounded-2xl border border-border bg-card p-5 shadow-xs flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">
-            Semanas del programa ({content.totalWeeks} semanas)
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            Asigna el plan nutricional y la rutina de ejercicio para cada semana
-            del paciente.
-          </p>
-        </div>
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
+  const totalPages = Math.max(1, Math.ceil(content.weeks.length / pageSize));
+  const pagedWeeks = useMemo(
+    () => content.weeks.slice((page - 1) * pageSize, page * pageSize),
+    [content.weeks, page, pageSize],
+  );
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setPage(1);
+  }, []);
+
+  return (
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-5">
+        <SectionHeader
+          title={`Días del programa (${content.totalWeeks} días)`}
+          description="Asigna el plan nutricional y la rutina de ejercicio para cada día del paciente."
+          icon={Layers}
+          variant="secondary"
+          className="min-w-0 flex-1 border-none bg-transparent px-0 py-0"
+        />
         {loadingCatalog && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Loader2 className="size-3.5 animate-spin text-primary" />
-            <span>Cargando catálogo del paciente...</span>
+            <span>Cargando catálogo...</span>
           </div>
         )}
       </div>
@@ -74,20 +91,16 @@ export function ContentTable({
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">Sem.</TableHead>
-              <TableHead>Fechas de la semana</TableHead>
-              <TableHead className="min-w-[240px]">Plan nutricional</TableHead>
-              <TableHead className="min-w-[260px]">
-                Rutina de ejercicio
-              </TableHead>
-              {canEdit && (
-                <TableHead className="text-right">Acciones</TableHead>
-              )}
+            <TableRow className="bg-[#0B2B4A] hover:bg-[#0B2B4A]">
+              <TableHead className="w-16 text-white">Día</TableHead>
+              <TableHead className="text-white">Fecha</TableHead>
+              <TableHead className="min-w-[240px] text-white">Plan nutricional</TableHead>
+              <TableHead className="min-w-[260px] text-white">Rutina de ejercicio</TableHead>
+              {canEdit && <TableHead className="text-right text-white">Acciones</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {content.weeks.map((week) => (
+            {pagedWeeks.map((week) => (
               <WeekRow
                 key={week.weekNumber}
                 week={week}
@@ -102,10 +115,19 @@ export function ContentTable({
         </Table>
       </div>
 
-      {content.weeks.length === 0 && (
+      {content.weeks.length === 0 ? (
         <p className="text-xs text-muted-foreground text-center py-4">
-          Esta inscripción no tiene semanas configuradas.
+          Esta inscripción no tiene días configurados.
         </p>
+      ) : (
+        <PagedListFooter
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          pageSizeOptions={[5, 10, 20, 50]}
+          onPageSizeChange={handlePageSizeChange}
+        />
       )}
     </section>
   );
@@ -205,7 +227,7 @@ export function WeekRow({
     return (
       <TableRow className="bg-primary/5">
         <TableCell className="font-bold text-sm tabular-nums">
-          Sem. {week.weekNumber}
+          Día {week.weekNumber}
         </TableCell>
         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
           {week.weekStartDateLocal} — {week.weekEndDateLocal}
