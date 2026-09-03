@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useState, useCallback, useEffect } from "react";
 import {
   BarChart3,
@@ -61,10 +60,7 @@ import { useBiometriaCommunity } from "../hooks/use-biometria-community";
 import { useBiometriaPatients } from "../hooks/use-biometria-patients";
 import { exportBiometriaCsv } from "../services/program-biometria-service";
 
-const BiometriaLeafletMap = dynamic(
-  () => import("./biometria-leaflet-map").then((m) => m.BiometriaLeafletMap),
-  { ssr: false, loading: () => <Skeleton className="h-[320px] w-full rounded-xl" /> },
-);
+import { BiometriaUsaSvgMap } from "./biometria-usa-svg-map";
 import {
   MISSION_COLORS,
   MISSION_LABELS,
@@ -203,7 +199,7 @@ function BiometriaMapRow({ data }: { data: import("../types/erp").BiometriaCommu
           variant="primary"
         />
         <div className="p-4">
-          <BiometriaLeafletMap cities={data.cities} />
+          <BiometriaUsaSvgMap cities={data.cities} />
         </div>
       </div>
 
