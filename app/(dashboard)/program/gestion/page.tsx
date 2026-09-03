@@ -4,13 +4,11 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAppContext } from "@/providers/context-provider";
 import { ProgramViewSwitcher } from "@/features/program/components/program-view-switcher";
 import { ProgramTemplatesPage } from "@/features/program/components/program-templates-page";
-import { ProgramEnrollmentsPage } from "@/features/program/components/program-enrollments-page";
 import { ProgramContentPage } from "@/features/program/components/program-content-page";
 import { ProgramPerfil360Page } from "@/features/program/components/program-perfil360-page";
 
 const GESTION_VIEWS = [
   { value: "plantillas", label: "Plantillas", permission: "Program.View" },
-  { value: "inscripciones", label: "Inscripciones", permission: "Program.View" },
   { value: "contenido", label: "Contenido", permission: "Program.Edit" },
   { value: "perfil-360", label: "Perfil 360", permission: "Program.View" },
 ];
@@ -21,8 +19,6 @@ function getVisibleViews(can: (code: string) => boolean) {
 
 function getComponent(view: string, patient?: string | null) {
   switch (view) {
-    case "inscripciones":
-      return <ProgramEnrollmentsPage />;
     case "contenido":
       return <ProgramContentPage />;
     case "perfil-360":
