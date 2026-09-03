@@ -7,6 +7,10 @@ import type {
   BulkEnrollInput,
   BulkEnrollResult,
   PaginatedResult,
+  ProgramSnapshot,
+  PaginatedXpLedger,
+  ClinicalBaseline,
+  CreateBaselineInput,
 } from "../types";
 
 const PATH = `${env.apiUrl}/api/v1/program/enrollments`;
@@ -136,6 +140,63 @@ export async function withdrawEnrollment(
     method: "POST",
     body: JSON.stringify(reason ? { reason } : {}),
   });
+}
+
+// --- Detalle de una inscripción (panel del paciente) ---
+
+export async function fetchEnrollmentById(
+  id: string,
+): Promise<ProgramEnrollment> {
+  return apiFetch<ProgramEnrollment>(`${PATH}/${id}`);
+}
+
+// --- Snapshot de gamificación (GET /enrollments/{id}/snapshot) ---
+
+export async function fetchEnrollmentSnapshot(
+  enrollmentId: string,
+): Promise<ProgramSnapshot> {
+  return apiFetch<ProgramSnapshot>(
+    `${PATH}/${enrollmentId}/snapshot`,
+  );
+}
+
+// --- Libro mayor de XP (GET /enrollments/{id}/xp-ledger) ---
+
+export async function fetchXpLedger(
+  enrollmentId: string,
+  page = 1,
+  pageSize = 20,
+): Promise<PaginatedXpLedger> {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  return apiFetch<PaginatedXpLedger>(
+    `${PATH}/${enrollmentId}/xp-ledger?${params.toString()}`,
+  );
+}
+
+// --- Líneas base clínicas (GET/POST /enrollments/{id}/baselines) ---
+
+export async function fetchBaselines(
+  enrollmentId: string,
+): Promise<ClinicalBaseline[]> {
+  return apiFetch<ClinicalBaseline[]>(
+    `${PATH}/${enrollmentId}/baselines`,
+  );
+}
+
+export async function createBaseline(
+  enrollmentId: string,
+  input: CreateBaselineInput,
+): Promise<ClinicalBaseline> {
+  return apiFetch<ClinicalBaseline>(
+    `${PATH}/${enrollmentId}/baselines`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 // --- Constantes ---

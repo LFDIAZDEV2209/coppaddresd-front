@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type {
+  ClinicalMeasurementDto,
   Insurer,
   Patient,
   PatientFilters,
@@ -73,6 +74,17 @@ export async function updatePatient(
 
 export async function deletePatient(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
+}
+
+/**
+ * Mediciones clínicas del paciente (fuente: app móvil), planas y ordenadas por
+ * `observedAt` desc. El agrupamiento por batch (check-in) es responsabilidad
+ * del frontend; el backend expone una lista plana.
+ */
+export async function getPatientMeasurements(
+  id: string,
+): Promise<ClinicalMeasurementDto[]> {
+  return apiFetch<ClinicalMeasurementDto[]>(`${PATH}/${id}/measurements`);
 }
 
 // --- Asignación paciente ↔ profesional ("mis pacientes") ---

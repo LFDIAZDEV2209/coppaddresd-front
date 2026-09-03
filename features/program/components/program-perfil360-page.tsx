@@ -36,13 +36,11 @@ export function ProgramPerfil360Page() {
   const hasQuery = trimmed.length >= 2;
 
   useEffect(() => {
-    if (trimmed.length < 2) {
-      setResults([]);
-      setError(null);
-      setLoading(false);
+    if (!hasQuery) {
       return;
     }
 
+    let active = true;
     const timer = setTimeout(async () => {
       setLoading(true);
       setError(null);
@@ -55,19 +53,26 @@ export function ProgramPerfil360Page() {
         const res = await apiFetch<PaginatedResult<PatientListItem>>(
           `${env.apiUrl}/api/v1/patients?${params.toString()}`,
         );
-        setResults(res.data);
+        if (active) setResults(res.data);
       } catch (e) {
-        setResults([]);
-        setError(
-          e instanceof Error ? e.message : "No se pudo buscar pacientes.",
-        );
+        if (active) {
+          setResults([]);
+          setError(
+            e instanceof Error ? e.message : "No se pudo buscar pacientes.",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(timer);
-  }, [trimmed]);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [trimmed, hasQuery]);
+
+  const displayResults = hasQuery ? results : [];
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -101,9 +106,9 @@ export function ProgramPerfil360Page() {
             <p className="text-xs text-muted-foreground">Buscando...</p>
           ) : error ? (
             <p className="text-xs text-destructive">{error}</p>
-          ) : results.length > 0 ? (
+          ) : displayResults.length > 0 ? (
             <div className="max-h-80 overflow-y-auto rounded-md border border-border">
-              {results.map((p) => {
+              {displayResults.map((p) => {
                 const fullName = `${p.firstName} ${p.lastName}`.trim();
                 const sublabel = p.email ?? p.medicalRecordNumber ?? undefined;
                 return (

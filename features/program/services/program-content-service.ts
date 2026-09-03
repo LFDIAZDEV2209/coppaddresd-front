@@ -35,6 +35,29 @@ export async function setWeekContent(
   );
 }
 
+// --- Asignar contenido en bloque a un rango de semanas ---
+
+export interface SetWeekContentRangeInput {
+  fromWeek: number;
+  toWeek: number;
+  nutritionPlanId: string | null;
+  exerciseRoutineId: string | null;
+}
+
+/** Aplica el mismo plan/rutina a un rango de semanas (PUT content/range). */
+export async function setWeekContentRange(
+  enrollmentId: string,
+  input: SetWeekContentRangeInput,
+): Promise<ProgramContentWeek[]> {
+  return apiFetch<ProgramContentWeek[]>(
+    `${PATH(enrollmentId)}/range`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
 // --- Obtener semana con estado de completitud del paciente ---
 
 export async function fetchEnrollmentWeek(
