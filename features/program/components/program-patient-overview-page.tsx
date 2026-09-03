@@ -98,7 +98,10 @@ export function ProgramPatientOverviewPage({
       ) : error ? (
         <PatientError message={error} onRetry={retry} />
       ) : data ? (
-        <PatientContent data={data} patientId={patientId} />
+        <div className="flex flex-col gap-6">
+          <PatientResumenSections data={data} />
+          <PatientClinicaSections data={data} />
+        </div>
       ) : (
         <PatientNotFound />
       )}
@@ -108,12 +111,10 @@ export function ProgramPatientOverviewPage({
 
 // --- Contenido ---
 
-function PatientContent({
+export function PatientResumenSections({
   data,
-  patientId,
 }: {
   data: import("../types/erp").PatientOverviewDto;
-  patientId: string;
 }) {
   const patientName = data.patient_name ?? "Paciente";
   const parts = patientName.split(" ");
@@ -440,9 +441,6 @@ function PatientContent({
         </section>
       )}
 
-      {/* Clinical Metrics */}
-      <ClinicalMetricsSection metrics={data.mediciones_clinicas} />
-
       {/* IA Analysis placeholder */}
       <div className="rounded-2xl border border-border bg-card p-5">
         <div className="flex items-start gap-4">
@@ -471,6 +469,19 @@ function PatientContent({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+export function PatientClinicaSections({
+  data,
+}: {
+  data: import("../types/erp").PatientOverviewDto;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Clinical Metrics */}
+      <ClinicalMetricsSection metrics={data.mediciones_clinicas} />
 
       {/* Weaknesses + Interventions + Clinical Reviews */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
