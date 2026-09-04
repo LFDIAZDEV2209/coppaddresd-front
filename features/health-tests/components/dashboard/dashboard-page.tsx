@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -12,6 +12,7 @@ import {
   PieChart as PieChartIcon,
   Users,
   TrendingUp,
+  MapPinned,
 } from "lucide-react";
 import {
   Area,
@@ -29,9 +30,13 @@ import {
 } from "recharts";
 import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
 import { useDashboard } from "../../hooks/use-health-tests";
+import { useHealthGeo } from "../../hooks/use-health-geo";
+import { HealthTestsUsaMap } from "../geo/health-tests-usa-map";
 import type { HealthAlert, RiskLevel } from "../../types";
 import { RISK_LABELS, riskSeverity } from "../../lib/domain";
 import { formatDate } from "../../lib/format";
@@ -192,6 +197,9 @@ export function HealthTestsDashboard() {
           context={t("Requieren revisión")}
         />
       </div>
+
+      {/* --- Mapa de riesgo geográfico — idéntico a programa/dashboard (USA SVG + Top ciudades + Alertas) --- */}
+      <HealthGeoMapRow />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <ChartCard
@@ -472,6 +480,155 @@ export function HealthTestsDashboard() {
         <CategoryCoverageChart />
       </ChartCard>
     </div>
+  );
+}
+
+/* --- Mapa idéntico a program/dashboard: USA SVG choropleth por % alto riesgo --- */
+function HealthGeoMapRow() {
+  const t = useT();
+  const { data, loading, error } = useHealthGeo();
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+
+  if (loading && !data) {
+    return (
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="h-5 w-48 mb-4 animate-pulse rounded bg-muted" />
+          <div className="h-[320px] w-full animate-pulse rounded bg-muted" />
+        </div>
+        <div className="flex flex-col gap-4">
+          <div className="h-[180px] rounded-2xl border border-border bg-card animate-pulse" />
+          <div className="h-[200px] rounded-2xl border border-border bg-card animate-pulse" />
+        </div>
+      </section>
+    );
+  }
+  if (error && !data) {
+    return (
+      <div className="rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-6 text-center">
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+    );
+  }
+  if (!data || data.cities.length === 0) return null;
+
+  const top3 = [...data.cities].sort((a, b) => b.count - a.count).slice(0, 3);
+
+  return (
+    <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
+      <div className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col">
+        <SectionHeader
+          title="Mapa de calor — Riesgo alto"
+          description="Distribución geográfica de pacientes con riesgo alto/crítico"
+          icon={MapPinned}
+          variant="primary"
+        />
+        <div className="flex flex-1 items-center justify-center p-4">
+          <HealthTestsUsaMap cities={data.cities} />
+        </div>
+      </div>
+      <div className="flex flex-col gap-4">
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <SectionHeader
+            title="Top ciudades"
+            description="Por número de pacientes"
+            icon={Users}
+            variant="secondary"
+          />
+          <div className="mt-3 flex flex-col gap-2">
+            {top3.map((c, i) => (
+              <div
+                key={`${c.name}-${c.stateAbbr}`}
+                className="flex w-full items-center gap-2 rounded-lg px-1 py-1 text-left"
+              >
+                <span
+                  className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${i === 0 ? "bg-warning-soft text-warning" : "bg-muted text-muted-foreground"}`}
+                >
+                  {i + 1}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-xs font-medium">
+                  {c.name}
+                  {c.stateAbbr ? `, ${c.stateAbbr}` : ""}
+                </span>
+                <Badge variant="outline" className="shrink-0 text-[10px]">
+                  {c.count}
+                </Badge>
+              </div>
+            ))}
+            {top3.length === 0 && (
+              <p className="text-xs text-muted-foreground">Sin datos</p>
+            )}
+          </div>
+          <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-xs">
+            <span className="text-muted-foreground">
+              Total pacientes mapeados
+            </span>
+            <span className="font-semibold">{data.totalPatients}</span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Con riesgo alto</span>
+            <span className="font-semibold text-destructive">
+              {data.highRiskCount}
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="p-5 pb-3">
+            <div className="flex items-center gap-3 rounded-xl bg-destructive-soft px-4 py-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                <BellRing className="size-4" />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
+                <div className="flex items-center gap-2">
+                  <h3 className="truncate text-[13px] font-semibold text-foreground">
+                    Alertas críticas
+                  </h3>
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 border-destructive/20 bg-white text-destructive text-[10px] font-bold"
+                  >
+                    {data.alerts.length}
+                  </Badge>
+                </div>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  Pacientes con riesgo alto/crítico
+                </p>
+              </div>
+            </div>
+          </div>
+          {data.alerts.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 px-5 pb-8 pt-4 text-center">
+              <p className="text-sm font-medium">Sin alertas geográficas</p>
+              <p className="text-xs text-muted-foreground">
+                Todos los pacientes dentro de rango.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 px-3 pb-3">
+              {data.alerts.slice(0, 4).map((a) => (
+                <Link
+                  key={a.patientId}
+                  href={`/health-tests/pacientes/${a.patientId}`}
+                  className="group flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 transition-colors hover:border-destructive/20 hover:bg-destructive-soft/30"
+                >
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary ring-1 ring-border">
+                    {a.name.slice(0, 2).toUpperCase()}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold leading-tight group-hover:text-foreground">
+                      {a.name}
+                    </p>
+                    <span className="mt-1 inline-flex max-w-full truncate rounded-full border bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold leading-none text-destructive border-destructive/20">
+                      {a.reason}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
