@@ -1092,19 +1092,56 @@ function PatientIaSection({
           />
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <ProgressRing
-                value={profile.ahs}
-                size={92}
-                stroke={8}
-                color={
+              {/* Anillo AHS con texto blanco para contraste sobre navy */}
+              {(() => {
+                const size = 92;
+                const stroke = 8;
+                const r = (size - stroke) / 2;
+                const c = 2 * Math.PI * r;
+                const pct = Math.max(0, Math.min(100, profile.ahs));
+                const off = c - (pct / 100) * c;
+                const col =
                   profile.ahs >= 70
                     ? "#10B981"
                     : profile.ahs >= 40
                       ? "#F59E0B"
-                      : "#EF4444"
-                }
-                track="rgba(255,255,255,0.15)"
-              />
+                      : "#EF4444";
+                return (
+                  <div
+                    className="relative flex shrink-0 items-center justify-center"
+                    style={{ width: size, height: size }}
+                    aria-label={`${pct}%`}
+                  >
+                    <svg width={size} height={size} className="-rotate-90">
+                      <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={r}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.15)"
+                        strokeWidth={stroke}
+                      />
+                      <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={r}
+                        fill="none"
+                        stroke={col}
+                        strokeWidth={stroke}
+                        strokeLinecap="round"
+                        strokeDasharray={c}
+                        strokeDashoffset={off}
+                        style={{
+                          transition: "stroke-dashoffset 0.6s ease",
+                        }}
+                      />
+                    </svg>
+                    <span className="absolute text-[15px] font-extrabold tracking-tight text-white">
+                      {pct}%
+                    </span>
+                  </div>
+                );
+              })()}
               <div className="flex flex-col gap-1.5">
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-white/70">
                   <Sparkles className="size-3" />
@@ -1142,26 +1179,27 @@ function PatientIaSection({
               </span>
             </div>
           </div>
-          {/* Chips */}
+          {/* Chips — más contraste */}
           <div className="relative mt-4 flex flex-wrap gap-1.5">
             {profile.chips.map((c) => (
               <span
                 key={c.text}
-                className="inline-flex items-center gap-1 rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur ring-1 ring-white/10"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.18] px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur border border-white/20"
               >
-                <span>{c.ico}</span>
+                <span className="text-[11px]">{c.ico}</span>
                 {t(c.text)}
               </span>
             ))}
           </div>
         </div>
-        {/* Banner condición */}
-        <div className="flex items-start gap-3 border-y border-border bg-card px-5 py-4">
+        {/* Banner condición — más contraste */}
+        <div className="flex items-start gap-3 border-y border-border bg-amber-50/40 px-5 py-4 dark:bg-card">
           <span
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl text-base"
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl text-base ring-1"
             style={{
-              backgroundColor: `${profile.bannerColor}14`,
+              backgroundColor: `${profile.bannerColor}18`,
               color: profile.bannerColor,
+              borderColor: `${profile.bannerColor}30`,
             }}
           >
             {profile.bannerIcon}
@@ -1235,57 +1273,91 @@ function PatientIaSection({
         </p>
       </div>
 
-      {/* Radar + dims — headers azules */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-        <div className="xl:col-span-2 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      {/* Radar + dims — distribución equilibrada, sin estirar */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 items-start">
+        <div className="xl:col-span-5 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm h-fit">
           <SectionHeader
             title={t("Radar 7 dimensiones")}
-            description={t("Perfil 0-100 por dominio")}
+            description={t("Perfil 0-100 por dominio · valores y brechas")}
             icon={Activity}
             variant="primary"
           />
-          <div className="flex justify-center p-4">
-            <RadarMini dims={profile.dims} />
+          <div className="flex flex-col items-center gap-3 p-6">
+            <div className="relative">
+              <div className="absolute inset-0 -z-10 rounded-full bg-gradient-to-br from-primary/5 via-transparent to-primary/10 blur-xl" />
+              <RadarMini dims={profile.dims} size={210} />
+            </div>
+            <p className="max-w-[260px] text-center text-[11px] leading-relaxed text-muted-foreground">
+              {t(
+                "Cada vértice es un dominio clínico. El polígono relleno marca tu perfil actual.",
+              )}
+            </p>
+            <div className="flex flex-wrap justify-center gap-1">
+              {profile.dims.slice(0, 3).map((d) => (
+                <span
+                  key={d.label}
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                  style={{
+                    backgroundColor: `${d.color}14`,
+                    color: d.color,
+                    border: `1px solid ${d.color}20`,
+                  }}
+                >
+                  <span
+                    className="size-1.5 rounded-full"
+                    style={{ backgroundColor: d.color }}
+                  />
+                  {t(d.label)} {d.value}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="xl:col-span-3 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="xl:col-span-7 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm h-fit">
           <SectionHeader
             title={t("Detalle por dimensión")}
-            description={t("Valor y nota clínica por dominio")}
+            description={t("Valor, barra y nota clínica por dominio")}
             icon={Target}
             variant="primary"
           />
-          <div className="flex flex-col gap-2 p-3">
+          <div className="grid grid-cols-1 gap-2.5 p-3 sm:grid-cols-2">
             {profile.dims.map((d) => (
               <div
                 key={d.label}
-                className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm"
+                className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
               >
                 <span
-                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-sm"
-                  style={{ backgroundColor: `${d.color}14`, color: d.color }}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-xl text-[15px] ring-1"
+                  style={{
+                    backgroundColor: `${d.color}16`,
+                    color: d.color,
+                    borderColor: `${d.color}20`,
+                  }}
                 >
                   {d.ico}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-[12px] font-semibold text-foreground">
+                    <span className="truncate text-[12.5px] font-bold text-foreground">
                       {t(d.label)}
                     </span>
                     <span
-                      className="shrink-0 text-[12px] font-bold"
-                      style={{ color: d.color }}
+                      className="shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-extrabold"
+                      style={{
+                        backgroundColor: `${d.color}14`,
+                        color: d.color,
+                      }}
                     >
                       {d.value}
                     </span>
                   </div>
-                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full"
+                      className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${d.value}%`, backgroundColor: d.color }}
                     />
                   </div>
-                  <span className="text-[10.5px] text-muted-foreground">
+                  <span className="mt-1 block truncate text-[11px] font-medium text-slate-600">
                     {t(d.note)}
                   </span>
                 </div>
@@ -1468,6 +1540,7 @@ function DofaMiniCard({
 
 function RadarMini({
   dims,
+  size = 170,
 }: {
   dims: {
     ico: string;
@@ -1476,8 +1549,8 @@ function RadarMini({
     color: string;
     note: string;
   }[];
+  size?: number;
 }) {
-  const size = 170;
   const cx = size / 2;
   const cy = size / 2;
   const r = size / 2 - 14;
