@@ -9,7 +9,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Provider as UrqlProvider, useMutation, useQuery, useSubscription } from "urql";
+import {
+  Provider as UrqlProvider,
+  useMutation,
+  useQuery,
+  useSubscription,
+} from "urql";
 import { communityClient } from "./services/client";
 import {
   ADD_COMMENT,
@@ -20,7 +25,6 @@ import {
   COMMUNITY_ANALYTICS_QUERY,
   COMMUNITY_GROUPS_QUERY,
   CREATE_ANNOUNCEMENT,
-  CREATE_POST,
   DASHBOARD_STATS_QUERY,
   DIAGNOSTIC_STATS_QUERY,
   FEED_EVENT_ADDED_SUB,
@@ -66,7 +70,6 @@ import {
   type CommunityGroupsResult,
   type CommunityGroupWire,
   type CreateAnnouncementResult,
-  type CreatePostResult,
   type DashboardStatsResult,
   type DiagnosticStatWire,
   type DiagnosticStatsResult,
@@ -127,7 +130,6 @@ import type {
   NetworkChannel,
   PostType,
   Recognition,
-  RegionName,
   RegionStat,
   RiskLevel,
   StreakRank,
@@ -136,7 +138,10 @@ import type {
 
 // --- Utilidades de mapeo (backend → frontend) ---
 
-function splitName(displayName: string): { firstName: string; lastName: string } {
+function splitName(displayName: string): {
+  firstName: string;
+  lastName: string;
+} {
   const parts = displayName.trim().split(/\s+/);
   const firstName = parts[0] ?? displayName;
   const lastName = parts.slice(1).join(" ") || "";
@@ -189,7 +194,7 @@ function mapProfile(p: Profile): CommunityMember {
     status: normalizedStatus === "BANNED" ? "Inactivo" : "Activo",
     daysSincePost: daysSince(p.lastPostAt),
     lastPost: relativeTime(p.lastPostAt),
-    risk: normalizeEnum(p.riskLevel) as RiskLevel || "Bajo",
+    risk: (normalizeEnum(p.riskLevel) as RiskLevel) || "Bajo",
     lastPostAt: p.lastPostAt ?? undefined,
     courses: 0,
     shared: false,
@@ -226,7 +231,10 @@ function mapPost(post: Post): ErpPost {
     author: post.profile.displayName,
     authorId: post.profile.id,
     type: normalizeEnum(post.type) as PostType,
-    destination: DEST_LABEL[normalizeEnum(post.destination)] ?? DEST_LABEL[post.destination] ?? post.destination,
+    destination:
+      DEST_LABEL[normalizeEnum(post.destination)] ??
+      DEST_LABEL[post.destination] ??
+      post.destination,
     body: post.body,
     pinned: post.pinned,
     pinnedOrder: post.pinnedOrder ?? 0,
@@ -270,13 +278,20 @@ function mapStreak(p: Profile): StreakRank {
 }
 
 /** Convierte un Post del wire a un TimelineEntry normalizado. */
-function wirePostToTimelineEntry(p: Post, isRepost = false, repostedAt?: string): TimelineEntry {
+function wirePostToTimelineEntry(
+  p: Post,
+  isRepost = false,
+  repostedAt?: string,
+): TimelineEntry {
   return {
     id: p.id,
     author: p.profile.displayName,
     authorId: p.profile.id,
     type: normalizeEnum(p.type) as PostType,
-    destination: DEST_LABEL[normalizeEnum(p.destination)] ?? DEST_LABEL[p.destination] ?? p.destination,
+    destination:
+      DEST_LABEL[normalizeEnum(p.destination)] ??
+      DEST_LABEL[p.destination] ??
+      p.destination,
     body: p.body,
     pinned: p.pinned,
     pinnedOrder: p.pinnedOrder ?? 0,
@@ -383,12 +398,15 @@ function formatFollowers(n: number): string {
   return String(n);
 }
 
-function deriveGroupType(name: string): "Reto" | "Apoyo" | "Nutrición" | "General" | "Principal" {
+function deriveGroupType(
+  name: string,
+): "Reto" | "Apoyo" | "Nutrición" | "General" | "Principal" {
   const lower = name.toLowerCase();
   if (lower.includes("reto")) return "Reto";
   if (lower.includes("apoyo")) return "Apoyo";
   if (lower.includes("cocina") || lower.includes("nutri")) return "Nutrición";
-  if (lower.includes("comunidad") || lower.includes("adred")) return "Principal";
+  if (lower.includes("comunidad") || lower.includes("adred"))
+    return "Principal";
   return "General";
 }
 
@@ -423,7 +441,8 @@ function mapWireRegion(r: RegionStatWire, totalMembers: number): RegionStat {
     region: label,
     members: r.members,
     postsPerWeek: r.postsPerWeek,
-    percent: totalMembers === 0 ? 0 : Math.round((r.members / totalMembers) * 100),
+    percent:
+      totalMembers === 0 ? 0 : Math.round((r.members / totalMembers) * 100),
   };
 }
 
@@ -534,10 +553,19 @@ interface ErpContextValue {
   messageReachError: string | undefined;
   refetchMessageReach: () => void;
   dashboardKpis: Kpi[];
-  dashboardActivitySeries: { dia: string; posts: number; comentarios: number; reacciones: number }[];
+  dashboardActivitySeries: {
+    dia: string;
+    posts: number;
+    comentarios: number;
+    reacciones: number;
+  }[];
   dashboardPostTypeData: { name: string; value: number }[];
   dashboardPeakHoursData: { hora: string; valor: number }[];
-  dashboardDiagnosisParticipation: { subject: string; value: number; fullMark: number }[];
+  dashboardDiagnosisParticipation: {
+    subject: string;
+    value: number;
+    fullMark: number;
+  }[];
   dashboardInactiveOver7Days: number;
   dashboardInactiveAtRisk: number;
   dashboardLoading: boolean;
@@ -666,12 +694,11 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const ev = feedSubResult.data?.feedEventAdded;
     if (!ev) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- WS external -> state, intentional
     setLiveFeedEvents((prev) => {
       if (prev.some((p) => p.id === ev.id)) return prev;
       return [ev, ...prev].slice(0, 20);
     });
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNewFeedIds((prev) => {
       const next = new Set(prev);
       next.add(ev.id);
@@ -697,12 +724,11 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const c = commentSubResult.data?.commentAdded;
     if (!c) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- WS external -> state, intentional
     setLiveComments((prev) => {
       if (prev.some((p) => p.id === c.id)) return prev;
       return [c, ...prev].slice(0, 100);
     });
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNewCommentIds((prev) => {
       const next = new Set(prev);
       next.add(c.id);
@@ -735,20 +761,22 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     variables: {},
   });
 
-  const [analyticsResult, refetchAnalytics] = useQuery<CommunityAnalyticsResult>({
-    query: COMMUNITY_ANALYTICS_QUERY,
-    variables: {},
-  });
+  const [analyticsResult, refetchAnalytics] =
+    useQuery<CommunityAnalyticsResult>({
+      query: COMMUNITY_ANALYTICS_QUERY,
+      variables: {},
+    });
 
   const [regionStatsResult, refetchRegions] = useQuery<RegionStatsResult>({
     query: REGION_STATS_QUERY,
     variables: {},
   });
 
-  const [diagnosticStatsResult, refetchDiagnostics] = useQuery<DiagnosticStatsResult>({
-    query: DIAGNOSTIC_STATS_QUERY,
-    variables: {},
-  });
+  const [diagnosticStatsResult, refetchDiagnostics] =
+    useQuery<DiagnosticStatsResult>({
+      query: DIAGNOSTIC_STATS_QUERY,
+      variables: {},
+    });
 
   const [recognitionsResult, refetchRecognitions] = useQuery<
     RecognitionsResult,
@@ -771,10 +799,11 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     variables: { take: 50, skip: 0 },
   });
 
-  const [messageReachResult, refetchMessageReach] = useQuery<MessageReachResult>({
-    query: MESSAGE_REACH_QUERY,
-    variables: {},
-  });
+  const [messageReachResult, refetchMessageReach] =
+    useQuery<MessageReachResult>({
+      query: MESSAGE_REACH_QUERY,
+      variables: {},
+    });
 
   const [, createPostMut] = useMutation<
     CreateAnnouncementResult,
@@ -809,33 +838,67 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     SendGroupMessageResult,
     { groupId: string; body: string }
   >(SEND_GROUP_MESSAGE);
-  const [, viewPostMut] = useMutation<ViewPostResult, { id: string }>(VIEW_POST);
-  const [, reorderPinnedMut] = useMutation<ReorderPinnedPostsResult, { orderedIds: string[] }>(REORDER_PINNED_POSTS);
+  const [, viewPostMut] = useMutation<ViewPostResult, { id: string }>(
+    VIEW_POST,
+  );
+  const [, reorderPinnedMut] = useMutation<
+    ReorderPinnedPostsResult,
+    { orderedIds: string[] }
+  >(REORDER_PINNED_POSTS);
 
-  const [, addCommentMut] = useMutation<AddCommentResult, { postId: string; body: string }>(ADD_COMMENT);
-  const [, replyToCommentMut] = useMutation<ReplyToCommentResult, { commentId: string; body: string }>(
-    REPLY_TO_COMMENT,
+  const [, addCommentMut] = useMutation<
+    AddCommentResult,
+    { postId: string; body: string }
+  >(ADD_COMMENT);
+  const [, replyToCommentMut] = useMutation<
+    ReplyToCommentResult,
+    { commentId: string; body: string }
+  >(REPLY_TO_COMMENT);
+  const [, deleteCommentMut] = useMutation<
+    ModerateDeleteCommentResult,
+    { commentId: string }
+  >(MODERATE_DELETE_COMMENT);
+  const [, reportPostMut] = useMutation<
+    ReportPostResult,
+    { postId: string; reason: string; details?: string }
+  >(REPORT_POST);
+  const [, resolveReportMut] = useMutation<
+    ResolveReportResult,
+    { reportId: string }
+  >(RESOLVE_REPORT);
+  const [, banProfileMut] = useMutation<
+    BanProfileResult,
+    { id: string; reason?: string }
+  >(BAN_PROFILE);
+  const [, unbanProfileMut] = useMutation<UnbanProfileResult, { id: string }>(
+    UNBAN_PROFILE,
   );
-  const [, deleteCommentMut] = useMutation<ModerateDeleteCommentResult, { commentId: string }>(
-    MODERATE_DELETE_COMMENT,
-  );
-  const [, reportPostMut] = useMutation<ReportPostResult, { postId: string; reason: string; details?: string }>(
-    REPORT_POST,
-  );
-  const [, resolveReportMut] = useMutation<ResolveReportResult, { reportId: string }>(
-    RESOLVE_REPORT,
-  );
-  const [, banProfileMut] = useMutation<BanProfileResult, { id: string; reason?: string }>(BAN_PROFILE);
-  const [, unbanProfileMut] = useMutation<UnbanProfileResult, { id: string }>(UNBAN_PROFILE);
 
-  const [, likeCommentMut] = useMutation<LikeCommentResult, { commentId: string }>(LIKE_COMMENT);
-  const [, unlikeCommentMut] = useMutation<UnlikeCommentResult, { commentId: string }>(UNLIKE_COMMENT);
-  const [, reportCommentMut] = useMutation<ReportCommentResult, { commentId: string; reason: string; details?: string }>(REPORT_COMMENT);
-  const [, resolveCommentReportMut] = useMutation<ResolveCommentReportResult, { reportId: string }>(RESOLVE_COMMENT_REPORT);
+  const [, likeCommentMut] = useMutation<
+    LikeCommentResult,
+    { commentId: string }
+  >(LIKE_COMMENT);
+  const [, unlikeCommentMut] = useMutation<
+    UnlikeCommentResult,
+    { commentId: string }
+  >(UNLIKE_COMMENT);
+  const [, reportCommentMut] = useMutation<
+    ReportCommentResult,
+    { commentId: string; reason: string; details?: string }
+  >(REPORT_COMMENT);
+  const [, resolveCommentReportMut] = useMutation<
+    ResolveCommentReportResult,
+    { reportId: string }
+  >(RESOLVE_COMMENT_REPORT);
 
   // --- Repost mutations ---
-  const [, repostPostMut] = useMutation<RepostPostResult, { postId: string }>(REPOST_POST);
-  const [, unrepostPostMut] = useMutation<UnrepostPostResult, { postId: string }>(UNREPOST_POST);
+  const [, repostPostMut] = useMutation<RepostPostResult, { postId: string }>(
+    REPOST_POST,
+  );
+  const [, unrepostPostMut] = useMutation<
+    UnrepostPostResult,
+    { postId: string }
+  >(UNREPOST_POST);
 
   const [reportedPostsResult, refetchReportedPosts] = useQuery<
     ReportedPostsResult,
@@ -894,7 +957,10 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     const base = feedResult.data?.feedEvents ?? [];
     const live = liveFeedEvents;
     // Combinar eventos en vivo al inicio, deduplicando por id, y marcar los nuevos
-    const merged: FeedEvent[] = [...live, ...base.filter((b) => !live.some((l) => l.id === b.id))];
+    const merged: FeedEvent[] = [
+      ...live,
+      ...base.filter((b) => !live.some((l) => l.id === b.id)),
+    ];
     return merged.map((e) => {
       const item = mapFeedEvent(e);
       if (newFeedIds.has(e.id)) item.isNew = true;
@@ -937,7 +1003,9 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   }, [diagnosticStatsResult.data]);
 
   const recognitions = useMemo<Recognition[]>(() => {
-    return (recognitionsResult.data?.recognitions ?? []).map(mapWireRecognition);
+    return (recognitionsResult.data?.recognitions ?? []).map(
+      mapWireRecognition,
+    );
   }, [recognitionsResult.data]);
 
   const networks = useMemo<NetworkChannel[]>(() => {
@@ -948,11 +1016,15 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   }, [networksResult.data]);
 
   const communityGroups = useMemo<CommunityGroup[]>(() => {
-    return (communityGroupsResult.data?.communityGroups ?? []).map(mapWireGroup);
+    return (communityGroupsResult.data?.communityGroups ?? []).map(
+      mapWireGroup,
+    );
   }, [communityGroupsResult.data]);
 
   const messageReach = useMemo<MessageReach[]>(() => {
-    return (messageReachResult.data?.messageReach ?? []).map(mapWireMessageReach);
+    return (messageReachResult.data?.messageReach ?? []).map(
+      mapWireMessageReach,
+    );
   }, [messageReachResult.data]);
 
   const reportedPosts = useMemo<ReportedPostWire[]>(() => {
@@ -1016,10 +1088,13 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     if (!ds) return [];
     const fmtNum = (n: number) => n.toLocaleString("es-ES");
     const fmtPct = (n: number) => `${Math.round(n)}%`;
-    const trendFor = (delta: number): { value: string; direction: "up" | "down" } | undefined => {
+    const trendFor = (
+      delta: number,
+    ): { value: string; direction: "up" | "down" } | undefined => {
       if (delta === 0) return undefined;
       const abs = Math.abs(delta);
-      const rounded = abs % 1 === 0 ? abs.toFixed(0) : abs.toFixed(1).replace(/\.0$/, "");
+      const rounded =
+        abs % 1 === 0 ? abs.toFixed(0) : abs.toFixed(1).replace(/\.0$/, "");
       return {
         value: delta > 0 ? `+${rounded}%` : `-${rounded}%`,
         direction: delta > 0 ? "up" : "down",
@@ -1078,7 +1153,9 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       // HotChocolate 16 serializa enums en SCREAMING_SNAKE_CASE (TEXTO, COMUNIDAD_ADRED)
       const wireType = String(type).toUpperCase();
       const pascalDest = toDestinationEnum(destination);
-      const wireDestination = pascalDest.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase();
+      const wireDestination = pascalDest
+        .replace(/([a-z])([A-Z])/g, "$1_$2")
+        .toUpperCase();
       createPostMut({
         body,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1098,7 +1175,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, refetchPosts, refetchFeed],
+    [toast, refetchPosts, refetchFeed, createPostMut],
   );
 
   const togglePin = useCallback<ErpContextValue["togglePin"]>(
@@ -1113,7 +1190,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, refetchPosts],
+    [toast, refetchPosts, pinPostMut],
   );
 
   const deletePost = useCallback<ErpContextValue["deletePost"]>(
@@ -1127,7 +1204,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, refetchPosts],
+    [toast, refetchPosts, deletePostMut],
   );
 
   // Registra una vista de la publicación (fire-and-forget, silencioso).
@@ -1137,19 +1214,21 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         if (!res.error) refetchPosts();
       });
     },
-    [refetchPosts],
+    [refetchPosts, viewPostMut],
   );
 
   const reorderPinned = useCallback<ErpContextValue["reorderPinned"]>(
     async (orderedIds) => {
       const res = await reorderPinnedMut({ orderedIds });
       if (res.error) {
-        toast(res.error.message || "No se pudo reordenar las publicaciones fijadas");
+        toast(
+          res.error.message || "No se pudo reordenar las publicaciones fijadas",
+        );
       } else {
         refetchPosts();
       }
     },
-    [toast, refetchPosts],
+    [toast, refetchPosts, reorderPinnedMut],
   );
 
   const awardXp = useCallback<ErpContextValue["awardXp"]>(
@@ -1176,20 +1255,22 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, refetchMembers, refetchStreaks],
+    [toast, refetchMembers, refetchStreaks, awardXpAllMut, awardXpMut],
   );
 
   const sendMessage = useCallback<ErpContextValue["sendMessage"]>(
     (memberId, message) => {
-      sendDirectMessageMut({ profileId: memberId, body: message }).then((res) => {
-        if (res.error) {
-          toast(t("No pudimos enviar el mensaje. Intenta de nuevo."));
-        } else {
-          toast(t("Enviado como Equipo ANTARES"));
-        }
-      });
+      sendDirectMessageMut({ profileId: memberId, body: message }).then(
+        (res) => {
+          if (res.error) {
+            toast(t("No pudimos enviar el mensaje. Intenta de nuevo."));
+          } else {
+            toast(t("Enviado como Equipo ANTARES"));
+          }
+        },
+      );
     },
-    [toast, t],
+    [toast, t, sendDirectMessageMut],
   );
 
   const sendBulkInactive = useCallback<ErpContextValue["sendBulkInactive"]>(
@@ -1203,7 +1284,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t],
+    [toast, t, sendBulkMessageMut],
   );
 
   const sendGroupMessage = useCallback<ErpContextValue["sendGroupMessage"]>(
@@ -1217,7 +1298,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t],
+    [toast, t, sendGroupMessageMut],
   );
 
   const addComment = useCallback<ErpContextValue["addComment"]>(
@@ -1251,7 +1332,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t],
+    [toast, t, addCommentMut],
   );
 
   const replyToComment = useCallback<ErpContextValue["replyToComment"]>(
@@ -1284,7 +1365,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t],
+    [toast, t, replyToCommentMut],
   );
 
   const deleteComment = useCallback<ErpContextValue["deleteComment"]>(
@@ -1298,7 +1379,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t, refetchPosts],
+    [toast, t, refetchPosts, deleteCommentMut],
   );
 
   const reportPost = useCallback<ErpContextValue["reportPost"]>(
@@ -1311,7 +1392,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t],
+    [toast, t, reportPostMut],
   );
 
   const likeComment = useCallback<ErpContextValue["likeComment"]>(
@@ -1324,7 +1405,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t, refetchPosts],
+    [toast, t, refetchPosts, likeCommentMut],
   );
 
   const unlikeComment = useCallback<ErpContextValue["unlikeComment"]>(
@@ -1337,7 +1418,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t, refetchPosts],
+    [toast, t, refetchPosts, unlikeCommentMut],
   );
 
   const reportComment = useCallback<ErpContextValue["reportComment"]>(
@@ -1350,10 +1431,12 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t],
+    [toast, t, reportCommentMut],
   );
 
-  const resolveCommentReport = useCallback<ErpContextValue["resolveCommentReport"]>(
+  const resolveCommentReport = useCallback<
+    ErpContextValue["resolveCommentReport"]
+  >(
     (reportId) => {
       resolveCommentReportMut({ reportId }).then((res) => {
         if (res.error) {
@@ -1364,7 +1447,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t, refetchReportedComments],
+    [toast, t, refetchReportedComments, resolveCommentReportMut],
   );
 
   // --- Repost handlers ---
@@ -1384,7 +1467,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, refetchPosts],
+    [toast, refetchPosts, repostPostMut],
   );
 
   const unrepostPostHandler = useCallback<ErpContextValue["unrepostPost"]>(
@@ -1398,7 +1481,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, refetchPosts],
+    [toast, refetchPosts, unrepostPostMut],
   );
 
   // --- Post reposts query (lazy) ---
@@ -1422,7 +1505,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       setPostRepostsVariables({ postId, take: 50, skip: 0 });
       reexecutePostReposts({ requestPolicy: "network-only" });
     },
-    [],
+    [reexecutePostReposts],
   );
 
   const postReposts = useMemo(() => {
@@ -1443,12 +1526,14 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     pause: true,
   });
 
-  const fetchProfileTimeline = useCallback<ErpContextValue["fetchProfileTimeline"]>(
+  const fetchProfileTimeline = useCallback<
+    ErpContextValue["fetchProfileTimeline"]
+  >(
     (profileId) => {
       setProfileTimelineVariables({ id: profileId });
       reexecuteProfileTimeline({ requestPolicy: "network-only" });
     },
-    [],
+    [reexecuteProfileTimeline],
   );
 
   const profileTimeline = useMemo(() => {
@@ -1462,7 +1547,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       setSearchProfilesVariables({ search, take, skip });
       reexecuteSearchProfiles({ requestPolicy: "network-only" });
     },
-    [],
+    [reexecuteSearchProfiles],
   );
 
   const resolveReport = useCallback<ErpContextValue["resolveReport"]>(
@@ -1476,7 +1561,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t, refetchReportedPosts],
+    [toast, t, refetchReportedPosts, resolveReportMut],
   );
 
   const banProfile = useCallback<ErpContextValue["banProfile"]>(
@@ -1491,7 +1576,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t, refetchMembers, refetchReportedPosts],
+    [toast, t, refetchMembers, refetchReportedPosts, banProfileMut],
   );
 
   const unbanProfile = useCallback<ErpContextValue["unbanProfile"]>(
@@ -1506,7 +1591,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [toast, t, refetchMembers, refetchReportedPosts],
+    [toast, t, refetchMembers, refetchReportedPosts, unbanProfileMut],
   );
 
   const value = useMemo<ErpContextValue>(
@@ -1683,6 +1768,9 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       replyToComment,
       deleteComment,
       reportPost,
+      reportedPosts,
+      reportedComments,
+      searchProfilesMapped,
       reportedPostsResult.fetching,
       reportedPostsResult.error,
       refetchReportedPosts,
@@ -1696,7 +1784,6 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       resolveCommentReport,
       searchProfiles,
       searchProfilesResult.fetching,
-      searchProfilesResult.error,
       repostPostHandler,
       unrepostPostHandler,
       postReposts,
@@ -1705,6 +1792,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       profileTimeline,
       profileTimelineResult.fetching,
       fetchProfileTimeline,
+
       sortBy,
       setSortBy,
       interval,

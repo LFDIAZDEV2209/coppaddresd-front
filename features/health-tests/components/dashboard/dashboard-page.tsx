@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -485,9 +485,7 @@ export function HealthTestsDashboard() {
 
 /* --- Mapa idéntico a program/dashboard: USA SVG choropleth por % alto riesgo --- */
 function HealthGeoMapRow() {
-  const t = useT();
   const { data, loading, error } = useHealthGeo();
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   if (loading && !data) {
     return (

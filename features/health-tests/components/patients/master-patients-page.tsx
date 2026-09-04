@@ -26,7 +26,6 @@ import {
   Sparkles,
   Timer,
   UserCheck,
-  UserRound,
   Users,
 } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
@@ -101,8 +100,8 @@ export function MasterPatientsPage() {
       : "table";
   });
 
-  const batteries = data?.batteries ?? [];
-  const tests = data?.tests ?? [];
+  const batteries = useMemo(() => data?.batteries ?? [], [data?.batteries]);
+  const tests = useMemo(() => data?.tests ?? [], [data?.tests]);
 
   const testsForBattery = useMemo(() => {
     if (batteryId === "all") return tests;
@@ -114,6 +113,7 @@ export function MasterPatientsPage() {
   // Cuando cambia la batería, si el test seleccionado ya no pertenece, resetearlo.
   useEffect(() => {
     if (testId !== "all" && !testsForBattery.some((x) => x.id === testId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- corrige selección inconsistente, requerido
       setTestId("all");
     }
   }, [batteryId, testId, testsForBattery]);
@@ -163,7 +163,16 @@ export function MasterPatientsPage() {
       const doc = row.patient.documentNumber.toLowerCase();
       return name.includes(term) || doc.includes(term);
     });
-  }, [data, search, risk, professionalId, batteryId, testId, batteries]);
+  }, [
+    data,
+    search,
+    risk,
+    professionalId,
+    batteryId,
+    testId,
+    batteries,
+    instrumentIdToCode,
+  ]);
 
   const sorted = useMemo(() => {
     const factor = sortDir === "asc" ? 1 : -1;
@@ -1096,7 +1105,6 @@ function ExpandedPanel({
     return m;
   }, [tests]);
   const idToTest = useMemo(() => new Map(tests.map((x) => [x.id, x])), [tests]);
-  const testMap = codeToTest;
 
   const { displayResults, batteryName } = useMemo(() => {
     let results = [...row.patient.results];
@@ -1126,7 +1134,7 @@ function ExpandedPanel({
     };
     results.sort((a, b) => (order[a.state] ?? 9) - (order[b.state] ?? 9));
     return { displayResults: results, batteryName: name };
-  }, [row.patient.results, batteryId, testId, batteries]);
+  }, [row.patient.results, batteryId, testId, batteries, idToCode]);
 
   const completed = displayResults.filter(
     (r) => r.state === "completado",

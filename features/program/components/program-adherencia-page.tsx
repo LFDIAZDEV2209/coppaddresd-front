@@ -52,6 +52,7 @@ import {
 } from "../services/program-erp-constants";
 import { PagedListFooter } from "./paged-list-footer";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SORT_OPTIONS = [
   { value: "global_pct", label: "Adherencia global" },
   { value: "xp", label: "XP total" },
@@ -118,7 +119,8 @@ export function ProgramAdherenciaPage() {
     URL.revokeObjectURL(url);
   };
 
-  const totalPages = data?.tabla.totalPages ?? 1;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+const totalPages = data?.tabla.totalPages ?? 1;
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">

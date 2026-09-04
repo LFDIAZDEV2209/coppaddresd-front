@@ -5,7 +5,14 @@
 // paciente (EnrollmentContentTab) y en la página de contenido original.
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { CalendarDays, Check, Loader2, Salad, Dumbbell, Layers } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  Loader2,
+  Salad,
+  Dumbbell,
+  Layers,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,6 +69,7 @@ export function ContentTable({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clamp page, intentional
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
@@ -94,9 +102,17 @@ export function ContentTable({
             <TableRow className="bg-[#0B2B4A] hover:bg-[#0B2B4A]">
               <TableHead className="w-16 text-white">Día</TableHead>
               <TableHead className="text-white">Fecha</TableHead>
-              <TableHead className="min-w-[240px] text-white">Plan nutricional</TableHead>
-              <TableHead className="min-w-[260px] text-white">Rutina de ejercicio</TableHead>
-              {canEdit && <TableHead className="text-right text-white">Acciones</TableHead>}
+              <TableHead className="min-w-[240px] text-white">
+                Plan nutricional
+              </TableHead>
+              <TableHead className="min-w-[260px] text-white">
+                Rutina de ejercicio
+              </TableHead>
+              {canEdit && (
+                <TableHead className="text-right text-white">
+                  Acciones
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>

@@ -27,7 +27,8 @@ export function useHealthGeo() {
 
   useEffect(() => {
     const ctrl = new AbortController();
-    load(ctrl.signal);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- load syncs external fetch → state, intentional
+    void load(ctrl.signal);
     return () => ctrl.abort();
   }, [load]);
 

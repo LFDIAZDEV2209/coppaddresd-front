@@ -209,6 +209,7 @@ interface IndicatorDefDto {
   isActive: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface AssignmentDto {
   id: string;
   patientId: string;
@@ -523,6 +524,7 @@ function inferCategory(code: string): TestCategory {
 }
 
 /** Mapa versionId -> HealthTest para resolver asignaciones (evita N+1 y mismatch instrumentId). */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function loadVersionMap(): Promise<Map<string, HealthTest>> {
   const response = await apiFetch<PaginatedDto<InstrumentDto>>(
     `${BASE}?page=1&pageSize=100&isActive=true`,
@@ -894,6 +896,7 @@ async function getMasterRows(): Promise<PatientMasterRow[]> {
   });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function listTestsCached(): Promise<HealthTest[]> {
   return cached("tests", TTL_CATALOG, () => listTestsRaw());
 }

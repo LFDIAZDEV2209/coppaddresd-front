@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import type {
-  PaginatedBiometriaPatients,
-} from "../types/erp";
+import type { PaginatedBiometriaPatients } from "../types/erp";
 import { fetchBiometriaPatients } from "../services/program-biometria-service";
 
 export interface BiometriaPatientsFilters {
@@ -19,7 +17,9 @@ export interface BiometriaPatientsFilters {
   stateAbbr: string | null;
 }
 
-export function useBiometriaPatients(initialFilters?: Partial<BiometriaPatientsFilters>) {
+export function useBiometriaPatients(
+  initialFilters?: Partial<BiometriaPatientsFilters>,
+) {
   const [filters, setFilters] = useState<BiometriaPatientsFilters>({
     page: 1,
     pageSize: 5,
@@ -37,7 +37,6 @@ export function useBiometriaPatients(initialFilters?: Partial<BiometriaPatientsF
   const [data, setData] = useState<PaginatedBiometriaPatients | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -66,7 +65,7 @@ export function useBiometriaPatients(initialFilters?: Partial<BiometriaPatientsF
     } finally {
       setLoading(false);
     }
-  }, [filters, reloadKey]);
+  }, [filters]);
 
   useEffect(() => {
     const timer = setTimeout(loadData, 300);
@@ -74,27 +73,30 @@ export function useBiometriaPatients(initialFilters?: Partial<BiometriaPatientsF
   }, [loadData]);
 
   const retry = useCallback(() => {
-    setReloadKey((key) => key + 1);
-  }, []);
+    void loadData();
+  }, [loadData]);
 
-  const updateFilters = useCallback((patch: Partial<BiometriaPatientsFilters>) => {
-    setFilters((prev) => ({
-      ...prev,
-      ...patch,
-      page: patch.page ?? (
-        patch.search !== prev.search ||
-        patch.gender !== prev.gender ||
-        patch.imcCategory !== prev.imcCategory ||
-        patch.glucosaCategory !== prev.glucosaCategory ||
-        patch.grasaCategory !== prev.grasaCategory ||
-        patch.trend !== prev.trend ||
-        patch.cityId !== prev.cityId ||
-        patch.stateAbbr !== prev.stateAbbr
-          ? 1
-          : prev.page
-      ),
-    }));
-  }, []);
+  const updateFilters = useCallback(
+    (patch: Partial<BiometriaPatientsFilters>) => {
+      setFilters((prev) => ({
+        ...prev,
+        ...patch,
+        page:
+          patch.page ??
+          (patch.search !== prev.search ||
+          patch.gender !== prev.gender ||
+          patch.imcCategory !== prev.imcCategory ||
+          patch.glucosaCategory !== prev.glucosaCategory ||
+          patch.grasaCategory !== prev.grasaCategory ||
+          patch.trend !== prev.trend ||
+          patch.cityId !== prev.cityId ||
+          patch.stateAbbr !== prev.stateAbbr
+            ? 1
+            : prev.page),
+      }));
+    },
+    [],
+  );
 
   return { data, loading, error, filters, updateFilters, retry };
 }

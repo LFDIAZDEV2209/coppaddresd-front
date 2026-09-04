@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { LayoutDashboard, Users, Bot, MessageSquare, Activity } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Bot,
+  MessageSquare,
+  Activity,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
@@ -19,7 +25,14 @@ import {
   fetchGrowthData,
   fetchRecentActivity,
 } from "../services/dashboard-service";
-import type { KpiData, ActivityDataPoint, AgentUsage, GrowthDataPoint, ActivityEvent, QuickAction } from "../types";
+import type {
+  KpiData,
+  ActivityDataPoint,
+  AgentUsage,
+  GrowthDataPoint,
+  ActivityEvent,
+  QuickAction,
+} from "../types";
 
 export function DashboardPage() {
   const t = useT();
@@ -29,18 +42,23 @@ export function DashboardPage() {
   const [growthData, setGrowthData] = useState<GrowthDataPoint[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityEvent[]>([]);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
-      const [kpisData, activityDataResult, agentUsageData, growthDataResult, recentActivityResult] =
-        await Promise.all([
-          fetchDashboardKpis(),
-          fetchActivityData(),
-          fetchAgentUsage(),
-          fetchGrowthData(),
-          fetchRecentActivity(),
-        ]);
+      const [
+        kpisData,
+        activityDataResult,
+        agentUsageData,
+        growthDataResult,
+        recentActivityResult,
+      ] = await Promise.all([
+        fetchDashboardKpis(),
+        fetchActivityData(),
+        fetchAgentUsage(),
+        fetchGrowthData(),
+        fetchRecentActivity(),
+      ]);
       setKpis(kpisData);
       setActivityData(activityDataResult);
       setAgentUsage(agentUsageData);
@@ -65,7 +83,10 @@ export function DashboardPage() {
       />
 
       {/* KPI Cards */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 stagger-children" aria-label={t("Indicadores clave")}>
+      <section
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 stagger-children"
+        aria-label={t("Indicadores clave")}
+      >
         {kpis.map((kpi) => (
           <StatCard
             key={kpi.id}
@@ -74,7 +95,15 @@ export function DashboardPage() {
             context={kpi.context}
             trend={kpi.trend}
             icon={kpi.icon}
-            variant={kpi.id === "kpi-users" ? "info" : kpi.id === "kpi-agents" ? "success" : kpi.id === "kpi-uptime" ? "success" : "primary"}
+            variant={
+              kpi.id === "kpi-users"
+                ? "info"
+                : kpi.id === "kpi-agents"
+                  ? "success"
+                  : kpi.id === "kpi-uptime"
+                    ? "success"
+                    : "primary"
+            }
           />
         ))}
       </section>
@@ -106,7 +135,10 @@ export function DashboardPage() {
       </div>
 
       {/* Bottom Row */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label={t("Métricas detalladas")}>
+      <section
+        className="grid grid-cols-1 gap-4 lg:grid-cols-3"
+        aria-label={t("Métricas detalladas")}
+      >
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
           <SectionHeader
             title={t("Uso de agentes")}

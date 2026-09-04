@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Menu, Search } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useT } from "@/providers/i18n-provider";
 import { communityBrand } from "../navigation";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";

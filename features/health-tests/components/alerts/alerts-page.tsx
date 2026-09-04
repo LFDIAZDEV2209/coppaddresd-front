@@ -301,6 +301,7 @@ function AlertsTable({
   canReview?: boolean;
 }) {
   const t = useT();
+  void tests;
   return (
     <div className="overflow-x-auto">
       <Table className="min-w-[1040px]">

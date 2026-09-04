@@ -317,233 +317,306 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
         }
       />
 
-      {/* Header del paciente: identidad + riesgo + tipificación */}
-      <section className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
-        {/* sutil degradado de fondo para darle vida sin romper el tema */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{
-            background:
-              "radial-gradient(600px 200px at 15% 0%, var(--primary) 0%, transparent 60%), radial-gradient(500px 220px at 95% 100%, var(--primary) 0%, transparent 60%)",
-          }}
+      {/* Navegación rápida — evita perderse entre secciones */}
+      <nav
+        aria-label={t("Navegación de secciones")}
+        className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-2 shadow-sm"
+      >
+        {[
+          { id: "ficha", label: "Ficha", icon: UserRound },
+          { id: "resumen", label: "Resumen", icon: CheckCircle2 },
+          { id: "analisis-ia", label: "Análisis IA", icon: Sparkles },
+          { id: "visual", label: "Visual", icon: Activity },
+          { id: "historial", label: "Historial", icon: Layers },
+          { id: "bateria", label: "Batería", icon: Building2 },
+          { id: "alertas", label: "Alertas", icon: BellRing },
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById(item.id)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[11.5px] font-semibold text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              <Icon className="size-3.5" />
+              {t(item.label)}
+            </a>
+          );
+        })}
+      </nav>
+
+      {/* Ficha del paciente — header azul */}
+      <section
+        id="ficha"
+        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+      >
+        <SectionHeader
+          title={t("Ficha del paciente")}
+          description={t("Identidad, tipificación de riesgo y fechas clave")}
+          icon={UserRound}
+          variant="primary"
         />
-        <div className="relative flex items-center gap-4">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-lg font-bold text-primary ring-1 ring-primary/15">
-            {initials(patient.firstName, patient.lastName)}
-          </span>
-          <div className="flex flex-col gap-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-bold text-foreground">
-                {fullName(patient.firstName, patient.lastName)}
-              </h2>
-              <RiskBadge
-                risk={risk ?? "sin-evaluar"}
-                label={typificationLabel(typification)}
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
-              <span>
-                {patient.documentNumber}
-                {patient.clinic ? ` · ${patient.clinic}` : ""}
-              </span>
-              <span>
-                {patient.gender} ·{" "}
-                {patient.age > 0
-                  ? `${patient.age} ${t("años")}`
-                  : t("edad no disponible")}
-              </span>
-              {patient.insurance ? (
-                <span className="flex items-center gap-1">
-                  <ShieldCheck className="size-3" />
-                  {patient.insurance}
+        <div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              background:
+                "radial-gradient(600px 200px at 15% 0%, var(--primary) 0%, transparent 60%), radial-gradient(500px 220px at 95% 100%, var(--primary) 0%, transparent 60%)",
+            }}
+          />
+          <div className="relative flex items-center gap-4">
+            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-lg font-bold text-primary ring-1 ring-primary/15">
+              {initials(patient.firstName, patient.lastName)}
+            </span>
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base font-bold text-foreground">
+                  {fullName(patient.firstName, patient.lastName)}
+                </h2>
+                <RiskBadge
+                  risk={risk ?? "sin-evaluar"}
+                  label={typificationLabel(typification)}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
+                <span>
+                  {patient.documentNumber}
+                  {patient.clinic ? ` · ${patient.clinic}` : ""}
                 </span>
-              ) : null}
-              {patient.phone ? (
-                <span className="flex items-center gap-1">
-                  <Phone className="size-3" />
-                  {patient.phone}
+                <span>
+                  {patient.gender} ·{" "}
+                  {patient.age > 0
+                    ? `${patient.age} ${t("años")}`
+                    : t("edad no disponible")}
                 </span>
-              ) : null}
-              <span className="flex items-center gap-1">
-                <Stethoscope className="size-3" />
-                {patient.professionalName || t("Sin asignar")}
-              </span>
+                {patient.insurance ? (
+                  <span className="flex items-center gap-1">
+                    <ShieldCheck className="size-3" />
+                    {patient.insurance}
+                  </span>
+                ) : null}
+                {patient.phone ? (
+                  <span className="flex items-center gap-1">
+                    <Phone className="size-3" />
+                    {patient.phone}
+                  </span>
+                ) : null}
+                <span className="flex items-center gap-1">
+                  <Stethoscope className="size-3" />
+                  {patient.professionalName || t("Sin asignar")}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="relative flex shrink-0 flex-col gap-1 rounded-xl bg-muted px-4 py-3 text-[12px]">
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <CalendarClock className="size-3.5" />
-            {t("Asignado")} {formatDate(patient.assignedAt)}
-          </span>
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <Clock className="size-3.5" />
-            {t("Última evaluación")} {formatDate(lastCompleted(evaluations))}
-          </span>
-          <span className="flex items-center gap-1.5 font-medium text-foreground">
-            <Award className="size-3.5 text-primary" />
-            AHS {iaProfile.ahs}/100 · {t(iaProfile.summary)}
-          </span>
+          <div className="relative flex shrink-0 flex-col gap-1 rounded-xl bg-muted px-4 py-3 text-[12px]">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <CalendarClock className="size-3.5" />
+              {t("Asignado")} {formatDate(patient.assignedAt)}
+            </span>
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Clock className="size-3.5" />
+              {t("Última evaluación")} {formatDate(lastCompleted(evaluations))}
+            </span>
+            <span className="flex items-center gap-1.5 font-medium text-foreground">
+              <Award className="size-3.5 text-primary" />
+              AHS {iaProfile.ahs}/100 · {t(iaProfile.summary)}
+            </span>
+          </div>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label={t("Tests completados")}
-          value={`${completed}/${totalTests}`}
+      <section
+        id="resumen"
+        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+      >
+        <SectionHeader
+          title={t("Resumen de batería")}
+          description={t("Avance, pendientes y alertas en una vista")}
           icon={CheckCircle2}
-          variant="success"
-          context={`${totalTests === 0 ? 0 : Math.round((completed / totalTests) * 100)}% ${t("de la batería")}`}
+          variant="primary"
         />
-        <StatCard
-          label={t("Pendientes")}
-          value={String(Math.max(0, totalTests - completed - pending))}
-          icon={Hourglass}
-          variant="warning"
-          context={t("Sin aplicar")}
-        />
-        <StatCard
-          label={t("En progreso")}
-          value={String(pending)}
-          icon={Timer}
-          variant="info"
-          context={t("Guardados a medias")}
-        />
-        <StatCard
-          label={t("Alertas del paciente")}
-          value={String(patientAlerts.length)}
-          icon={BellRing}
-          variant={patientAlerts.length > 0 ? "destructive" : "primary"}
-          context={t("Relacionadas con sus resultados")}
-        />
-      </div>
+        <div className="p-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label={t("Tests completados")}
+              value={`${completed}/${totalTests}`}
+              icon={CheckCircle2}
+              variant="success"
+              context={`${totalTests === 0 ? 0 : Math.round((completed / totalTests) * 100)}% ${t("de la batería")}`}
+            />
+            <StatCard
+              label={t("Pendientes")}
+              value={String(Math.max(0, totalTests - completed - pending))}
+              icon={Hourglass}
+              variant="warning"
+              context={t("Sin aplicar")}
+            />
+            <StatCard
+              label={t("En progreso")}
+              value={String(pending)}
+              icon={Timer}
+              variant="info"
+              context={t("Guardados a medias")}
+            />
+            <StatCard
+              label={t("Alertas del paciente")}
+              value={String(patientAlerts.length)}
+              icon={BellRing}
+              variant={patientAlerts.length > 0 ? "destructive" : "primary"}
+              context={t("Relacionadas con sus resultados")}
+            />
+          </div>
+        </div>
+      </section>
 
       {/* ── Análisis integral ANTARES · IA (espejo del HealthResult móvil, con datos reales) ── */}
-      <PatientIaSection
-        profile={iaProfile}
-        patient={patient}
-        evaluations={evaluations}
-      />
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <ChartCard
-          title={t("Perfil de indicadores")}
-          description={t("Scores de los tests completados (0-100)")}
-          icon={Activity}
-        >
-          {radarData.length === 0 ? (
-            <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-              <span className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                <Activity className="size-6" />
-              </span>
-              <p className="max-w-52 text-xs text-muted-foreground">
-                {t(
-                  "Sin tests completados todavía — el radar se dibuja al completar evaluaciones.",
-                )}
-              </p>
-            </div>
-          ) : (
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData} outerRadius="68%">
-                  <PolarGrid stroke="var(--border)" />
-                  <PolarAngleAxis
-                    dataKey="name"
-                    tick={{ fontSize: 8.5, fill: "var(--muted-foreground)" }}
-                  />
-                  <PolarRadiusAxis
-                    domain={[0, 100]}
-                    tick={false}
-                    axisLine={false}
-                  />
-                  <Radar
-                    dataKey="score"
-                    stroke="var(--primary)"
-                    fill="var(--primary)"
-                    fillOpacity={0.22}
-                    strokeWidth={2}
-                  />
-                  <Tooltip
-                    formatter={(value) => [`${value} pts`, ""]}
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: "1px solid var(--border)",
-                      fontSize: 12,
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                    }}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </ChartCard>
-
-        <ChartCard
-          title={t("Evolución de scores")}
-          description={t("Evaluaciones repetidas en el tiempo")}
-          icon={HeartPulse}
-        >
-          {evolutionData.length === 0 ? (
-            <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-              <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                <TrendingUp className="size-6" />
-              </span>
-              <p className="max-w-52 text-xs text-muted-foreground">
-                {t(
-                  "Sin evaluaciones repetidas para comparar — al repetir un test verás la curva.",
-                )}
-              </p>
-            </div>
-          ) : (
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={evolutionData}
-                  margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--border)"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    domain={[0, 100]}
-                    tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip
-                    formatter={(value, name) => [String(value), String(name)]}
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: "1px solid var(--border)",
-                      fontSize: 12,
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="valor"
-                    stroke="var(--chart-2)"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: "var(--chart-2)" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </ChartCard>
+      <div id="analisis-ia" className="scroll-mt-6">
+        <PatientIaSection
+          profile={iaProfile}
+          patient={patient}
+          evaluations={evaluations}
+        />
       </div>
 
+      <section
+        id="visual"
+        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+      >
+        <SectionHeader
+          title={t("Visualización clínica")}
+          description={t("Radar de indicadores y evolución temporal")}
+          icon={Activity}
+          variant="primary"
+        />
+        <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-2">
+          <ChartCard
+            title={t("Perfil de indicadores")}
+            description={t("Scores de los tests completados (0-100)")}
+            icon={Activity}
+          >
+            {radarData.length === 0 ? (
+              <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+                <span className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                  <Activity className="size-6" />
+                </span>
+                <p className="max-w-52 text-xs text-muted-foreground">
+                  {t(
+                    "Sin tests completados todavía — el radar se dibuja al completar evaluaciones.",
+                  )}
+                </p>
+              </div>
+            ) : (
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData} outerRadius="68%">
+                    <PolarGrid stroke="var(--border)" />
+                    <PolarAngleAxis
+                      dataKey="name"
+                      tick={{ fontSize: 8.5, fill: "var(--muted-foreground)" }}
+                    />
+                    <PolarRadiusAxis
+                      domain={[0, 100]}
+                      tick={false}
+                      axisLine={false}
+                    />
+                    <Radar
+                      dataKey="score"
+                      stroke="var(--primary)"
+                      fill="var(--primary)"
+                      fillOpacity={0.22}
+                      strokeWidth={2}
+                    />
+                    <Tooltip
+                      formatter={(value) => [`${value} pts`, ""]}
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid var(--border)",
+                        fontSize: 12,
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                      }}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </ChartCard>
+
+          <ChartCard
+            title={t("Evolución de scores")}
+            description={t("Evaluaciones repetidas en el tiempo")}
+            icon={HeartPulse}
+          >
+            {evolutionData.length === 0 ? (
+              <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+                <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                  <TrendingUp className="size-6" />
+                </span>
+                <p className="max-w-52 text-xs text-muted-foreground">
+                  {t(
+                    "Sin evaluaciones repetidas para comparar — al repetir un test verás la curva.",
+                  )}
+                </p>
+              </div>
+            ) : (
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={evolutionData}
+                    margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="var(--border)"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      domain={[0, 100]}
+                      tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      formatter={(value, name) => [String(value), String(name)]}
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid var(--border)",
+                        fontSize: 12,
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="valor"
+                      stroke="var(--chart-2)"
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: "var(--chart-2)" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </ChartCard>
+        </div>
+      </section>
+
       {/* Historial de evaluaciones (hub) — ahora con filtros por batería y por test */}
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <section
+        id="historial"
+        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+      >
         <SectionHeader
           title={t("Historial de evaluaciones")}
           description={t(
@@ -765,7 +838,10 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
       </section>
 
       {/* Tests de la batería — ahora con iconografía por categoría y estado visual */}
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <section
+        id="bateria"
+        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+      >
         <SectionHeader
           title={t("Tests de la batería")}
           description={t("Estado, score e interpretación de cada evaluación")}
@@ -880,7 +956,10 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
       </section>
 
       {/* Alertas del paciente */}
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <section
+        id="alertas"
+        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+      >
         <SectionHeader
           title={t("Alertas del paciente")}
           description={t("Resultados que requieren atención clínica")}
@@ -996,8 +1075,16 @@ function PatientIaSection({
 
   return (
     <section className="flex flex-col gap-4">
-      {/* Hero AHS */}
+      {/* Hero AHS — cabecera azul + síntesis */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <SectionHeader
+          title={t("Análisis integral ANTARES · IA")}
+          description={t(
+            "Síntesis IA — AHS, radar, DOFA, correlaciones y plan priorizado",
+          )}
+          icon={Sparkles}
+          variant="primary"
+        />
         <div className="relative overflow-hidden bg-gradient-to-br from-[var(--sidebar)] via-[color-mix(in_srgb,var(--sidebar)_92%,var(--primary))] to-[color-mix(in_srgb,var(--sidebar)_88%,var(--primary))] p-5 sm:p-6">
           <div
             aria-hidden
@@ -1148,67 +1235,74 @@ function PatientIaSection({
         </p>
       </div>
 
-      {/* Radar + dims */}
+      {/* Radar + dims — headers azules */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-        <div className="xl:col-span-2 overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <h4 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
-            <Activity className="size-3.5 text-primary" />
-            {t("Radar 7 dimensiones")}
-          </h4>
-          <div className="mt-3 flex justify-center">
+        <div className="xl:col-span-2 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <SectionHeader
+            title={t("Radar 7 dimensiones")}
+            description={t("Perfil 0-100 por dominio")}
+            icon={Activity}
+            variant="primary"
+          />
+          <div className="flex justify-center p-4">
             <RadarMini dims={profile.dims} />
           </div>
         </div>
-        <div className="xl:col-span-3 flex flex-col gap-2">
-          {profile.dims.map((d) => (
-            <div
-              key={d.label}
-              className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm"
-            >
-              <span
-                className="flex size-8 shrink-0 items-center justify-center rounded-lg text-sm"
-                style={{ backgroundColor: `${d.color}14`, color: d.color }}
+        <div className="xl:col-span-3 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <SectionHeader
+            title={t("Detalle por dimensión")}
+            description={t("Valor y nota clínica por dominio")}
+            icon={Target}
+            variant="primary"
+          />
+          <div className="flex flex-col gap-2 p-3">
+            {profile.dims.map((d) => (
+              <div
+                key={d.label}
+                className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm"
               >
-                {d.ico}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[12px] font-semibold text-foreground">
-                    {t(d.label)}
-                  </span>
-                  <span
-                    className="shrink-0 text-[12px] font-bold"
-                    style={{ color: d.color }}
-                  >
-                    {d.value}
-                  </span>
-                </div>
-                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full"
-                    style={{ width: `${d.value}%`, backgroundColor: d.color }}
-                  />
-                </div>
-                <span className="text-[10.5px] text-muted-foreground">
-                  {t(d.note)}
+                <span
+                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-sm"
+                  style={{ backgroundColor: `${d.color}14`, color: d.color }}
+                >
+                  {d.ico}
                 </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-[12px] font-semibold text-foreground">
+                      {t(d.label)}
+                    </span>
+                    <span
+                      className="shrink-0 text-[12px] font-bold"
+                      style={{ color: d.color }}
+                    >
+                      {d.value}
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${d.value}%`, backgroundColor: d.color }}
+                    />
+                  </div>
+                  <span className="text-[10.5px] text-muted-foreground">
+                    {t(d.note)}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* DOFA */}
+      {/* DOFA — header azul */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="flex items-center gap-2 border-b border-border bg-muted/20 px-5 py-3">
-          <Target className="size-4 text-primary" />
-          <h4 className="text-[12.5px] font-bold text-foreground">
-            {t("Análisis DOFA")}
-          </h4>
-          <span className="text-[11px] text-muted-foreground">
-            · {t("Fortalezas, Debilidades, Oportunidades y Amenazas")}
-          </span>
-        </div>
+        <SectionHeader
+          title={t("Análisis DOFA")}
+          description={t("Fortalezas, Debilidades, Oportunidades y Amenazas")}
+          icon={Target}
+          variant="primary"
+        />
         <div className="grid grid-cols-1 gap-px bg-border/60 sm:grid-cols-2">
           <DofaMiniCard
             tone="ok"
@@ -1237,46 +1331,50 @@ function PatientIaSection({
         </div>
       </div>
 
-      {/* Correlaciones */}
+      {/* Correlaciones — header azul */}
       {profile.correlations.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          <h4 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
-            <Link2 className="size-3.5" />
-            {t("Correlaciones detectadas")}
-          </h4>
-          {profile.correlations.map((c) => (
-            <div
-              key={c.title}
-              className="flex gap-3 rounded-xl border-l-[3px] bg-card px-4 py-3 shadow-sm"
-              style={{ borderLeftColor: c.color }}
-            >
-              <span
-                className="flex size-7 shrink-0 items-center justify-center rounded-lg"
-                style={{ backgroundColor: `${c.color}14`, color: c.color }}
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <SectionHeader
+            title={t("Correlaciones detectadas")}
+            description={t("Patrones entre dominios que requieren atención")}
+            icon={Link2}
+            variant="primary"
+          />
+          <div className="flex flex-col gap-3 p-4">
+            {profile.correlations.map((c) => (
+              <div
+                key={c.title}
+                className="flex gap-3 rounded-xl border-l-[3px] bg-card px-4 py-3 shadow-sm ring-1 ring-border/30"
+                style={{ borderLeftColor: c.color }}
               >
-                <Link2 className="size-3.5" />
-              </span>
-              <div>
-                <div className="text-[12.5px] font-bold text-foreground">
-                  {t(c.title)}
+                <span
+                  className="flex size-7 shrink-0 items-center justify-center rounded-lg"
+                  style={{ backgroundColor: `${c.color}14`, color: c.color }}
+                >
+                  <Link2 className="size-3.5" />
+                </span>
+                <div>
+                  <div className="text-[12.5px] font-bold text-foreground">
+                    {t(c.title)}
+                  </div>
+                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                    {t(c.text)}
+                  </p>
                 </div>
-                <p className="text-[12px] leading-relaxed text-muted-foreground">
-                  {t(c.text)}
-                </p>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
       ) : null}
 
-      {/* Plan priorizado */}
+      {/* Plan priorizado — header azul */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="flex items-center gap-2 border-b border-border bg-muted/20 px-5 py-3">
-          <Award className="size-4 text-primary" />
-          <h4 className="text-[12.5px] font-bold text-foreground">
-            {t("Plan de intervención priorizado")}
-          </h4>
-        </div>
+        <SectionHeader
+          title={t("Plan de intervención priorizado")}
+          description={t("Acciones por especialidad y semana objetivo")}
+          icon={Award}
+          variant="primary"
+        />
         <div className="flex flex-col divide-y divide-border/60">
           {profile.plan.map((item, i) => (
             <div key={item.title} className="flex items-center gap-3 px-4 py-3">

@@ -87,7 +87,7 @@ export function RolePermissionsPanel({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [role]);
+  }, [role, t]);
 
   const togglePermission = useCallback((permissionId: string) => {
     setChecked((prev) => {
@@ -140,12 +140,20 @@ export function RolePermissionsPanel({
 
       if (result.errors.length > 0) {
         onError(
-          t('Se aplicaron {applied} cambios, pero {errors} asignaciones fallaron. Reintentá guardar: las pendientes se completarán.', { applied: String(result.applied), errors: String(result.errors.length) }),
+          t(
+            "Se aplicaron {applied} cambios, pero {errors} asignaciones fallaron. Reintentá guardar: las pendientes se completarán.",
+            {
+              applied: String(result.applied),
+              errors: String(result.errors.length),
+            },
+          ),
         );
       }
     } catch (err) {
       setLoadError(
-        err instanceof Error ? err.message : t("Error al guardar los permisos."),
+        err instanceof Error
+          ? err.message
+          : t("Error al guardar los permisos."),
       );
     } finally {
       setSaving(false);
@@ -226,7 +234,9 @@ export function RolePermissionsPanel({
 
             {!canAssignPermissions && (
               <p className="mt-4 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
-                {t("No tenés permiso para modificar la asignación de permisos (Permissions.Assign).")}
+                {t(
+                  "No tenés permiso para modificar la asignación de permisos (Permissions.Assign).",
+                )}
               </p>
             )}
           </>
