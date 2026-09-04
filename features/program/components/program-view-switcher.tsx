@@ -13,12 +13,16 @@ interface ViewSwitcherProps {
   onChange: (value: string) => void;
 }
 
-export function ProgramViewSwitcher({ value, options, onChange }: ViewSwitcherProps) {
+export function ProgramViewSwitcher({
+  value,
+  options,
+  onChange,
+}: ViewSwitcherProps) {
   return (
     <div
       role="tablist"
       aria-label="Vistas del programa"
-      className="inline-flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-sm"
+      className="inline-flex flex-wrap items-center gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-sm"
     >
       {options.map((option) => {
         const isActive = value === option.value;
@@ -30,10 +34,10 @@ export function ProgramViewSwitcher({ value, options, onChange }: ViewSwitcherPr
             aria-selected={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg px-5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+              "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
               isActive
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                ? "bg-[#123B63] text-white shadow-md shadow-[#123B63]/25"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
             )}
           >
             {option.label}

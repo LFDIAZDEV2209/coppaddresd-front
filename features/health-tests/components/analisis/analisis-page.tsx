@@ -46,17 +46,18 @@ export function AnalisisPage() {
           onValueChange={(v) => setActive(v as typeof active)}
           className="w-full"
         >
-          <div className="overflow-x-auto -mx-1 px-1">
-            <TabsList className="inline-flex h-10 items-center justify-center rounded-xl bg-muted p-1.5 gap-1">
+          {/* Tabs pill idénticos a ProgramViewSwitcher — h-9 activo navy, inactivo ghost */}
+          <div className="flex justify-center sm:justify-start overflow-x-auto -mx-1 px-1 py-1">
+            <TabsList className="inline-flex h-auto w-auto flex-none items-center gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-sm group-data-horizontal/tabs:h-auto">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
-                    className="inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-foreground"
+                    className="h-9 flex-none whitespace-nowrap rounded-full px-5 text-sm font-medium text-slate-500 transition-all duration-200 hover:bg-slate-50 hover:text-slate-700 data-active:border-transparent data-active:bg-[#123B63] data-active:text-white data-active:shadow-md data-active:shadow-[#123B63]/25 data-active:hover:bg-[#123B63]"
                   >
-                    <Icon className="size-4" />
+                    <Icon className="size-4 shrink-0" />
                     {t(tab.label)}
                   </TabsTrigger>
                 );
