@@ -48,13 +48,17 @@ yarn typecheck                              # TypeScript check (si configurado)
 - **El frontend NUNCA llama al AI Service directo** — el backend proxya ejecuciones (`GET /api/v1/agents/executions`) y el chat (`POST /api/v1/chat` + `/stream` con `agentTypeId`/`userId`). El upload de documentos: PUT `{apiUrl}/api/v1/storage/{key}` + register en la KB (el backend dispara chunking+embeddings).
 - **Versionado**: crear una versión es generar un JSON config desde el form; la primera se activa automáticamente; las versiones son inmutables (solo activar/desactivar). El backend sincroniza la activación al AI Service (`/internal/agents/sync-config`).
 
-## OBLIGATORIO: Flujo de trabajo frontend
+## OBLIGATORIO: Flujo de trabajo frontend — UX/UI expert mode
+
+> **Actúa como UX/UI expert con 15+ años.** Toda tarea frontend carga `design-taste-frontend` v2 + `impeccable` como disciplina obligatoria. Brief inference (§0) + locks §4 + bans §9 + pre-flight §14 antes de ship.
 
 1. **Cargar skills ANTES de escribir codigo**:
-   - `frontend-design` + `react-best-practices` + `next-best-practices`
+   - `design-taste-frontend` (v2 taste-skill: brief inference, design system map, locks, bans, hero discipline) + `impeccable` (23 comandos, detector 61 reglas)
+   - `frontend-design` + `react-best-practices` + `next-best-practices` (base técnica)
    - `tailwind-css-patterns` + `shadcn` + `composition-patterns`
    - `accessibility` + `modern-web-guidance` + `seo`
    - `typescript-advanced-types` + `next-cache-components`
+   - Ver `.agents/skills/design-taste-frontend/SKILL.md` y `.agents/skills/impeccable/SKILL.md` — la skill es la fuente de verdad, no el README resumido.
 
 2. **Leer docs de Next.js 16**: `node_modules/next/dist/docs/` — APIs cambiaron vs training data.
 
@@ -91,25 +95,26 @@ yarn typecheck                              # TypeScript check (si configurado)
 
 ## Skills (MANDATORY antes de trabajo sustancial)
 
-| Tipo de trabajo | Skills a cargar |
-|---|---|
-| Cualquier UI/Componente | `frontend-design` + `react-best-practices` + `next-best-practices` |
-| Estilos/Tailwind | `tailwind-css-patterns` + `modern-web-guidance` |
-| Componentes shadcn | `shadcn` + `composition-patterns` |
-| Accesibilidad | `accessibility` |
-| SEO | `seo` |
-| TypeScript avanzado | `typescript-advanced-types` |
-| Caching/Performance | `next-cache-components` |
-| Testing E2E | Usar **Playwright MCP** |
-| Diseno visual | Usar **Pencil MCP** |
+| Tipo de trabajo         | Skills a cargar                                                                                             |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Cualquier UI/Componente | `design-taste-frontend` + `impeccable` + `frontend-design` + `react-best-practices` + `next-best-practices` |
+| Estilos/Tailwind        | `tailwind-css-patterns` + `modern-web-guidance`                                                             |
+| Componentes shadcn      | `shadcn` + `composition-patterns`                                                                           |
+| Accesibilidad           | `accessibility`                                                                                             |
+| SEO                     | `seo`                                                                                                       |
+| TypeScript avanzado     | `typescript-advanced-types`                                                                                 |
+| Caching/Performance     | `next-cache-components`                                                                                     |
+| Testing E2E             | Usar **Playwright MCP**                                                                                     |
+| Diseno visual           | `design-taste-frontend` + `impeccable` + **Pencil MCP**                                                     |
+| Pre-ship                | `npx impeccable detect` o `/impeccable audit/polish`                                                        |
 
 ## MCPs disponibles
 
-| MCP | Uso |
-|---|---|
-| **pencil** | Diseno visual, mockups, prototipos UI/UX |
-| **playwright** | QA, testing E2E, verificacion visual |
-| **codegraph** | Entender codigo, buscar simbolos |
+| MCP            | Uso                                      |
+| -------------- | ---------------------------------------- |
+| **pencil**     | Diseno visual, mockups, prototipos UI/UX |
+| **playwright** | QA, testing E2E, verificacion visual     |
+| **codegraph**  | Entender codigo, buscar simbolos         |
 
 ## i18n (internacionalizacion)
 
