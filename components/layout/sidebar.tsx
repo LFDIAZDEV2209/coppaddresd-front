@@ -85,42 +85,54 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "flex flex-col bg-gradient-to-b from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_85%,#000)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] relative shrink-0 h-screen overflow-hidden",
+          "flex flex-col bg-gradient-to-b from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_85%,#000)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] relative shrink-0 h-screen overflow-hidden border-r border-white/10 shadow-[8px_0_24px_-18px_rgba(4,12,32,0.6)]",
           collapsed ? "w-[68px]" : "w-[236px]",
           mobileOpen ? "fixed inset-y-0 left-0 z-50" : "hidden lg:flex",
         )}
         role="navigation"
         aria-label="Navegación principal"
       >
+        {/* Glow decorativo de marca (motivo teal de la identidad) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-24 -left-16 size-64 rounded-full bg-brand-teal/10 blur-[80px]"
+        />
         {/* Brand Header */}
         <div
           className={cn(
-            "flex items-center justify-center px-3.5 pt-4 pb-3 border-b border-white/8 relative shrink-0",
-            collapsed ? "h-[80px]" : "h-[90px]",
+            "flex items-center justify-center px-3.5 border-b border-white/8 relative shrink-0 h-16",
           )}
         >
           <Link
             href="/dashboard"
-            className="flex items-center justify-center w-full transition-transform duration-200 hover:scale-[1.02]"
+            className="flex items-center justify-center w-full transition-transform duration-200 hover:scale-[1.04]"
             onClick={collapsed ? onToggleCollapse : undefined}
           >
-            <Image
-              src="/image.png"
-              alt="Copp Adresd"
-              loading="eager"
-              width={582}
-              height={429}
+            {/* Círculo blanco: hace flotar el logo a color sobre el navy */}
+            <span
               className={cn(
-                "w-auto object-contain transition-all duration-300 cursor-pointer",
-                collapsed ? "h-10 max-w-[54px]" : "h-14 max-w-[180px]",
+                "flex shrink-0 items-center justify-center rounded-full bg-white shadow-md shadow-black/25 ring-1 ring-black/5 transition-all duration-300",
+                collapsed ? "size-9" : "size-11",
               )}
-            />
+            >
+              <Image
+                src="/LogoIndividual.png"
+                alt="Copp Adresd"
+                loading="eager"
+                width={197}
+                height={197}
+                className={cn(
+                  "w-auto object-contain transition-all duration-300 cursor-pointer",
+                  collapsed ? "size-7" : "size-8",
+                )}
+              />
+            </span>
           </Link>
 
           {!collapsed && (
             <button
               onClick={onToggleCollapse}
-              className="absolute right-2 top-4 flex size-[26px] items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white hover:scale-110 transition-all duration-200"
+              className="absolute right-2 top-1/2 flex size-[26px] -translate-y-1/2 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200"
               aria-label={t("Colapsar sidebar")}
             >
               <ChevronsLeft className="size-[15px]" />
@@ -129,8 +141,8 @@ export function Sidebar({
         </div>
 
         {/* Navigation Modules — scroll sutil: thumb blanca translúcida, solo visible al hover/scroll */}
-        <ScrollArea className="flex-1 min-h-0 px-2.5 py-2">
-          <nav className="flex flex-col gap-0.5 pb-2">
+        <ScrollArea className="flex-1 min-h-0 px-3 py-3">
+          <nav className="flex flex-col gap-1 pb-3">
             {navModules.map((mod) => {
               const active = isModuleActive(mod);
               const single = visibleNavItems(mod, can).length === 1;
@@ -145,7 +157,7 @@ export function Sidebar({
                       className={cn(
                         "flex items-center justify-center rounded-lg p-2.5 my-0.5 transition-all duration-200 border",
                         active
-                          ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
+                          ? "bg-brand-gradient text-white border-transparent shadow-[0_6px_16px_-6px_rgba(3,93,77,0.5)] [&_svg]:text-white"
                           : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white hover:scale-105 border-transparent",
                       )}
                       onClick={() => {
@@ -171,9 +183,9 @@ export function Sidebar({
                     href={onlyItem.href}
                     onClick={onCloseMobile}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-all duration-200 border group",
+                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-all duration-200 border group relative",
                       onlyActive
-                        ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
+                        ? "bg-brand-gradient text-white border-transparent shadow-[0_6px_16px_-6px_rgba(3,93,77,0.5)] [&_svg]:text-white"
                         : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white hover:scale-[1.01] border-transparent",
                     )}
                   >
@@ -197,7 +209,7 @@ export function Sidebar({
                     className={cn(
                       "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-all duration-200 border group",
                       active
-                        ? "bg-white/5 text-white border-white/10"
+                        ? "bg-brand-gradient text-white border-transparent shadow-[0_6px_16px_-6px_rgba(3,93,77,0.5)] [&_svg]:text-white"
                         : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white hover:scale-[1.01] border-transparent",
                     )}
                   >
@@ -232,55 +244,57 @@ export function Sidebar({
                           (() => {
                             const items = visibleNavItems(mod, can);
                             let lastSection: string | undefined;
-                            return items.flatMap<React.ReactNode>((item, idx) => {
-                              const ItemIcon = item.icon;
-                              const itemActive = isActive(item);
-                              const elements: React.ReactNode[] = [];
+                            return items.flatMap<React.ReactNode>(
+                              (item, idx) => {
+                                const ItemIcon = item.icon;
+                                const itemActive = isActive(item);
+                                const elements: React.ReactNode[] = [];
 
-                              // Insert section label when section changes
-                              if (
-                                item.section &&
-                                item.section !== lastSection
-                              ) {
-                                lastSection = item.section;
+                                // Insert section label when section changes
+                                if (
+                                  item.section &&
+                                  item.section !== lastSection
+                                ) {
+                                  lastSection = item.section;
+                                  elements.push(
+                                    <p
+                                      key={`section-${item.section}`}
+                                      className="px-2.5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40"
+                                    >
+                                      {t(item.section)}
+                                    </p>,
+                                  );
+                                } else if (item.section) {
+                                  lastSection = item.section;
+                                }
+
                                 elements.push(
-                                  <p
-                                    key={`section-${item.section}`}
-                                    className="px-2.5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40"
+                                  <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={onCloseMobile}
+                                    className={cn(
+                                      "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all duration-200 border",
+                                      itemActive
+                                        ? "bg-white/10 font-semibold text-white border-transparent [&_svg]:text-white"
+                                        : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white border-transparent",
+                                    )}
+                                    style={{
+                                      animationDelay: expanded
+                                        ? `${idx * 40}ms`
+                                        : undefined,
+                                    }}
                                   >
-                                    {t(item.section)}
-                                  </p>,
+                                    <ItemIcon className="size-[16px] shrink-0" />
+                                    <span className="truncate">
+                                      {t(item.label)}
+                                    </span>
+                                  </Link>,
                                 );
-                              } else if (item.section) {
-                                lastSection = item.section;
-                              }
 
-                              elements.push(
-                                <Link
-                                  key={item.href}
-                                  href={item.href}
-                                  onClick={onCloseMobile}
-                                  className={cn(
-                                    "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all duration-200 border",
-                                    itemActive
-                                      ? "bg-[var(--sidebar-active-bg)] font-semibold text-[var(--sidebar-active-text)] border-[var(--sidebar-active-border)]"
-                                      : "text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-hover)] hover:text-white border-transparent",
-                                  )}
-                                  style={{
-                                    animationDelay: expanded
-                                      ? `${idx * 40}ms`
-                                      : undefined,
-                                  }}
-                                >
-                                  <ItemIcon className="size-[16px] shrink-0" />
-                                  <span className="truncate">
-                                    {t(item.label)}
-                                  </span>
-                                </Link>,
-                              );
-
-                              return elements;
-                            });
+                                return elements;
+                              },
+                            );
                           })()
                         }
                       </div>
@@ -292,8 +306,8 @@ export function Sidebar({
           </nav>
         </ScrollArea>
 
-        {/* User Card */}
-        <div className="p-2.5 mt-auto shrink-0">
+        {/* Perfil (account menu) — integrado, separado por hairline sutil */}
+        <div className="mt-auto shrink-0 border-t border-white/8 px-3 pb-3 pt-2">
           {collapsed ? (
             <div className="flex flex-col gap-2">
               <button
@@ -316,22 +330,22 @@ export function Sidebar({
               </Tooltip>
             </div>
           ) : (
-            <div className="flex items-center gap-2.5 rounded-xl bg-white/5 border border-white/10 p-2.5 transition-all duration-200 hover:bg-white/8">
-              <Avatar className="size-8 transition-transform duration-200 hover:scale-110">
-                <AvatarFallback className="bg-primary text-[11px] font-bold text-primary-foreground">
+            <div className="flex items-center gap-3 rounded-xl p-2 -mx-2 transition-colors duration-200 hover:bg-white/[0.06]">
+              <Avatar className="size-9 ring-2 ring-brand-teal/40 transition-transform duration-200 hover:scale-105">
+                <AvatarFallback className="bg-gradient-to-br from-brand-navy to-brand-teal text-[11px] font-bold text-white">
                   {user?.initials ?? "CA"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-1 flex-col gap-px overflow-hidden min-w-0">
-                <span className="text-[12.5px] font-semibold text-white truncate">
+                <span className="text-[13px] font-semibold text-white truncate">
                   {user?.name ?? "Usuario"}
                 </span>
-                <span className="text-[10.5px] text-[var(--sidebar-muted-foreground)] truncate">
+                <span className="text-[11px] text-white/55 truncate">
                   {user?.roles[0] ?? "Sin rol"}
                 </span>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex size-7 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white hover:scale-110 transition-all duration-200">
+                <DropdownMenuTrigger className="flex size-8 items-center justify-center rounded-lg text-white/50 hover:bg-white/10 hover:text-white transition-colors duration-200">
                   <ChevronDown className="size-3.5" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">

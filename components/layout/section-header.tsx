@@ -29,7 +29,7 @@ export function SectionHeader({
   };
 
   const iconStyles = {
-    primary: "bg-primary text-primary-foreground",
+    primary: "bg-white text-[var(--sidebar)]",
     secondary: "bg-primary/10 text-primary",
     tertiary: "bg-muted text-muted-foreground",
     destructive: "bg-white text-destructive",

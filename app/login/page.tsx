@@ -96,7 +96,7 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-dvh w-full overflow-x-hidden lg:grid-cols-[minmax(0,520px)_1fr]">
       {/* ─── Izquierda: formulario ─── */}
-      <div className="relative flex flex-col bg-background px-6 py-10 sm:px-10 lg:px-14">
+      <div className="relative flex flex-col bg-background px-6 py-7 sm:px-10 lg:px-14">
         {/* Idioma (esquina) */}
         <LanguageToggle className="absolute right-6 top-8 z-10 flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:right-10" />
 
@@ -107,14 +107,14 @@ export default function LoginPage() {
           width={816}
           height={519}
           priority
-          className="mx-auto h-16 w-auto"
+          className="mx-auto h-14 w-auto"
         />
 
         {/* Contenido centrado verticalmente */}
-        <div className="flex flex-1 flex-col justify-center py-12">
+        <div className="flex flex-1 flex-col justify-center py-6">
           <div className="stagger-children mx-auto flex w-full max-w-[400px] flex-col">
             {/* Titular display (línea Antares: gris + navy bold) */}
-            <h1 className="font-heading text-[clamp(32px,4.5vw,42px)] leading-[1.06] tracking-tight">
+            <h1 className="font-heading text-[clamp(30px,4.2vw,38px)] leading-[1.06] tracking-tight">
               <span className="block font-medium text-slate-500">
                 {t("Transforma")}
               </span>
@@ -134,7 +134,7 @@ export default function LoginPage() {
             </Suspense>
 
             {/* Formulario */}
-            <form onSubmit={handleSubmit} className="mt-11 flex flex-col gap-6">
+            <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-5">
               <div className="flex flex-col gap-2.5">
                 <Label
                   htmlFor="email"
@@ -227,7 +227,7 @@ export default function LoginPage() {
 
             {/* Credenciales demo — solo en desarrollo */}
             {process.env.NODE_ENV === "development" && (
-              <div className="mt-10 flex items-start gap-3 rounded-xl border border-border/70 bg-card p-4">
+              <div className="mt-6 flex items-start gap-3 rounded-xl border border-border/70 bg-card p-4">
                 <HeartPulse className="mt-0.5 size-5 shrink-0 text-brand-teal" />
                 <div className="flex flex-col gap-2">
                   <span className="text-[12px] font-semibold text-foreground">
@@ -303,7 +303,7 @@ export default function LoginPage() {
         </div>
 
         {/* Showcase: tarjeta fotográfica + métricas flotantes integradas */}
-        <div className="relative z-10 flex flex-1 items-center justify-center px-12 py-10">
+        <div className="relative z-10 flex flex-1 items-center justify-center px-12 py-8">
           <div className="relative w-full max-w-[480px]">
             {/* Anillos decorativos grandes (motivo circular de la marca) */}
             <div
@@ -386,7 +386,7 @@ export default function LoginPage() {
         </div>
 
         {/* Capacidades de la plataforma: barra integrada al showcase */}
-        <div className="relative z-10 px-12 pb-12">
+        <div className="relative z-10 px-12 pb-9">
           <div className="mx-auto grid max-w-[480px] grid-cols-4 divide-x divide-white/8 rounded-2xl border border-white/10 bg-white/6 backdrop-blur-sm">
             {[
               { icon: UsersRound, label: t("Pacientes") },

@@ -44,7 +44,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const segments = getBreadcrumbSegments(pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/8 bg-gradient-to-r from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_90%,var(--primary))] px-4 lg:px-5">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/8 bg-gradient-to-r from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_90%,var(--primary))] px-4 lg:px-6">
       {/* Left: Mobile menu + Breadcrumb */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <button
@@ -67,7 +67,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
               {segment.href ? (
                 <Link
                   href={segment.href}
-                  className="text-white/75 hover:text-white transition-colors truncate"
+                  className="font-medium text-white/55 transition-colors hover:text-white/85"
                 >
                   {t(segment.label)}
                 </Link>
@@ -85,13 +85,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Search */}
         <div className="relative hidden md:block">
-          <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/55" />
+          <Search className="absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-white/55" />
           <input
             type="text"
             placeholder={t("Buscar...")}
-            className="h-8 w-[220px] rounded-lg bg-white/10 pl-8 pr-12 text-[12.5px] text-white placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-white/25 focus:bg-white/15 transition-all"
+            className="h-9 w-64 rounded-full border border-white/10 bg-white/[0.06] pl-9 pr-12 text-[12.5px] text-white placeholder:text-white/45 focus:border-brand-teal/40 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-brand-teal/25 transition-all"
           />
-          <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[10px] text-white/60">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 text-[10px] text-white/60">
             ⌘K
           </kbd>
         </div>
@@ -99,7 +99,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="flex size-8 items-center justify-center rounded-lg bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition-colors"
+          className="flex size-9 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white transition-colors"
           aria-label={theme === "light" ? t("Modo oscuro") : t("Modo claro")}
         >
           {theme === "light" ? (
@@ -110,25 +110,25 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </button>
 
         {/* Language Toggle */}
-        <LanguageToggle className="flex h-8 items-center gap-1.5 rounded-lg bg-white/10 px-2.5 text-white/80 hover:bg-white/20 hover:text-white transition-colors" />
+        <LanguageToggle className="flex h-9 items-center gap-1.5 rounded-full px-2.5 text-white/70 hover:bg-white/10 hover:text-white transition-colors" />
 
         {/* Notifications */}
         <button
-          className="relative flex size-8 items-center justify-center rounded-lg bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition-colors"
+          className="relative flex size-9 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white transition-colors"
           aria-label={t("Notificaciones")}
         >
           <Bell className="size-4" />
-          <span className="absolute right-1.5 top-1.5 size-[7px] rounded-full bg-destructive ring-2 ring-[var(--sidebar)]" />
+          <span className="absolute right-[9px] top-[9px] size-[6px] rounded-full bg-destructive ring-2 ring-[var(--sidebar)]" />
         </button>
 
         {/* Contexto organizacional (switcher de clínica) */}
         {context && context.clinics.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="flex items-center gap-2 rounded-lg bg-white/10 px-2.5 py-1.5 text-left hover:bg-white/20 transition-colors"
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-3 py-1.5 text-left hover:bg-white/12 transition-colors"
               aria-label="Cambiar clínica activa"
             >
-              <Building2 className="size-3.5 text-white/70" />
+              <Building2 className="size-4 text-brand-blue-soft" />
               <span className="hidden max-w-[160px] flex-col gap-px sm:flex">
                 <span className="truncate text-[11.5px] font-semibold text-white leading-tight">
                   {activeClinic?.name ?? "Sin clínica"}
@@ -185,7 +185,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                     onClick={() => setActiveClinic(null)}
                     className="text-muted-foreground"
                   >
-                     {t("Ver todo (contexto global)")}
+                    {t("Ver todo (contexto global)")}
                   </DropdownMenuItem>
                 </>
               )}
@@ -198,11 +198,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
         {/* User Profile */}
         <DropdownMenu>
-          <DropdownMenuTrigger
-            className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-white/12 transition-colors"
-          >
-            <Avatar className="size-7">
-              <AvatarFallback className="bg-primary-soft text-[10px] font-bold text-primary-strong">
+          <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-white/12 transition-colors">
+            <Avatar className="size-8 ring-2 ring-brand-teal/40">
+              <AvatarFallback className="bg-gradient-to-br from-brand-navy to-brand-teal text-[10px] font-bold text-white">
                 {user?.initials ?? "CA"}
               </AvatarFallback>
             </Avatar>
@@ -234,7 +232,10 @@ export function Topbar({ onMenuClick }: TopbarProps) {
               {t("Configuración")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => logout()} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem
+              onClick={() => logout()}
+              className="text-destructive focus:text-destructive"
+            >
               <LogOut className="size-4" />
               {t("Cerrar sesión")}
             </DropdownMenuItem>

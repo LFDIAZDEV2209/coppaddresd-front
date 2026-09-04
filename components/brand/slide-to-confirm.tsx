@@ -1,17 +1,17 @@
 "use client";
 
 import { ArrowRight, Check, Loader2 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * CTA de deslizar-para-confirmar (línea visual COPP-ADRESD): pill navy con
+ * CTA de deslizar-para-confirmar (lÃ­nea visual COPP-ADRESD): pill navy con
  * thumb teal arrastrable. Al llegar el thumb al extremo derecho dispara
- * `onConfirm` (iniciar sesión). Alternativa de teclado: el thumb es
+ * `onConfirm` (iniciar sesiÃ³n). Alternativa de teclado: el thumb es
  * enfocable (role="slider", flechas para avanzar, Home/End), y el
  * formulario entra con Enter desde los inputs.
  *
- * Interacción vía Pointer Events + refs (sin re-renders por movimiento);
+ * InteracciÃ³n vÃ­a Pointer Events + refs (sin re-renders por movimiento);
  * respeta prefers-reduced-motion en las transiciones de snap.
  */
 interface SlideToConfirmProps {
@@ -26,9 +26,9 @@ interface SlideToConfirmProps {
   className?: string;
 }
 
-const THUMB = 44; // px — diámetro del thumb
-const INSET = 4; // px — margen interno del track
-/** Progreso mínimo (0-1) para aceptar la confirmación al soltar. */
+const THUMB = 44; // px â€” diÃ¡metro del thumb
+const INSET = 4; // px â€” margen interno del track
+/** Progreso mÃ­nimo (0-1) para aceptar la confirmaciÃ³n al soltar. */
 const CONFIRM_AT = 0.94;
 
 export function SlideToConfirm({
@@ -43,17 +43,25 @@ export function SlideToConfirm({
   const trackRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ startX: 0, baseX: 0 });
   const confirmedRef = useRef(false);
+  // Ancho medido en estado (nunca refs durante render).
+  const [trackWidth, setTrackWidth] = useState(0);
   const [progress, setProgress] = useState(0); // 0..1, estado render
   const [done, setDone] = useState(false);
   const [dragging, setDragging] = useState(false);
 
+  useEffect(() => {
+    const measure = () => {
+      if (trackRef.current) setTrackWidth(trackRef.current.clientWidth);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
   const locked = disabled || busy;
 
-  // Distancia máxima de desplazamiento del thumb.
-  const maxTravel = () => {
-    const track = trackRef.current;
-    return track ? track.clientWidth - THUMB - INSET * 2 : 0;
-  };
+  // Distancia mÃ¡xima de desplazamiento del thumb.
+  const maxTravel = Math.max(trackWidth - THUMB - INSET * 2, 0);
 
   const confirm = useCallback(() => {
     if (confirmedRef.current || locked) return;
@@ -61,7 +69,7 @@ export function SlideToConfirm({
     setProgress(1);
     setDone(true);
     onConfirm();
-    // Si el padre nunca entra en busy (ej. validación fallida), devolvemos
+    // Si el padre nunca entra en busy (ej. validaciÃ³n fallida), devolvemos
     // el thumb tras un instante para poder reintentar.
     window.setTimeout(() => {
       confirmedRef.current = false;
@@ -73,18 +81,15 @@ export function SlideToConfirm({
   const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (locked) return;
     e.currentTarget.setPointerCapture(e.pointerId);
-    dragState.current = { startX: e.clientX, baseX: progress * maxTravel() };
+    dragState.current = { startX: e.clientX, baseX: progress * maxTravel };
     setDragging(true);
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (!dragging || locked) return;
     const dx = e.clientX - dragState.current.startX;
-    const next = Math.min(
-      Math.max(dragState.current.baseX + dx, 0),
-      maxTravel(),
-    );
-    setProgress(maxTravel() ? next / maxTravel() : 0);
+    const next = Math.min(Math.max(dragState.current.baseX + dx, 0), maxTravel);
+    setProgress(maxTravel ? next / maxTravel : 0);
   };
 
   const onPointerUp = () => {
@@ -121,7 +126,7 @@ export function SlideToConfirm({
     }
   };
 
-  const travel = progress * maxTravel();
+  const travel = progress * maxTravel;
   const animate = !dragging; // mientras arrastra, sigue al dedo sin lag
 
   return (
@@ -135,7 +140,7 @@ export function SlideToConfirm({
         className,
       )}
     >
-      {/* Relleno de progreso (glass sutil detrás del thumb) */}
+      {/* Relleno de progreso (glass sutil detrÃ¡s del thumb) */}
       <div
         aria-hidden="true"
         className="absolute top-1 bottom-1 left-1 rounded-full bg-white/8"
