@@ -21,28 +21,45 @@ const DAY_LONG: Record<string, string> = {
 };
 
 /**
- * Actividad semanal: barras navy con pico en gradiente teal. Al pasar el
- * mouse la barra se acentúa, las demás se atenúan y aparece el tooltip
- * con día, valor exacto y variación vs. el día anterior.
+ * Actividad semanal: barras navy con pico en gradiente teal, línea de
+ * promedio punteada y eje con escala real. Hover: la barra se acentúa,
+ * las demás se atenúan y aparece el tooltip con día, valor y variación.
  */
 export function ActivityChart({ data }: ActivityChartProps) {
   const t = useT();
   const [hovered, setHovered] = useState<number | null>(null);
   const maxValue = Math.max(...data.map((d) => d.value), 1);
+  const avg = Math.round(
+    data.reduce((s, d) => s + d.value, 0) / Math.max(data.length, 1),
+  );
   const peakIndex = data.reduce(
     (best, d, i) => (d.value > data[best].value ? i : best),
     0,
   );
+  const avgPx = (avg / maxValue) * 180;
 
   return (
     <div className="flex items-end gap-0">
+      {/* Eje con escala real */}
       <div className="flex w-10 shrink-0 flex-col-reverse items-end justify-between pb-8 text-[10px] text-muted-foreground">
-        {[0, 25, 50, 75, 100].map((v) => (
+        {[0, Math.round(maxValue / 2), maxValue].map((v) => (
           <span key={v}>{v}</span>
         ))}
       </div>
 
-      <div className="flex flex-1 items-end gap-2">
+      <div className="relative flex flex-1 items-end gap-2">
+        {/* Línea de promedio */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 z-10 flex items-center"
+          style={{ bottom: avgPx }}
+        >
+          <span className="h-px flex-1 border-t border-dashed border-brand-teal/40" />
+          <span className="ml-1 rounded-full bg-brand-teal/10 px-1.5 py-px text-[9px] font-semibold text-brand-teal">
+            {t("Promedio")} {avg}
+          </span>
+        </div>
+
         {data.map((point, index) => {
           const heightPercent = (point.value / maxValue) * 100;
           const isPeak = index === peakIndex;
@@ -69,7 +86,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
           return (
             <div
               key={point.day}
-              className="flex flex-1 cursor-pointer flex-col items-center gap-2"
+              className="relative z-20 flex flex-1 cursor-pointer flex-col items-center gap-2"
               onMouseEnter={() => setHovered(index)}
               onMouseLeave={() => setHovered(null)}
             >
@@ -94,7 +111,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
                 >
                   <div
                     className={cn(
-                      "mx-auto w-[30px] rounded-t-[10px] transition-all duration-200",
+                      "bar-grow-y mx-auto w-[30px] rounded-t-[10px] transition-[opacity,filter] duration-200",
                       isHovered || isPeak
                         ? "bg-brand-gradient"
                         : "bg-brand-navy/85",
@@ -102,6 +119,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
                     )}
                     style={{
                       height: "100%",
+                      animationDelay: `${index * 60}ms`,
                       boxShadow:
                         isHovered || isPeak
                           ? "0 6px 16px -4px rgba(3,93,77,0.35)"

@@ -25,19 +25,21 @@ const MONTH_LONG: Record<string, string> = {
   Dic: "Diciembre",
 };
 
+const W = 320;
+const H = 110;
+const TOP_PAD = 10;
+const BOTTOM_PAD = 8;
+
 /**
- * Crecimiento mensual: barras teal, pico en gradiente. Hover con tooltip
- * (periodo, usuarios nuevos, variación vs. mes anterior). Guard contra
- * datos vacíos.
+ * Crecimiento mensual: tendencia con área degradada + línea teal y puntos
+ * interactivos (tooltip con periodo, usuarios nuevos y variación vs. mes
+ * anterior). El último punto marca el periodo actual. Guard contra datos
+ * vacíos.
  */
 export function GrowthCard({ data }: GrowthCardProps) {
   const t = useT();
   const [hovered, setHovered] = useState<number | null>(null);
   const maxValue = Math.max(...data.map((d) => d.value), 1);
-  const peakIndex = data.reduce(
-    (best, d, i) => (d.value > data[best].value ? i : best),
-    0,
-  );
 
   if (data.length === 0) {
     return (
@@ -47,19 +49,53 @@ export function GrowthCard({ data }: GrowthCardProps) {
     );
   }
 
+  const pts = data.map((d, i) => ({
+    x: data.length > 1 ? (i / (data.length - 1)) * W : W / 2,
+    y: H - BOTTOM_PAD - (d.value / maxValue) * (H - BOTTOM_PAD - TOP_PAD),
+  }));
+  const linePath = pts
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+    .join(" ");
+  const areaPath = `${linePath} L${W},${H} L0,${H} Z`;
+  const lastIndex = data.length - 1;
+
   return (
     <div className="flex flex-col">
-      <div className="flex items-end gap-1.5" style={{ height: 110 }}>
-        {data.map((point, i) => {
-          const isPeak = i === peakIndex;
+      <div className="relative" style={{ height: H }}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="none"
+          className="h-full w-full"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="growth-area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#035d4d" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#035d4d" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={areaPath} fill="url(#growth-area)" />
+          <path
+            d={linePath}
+            fill="none"
+            stroke="var(--brand-teal)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+
+        {/* Puntos interactivos (HTML: círculos perfectos + tooltip) */}
+        {pts.map((p, i) => {
+          const isLast = i === lastIndex;
           const isHovered = hovered === i;
-          const align =
-            i === 0 ? "start" : i === data.length - 1 ? "end" : "center";
+          const align = i === 0 ? "start" : i === lastIndex ? "end" : "center";
           const prev = i > 0 ? data[i - 1] : null;
           let delta: { value: string; up: boolean; vs: string } | undefined;
           if (prev) {
             const pct = Math.round(
-              ((point.value - prev.value) / Math.max(prev.value, 1)) * 100,
+              ((data[i].value - prev.value) / Math.max(prev.value, 1)) * 100,
             );
             delta = {
               value: `${pct > 0 ? "+" : ""}${pct}%`,
@@ -70,30 +106,35 @@ export function GrowthCard({ data }: GrowthCardProps) {
 
           return (
             <div
-              key={point.month}
-              className="relative flex flex-1 cursor-pointer flex-col items-center justify-end"
-              style={{ height: "100%" }}
+              key={data[i].month}
+              className="absolute z-20 flex cursor-pointer items-center justify-center p-3"
+              style={{
+                left: `${(p.x / W) * 100}%`,
+                top: `${(p.y / H) * 100}%`,
+                transform: "translate(-50%, -50%)",
+              }}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
             >
               <ChartTooltip
                 visible={isHovered}
                 align={align}
-                title={t(MONTH_LONG[point.month] ?? point.month)}
+                placement={p.y / H < 0.42 ? "bottom" : "top"}
+                title={t(MONTH_LONG[data[i].month] ?? data[i].month)}
                 label={t("usuarios nuevos")}
-                value={String(point.value)}
+                value={String(data[i].value)}
                 delta={delta}
-                style={{
-                  bottom: Math.min((point.value / maxValue) * 88 + 8, 24),
-                }}
               />
-              <div
+              <button
+                type="button"
                 className={cn(
-                  "w-full max-w-[26px] rounded-t-md transition-all duration-200",
-                  isHovered || isPeak ? "bg-brand-gradient" : "bg-[#5581a2]",
-                  hovered !== null && !isHovered && "opacity-55",
+                  "block size-3 cursor-pointer rounded-full border-2 bg-white transition-all duration-200",
+                  isLast
+                    ? "border-brand-teal ring-4 ring-brand-teal/15"
+                    : "border-brand-teal/60 hover:border-brand-teal",
+                  isHovered && "scale-125 border-brand-teal bg-brand-teal",
                 )}
-                style={{ height: Math.max((point.value / maxValue) * 88, 4) }}
+                aria-label={`${data[i].month}: ${data[i].value}`}
               />
             </div>
           );
@@ -106,9 +147,11 @@ export function GrowthCard({ data }: GrowthCardProps) {
             key={point.month}
             className={cn(
               "flex-1 text-center text-[10px] transition-colors duration-200",
-              i === peakIndex || hovered === i
+              i === lastIndex
                 ? "font-bold text-brand-teal"
-                : "font-medium text-muted-foreground",
+                : i === hovered
+                  ? "font-semibold text-foreground"
+                  : "font-medium text-muted-foreground",
             )}
           >
             {point.month}

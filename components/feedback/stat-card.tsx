@@ -1,4 +1,7 @@
+"use client";
+
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +21,8 @@ interface StatCardProps {
   trend?: { value: string; direction: "up" | "down" };
   icon: LucideIcon;
   variant?: CardVariant;
+  /** KPI héroe: relleno con el gradiente de marca (jerarquía principal). */
+  filled?: boolean;
 }
 
 const variantConfig: Record<
@@ -73,10 +78,54 @@ const variantConfig: Record<
   },
 };
 
+/** Extrae parte numérica + sufijo (ej. "99,8%" → 99.8 + "%"). */
+function parseValue(
+  target: string,
+): { num: number; decimals: number; suffix: string } | null {
+  const match = target.match(/^([\d.,]+)(.*)$/);
+  if (!match) return null;
+  const numeric = match[1];
+  const normalized = numeric.replace(/\./g, "").replace(",", ".");
+  const num = parseFloat(normalized);
+  if (Number.isNaN(num)) return null;
+  const decimals = numeric.split(",")[1]?.length ?? 0;
+  return { num, decimals, suffix: match[2] };
+}
+
+/** Count-up suave al montar; respeta prefers-reduced-motion. */
+function useCountUp(target: string, duration = 750): string {
+  const parsed = parseValue(target);
+  const [display, setDisplay] = useState(target);
+
+  useEffect(() => {
+    setDisplay(target);
+    if (!parsed) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(
+        (parsed.num * eased).toLocaleString("es-CO", {
+          minimumFractionDigits: parsed.decimals,
+          maximumFractionDigits: parsed.decimals,
+        }) + parsed.suffix,
+      );
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target]);
+
+  return display;
+}
+
 /**
- * Tarjeta de métrica con acento de color por variante: raya superior e
- * icono en caja de color. El fondo queda neutro (bg-card: blanco en claro,
- * oscuro en dark) para no competir con los acentos.
+ * Tarjeta de métrica con acento de color por variante. `filled` convierte
+ * la card en KPI héroe (gradiente de marca) para jerarquía principal.
+ * El valor hace count-up suave al montar.
  */
 export function StatCard({
   label,
@@ -85,38 +134,61 @@ export function StatCard({
   trend,
   icon: Icon,
   variant = "default",
+  filled = false,
 }: StatCardProps) {
   const config = variantConfig[variant];
+  const displayValue = useCountUp(value);
 
   return (
-    <div className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-border/70 bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md">
-      <span
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-1"
-        style={{ backgroundColor: config.accent }}
-      />
+    <div
+      className={cn(
+        "group relative flex items-center gap-4 overflow-hidden rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        filled
+          ? "border-transparent bg-brand-gradient shadow-lg shadow-brand-navy/25"
+          : "border-border/70 bg-card hover:border-border",
+      )}
+    >
+      {!filled && (
+        <span
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-1"
+          style={{ backgroundColor: config.accent }}
+        />
+      )}
       <div
         className={cn(
-          "flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm",
-          config.iconBg,
+          "flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105",
+          filled
+            ? "bg-white/15 text-white"
+            : cn(config.iconBg, config.iconColor),
         )}
       >
-        <Icon className={cn("size-5", config.iconColor)} />
+        <Icon className="size-5" />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="line-clamp-2 text-[11px] font-medium uppercase leading-4 tracking-wider text-muted-foreground">
+        <span
+          className={cn(
+            "line-clamp-2 text-[11px] font-medium uppercase leading-4 tracking-wider",
+            filled ? "text-white/70" : "text-muted-foreground",
+          )}
+        >
           {label}
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl leading-none font-bold tracking-tight text-foreground">
-            {value}
+          <span
+            className={cn(
+              "text-2xl leading-none font-bold tracking-tight tabular-nums",
+              filled ? "text-white" : "text-foreground",
+            )}
+          >
+            {displayValue}
           </span>
           {trend && (
             <span
               className={cn(
                 "flex items-center gap-0.5 text-[11px] font-semibold",
-                config.trendColor,
+                filled ? "text-teal-200" : config.trendColor,
               )}
             >
               {trend.direction === "up" ? (
@@ -129,7 +201,14 @@ export function StatCard({
           )}
         </div>
         {context && (
-          <span className="text-[11px] text-muted-foreground">{context}</span>
+          <span
+            className={cn(
+              "text-[11px]",
+              filled ? "text-white/70" : "text-muted-foreground",
+            )}
+          >
+            {context}
+          </span>
         )}
       </div>
     </div>

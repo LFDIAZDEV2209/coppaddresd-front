@@ -528,3 +528,35 @@
     feedSlideIn 350ms cubic-bezier(0.22, 1, 0.36, 1),
     feedHighlight 2000ms ease-out 350ms;
 }
+
+/* Crecimiento de barras al cargar (dashboards) — respeta reduced motion */
+@keyframes barGrowY {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes barGrowX {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.bar-grow-y {
+  transform-origin: bottom;
+  animation: barGrowY 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.bar-grow-x {
+  transform-origin: left;
+  animation: barGrowX 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bar-grow-y,
+  .bar-grow-x {
+    animation: none;
+  }
+}

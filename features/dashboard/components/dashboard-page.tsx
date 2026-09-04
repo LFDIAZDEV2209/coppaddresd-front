@@ -82,12 +82,12 @@ export function DashboardPage() {
         icon={LayoutDashboard}
       />
 
-      {/* KPI Cards */}
+      {/* KPI Cards — el primero es el héroe (gradiente de marca) */}
       <section
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 stagger-children"
         aria-label={t("Indicadores clave")}
       >
-        {kpis.map((kpi) => (
+        {kpis.map((kpi, idx) => (
           <StatCard
             key={kpi.id}
             label={kpi.label}
@@ -95,6 +95,7 @@ export function DashboardPage() {
             context={kpi.context}
             trend={kpi.trend}
             icon={kpi.icon}
+            filled={idx === 0}
             variant={
               kpi.id === "kpi-users"
                 ? "info"
@@ -109,13 +110,21 @@ export function DashboardPage() {
       </section>
 
       {/* Activity Chart + Quick Actions */}
-      <div className="flex flex-col gap-4 xl:flex-row">
+      <div className="flex flex-col gap-4 xl:flex-row stagger-children">
         <div className="flex-1 flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
           <SectionHeader
             title={t("Actividad semanal")}
             description={t("Conversaciones por día")}
             icon={Activity}
             variant="primary"
+            actions={
+              <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85">
+                {t("Total")}
+                <b className="font-bold tabular-nums text-white">
+                  {activityData.reduce((s, d) => s + d.value, 0)}
+                </b>
+              </span>
+            }
           />
           <div className="p-5">
             <ActivityChart data={activityData} />
@@ -136,7 +145,7 @@ export function DashboardPage() {
 
       {/* Bottom Row */}
       <section
-        className="grid grid-cols-1 gap-4 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-4 lg:grid-cols-3 stagger-children"
         aria-label={t("Métricas detalladas")}
       >
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">

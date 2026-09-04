@@ -11,8 +11,9 @@ interface AgentUsageCardProps {
 }
 
 /**
- * Consumo por agente: gradiente navy→teal; hover acentúa la barra,
- * atenúa el resto y muestra tooltip con porcentaje y ranking.
+ * Ranking de consumo por agente: badge de posición (#1 en teal), barra
+ * que crece al cargar, hover acentúa + atenúa el resto, tooltip con
+ * porcentaje y ranking.
  */
 export function AgentUsageCard({ data }: AgentUsageCardProps) {
   const t = useT();
@@ -22,7 +23,7 @@ export function AgentUsageCard({ data }: AgentUsageCardProps) {
     .map((a) => a.name);
 
   return (
-    <div className="flex flex-col gap-4 py-1">
+    <div className="flex flex-col gap-3.5 py-1">
       {data.map((agent, index) => {
         const percent = Math.min((agent.usage / agent.max) * 100, 100);
         const isHovered = hovered === index;
@@ -31,7 +32,7 @@ export function AgentUsageCard({ data }: AgentUsageCardProps) {
         return (
           <div
             key={agent.name}
-            className="group relative flex cursor-default items-center gap-3"
+            className="relative flex cursor-default items-center gap-2.5"
             onMouseEnter={() => setHovered(index)}
             onMouseLeave={() => setHovered(null)}
           >
@@ -46,7 +47,17 @@ export function AgentUsageCard({ data }: AgentUsageCardProps) {
             />
             <span
               className={cn(
-                "w-20 shrink-0 truncate text-[12px] transition-colors duration-200",
+                "flex size-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold transition-colors duration-200",
+                rank === 1
+                  ? "bg-brand-teal text-white"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
+              {rank}
+            </span>
+            <span
+              className={cn(
+                "w-16 shrink-0 truncate text-[12px] transition-colors duration-200",
                 isHovered
                   ? "font-semibold text-foreground"
                   : "font-medium text-foreground/85",
@@ -57,16 +68,19 @@ export function AgentUsageCard({ data }: AgentUsageCardProps) {
             <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted">
               <div
                 className={cn(
-                  "rounded-full transition-all duration-200",
+                  "bar-grow-x rounded-full transition-all duration-200",
                   isHovered ? "bg-brand-gradient" : "bg-brand-navy/85",
                   hovered !== null && !isHovered && "opacity-35",
                 )}
-                style={{ width: `${percent}%` }}
+                style={{
+                  width: `${percent}%`,
+                  animationDelay: `${index * 70}ms`,
+                }}
               />
             </div>
             <span
               className={cn(
-                "w-10 shrink-0 text-right text-[11px] transition-colors duration-200",
+                "w-10 shrink-0 text-right text-[11px] tabular-nums transition-colors duration-200",
                 isHovered
                   ? "font-bold text-brand-teal"
                   : "font-semibold text-muted-foreground",
