@@ -27,6 +27,14 @@ const nextConfig: NextConfig = {
       { source: "/program/adaptations", destination: "/program/clinica?view=adaptaciones", permanent: false },
       { source: "/program/interventions", destination: "/program/clinica?view=intervenciones", permanent: false },
       { source: "/program/patients/:id", destination: "/program/gestion?view=perfil-360&patient=:id", permanent: false },
+
+      // ── F1: people-area redirects ──────────────────────────────────
+      { source: "/professionals/new", destination: "/people/new", permanent: true },
+      { source: "/professionals/importar", destination: "/employees/importar", permanent: true },
+      { source: "/professionals/:id", destination: "/employees/:id", permanent: true },
+      { source: "/professionals", destination: "/employees", permanent: true },
+      { source: "/employees/new", destination: "/people/new", permanent: true },
+      { source: "/patients/new", destination: "/people/new?mode=patient", permanent: true },
     ];
   },
 };
