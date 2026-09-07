@@ -17,15 +17,19 @@ import {
   ShieldAlert,
   BarChart3,
   UserPlus,
+  ImagePlus,
+  Loader2,
 } from "lucide-react";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useT } from "@/providers/i18n-provider";
 import { useAppContext } from "@/providers/context-provider";
 import type { Club } from "../types";
-import { archiveClub, fetchClub } from "../mock/clubs-api";
+import { archiveClub, fetchClub, restoreClub, updateClubCover } from "../mock/clubs-api";
+import { uploadClubImage } from "../services/clubs-service";
 import {
   CLUB_STATUS_COLORS,
   VISIBILITY_COLORS,
@@ -49,6 +53,8 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
 
   const [club, setClub] = useState<Club | null>(null);
   const [loading, setLoading] = useState(true);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -67,9 +73,28 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
     setClub(await fetchClub(clubId));
   };
 
+  const handleCover = async (file: File | null) => {
+    if (!file || !club) return;
+    setCoverUploading(true);
+    setCoverError(null);
+    try {
+      const key = await uploadClubImage(club.id, "COVER", file);
+      await updateClubCover(club.id, key);
+      await reload();
+    } catch (e) {
+      setCoverError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCoverUploading(false);
+    }
+  };
+
   const toggleArchive = async () => {
     if (!club) return;
-    setClub(await archiveClub(club.id));
+    setClub(
+      club.status === "ACTIVO"
+        ? await archiveClub(club.id)
+        : await restoreClub(club.id),
+    );
   };
 
   if (loading) {
@@ -111,7 +136,19 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
 
       {/* Cabecera del club */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="h-36 sm:h-44" style={clubCoverStyle(club.category)} />
+        <div
+          className="h-36 sm:h-44"
+          style={
+            club.coverUrl
+              ? { backgroundImage: `url(${club.coverUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+              : clubCoverStyle(club.category)
+          }
+        />
+        {coverError && (
+          <div className="bg-destructive/10 px-4 py-1.5 text-xs text-destructive">
+            {coverError}
+          </div>
+        )}
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-4">
             <span
@@ -193,6 +230,34 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
                 <RefreshCw data-icon="inline-start" />
                 {t("Actualizar")}
               </Button>
+              {/* El label con htmlFor abre el selector de archivos de forma nativa
+                  en cualquier navegador. El input file está fuera del label con hidden. */}
+              <label
+                htmlFor="club-cover-input"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "inline-flex cursor-pointer items-center gap-1.5",
+                  coverUploading && "pointer-events-none opacity-60",
+                )}
+              >
+                {coverUploading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <ImagePlus data-icon="inline-start" />
+                )}
+                {t("Portada")}
+              </label>
+              <input
+                id="club-cover-input"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={coverUploading}
+                onChange={(e) => {
+                  handleCover(e.target.files?.[0] ?? null);
+                  e.target.value = "";
+                }}
+              />
             </div>
           )}
         </div>

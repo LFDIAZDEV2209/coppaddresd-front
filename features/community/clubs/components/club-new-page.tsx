@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
+import { Users, ArrowLeft, ArrowRight, Check, Sparkles, ImagePlus, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { useT } from "@/providers/i18n-provider";
 import { useAppContext } from "@/providers/context-provider";
 import type { ClubVisibility } from "../types";
 import { createClub } from "../mock/clubs-api";
+import { uploadClubImage } from "../services/clubs-service";
 import { CLUB_CATEGORIES } from "../mock/seeds";
 
 const STEPS = [
@@ -49,6 +50,7 @@ interface WizardState {
   rules: string;
   objectives: string;
   moderators: string[];
+  coverKey: string | null;
 }
 
 const INITIAL: WizardState = {
@@ -61,6 +63,7 @@ const INITIAL: WizardState = {
   rules: "",
   objectives: "",
   moderators: [],
+  coverKey: null,
 };
 
 export function ClubNewPage() {
@@ -72,6 +75,9 @@ export function ClubNewPage() {
   const [form, setForm] = useState<WizardState>(INITIAL);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
 
   const set = <K extends keyof WizardState>(key: K, value: WizardState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -115,6 +121,21 @@ export function ClubNewPage() {
 
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
+  const handleCover = async (file: File | null) => {
+    if (!file) return;
+    setCoverUploading(true);
+    setCoverError(null);
+    try {
+      const key = await uploadClubImage(null, "COVER", file);
+      set("coverKey", key);
+      setCoverPreview(URL.createObjectURL(file));
+    } catch (e) {
+      setCoverError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCoverUploading(false);
+    }
+  };
+
   const submit = async () => {
     setSubmitting(true);
     const club = await createClub({
@@ -135,6 +156,7 @@ export function ClubNewPage() {
         .split("\n")
         .map((x) => x.trim())
         .filter(Boolean),
+      coverKey: form.coverKey,
     });
     router.push(`/community/clubs/${club.id}`);
   };
@@ -192,6 +214,59 @@ export function ClubNewPage() {
                 )}
                 rows={4}
               />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>{t("Portada del club")}</Label>
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted text-xs text-muted-foreground"
+                  style={
+                    coverPreview
+                      ? {
+                          backgroundImage: `url(${coverPreview})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : undefined
+                  }
+                >
+                  {!coverPreview && t("Sin portada")}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label
+                    className={`inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm ${
+                      coverUploading ? "opacity-60" : ""
+                    }`}
+                  >
+                    {coverUploading ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <ImagePlus className="size-4" />
+                    )}
+                    {coverUploading ? t("Subiendo…") : t("Subir portada")}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      className="hidden"
+                      disabled={coverUploading}
+                      onChange={(e) => handleCover(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                  {form.coverKey && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        set("coverKey", null);
+                        setCoverPreview(null);
+                      }}
+                    >
+                      {t("Quitar")}
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {coverError && <span className="text-xs text-destructive">{coverError}</span>}
             </div>
           </div>
         )}

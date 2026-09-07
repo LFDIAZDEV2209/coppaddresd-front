@@ -193,9 +193,17 @@ export function ClubsPage() {
                     >
                       <span
                         className="flex size-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white"
-                        style={clubCoverStyle(club.category)}
+                        style={
+                          club.coverUrl
+                            ? {
+                                backgroundImage: `url(${club.coverUrl})`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                              }
+                            : clubCoverStyle(club.category)
+                        }
                       >
-                        {initials(club.name)}
+                        {!club.coverUrl && initials(club.name)}
                       </span>
                       <span className="flex min-w-0 flex-col">
                         <span className="truncate text-sm font-semibold text-foreground">

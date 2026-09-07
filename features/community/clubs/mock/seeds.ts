@@ -3,7 +3,6 @@
 
 import type {
   Club,
-  ClubEvent,
   ClubMember,
   ClubNotification,
   ClubPost,

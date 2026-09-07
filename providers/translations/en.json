@@ -2628,5 +2628,15 @@
   "Timeline": "Timeline",
   "Timeline de": "Timeline of",
   "Transmisión estilo broadcast — cualquiera puede unirse y usar el chat (mock).": "Broadcast-style stream — anyone can join and use the chat (mock).",
-  "Tú quedarás como administrador del club. Selecciona moderadores adicionales (opcional).": "You will remain as the club admin. Select additional moderators (optional)."
+  "Tú quedarás como administrador del club. Selecciona moderadores adicionales (opcional).": "You will remain as the club admin. Select additional moderators (optional).",
+  "Portada del club": "Club cover",
+  "Sin portada": "No cover",
+  "Subiendo…": "Uploading…",
+  "Subir portada": "Upload cover",
+  "Enlace del live (YouTube/Vimeo/embed)": "Live link (YouTube/Vimeo/embed)",
+  "Buscar usuarios de la plataforma…": "Search platform users…",
+  "Agregar miembro": "Add member",
+  "Busca un usuario de la plataforma y asígnalo al club.": "Search a platform user and assign them to the club.",
+  "Cambiar portada": "Change cover",
+  "Portada": "Cover"
 }
