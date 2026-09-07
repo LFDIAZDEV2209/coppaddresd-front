@@ -94,8 +94,8 @@
   --brand-gradient: linear-gradient(
     135deg,
     #023467 0%,
-    #0c4c6b 55%,
-    #3d7b72 100%
+    #07425f 60%,
+    #0e5f63 100%
   );
 
   --background: #eff2f7;
@@ -407,7 +407,7 @@
   background: linear-gradient(
     135deg,
     var(--sidebar) 0%,
-    color-mix(in srgb, var(--sidebar) 80%, var(--primary)) 100%
+    color-mix(in srgb, var(--sidebar) 60%, var(--primary)) 100%
   );
 }
 

@@ -21,7 +21,21 @@ const DAY_LONG: Record<string, string> = {
 };
 
 /**
- * Actividad semanal: barras navy con pico en gradiente teal, línea de
+ * Paleta multi-color con degradados: cada día tiene su propio tono
+ * (el pico conserva el gradiente de marca como acento héroe).
+ */
+const BAR_GRADIENTS: (readonly [string, string] | null)[] = [
+  ["#38bdf8", "#0369a1"], // Lun · cielo
+  ["#2dd4bf", "#0f766e"], // Mar · teal
+  ["#a78bfa", "#6d28d9"], // Mié · violeta
+  null, // Jue · pico → gradiente de marca
+  ["#fbbf24", "#b45309"], // Vie · ámbar
+  ["#f472b6", "#be185d"], // Sáb · rosa
+  ["#94a3b8", "#475569"], // Dom · pizarra
+];
+
+/**
+ * Actividad semanal: barras teal con pico en gradiente de marca, línea de
  * promedio punteada y eje con escala real. Hover: la barra se acentúa,
  * las demás se atenúan y aparece el tooltip con día, valor y variación.
  */
@@ -111,19 +125,21 @@ export function ActivityChart({ data }: ActivityChartProps) {
                 >
                   <div
                     className={cn(
-                      "bar-grow-y mx-auto w-[30px] rounded-t-[10px] transition-[opacity,filter] duration-200",
-                      isHovered || isPeak
-                        ? "bg-brand-gradient"
-                        : "bg-brand-navy/85",
-                      hovered !== null && !isHovered && "opacity-55",
+                      "bar-grow-y mx-auto w-[30px] rounded-t-[10px] transition-[opacity,filter,transform] duration-200",
+                      isPeak && "bg-brand-gradient",
+                      isHovered && !isPeak && "brightness-110",
+                      hovered !== null && !isHovered && "opacity-50",
                     )}
                     style={{
                       height: "100%",
                       animationDelay: `${index * 60}ms`,
+                      background: isPeak
+                        ? undefined
+                        : `linear-gradient(180deg, ${BAR_GRADIENTS[index]?.[0]}, ${BAR_GRADIENTS[index]?.[1]})`,
                       boxShadow:
                         isHovered || isPeak
                           ? "0 6px 16px -4px rgba(3,93,77,0.35)"
-                          : "0 4px 10px -4px rgba(20,40,85,0.25)",
+                          : "0 4px 10px -4px rgba(15,30,60,0.25)",
                     }}
                   />
                 </div>

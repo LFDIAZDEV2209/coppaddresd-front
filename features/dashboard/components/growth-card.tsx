@@ -59,6 +59,17 @@ export function GrowthCard({ data }: GrowthCardProps) {
   const areaPath = `${linePath} L${W},${H} L0,${H} Z`;
   const lastIndex = data.length - 1;
 
+  /** Colores de puntos alineados con los stops del gradiente de la línea. */
+  const DOT_COLORS = [
+    "#0ea5e9",
+    "#12b0c4",
+    "#14b8a6",
+    "#4fa9a0",
+    "#8b5cf6",
+    "#c08a3e",
+    "#f59e0b",
+  ];
+
   return (
     <div className="flex flex-col">
       <div className="relative" style={{ height: H }}>
@@ -69,17 +80,25 @@ export function GrowthCard({ data }: GrowthCardProps) {
           aria-hidden="true"
         >
           <defs>
-            <linearGradient id="growth-area" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#035d4d" stopOpacity="0.22" />
-              <stop offset="100%" stopColor="#035d4d" stopOpacity="0" />
+            <linearGradient id="growth-area" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.2" />
+              <stop offset="35%" stopColor="#14b8a6" stopOpacity="0.16" />
+              <stop offset="70%" stopColor="#8b5cf6" stopOpacity="0.14" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.18" />
+            </linearGradient>
+            <linearGradient id="growth-line" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#0ea5e9" />
+              <stop offset="35%" stopColor="#14b8a6" />
+              <stop offset="70%" stopColor="#8b5cf6" />
+              <stop offset="100%" stopColor="#f59e0b" />
             </linearGradient>
           </defs>
           <path d={areaPath} fill="url(#growth-area)" />
           <path
             d={linePath}
             fill="none"
-            stroke="var(--brand-teal)"
-            strokeWidth="2"
+            stroke="url(#growth-line)"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
@@ -129,11 +148,13 @@ export function GrowthCard({ data }: GrowthCardProps) {
                 type="button"
                 className={cn(
                   "block size-3 cursor-pointer rounded-full border-2 bg-white transition-all duration-200",
-                  isLast
-                    ? "border-brand-teal ring-4 ring-brand-teal/15"
-                    : "border-brand-teal/60 hover:border-brand-teal",
-                  isHovered && "scale-125 border-brand-teal bg-brand-teal",
+                  isLast && "ring-4 ring-amber-500/15",
+                  isHovered && "scale-125",
                 )}
+                style={{
+                  borderColor: DOT_COLORS[i],
+                  ...(isHovered ? { background: DOT_COLORS[i] } : {}),
+                }}
                 aria-label={`${data[i].month}: ${data[i].value}`}
               />
             </div>
@@ -148,11 +169,12 @@ export function GrowthCard({ data }: GrowthCardProps) {
             className={cn(
               "flex-1 text-center text-[10px] transition-colors duration-200",
               i === lastIndex
-                ? "font-bold text-brand-teal"
+                ? "font-bold"
                 : i === hovered
                   ? "font-semibold text-foreground"
                   : "font-medium text-muted-foreground",
             )}
+            style={i === lastIndex ? { color: DOT_COLORS[i] } : undefined}
           >
             {point.month}
           </span>

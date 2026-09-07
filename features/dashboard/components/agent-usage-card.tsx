@@ -10,6 +10,16 @@ interface AgentUsageCardProps {
   data: AgentUsage[];
 }
 
+/** Degradado multi-color: cada agente tiene su propio tono. */
+const AGENT_GRADIENTS: [string, string][] = [
+  ["#38bdf8", "#0369a1"], // cielo
+  ["#2dd4bf", "#0f766e"], // teal
+  ["#a78bfa", "#6d28d9"], // violeta
+  ["#fbbf24", "#b45309"], // ámbar
+  ["#f472b6", "#be185d"], // rosa
+  ["#94a3b8", "#475569"], // pizarra
+];
+
 /**
  * Ranking de consumo por agente: badge de posición (#1 en teal), barra
  * que crece al cargar, hover acentúa + atenúa el resto, tooltip con
@@ -69,12 +79,13 @@ export function AgentUsageCard({ data }: AgentUsageCardProps) {
               <div
                 className={cn(
                   "bar-grow-x rounded-full transition-all duration-200",
-                  isHovered ? "bg-brand-gradient" : "bg-brand-navy/85",
+                  isHovered && "brightness-110",
                   hovered !== null && !isHovered && "opacity-35",
                 )}
                 style={{
                   width: `${percent}%`,
                   animationDelay: `${index * 70}ms`,
+                  background: `linear-gradient(90deg, ${AGENT_GRADIENTS[index % AGENT_GRADIENTS.length][0]}, ${AGENT_GRADIENTS[index % AGENT_GRADIENTS.length][1]})`,
                 }}
               />
             </div>
@@ -82,7 +93,7 @@ export function AgentUsageCard({ data }: AgentUsageCardProps) {
               className={cn(
                 "w-10 shrink-0 text-right text-[11px] tabular-nums transition-colors duration-200",
                 isHovered
-                  ? "font-bold text-brand-teal"
+                  ? "font-bold text-foreground"
                   : "font-semibold text-muted-foreground",
               )}
             >

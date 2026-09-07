@@ -281,6 +281,46 @@ export default function LoginPage() {
         <div className="pointer-events-none absolute -bottom-32 -left-24 size-[420px] rounded-full bg-brand-teal/20 blur-[120px]" />
         <div className="pointer-events-none absolute top-10 right-1/4 size-[360px] rounded-full bg-brand-blue-mid/15 blur-[110px]" />
 
+        {/* Transición wave orgánica hacia el formulario (responsive SVG) */}
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 z-[5] h-full w-[130px]"
+          viewBox="0 0 130 1000"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <linearGradient id="wave-stroke" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#87aeca" />
+              <stop offset="55%" stopColor="#5581a2" />
+              <stop offset="100%" stopColor="#035d4d" />
+            </linearGradient>
+            <linearGradient id="wave-halo" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#0c4c6b" />
+              <stop offset="100%" stopColor="#035d4d" />
+            </linearGradient>
+          </defs>
+          {/* Halo gradiente: suaviza la transición entre el blanco y el navy */}
+          <path
+            d="M0 0 H84 C126 170 30 360 80 540 C118 700 56 860 72 1000 H0 Z"
+            fill="url(#wave-halo)"
+            fillOpacity="0.5"
+          />
+          {/* Wave principal blanca (mismo color del panel del formulario) */}
+          <path
+            d="M0 0 H56 C108 160 6 350 58 530 C102 690 28 860 48 1000 H0 Z"
+            fill="var(--background)"
+          />
+          {/* Trazo con gradiente del logo siguiendo el borde de la wave */}
+          <path
+            d="M56 0 C108 160 6 350 58 530 C102 690 28 860 48 1000"
+            fill="none"
+            stroke="url(#wave-stroke)"
+            strokeOpacity="0.6"
+            strokeWidth="2.5"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+
         {/* Marca */}
         <div className="relative z-10 flex items-center justify-center gap-3.5 px-12 pt-10">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg shadow-black/10">

@@ -40,7 +40,7 @@ export function RecentActivityCard({ data }: RecentActivityCardProps) {
               className="group relative z-10 -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-200 hover:bg-muted/50"
             >
               <div className="relative shrink-0">
-                <div className="flex size-8 items-center justify-center rounded-full bg-info-soft text-[10px] font-bold text-info-foreground ring-2 ring-card">
+                <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--sidebar)] to-brand-teal text-[10px] font-bold text-white shadow-sm ring-2 ring-card">
                   {event.initials}
                 </div>
                 <span className="absolute -right-0.5 -bottom-0.5 flex size-3.5 items-center justify-center rounded-full border border-border bg-card">

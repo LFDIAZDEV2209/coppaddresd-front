@@ -21,8 +21,7 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   const styles = {
-    primary:
-      "bg-gradient-to-r from-[var(--sidebar)] to-[color-mix(in_srgb,var(--sidebar)_88%,var(--primary))] text-white rounded-none px-4 py-3",
+    primary: "bg-brand-gradient text-white rounded-none px-4 py-3",
     secondary: "bg-primary-soft text-foreground rounded-xl px-4 py-3",
     tertiary: "bg-transparent text-foreground px-0 py-2",
     destructive: "bg-destructive text-white rounded-none px-4 py-3",
