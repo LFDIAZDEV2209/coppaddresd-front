@@ -186,7 +186,7 @@ export function UsersToolbar({
       </div>
 
       {activeChips.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="animate-slide-down flex flex-wrap items-center gap-1.5">
           <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
             <SlidersHorizontal className="size-3" />
             {t("{count} filtros activos", {
@@ -196,7 +196,7 @@ export function UsersToolbar({
           {activeChips.map((chip) => (
             <span
               key={chip.key}
-              className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 py-0.5 pr-1 pl-2.5 text-[11px] font-medium text-primary"
+              className="animate-scale-in inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 py-0.5 pr-1 pl-2.5 text-[11px] font-medium text-primary transition-all hover:bg-primary/15"
             >
               {chip.label}
               <button

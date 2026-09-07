@@ -224,7 +224,7 @@ export function UserBulkImport() {
 
       {/* ETAPA: carga de archivo */}
       {stage === "upload" && (
-        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:p-8">
+        <div className="animate-slide-up flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:p-8">
           <label
             onDragOver={(e) => {
               e.preventDefault();
@@ -307,7 +307,7 @@ export function UserBulkImport() {
 
       {/* ETAPA: preview EDITABLE */}
       {stage === "preview" && preview && (
-        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
+        <div className="animate-slide-up flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
           <div className="flex flex-wrap items-center gap-2">
             <SummaryChip
               tone="success"
@@ -359,12 +359,15 @@ export function UserBulkImport() {
                     <tr
                       key={`${row.line}-${index}`}
                       className={cn(
-                        "border-t border-border/50 transition-colors",
+                        "animate-slide-up border-t border-border/50 transition-colors",
                         invalid
                           ? "bg-destructive-soft/25"
                           : "hover:bg-muted/30",
                         duplicate && "bg-destructive-soft/40",
                       )}
+                      style={{
+                        animationDelay: `${Math.min(index * 40, 240)}ms`,
+                      }}
                     >
                       <td
                         className={cn(
@@ -507,7 +510,8 @@ export function UserBulkImport() {
 
       {/* ETAPA: confirmación */}
       {stage === "confirm" && preview && (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-12 text-center">
+        <div className="animate-scale-in flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-12 text-center">
+          {" "}
           <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <UsersIcon className="size-6" />
           </span>
@@ -537,7 +541,7 @@ export function UserBulkImport() {
 
       {/* ETAPA: procesando */}
       {stage === "processing" && (
-        <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-card px-6 py-14">
+        <div className="animate-scale-in flex flex-col items-center gap-5 rounded-2xl border border-border bg-card px-6 py-14">
           <LoaderCircle className="size-10 animate-spin text-primary" />
           <div className="flex flex-col items-center gap-2">
             <p className="text-[15px] font-semibold text-foreground">
@@ -564,7 +568,8 @@ export function UserBulkImport() {
 
       {/* ETAPA: resultado */}
       {stage === "result" && result && (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-12 text-center">
+        <div className="animate-scale-in flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-12 text-center">
+          {" "}
           <span className="flex size-14 items-center justify-center rounded-2xl bg-success/15 text-success">
             <CheckCircle2 className="size-7" />
           </span>
@@ -670,6 +675,7 @@ function NativeSelect({
   );
 }
 
+/** Chip resumen animado (pops al aparecer). */
 function SummaryChip({
   tone,
   icon: Icon,
@@ -682,7 +688,7 @@ function SummaryChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold",
+        "animate-scale-in inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold",
         tone === "success" && "bg-success text-white",
         tone === "warning" && "bg-warning-soft text-warning-foreground",
         tone === "destructive" && "bg-destructive-soft text-destructive",

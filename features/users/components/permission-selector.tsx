@@ -221,7 +221,7 @@ export function PermissionSelector({
                   </span>
                 </span>
                 {selectedCount > 0 && (
-                  <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10.5px] font-bold text-success-foreground">
+                  <span className="animate-scale-in rounded-full bg-success/15 px-2 py-0.5 text-[10.5px] font-bold text-success-foreground">
                     {selectedCount}
                   </span>
                 )}
@@ -233,80 +233,91 @@ export function PermissionSelector({
                 />
               </div>
 
-              {/* Contenido */}
-              {open && (
-                <div className="flex flex-col gap-0.5 border-t border-border/50 px-2 py-2">
-                  {grantable.length > 1 && (
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const allSelected = grantable.every((permission) =>
-                          selected.has(permission.id),
-                        );
-                        grantable.forEach((permission) => {
-                          const isChecked = selected.has(permission.id);
-                          if (allSelected ? isChecked : !isChecked) {
-                            onToggle(permission.id);
-                          }
-                        });
-                      }}
-                      className="self-start rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold text-primary transition-colors hover:bg-primary/10 disabled:opacity-40"
-                    >
-                      {grantable.every((permission) =>
-                        selected.has(permission.id),
-                      )
-                        ? t("Quitar todos")
-                        : t("Agregar todos")}
-                    </button>
-                  )}
-                  {group.permissions.map((permission) => {
-                    const inherited = inheritedIds.has(permission.id);
-                    const checked = selected.has(permission.id) || inherited;
-                    const originRole = inheritedOrigin?.get(permission.id);
-                    return (
-                      <label
-                        key={permission.id}
-                        className={cn(
-                          "flex items-start gap-2.5 rounded-lg p-2 transition-colors",
-                          inherited
-                            ? "cursor-not-allowed opacity-60"
-                            : "cursor-pointer hover:bg-muted/60",
-                        )}
+              {/* Contenido — expand/collapse animado (grid rows) */}
+              <div
+                className={cn(
+                  "grid transition-all duration-300 ease-out",
+                  open
+                    ? "grid-rows-[1fr] opacity-100"
+                    : "grid-rows-[0fr] opacity-0",
+                )}
+              >
+                <div className="overflow-hidden">
+                  <div className="flex flex-col gap-0.5 border-t border-border/50 px-2 py-2">
+                    {grantable.length > 1 && (
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const allSelected = grantable.every((permission) =>
+                            selected.has(permission.id),
+                          );
+                          grantable.forEach((permission) => {
+                            const isChecked = selected.has(permission.id);
+                            if (allSelected ? isChecked : !isChecked) {
+                              onToggle(permission.id);
+                            }
+                          });
+                        }}
+                        className="self-start rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold text-primary transition-colors hover:bg-primary/10 disabled:opacity-40"
                       >
-                        <Checkbox
-                          checked={checked}
-                          disabled={disabled || inherited}
-                          onCheckedChange={() => onToggle(permission.id)}
-                          className="mt-0.5"
-                          aria-label={permission.name}
-                        />
-                        <span className="flex min-w-0 flex-col gap-0.5">
-                          <span className="flex items-center gap-1.5">
-                            <span className="text-[12.5px] leading-tight font-medium text-foreground">
-                              {permission.name}
-                            </span>
-                            {inherited && originRole && (
-                              <span className="inline-flex shrink-0 items-center gap-0.5 rounded-md bg-teal-50 px-1.5 py-px text-[9.5px] font-semibold text-teal-700">
-                                <CheckCircle2 className="size-2.5" />
-                                {t("Rol")}: {originRole}
+                        {grantable.every((permission) =>
+                          selected.has(permission.id),
+                        )
+                          ? t("Quitar todos")
+                          : t("Agregar todos")}
+                      </button>
+                    )}
+                    {group.permissions.map((permission) => {
+                      const inherited = inheritedIds.has(permission.id);
+                      const checked = selected.has(permission.id) || inherited;
+                      const originRole = inheritedOrigin?.get(permission.id);
+                      return (
+                        <label
+                          key={permission.id}
+                          className={cn(
+                            "flex items-start gap-2.5 rounded-lg p-2 transition-colors",
+                            inherited
+                              ? "cursor-not-allowed opacity-60"
+                              : "cursor-pointer hover:bg-muted/60",
+                          )}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            disabled={disabled || inherited}
+                            onCheckedChange={() => onToggle(permission.id)}
+                            className="mt-0.5"
+                            aria-label={permission.name}
+                          />
+                          <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="flex items-center gap-1.5">
+                              <span className="text-[12.5px] leading-tight font-medium text-foreground">
+                                {permission.name}
                               </span>
-                            )}
+                              {inherited && originRole && (
+                                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-md bg-teal-50 px-1.5 py-px text-[9.5px] font-semibold text-teal-700">
+                                  <CheckCircle2 className="size-2.5" />
+                                  {t("Rol")}: {originRole}
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-mono text-[10px] text-muted-foreground/80">
+                              {permission.code}
+                            </span>
+                            <span className="text-[11px] leading-snug text-muted-foreground">
+                              {permission.description ??
+                                t(
+                                  "Permite usar esta función de la plataforma.",
+                                )}
+                            </span>
                           </span>
-                          <span className="font-mono text-[10px] text-muted-foreground/80">
-                            {permission.code}
-                          </span>
-                          <span className="text-[11px] leading-snug text-muted-foreground">
-                            {permission.description ??
-                              t("Permite usar esta función de la plataforma.")}
-                          </span>
-                        </span>
-                      </label>
-                    );
-                  })}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-              )}
+              </div>
             </section>
           );
         })}

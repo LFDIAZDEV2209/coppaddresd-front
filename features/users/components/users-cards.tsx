@@ -58,7 +58,7 @@ export function UsersCards({
   const t = useT();
 
   return (
-    <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+    <div className="stagger-children grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
       {users.map((user) => {
         const selected = selectedIds.has(user.id);
         return (

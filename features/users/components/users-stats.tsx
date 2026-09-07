@@ -119,7 +119,7 @@ export function UsersStats({ stats, filters, onStatFilter }: UsersStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+    <div className="stagger-children grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
       {defs.map((def) => {
         const value = stats ? def.getValue(stats) : null;
         const active = def.isActive(filters);

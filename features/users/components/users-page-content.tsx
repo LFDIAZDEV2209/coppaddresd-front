@@ -309,7 +309,7 @@ export function UsersPageContent() {
 
   return (
     <BulkRolesProvider roles={catalog?.roles ?? []}>
-      <div className="flex flex-col gap-5 p-6">
+      <div className="stagger-children flex flex-col gap-5 p-6">
         <PageHeader
           title={t("Usuarios")}
           description={t(

@@ -502,9 +502,9 @@ export function UserWizard({ mode, userId }: UserWizardProps) {
               >
                 <span
                   className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-bold",
+                    "flex size-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-bold transition-all duration-300",
                     current
-                      ? "bg-brand-gradient text-white"
+                      ? "scale-105 bg-brand-gradient text-white shadow-sm"
                       : done
                         ? "bg-success text-white"
                         : "bg-muted text-muted-foreground",
@@ -533,8 +533,8 @@ export function UserWizard({ mode, userId }: UserWizardProps) {
               {index < STEPS.length - 1 && (
                 <span
                   className={cn(
-                    "h-px flex-1",
-                    done ? "bg-success/50" : "bg-border",
+                    "h-px flex-1 transition-colors duration-500",
+                    done ? "bg-success/60" : "bg-border",
                   )}
                 />
               )}
@@ -583,7 +583,7 @@ export function UserWizard({ mode, userId }: UserWizardProps) {
 
           {/* PASO 1 — Información básica */}
           {step === 0 && (
-            <div className="flex flex-col gap-4">
+            <div className="animate-slide-up flex flex-col gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
                   label={t("Nombre")}
@@ -740,7 +740,7 @@ export function UserWizard({ mode, userId }: UserWizardProps) {
 
           {/* PASO 2 — Roles con preview dinámico */}
           {step === 1 && (
-            <div className="flex flex-col gap-3">
+            <div className="animate-slide-up flex flex-col gap-3">
               {!canAssignRoles ? (
                 <Notice
                   icon={Lock}
@@ -780,7 +780,7 @@ export function UserWizard({ mode, userId }: UserWizardProps) {
 
           {/* PASO 3 — Permisos directos */}
           {step === 2 && (
-            <div className="flex flex-col gap-3">
+            <div className="animate-slide-up flex flex-col gap-3">
               {!canAssignPermissions ? (
                 <Notice
                   icon={Lock}

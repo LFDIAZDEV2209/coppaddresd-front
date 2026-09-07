@@ -181,14 +181,15 @@ export function UsersTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {users.map((user) => {
+        {users.map((user, index) => {
           const selected = selectedIds.has(user.id);
           const lastAccess = getMockLastAccess(user.id);
           return (
             <TableRow
               key={user.id}
               data-selected={selected}
-              className="h-12 data-[selected=true]:bg-primary/[0.04]"
+              className="h-12 animate-slide-up data-[selected=true]:bg-primary/[0.04]"
+              style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
             >
               <TableCell>
                 <Checkbox

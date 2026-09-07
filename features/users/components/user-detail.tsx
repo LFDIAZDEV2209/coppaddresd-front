@@ -254,7 +254,7 @@ export function UserDetail({ userId }: UserDetailProps) {
   const directCount = summary?.direct.length ?? 0;
 
   return (
-    <div className="flex flex-col gap-5 p-6">
+    <div className="stagger-children flex flex-col gap-5 p-6">
       <PageHeader
         title={t("Detalle de usuario")}
         description={t("Identidad, roles y mapa de permisos del usuario.")}
@@ -273,7 +273,7 @@ export function UserDetail({ userId }: UserDetailProps) {
 
       {notice && (
         <div
-          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          className="animate-slide-down flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
           role="status"
         >
           <Info className="mt-0.5 size-4 shrink-0" />
@@ -489,7 +489,7 @@ export function UserDetail({ userId }: UserDetailProps) {
             </p>
           ) : (
             <div className="max-h-[460px] overflow-y-auto pr-1">
-              <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+              <div className="stagger-children grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                 {permissionGroups.map((group) => (
                   <div key={group.module} className="flex flex-col gap-1">
                     <p className="text-[10.5px] font-bold tracking-wide text-foreground uppercase">

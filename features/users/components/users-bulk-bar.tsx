@@ -90,8 +90,8 @@ export function UsersBulkBar({
 
   return (
     <>
-      <div className="sticky bottom-4 z-20 mx-auto w-fit">
-        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/20 bg-brand-gradient px-3 py-2 shadow-lg shadow-brand-navy/30">
+      <div className="animate-slide-up sticky bottom-4 z-20 mx-auto w-fit">
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/20 bg-brand-gradient px-3 py-2 shadow-lg shadow-brand-navy/30 transition-transform hover:-translate-y-0.5">
           <span className="flex items-center gap-2 rounded-xl bg-white/12 px-2.5 py-1 text-[12.5px] font-semibold text-white">
             <ShieldCheck className="size-4" />
             {t("{count} seleccionados", { count: String(selectedCount) })}
