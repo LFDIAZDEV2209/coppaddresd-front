@@ -3,7 +3,11 @@
  * (badges de estado Activo/Inactivo y formato de fecha en español).
  */
 
-/** Colores del badge de estado Activo/Inactivo (usuarios y roles). */
+/**
+ * Colores SÓLIDOS del badge de estado Activo/Inactivo (usuarios y roles).
+ * Alto contraste: verde pleno con texto blanco; inactivo = gris pizarra
+ * sólido (nunca pastel translúcido: los -soft son para banners, no estados).
+ */
 export function getStatusColor(active: boolean): {
   bg: string;
   text: string;
@@ -11,15 +15,15 @@ export function getStatusColor(active: boolean): {
 } {
   if (active) {
     return {
-      bg: "var(--success-soft)",
-      text: "var(--success-foreground)",
-      dot: "var(--success-foreground)",
+      bg: "var(--success)",
+      text: "#ffffff",
+      dot: "#ffffff",
     };
   }
   return {
-    bg: "var(--destructive-soft)",
-    text: "var(--destructive)",
-    dot: "var(--destructive)",
+    bg: "#e2e8f0",
+    text: "#334155",
+    dot: "#64748b",
   };
 }
 

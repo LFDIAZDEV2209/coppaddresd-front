@@ -6,35 +6,32 @@ interface PageHeaderProps {
   description: string;
   icon: LucideIcon;
   actions?: React.ReactNode;
-  /** Tono del gradiente de fondo: navy (default, color principal del sidebar) o primary (azul de acento). */
-  tone?: "navy" | "primary";
+  /**
+   * Tono del fondo: "brand" (default) usa el token ÚNICO --brand-gradient
+   * (ajustable en app/globals.css → todas las cabeceras cambian juntas).
+   * "primary" se reserva como acento con el azul primario.
+   */
+  tone?: "brand" | "primary";
   className?: string;
 }
 
 /**
- * Cabecera de página. El color principal de la plataforma es el navy del
- * sidebar (`--sidebar`): el tono por defecto lo usa con un degradado LEVE
- * (viraje sutil, sin azul claro protagonista). `primary` se reserva como
- * acento en vistas que lo requieran.
+ * Cabecera de página. El fondo SIEMPRE sale del token --brand-gradient
+ * (globals.css): un solo lugar para ajustar el degradado de la plataforma.
  */
 export function PageHeader({
   title,
   description,
   icon: Icon,
   actions,
-  tone = "navy",
+  tone = "brand",
   className,
 }: PageHeaderProps) {
-  const gradient =
-    tone === "primary"
-      ? "from-primary via-primary/85 to-[color-mix(in_srgb,var(--primary)_50%,var(--sidebar))]"
-      : "from-[var(--sidebar)] via-[#0c4c6b] to-brand-teal";
-
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-t-xl rounded-b-none bg-gradient-to-r px-6 py-4 shadow-sm",
-        gradient,
+        "flex items-center gap-4 rounded-t-xl rounded-b-none px-6 py-4 shadow-sm",
+        tone === "primary" ? "bg-primary" : "bg-brand-gradient",
         className,
       )}
     >
