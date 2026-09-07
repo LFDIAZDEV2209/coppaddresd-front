@@ -153,7 +153,9 @@ export function validateProfessionalRows(
 }
 
 /**
- * Simulación de creación masiva (MOCK — no toca el backend). Itera las filas
+ * @deprecated Simulación de creación masiva (MOCK — no toca el backend).
+ * Conservada solo para referencia/demo local. La importación real usa
+ * `createBulkEmployees` (POST /api/v1/employees/bulk). Itera las filas
  * válidas con delay por profesional y reporta progreso; ~4% de "omitidos"
  * para mostrar la UX completa del resultado.
  */

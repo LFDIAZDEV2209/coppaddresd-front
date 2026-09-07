@@ -33,20 +33,28 @@ import {
 import {
   downloadProfessionalsTemplate,
   parseProfessionalsCsv,
-  simulateBulkProfessionalCreate,
   validateProfessionalRows,
   type BulkProfessionalPreview,
   type BulkProfessionalResult,
   type BulkProfessionalRow,
 } from "../services/professionals-mock";
+import {
+  createBulkEmployees,
+  fetchOrganizationTree,
+} from "../services/employees-service";
+import { ApiError } from "@/lib/api/http";
 
 type Stage = "upload" | "preview" | "confirm" | "processing" | "result";
 
 /**
- * Creación masiva de profesionales (MOCK) con el patrón del módulo Usuarios:
- * plantilla CSV, preview editable con revalidación en línea, confirmación,
- * progreso y resultado. Cuando el backend exponga el endpoint real, la UI
- * se conecta sin cambios de estructura.
+ * Creación masiva de profesionales conectada al endpoint real.
+ * Flujo: plantilla CSV → preview editable con revalidación → confirmación →
+ * procesamiento (POST /api/v1/employees/bulk, request único con spinner
+ * indeterminado) → resultado con mapeo de results[] por line.
+ *
+ * organizationId: org-scoped — se resuelve como en el wizard (fetchOrganizationTree
+ * + primera org con clínicas). La UI no expone selector de org: si no hay org
+ * con clínicas se muestra error global reintentable.
  */
 export function ProfessionalBulkImport() {
   const t = useT();
@@ -56,18 +64,33 @@ export function ProfessionalBulkImport() {
   const [rows, setRows] = useState<BulkProfessionalRow[]>([]);
   const [preview, setPreview] = useState<BulkProfessionalPreview | null>(null);
   const [result, setResult] = useState<BulkProfessionalResult | null>(null);
-  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [fileError, setFileError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [failedRows, setFailedRows] = useState<
+    Array<{ line: number; error: string }>
+  >([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchProfessionalTypes()
-      .then(setTypes)
+    let cancelled = false;
+    Promise.all([fetchProfessionalTypes(), fetchOrganizationTree()])
+      .then(([fetchedTypes, orgs]) => {
+        if (cancelled) return;
+        setTypes(fetchedTypes);
+        // Misma estrategia que el wizard: primera org con clínicas.
+        const withClinics = orgs.find((o) => o.clinics.length > 0) ?? orgs[0] ?? null;
+        if (withClinics) setOrganizationId(withClinics.id);
+      })
       .catch(() => {
-        // Sin catálogo la validación de tipos se relaja (no bloquea el mock).
+        // Sin catálogo la validación de tipos se relaja (no bloquea).
+        // Si falla el árbol org, se mostrará error al intentar importar.
       });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const typeNames = types.map((type) => type.name);
@@ -146,13 +169,73 @@ export function ProfessionalBulkImport() {
 
   const startImport = async () => {
     if (!preview) return;
+    if (!organizationId) {
+      setBulkError(
+        t(
+          "No se pudo resolver la organización. Recargá la página e intenta de nuevo.",
+        ),
+      );
+      return;
+    }
     setStage("processing");
-    setProgress({ done: 0, total: preview.valid });
-    const res = await simulateBulkProfessionalCreate(rows, (done, total) =>
-      setProgress({ done, total }),
-    );
-    setResult(res);
-    setStage("result");
+    setBulkError(null);
+    setFailedRows([]);
+    // Solo filas válidas (el backend igual valida por fila, pero evitamos
+    // enviar errores ya detectados en cliente). Mapeo: professionalType -> professionalTypeName.
+    const validRows = rows.filter((row) => row.errors.length === 0);
+    const payload = validRows.map((row) => ({
+      firstName: row.firstName.trim(),
+      lastName: row.lastName.trim(),
+      email: row.email.trim(),
+      professionalTypeName: row.professionalType ? row.professionalType : null,
+      status: (row.status || "activo").trim().toLowerCase(),
+    }));
+
+    try {
+      const response = await createBulkEmployees({
+        organizationId,
+        rows: payload,
+      });
+
+      // Mapea results[] por line a las filas UI para mostrar errores de fila.
+      // El backend usa line 1-based sobre el array enviado (validRows).
+      // Inyectamos el error en la fila correspondiente para que el preview
+      // pueda reflejarlo si el usuario vuelve atrás.
+      if (response.results && response.results.length > 0) {
+        const failures = response.results
+          .filter((r) => !r.success)
+          .map((r) => ({ line: r.line, error: r.error ?? t("Error desconocido") }));
+        setFailedRows(failures);
+
+        // Actualiza las filas UI con errores del servidor (para trazabilidad).
+        if (failures.length > 0) {
+          const lineToError = new Map(failures.map((f) => [f.line, f.error]));
+          const updated = validRows.map((row, idx) => {
+            const line = idx + 1;
+            const err = lineToError.get(line);
+            if (err) return { ...row, errors: [...row.errors, err] };
+            return row;
+          });
+          // Mantener también las filas inválidas originales para contexto.
+          const invalidRows = rows.filter((row) => row.errors.length > 0);
+          const merged = [...invalidRows, ...updated];
+          // No llamamos revalidate aquí para no pisar los errores del servidor.
+          // Solo actualizamos rows para que el resultado pueda listarlos.
+          // El orden original por line se conserva al mostrar failedRows.
+          setRows(merged);
+        }
+      }
+
+      setResult({ created: response.created, skipped: response.failed });
+      setStage("result");
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : t("No se pudo completar la importación. Verifica tu conexión e intenta de nuevo.");
+      setBulkError(message);
+      setStage("confirm");
+    }
   };
 
   const reset = () => {
@@ -160,7 +243,8 @@ export function ProfessionalBulkImport() {
     setRows([]);
     setPreview(null);
     setResult(null);
-    setProgress({ done: 0, total: 0 });
+    setBulkError(null);
+    setFailedRows([]);
     setFileError(null);
     setFileName(null);
     if (inputRef.current) inputRef.current.value = "";
@@ -225,6 +309,25 @@ export function ProfessionalBulkImport() {
           );
         })}
       </ol>
+
+      {bulkError && stage !== "processing" && stage !== "result" && (
+        <div
+          className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive-soft px-3 py-2.5 text-[12.5px] text-destructive"
+          role="alert"
+        >
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{bulkError}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void startImport()}
+            className="shrink-0"
+          >
+            <RotateCcw data-icon="inline-start" />
+            {t("Reintentar")}
+          </Button>
+        </div>
+      )}
 
       {/* ETAPA: carga de archivo */}
       {stage === "upload" && (
@@ -547,7 +650,7 @@ export function ProfessionalBulkImport() {
         </div>
       )}
 
-      {/* ETAPA: procesando */}
+      {/* ETAPA: procesando — request único, estado indeterminado */}
       {stage === "processing" && (
         <div className="animate-scale-in flex flex-col items-center gap-5 rounded-2xl border border-border bg-card px-6 py-14">
           <LoaderCircle className="size-10 animate-spin text-primary" />
@@ -555,21 +658,12 @@ export function ProfessionalBulkImport() {
             <p className="text-[15px] font-semibold text-foreground">
               {t("Creando profesionales...")}
             </p>
-            <p className="text-[13px] tabular-nums text-muted-foreground">
-              {progress.done} / {progress.total}
+            <p className="text-[13px] text-muted-foreground">
+              {t("Enviando lote al servidor...")}
             </p>
           </div>
           <div className="h-2.5 w-full max-w-sm overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-brand-gradient transition-all duration-300"
-              style={{
-                width: `${
-                  progress.total === 0
-                    ? 0
-                    : Math.round((progress.done / progress.total) * 100)
-                }%`,
-              }}
-            />
+            <div className="h-full w-full animate-pulse rounded-full bg-brand-gradient opacity-80" />
           </div>
         </div>
       )}
@@ -593,10 +687,31 @@ export function ProfessionalBulkImport() {
               <SummaryChip
                 tone="warning"
                 icon={AlertTriangle}
-                label={`${result.skipped} ${t("omitidos")}`}
+                label={`${result.skipped} ${t("con errores")}`}
               />
             )}
           </div>
+          {failedRows.length > 0 && (
+            <div className="mt-2 w-full max-w-xl rounded-xl border border-warning/30 bg-warning-soft/40 p-3 text-left">
+              <p className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-warning-foreground">
+                <AlertTriangle className="size-3.5" />
+                {t("Detalles de filas con error")}
+              </p>
+              <ul className="flex flex-col gap-1.5">
+                {failedRows.map((f) => (
+                  <li
+                    key={f.line}
+                    className="flex items-start gap-2 rounded-md bg-card px-2.5 py-1.5 text-[12px] text-foreground"
+                  >
+                    <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                      {t("Línea {line}", { line: String(f.line) })}
+                    </span>
+                    <span className="flex-1">{f.error}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
             <Button onClick={() => router.push("/employees")}>
               <Stethoscope data-icon="inline-start" />
@@ -607,11 +722,6 @@ export function ProfessionalBulkImport() {
               {t("Importar otro archivo")}
             </Button>
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground/80">
-            {t(
-              "Simulación de demostración: la creación masiva real se conectará al backend.",
-            )}
-          </p>
         </div>
       )}
     </div>

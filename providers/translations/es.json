@@ -2676,5 +2676,13 @@
   "XP por rachas": "XP por rachas",
   "y todas sus asignaciones. Esta acción no se puede deshacer.": "y todas sus asignaciones. Esta acción no se puede deshacer.",
   "Ya empezaron sus evaluaciones": "Ya empezaron sus evaluaciones",
-  "Ya reposteaste esta publicación": "Ya reposteaste esta publicación"
+  "Ya reposteaste esta publicación": "Ya reposteaste esta publicación",
+  "No se pudo resolver la organización. Recargá la página e intenta de nuevo.": "No se pudo resolver la organización. Recargá la página e intenta de nuevo.",
+  "Error desconocido": "Error desconocido",
+  "No se pudo completar la importación. Verifica tu conexión e intenta de nuevo.": "No se pudo completar la importación. Verifica tu conexión e intenta de nuevo.",
+  "Enviando lote al servidor...": "Enviando lote al servidor...",
+  "Detalles de filas con error": "Detalles de filas con error",
+  "Línea {line}": "Línea {line}",
+  "creados": "creados",
+  "con errores": "con errores"
 }
