@@ -290,6 +290,51 @@ export async function updateProfessionalScopes(
   });
 }
 
+// --- Creación masiva de empleados (CSV) ---
+
+/** Fila individual enviada al bulk endpoint. */
+export interface BulkCreateRow {
+  firstName: string;
+  lastName: string;
+  email: string;
+  professionalTypeName: string | null;
+  status: string;
+}
+
+export interface BulkCreateEmployeesInput {
+  organizationId: string;
+  rows: BulkCreateRow[];
+}
+
+export interface BulkRowResult {
+  line: number;
+  success: boolean;
+  employeeId?: string | null;
+  error?: string | null;
+}
+
+export interface BulkCreateResult {
+  results: BulkRowResult[];
+  created: number;
+  failed: number;
+}
+
+/**
+ * Crea empleados de forma masiva.
+ * POST /api/v1/employees/bulk — cada fila se procesa de forma independiente.
+ */
+export async function createBulkEmployees(
+  input: BulkCreateEmployeesInput,
+): Promise<BulkCreateResult> {
+  return apiFetch<BulkCreateResult>(`${env.apiUrl}/api/v1/employees/bulk`, {
+    method: "POST",
+    body: JSON.stringify({
+      organizationId: input.organizationId,
+      rows: input.rows,
+    }),
+  });
+}
+
 // --- Horarios semanales de atención del profesional ---
 
 /** Franja horaria semanal (contrato del backend: weekday 1=lun..7=dom, HH:mm). */
