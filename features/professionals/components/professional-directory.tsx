@@ -8,21 +8,13 @@ import {
   ArrowUp,
   ArrowUpDown,
   Building2,
-  Check,
-  Eye,
   FileUp,
   MailPlus,
-  MoreHorizontal,
   Plus,
   RefreshCw,
-  Search,
-  SlidersHorizontal,
   Stethoscope,
-  UserCheck,
   UserRound,
   UserRoundCheck,
-  UserX,
-  Users,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,20 +22,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -53,19 +31,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ViewToggle, type DataView } from "@/components/feedback/view-toggle";
 import { useAppContext } from "@/providers/context-provider";
 import { CatalogManagement } from "./catalog-management";
 import { useProfessionals } from "../hooks/use-professionals";
 import type { EmployeeListItem } from "../services/employees-service";
 import { inviteEmployee } from "../services/employees-service";
 import { ApiError } from "@/lib/api/http";
+import type { DataView } from "@/components/feedback/view-toggle";
 import {
   fullName,
   ProfessionalAvatar,
   ProfessionalStatusBadge,
   statusLabel,
 } from "./professional-visuals";
+import { DirectoryStats } from "./directory/directory-stats";
+import { DirectoryToolbar } from "./directory/directory-filters";
+import { ActionsMenu } from "./directory/actions-menu";
 
 /**
  * Directorio de profesionales del ERP con el lenguaje visual del módulo de
@@ -435,382 +416,6 @@ export function ProfessionalDirectory() {
       {/* Gestión de catálogos (tipos y especialidades): solo Super Admin. */}
       {canManageCatalogs && <CatalogManagement />}
     </div>
-  );
-}
-
-// --- Stats clicables (patrón del módulo Usuarios) ---
-
-interface StatDef {
-  key: string;
-  label: string;
-  icon: typeof Users;
-  iconBg: string;
-  accent: string;
-  getValue: (stats: {
-    total: number;
-    active: number;
-    invited: number;
-    inactive: number;
-  }) => number;
-  context: string;
-  isActive: (filters: { status: string }) => boolean;
-  filter: { status: string };
-}
-
-function DirectoryStats({
-  stats,
-  filters,
-  onStatFilter,
-}: {
-  stats: {
-    total: number;
-    active: number;
-    invited: number;
-    inactive: number;
-  } | null;
-  filters: { status: string };
-  onStatFilter: (partial: { status: string }) => void;
-}) {
-  const t = useT();
-  const defs: StatDef[] = [
-    {
-      key: "total",
-      label: "Total de profesionales",
-      icon: Users,
-      iconBg: "bg-brand-gradient text-white shadow-sm",
-      accent: "var(--brand-gradient)",
-      getValue: (s) => s.total,
-      context: "Directorio completo",
-      isActive: () => filters.status === "all",
-      filter: { status: "all" },
-    },
-    {
-      key: "active",
-      label: "Activos",
-      icon: UserCheck,
-      iconBg: "bg-success text-white",
-      accent: "var(--success)",
-      getValue: (s) => s.active,
-      context: "En el equipo activo",
-      isActive: (f) => f.status === "Active",
-      filter: { status: "Active" },
-    },
-    {
-      key: "invited",
-      label: "Invitados",
-      icon: MailPlus,
-      iconBg: "bg-warning text-white",
-      accent: "var(--warning)",
-      getValue: (s) => s.invited,
-      context: "Pendientes de primer acceso",
-      isActive: (f) => f.status === "Invited",
-      filter: { status: "Invited" },
-    },
-    {
-      key: "inactive",
-      label: "Inactivos",
-      icon: UserX,
-      iconBg: "bg-slate-400 text-white",
-      accent: "#94a3b8",
-      getValue: (s) => s.inactive,
-      context: "Sin actividad en el ERP",
-      isActive: (f) => f.status === "Inactive",
-      filter: { status: "Inactive" },
-    },
-  ];
-
-  return (
-    <div className="stagger-children grid grid-cols-2 gap-3 xl:grid-cols-4">
-      {defs.map((def) => {
-        const value = stats ? def.getValue(stats) : null;
-        const active = def.isActive(filters);
-        return (
-          <button
-            key={def.key}
-            type="button"
-            disabled={!stats}
-            onClick={() => onStatFilter(def.filter)}
-            aria-pressed={active}
-            className={cn(
-              "group relative flex items-center gap-3 overflow-hidden rounded-xl border bg-card p-3.5 pl-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none",
-              active
-                ? "border-primary ring-1 ring-primary/30"
-                : "border-border/70 hover:border-border",
-            )}
-          >
-            <span
-              aria-hidden
-              className="absolute inset-y-0 left-0 w-1"
-              style={{ background: def.accent }}
-            />
-            <span
-              className={cn(
-                "flex size-9 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105",
-                def.iconBg,
-              )}
-            >
-              <def.icon className="size-4" />
-            </span>
-            <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
-                {t(def.label)}
-              </span>
-              {stats ? (
-                <span className="text-xl leading-none font-bold tabular-nums text-foreground">
-                  {value}
-                </span>
-              ) : (
-                <Skeleton className="h-5 w-10" />
-              )}
-              <span className="truncate text-[10.5px] text-muted-foreground">
-                {stats ? t(def.context) : "—"}
-              </span>
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// --- Toolbar con chips de filtros ---
-
-function DirectoryToolbar({
-  filters,
-  specialties,
-  roles,
-  clinics,
-  view,
-  onViewChange,
-  loading,
-  onRefresh,
-  onFilterChange,
-  activeChips,
-  onClearFilters,
-  resultCount,
-  isFiltered,
-}: {
-  filters: {
-    search: string;
-    status: string;
-    specialtyId: string;
-    roleId: string;
-    clinicId: string;
-  };
-  specialties: { id: string; name: string; isActive: boolean }[];
-  roles: { id: string; name: string }[];
-  clinics: { id: string; name: string }[];
-  view: DataView;
-  onViewChange: (view: DataView) => void;
-  loading: boolean;
-  onRefresh: () => void;
-  onFilterChange: (
-    partial: Partial<{
-      search: string;
-      status: string;
-      specialtyId: string;
-      roleId: string;
-      clinicId: string;
-    }>,
-  ) => void;
-  activeChips: { key: string; label: string; onRemove: () => void }[];
-  onClearFilters: () => void;
-  resultCount: number;
-  isFiltered: boolean;
-}) {
-  const t = useT();
-  // El debounce (300 ms) vive en el hook: aquí notificamos en cada tecla y
-  // el input es controlado (los chips y "Limpiar filtros" lo sincronizan).
-  return (
-    <section
-      className="flex flex-col gap-2.5"
-      aria-label={t("Filtros de profesionales")}
-    >
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative w-full min-w-[200px] sm:w-[240px]">
-          <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="h-9 bg-card pr-8 pl-9"
-            value={filters.search}
-            onChange={(event) => onFilterChange({ search: event.target.value })}
-            placeholder={t("Buscar profesional...")}
-            aria-label={t("Buscar profesionales")}
-          />
-          {filters.search && (
-            <button
-              type="button"
-              onClick={() => onFilterChange({ search: "" })}
-              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-sm text-muted-foreground transition-colors hover:text-foreground"
-              aria-label={t("Limpiar búsqueda")}
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
-
-        <Select
-          value={filters.status}
-          onValueChange={(value) => onFilterChange({ status: value ?? "all" })}
-        >
-          <SelectTrigger
-            className="h-9 w-[170px] bg-card"
-            aria-label={t("Filtrar por estado")}
-          >
-            <UserRound className="mr-2 size-3.5 text-muted-foreground" />
-            <SelectValue>
-              {filters.status === "all"
-                ? t("Estado")
-                : t(statusLabel(filters.status))}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("Todos los estados")}</SelectItem>
-            <SelectItem value="Active">{t("Activo")}</SelectItem>
-            <SelectItem value="Invited">{t("Invitado")}</SelectItem>
-            <SelectItem value="Inactive">{t("Inactivo")}</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.specialtyId}
-          onValueChange={(value) =>
-            onFilterChange({ specialtyId: value ?? "all" })
-          }
-        >
-          <SelectTrigger
-            className="h-9 w-[175px] bg-card"
-            aria-label={t("Filtrar por especialidad")}
-          >
-            <Stethoscope className="mr-2 size-3.5 text-muted-foreground" />
-            <SelectValue>
-              {filters.specialtyId === "all"
-                ? t("Especialidades")
-                : (specialties.find((s) => s.id === filters.specialtyId)
-                    ?.name ?? t("Especialidades"))}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("Todas las especialidades")}</SelectItem>
-            {specialties
-              .filter((s) => s.isActive)
-              .map((specialty) => (
-                <SelectItem key={specialty.id} value={specialty.id}>
-                  {specialty.name}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.roleId}
-          onValueChange={(value) => onFilterChange({ roleId: value ?? "all" })}
-        >
-          <SelectTrigger
-            className="h-9 w-[140px] bg-card"
-            aria-label={t("Filtrar por rol")}
-          >
-            <UserCheck className="mr-2 size-3.5 text-muted-foreground" />
-            <SelectValue>
-              {filters.roleId === "all"
-                ? t("Roles")
-                : (roles.find((r) => r.id === filters.roleId)?.name ??
-                  t("Roles"))}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("Todos los roles")}</SelectItem>
-            {roles.map((role) => (
-              <SelectItem key={role.id} value={role.id}>
-                {role.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.clinicId}
-          onValueChange={(value) =>
-            onFilterChange({ clinicId: value ?? "all" })
-          }
-        >
-          <SelectTrigger
-            className="h-9 w-[150px] bg-card"
-            aria-label={t("Filtrar por clínica")}
-          >
-            <Building2 className="mr-2 size-3.5 text-muted-foreground" />
-            <SelectValue>
-              {filters.clinicId === "all"
-                ? t("Clínicas")
-                : (clinics.find((c) => c.id === filters.clinicId)?.name ??
-                  t("Clínicas"))}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("Todas las clínicas")}</SelectItem>
-            {clinics.map((clinic) => (
-              <SelectItem key={clinic.id} value={clinic.id}>
-                {clinic.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="ml-auto flex items-center gap-1.5">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={onRefresh}
-            disabled={loading}
-            aria-label={t("Actualizar directorio")}
-            title={t("Actualizar directorio")}
-          >
-            <RefreshCw className={loading ? "animate-spin" : undefined} />
-          </Button>
-          <ViewToggle value={view} onValueChange={onViewChange} />
-        </div>
-      </div>
-
-      {activeChips.length > 0 && (
-        <div className="animate-slide-down flex flex-wrap items-center gap-1.5">
-          <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-            <SlidersHorizontal className="size-3" />
-            {t("{count} filtros activos", {
-              count: String(activeChips.length),
-            })}
-          </span>
-          {activeChips.map((chip) => (
-            <span
-              key={chip.key}
-              className="animate-scale-in inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 py-0.5 pr-1 pl-2.5 text-[11px] font-medium text-primary transition-all hover:bg-primary/15"
-            >
-              {chip.label}
-              <button
-                type="button"
-                onClick={chip.onRemove}
-                className="flex items-center justify-center rounded-full p-0.5 transition-colors hover:bg-primary/20"
-                aria-label={t("Quitar filtro {label}", { label: chip.label })}
-              >
-                <X className="size-3" />
-              </button>
-            </span>
-          ))}
-          <Button
-            variant="ghost"
-            size="xs"
-            className="text-muted-foreground"
-            onClick={onClearFilters}
-          >
-            <X data-icon="inline-start" />
-            {t("Limpiar filtros")}
-          </Button>
-          {isFiltered && resultCount > 0 && (
-            <span className="ml-1 text-[11px] text-muted-foreground">
-              {t("{count} resultados", { count: String(resultCount) })}
-            </span>
-          )}
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -1238,62 +843,6 @@ function BulkBar({
         {t("Limpiar selección")}
       </Button>
     </div>
-  );
-}
-
-// --- Menú de acciones de fila ---
-
-function ActionsMenu({
-  employee,
-  canInvite,
-  inviting,
-  copied,
-  onOpen,
-  onInvite,
-}: {
-  employee: EmployeeListItem;
-  canInvite: boolean;
-  inviting: boolean;
-  copied: boolean;
-  onOpen: (employee: EmployeeListItem) => void;
-  onInvite: (employee: EmployeeListItem) => void;
-}) {
-  const t = useT();
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t("Acciones de {name}", { name: fullName(employee) })}
-          />
-        }
-      >
-        <MoreHorizontal />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onOpen(employee)}>
-          <Eye />
-          {t("Ver detalles")}
-        </DropdownMenuItem>
-        {canInvite && employee.status === "Invited" && (
-          <DropdownMenuItem
-            disabled={inviting}
-            onClick={() => onInvite(employee)}
-          >
-            <MailPlus />
-            {inviting ? t("Enviando...") : t("Reenviar invitación")}
-          </DropdownMenuItem>
-        )}
-        {copied && (
-          <DropdownMenuItem disabled>
-            <Check />
-            {t("Enlace copiado")}
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
