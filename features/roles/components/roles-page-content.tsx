@@ -1,17 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  CalendarDays,
-  Key,
-  Pencil,
   Plus,
   RefreshCw,
+  Search,
   ShieldCheck,
   Trash2,
+  TriangleAlert,
+  X,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { SectionHeader } from "@/components/layout/section-header";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,8 +23,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/feedback/status-badge";
 import { useAuth } from "@/providers/auth-provider";
 import { useT } from "@/providers/i18n-provider";
 import type { Permission } from "@/features/permissions/types";
@@ -35,10 +34,10 @@ import {
   createRole,
   updateRole,
   deleteRole,
-  formatDate,
-  getStatusColor,
+  fetchRolePermissions,
 } from "../services/roles-service";
 import type { Role, RoleCreateInput, RoleUpdateInput } from "../types";
+import { RoleCard } from "./role-card";
 import { RoleFormDialog } from "./role-form-dialog";
 import { RolePermissionsPanel } from "./role-permissions-panel";
 
@@ -49,14 +48,23 @@ export function RolesPageContent() {
   const canUpdate = hasPermission("Roles.Update");
   const canDelete = hasPermission("Roles.Delete");
   const canAssignPermissions = hasPermission("Permissions.Assign");
+  // Los roles de sistema solo se editan/eliminan con System.AdminSettings
+  // (el backend lo rechaza igual; acá se deshabilita la acción).
+  const canSystemChanges = hasPermission("System.AdminSettings");
 
   const [roles, setRoles] = useState<Role[] | null>(null);
   const [catalog, setCatalog] = useState<Permission[] | null>(null);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [roleSearch, setRoleSearch] = useState("");
+  /** Hay cambios sin guardar en el panel (para custodiar el cambio de rol). */
+  const [panelDirty, setPanelDirty] = useState(false);
+  /** Rol destino pendiente de confirmar cuando hay cambios sin guardar. */
+  const [pendingRoleId, setPendingRoleId] = useState<string | null>(null);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Role | undefined>();
@@ -78,7 +86,32 @@ export function RolesPageContent() {
     );
   }, []);
 
-  // Carga inicial: roles + catálogo de permisos (paralelo).
+  /**
+   * Cantidad de permisos por rol: el listado del backend no la incluye, se
+   * resuelve con 1 request por rol en segundo plano (roles acotados: decenas).
+   */
+  const loadCounts = useCallback(async (rolesData: Role[]) => {
+    const results = await Promise.allSettled(
+      rolesData.map(async (role) => ({
+        id: role.id,
+        count: (await fetchRolePermissions(role.id)).length,
+      })),
+    );
+    const next: Record<string, number> = {};
+    results.forEach((result) => {
+      if (result.status === "fulfilled")
+        next[result.value.id] = result.value.count;
+    });
+    setCounts(next);
+  }, []);
+
+  const refreshRoles = useCallback(async () => {
+    const rolesData = await fetchRoles();
+    applyRoles(rolesData);
+    void loadCounts(rolesData);
+  }, [applyRoles, loadCounts]);
+
+  // Carga inicial: roles + catálogo de permisos (paralelo); counts en 2º plano.
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -89,6 +122,7 @@ export function RolesPageContent() {
       ]);
       setCatalog(permissionsData);
       applyRoles(rolesData);
+      void loadCounts(rolesData);
     } catch (err) {
       setRoles(null);
       setError(
@@ -97,7 +131,7 @@ export function RolesPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [applyRoles, t]);
+  }, [applyRoles, loadCounts, t]);
 
   useEffect(() => {
     const timer = setTimeout(loadData, 0);
@@ -105,6 +139,24 @@ export function RolesPageContent() {
   }, [loadData, reloadKey]);
 
   const retry = useCallback(() => setReloadKey((key) => key + 1), []);
+
+  /** Cambio de rol con custodia: si hay cambios sin guardar, pide confirmación. */
+  const requestSelect = useCallback(
+    (roleId: string) => {
+      if (roleId === selectedRoleId) return;
+      if (panelDirty) {
+        setPendingRoleId(roleId);
+        return;
+      }
+      setSelectedRoleId(roleId);
+    },
+    [panelDirty, selectedRoleId],
+  );
+
+  const confirmSwitch = () => {
+    if (pendingRoleId) setSelectedRoleId(pendingRoleId);
+    setPendingRoleId(null);
+  };
 
   const openCreate = () => {
     setEditing(undefined);
@@ -114,6 +166,13 @@ export function RolesPageContent() {
     setEditing(role);
     setFormOpen(true);
   };
+
+  /** Gating de roles de sistema (el backend también lo valida). */
+  const canTouchRole = useCallback(
+    (role: Role | null) =>
+      Boolean(role && (!role.isSystem || canSystemChanges)),
+    [canSystemChanges],
+  );
 
   /**
    * Guarda el rol y recarga la lista. Los errores (ej. "El nombre del rol ya
@@ -133,7 +192,7 @@ export function RolesPageContent() {
       }
       // Se aplica la lista antes de cerrar: si la recarga falla, el dialog
       // queda abierto mostrando el error.
-      applyRoles(await fetchRoles());
+      await refreshRoles();
       setFormOpen(false);
     } finally {
       setSavingRole(false);
@@ -147,7 +206,7 @@ export function RolesPageContent() {
     try {
       await deleteRole(deleting.id);
       setDeleting(undefined);
-      applyRoles(await fetchRoles());
+      await refreshRoles();
     } catch (err) {
       setActionError(
         err instanceof Error ? err.message : t("Error al eliminar el rol."),
@@ -158,7 +217,23 @@ export function RolesPageContent() {
     }
   };
 
-  const selectedRole = roles?.find((role) => role.id === selectedRoleId) ?? null;
+  /** Tras guardar permisos: actualiza el contador del rol en el listado. */
+  const handleSaved = useCallback((roleId: string, permissionCount: number) => {
+    setCounts((prev) => ({ ...prev, [roleId]: permissionCount }));
+  }, []);
+
+  const selectedRole =
+    roles?.find((role) => role.id === selectedRoleId) ?? null;
+  const normalizedSearch = roleSearch.trim().toLowerCase();
+  const filteredRoles = useMemo(() => {
+    const all = roles ?? [];
+    if (!normalizedSearch) return all;
+    return all.filter(
+      (role) =>
+        role.name.toLowerCase().includes(normalizedSearch) ||
+        (role.description ?? "").toLowerCase().includes(normalizedSearch),
+    );
+  }, [roles, normalizedSearch]);
 
   if (loading) {
     return <RolesSkeleton />;
@@ -197,104 +272,127 @@ export function RolesPageContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[270px_1fr]">
-        {/* Tarjetas de roles */}
-        <div className="flex flex-col gap-3">
+      {/* Mobile: selector horizontal de roles, sticky bajo el topbar. */}
+      <div className="sticky top-0 z-10 -mx-6 bg-background/90 px-6 py-2 backdrop-blur lg:hidden">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {(roles ?? []).map((role) => {
             const isSelected = role.id === selectedRoleId;
             return (
               <button
                 key={role.id}
-                onClick={() => setSelectedRoleId(role.id)}
-                className={`flex flex-col gap-3 rounded-2xl border p-4 text-left transition-all ${
+                type="button"
+                onClick={() => requestSelect(role.id)}
+                aria-pressed={isSelected}
+                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors ${
                   isSelected
-                    ? "border-primary bg-primary-soft shadow-sm"
-                    : "border-border bg-card hover:border-border-strong"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-foreground"
                 }`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <ShieldCheck className="size-4" />
-                    </div>
-                    <h3 className="truncate text-[13px] font-semibold text-foreground">
-                      {role.name}
-                    </h3>
-                  </div>
-                  <StatusBadge
-                    status={role.isActive ? t("Activo") : t("Inactivo")}
-                    color={getStatusColor(role.isActive)}
-                  />
-                </div>
-                <p className="text-[11px] text-muted-foreground line-clamp-2">
-                  {role.description || t("Sin descripción")}
-                </p>
-                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                  <Key className="size-3" />
-                  <span>{t("Permisos")}</span>
-                  <span className="ml-auto flex items-center gap-1">
-                    <CalendarDays className="size-3" />
-                    {formatDate(role.createdAt)}
-                  </span>
-                </div>
+                {role.name}
+                <span
+                  className={`text-[10px] font-medium ${
+                    isSelected
+                      ? "text-primary-foreground/70"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {counts[role.id] ?? "…"}
+                </span>
               </button>
             );
           })}
-          {roles?.length === 0 && (
-            <div className="rounded-2xl border border-border bg-card p-6 text-center">
-              <p className="text-sm font-medium text-foreground">
-                {t("No hay roles todavía")}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {canCreate
-                  ? t("Creá el primer rol para comenzar.")
-                  : t("No hay roles creados.")}
-              </p>
-            </div>
-          )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+        {/* Listado de roles: sticky mientras se recorre el panel de permisos */}
+        <aside className="hidden flex-col gap-3 lg:sticky lg:top-0 lg:flex lg:max-h-[calc(100vh-6.5rem)]">
+          <div className="flex items-center gap-2 px-0.5">
+            <h2 className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              {t("Todos los roles")}
+            </h2>
+            <span className="rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+              {(roles ?? []).length}
+            </span>
+          </div>
+
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              value={roleSearch}
+              onChange={(event) => setRoleSearch(event.target.value)}
+              placeholder={t("Buscar rol...")}
+              aria-label={t("Buscar rol...")}
+              className="h-9 pl-9 pr-8 text-[12.5px]"
+            />
+            {roleSearch && (
+              <button
+                type="button"
+                onClick={() => setRoleSearch("")}
+                aria-label={t("Limpiar búsqueda")}
+                className="absolute right-2 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X className="size-3" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pb-1 pr-0.5">
+            {filteredRoles.map((role) => (
+              <RoleCard
+                key={role.id}
+                role={role}
+                selected={role.id === selectedRoleId}
+                permissionCount={counts[role.id]}
+                onSelect={() => requestSelect(role.id)}
+              />
+            ))}
+
+            {filteredRoles.length === 0 && (
+              <div className="rounded-xl border border-dashed border-border bg-card p-5 text-center">
+                <p className="text-[13px] font-medium text-foreground">
+                  {t("Sin roles que coincidan")}
+                </p>
+                <p className="mt-1 text-[11.5px] text-muted-foreground">
+                  {t("Ajustá el término de búsqueda.")}
+                </p>
+              </div>
+            )}
+
+            {canCreate && (
+              <button
+                type="button"
+                onClick={openCreate}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2.5 text-[12.5px] font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+              >
+                <Plus className="size-3.5" aria-hidden="true" />
+                {t("Nuevo rol")}
+              </button>
+            )}
+          </div>
+        </aside>
 
         {/* Panel de permisos del rol seleccionado */}
-        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
-          <SectionHeader
-            title={`Permisos de ${selectedRole?.name ?? ""}`}
-            description={t("Configurá qué permisos tiene este rol")}
-            icon={ShieldCheck}
-            variant="primary"
-            actions={
-              <div className="flex items-center gap-2">
-                {canUpdate && selectedRole && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="gap-1.5 border-white/20 text-white hover:bg-white/10"
-                    onClick={() => openEdit(selectedRole)}
-                  >
-                    <Pencil className="size-[15px]" />
-                    {t("Editar")}
-                  </Button>
-                )}
-                {canDelete && selectedRole && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="gap-1.5 border-white/20 text-white hover:bg-white/10"
-                    onClick={() => setDeleting(selectedRole)}
-                  >
-                    <Trash2 className="size-[15px]" />
-                    {t("Eliminar")}
-                  </Button>
-                )}
-              </div>
-            }
-          />
-          <RolePermissionsPanel
-            role={selectedRole}
-            catalog={catalog ?? []}
-            canAssignPermissions={canAssignPermissions}
-            onError={setActionError}
-          />
-        </div>
+        <RolePermissionsPanel
+          role={selectedRole}
+          catalog={catalog ?? []}
+          canAssignPermissions={canAssignPermissions}
+          canEditRole={
+            Boolean(selectedRole) && canUpdate && canTouchRole(selectedRole)
+          }
+          canDeleteRole={
+            Boolean(selectedRole) && canDelete && canTouchRole(selectedRole)
+          }
+          onEdit={() => selectedRole && openEdit(selectedRole)}
+          onDelete={() => selectedRole && setDeleting(selectedRole)}
+          onDirtyChange={setPanelDirty}
+          onSaved={handleSaved}
+          onError={setActionError}
+        />
       </div>
 
       <RoleFormDialog
@@ -305,6 +403,35 @@ export function RolesPageContent() {
         onOpenChange={setFormOpen}
         onSubmit={submitRole}
       />
+
+      {/* Confirmación: cambiar de rol con cambios sin guardar */}
+      <AlertDialog
+        open={Boolean(pendingRoleId)}
+        onOpenChange={(open) => !open && setPendingRoleId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogMedia className="bg-warning-soft text-warning-foreground">
+            <TriangleAlert />
+          </AlertDialogMedia>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("¿Descartar cambios?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                'Tenés cambios sin guardar en el rol "{role}". Si cambiás de rol, se perderán.',
+                {
+                  role: roles?.find((r) => r.id === selectedRoleId)?.name ?? "",
+                },
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("Seguir editando")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSwitch}>
+              {t("Descartar y cambiar")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={Boolean(deleting)}
@@ -317,11 +444,16 @@ export function RolesPageContent() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("¿Eliminar rol?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('Se eliminará el rol "{name}". Los usuarios que lo tengan asignado perderán sus permisos. Esta acción no se puede deshacer.', { name: deleting?.name ?? "" })}
+              {t(
+                'Se eliminará el rol "{name}". Los usuarios que lo tengan asignado perderán sus permisos. Esta acción no se puede deshacer.',
+                { name: deleting?.name ?? "" },
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={savingRole}>{t("Cancelar")}</AlertDialogCancel>
+            <AlertDialogCancel disabled={savingRole}>
+              {t("Cancelar")}
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
               disabled={savingRole}
@@ -340,13 +472,15 @@ function RolesSkeleton() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <Skeleton className="h-[88px] rounded-2xl" />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[270px_1fr]">
-        <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+        <div className="hidden flex-col gap-3 lg:flex">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-9 rounded-lg" />
           {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-[120px] rounded-2xl" />
+            <Skeleton key={index} className="h-[92px] rounded-xl" />
           ))}
         </div>
-        <Skeleton className="h-[420px] rounded-2xl" />
+        <Skeleton className="h-[520px] rounded-2xl" />
       </div>
     </div>
   );

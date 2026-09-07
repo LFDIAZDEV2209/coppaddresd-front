@@ -7,6 +7,8 @@ export interface Role {
   name: string;
   description: string | null;
   isActive: boolean;
+  /** Rol de sistema (protegido: requiere System.AdminSettings para editar/eliminar). */
+  isSystem: boolean;
   createdAt: string;
 }
 
