@@ -1,4 +1,4 @@
-import { getAccessToken } from "@/lib/api/http";
+import { apiFetch, getAccessToken } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type { MediaItem } from "../types";
 
@@ -16,9 +16,9 @@ export interface DetectedMediaMetadata {
 }
 
 /**
- * Pide al back una clave determinística + URL firmada para subir el archivo.
- * Con el proveedor Local la URL apunta a PUT /api/v1/storage/{key}; con S3
- * será un presigned URL real del bucket. El front no distingue.
+ * Pide al backend una clave determinística + URL firmada para subir el archivo.
+ * Con el proveedor Local la URL apunta a PUT /api/v1/storage/{key} (con firma HMAC);
+ * con S3 será un presigned URL real del bucket de AWS. El front consume el mismo contrato.
  *
  * purpose: "content" (default) sube audio/video a su carpeta; "thumbnail"
  * sube la imagen de portada a media/thumbnails/.
@@ -28,26 +28,21 @@ export async function requestUploadIntent(
   contentType: string,
   purpose: "content" | "thumbnail" = "content",
 ): Promise<UploadIntentResponse> {
-  const token = getAccessToken();
-  const response = await fetch(`${env.apiUrl}/api/v1/media/upload-intent`, {
+  return apiFetch<UploadIntentResponse>(`${env.apiUrl}/api/v1/media/upload-intent`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
     body: JSON.stringify({ fileName, contentType, purpose }),
   });
-
-  if (!response.ok) throw new Error("No se pudo iniciar la subida del archivo.");
-  return (await response.json()) as UploadIntentResponse;
 }
 
 /**
  * Sube el archivo directo al presignedUrl (PUT) con barra de progreso.
- * onProgress recibe 0..100. El Bearer token solo se adjunta cuando la URL
- * apunta al backend (proveedor Local); con S3 la URL es del bucket y el
- * presigned URL ya la autoriza (un header Authorization rompería la firma).
+ * onProgress recibe 0..100.
+ *
+ * Estrategia de autorización:
+ * - Si el destino es AWS S3 (o almacenamiento en nube externo con firma en query params),
+ *   NO se adjunta el header Authorization: Bearer, ya que S3 SigV4 lo rechaza si no fue firmado.
+ * - Si el destino es un endpoint del backend o gateway (localhost, IP local, proxy interno, o /api/v1/storage/),
+ *   se adjunta Authorization: Bearer ${token} si está disponible.
  */
 export async function uploadToPresignedUrl(
   presignedUrl: string,
@@ -58,10 +53,11 @@ export async function uploadToPresignedUrl(
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", presignedUrl);
 
-    const isBackendTarget = isSameOrigin(presignedUrl, env.apiUrl);
-    const token = getAccessToken();
-    if (isBackendTarget && token) {
-      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    if (shouldAttachAuthToken(presignedUrl, env.apiUrl)) {
+      const token = getAccessToken();
+      if (token) {
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
     }
     xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
 
@@ -83,12 +79,39 @@ export async function uploadToPresignedUrl(
   });
 }
 
-/** true si la URL comparte origen con la API del backend (mismo host). */
-function isSameOrigin(url: string, base: string): boolean {
+/**
+ * Determina si la URL de subida es un destino interno del backend/gateway
+ * que admite o requiere el header Bearer, o si es un bucket S3 de AWS.
+ */
+function shouldAttachAuthToken(url: string, baseApiUrl: string): boolean {
   try {
-    return new URL(url).host === new URL(base).host;
+    const parsedUrl = new URL(url, baseApiUrl);
+    const host = parsedUrl.hostname.toLowerCase();
+
+    // Si es un bucket S3 de AWS o almacenamiento externo de nube con AWS SigV4:
+    const isAwsS3 =
+      host.endsWith(".amazonaws.com") ||
+      parsedUrl.searchParams.has("X-Amz-Signature") ||
+      parsedUrl.searchParams.has("AWSAccessKeyId") ||
+      parsedUrl.searchParams.has("x-amz-signature");
+
+    if (isAwsS3) {
+      return false;
+    }
+
+    // Si es localhost, IP loopback, comparte origen con env.apiUrl o apunta a /api/v1/storage/
+    const baseHost = new URL(baseApiUrl).hostname.toLowerCase();
+    const isLocalOrInternal =
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "::1" ||
+      host === baseHost ||
+      parsedUrl.pathname.includes("/api/v1/storage/");
+
+    return isLocalOrInternal;
   } catch {
-    return false;
+    // Si la URL es relativa, es una ruta interna del backend
+    return url.startsWith("/");
   }
 }
 

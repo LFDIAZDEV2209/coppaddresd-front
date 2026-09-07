@@ -118,6 +118,18 @@ export function BiometriaFiguraCorporal({
 
   const activeZone = pinnedZone ?? hoverZone;
 
+  const updateTipPos = useCallback((e: React.MouseEvent) => {
+    const rect = wrapperRef.current?.getBoundingClientRect();
+    if (rect) {
+      const relX = e.clientX - rect.left;
+      const relY = e.clientY - rect.top;
+      const maxX = Math.max(rect.width - 4 - 180, 4);
+      const clampedX = Math.min(Math.max(relX + 12, 4), maxX);
+      const clampedY = Math.max(relY + 12, 4);
+      setTipPos({ x: clampedX, y: clampedY });
+    }
+  }, []);
+
   const handleMouseOver = useCallback((e: React.MouseEvent) => {
     if (pinnedZone) return;
     const target = e.target as HTMLElement;
@@ -125,20 +137,18 @@ export function BiometriaFiguraCorporal({
     const zone = id ? (slugToZone[id] ?? null) : null;
     if (zone) {
       setHoverZone(zone);
-      const rect = wrapperRef.current?.getBoundingClientRect();
-      if (rect) setTipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      updateTipPos(e);
     } else {
       // hovering a non-measurable part or empty space -> keep no tooltip
       // only clear if hovering the wrapper background itself (id is wrapper)
       if ((e.target as HTMLElement) === wrapperRef.current) setHoverZone(null);
     }
-  }, [pinnedZone]);
+  }, [pinnedZone, updateTipPos]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (pinnedZone || !hoverZone) return;
-    const rect = wrapperRef.current?.getBoundingClientRect();
-    if (rect) setTipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  }, [pinnedZone, hoverZone]);
+    updateTipPos(e);
+  }, [pinnedZone, hoverZone, updateTipPos]);
 
   const handleMouseLeave = useCallback(() => {
     if (!pinnedZone) setHoverZone(null);
@@ -188,9 +198,8 @@ export function BiometriaFiguraCorporal({
 
   const tooltip = activeZone ? buildTooltipContent(activeZone, exacta, gender, iccAlto) : null;
 
-  const wrapperW = wrapperRef.current?.clientWidth ?? 200;
-  const clampedX = Math.min(Math.max(tipPos.x + 12, 4), wrapperW - 4 - 180);
-  const clampedY = Math.max(tipPos.y + 12, 4);
+  const clampedX = tipPos.x;
+  const clampedY = tipPos.y;
 
   return (
     <div className="flex flex-col items-center gap-2">

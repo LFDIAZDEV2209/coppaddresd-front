@@ -49,8 +49,6 @@ export function useBiometriaPatient(patientId: string) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     fetchBiometriaPatient(patientId)
       .then((result) => {
         if (!cancelled) {
@@ -67,7 +65,7 @@ export function useBiometriaPatient(patientId: string) {
     return () => {
       cancelled = true;
     };
-  }, [patientId, fetchData]);
+  }, [patientId]);
 
   return { data, loading, error, retry: fetchData };
 }
@@ -234,28 +232,24 @@ export function BiometriaHeroSections({
 // --- History sections: heatmap 28d + historial semanal ---
 
 export function BiometriaHistorySections({ data }: { data: BiometriaPatientDetail }) {
-  if (data.adherence_heatmap.length === 0 && data.historial_semanal.length === 0) return null;
-  const hasHeatmap = data.adherence_heatmap.length > 0;
-  const hasHistorial = data.historial_semanal.length > 0;
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(7);
   const historialTotal = data.historial_semanal.length;
   const totalPages = Math.max(1, Math.ceil(historialTotal / pageSize));
+  const currentPage = Math.min(page, totalPages);
   const paginatedHistorial = useMemo(
-    () => data.historial_semanal.slice((page - 1) * pageSize, page * pageSize),
-    [data.historial_semanal, page, pageSize],
+    () => data.historial_semanal.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [data.historial_semanal, currentPage, pageSize],
   );
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-  useEffect(() => {
-    setPage(1);
-  }, [historialTotal]);
+
+  const hasHeatmap = data.adherence_heatmap.length > 0;
+  const hasHistorial = data.historial_semanal.length > 0;
 
   // weekday alignment: first date's Mon-based column (0=Mon)
   const firstDate = hasHeatmap ? new Date(data.adherence_heatmap[0].date) : null;
   const offset = firstDate && !isNaN(firstDate.getTime()) ? ((firstDate.getDay() + 6) % 7) : 0;
+
+  if (!hasHeatmap && !hasHistorial) return null;
 
   if (hasHeatmap && hasHistorial) {
     return (

@@ -107,11 +107,6 @@ export function ProgramPerfil360Page({ initialPatientId }: ProgramPerfil360PageP
       });
   }, [initialPatientId, selectedPatient?.id]);
 
-  // Cuando se selecciona un paciente, ocultar el buscador por defecto
-  useEffect(() => {
-    if (selectedPatient) setShowSearch(false);
-  }, [selectedPatient?.id]);
-
   if (selectedPatient) {
     return (
       <div className="flex flex-col gap-6 p-4 sm:p-6">

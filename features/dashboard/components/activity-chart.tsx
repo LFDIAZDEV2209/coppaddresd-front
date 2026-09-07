@@ -5,9 +5,25 @@ interface ActivityChartProps {
   data: ActivityDataPoint[];
 }
 
+/**
+ * Gráfica de barras de actividad diaria (una barra por día del período).
+ * Soporta series largas (p. ej. 30 puntos del endpoint de KPIs): el ancho de
+ * barra es fluido y las etiquetas de día se espacian para no colisionar.
+ */
 export function ActivityChart({ data }: ActivityChartProps) {
   const t = useT();
-  const maxValue = Math.max(...data.map((d) => d.value));
+
+  if (data.length === 0) {
+    return (
+      <div className="flex h-[240px] items-center justify-center rounded-lg bg-muted/30 text-sm text-muted-foreground">
+        {t("Sin actividad en el período")}
+      </div>
+    );
+  }
+
+  const maxValue = Math.max(0, ...data.map((d) => d.value));
+  // Con series largas se etiqueta una fracción de los días (máx. ~12 etiquetas).
+  const labelEvery = data.length > 12 ? Math.ceil(data.length / 12) : 1;
 
   const barColors = [
     "var(--chart-1)",
@@ -29,26 +45,26 @@ export function ActivityChart({ data }: ActivityChartProps) {
 
       <div className="flex flex-1 items-end gap-2">
         {data.map((point, index) => {
-          const heightPercent = (point.value / maxValue) * 100;
+          const heightPercent = maxValue > 0 ? (point.value / maxValue) * 100 : 0;
           const barColor = barColors[index % barColors.length];
           return (
             <div
-              key={point.day}
-              className="flex flex-1 flex-col items-center gap-2"
+              key={`${point.day}-${index}`}
+              className="flex min-w-0 flex-1 flex-col items-center gap-2"
             >
               <div className="relative flex w-full items-end justify-center" style={{ height: 200 }}>
                 <div
-                  className="w-[36px] rounded-t-lg transition-all duration-500 ease-out hover:shadow-lg"
+                  className="w-full max-w-[36px] rounded-t-lg transition-all duration-500 ease-out hover:shadow-lg"
                   style={{
                     height: `${heightPercent}%`,
                     backgroundColor: barColor,
                     boxShadow: `0 4px 12px ${barColor}30`,
                   }}
-                  title={t('{count} conversaciones', { count: String(point.value) })}
+                  title={t("{count} registros", { count: String(point.value) })}
                 />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground">
-                {point.day}
+              <span className="max-w-full truncate text-[11px] font-medium text-muted-foreground">
+                {index % labelEvery === 0 ? point.day : "\u00A0"}
               </span>
             </div>
           );

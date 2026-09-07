@@ -14,6 +14,11 @@ export type MediaCategory =
   | "Mindfulness"
   | "Motivacion";
 
+export interface MediaChapter {
+  atSeconds: number;
+  label: string;
+}
+
 /** Espejo del MediaItemDto del backend (CoppAddresd.Api /api/v1/media). */
 export interface MediaItem {
   id: string;
@@ -37,6 +42,8 @@ export interface MediaItem {
   createdAt: string;
   updatedAt: string | null;
   createdBy: string | null;
+  chapters?: MediaChapter[];
+  takeaways?: string[];
 }
 
 export interface MediaInput {
@@ -54,6 +61,8 @@ export interface MediaInput {
   sortOrder: number;
   day: number;
   month: number;
+  chapters?: MediaChapter[];
+  takeaways?: string[];
 }
 
 export interface MediaFilters {

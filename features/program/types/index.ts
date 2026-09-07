@@ -48,8 +48,9 @@ export interface CreateTemplateInput {
   code: string;
   name: string;
   description: string | null;
-  totalWeeks: number;
-  days: WeeklyDayTaskInput[];
+  totalDays?: number;
+  totalWeeks?: number;
+  days?: WeeklyDayTaskInput[];
 }
 
 /** Payload para actualizar plantilla. */
@@ -57,8 +58,9 @@ export interface UpdateTemplateInput {
   code: string;
   name: string;
   description: string | null;
-  totalWeeks: number;
-  days: WeeklyDayTaskInput[];
+  totalDays?: number;
+  totalWeeks?: number;
+  days?: WeeklyDayTaskInput[];
 }
 
 /** Payload para una fila del horario semanal. */

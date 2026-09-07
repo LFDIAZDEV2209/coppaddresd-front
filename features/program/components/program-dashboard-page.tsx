@@ -619,11 +619,6 @@ function AlertasCriticasCard({ alerts }: { alerts: import("../types/erp").Biomet
   const safePage = Math.min(page, totalPages);
   const slice = alerts.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  // if alerts shrink, clamp page
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
       <div className="p-5 pb-3">

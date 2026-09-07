@@ -11,6 +11,7 @@ import {
   X,
   UserCheck,
   Info,
+  UserPlus,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,11 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/providers/auth-provider";
 import { useProgramContent } from "../hooks/use-program-content";
-import { fetchProgramEnrollments } from "../services/program-enrollments-service";
+import {
+  fetchProgramEnrollments,
+  enrollPatient,
+} from "../services/program-enrollments-service";
+import { ProgramEnrollDialog } from "./program-enroll-dialog";
 import { PagedListFooter } from "./paged-list-footer";
 import {
   fetchRoutinesForPicker,
@@ -45,7 +50,11 @@ import {
   ContentSkeleton,
   ContentErrorState,
 } from "./program-content-table";
-import type { ProgramEnrollment, EnrollmentStatus } from "../types";
+import type {
+  ProgramEnrollment,
+  EnrollmentStatus,
+  EnrollPatientInput,
+} from "../types";
 import type {
   ExerciseRoutineListItem,
   NutritionPlanListItem,
@@ -54,9 +63,14 @@ import type {
 export function ProgramContentPage() {
   const { hasPermission } = useAuth();
   const canEdit = hasPermission("Program.Edit");
+  const canEnroll = hasPermission("Program.Enroll");
 
   const { content, loading, error, selectEnrollment, saveWeek, retry, clear } =
     useProgramContent();
+
+  // Estado para el modal de inscripción de paciente
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
+  const [savingEnroll, setSavingEnroll] = useState(false);
 
   // Estado del listado inicial de pacientes inscritos
   const [enrollmentsList, setEnrollmentsList] = useState<ProgramEnrollment[]>(
@@ -82,20 +96,23 @@ export function ProgramContentPage() {
   const [loadingCatalog, setLoadingCatalog] = useState(false);
   const [enrollPage, setEnrollPage] = useState(1);
   const [enrollPageSize, setEnrollPageSize] = useState(5);
+  const [enrollTotalPages, setEnrollTotalPages] = useState(1);
 
-  // Cargar primeros 10 pacientes inscritos al buscar o filtrar
-  const loadInitialPatients = useCallback(
-    async (search: string, status: "all" | EnrollmentStatus) => {
+  // Cargar pacientes inscritos desde el servidor con paginación real
+  const loadEnrollments = useCallback(
+    async (page: number, pageSize: number, search: string, status: "all" | EnrollmentStatus) => {
       setLoadingEnrollments(true);
       try {
-        const res = await fetchProgramEnrollments(1, 10, {
+        const res = await fetchProgramEnrollments(page, pageSize, {
           status,
           patientId: "",
           search: search.trim(),
         });
         setEnrollmentsList(res.data);
+        setEnrollTotalPages(res.totalPages || 1);
       } catch {
         setEnrollmentsList([]);
+        setEnrollTotalPages(1);
       } finally {
         setLoadingEnrollments(false);
       }
@@ -103,18 +120,13 @@ export function ProgramContentPage() {
     [],
   );
 
-  // Debounce para el input de búsqueda por nombre / documento
+  // Debounce para el input de búsqueda y cambio de paginación / filtros
   useEffect(() => {
     const timer = setTimeout(() => {
-      setEnrollPage(1);
-      loadInitialPatients(searchQuery, statusFilter);
+      loadEnrollments(enrollPage, enrollPageSize, searchQuery, statusFilter);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, statusFilter, loadInitialPatients]);
-
-  const enrollTotalPages = Math.max(1, Math.ceil(enrollmentsList.length / enrollPageSize));
-  const enrollSafePage = Math.min(enrollPage, enrollTotalPages);
-  const pageEnrollments = enrollmentsList.slice((enrollSafePage - 1) * enrollPageSize, enrollSafePage * enrollPageSize);
+  }, [enrollPage, enrollPageSize, searchQuery, statusFilter, loadEnrollments]);
 
   // Manejar selección de un paciente de la tabla
   const handleSelectPatient = useCallback(
@@ -154,6 +166,16 @@ export function ProgramContentPage() {
     retry();
   }, [retry]);
 
+  const handleEnrollSubmit = async (input: EnrollPatientInput) => {
+    setSavingEnroll(true);
+    try {
+      await enrollPatient(input);
+      await loadEnrollments(enrollPage, enrollPageSize, searchQuery, statusFilter);
+    } finally {
+      setSavingEnroll(false);
+    }
+  };
+
   if (!canEdit) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border py-16 text-center">
@@ -176,6 +198,14 @@ export function ProgramContentPage() {
         title="Contenido del programa"
         description="Configura el plan nutricional y la rutina de ejercicio de cada semana para una inscripción de paciente"
         icon={CalendarDays}
+        actions={
+          canEnroll ? (
+            <Button size="sm" onClick={() => setEnrollDialogOpen(true)}>
+              <UserPlus data-icon="inline-start" />
+              Inscribir paciente
+            </Button>
+          ) : undefined
+        }
       />
 
       {/* Aviso de migración: la gestión de contenido vive en Perfil 360 */}
@@ -194,7 +224,7 @@ export function ProgramContentPage() {
         </p>
       </div>
 
-      {/* VISTA 1: Buscador e inicio con los primeros 10 pacientes inscritos */}
+      {/* VISTA 1: Buscador e inicio con pacientes inscritos paginados desde el servidor */}
       {!selectedEnrollment ? (
         <section className="rounded-2xl border border-border bg-card p-5 shadow-xs flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
@@ -215,13 +245,19 @@ export function ProgramContentPage() {
                 <Input
                   placeholder="Buscar por nombre o documento..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setEnrollPage(1);
+                  }}
                   className="pl-9 text-xs h-9 bg-card"
                 />
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => setSearchQuery("")}
+                    onClick={() => {
+                      setSearchQuery("");
+                      setEnrollPage(1);
+                    }}
                     className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
                   >
                     <X className="size-4" />
@@ -231,9 +267,10 @@ export function ProgramContentPage() {
 
               <Select
                 value={statusFilter}
-                onValueChange={(val) =>
-                  setStatusFilter(val as "all" | EnrollmentStatus)
-                }
+                onValueChange={(val) => {
+                  setStatusFilter(val as "all" | EnrollmentStatus);
+                  setEnrollPage(1);
+                }}
               >
                 <SelectTrigger className="h-9 w-36 text-xs bg-card">
                   <SelectValue placeholder="Estado" />
@@ -256,7 +293,7 @@ export function ProgramContentPage() {
             </div>
           </div>
 
-          {/* Tabla de los primeros 10 pacientes inscritos */}
+          {/* Tabla de pacientes inscritos paginados */}
           {loadingEnrollments ? (
             <div className="flex flex-col gap-2 py-4">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -272,7 +309,7 @@ export function ProgramContentPage() {
               <p className="text-xs text-muted-foreground">
                 {searchQuery
                   ? "Intenta con otro término de búsqueda (nombre o documento)."
-                  : "No hay inscripciones activas registradas en este momento."}
+                  : "No hay inscripciones registradas en este momento."}
               </p>
             </div>
           ) : (
@@ -289,7 +326,7 @@ export function ProgramContentPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pageEnrollments.map((enrollment) => {
+                  {enrollmentsList.map((enrollment) => {
                     const patientName =
                       enrollment.patientFullName ||
                       `Paciente (${enrollment.patientId.substring(0, 8)})`;
@@ -368,7 +405,7 @@ export function ProgramContentPage() {
               </Table>
             </div>
             <PagedListFooter
-              page={enrollSafePage}
+              page={enrollPage}
               totalPages={enrollTotalPages}
               onPageChange={setEnrollPage}
               pageSize={enrollPageSize}
@@ -441,6 +478,13 @@ export function ProgramContentPage() {
           ) : null}
         </div>
       )}
+
+      <ProgramEnrollDialog
+        open={enrollDialogOpen}
+        saving={savingEnroll}
+        onOpenChange={setEnrollDialogOpen}
+        onSubmit={handleEnrollSubmit}
+      />
     </div>
   );
 }

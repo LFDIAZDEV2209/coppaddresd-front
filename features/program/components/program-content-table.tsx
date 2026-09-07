@@ -4,7 +4,7 @@
 // Extraídos de program-content-page.tsx para reutilizarse en el panel del
 // paciente (EnrollmentContentTab) y en la página de contenido original.
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { CalendarDays, Check, Loader2, Salad, Dumbbell, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,14 +56,11 @@ export function ContentTable({
   const [pageSize, setPageSize] = useState(10);
 
   const totalPages = Math.max(1, Math.ceil(content.weeks.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
   const pagedWeeks = useMemo(
-    () => content.weeks.slice((page - 1) * pageSize, page * pageSize),
-    [content.weeks, page, pageSize],
+    () => content.weeks.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [content.weeks, currentPage, pageSize],
   );
-
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
 
   const handlePageSizeChange = useCallback((size: number) => {
     setPageSize(size);
@@ -121,7 +118,7 @@ export function ContentTable({
         </p>
       ) : (
         <PagedListFooter
-          page={page}
+          page={currentPage}
           totalPages={totalPages}
           onPageChange={setPage}
           pageSize={pageSize}

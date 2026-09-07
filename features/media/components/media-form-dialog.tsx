@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, type FormEvent } from "react";
+
 import {
   FileAudio,
   LoaderCircle,
@@ -9,6 +10,8 @@ import {
   Clock,
   HardDrive,
   ImagePlus,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { MediaItem, MediaInput } from "../types";
+import type { MediaItem, MediaInput, MediaChapter } from "../types";
 import { detectMediaMetadata, type DetectedMediaMetadata } from "../services/upload-service";
 import { formatDuration, formatFileSize } from "../services/media-service";
 import { MediaPlayer } from "./media-player";
@@ -44,6 +47,22 @@ interface MediaFormDialogProps {
 }
 
 const MAX_THUMBNAIL_BYTES = 2 * 1024 * 1024; // 2 MB
+
+function secondsToMMSS(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function mmssToSeconds(str: string): number {
+  const parts = str.trim().split(":");
+  if (parts.length === 2) {
+    const m = parseInt(parts[0], 10) || 0;
+    const s = parseInt(parts[1], 10) || 0;
+    return m * 60 + s;
+  }
+  return parseInt(str, 10) || 0;
+}
 
 const emptyForm = {
   title: "",
@@ -80,6 +99,17 @@ export function MediaFormDialog({
         }
       : emptyForm,
   );
+  const [chapters, setChapters] = useState<{ timeStr: string; label: string }[]>(() =>
+    media?.chapters
+      ? media.chapters.map((c) => ({
+          timeStr: secondsToMMSS(c.atSeconds),
+          label: c.label,
+        }))
+      : [],
+  );
+  const [takeaways, setTakeaways] = useState<string[]>(() =>
+    media?.takeaways ? [...media.takeaways] : [],
+  );
   const [file, setFile] = useState<File | null>(null);
   const [metadata, setMetadata] = useState<DetectedMediaMetadata | null>(null);
   const [detecting, setDetecting] = useState(false);
@@ -93,6 +123,32 @@ export function MediaFormDialog({
 
   const update = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const addChapter = () => {
+    setChapters((prev) => [...prev, { timeStr: "00:00", label: "" }]);
+  };
+
+  const updateChapter = (index: number, field: "timeStr" | "label", val: string) => {
+    setChapters((prev) =>
+      prev.map((c, i) => (i === index ? { ...c, [field]: val } : c)),
+    );
+  };
+
+  const removeChapter = (index: number) => {
+    setChapters((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addTakeaway = () => {
+    setTakeaways((prev) => [...prev, ""]);
+  };
+
+  const updateTakeaway = (index: number, val: string) => {
+    setTakeaways((prev) => prev.map((t, i) => (i === index ? val : t)));
+  };
+
+  const removeTakeaway = (index: number) => {
+    setTakeaways((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,6 +224,16 @@ export function MediaFormDialog({
     setValidationError(null);
     setProgress(0);
 
+    const parsedChapters: MediaChapter[] = chapters
+      .filter((c) => c.label.trim())
+      .map((c) => ({
+        atSeconds: mmssToSeconds(c.timeStr),
+        label: c.label.trim(),
+      }))
+      .sort((a, b) => a.atSeconds - b.atSeconds);
+
+    const parsedTakeaways = takeaways.map((t) => t.trim()).filter(Boolean);
+
     const input: MediaInput = media && !file
       ? {
           title: form.title.trim(),
@@ -186,6 +252,8 @@ export function MediaFormDialog({
           sortOrder: form.sortOrder,
           day: form.day,
           month: form.month,
+          chapters: parsedChapters,
+          takeaways: parsedTakeaways,
         }
       : {
           title: form.title.trim(),
@@ -202,6 +270,8 @@ export function MediaFormDialog({
           sortOrder: form.sortOrder,
           day: form.day,
           month: form.month,
+          chapters: parsedChapters,
+          takeaways: parsedTakeaways,
         };
 
     await onSubmit(input, file ?? undefined, thumbnailFile, setProgress);
@@ -565,6 +635,107 @@ export function MediaFormDialog({
               disabled={uploading}
             />
           </Field>
+
+          <fieldset className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <legend className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {t('Capítulos interactivos')}
+              </legend>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addChapter}
+                disabled={uploading}
+              >
+                <Plus className="size-3.5" data-icon="inline-start" />
+                {t('Agregar capítulo')}
+              </Button>
+            </div>
+            {chapters.length === 0 ? (
+              <p className="text-xs italic text-muted-foreground">
+                {t('Sin capítulos personalizados (se generarán automáticamente según la duración).')}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {chapters.map((ch, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      className="w-24 shrink-0"
+                      placeholder="00:00"
+                      value={ch.timeStr}
+                      onChange={(e) => updateChapter(idx, "timeStr", e.target.value)}
+                      disabled={uploading}
+                    />
+                    <Input
+                      className="flex-1"
+                      placeholder={t('Nombre del capítulo (ej. Introducción)')}
+                      value={ch.label}
+                      onChange={(e) => updateChapter(idx, "label", e.target.value)}
+                      disabled={uploading}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => removeChapter(idx)}
+                      disabled={uploading}
+                      aria-label={t('Eliminar capítulo')}
+                    >
+                      <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <legend className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {t('Puntos Clave (Takeaways)')}
+              </legend>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addTakeaway}
+                disabled={uploading}
+              >
+                <Plus className="size-3.5" data-icon="inline-start" />
+                {t('Agregar punto clave')}
+              </Button>
+            </div>
+            {takeaways.length === 0 ? (
+              <p className="text-xs italic text-muted-foreground">
+                {t('Sin puntos clave personalizados (se mostrarán las recomendaciones por defecto).')}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {takeaways.map((tk, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      className="flex-1"
+                      placeholder={t('Ej. Proteína en cada comida principal')}
+                      value={tk}
+                      onChange={(e) => updateTakeaway(idx, e.target.value)}
+                      disabled={uploading}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => removeTakeaway(idx)}
+                      disabled={uploading}
+                      aria-label={t('Eliminar punto clave')}
+                    >
+                      <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </fieldset>
 
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div className="flex flex-col gap-0.5">
