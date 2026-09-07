@@ -102,7 +102,7 @@ export function UsersPageContent() {
           : t('Error al cargar roles y permisos.'),
       );
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const timer = setTimeout(loadCatalog, 0);

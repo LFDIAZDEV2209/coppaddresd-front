@@ -2,14 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, BadgeCheck, GraduationCap, Loader2, Stethoscope } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
+  GraduationCap,
+  Loader2,
+  Stethoscope,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAppContext } from "@/providers/context-provider";
 import { useT } from "@/providers/i18n-provider";
-import {
-  fetchMyProfile,
-  updateMyProfile,
-} from "@/lib/api/context-service";
+import { fetchMyProfile, updateMyProfile } from "@/lib/api/context-service";
 import {
   fetchProfessionalTypes,
   fetchSpecialties,
@@ -66,7 +70,8 @@ export default function OnboardingPage() {
         const firstLicense = prof.professional?.licenses?.[0];
         if (firstLicense?.number) setLicenseNumber(firstLicense.number);
       } catch {
-        if (!cancelled) setError(t("No se pudieron cargar los datos. Intenta nuevamente."));
+        if (!cancelled)
+          setError(t("No se pudieron cargar los datos. Intenta nuevamente."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -74,7 +79,7 @@ export default function OnboardingPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const selectedType = useMemo(
     () => types.find((pt) => pt.id === typeId) ?? null,
@@ -113,7 +118,13 @@ export default function OnboardingPage() {
         phoneCountryCode: phone.startsWith("+") ? null : "1",
         phoneNumber: phone || null,
         licenses: licenseNumber
-          ? [{ licenseType: "Other", number: licenseNumber, verificationStatus: "Pending" }]
+          ? [
+              {
+                licenseType: "Other",
+                number: licenseNumber,
+                verificationStatus: "Pending",
+              },
+            ]
           : [],
         completeOnboarding: true,
       });
@@ -124,7 +135,9 @@ export default function OnboardingPage() {
     } catch (err) {
       setSaving(false);
       setError(
-        err instanceof ApiError ? err.message : t("No se pudo guardar el perfil. Intenta nuevamente."),
+        err instanceof ApiError
+          ? err.message
+          : t("No se pudo guardar el perfil. Intenta nuevamente."),
       );
     }
   };
@@ -142,7 +155,9 @@ export default function OnboardingPage() {
     <div className="mx-auto max-w-3xl px-4 py-6">
       <PageHeader
         title={t("Completa tu perfil profesional")}
-        description={t("Cuéntanos tu profesión y especialidades para configurar tu cuenta. Es un paso rápido.")}
+        description={t(
+          "Cuéntanos tu profesión y especialidades para configurar tu cuenta. Es un paso rápido.",
+        )}
         icon={GraduationCap}
       />
 
@@ -155,8 +170,12 @@ export default function OnboardingPage() {
                 step >= s ? "bg-primary" : "bg-muted"
               }`}
             />
-            <span className={`text-[11px] font-medium ${step >= s ? "text-foreground" : "text-muted-foreground"}`}>
-              {s === 1 ? t("Profesión y especialidad") : t("Detalles del perfil")}
+            <span
+              className={`text-[11px] font-medium ${step >= s ? "text-foreground" : "text-muted-foreground"}`}
+            >
+              {s === 1
+                ? t("Profesión y especialidad")
+                : t("Detalles del perfil")}
             </span>
           </div>
         ))}
@@ -193,7 +212,9 @@ export default function OnboardingPage() {
                       : "border-border hover:border-primary/40"
                   }`}
                 >
-                  <span className="block text-[13px] font-semibold">{pt.name}</span>
+                  <span className="block text-[13px] font-semibold">
+                    {pt.name}
+                  </span>
                   <span className="mt-0.5 block text-[11.5px] text-muted-foreground line-clamp-1">
                     {pt.description}
                   </span>
@@ -204,7 +225,9 @@ export default function OnboardingPage() {
             {selectedType && (
               <div className="mt-6">
                 <h3 className="text-[13.5px] font-semibold">
-                  {t("Especialidades válidas para {name}", { name: selectedType.name })}
+                  {t("Especialidades válidas para {name}", {
+                    name: selectedType.name,
+                  })}
                 </h3>
                 <p className="mt-0.5 text-[12px] text-muted-foreground">
                   {t("Puedes seleccionar una o varias.")}
@@ -256,14 +279,21 @@ export default function OnboardingPage() {
 
         {step === 2 && (
           <div>
-            <h2 className="text-[15px] font-semibold">{t("Detalles del perfil")}</h2>
+            <h2 className="text-[15px] font-semibold">
+              {t("Detalles del perfil")}
+            </h2>
             <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-              {t("Completa tus datos de contacto y credenciales. Puedes editarlos después.")}
+              {t(
+                "Completa tus datos de contacto y credenciales. Puedes editarlos después.",
+              )}
             </p>
 
             <div className="mt-4 space-y-4">
               <div>
-                <label htmlFor="bio" className="mb-1.5 block text-[12.5px] font-medium">
+                <label
+                  htmlFor="bio"
+                  className="mb-1.5 block text-[12.5px] font-medium"
+                >
                   {t("Biografía profesional")}
                 </label>
                 <textarea
@@ -271,14 +301,19 @@ export default function OnboardingPage() {
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={3}
-                  placeholder={t("Cuéntanos tu experiencia y enfoque clínico...")}
+                  placeholder={t(
+                    "Cuéntanos tu experiencia y enfoque clínico...",
+                  )}
                   className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="phone" className="mb-1.5 block text-[12.5px] font-medium">
+                  <label
+                    htmlFor="phone"
+                    className="mb-1.5 block text-[12.5px] font-medium"
+                  >
                     {t("Teléfono de contacto")}
                   </label>
                   <input
@@ -290,7 +325,10 @@ export default function OnboardingPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="license" className="mb-1.5 block text-[12.5px] font-medium">
+                  <label
+                    htmlFor="license"
+                    className="mb-1.5 block text-[12.5px] font-medium"
+                  >
                     {t("Licencia profesional (opcional)")}
                   </label>
                   <input
@@ -317,7 +355,11 @@ export default function OnboardingPage() {
                 disabled={saving}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-[13px] font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
               >
-                {saving ? <Loader2 className="size-4 animate-spin" /> : <BadgeCheck className="size-4" />}
+                {saving ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <BadgeCheck className="size-4" />
+                )}
                 {t("Completar onboarding")}
               </button>
             </div>

@@ -31,8 +31,9 @@ export function useProgramToast() {
   );
 
   useEffect(() => {
+    const timersSnapshot = timers.current;
     return () => {
-      timers.current.forEach((t) => clearTimeout(t));
+      timersSnapshot.forEach((t) => clearTimeout(t));
     };
   }, []);
 

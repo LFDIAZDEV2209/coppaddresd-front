@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -13,7 +13,6 @@ import {
   TrendingDown,
   Minus,
   Stethoscope,
-  AlertTriangle,
   ClipboardPenLine,
   ShieldAlert,
   RefreshCw,
@@ -32,8 +31,6 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -62,7 +59,6 @@ import {
   MISSION_LABELS,
   MISSION_ORDER,
   CLINICAL_COLORS,
-  adherenceChipClass,
   relativeTime,
   CHART_TOOLTIP,
 } from "../services/program-erp-constants";
@@ -85,7 +81,12 @@ export function ProgramPatientOverviewPage({
         description="Vista integral de progreso, adherencia y salud"
         icon={UserRound}
         actions={
-          <Button variant="outline" size="sm" onClick={retry} disabled={loading}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={retry}
+            disabled={loading}
+          >
             <RefreshCw
               data-icon="inline-start"
               className={loading ? "animate-spin" : undefined}
@@ -132,7 +133,10 @@ export function PatientResumenHero({
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)" }}
+        style={{
+          background:
+            "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)",
+        }}
       />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-[#123B63] text-xl font-bold">
@@ -144,7 +148,8 @@ export function PatientResumenHero({
             {data.enrollment && (
               <>
                 <span>
-                  Semana {data.enrollment.current_week}/{data.enrollment.total_weeks}
+                  Semana {data.enrollment.current_week}/
+                  {data.enrollment.total_weeks}
                 </span>
                 <span>·</span>
                 <span>{data.enrollment.status}</span>
@@ -159,46 +164,54 @@ export function PatientResumenHero({
               </>
             )}
           </div>
-          {biometria && (biometria.gender || biometria.age || biometria.imc_category || biometria.imc) && (
-            <div className="mt-1.5 flex flex-wrap gap-2 text-[12px] text-white/60">
-              <span>Biometría corporal</span>
-              {biometria.gender && (
-                <>
-                  <span>·</span>
-                  <span>{biometria.gender}</span>
-                </>
-              )}
-              {biometria.age != null && (
-                <>
-                  <span>·</span>
-                  <span>{biometria.age} años</span>
-                </>
-              )}
-              {biometria.imc_category && (
-                <>
-                  <span>·</span>
-                  <span>{biometria.imc_category}</span>
-                </>
-              )}
-              {biometria.imc != null && (
-                <>
-                  <span>·</span>
-                  <span>IMC {biometria.imc.toFixed(1)}</span>
-                </>
-              )}
-            </div>
-          )}
+          {biometria &&
+            (biometria.gender ||
+              biometria.age ||
+              biometria.imc_category ||
+              biometria.imc) && (
+              <div className="mt-1.5 flex flex-wrap gap-2 text-[12px] text-white/60">
+                <span>Biometría corporal</span>
+                {biometria.gender && (
+                  <>
+                    <span>·</span>
+                    <span>{biometria.gender}</span>
+                  </>
+                )}
+                {biometria.age != null && (
+                  <>
+                    <span>·</span>
+                    <span>{biometria.age} años</span>
+                  </>
+                )}
+                {biometria.imc_category && (
+                  <>
+                    <span>·</span>
+                    <span>{biometria.imc_category}</span>
+                  </>
+                )}
+                {biometria.imc != null && (
+                  <>
+                    <span>·</span>
+                    <span>IMC {biometria.imc.toFixed(1)}</span>
+                  </>
+                )}
+              </div>
+            )}
         </div>
         {data.streak && (
           <div className="flex items-center gap-4 text-sm">
             <div className="text-center">
               <Flame className="mx-auto mb-0.5 size-5 text-amber-400" />
-              <p className="text-lg font-bold tabular-nums">{data.streak.current_streak}</p>
+              <p className="text-lg font-bold tabular-nums">
+                {data.streak.current_streak}
+              </p>
               <p className="text-[11px] text-white/60">Racha</p>
             </div>
             <div className="text-center">
               <Trophy className="mx-auto mb-0.5 size-5 text-green-400" />
-              <p className="text-lg font-bold tabular-nums">{data.streak.nb_current_streak}</p>
+              <p className="text-lg font-bold tabular-nums">
+                {data.streak.nb_current_streak}
+              </p>
               <p className="text-[11px] text-white/60">Racha NB</p>
             </div>
           </div>
@@ -236,7 +249,9 @@ export function PatientResumenBody({
                     <div
                       className="flex size-12 items-center justify-center rounded-full"
                       style={{
-                        background: t.completed ? MISSION_COLORS[t.task_code] : "var(--muted)",
+                        background: t.completed
+                          ? MISSION_COLORS[t.task_code]
+                          : "var(--muted)",
                       }}
                     >
                       {t.completed ? (
@@ -245,10 +260,14 @@ export function PatientResumenBody({
                         <Lock className="size-5 text-muted-foreground" />
                       )}
                     </div>
-                    <span className="text-xs font-medium">{MISSION_LABELS[t.task_code] ?? t.task_code}</span>
+                    <span className="text-xs font-medium">
+                      {MISSION_LABELS[t.task_code] ?? t.task_code}
+                    </span>
                     <Badge
                       className={
-                        t.completed ? "bg-success-soft text-success-foreground" : "bg-muted text-muted-foreground"
+                        t.completed
+                          ? "bg-success-soft text-success-foreground"
+                          : "bg-muted text-muted-foreground"
                       }
                     >
                       {t.completed ? `+${t.points} XP` : "Pendiente"}
@@ -263,8 +282,12 @@ export function PatientResumenBody({
                     <div className="flex size-12 items-center justify-center rounded-full bg-muted">
                       <Lock className="size-5 text-muted-foreground" />
                     </div>
-                    <span className="text-xs font-medium">{MISSION_LABELS[code]}</span>
-                    <Badge className="bg-muted text-muted-foreground">Sin datos</Badge>
+                    <span className="text-xs font-medium">
+                      {MISSION_LABELS[code]}
+                    </span>
+                    <Badge className="bg-muted text-muted-foreground">
+                      Sin datos
+                    </Badge>
                   </div>
                 ))}
           </div>
@@ -285,7 +308,9 @@ export function PatientResumenBody({
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart
                   data={MISSION_ORDER.map((code) => {
-                    const m = data.adherencia_semana.find((a) => a.task_code === code);
+                    const m = data.adherencia_semana.find(
+                      (a) => a.task_code === code,
+                    );
                     return {
                       mission: MISSION_LABELS[code] ?? code,
                       pct: m?.pct ?? 0,
@@ -293,8 +318,15 @@ export function PatientResumenBody({
                   })}
                 >
                   <PolarGrid stroke="var(--border)" />
-                  <PolarAngleAxis dataKey="mission" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
+                  <PolarAngleAxis
+                    dataKey="mission"
+                    tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  />
+                  <PolarRadiusAxis
+                    angle={30}
+                    domain={[0, 100]}
+                    tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  />
                   <Radar
                     name="Adherencia"
                     dataKey="pct"
@@ -302,12 +334,17 @@ export function PatientResumenBody({
                     fill="var(--primary)"
                     fillOpacity={0.2}
                   />
-                  <Tooltip {...CHART_TOOLTIP} formatter={(v) => [`${v}%`, "Adherencia"]} />
+                  <Tooltip
+                    {...CHART_TOOLTIP}
+                    formatter={(v) => [`${v}%`, "Adherencia"]}
+                  />
                 </RadarChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-muted-foreground">Sin datos de adherencia.</p>
+                <p className="text-sm text-muted-foreground">
+                  Sin datos de adherencia.
+                </p>
               </div>
             )}
           </div>
@@ -322,29 +359,56 @@ export function PatientResumenBody({
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {data.scores.health && (
             <div className="rounded-2xl border border-border bg-card p-5">
-              <SectionHeader title="Índice de Salud" icon={Stethoscope} variant="secondary" />
+              <SectionHeader
+                title="Índice de Salud"
+                icon={Stethoscope}
+                variant="secondary"
+              />
               <div className="mt-4 flex items-baseline gap-3">
-                <span className="text-4xl font-bold tabular-nums">{data.scores.health.score}</span>
+                <span className="text-4xl font-bold tabular-nums">
+                  {data.scores.health.score}
+                </span>
                 <span className="text-sm text-muted-foreground">/ 100</span>
                 <TrendBadge trend={data.scores.health.trend} />
               </div>
               <div className="mt-4 flex flex-col gap-2">
                 {[
-                  { label: "Adherencia", value: data.scores.health.score_adherence },
-                  { label: "Clínico", value: data.scores.health.score_clinical },
-                  { label: "Nutrición", value: data.scores.health.score_nutrition },
-                  { label: "Psicología", value: data.scores.health.score_psychology },
-                  { label: "Ejercicio", value: data.scores.health.score_exercise },
+                  {
+                    label: "Adherencia",
+                    value: data.scores.health.score_adherence,
+                  },
+                  {
+                    label: "Clínico",
+                    value: data.scores.health.score_clinical,
+                  },
+                  {
+                    label: "Nutrición",
+                    value: data.scores.health.score_nutrition,
+                  },
+                  {
+                    label: "Psicología",
+                    value: data.scores.health.score_psychology,
+                  },
+                  {
+                    label: "Ejercicio",
+                    value: data.scores.health.score_exercise,
+                  },
                 ].map((dim) => (
                   <div key={dim.label} className="flex items-center gap-3">
-                    <span className="w-24 text-xs text-muted-foreground">{dim.label}</span>
+                    <span className="w-24 text-xs text-muted-foreground">
+                      {dim.label}
+                    </span>
                     <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                       <div
                         className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${Math.min(100, Math.max(0, dim.value))}%` }}
+                        style={{
+                          width: `${Math.min(100, Math.max(0, dim.value))}%`,
+                        }}
                       />
                     </div>
-                    <span className="w-8 text-right text-xs font-medium tabular-nums">{dim.value}</span>
+                    <span className="w-8 text-right text-xs font-medium tabular-nums">
+                      {dim.value}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -352,9 +416,15 @@ export function PatientResumenBody({
           )}
           {data.scores.transformation && (
             <div className="rounded-2xl border border-border bg-card p-5">
-              <SectionHeader title="Índice de Transformación" icon={TrendingUp} variant="secondary" />
+              <SectionHeader
+                title="Índice de Transformación"
+                icon={TrendingUp}
+                variant="secondary"
+              />
               <div className="mt-4 flex items-baseline gap-3">
-                <span className="text-4xl font-bold tabular-nums">{data.scores.transformation.score}</span>
+                <span className="text-4xl font-bold tabular-nums">
+                  {data.scores.transformation.score}
+                </span>
                 <span className="text-sm text-muted-foreground">/ 100</span>
                 <Badge variant="outline" className="text-xs">
                   Semana {data.scores.transformation.week_number}
@@ -383,55 +453,61 @@ export function PatientResumenBody({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {Object.entries(data.scores.transformation.detail).map(([code, detail]) => (
-                        <TableRow key={code}>
-                          <TableCell className="font-medium text-sm">{code}</TableCell>
-                          <TableCell className="text-right text-sm tabular-nums">
-                            {detail.baseline} {detail.unit}
-                          </TableCell>
-                          <TableCell className="text-right text-sm tabular-nums font-medium">
-                            {detail.current} {detail.unit}
-                          </TableCell>
-                          <TableCell className="text-right text-sm tabular-nums">
-                            <span
-                              className={
-                                detail.delta > 0
-                                  ? "text-success"
-                                  : detail.delta < 0
-                                    ? "text-destructive"
-                                    : ""
-                              }
-                            >
-                              {detail.delta > 0 ? "+" : ""}
-                              {detail.delta}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right text-sm tabular-nums">
-                            <span
-                              className={
-                                detail.delta_pct > 0
-                                  ? "text-success"
-                                  : detail.delta_pct < 0
-                                    ? "text-destructive"
-                                    : ""
-                              }
-                            >
-                              {detail.delta_pct > 0 ? "+" : ""}
-                              {detail.delta_pct}%
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {detail.favorable ? (
-                              <span className="text-success text-sm">✓</span>
-                            ) : (
-                              <span className="text-destructive text-sm">✗</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right text-sm font-medium tabular-nums">
-                            {detail.score}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {Object.entries(data.scores.transformation.detail).map(
+                        ([code, detail]) => (
+                          <TableRow key={code}>
+                            <TableCell className="font-medium text-sm">
+                              {code}
+                            </TableCell>
+                            <TableCell className="text-right text-sm tabular-nums">
+                              {detail.baseline} {detail.unit}
+                            </TableCell>
+                            <TableCell className="text-right text-sm tabular-nums font-medium">
+                              {detail.current} {detail.unit}
+                            </TableCell>
+                            <TableCell className="text-right text-sm tabular-nums">
+                              <span
+                                className={
+                                  detail.delta > 0
+                                    ? "text-success"
+                                    : detail.delta < 0
+                                      ? "text-destructive"
+                                      : ""
+                                }
+                              >
+                                {detail.delta > 0 ? "+" : ""}
+                                {detail.delta}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right text-sm tabular-nums">
+                              <span
+                                className={
+                                  detail.delta_pct > 0
+                                    ? "text-success"
+                                    : detail.delta_pct < 0
+                                      ? "text-destructive"
+                                      : ""
+                                }
+                              >
+                                {detail.delta_pct > 0 ? "+" : ""}
+                                {detail.delta_pct}%
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {detail.favorable ? (
+                                <span className="text-success text-sm">✓</span>
+                              ) : (
+                                <span className="text-destructive text-sm">
+                                  ✗
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-medium tabular-nums">
+                              {detail.score}
+                            </TableCell>
+                          </TableRow>
+                        ),
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -455,11 +531,16 @@ export function PatientResumenBody({
             <Sparkles className="size-5 text-white" />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-[#7C3AED]">IA · Análisis individual</span>
-            <span className="text-[15px] font-bold text-foreground">Análisis inteligente</span>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-[#7C3AED]">
+              IA · Análisis individual
+            </span>
+            <span className="text-[15px] font-bold text-foreground">
+              Análisis inteligente
+            </span>
             <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-              El análisis IA de este paciente (fortalezas, áreas de mejora, predicciones de racha y riesgo de abandono) estará
-              disponible próximamente.
+              El análisis IA de este paciente (fortalezas, áreas de mejora,
+              predicciones de racha y riesgo de abandono) estará disponible
+              próximamente.
             </p>
             <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-[11px] font-semibold text-info-foreground">
               <Clock className="size-3" />
@@ -485,16 +566,53 @@ export function PatientResumenSections({
   );
 }
 
-function ClinicalMetricsTilesInner({ metrics }: { metrics: import("../types/erp").PatientOverviewClinicalMetricsDto | null }) {
+function ClinicalMetricsTilesInner({
+  metrics,
+}: {
+  metrics: import("../types/erp").PatientOverviewClinicalMetricsDto | null;
+}) {
   if (!metrics) return null;
-  const items: { key: "bmi" | "hba1c" | "body_fat"; label: string; icon: typeof Weight; color: string; threshold: number; thresholdLabel: string }[] = [
-    { key: "bmi", label: "BMI", icon: Weight, color: CLINICAL_COLORS.bmi, threshold: 30, thresholdLabel: "≥ 30" },
-    { key: "hba1c", label: "HbA1c", icon: Droplet, color: CLINICAL_COLORS.hba1c, threshold: 7, thresholdLabel: "≥ 7" },
-    { key: "body_fat", label: "% Grasa", icon: Activity, color: CLINICAL_COLORS.body_fat, threshold: 25, thresholdLabel: "≥ 25" },
+  const items: {
+    key: "bmi" | "hba1c" | "body_fat";
+    label: string;
+    icon: typeof Weight;
+    color: string;
+    threshold: number;
+    thresholdLabel: string;
+  }[] = [
+    {
+      key: "bmi",
+      label: "BMI",
+      icon: Weight,
+      color: CLINICAL_COLORS.bmi,
+      threshold: 30,
+      thresholdLabel: "≥ 30",
+    },
+    {
+      key: "hba1c",
+      label: "HbA1c",
+      icon: Droplet,
+      color: CLINICAL_COLORS.hba1c,
+      threshold: 7,
+      thresholdLabel: "≥ 7",
+    },
+    {
+      key: "body_fat",
+      label: "% Grasa",
+      icon: Activity,
+      color: CLINICAL_COLORS.body_fat,
+      threshold: 25,
+      thresholdLabel: "≥ 25",
+    },
   ];
   return (
     <section className="flex flex-col gap-4">
-      <SectionHeader title="Mediciones clínicas" description="Última medición y tendencia" icon={Stethoscope} variant="secondary" />
+      <SectionHeader
+        title="Mediciones clínicas"
+        description="Última medición y tendencia"
+        icon={Stethoscope}
+        variant="secondary"
+      />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {items.map((item) => {
           const snap = metrics[item.key];
@@ -503,30 +621,69 @@ function ClinicalMetricsTilesInner({ metrics }: { metrics: import("../types/erp"
           const baseline = snap?.baseline_value;
           const observed = snap?.observed_at;
           return (
-            <div key={item.key} className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+            <div
+              key={item.key}
+              className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5"
+            >
               <div className="flex items-center gap-2">
-                <div className="flex size-9 items-center justify-center rounded-xl" style={{ backgroundColor: `${item.color}20` }}>
+                <div
+                  className="flex size-9 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: `${item.color}20` }}
+                >
                   <item.icon className="size-5" style={{ color: item.color }} />
                 </div>
                 <span className="text-sm font-semibold">{item.label}</span>
                 {latest !== null && latest !== undefined && (
-                  <Badge variant="outline" className="ml-auto text-[10px]" style={{ borderColor: `${item.color}40`, color: item.color }}>Umbral {item.thresholdLabel}</Badge>
+                  <Badge
+                    variant="outline"
+                    className="ml-auto text-[10px]"
+                    style={{
+                      borderColor: `${item.color}40`,
+                      color: item.color,
+                    }}
+                  >
+                    Umbral {item.thresholdLabel}
+                  </Badge>
                 )}
               </div>
               {latest !== null && latest !== undefined ? (
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tabular-nums" style={{ color: item.color }}>{latest.toFixed(1)}</span>
-                  {snap?.unit && <span className="text-xs text-muted-foreground">{snap.unit}</span>}
+                  <span
+                    className="text-2xl font-bold tabular-nums"
+                    style={{ color: item.color }}
+                  >
+                    {latest.toFixed(1)}
+                  </span>
+                  {snap?.unit && (
+                    <span className="text-xs text-muted-foreground">
+                      {snap.unit}
+                    </span>
+                  )}
                   {delta !== null && delta !== undefined && (
-                    <span className={`text-[11px] font-semibold ${delta <= 0 ? "text-success" : "text-destructive"}`}>{delta <= 0 ? "↓" : "↑"} {Math.abs(delta).toFixed(1)}%</span>
+                    <span
+                      className={`text-[11px] font-semibold ${delta <= 0 ? "text-success" : "text-destructive"}`}
+                    >
+                      {delta <= 0 ? "↓" : "↑"} {Math.abs(delta).toFixed(1)}%
+                    </span>
                   )}
                 </div>
               ) : (
-                <div className="flex items-baseline gap-2"><span className="text-2xl font-bold text-muted-foreground/50">—</span><span className="text-xs text-muted-foreground">Sin registro</span></div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-muted-foreground/50">
+                    —
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Sin registro
+                  </span>
+                </div>
               )}
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                {baseline !== null && baseline !== undefined && <span>Base: {baseline.toFixed(1)}</span>}
-                {observed && <span className="ml-auto">{relativeTime(observed)}</span>}
+                {baseline !== null && baseline !== undefined && (
+                  <span>Base: {baseline.toFixed(1)}</span>
+                )}
+                {observed && (
+                  <span className="ml-auto">{relativeTime(observed)}</span>
+                )}
               </div>
             </div>
           );
@@ -555,13 +712,31 @@ export function PatientClinicaBottom({
   const [iPage, setIPage] = useState(1);
   const [rPage, setRPage] = useState(1);
 
-  const wTotal = Math.max(1, Math.ceil(data.weaknesses.length / CLINICA_PAGE_SIZE));
-  const iTotal = Math.max(1, Math.ceil(data.interventions.length / CLINICA_PAGE_SIZE));
-  const rTotal = Math.max(1, Math.ceil(data.clinical_reviews.length / CLINICA_PAGE_SIZE));
+  const wTotal = Math.max(
+    1,
+    Math.ceil(data.weaknesses.length / CLINICA_PAGE_SIZE),
+  );
+  const iTotal = Math.max(
+    1,
+    Math.ceil(data.interventions.length / CLINICA_PAGE_SIZE),
+  );
+  const rTotal = Math.max(
+    1,
+    Math.ceil(data.clinical_reviews.length / CLINICA_PAGE_SIZE),
+  );
 
-  const wSlice = data.weaknesses.slice((wPage - 1) * CLINICA_PAGE_SIZE, wPage * CLINICA_PAGE_SIZE);
-  const iSlice = data.interventions.slice((iPage - 1) * CLINICA_PAGE_SIZE, iPage * CLINICA_PAGE_SIZE);
-  const rSlice = data.clinical_reviews.slice((rPage - 1) * CLINICA_PAGE_SIZE, rPage * CLINICA_PAGE_SIZE);
+  const wSlice = data.weaknesses.slice(
+    (wPage - 1) * CLINICA_PAGE_SIZE,
+    wPage * CLINICA_PAGE_SIZE,
+  );
+  const iSlice = data.interventions.slice(
+    (iPage - 1) * CLINICA_PAGE_SIZE,
+    iPage * CLINICA_PAGE_SIZE,
+  );
+  const rSlice = data.clinical_reviews.slice(
+    (rPage - 1) * CLINICA_PAGE_SIZE,
+    rPage * CLINICA_PAGE_SIZE,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -576,7 +751,9 @@ export function PatientClinicaBottom({
           />
           {data.weaknesses.length === 0 ? (
             <div className="flex min-h-[280px] flex-1 items-center justify-center py-8">
-              <p className="text-sm text-muted-foreground">Sin debilidades detectadas.</p>
+              <p className="text-sm text-muted-foreground">
+                Sin debilidades detectadas.
+              </p>
             </div>
           ) : (
             <div className="flex flex-1 flex-col">
@@ -601,7 +778,14 @@ export function PatientClinicaBottom({
                   </span>
                 </div>
               ))}
-              {wTotal > 1 && <PagedListFooter page={wPage} totalPages={wTotal} onPageChange={setWPage} pageSize={CLINICA_PAGE_SIZE} />}
+              {wTotal > 1 && (
+                <PagedListFooter
+                  page={wPage}
+                  totalPages={wTotal}
+                  onPageChange={setWPage}
+                  pageSize={CLINICA_PAGE_SIZE}
+                />
+              )}
             </div>
           )}
         </div>
@@ -615,7 +799,9 @@ export function PatientClinicaBottom({
           />
           {data.interventions.length === 0 ? (
             <div className="flex min-h-[280px] flex-1 items-center justify-center py-8">
-              <p className="text-sm text-muted-foreground">Sin intervenciones registradas.</p>
+              <p className="text-sm text-muted-foreground">
+                Sin intervenciones registradas.
+              </p>
             </div>
           ) : (
             <div className="flex flex-1 flex-col">
@@ -635,7 +821,14 @@ export function PatientClinicaBottom({
                   </span>
                 </div>
               ))}
-              {iTotal > 1 && <PagedListFooter page={iPage} totalPages={iTotal} onPageChange={setIPage} pageSize={CLINICA_PAGE_SIZE} />}
+              {iTotal > 1 && (
+                <PagedListFooter
+                  page={iPage}
+                  totalPages={iTotal}
+                  onPageChange={setIPage}
+                  pageSize={CLINICA_PAGE_SIZE}
+                />
+              )}
             </div>
           )}
         </div>
@@ -649,7 +842,9 @@ export function PatientClinicaBottom({
           />
           {data.clinical_reviews.length === 0 ? (
             <div className="flex min-h-[280px] flex-1 items-center justify-center py-8">
-              <p className="text-sm text-muted-foreground">Sin revisiones pendientes.</p>
+              <p className="text-sm text-muted-foreground">
+                Sin revisiones pendientes.
+              </p>
             </div>
           ) : (
             <div className="flex flex-1 flex-col">
@@ -673,7 +868,14 @@ export function PatientClinicaBottom({
                   )}
                 </div>
               ))}
-              {rTotal > 1 && <PagedListFooter page={rPage} totalPages={rTotal} onPageChange={setRPage} pageSize={CLINICA_PAGE_SIZE} />}
+              {rTotal > 1 && (
+                <PagedListFooter
+                  page={rPage}
+                  totalPages={rTotal}
+                  onPageChange={setRPage}
+                  pageSize={CLINICA_PAGE_SIZE}
+                />
+              )}
             </div>
           )}
         </div>
@@ -733,7 +935,11 @@ export function ClinicalEvolutionCard({
   metrics: import("../types/erp").PatientOverviewClinicalMetricsDto | null;
 }) {
   if (!metrics) return null;
-  const items: { key: "bmi" | "hba1c" | "body_fat"; label: string; color: string }[] = [
+  const items: {
+    key: "bmi" | "hba1c" | "body_fat";
+    label: string;
+    color: string;
+  }[] = [
     { key: "bmi", label: "BMI", color: CLINICAL_COLORS.bmi },
     { key: "hba1c", label: "HbA1c", color: CLINICAL_COLORS.hba1c },
     { key: "body_fat", label: "% Grasa", color: CLINICAL_COLORS.body_fat },
@@ -744,30 +950,84 @@ export function ClinicalEvolutionCard({
     return (
       <div className="flex h-full min-h-[320px] flex-col overflow-hidden rounded-2xl border border-border bg-card">
         <div className="px-4 pt-4">
-          <SectionHeader title="Evolución 12 semanas" description="BMI, HbA1c y % grasa corporal" icon={TrendingUp} variant="secondary" />
+          <SectionHeader
+            title="Evolución 12 semanas"
+            description="BMI, HbA1c y % grasa corporal"
+            icon={TrendingUp}
+            variant="secondary"
+          />
         </div>
-        <div className="flex flex-1 items-center justify-center p-4 text-sm text-muted-foreground">Sin serie 12 semanas</div>
+        <div className="flex flex-1 items-center justify-center p-4 text-sm text-muted-foreground">
+          Sin serie 12 semanas
+        </div>
       </div>
     );
   }
   return (
     <div className="flex h-full min-h-[340px] flex-col overflow-hidden rounded-2xl border border-border bg-card">
       <div className="px-4 pt-4">
-        <SectionHeader title="Evolución 12 semanas" description="BMI, HbA1c y % grasa corporal" icon={TrendingUp} variant="secondary" />
+        <SectionHeader
+          title="Evolución 12 semanas"
+          description="BMI, HbA1c y % grasa corporal"
+          icon={TrendingUp}
+          variant="secondary"
+        />
       </div>
       <div className="flex flex-1 flex-col p-3 pt-2">
         <div className="min-h-[260px] flex-1">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="week" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} interval={0} angle={-28} dy={10} height={52} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} width={34} domain={["auto", "auto"]} />
-              <Tooltip {...CHART_TOOLTIP} formatter={(v, n) => [Number(v).toFixed(1), n as string]} labelFormatter={(l) => `Semana: ${l}`} />
-              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconSize={10} />
+            <LineChart
+              data={chartData}
+              margin={{ top: 8, right: 12, left: -8, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--border)"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="week"
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                interval={0}
+                angle={-28}
+                dy={10}
+                height={52}
+                textAnchor="end"
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                width={34}
+                domain={["auto", "auto"]}
+              />
+              <Tooltip
+                {...CHART_TOOLTIP}
+                formatter={(v, n) => [Number(v).toFixed(1), n as string]}
+                labelFormatter={(l) => `Semana: ${l}`}
+              />
+              <Legend
+                wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
+                iconSize={10}
+              />
               {items.map((it) => {
-                const snap = (metrics as unknown as Record<string, { series_12w?: unknown[] }>)[it.key];
+                const snap = (
+                  metrics as unknown as Record<
+                    string,
+                    { series_12w?: unknown[] }
+                  >
+                )[it.key];
                 if (!snap?.series_12w?.length) return null;
-                return <Line key={it.key} type="monotone" dataKey={it.key} name={it.label} stroke={it.color} strokeWidth={2} dot={{ r: 3 }} connectNulls />;
+                return (
+                  <Line
+                    key={it.key}
+                    type="monotone"
+                    dataKey={it.key}
+                    name={it.label}
+                    stroke={it.color}
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    connectNulls
+                  />
+                );
               })}
             </LineChart>
           </ResponsiveContainer>
@@ -801,7 +1061,7 @@ function PatientEvolucionCard({
 
   // Build per-metric 12-week chart data
   const buildMetricChartData = (
-    metricKey: "bmi" | "hba1c" | "body_fat" | "glucose"
+    metricKey: "bmi" | "hba1c" | "body_fat" | "glucose",
   ) => {
     const snap = metrics?.[metricKey];
     if (!snap?.series_12w?.length) return null;
@@ -830,8 +1090,8 @@ function PatientEvolucionCard({
       icon={TrendingUp}
     >
       <div className="h-[280px]">
-        {tab === "adherencia" && (
-          data.evolucion_12_semanas.length > 0 ? (
+        {tab === "adherencia" &&
+          (data.evolucion_12_semanas.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.evolucion_12_semanas}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -843,8 +1103,16 @@ function PatientEvolucionCard({
                     return `S${Math.ceil(d.getDate() / 7)}`;
                   }}
                 />
-                <YAxis yAxisId="pct" domain={[0, 100]} tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
-                <YAxis yAxisId="xp" orientation="right" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
+                <YAxis
+                  yAxisId="pct"
+                  domain={[0, 100]}
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                />
+                <YAxis
+                  yAxisId="xp"
+                  orientation="right"
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                />
                 <Tooltip {...CHART_TOOLTIP} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Line
@@ -873,56 +1141,70 @@ function PatientEvolucionCard({
                 Sin datos de evolución.
               </p>
             </div>
-          )
-        )}
+          ))}
 
-        {(tab === "bmi" || tab === "hba1c" || tab === "grasa" || tab === "glucosa" || tab === "glucose") && (() => {
-          const metricKey =
-            tab === "grasa" ? "body_fat" : tab === "glucosa" || tab === "glucose" ? "glucose" : (tab as "bmi" | "hba1c" | "glucose");
-          const item = clinicalItems.find((c) => c.key === metricKey);
-          const chartData = buildMetricChartData(metricKey);
+        {(tab === "bmi" ||
+          tab === "hba1c" ||
+          tab === "grasa" ||
+          tab === "glucosa" ||
+          tab === "glucose") &&
+          (() => {
+            const metricKey =
+              tab === "grasa"
+                ? "body_fat"
+                : tab === "glucosa" || tab === "glucose"
+                  ? "glucose"
+                  : (tab as "bmi" | "hba1c" | "glucose");
+            const item = clinicalItems.find((c) => c.key === metricKey);
+            const chartData = buildMetricChartData(metricKey);
 
-          if (!chartData || chartData.length === 0) {
+            if (!chartData || chartData.length === 0) {
+              return (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-sm text-muted-foreground">
+                    Sin datos de {item?.label ?? tab}.
+                  </p>
+                </div>
+              );
+            }
+
             return (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-muted-foreground">
-                  Sin datos de {item?.label ?? tab}.
-                </p>
-              </div>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  />
+                  <Tooltip
+                    {...CHART_TOOLTIP}
+                    formatter={(value) => [
+                      Number(value).toFixed(1),
+                      item?.label ?? tab,
+                    ]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    name={item?.label ?? tab}
+                    stroke={item?.color ?? "var(--primary)"}
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    connectNulls
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             );
-          }
-
-          return (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-                />
-                <YAxis tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
-                <Tooltip
-                  {...CHART_TOOLTIP}
-                  formatter={(value) => [Number(value).toFixed(1), item?.label ?? tab]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  name={item?.label ?? tab}
-                  stroke={item?.color ?? "var(--primary)"}
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  connectNulls
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          );
-        })()}
+          })()}
       </div>
     </ChartTabs>
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- reservado para uso futuro
 function ClinicalMetricsSection({
   metrics,
 }: {
@@ -938,9 +1220,30 @@ function ClinicalMetricsSection({
     threshold: number;
     thresholdLabel: string;
   }[] = [
-    { key: "bmi", label: "BMI", icon: Weight, color: CLINICAL_COLORS.bmi, threshold: 30, thresholdLabel: "≥ 30" },
-    { key: "hba1c", label: "HbA1c", icon: Droplet, color: CLINICAL_COLORS.hba1c, threshold: 7, thresholdLabel: "≥ 7" },
-    { key: "body_fat", label: "% Grasa", icon: Activity, color: CLINICAL_COLORS.body_fat, threshold: 25, thresholdLabel: "≥ 25" },
+    {
+      key: "bmi",
+      label: "BMI",
+      icon: Weight,
+      color: CLINICAL_COLORS.bmi,
+      threshold: 30,
+      thresholdLabel: "≥ 30",
+    },
+    {
+      key: "hba1c",
+      label: "HbA1c",
+      icon: Droplet,
+      color: CLINICAL_COLORS.hba1c,
+      threshold: 7,
+      thresholdLabel: "≥ 7",
+    },
+    {
+      key: "body_fat",
+      label: "% Grasa",
+      icon: Activity,
+      color: CLINICAL_COLORS.body_fat,
+      threshold: 25,
+      thresholdLabel: "≥ 25",
+    },
   ];
 
   const chartData = buildClinicalChartData(metrics);
@@ -981,7 +1284,10 @@ function ClinicalMetricsSection({
                   <Badge
                     variant="outline"
                     className="ml-auto text-[10px]"
-                    style={{ borderColor: `${item.color}40`, color: item.color }}
+                    style={{
+                      borderColor: `${item.color}40`,
+                      color: item.color,
+                    }}
                   >
                     Umbral {item.thresholdLabel}
                   </Badge>
@@ -990,11 +1296,16 @@ function ClinicalMetricsSection({
 
               {latest !== null && latest !== undefined ? (
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tabular-nums" style={{ color: item.color }}>
+                  <span
+                    className="text-2xl font-bold tabular-nums"
+                    style={{ color: item.color }}
+                  >
                     {latest.toFixed(1)}
                   </span>
                   {snap?.unit && (
-                    <span className="text-xs text-muted-foreground">{snap.unit}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {snap.unit}
+                    </span>
                   )}
                   {delta !== null && delta !== undefined && (
                     <span
@@ -1008,8 +1319,12 @@ function ClinicalMetricsSection({
                 </div>
               ) : (
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-muted-foreground/50">—</span>
-                  <span className="text-xs text-muted-foreground">Sin registro</span>
+                  <span className="text-2xl font-bold text-muted-foreground/50">
+                    —
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Sin registro
+                  </span>
                 </div>
               )}
 
@@ -1039,8 +1354,13 @@ function ClinicalMetricsSection({
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="week" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
-                <YAxis tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
+                <XAxis
+                  dataKey="week"
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                />
                 <Tooltip
                   {...CHART_TOOLTIP}
                   formatter={(value, name) => [Number(value).toFixed(1), name]}
@@ -1082,7 +1402,11 @@ function buildClinicalChartData(
 ): Record<string, string | number>[] {
   const weekMap = new Map<string, Record<string, string | number>>();
 
-  const keys: Array<"bmi" | "hba1c" | "body_fat"> = ["bmi", "hba1c", "body_fat"];
+  const keys: Array<"bmi" | "hba1c" | "body_fat"> = [
+    "bmi",
+    "hba1c",
+    "body_fat",
+  ];
   const orderMap = new Map<string, number>();
   for (const key of keys) {
     const series = metrics[key]?.series_12w;
@@ -1109,8 +1433,14 @@ function buildClinicalChartData(
 
 function TrendBadge({ trend }: { trend: string }) {
   const config = {
-    up: { label: "Mejorando", className: "bg-success-soft text-success-foreground" },
-    down: { label: "Empeorando", className: "bg-destructive-soft text-destructive" },
+    up: {
+      label: "Mejorando",
+      className: "bg-success-soft text-success-foreground",
+    },
+    down: {
+      label: "Empeorando",
+      className: "bg-destructive-soft text-destructive",
+    },
     stable: { label: "Estable", className: "bg-muted text-muted-foreground" },
   } as const;
   const c = config[trend as keyof typeof config] ?? config.stable;
@@ -1134,7 +1464,14 @@ function PatientSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       <div className="relative overflow-hidden rounded-2xl bg-[#0B2B4A] p-6">
-        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)" }} />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)",
+          }}
+        />
         <div className="flex items-center gap-4">
           <Skeleton className="size-16 rounded-2xl" />
           <div className="flex-1">

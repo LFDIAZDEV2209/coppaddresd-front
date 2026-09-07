@@ -23,7 +23,10 @@ function initialsOf(p: PatientListItem): string {
   const b = p.lastName?.trim()?.[0] ?? "";
   const s = `${a}${b}`.toUpperCase();
   if (s) return s;
-  const fallback = `${p.firstName} ${p.lastName}`.trim().slice(0, 2).toUpperCase();
+  const fallback = `${p.firstName} ${p.lastName}`
+    .trim()
+    .slice(0, 2)
+    .toUpperCase();
   return fallback || "P";
 }
 
@@ -31,12 +34,15 @@ interface ProgramPerfil360PageProps {
   initialPatientId?: string | null;
 }
 
-export function ProgramPerfil360Page({ initialPatientId }: ProgramPerfil360PageProps) {
+export function ProgramPerfil360Page({
+  initialPatientId,
+}: ProgramPerfil360PageProps) {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<PatientListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPatient, setSelectedPatient] = useState<PatientListItem | null>(null);
+  const [selectedPatient, setSelectedPatient] =
+    useState<PatientListItem | null>(null);
   const [showSearch, setShowSearch] = useState(false);
 
   const trimmed = search.trim();
@@ -107,6 +113,11 @@ export function ProgramPerfil360Page({ initialPatientId }: ProgramPerfil360PageP
       });
   }, [initialPatientId, selectedPatient?.id]);
 
+  // Cuando se selecciona un paciente, ocultar el buscador por defecto
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- UI sync, intentional
+    if (selectedPatient) setShowSearch(false);
+  }, [selectedPatient]);
   if (selectedPatient) {
     return (
       <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -139,7 +150,8 @@ export function ProgramPerfil360Page({ initialPatientId }: ProgramPerfil360PageP
                 <div className="max-h-80 overflow-y-auto rounded-md border border-border">
                   {displayResults.map((p) => {
                     const fullName = `${p.firstName} ${p.lastName}`.trim();
-                    const sublabel = p.email ?? p.medicalRecordNumber ?? undefined;
+                    const sublabel =
+                      p.email ?? p.medicalRecordNumber ?? undefined;
                     return (
                       <div
                         key={p.id}
@@ -149,7 +161,9 @@ export function ProgramPerfil360Page({ initialPatientId }: ProgramPerfil360PageP
                           {initialsOf(p)}
                         </span>
                         <span className="flex min-w-0 flex-1 flex-col">
-                          <span className="truncate text-sm font-medium">{fullName}</span>
+                          <span className="truncate text-sm font-medium">
+                            {fullName}
+                          </span>
                           {sublabel && (
                             <span className="truncate text-xs text-muted-foreground">
                               {sublabel}
@@ -172,7 +186,9 @@ export function ProgramPerfil360Page({ initialPatientId }: ProgramPerfil360PageP
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground">No se encontraron pacientes.</p>
+                <p className="text-xs text-muted-foreground">
+                  No se encontraron pacientes.
+                </p>
               )}
             </div>
           </section>

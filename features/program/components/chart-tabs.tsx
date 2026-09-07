@@ -25,6 +25,7 @@ export interface ChartTabsProps {
 // --- Hook: usePersistedTab ---
 
 /** sessionStorage no emite eventos de cambio: suscripción no-op. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const subscribeStorage = (_onStoreChange: () => void) => () => {};
 
 /**

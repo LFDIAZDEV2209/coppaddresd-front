@@ -35,10 +35,15 @@ interface ProgramPatientProfile360Props {
 
 export function ProgramPatientProfile360({
   patientId,
+  onBack: _onBack,
   onToggleSearch,
   isSearchOpen,
 }: ProgramPatientProfile360Props) {
-  const [activeTab, setActiveTab] = usePersistedTab("perfil360:unified-v2", "resumen");
+  void _onBack;
+  const [activeTab, setActiveTab] = usePersistedTab(
+    "perfil360:unified-v2",
+    "resumen",
+  );
   const { data, loading, error, retry } = usePatientOverview(patientId);
   const {
     data: biometriaData,
@@ -64,6 +69,10 @@ export function ProgramPatientProfile360({
 
   useEffect(() => {
     if (!enrollmentId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset enrollment state on id clear
+      setEnrollment(null);
+      setEnrollmentError(null);
+      setEnrollmentLoading(false);
       return;
     }
     let cancelled = false;
@@ -77,7 +86,9 @@ export function ProgramPatientProfile360({
       .catch((err) => {
         if (!cancelled) {
           setEnrollmentError(
-            err instanceof Error ? err.message : "No se pudo cargar la inscripción.",
+            err instanceof Error
+              ? err.message
+              : "No se pudo cargar la inscripción.",
           );
         }
       })
@@ -101,7 +112,9 @@ export function ProgramPatientProfile360({
       .then(setEnrollment)
       .catch((err) =>
         setEnrollmentError(
-          err instanceof Error ? err.message : "No se pudo cargar la inscripción.",
+          err instanceof Error
+            ? err.message
+            : "No se pudo cargar la inscripción.",
         ),
       )
       .finally(() => setEnrollmentLoading(false));
@@ -155,10 +168,19 @@ export function ProgramPatientProfile360({
               aria-label={isSearchOpen ? "Ocultar buscador" : "Buscar paciente"}
               title={isSearchOpen ? "Ocultar buscador" : "Buscar paciente"}
             >
-              {isSearchOpen ? <X className="size-4" /> : <Search className="size-4" />}
+              {isSearchOpen ? (
+                <X className="size-4" />
+              ) : (
+                <Search className="size-4" />
+              )}
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={retry} disabled={loading}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={retry}
+            disabled={loading}
+          >
             <RefreshCw
               data-icon="inline-start"
               className={loading ? "animate-spin" : undefined}
@@ -171,14 +193,21 @@ export function ProgramPatientProfile360({
       {/* Tab content */}
       <div>
         {safeTab === "resumen" && (
-          <section aria-label="Resumen del paciente" className="flex flex-col gap-5">
+          <section
+            aria-label="Resumen del paciente"
+            className="flex flex-col gap-5"
+          >
             {/* Biometría: figura + zonas + mediciones exactas en el mismo box */}
             {biometriaLoading ? (
               <BiometriaPerfilSkeleton />
             ) : biometriaError ? (
               <div className="rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-5 text-center">
-                <p className="text-sm font-semibold text-destructive">Error al cargar biometría</p>
-                <p className="mt-1 text-xs text-muted-foreground">{biometriaError}</p>
+                <p className="text-sm font-semibold text-destructive">
+                  Error al cargar biometría
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {biometriaError}
+                </p>
               </div>
             ) : biometriaData ? (
               <BiometriaHeroSections
@@ -188,7 +217,9 @@ export function ProgramPatientProfile360({
             ) : null}
 
             {/* Resto del resumen sin hero (ya renderizado arriba) — Misiones ya va dentro del box de biometría para poblar el espacio en blanco */}
-            {loading ? null : error ? null : data ? <PatientResumenBody data={data} hideMisiones /> : null}
+            {loading ? null : error ? null : data ? (
+              <PatientResumenBody data={data} hideMisiones />
+            ) : null}
 
             {/* Historial biometría: heatmap + tabla semanal */}
             {biometriaLoading ? null : biometriaData ? (
@@ -198,7 +229,10 @@ export function ProgramPatientProfile360({
         )}
 
         {safeTab === "clinica" && (
-          <section aria-label="Información clínica del paciente" className="flex flex-col gap-5">
+          <section
+            aria-label="Información clínica del paciente"
+            className="flex flex-col gap-5"
+          >
             {loading ? (
               <ResumenSkeleton />
             ) : error ? (
@@ -280,7 +314,8 @@ function EnrollmentDetailTabWrapper({
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-14 text-center">
         <p className="text-sm font-semibold">Sin inscripción activa</p>
         <p className="max-w-sm text-xs text-muted-foreground">
-          Este paciente no tiene una inscripción activa al programa. Inscríbelo desde el módulo de pacientes para ver el contenido y historial.
+          Este paciente no tiene una inscripción activa al programa. Inscríbelo
+          desde el módulo de pacientes para ver el contenido y historial.
         </p>
       </div>
     );
@@ -307,7 +342,10 @@ function ResumenSkeleton() {
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)" }}
+          style={{
+            background:
+              "radial-gradient(600px 200px at 85% -20%, rgba(212,175,55,0.18), transparent 60%)",
+          }}
         />
         <div className="flex items-center gap-4">
           <Skeleton className="size-16 rounded-2xl" />
@@ -335,7 +373,9 @@ function TabError({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
-      <p className="text-sm font-semibold text-destructive">Error al cargar el perfil</p>
+      <p className="text-sm font-semibold text-destructive">
+        Error al cargar el perfil
+      </p>
       <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
         Reintentar

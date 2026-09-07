@@ -101,7 +101,7 @@ export function LegalDocumentsSection() {
     void listAllLegalDocumentVersions()
       .then(setAllVersions)
       .catch(() => undefined);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void listLegalDocuments()
@@ -114,7 +114,7 @@ export function LegalDocumentsSection() {
         setError(t("No pudimos cargar los documentos legales."));
         setLoading(false);
       });
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (selectedCode) loadDocument(selectedCode);

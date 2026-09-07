@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Adaptation,
   AdaptationDecisionAction,
   AdaptationStatus,

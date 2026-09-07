@@ -28,7 +28,7 @@ export function PageHeader({
   const gradient =
     tone === "primary"
       ? "from-primary via-primary/85 to-[color-mix(in_srgb,var(--primary)_50%,var(--sidebar))]"
-      : "from-[var(--sidebar)] via-[color-mix(in_srgb,var(--sidebar)_97%,var(--primary))] to-[color-mix(in_srgb,var(--sidebar)_94%,var(--primary))]";
+      : "from-[var(--sidebar)] via-[#0c4c6b] to-brand-teal";
 
   return (
     <div

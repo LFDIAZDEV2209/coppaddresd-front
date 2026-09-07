@@ -54,6 +54,7 @@ export function CoveragePage() {
   const t = useT();
   const { data, loading, error, reload } = useCoverage();
   const [category, setCategory] = useState<TestCategory | "all">("all");
+  const [battery, setBattery] = useState<string>("all");
 
   const totals = useMemo(() => {
     if (!data) return null;
@@ -78,9 +79,18 @@ export function CoveragePage() {
 
   const filteredByTest = useMemo(() => {
     if (!data) return [];
-    if (category === "all") return data.byTest;
-    return data.byTest.filter((c) => c.test.category === category);
-  }, [data, category]);
+    let list = data.byTest;
+    if (battery !== "all") {
+      const b = data.batteries.find((x) => x.id === battery);
+      if (b) {
+        const ids = new Set(b.testIds);
+        list = list.filter((c) => ids.has(c.test.id));
+      }
+    }
+    if (category !== "all")
+      list = list.filter((c) => c.test.category === category);
+    return list;
+  }, [data, category, battery]);
 
   const header = (
     <PageHeader
@@ -285,31 +295,59 @@ export function CoveragePage() {
           icon={ClipboardCheck}
           variant="primary"
           actions={
-            <Select
-              value={category}
-              onValueChange={(value) =>
-                setCategory((value ?? "all") as TestCategory | "all")
-              }
-            >
-              <SelectTrigger
-                className="h-8 w-44 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70"
-                aria-label={t("Filtrar por categoría")}
+            <div className="flex items-center gap-2">
+              <Select
+                value={battery}
+                onValueChange={(value) => setBattery(value ?? "all")}
               >
-                <SelectValue>
-                  {category === "all"
-                    ? t("Todas las categorías")
-                    : CATEGORY_LABELS[category]}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("Todas las categorías")}</SelectItem>
-                {data.byCategory.map((c) => (
-                  <SelectItem key={c.category} value={c.category}>
-                    {c.categoryName}
+                <SelectTrigger
+                  className="h-8 w-48 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70"
+                  aria-label={t("Filtrar por batería")}
+                >
+                  <SelectValue>
+                    {battery === "all"
+                      ? t("Todas las baterías")
+                      : (data.batteries.find((b) => b.id === battery)?.name ??
+                        t("Batería"))}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("Todas las baterías")}</SelectItem>
+                  {data.batteries.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name} · {b.testIds.length} tests
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={category}
+                onValueChange={(value) =>
+                  setCategory((value ?? "all") as TestCategory | "all")
+                }
+              >
+                <SelectTrigger
+                  className="h-8 w-44 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70"
+                  aria-label={t("Filtrar por categoría")}
+                >
+                  <SelectValue>
+                    {category === "all"
+                      ? t("Todas las categorías")
+                      : CATEGORY_LABELS[category]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {t("Todas las categorías")}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  {data.byCategory.map((c) => (
+                    <SelectItem key={c.category} value={c.category}>
+                      {c.categoryName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           }
         />
         <div className="overflow-x-auto">

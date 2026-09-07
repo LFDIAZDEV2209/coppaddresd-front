@@ -324,14 +324,16 @@ function PendingTable({
                     })}
                     {row.pendingTests.length > 3 && (
                       <span className="inline-flex items-center rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
-                        +{row.pendingTests.length - 3}
+                        +{String(row.pendingTests.length - 3)}
                       </span>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
                   <span className="text-sm font-semibold text-foreground">
-                    {row.daysPending}
+                    {String(
+                      Number.isFinite(row.daysPending) ? row.daysPending : 0,
+                    )}
                   </span>
                   <span className="block text-[11px] text-muted-foreground">
                     {t("desde asignación")}

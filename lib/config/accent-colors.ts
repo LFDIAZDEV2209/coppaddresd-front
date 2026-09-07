@@ -19,16 +19,21 @@ export interface AccentColorOption {
 }
 
 export const ACCENT_COLORS: AccentColorOption[] = [
+  {
+    key: "navy",
+    name: "Navy COPP-ADRESD",
+    hex: "#023467",
+    foreground: "light",
+  },
   { key: "indigo", name: "Índigo", hex: "#4B0082", foreground: "light" },
   { key: "violeta", name: "Violeta", hex: "#7C3AED", foreground: "light" },
-  { key: "azul", name: "Azul", hex: "#123B63", foreground: "light" },
   { key: "teal", name: "Teal", hex: "#0D9488", foreground: "light" },
   { key: "esmeralda", name: "Esmeralda", hex: "#10B981", foreground: "light" },
   { key: "ambar", name: "Ámbar", hex: "#F59E0B", foreground: "dark" },
 ];
 
-/** Acento por defecto: el azul navy de la marca (paleta "Azul"). */
-export const DEFAULT_ACCENT = "#123B63";
+/** Acento por defecto: el navy oficial de la paleta COPP-ADRESD. */
+export const DEFAULT_ACCENT = "#023467";
 
 export const ACCENT_STORAGE_KEY = "copp-accent";
 

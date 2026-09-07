@@ -171,7 +171,9 @@ export function coveragePercent(completed: number, total: number): number {
 export function daysBetween(from: string, to: string): number {
   const a = new Date(from).getTime();
   const b = new Date(to).getTime();
-  return Math.max(0, Math.floor((b - a) / 86_400_000));
+  if (Number.isNaN(a) || Number.isNaN(b)) return 0;
+  const diff = Math.floor((b - a) / 86_400_000);
+  return Number.isNaN(diff) ? 0 : Math.max(0, diff);
 }
 
 /** Score promedio 0-100 de un conjunto de resultados evaluados. */

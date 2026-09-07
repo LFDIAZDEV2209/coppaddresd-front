@@ -7,9 +7,17 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-space-grotesk);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans);
+  --font-heading: var(--font-sora);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-deep: var(--brand-navy-deep);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-teal-mid: var(--brand-teal-mid);
+  --color-brand-green-mid: var(--brand-green-mid);
+  --color-brand-blue-soft: var(--brand-blue-soft);
+  --color-brand-blue-mid: var(--brand-blue-mid);
+  --color-brand-blue-deep: var(--brand-blue-deep);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -65,12 +73,30 @@
   --radius: 0.75rem;
 
   /* === ACENTO (única fuente de verdad) ===
-     El color de acento de la marca es el azul navy (default #123B63, el "Azul"
-     de la paleta de Settings). Todo el sistema primario y el croma de
+     El color de acento de la marca es el navy oficial de la paleta
+     COPP-ADRESD (#023467). Todo el sistema primario y el croma de
      navegación se DERIVAN de --accent-color con color-mix(): el provider lo
      sobrescribe inline en <html> en runtime (data style) y todo se recalcula
      en ambos temas sin tocar componentes. */
-  --accent-color: #123b63;
+  --accent-color: #023467;
+
+  /* === PALETA OFICIAL COPP-ADRESD (PaletaColores.jpeg) ===
+     Navy plano para paneles/hero, teal plano para superficies de marca,
+     degradado navy→teal para CTAs y elementos de inferior/fondo. */
+  --brand-navy: #142855;
+  --brand-navy-deep: #023467;
+  --brand-teal: #035d4d;
+  --brand-teal-mid: #0c4c6b;
+  --brand-green-mid: #3d7b72;
+  --brand-blue-soft: #87aeca;
+  --brand-blue-mid: #5581a2;
+  --brand-blue-deep: #4b7086;
+  --brand-gradient: linear-gradient(
+    135deg,
+    #023467 0%,
+    #07425f 60%,
+    #0e5f63 100%
+  );
 
   --background: #eff2f7;
   --foreground: #1a1d2e;
@@ -243,6 +269,7 @@
   h5,
   h6 {
     font-family:
+      var(--font-heading),
       var(--font-sans),
       ui-sans-serif,
       system-ui,
@@ -380,8 +407,44 @@
   background: linear-gradient(
     135deg,
     var(--sidebar) 0%,
-    color-mix(in srgb, var(--sidebar) 80%, var(--primary)) 100%
+    color-mix(in srgb, var(--sidebar) 60%, var(--primary)) 100%
   );
+}
+
+/* Degradado oficial de marca navy→teal (CTAs, paneles de acento) */
+.bg-brand-gradient {
+  background: var(--brand-gradient);
+}
+
+/* Brillo del CtaPill que sigue al cursor (vars --mx/--my seteadas por JS).
+   Overlay pointer-events-none; opacity al hover para entrada suave. */
+.cta-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.cta-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    90px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.14),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.cta-shine:hover::after {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cta-shine::after {
+    display: none;
+  }
 }
 
 .rich-text-editor .ProseMirror {
@@ -464,4 +527,36 @@
   animation:
     feedSlideIn 350ms cubic-bezier(0.22, 1, 0.36, 1),
     feedHighlight 2000ms ease-out 350ms;
+}
+
+/* Crecimiento de barras al cargar (dashboards) — respeta reduced motion */
+@keyframes barGrowY {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes barGrowX {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.bar-grow-y {
+  transform-origin: bottom;
+  animation: barGrowY 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.bar-grow-x {
+  transform-origin: left;
+  animation: barGrowX 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bar-grow-y,
+  .bar-grow-x {
+    animation: none;
+  }
 }

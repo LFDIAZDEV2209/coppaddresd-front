@@ -3,7 +3,7 @@
 // es.json: valor = clave (español). en.json: valor = clave (placeholder)
 // salvo entradas del mapa manual de inglés.
 import { readFileSync, readdirSync, writeFileSync, existsSync } from "fs";
-import { join, relative } from "path";
+import { join } from "path";
 
 const ROOT = process.cwd();
 const EN_PATH = join(ROOT, "providers", "translations", "en.json");
@@ -13,7 +13,8 @@ const KEY_RE = /\bt\(\s*(['"`])((?:(?!\1).)+)\1/g;
 
 const dirs = [
   "features/community",
-  "app/(dashboard)/community","app/(community)",
+  "app/(dashboard)/community",
+  "app/(community)",
   "lib/config",
 ];
 

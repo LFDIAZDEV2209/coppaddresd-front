@@ -63,6 +63,7 @@ export function useAsyncData<T>(loader: () => Promise<T>) {
 
 export interface DashboardData {
   patients: PatientProfile[];
+  masterRows: PatientMasterRow[];
   tests: HealthTest[];
   alerts: HealthAlert[];
   professionals: HealthProfessional[];
@@ -71,64 +72,53 @@ export interface DashboardData {
 }
 
 export function useDashboard() {
-  const patients = useAsyncData(healthTestsApi.listPatients);
+  const masterRows = useAsyncData(healthTestsApi.getMasterRows);
   const tests = useAsyncData(healthTestsApi.listTests);
   const alerts = useAsyncData(healthTestsApi.listAlerts);
-  const professionals = useAsyncData(healthTestsApi.listProfessionals);
   const trend = useAsyncData(healthTestsApi.getCoverageTrend);
   const stats = useAsyncData(healthTestsApi.getStats);
 
   const loading =
-    patients.loading ||
+    masterRows.loading ||
     tests.loading ||
     alerts.loading ||
-    professionals.loading ||
     trend.loading ||
     stats.loading;
   const error =
-    patients.error ??
+    masterRows.error ??
     tests.error ??
     alerts.error ??
-    professionals.error ??
     trend.error ??
     stats.error;
 
   const reload = useCallback(() => {
-    void patients.reload();
+    void masterRows.reload();
     void tests.reload();
     void alerts.reload();
-    void professionals.reload();
     void trend.reload();
     void stats.reload();
-  }, [patients, tests, alerts, professionals, trend, stats]);
+  }, [masterRows, tests, alerts, trend, stats]);
 
   const data = useMemo<DashboardData | null>(() => {
     if (
-      !patients.data ||
+      !masterRows.data ||
       !tests.data ||
       !alerts.data ||
-      !professionals.data ||
       !trend.data ||
       !stats.data
     ) {
       return null;
     }
     return {
-      patients: patients.data,
+      patients: (masterRows.data as PatientMasterRow[]).map((r) => r.patient),
+      masterRows: masterRows.data as PatientMasterRow[],
       tests: tests.data,
       alerts: alerts.data,
-      professionals: professionals.data,
+      professionals: [] as HealthProfessional[],
       coverageTrend: trend.data,
       stats: stats.data,
     };
-  }, [
-    patients.data,
-    tests.data,
-    alerts.data,
-    professionals.data,
-    trend.data,
-    stats.data,
-  ]);
+  }, [masterRows.data, tests.data, alerts.data, trend.data, stats.data]);
 
   return { data, loading, error, reload, metrics: healthTestMetrics };
 }
@@ -139,56 +129,51 @@ export function useDashboard() {
 
 export function useCoverage() {
   const byTest = useAsyncData(healthTestsApi.getCoverageByTest);
-  const byCategory = useAsyncData(healthTestsApi.getCoverageByCategory);
+  // byCategory se deriva de byTest en memoria (sin segundo fetch)
+  const byCategory = useMemo(() => {
+    if (!byTest.data) return null;
+    const cats = [
+      ...new Set((byTest.data as CoverageByTest[]).map((c) => c.test.category)),
+    ];
+    return cats.map((category) => {
+      const tests = (byTest.data as CoverageByTest[]).filter(
+        (c) => c.test.category === category,
+      );
+      const completed = tests.reduce((acc, c) => acc + c.completed, 0);
+      const total = tests.reduce((acc, c) => acc + c.total, 0);
+      return {
+        category,
+        categoryName: tests[0]?.test.category ?? category,
+        completed,
+        total,
+        coverage: total === 0 ? 0 : Math.round((completed / total) * 100),
+      } as CoverageByCategory;
+    });
+  }, [byTest.data]);
   const trend = useAsyncData(healthTestsApi.getCoverageTrend);
-  const patients = useAsyncData(healthTestsApi.listPatients);
-  const professionals = useAsyncData(healthTestsApi.listProfessionals);
+  const batteries = useAsyncData(healthTestsApi.listBatteries);
 
-  const loading =
-    byTest.loading ||
-    byCategory.loading ||
-    trend.loading ||
-    patients.loading ||
-    professionals.loading;
-  const error =
-    byTest.error ??
-    byCategory.error ??
-    trend.error ??
-    patients.error ??
-    professionals.error;
+  const loading = byTest.loading || trend.loading || batteries.loading;
+  const error = byTest.error ?? trend.error ?? batteries.error;
 
   const reload = useCallback(() => {
     void byTest.reload();
-    void byCategory.reload();
     void trend.reload();
-    void patients.reload();
-    void professionals.reload();
-  }, [byTest, byCategory, trend, patients, professionals]);
+    void batteries.reload();
+  }, [byTest, trend, batteries]);
 
   const data = useMemo(() => {
-    if (
-      !byTest.data ||
-      !byCategory.data ||
-      !trend.data ||
-      !patients.data ||
-      !professionals.data
-    ) {
+    if (!byTest.data || !trend.data || !batteries.data || !byCategory) {
       return null;
     }
     return {
       byTest: byTest.data as CoverageByTest[],
-      byCategory: byCategory.data as CoverageByCategory[],
+      byCategory,
       trend: trend.data as CoverageTrendPoint[],
-      totalPatients: patients.data.length,
-      professionals: professionals.data,
+      totalPatients: (byTest.data as CoverageByTest[])[0]?.total ?? 0,
+      batteries: batteries.data as Battery[],
     };
-  }, [
-    byTest.data,
-    byCategory.data,
-    trend.data,
-    patients.data,
-    professionals.data,
-  ]);
+  }, [byTest.data, byCategory, trend.data, batteries.data]);
 
   return { data, loading, error, reload };
 }
@@ -236,26 +221,22 @@ export function usePendingPatients() {
 
 export function useIndicators() {
   const aggregates = useAsyncData(healthTestsApi.getIndicatorAggregates);
-  const patients = useAsyncData(healthTestsApi.listPatients);
-  const alerts = useAsyncData(healthTestsApi.listAlerts);
 
-  const loading = aggregates.loading || patients.loading || alerts.loading;
-  const error = aggregates.error ?? patients.error ?? alerts.error;
+  const loading = aggregates.loading;
+  const error = aggregates.error;
 
   const reload = useCallback(() => {
     void aggregates.reload();
-    void patients.reload();
-    void alerts.reload();
-  }, [aggregates, patients, alerts]);
+  }, [aggregates]);
 
   const data = useMemo(() => {
-    if (!aggregates.data || !patients.data || !alerts.data) return null;
+    if (!aggregates.data) return null;
     return {
       aggregates: aggregates.data as IndicatorAggregate[],
-      patients: patients.data,
-      alerts: alerts.data as HealthAlert[],
+      patients: [] as PatientProfile[],
+      alerts: [] as HealthAlert[],
     };
-  }, [aggregates.data, patients.data, alerts.data]);
+  }, [aggregates.data]);
 
   return { data, loading, error, reload };
 }
@@ -312,24 +293,30 @@ export function useMasterPatients() {
   const rows = useAsyncData(healthTestsApi.getMasterRows);
   const tests = useAsyncData(healthTestsApi.listTests);
   const professionals = useAsyncData(healthTestsApi.listProfessionals);
+  const batteries = useAsyncData(healthTestsApi.listBatteries);
 
-  const loading = rows.loading || tests.loading || professionals.loading;
-  const error = rows.error ?? tests.error ?? professionals.error;
+  const loading =
+    rows.loading || tests.loading || professionals.loading || batteries.loading;
+  const error =
+    rows.error ?? tests.error ?? professionals.error ?? batteries.error;
 
   const reload = useCallback(() => {
     void rows.reload();
     void tests.reload();
     void professionals.reload();
-  }, [rows, tests, professionals]);
+    void batteries.reload();
+  }, [rows, tests, professionals, batteries]);
 
   const data = useMemo(() => {
-    if (!rows.data || !tests.data || !professionals.data) return null;
+    if (!rows.data || !tests.data || !professionals.data || !batteries.data)
+      return null;
     return {
       rows: rows.data as PatientMasterRow[],
       tests: tests.data as HealthTest[],
       professionals: professionals.data as HealthProfessional[],
+      batteries: batteries.data as Battery[],
     };
-  }, [rows.data, tests.data, professionals.data]);
+  }, [rows.data, tests.data, professionals.data, batteries.data]);
 
   return { data, loading, error, reload };
 }
