@@ -1,5 +1,8 @@
-import { ProfessionalWizard } from "@/features/professionals/components/professional-wizard";
+import { PeopleWizard } from "@/features/professionals/components/people-wizard";
 
-export default function Page() {
-  return <ProfessionalWizard />;
+export default async function Page(props: {
+  searchParams?: Promise<{ mode?: string }>;
+}) {
+  const params = await props.searchParams;
+  return <PeopleWizard initialMode={params?.mode} />;
 }
