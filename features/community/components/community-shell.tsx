@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { CommunitySidebar } from "./community-sidebar";
 import { CommunityTopbar } from "./community-topbar";
 
@@ -35,9 +34,7 @@ export function CommunityErpShell({ children }: { children: React.ReactNode }) {
         <CommunityTopbar onMenuClick={() => setMobileOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           {/* key por ruta: re-dispara la entrada de la página en cada navegación */}
-          <div key={pathname}>
-            {children}
-          </div>
+          <div key={pathname}>{children}</div>
         </main>
       </div>
     </div>

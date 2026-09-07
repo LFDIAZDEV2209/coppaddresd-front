@@ -112,8 +112,12 @@ export function UserFormDialog({
   const [permissionIds, setPermissionIds] = useState<Set<string>>(new Set());
   // Snapshots de la precarga: permiten detectar si las asignaciones cambiaron
   // al guardar (el backend solo invalida el security stamp con cambios reales).
-  const [originalRoleIds, setOriginalRoleIds] = useState<Set<string>>(new Set());
-  const [originalPermissionIds, setOriginalPermissionIds] = useState<Set<string>>(new Set());
+  const [originalRoleIds, setOriginalRoleIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [originalPermissionIds, setOriginalPermissionIds] = useState<
+    Set<string>
+  >(new Set());
   // En edición arranca cargando (skeleton); en creación no hay nada que cargar.
   const [loadingAssignments, setLoadingAssignments] = useState(Boolean(user));
   // Precarga fallida = submit bloqueado (guardar mandaría conjuntos vacíos y
@@ -122,12 +126,16 @@ export function UserFormDialog({
   const [retryKey, setRetryKey] = useState(0);
 
   // Validación client-side por campo (solo se muestran campos tocados).
-  const [fieldErrors, setFieldErrors] = useState<UserFieldErrors>(emptyFieldErrors);
+  const [fieldErrors, setFieldErrors] =
+    useState<UserFieldErrors>(emptyFieldErrors);
   const [touched, setTouched] = useState<Set<string>>(new Set());
   // Errores del backend/red: se muestran en una caja dentro del modal.
   const [submitErrors, setSubmitErrors] = useState<string[] | null>(null);
 
-  const update = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => {
+  const update = <K extends keyof typeof form>(
+    field: K,
+    value: (typeof form)[K],
+  ) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
@@ -174,7 +182,9 @@ export function UserFormDialog({
         .catch(() => {
           if (!cancelled) {
             setLoadError(
-              t('No se pudieron cargar los roles y permisos del usuario. Para evitar cambios no deseados, el guardado está deshabilitado hasta reintentar.'),
+              t(
+                "No se pudieron cargar los roles y permisos del usuario. Para evitar cambios no deseados, el guardado está deshabilitado hasta reintentar.",
+              ),
             );
           }
         })
@@ -186,7 +196,7 @@ export function UserFormDialog({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [open, user, retryKey]);
+  }, [open, user, retryKey, t]);
 
   const toggleRole = useCallback((roleId: string) => {
     setRoleIds((prev) => {
@@ -247,7 +257,7 @@ export function UserFormDialog({
         splitBackendErrors(
           err instanceof Error
             ? err.message
-            : t('Error inesperado. Intenta de nuevo.'),
+            : t("Error inesperado. Intenta de nuevo."),
         ),
       );
     }
@@ -269,12 +279,14 @@ export function UserFormDialog({
             </div>
             <div className="flex flex-col gap-1">
               <DialogTitle>
-                {user ? t('Editar usuario') : t('Nuevo usuario')}
+                {user ? t("Editar usuario") : t("Nuevo usuario")}
               </DialogTitle>
               <DialogDescription>
                 {user
-                  ? t('Actualizá los datos y las asignaciones del usuario.')
-                  : t('Creá el usuario y asignale roles y permisos adicionales.')}
+                  ? t("Actualizá los datos y las asignaciones del usuario.")
+                  : t(
+                      "Creá el usuario y asignale roles y permisos adicionales.",
+                    )}
               </DialogDescription>
             </div>
           </div>
@@ -293,7 +305,9 @@ export function UserFormDialog({
                 className="rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-foreground"
                 role="status"
               >
-                {t('No se pudieron cargar los roles y permisos del catálogo. Podés guardar los datos básicos, pero no asignar roles ni permisos hasta que el catálogo esté disponible.')}
+                {t(
+                  "No se pudieron cargar los roles y permisos del catálogo. Podés guardar los datos básicos, pero no asignar roles ni permisos hasta que el catálogo esté disponible.",
+                )}
               </p>
             )}
 
@@ -311,7 +325,7 @@ export function UserFormDialog({
                   disabled={saving}
                 >
                   <RefreshCw data-icon="inline-start" />
-                  {t('Reintentar')}
+                  {t("Reintentar")}
                 </Button>
               </div>
             )}
@@ -335,7 +349,7 @@ export function UserFormDialog({
 
             <fieldset className="flex flex-col gap-4">
               <legend className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                {t('Información del usuario')}
+                {t("Información del usuario")}
               </legend>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
@@ -355,22 +369,24 @@ export function UserFormDialog({
                   />
                   {user && (
                     <p className="text-[11px] text-muted-foreground">
-                      {t('El email no se puede cambiar.')}
+                      {t("El email no se puede cambiar.")}
                     </p>
                   )}
                 </Field>
                 {!user && (
                   <Field
-                    label={t('Contraseña')}
+                    label={t("Contraseña")}
                     required
                     error={touched.has("password") ? fieldErrors.password : ""}
                   >
                     <Input
                       type="password"
                       value={form.password}
-                      onChange={(event) => update("password", event.target.value)}
+                      onChange={(event) =>
+                        update("password", event.target.value)
+                      }
                       onBlur={handleBlur("password")}
-                      placeholder={t('Contraseña inicial')}
+                      placeholder={t("Contraseña inicial")}
                       disabled={saving}
                       aria-invalid={Boolean(fieldErrors.password)}
                       autoComplete="new-password"
@@ -378,13 +394,15 @@ export function UserFormDialog({
                   </Field>
                 )}
                 <Field
-                  label={t('Nombre')}
+                  label={t("Nombre")}
                   required
                   error={touched.has("firstName") ? fieldErrors.firstName : ""}
                 >
                   <Input
                     value={form.firstName}
-                    onChange={(event) => update("firstName", event.target.value)}
+                    onChange={(event) =>
+                      update("firstName", event.target.value)
+                    }
                     onBlur={handleBlur("firstName")}
                     placeholder="Ej. María"
                     disabled={saving}
@@ -392,7 +410,7 @@ export function UserFormDialog({
                   />
                 </Field>
                 <Field
-                  label={t('Apellido')}
+                  label={t("Apellido")}
                   required
                   error={touched.has("lastName") ? fieldErrors.lastName : ""}
                 >
@@ -409,16 +427,18 @@ export function UserFormDialog({
               {user && (
                 <div className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-medium">{t('Usuario activo')}</span>
+                    <span className="text-sm font-medium">
+                      {t("Usuario activo")}
+                    </span>
                     <span className="text-xs text-muted-foreground">
-                      {t('Los usuarios inactivos no pueden iniciar sesión.')}
+                      {t("Los usuarios inactivos no pueden iniciar sesión.")}
                     </span>
                   </div>
                   <Switch
                     checked={form.isActive}
                     onCheckedChange={(checked) => update("isActive", checked)}
                     disabled={saving}
-                    aria-label={t('Usuario activo')}
+                    aria-label={t("Usuario activo")}
                   />
                 </div>
               )}
@@ -427,7 +447,7 @@ export function UserFormDialog({
             {rolesAvailable && (
               <fieldset className="flex flex-col gap-3">
                 <legend className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                  {t('Roles')}
+                  {t("Roles")}
                 </legend>
                 <DropdownMenu>
                   <DropdownMenuTrigger
@@ -442,17 +462,19 @@ export function UserFormDialog({
                   >
                     <span className="truncate">
                       {roleIds.size === 0
-                        ? t('Seleccionar roles')
+                        ? t("Seleccionar roles")
                         : roleIds.size === 1
-                          ? t('1 rol seleccionado')
-                          : t('{count} roles seleccionados', { count: String(roleIds.size) })}
+                          ? t("1 rol seleccionado")
+                          : t("{count} roles seleccionados", {
+                              count: String(roleIds.size),
+                            })}
                     </span>
                     <ChevronsUpDown className="size-4 opacity-60" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="max-h-72 w-full">
                     <DropdownMenuGroup>
                       <DropdownMenuLabel>
-                        {t('Roles disponibles')}
+                        {t("Roles disponibles")}
                       </DropdownMenuLabel>
                       {roles.map((role) => {
                         const checked = roleIds.has(role.id);
@@ -476,10 +498,12 @@ export function UserFormDialog({
               <fieldset className="flex flex-col gap-3">
                 <legend className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
                   <ShieldCheck className="size-3.5" />
-                  {t('Permisos adicionales')}
+                  {t("Permisos adicionales")}
                 </legend>
                 <p className="text-[11.5px] text-muted-foreground">
-                  {t('Permisos directos del usuario, además de los que obtiene por sus roles.')}
+                  {t(
+                    "Permisos directos del usuario, además de los que obtiene por sus roles.",
+                  )}
                 </p>
                 <Separator />
                 <PermissionGroups
@@ -498,21 +522,21 @@ export function UserFormDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={saving}
               >
-                {t('Cancelar')}
+                {t("Cancelar")}
               </Button>
-              <Button
-                type="submit"
-                disabled={saving || Boolean(loadError)}
-              >
+              <Button type="submit" disabled={saving || Boolean(loadError)}>
                 {saving ? (
                   <>
-                    <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                    {t('Guardando...')}
+                    <LoaderCircle
+                      className="animate-spin"
+                      data-icon="inline-start"
+                    />
+                    {t("Guardando...")}
                   </>
                 ) : user ? (
-                  t('Guardar cambios')
+                  t("Guardar cambios")
                 ) : (
-                  t('Crear usuario')
+                  t("Crear usuario")
                 )}
               </Button>
             </DialogFooter>

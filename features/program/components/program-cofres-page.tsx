@@ -45,6 +45,7 @@ import {
 } from "../services/program-erp-constants";
 import { ChartTabs, usePersistedTab } from "./chart-tabs";
 import { PagedListFooter } from "./paged-list-footer";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { ErpCofresHitos, ProgramErpCofresDto } from "../types/erp";
 
 const MILESTONE_KEYS = [7, 11, 22, 50] as const;

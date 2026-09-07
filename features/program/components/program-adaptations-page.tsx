@@ -52,7 +52,6 @@ import { useAdaptations } from "../hooks/use-adaptations";
 import { useAuth } from "@/providers/auth-provider";
 import type {
   Adaptation,
-  AdaptationDecisionAction,
   AdaptationKind,
   AdaptationStatus,
 } from "../types/adaptations";
