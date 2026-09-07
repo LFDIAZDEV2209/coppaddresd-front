@@ -108,7 +108,7 @@ export function ProfessionalDirectory() {
 
   const openCreate = () => router.push("/professionals/new");
   const openDetail = (employee: EmployeeListItem) =>
-    router.push(`/professionals/${employee.id}`);
+    router.push(`/employees/${employee.id}`);
 
   const isFiltered =
     filters.search.trim() !== "" ||
@@ -299,7 +299,7 @@ export function ProfessionalDirectory() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => router.push("/professionals/importar")}
+                onClick={() => router.push("/employees/importar")}
               >
                 <FileUp data-icon="inline-start" />
                 {t("Creación masiva")}

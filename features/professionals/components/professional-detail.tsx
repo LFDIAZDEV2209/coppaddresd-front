@@ -256,7 +256,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         <Button
           variant="outline"
           className="mt-4"
-          onClick={() => router.push("/professionals")}
+          onClick={() => router.push("/employees")}
         >
           {t("Volver al directorio")}
         </Button>
@@ -313,7 +313,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => router.push("/professionals")}
+              onClick={() => router.push("/employees")}
             >
               {t("Volver al directorio")}
             </Button>

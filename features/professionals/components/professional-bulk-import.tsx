@@ -179,7 +179,7 @@ export function ProfessionalBulkImport() {
             variant="outline"
             size="sm"
             onClick={() =>
-              stage === "upload" ? router.push("/professionals") : reset()
+              stage === "upload" ? router.push("/employees") : reset()
             }
           >
             <ArrowLeft data-icon="inline-start" />
@@ -598,7 +598,7 @@ export function ProfessionalBulkImport() {
             )}
           </div>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-            <Button onClick={() => router.push("/professionals")}>
+            <Button onClick={() => router.push("/employees")}>
               <Stethoscope data-icon="inline-start" />
               {t("Ir a profesionales")}
             </Button>

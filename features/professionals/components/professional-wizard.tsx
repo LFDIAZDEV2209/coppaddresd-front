@@ -603,7 +603,7 @@ export function ProfessionalWizard() {
                 <Button
                   size="sm"
                   onClick={() =>
-                    router.push(`/professionals/${created.employeeId}`)
+                    router.push(`/employees/${created.employeeId}`)
                   }
                 >
                   Ver perfil del profesional
@@ -611,7 +611,7 @@ export function ProfessionalWizard() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => router.push("/professionals")}
+                  onClick={() => router.push("/employees")}
                 >
                   Volver al directorio
                 </Button>
@@ -624,7 +624,7 @@ export function ProfessionalWizard() {
               <Button
                 size="sm"
                 onClick={() =>
-                  router.push(`/professionals/${created.employeeId}`)
+                  router.push(`/employees/${created.employeeId}`)
                 }
               >
                 Ver perfil del profesional
@@ -632,7 +632,7 @@ export function ProfessionalWizard() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => router.push("/professionals")}
+                onClick={() => router.push("/employees")}
               >
                 Volver al directorio
               </Button>
