@@ -98,6 +98,10 @@ function useCountUp(target: string, duration = 750): string {
   const [display, setDisplay] = useState(target);
 
   useEffect(() => {
+    // Sincronización intencional del valor objetivo al cambiar `target` —
+    // necesaria para resetear la animación de count-up. No es derivación
+    // pura: el valor intermedio se anima vía rAF.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplay(target);
     if (!parsed) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
