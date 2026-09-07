@@ -26,6 +26,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
+import { InfoItem } from "@/components/ui/info-item";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -592,41 +593,6 @@ export function UserDetail({ userId }: UserDetailProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
-}
-
-function InfoItem({
-  label,
-  value,
-  icon: Icon,
-  mono,
-  hint,
-}: {
-  label: string;
-  value: string;
-  icon?: typeof Mail;
-  mono?: boolean;
-  hint?: string;
-}) {
-  const t = useT();
-  return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
-        {label}
-        {hint && (
-          <span className="ml-1 normal-case opacity-70">· {t(hint)}</span>
-        )}
-      </dt>
-      <dd
-        className={cn(
-          "flex items-center gap-1.5 truncate text-[13px] font-medium text-foreground",
-          mono && "font-mono text-[12px]",
-        )}
-      >
-        {Icon && <Icon className="size-3.5 shrink-0 text-muted-foreground" />}
-        {value}
-      </dd>
     </div>
   );
 }

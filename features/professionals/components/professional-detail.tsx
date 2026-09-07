@@ -4,15 +4,24 @@ import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Activity,
   Building2,
+  CalendarDays,
   Check,
   Copy,
+  IdCard,
   Loader2,
+  Mail,
   MailPlus,
+  Phone,
   ShieldCheck,
   Stethoscope,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
+import { InfoItem } from "@/components/ui/info-item";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
   fetchEmployee,
@@ -25,13 +34,18 @@ import {
 import { fetchRoles } from "@/features/roles/services/roles-service";
 import type { Role } from "@/features/roles/types";
 import { ApiError } from "@/lib/api/http";
+import {
+  fullName,
+  ProfessionalAvatar,
+  ProfessionalStatusBadge,
+} from "./professional-visuals";
 
-const STATUS_LABELS: Record<string, string> = {
-  Invited: "Invitado",
-  Active: "Activo",
-  Inactive: "Inactivo",
-};
-
+/**
+ * Vista de detalle del profesional con el patrón del módulo Usuarios:
+ * card de identidad blanca, secciones con barra de gradiente, grid de
+ * datos con iconos y selects nativos estilizados. Toda la lógica
+ * (invitar, scopes por clínica) se conserva intacta.
+ */
 export function ProfessionalDetail({ id }: { id: string }) {
   const t = useT();
   const router = useRouter();
@@ -49,6 +63,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
   const [dirty, setDirty] = useState(false);
   const [invitationLink, setInvitationLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedUserId, setCopiedUserId] = useState(false);
 
   const load = useCallback(
     async (showSpinner = false) => {
@@ -71,13 +86,13 @@ export function ProfessionalDetail({ id }: { id: string }) {
       } catch {
         setFeedback({
           kind: "error",
-          message: "No se pudo cargar el profesional.",
+          message: t("No se pudo cargar el profesional."),
         });
       } finally {
         if (showSpinner) setLoading(false);
       }
     },
-    [id],
+    [id, t],
   );
 
   useEffect(() => {
@@ -104,7 +119,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         if (!cancelled) {
           setFeedback({
             kind: "error",
-            message: "No se pudo cargar el profesional.",
+            message: t("No se pudo cargar el profesional."),
           });
         }
       } finally {
@@ -114,7 +129,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, t]);
 
   const canManageScopes = useMemo(
     () =>
@@ -132,8 +147,10 @@ export function ProfessionalDetail({ id }: { id: string }) {
       const result = await inviteEmployee(id);
       setInvitationLink(result.invitationLink);
       const message = result.invitationLink
-        ? `Invitación enviada. El enlace quedó listo para copiar.`
-        : `Invitación enviada a ${employee?.email}. Recibirá el enlace por correo.`;
+        ? t("Invitación enviada. El enlace quedó listo para copiar.")
+        : t("Invitación enviada a {email}. Recibirá el enlace por correo.", {
+            email: employee?.email ?? "",
+          });
       setFeedback({ kind: "ok", message });
       await load(true);
     } catch (err) {
@@ -142,7 +159,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         message:
           err instanceof ApiError
             ? err.message
-            : "No se pudo enviar la invitación.",
+            : t("No se pudo enviar la invitación."),
       });
     } finally {
       setBusy(false);
@@ -156,7 +173,10 @@ export function ProfessionalDetail({ id }: { id: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setFeedback({ kind: "error", message: "No se pudo copiar el enlace." });
+      setFeedback({
+        kind: "error",
+        message: t("No se pudo copiar el enlace."),
+      });
     }
   };
 
@@ -182,7 +202,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
       });
       setFeedback({
         kind: "ok",
-        message: "Permisos por clínica actualizados.",
+        message: t("Permisos por clínica actualizados."),
       });
       await load();
     } catch (err) {
@@ -191,7 +211,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         message:
           err instanceof ApiError
             ? err.message
-            : "No se pudieron guardar los permisos.",
+            : t("No se pudieron guardar los permisos."),
       });
     } finally {
       setBusy(false);
@@ -200,9 +220,27 @@ export function ProfessionalDetail({ id }: { id: string }) {
 
   if (loading) {
     return (
-      <div className="mx-auto flex min-h-[60vh] max-w-5xl items-center justify-center text-muted-foreground">
-        <Loader2 className="mr-2 size-5 animate-spin" />
-        Cargando...
+      <div className="stagger-children mx-auto flex max-w-5xl flex-col gap-5 px-4 py-6">
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-2">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                className="mb-3 flex items-center gap-4 border-b border-border/60 py-3 last:border-0"
+                key={index}
+              >
+                <Skeleton className="h-9 flex-1 rounded-lg" />
+                <Skeleton className="h-9 w-48 rounded-lg" />
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-48" />
+            <Skeleton className="h-3 w-40" />
+            <Skeleton className="h-9 w-full rounded-lg" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -220,87 +258,174 @@ export function ProfessionalDetail({ id }: { id: string }) {
           className="mt-4"
           onClick={() => router.push("/professionals")}
         >
-          Volver al directorio
+          {t("Volver al directorio")}
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="stagger-children mx-auto max-w-5xl px-4 py-6">
       <PageHeader
-        title={`${employee.firstName} ${employee.middleName ?? ""} ${employee.lastName}`}
-        description={`${employee.email} · ${
-          employee.isProfessional
-            ? (employee.professionalTypeName ?? "Profesional")
-            : "Empleado"
-        }`}
+        title={t("Profesional")}
+        description={t("Equipo clínico del ERP")}
         icon={Stethoscope}
-        actions={
-          <span
-            className={`inline-flex rounded-full px-3 py-1 text-[12px] font-semibold ${
-              employee.status === "Active"
-                ? "bg-emerald-500/10 text-emerald-700"
-                : employee.status === "Invited"
-                  ? "bg-amber-500/10 text-amber-700"
-                  : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {STATUS_LABELS[employee.status] ?? employee.status}
-          </span>
-        }
       />
+
+      {/* Card de identidad (patrón Usuarios): avatar, datos y acciones. */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <ProfessionalAvatar employee={employee} size="lg" />
+            <div className="min-w-0">
+              <h1 className="truncate text-lg leading-tight font-bold text-foreground">
+                {fullName(employee)}
+              </h1>
+              <p className="flex items-center gap-1.5 truncate text-[13px] text-muted-foreground">
+                <Mail className="size-3.5 shrink-0" />
+                {employee.email}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <ProfessionalStatusBadge status={employee.status} />
+                {employee.professionalTypeName && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-foreground/80">
+                    <Stethoscope className="size-3 text-primary" />
+                    {employee.professionalTypeName}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {(!employee.userId || employee.status === "Invited") && (
+              <Button size="sm" onClick={onInvite} disabled={busy}>
+                {busy ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <MailPlus data-icon="inline-start" />
+                )}
+                {employee.userId
+                  ? t("Reenviar invitación")
+                  : t("Invitar al profesional")}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push("/professionals")}
+            >
+              {t("Volver al directorio")}
+            </Button>
+          </div>
+        </div>
+
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border/60 pt-4 sm:grid-cols-3 lg:grid-cols-4">
+          <InfoItem
+            label={t("Correo electrónico")}
+            value={employee.email}
+            icon={Mail}
+          />
+          <InfoItem
+            label={t("Teléfono")}
+            value={
+              employee.phoneNumber
+                ? `${employee.phoneCountryCode ?? ""} ${employee.phoneNumber}`.trim()
+                : "—"
+            }
+            icon={Phone}
+          />
+          <InfoItem
+            label={t("Organización")}
+            value={employee.organizationName}
+            icon={Building2}
+          />
+          <InfoItem
+            label={t("Estado")}
+            value={t(
+              employee.status === "Active"
+                ? "Activo"
+                : employee.status === "Invited"
+                  ? "Invitado"
+                  : "Inactivo",
+            )}
+            icon={Activity}
+          />
+          {employee.hireDate && (
+            <InfoItem
+              label={t("Fecha de ingreso")}
+              value={new Date(employee.hireDate).toLocaleDateString("es", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })}
+              icon={CalendarDays}
+            />
+          )}
+          {employee.userId && (
+            <InfoItem
+              label={t("ID de usuario")}
+              value={employee.userId}
+              icon={IdCard}
+              mono
+              hint="Usuario vinculado"
+            />
+          )}
+        </dl>
+      </div>
 
       {feedback && (
         <div
-          className={`mt-4 rounded-xl px-4 py-3 text-[13px] ${
+          className={`animate-slide-down mt-5 rounded-xl px-4 py-3 text-[13px] ${
             feedback.kind === "ok"
-              ? "bg-emerald-500/10 text-emerald-700"
-              : "bg-destructive/10 text-destructive"
+              ? "bg-success-soft text-success-foreground"
+              : "bg-destructive-soft text-destructive"
           }`}
+          role="status"
         >
           {feedback.message}
         </div>
       )}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        {/* Columna principal: asignaciones + permisos */}
+        {/* Columna principal: asignaciones por clínica */}
         <div className="space-y-5 lg:col-span-2">
-          <section className="rounded-2xl border border-border bg-card">
-            <div className="flex items-center gap-2 border-b border-border px-5 py-4">
-              <ShieldCheck className="size-4 text-primary" />
-              <h2 className="text-[14px] font-semibold">
-                Permisos por clínica
-              </h2>
-            </div>
+          <section className="overflow-hidden rounded-2xl border border-border bg-card">
+            <SectionHeader
+              title={t("Permisos por clínica")}
+              description={t(
+                "El rol se asigna por clínica: el profesional puede tener permisos distintos en cada una",
+              )}
+              icon={ShieldCheck}
+              variant="primary"
+            />
 
             {!employee.userId ? (
               <div className="flex flex-col items-start gap-3 p-5">
                 <p className="text-[13px] text-muted-foreground">
-                  Este profesional aún no tiene usuario. Invítalo para poder
-                  asignar sus permisos por clínica.
+                  {t(
+                    "Este profesional aún no tiene usuario. Invítalo para poder asignar sus permisos por clínica.",
+                  )}
                 </p>
-                <Button onClick={onInvite} disabled={busy}>
+                <Button onClick={onInvite} disabled={busy} size="sm">
                   {busy ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
                     <MailPlus className="size-4" />
                   )}
-                  Invitar al profesional
+                  {t("Invitar al profesional")}
                 </Button>
               </div>
             ) : canManageScopes ? (
               <div className="p-5">
-                <p className="mb-4 text-[12.5px] text-muted-foreground">
-                  El rol se asigna por clínica: el profesional puede tener
-                  permisos distintos en cada una. Los cambios aplican de
-                  inmediato.
-                </p>
                 <div className="space-y-3">
-                  {employee.clinics.map((clinic) => (
+                  {employee.clinics.map((clinic, index) => (
                     <div
                       key={clinic.clinicId}
-                      className="flex flex-col gap-2 rounded-xl border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
+                      className="animate-slide-up flex flex-col gap-2 rounded-xl border border-border/70 bg-muted/20 p-3 transition-colors hover:border-border sm:flex-row sm:items-center sm:justify-between"
+                      style={{
+                        animationDelay: `${Math.min(index * 60, 240)}ms`,
+                      }}
                     >
                       <div className="min-w-0">
                         <p className="flex items-center gap-1.5 text-[13px] font-semibold">
@@ -308,7 +433,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           {clinic.clinicName}
                           {clinic.isPrimary && (
                             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                              Principal
+                              {t("Principal")}
                             </span>
                           )}
                         </p>
@@ -321,92 +446,107 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           )}
                         </p>
                       </div>
-                      <select
+                      <NativeSelect
                         value={roleByClinic[clinic.clinicId] ?? ""}
-                        onChange={(e) => {
+                        onChange={(value) => {
                           setRoleByClinic((prev) => ({
                             ...prev,
-                            [clinic.clinicId]: e.target.value,
+                            [clinic.clinicId]: value,
                           }));
                           setDirty(true);
                         }}
-                        className="h-9 w-full rounded-lg border border-border bg-background px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-56"
-                      >
-                        <option value="">{t("Sin rol")}</option>
-                        {roles.map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {r.name}
-                          </option>
-                        ))}
-                      </select>
+                        options={[
+                          { value: "", label: t("Sin rol") },
+                          ...roles.map((r) => ({
+                            value: r.id,
+                            label: r.name,
+                          })),
+                        ]}
+                        className="sm:w-56"
+                        ariaLabel={t("Rol en {clinic}", {
+                          clinic: clinic.clinicName,
+                        })}
+                      />
                     </div>
                   ))}
                 </div>
 
                 <div className="mt-4 flex justify-end">
-                  <Button onClick={onSaveScopes} disabled={busy || !dirty}>
+                  <Button
+                    onClick={onSaveScopes}
+                    disabled={busy || !dirty}
+                    size="sm"
+                  >
                     {busy ? (
-                      <Loader2 className="size-4 animate-spin" />
+                      <Loader2
+                        data-icon="inline-start"
+                        className="animate-spin"
+                      />
                     ) : (
-                      <ShieldCheck className="size-4" />
+                      <ShieldCheck data-icon="inline-start" />
                     )}
-                    Guardar permisos
+                    {t("Guardar permisos")}
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="p-5">
                 <p className="text-[13px] text-muted-foreground">
-                  No hay clínicas asignadas. Agrega clínicas desde la edición
-                  del profesional.
+                  {t(
+                    "No hay clínicas asignadas. Agrega clínicas desde la edición del profesional.",
+                  )}
                 </p>
               </div>
             )}
           </section>
         </div>
 
-        {/* Columna lateral: perfil + invitación */}
+        {/* Columna lateral: invitación + profesión */}
         <div className="space-y-5">
-          <section className="rounded-2xl border border-border bg-card">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="text-[14px] font-semibold">Invitación</h2>
-            </div>
+          <section className="overflow-hidden rounded-2xl border border-border bg-card">
+            <SectionHeader
+              title={t("Invitación y acceso")}
+              description={t("Primer acceso del profesional al ERP")}
+              icon={MailPlus}
+              variant="primary"
+            />
             <div className="space-y-3 p-5">
-              <InfoRow label={t("Organización")} value={employee.organizationName} />
-              <InfoRow
-                label={t("Estado")}
-                value={STATUS_LABELS[employee.status] ?? employee.status}
-              />
-              {employee.userId ? (
-                <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 px-3 py-2">
-                  <span className="text-[12.5px] font-medium text-emerald-700">
-                    Usuario vinculado
+              <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                <span className="text-[12.5px] font-medium text-muted-foreground">
+                  {t("Estado del acceso")}
+                </span>
+                <span className="text-[12.5px] font-semibold">
+                  {employee.userId
+                    ? t("Usuario vinculado")
+                    : t("Sin usuario de acceso")}
+                </span>
+              </div>
+
+              {employee.userId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(employee.userId!);
+                    setCopiedUserId(true);
+                    setTimeout(() => setCopiedUserId(false), 2000);
+                  }}
+                  className="flex w-full items-center justify-between rounded-lg bg-success-soft px-3 py-2 transition-colors hover:bg-success-soft/70"
+                >
+                  <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-success-foreground">
+                    <Check className="size-3.5" />
+                    {t("Usuario vinculado")}
                   </span>
-                  <button
-                    onClick={() =>
-                      navigator.clipboard.writeText(employee.userId!)
-                    }
-                    className="text-[12px] text-muted-foreground hover:text-foreground"
-                    aria-label={t("Copiar ID de usuario")}
-                  >
+                  <span className="flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                    {copiedUserId ? t("Copiado") : t("Copiar ID")}
                     <Copy className="size-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <Button className="w-full" onClick={onInvite} disabled={busy}>
-                  {busy ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <MailPlus className="size-4" />
-                  )}
-                  Invitar
-                </Button>
+                  </span>
+                </button>
               )}
 
               {invitationLink && (
-                <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-muted/40 p-3">
-                  <span className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Enlace de invitación (72 h, un solo uso)
+                <div className="animate-scale-in flex flex-col gap-2 rounded-xl border border-border/70 bg-muted/40 p-3">
+                  <span className="text-[10.5px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    {t("Enlace de invitación (72 h, un solo uso)")}
                   </span>
                   <code className="break-all font-mono text-[11px] text-foreground">
                     {invitationLink}
@@ -417,47 +557,47 @@ export function ProfessionalDetail({ id }: { id: string }) {
                     onClick={copyInvitationLink}
                   >
                     {copied ? (
-                      <Check className="size-3.5" />
+                      <Check data-icon="inline-start" className="size-3.5" />
                     ) : (
-                      <Copy className="size-3.5" />
+                      <Copy data-icon="inline-start" className="size-3.5" />
                     )}
-                    {copied ? "Copiado" : "Copiar enlace"}
+                    {copied ? t("Copiado") : t("Copiar enlace")}
                   </Button>
                 </div>
-              )}
-
-              {employee.userId && employee.status === "Invited" && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={onInvite}
-                  disabled={busy}
-                >
-                  {busy ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <MailPlus className="size-4" />
-                  )}
-                  Reenviar invitación
-                </Button>
               )}
             </div>
           </section>
 
-          {employee.professionalTypeName && (
-            <section className="rounded-2xl border border-border bg-card">
-              <div className="border-b border-border px-5 py-4">
-                <h2 className="text-[14px] font-semibold">Profesión</h2>
-              </div>
-              <div className="space-y-3 p-5">
-                <InfoRow label={t("Tipo")} value={employee.professionalTypeName} />
-                <p className="text-[12px] text-muted-foreground">
-                  El profesional puede completar su perfil y credenciales desde
-                  su propio acceso.
+          <section className="overflow-hidden rounded-2xl border border-border bg-card">
+            <SectionHeader
+              title={t("Profesión")}
+              description={t("Tipo de profesional y perfil clínico")}
+              icon={Stethoscope}
+              variant="primary"
+            />
+            <div className="space-y-3 p-5">
+              {employee.professionalTypeName ? (
+                <>
+                  <InfoItem
+                    label={t("Tipo")}
+                    value={employee.professionalTypeName}
+                    icon={Stethoscope}
+                  />
+                  <p className="text-[12px] text-muted-foreground">
+                    {t(
+                      "El profesional puede completar su perfil y credenciales desde su propio acceso.",
+                    )}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[12.5px] text-muted-foreground">
+                  {t(
+                    "Sin profesión asignada: el profesional podrá completarla al aceptar la invitación.",
+                  )}
                 </p>
-              </div>
-            </section>
-          )}
+              )}
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -477,15 +617,4 @@ function currentRoleName(
   }
   const role = scopes?.roles.find((r) => r.scopeId === clinicId);
   return role?.roleName ?? "Sin rol asignado";
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-0.5 text-[13px] font-medium">{value}</p>
-    </div>
-  );
 }

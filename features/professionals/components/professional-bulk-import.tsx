@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -15,45 +16,46 @@ import {
   Pencil,
   Plus,
   RotateCcw,
+  Stethoscope,
   Trash2,
   Upload,
-  Users as UsersIcon,
   XCircle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
-import { cn } from "@/lib/utils";
-import { useT } from "@/providers/i18n-provider";
-import { fetchRoles } from "@/features/roles/services/roles-service";
-import type { BulkUserRow, BulkPreview, BulkResult } from "../types";
 import {
-  downloadTemplate,
-  parseUsersCsv,
-  simulateBulkCreate,
-  validateBulkRows,
-} from "../services/users-mock";
+  fetchProfessionalTypes,
+  type ProfessionalTypeDto,
+} from "../services/professional-catalogs-service";
+import {
+  downloadProfessionalsTemplate,
+  parseProfessionalsCsv,
+  simulateBulkProfessionalCreate,
+  validateProfessionalRows,
+  type BulkProfessionalPreview,
+  type BulkProfessionalResult,
+  type BulkProfessionalRow,
+} from "../services/professionals-mock";
 
 type Stage = "upload" | "preview" | "confirm" | "processing" | "result";
 
 /**
- * Experiencia dedicada de creación masiva de usuarios (MOCK).
- *
- * Flujo: carga de archivo → PREVIEW EDITABLE (corrige errores en línea,
- * agrega/elimina filas, revalidación instantánea) → confirmación →
- * progreso → resultado. La creación se SIMULA en users-mock.ts; al existir
- * el endpoint real se reemplaza sin tocar la UI.
+ * Creación masiva de profesionales (MOCK) con el patrón del módulo Usuarios:
+ * plantilla CSV, preview editable con revalidación en línea, confirmación,
+ * progreso y resultado. Cuando el backend exponga el endpoint real, la UI
+ * se conecta sin cambios de estructura.
  */
-export function UserBulkImport() {
+export function ProfessionalBulkImport() {
   const t = useT();
   const router = useRouter();
-
   const [stage, setStage] = useState<Stage>("upload");
-  const [roleNames, setRoleNames] = useState<string[]>([]);
-  const [rows, setRows] = useState<BulkUserRow[]>([]);
-  const [preview, setPreview] = useState<BulkPreview | null>(null);
-  const [result, setResult] = useState<BulkResult | null>(null);
+  const [types, setTypes] = useState<ProfessionalTypeDto[]>([]);
+  const [rows, setRows] = useState<BulkProfessionalRow[]>([]);
+  const [preview, setPreview] = useState<BulkProfessionalPreview | null>(null);
+  const [result, setResult] = useState<BulkProfessionalResult | null>(null);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [fileError, setFileError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -61,22 +63,24 @@ export function UserBulkImport() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchRoles()
-      .then((roles) => setRoleNames(roles.map((role) => role.name)))
+    fetchProfessionalTypes()
+      .then(setTypes)
       .catch(() => {
-        // Sin catálogo la validación de roles se relaja (no bloquea el mock).
+        // Sin catálogo la validación de tipos se relaja (no bloquea el mock).
       });
   }, []);
 
+  const typeNames = types.map((type) => type.name);
+
   /** Revalida TODAS las filas (copias inmutables) y actualiza el resumen. */
   const revalidate = useCallback(
-    (next: BulkUserRow[]) => {
+    (next: BulkProfessionalRow[]) => {
       const copies = next.map((row) => ({ ...row, errors: [] }));
-      const summary = validateBulkRows(copies, roleNames);
+      const summary = validateProfessionalRows(copies, typeNames);
       setRows(copies);
       setPreview(summary);
     },
-    [roleNames],
+    [typeNames],
   );
 
   const handleFile = useCallback(
@@ -93,7 +97,7 @@ export function UserBulkImport() {
       const reader = new FileReader();
       reader.onload = () => {
         const text = String(reader.result ?? "");
-        const parsed = parseUsersCsv(text);
+        const parsed = parseProfessionalsCsv(text);
         if (parsed.length === 0) {
           setFileError(
             t(
@@ -103,7 +107,7 @@ export function UserBulkImport() {
           return;
         }
         const copies = parsed.map((row) => ({ ...row, errors: [] }));
-        const summary = validateBulkRows(copies, roleNames);
+        const summary = validateProfessionalRows(copies, typeNames);
         setRows(copies);
         setPreview(summary);
         setFileName(file.name);
@@ -111,10 +115,10 @@ export function UserBulkImport() {
       };
       reader.readAsText(file, "utf-8");
     },
-    [roleNames, t],
+    [typeNames, t],
   );
 
-  const updateRow = (index: number, patch: Partial<BulkUserRow>) => {
+  const updateRow = (index: number, patch: Partial<BulkProfessionalRow>) => {
     revalidate(
       rows.map((row, i) => (i === index ? { ...row, ...patch } : row)),
     );
@@ -133,7 +137,7 @@ export function UserBulkImport() {
         firstName: "",
         lastName: "",
         email: "",
-        role: "",
+        professionalType: "",
         status: "activo",
         errors: [],
       },
@@ -144,7 +148,7 @@ export function UserBulkImport() {
     if (!preview) return;
     setStage("processing");
     setProgress({ done: 0, total: preview.valid });
-    const res = await simulateBulkCreate(rows, (done, total) =>
+    const res = await simulateBulkProfessionalCreate(rows, (done, total) =>
       setProgress({ done, total }),
     );
     setResult(res);
@@ -163,19 +167,19 @@ export function UserBulkImport() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title={t("Crear usuarios masivamente")}
+        title={t("Crear profesionales masivamente")}
         description={t(
-          "Importá un archivo CSV con la plantilla: revisá la validación y creá todos los usuarios de una vez.",
+          "Importá un archivo CSV con la plantilla: revisá la validación y creá todo el equipo de una vez.",
         )}
-        icon={UsersIcon}
+        icon={Stethoscope}
         actions={
           <Button
             variant="outline"
             size="sm"
             onClick={() =>
-              stage === "upload" ? router.push("/users") : reset()
+              stage === "upload" ? router.push("/professionals") : reset()
             }
           >
             <ArrowLeft data-icon="inline-start" />
@@ -270,13 +274,13 @@ export function UserBulkImport() {
               </span>
               <span className="text-[12.5px] text-muted-foreground">
                 {t(
-                  "CSV con separador ';' · columnas: nombre, apellido, email, rol, estado",
+                  "CSV con separador ';' · columnas: nombre, apellido, email, tipo, estado",
                 )}
               </span>
             </span>
             <span className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-[12px] text-muted-foreground">
               <FileSpreadsheet className="size-4" />
-              {fileName ? fileName : t("plantilla-usuarios.csv")}
+              {fileName ? fileName : t("plantilla-profesionales.csv")}
             </span>
           </label>
 
@@ -291,7 +295,7 @@ export function UserBulkImport() {
           )}
 
           <div className="flex flex-wrap items-center gap-2.5 border-t border-border/60 pt-4">
-            <Button variant="outline" onClick={downloadTemplate}>
+            <Button variant="outline" onClick={downloadProfessionalsTemplate}>
               <Download data-icon="inline-start" />
               {t("Descargar plantilla")}
             </Button>
@@ -312,7 +316,7 @@ export function UserBulkImport() {
             <SummaryChip
               tone="success"
               icon={CheckCircle2}
-              label={`${preview.valid} ${t("usuarios válidos")}`}
+              label={`${preview.valid} ${t("profesionales válidos")}`}
             />
             {preview.invalid > 0 && (
               <SummaryChip
@@ -335,13 +339,13 @@ export function UserBulkImport() {
           </div>
 
           <div className="max-h-[440px] overflow-auto rounded-xl border border-border/70">
-            <table className="w-full min-w-[880px] text-left text-[12.5px]">
+            <table className="w-full min-w-[920px] text-left text-[12.5px]">
               <thead className="sticky top-0 z-10 bg-muted/90 backdrop-blur">
                 <tr className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
                   <th className="w-10 px-2 py-2">#</th>
                   <th className="w-52 px-2 py-2">{t("Nombre")}</th>
-                  <th className="min-w-[300px] px-2 py-2">{t("Email")}</th>
-                  <th className="w-48 px-2 py-2">{t("Rol")}</th>
+                  <th className="min-w-[280px] px-2 py-2">{t("Email")}</th>
+                  <th className="w-56 px-2 py-2">{t("Tipo")}</th>
                   <th className="w-36 px-2 py-2">{t("Estado")}</th>
                   <th className="w-2/5 min-w-[220px] px-2 py-2">
                     {t("Validación")}
@@ -412,16 +416,16 @@ export function UserBulkImport() {
                       </td>
                       <td className="px-2 py-1.5">
                         <NativeSelect
-                          value={row.role}
-                          invalid={row.errors.some((e) => e.includes("Rol"))}
+                          value={row.professionalType}
+                          invalid={row.errors.some((e) => e.includes("Tipo"))}
                           onChange={(value) =>
-                            updateRow(index, { role: value })
+                            updateRow(index, { professionalType: value })
                           }
                           options={[
-                            { value: "", label: t("— sin rol —") },
-                            ...roleNames.map((role) => ({
-                              value: role,
-                              label: role,
+                            { value: "", label: t("— sin tipo —") },
+                            ...typeNames.map((name) => ({
+                              value: name,
+                              label: name,
                             })),
                           ]}
                         />
@@ -435,6 +439,7 @@ export function UserBulkImport() {
                           }
                           options={[
                             { value: "activo", label: t("Activo") },
+                            { value: "invitado", label: t("Invitado") },
                             { value: "inactivo", label: t("Inactivo") },
                           ]}
                         />
@@ -511,16 +516,17 @@ export function UserBulkImport() {
       {/* ETAPA: confirmación */}
       {stage === "confirm" && preview && (
         <div className="animate-scale-in flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-12 text-center">
-          {" "}
           <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <UsersIcon className="size-6" />
+            <Stethoscope className="size-6" />
           </span>
           <h2 className="text-lg font-bold text-foreground">
-            {t("¿Crear {count} usuarios?", { count: String(preview.valid) })}
+            {t("¿Crear {count} profesionales?", {
+              count: String(preview.valid),
+            })}
           </h2>
           <p className="max-w-md text-[13px] text-muted-foreground">
             {t(
-              "Se crearán los usuarios válidos con contraseña temporal generada. Las filas con errores se omitirán y podrás corregirlas después.",
+              "Se creará el perfil de cada profesional válido y se enviará la invitación de primer acceso. Las filas con errores se omitirán y podrás corregirlas después.",
             )}
           </p>
           <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
@@ -528,8 +534,10 @@ export function UserBulkImport() {
               onClick={() => void startImport()}
               className="bg-brand-gradient shadow-md shadow-brand-navy/25 hover:opacity-95"
             >
-              <UsersIcon data-icon="inline-start" />
-              {t("Crear {count} usuarios", { count: String(preview.valid) })}
+              <Stethoscope data-icon="inline-start" />
+              {t("Crear {count} profesionales", {
+                count: String(preview.valid),
+              })}
             </Button>
             <Button variant="outline" onClick={() => setStage("preview")}>
               <ArrowLeft data-icon="inline-start" />
@@ -545,7 +553,7 @@ export function UserBulkImport() {
           <LoaderCircle className="size-10 animate-spin text-primary" />
           <div className="flex flex-col items-center gap-2">
             <p className="text-[15px] font-semibold text-foreground">
-              {t("Creando usuarios...")}
+              {t("Creando profesionales...")}
             </p>
             <p className="text-[13px] tabular-nums text-muted-foreground">
               {progress.done} / {progress.total}
@@ -569,7 +577,6 @@ export function UserBulkImport() {
       {/* ETAPA: resultado */}
       {stage === "result" && result && (
         <div className="animate-scale-in flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-12 text-center">
-          {" "}
           <span className="flex size-14 items-center justify-center rounded-2xl bg-success/15 text-success">
             <CheckCircle2 className="size-7" />
           </span>
@@ -591,9 +598,9 @@ export function UserBulkImport() {
             )}
           </div>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-            <Button onClick={() => router.push("/users")}>
-              <UsersIcon data-icon="inline-start" />
-              {t("Ir a usuarios")}
+            <Button onClick={() => router.push("/professionals")}>
+              <Stethoscope data-icon="inline-start" />
+              {t("Ir a profesionales")}
             </Button>
             <Button variant="outline" onClick={reset}>
               <FileUp data-icon="inline-start" />
