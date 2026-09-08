@@ -915,7 +915,6 @@
   "El profesional puede completar su perfil y credenciales desde su propio acceso.": "El profesional puede completar su perfil y credenciales desde su propio acceso.",
   "el profesional puede tener permisos distintos en cada una.": "el profesional puede tener permisos distintos en cada una.",
   "El profesional recibirá un enlace de primer acceso (válido por 72 h). Si lo desactivas, podrás invitarlo después desde su perfil.": "El profesional recibirá un enlace de primer acceso (válido por 72 h). Si lo desactivas, podrás invitarlo después desde su perfil.",
-  "El rol se asigna por clínica: el profesional puede tener permisos distintos en cada una. Los cambios aplican de inmediato.": "El rol se asigna por clínica: el profesional puede tener permisos distintos en cada una. Los cambios aplican de inmediato.",
   "El solicitante no podrá unirse al club.": "El solicitante no podrá unirse al club.",
   "El solicitante pasará a ser miembro activo del club.": "El solicitante pasará a ser miembro activo del club.",
   "El título es obligatorio.": "El título es obligatorio.",
@@ -1205,7 +1204,6 @@
   "Gestión de usuarios del sistema": "Gestión de usuarios del sistema",
   "Gestión de XP, cofres y mensajes desde el ERP": "Gestión de XP, cofres y mensajes desde el ERP",
   "Gestión del programa": "Gestión del programa",
-  "Gestiona el equipo clínico, sus especialidades, roles y acceso al ERP": "Gestiona el equipo clínico, sus especialidades, roles y acceso al ERP",
   "Gestiona la información y el seguimiento de tus pacientes": "Gestiona la información y el seguimiento de tus pacientes",
   "Gestiona las publicaciones de la comunidad": "Gestiona las publicaciones de la comunidad",
   "Gestiona las rutinas de ejercicio para tus pacientes": "Gestiona las rutinas de ejercicio para tus pacientes",
@@ -1856,7 +1854,6 @@
   "Permisos adicionales": "Permisos adicionales",
   "Permisos de ": "Permisos de ",
   "Permisos directos del usuario, además de los que obtiene por sus roles.": "Permisos directos del usuario, además de los que obtiene por sus roles.",
-  "Permisos por clínica": "Permisos por clínica",
   "permiso directo": "permiso directo",
   "permisos": "permisos",
   "permisos directos": "permisos directos",
@@ -2739,5 +2736,11 @@
   "Contraseña temporal": "Contraseña temporal",
   "Copiar": "Copiar",
   "Copiar todas las credenciales": "Copiar todas las credenciales",
-  "Ir a usuarios": "Ir a usuarios"
+  "Ir a usuarios": "Ir a usuarios",
+  "Acceso por clínica": "Acceso por clínica",
+  "El acceso se otorga por clínica según la profesión del profesional": "El acceso se otorga por clínica según la profesión del profesional",
+  "Acceso clínico": "Acceso clínico",
+  "Acceso clínico activo": "Acceso clínico activo",
+  "Sin acceso": "Sin acceso",
+  "Gestiona el equipo clínico, sus especialidades y acceso al ERP": "Gestiona el equipo clínico, sus especialidades y acceso al ERP"
 }

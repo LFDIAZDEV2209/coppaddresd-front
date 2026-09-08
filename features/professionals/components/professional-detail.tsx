@@ -20,7 +20,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { InfoItem } from "@/components/ui/info-item";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,7 +59,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
     kind: "ok" | "error";
     message: string;
   } | null>(null);
-  const [roleByClinic, setRoleByClinic] = useState<Record<string, string>>({});
+  const [accessByClinic, setAccessByClinic] = useState<Record<string, boolean>>({});
   const [dirty, setDirty] = useState(false);
   const [invitationLink, setInvitationLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -76,11 +76,11 @@ export function ProfessionalDetail({ id }: { id: string }) {
         setEmployee(emp);
         setScopes(sc);
         if (sc && !sc.requiresInvitation) {
-          const map: Record<string, string> = {};
+          const map: Record<string, boolean> = {};
           for (const role of sc.roles) {
-            if (role.scopeId) map[role.scopeId] = role.roleId;
+            if (role.scopeId) map[role.scopeId] = true;
           }
-          setRoleByClinic(map);
+          setAccessByClinic(map);
         }
         setDirty(false);
       } catch {
@@ -109,11 +109,11 @@ export function ProfessionalDetail({ id }: { id: string }) {
         setScopes(sc);
         setRoles(rs);
         if (sc && !sc.requiresInvitation) {
-          const map: Record<string, string> = {};
+          const map: Record<string, boolean> = {};
           for (const role of sc.roles) {
-            if (role.scopeId) map[role.scopeId] = role.roleId;
+            if (role.scopeId) map[role.scopeId] = true;
           }
-          setRoleByClinic(map);
+          setAccessByClinic(map);
         }
       } catch {
         if (!cancelled) {
@@ -184,17 +184,29 @@ export function ProfessionalDetail({ id }: { id: string }) {
     setBusy(true);
     setFeedback(null);
     try {
+      // Resolver el rol "Professional" (case-insensitive) del catálogo.
+      const professionalRoleId =
+        roles.find((r) => r.name.toLowerCase() === "professional")?.id ??
+        undefined;
+
       const rolesToApply: Array<{
         roleId: string;
         scopeType: string;
         scopeId: string | null;
-      }> = Object.entries(roleByClinic)
-        .filter(([, roleId]) => roleId)
-        .map(([clinicId, roleId]) => ({
-          roleId,
-          scopeType: "Clinic",
-          scopeId: clinicId,
-        }));
+      }> = [];
+
+      // Solo incluir clínicas con acceso activo y ProfessionalRoleId válido.
+      if (professionalRoleId) {
+        for (const [clinicId, hasAccess] of Object.entries(accessByClinic)) {
+          if (hasAccess) {
+            rolesToApply.push({
+              roleId: professionalRoleId,
+              scopeType: "Clinic",
+              scopeId: clinicId,
+            });
+          }
+        }
+      }
 
       await updateProfessionalScopes(id, {
         roles: rolesToApply,
@@ -392,9 +404,9 @@ export function ProfessionalDetail({ id }: { id: string }) {
         <div className="space-y-5 lg:col-span-2">
           <section className="overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
-              title={t("Permisos por clínica")}
+              title={t("Acceso por clínica")}
               description={t(
-                "El rol se asigna por clínica: el profesional puede tener permisos distintos en cada una",
+                "El acceso se otorga por clínica según la profesión del profesional",
               )}
               icon={ShieldCheck}
               variant="primary"
@@ -438,34 +450,22 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           )}
                         </p>
                         <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-                          {currentRoleName(
-                            clinic.clinicId,
-                            roleByClinic,
-                            scopes,
-                            roles,
-                          )}
+                          {accessByClinic[clinic.clinicId]
+                            ? t("Acceso clínico activo")
+                            : t("Sin acceso")}
                         </p>
                       </div>
-                      <NativeSelect
-                        value={roleByClinic[clinic.clinicId] ?? ""}
-                        onChange={(value) => {
-                          setRoleByClinic((prev) => ({
+                      <Switch
+                        size="sm"
+                        checked={accessByClinic[clinic.clinicId] ?? false}
+                        onCheckedChange={(checked) => {
+                          setAccessByClinic((prev) => ({
                             ...prev,
-                            [clinic.clinicId]: value,
+                            [clinic.clinicId]: checked,
                           }));
                           setDirty(true);
                         }}
-                        options={[
-                          { value: "", label: t("Sin rol") },
-                          ...roles.map((r) => ({
-                            value: r.id,
-                            label: r.name,
-                          })),
-                        ]}
-                        className="sm:w-56"
-                        ariaLabel={t("Rol en {clinic}", {
-                          clinic: clinic.clinicName,
-                        })}
+                        aria-label={t("Acceso clínico")}
                       />
                     </div>
                   ))}
@@ -604,17 +604,3 @@ export function ProfessionalDetail({ id }: { id: string }) {
   );
 }
 
-function currentRoleName(
-  clinicId: string,
-  roleByClinic: Record<string, string>,
-  scopes: ProfessionalScopes | null,
-  roles: Role[],
-): string {
-  const selected = roleByClinic[clinicId];
-  if (selected) {
-    const role = roles.find((r) => r.id === selected);
-    return role?.name ?? "Sin rol asignado";
-  }
-  const role = scopes?.roles.find((r) => r.scopeId === clinicId);
-  return role?.roleName ?? "Sin rol asignado";
-}
