@@ -1,7 +1,14 @@
-﻿import type { NextConfig } from "next";
+﻿import path from "path";
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+
+  // El root de Turbopack es este repo. Sin esto, Next autodetecta lockfiles
+  // sueltos en carpetas superiores (fuera del repo) y emite un warning.
+  turbopack: {
+    root: path.join(__dirname),
+  },
 
   images: {
     remotePatterns: [
