@@ -119,11 +119,32 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Cargar catálogos
+  // Cargar catálogos de forma condicional según el modo efectivo.
+  // - user: el UserWizard embebido carga sus propios roles/permisos; no necesitamos nada del shell.
+  // - patient: solo el árbol de organizaciones (selector de clínica).
+  // - profesional / empleado / selector de modo: los 4 catálogos en paralelo.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        if (effectiveMode === "user") {
+          // El UserWizard embebido carga sus propios catálogos internamente
+          return;
+        }
+
+        if (effectiveMode === "patient") {
+          // Paciente: solo necesitamos el árbol de organizaciones (selector de clínica)
+          const orgs = await fetchOrganizationTree();
+          if (cancelled) return;
+          setOrganizations(orgs);
+          const withClinics = orgs.find((o) => o.clinics.length > 0);
+          if (withClinics) {
+            setForm((f) => ({ ...f, organizationId: withClinics.id }));
+          }
+          return;
+        }
+
+        // Profesional / Empleado / selector de modo: cargar los 4 catálogos en paralelo
         const [orgs, ts, ss, rs] = await Promise.all([
           fetchOrganizationTree(),
           fetchProfessionalTypes(),
@@ -150,7 +171,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [effectiveMode]);
 
   // Pasos del modo actual
   const mode = form.mode;
