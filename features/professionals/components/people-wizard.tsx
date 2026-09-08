@@ -585,9 +585,11 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
         </div>
       )}
 
-      {/* Wizard body */}
+      {/* Wizard body. En modo usuario la caja la aportan el StepNav y la tarjeta del UserWizard embebido. */}
       {!created && (
-        <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-card">
+        <div
+          className={`mt-5${mode === "user" && step >= 0 ? "" : " overflow-hidden rounded-2xl border border-border bg-card"}`}
+        >
           {error && (
             <div className="border-b border-border bg-destructive/5 px-5 py-2.5 text-[13px] text-destructive">
               {error}

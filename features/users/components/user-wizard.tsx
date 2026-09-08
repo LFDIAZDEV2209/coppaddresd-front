@@ -501,10 +501,8 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
         />
       )}
 
-      {/* Stepper embebido (el standalone va integrado dentro de la tarjeta del paso) */}
-      {embedded && (
-        <StepNav steps={USER_STEPS} currentIndex={step} icons={USER_STEP_ICONS} />
-      )}
+      {/* Stepper: caja propia separada de la tarjeta del paso (mismo patrón que people-wizard) */}
+      <StepNav steps={USER_STEPS} currentIndex={step} icons={USER_STEP_ICONS} />
 
       {loading ? (
         <div className={cn("flex flex-col gap-4 p-6", !embedded && "rounded-2xl border border-border bg-card")}>
@@ -526,11 +524,7 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
           </Button>
         </div>
       ) : (
-        <div className={cn("flex flex-col gap-5", !embedded && "overflow-hidden rounded-2xl border border-border bg-card")}>
-          {/* El stepper vive dentro de la tarjeta: una sola caja, banda a sangre debajo */}
-          {!embedded && (
-            <StepNav steps={USER_STEPS} currentIndex={step} icons={USER_STEP_ICONS} bare />
-          )}
+        <div className="flex flex-col gap-5 overflow-hidden rounded-2xl border border-border bg-card">
           {submitErrors && submitErrors.length > 0 && (
             <div
               className="mx-5 mt-5 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive sm:mx-6 sm:mt-6"

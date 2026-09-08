@@ -38,8 +38,6 @@ interface StepNavProps {
   onStepClick?: (index: number) => void;
   /** Mapa de iconos por clave de paso. Se fusiona con los iconos por defecto del wizard de personas. */
   icons?: Record<string, React.ElementType>;
-  /** Sin caja propia: para integrarlo dentro de la tarjeta del paso (una sola caja). */
-  bare?: boolean;
 }
 
 export function StepNav({
@@ -47,7 +45,6 @@ export function StepNav({
   currentIndex,
   onStepClick,
   icons,
-  bare = false,
 }: StepNavProps) {
   const t = useT();
   const mergedIcons = { ...DEFAULT_ICONS, ...icons };
@@ -55,10 +52,7 @@ export function StepNav({
   return (
     <nav
       aria-label={t("Progreso del formulario")}
-      className={cn(
-        "flex items-stretch px-4 py-4 sm:px-6",
-        !bare && "overflow-hidden rounded-2xl border border-border bg-card",
-      )}
+      className="flex items-stretch overflow-hidden rounded-2xl border border-border bg-card px-4 py-4 sm:px-6"
     >
       {steps.map((s, i) => {
         const Icon = mergedIcons[s.key] ?? UserRound;
