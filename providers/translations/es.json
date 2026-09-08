@@ -2685,5 +2685,8 @@
   "Detalles de filas con error": "Detalles de filas con error",
   "Línea {line}": "Línea {line}",
   "creados": "creados",
-  "con errores": "con errores"
+  "con errores": "con errores",
+  "Usuario de plataforma": "Usuario de plataforma",
+  "Accesos": "Accesos",
+  "Crea credenciales de acceso con roles y permisos, sin perfil de empleado ni paciente.": "Crea credenciales de acceso con roles y permisos, sin perfil de empleado ni paciente."
 }

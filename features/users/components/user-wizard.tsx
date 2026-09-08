@@ -61,6 +61,10 @@ interface UserWizardProps {
   /** "create" en /users/nuevo · "edit" en /users/{id}/editar. */
   mode: "create" | "edit";
   userId?: string;
+  /** Cuando se renderiza embebido en people-wizard, oculta el PageHeader propio. */
+  embedded?: boolean;
+  /** Callback para volver al selector de modo del people-wizard. */
+  onBackToSelector?: () => void;
 }
 
 interface WizardStep {
@@ -104,7 +108,7 @@ const ALL_FIELDS = ["email", "password", "firstName", "lastName"] as const;
  * 3. Permisos directos agrupados por módulo, con descripción humana;
  *    los heredados por roles aparecen bloqueados para evitar duplicar.
  */
-export function UserWizard({ mode, userId }: UserWizardProps) {
+export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWizardProps) {
   const isEdit = mode === "edit" && Boolean(userId);
   const t = useT();
   const router = useRouter();
@@ -455,30 +459,32 @@ export function UserWizard({ mode, userId }: UserWizardProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <PageHeader
-        title={isEdit ? t("Editar usuario") : t("Nuevo usuario")}
-        description={
-          isEdit
-            ? t("Actualizá los datos, roles y permisos del usuario.")
-            : t(
-                "Creá el usuario en 3 pasos: datos, roles y permisos adicionales.",
-              )
-        }
-        icon={UsersIcon}
-        actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              router.push(isEdit && userId ? `/users/${userId}` : "/users")
-            }
-          >
-            <ArrowLeft data-icon="inline-start" />
-            {t("Volver")}
-          </Button>
-        }
-      />
+    <div className={cn("flex flex-col gap-6", embedded ? "" : "p-6")}>
+      {!embedded && (
+        <PageHeader
+          title={isEdit ? t("Editar usuario") : t("Nuevo usuario")}
+          description={
+            isEdit
+              ? t("Actualizá los datos, roles y permisos del usuario.")
+              : t(
+                  "Creá el usuario en 3 pasos: datos, roles y permisos adicionales.",
+                )
+          }
+          icon={UsersIcon}
+          actions={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                router.push(isEdit && userId ? `/users/${userId}` : "/users")
+              }
+            >
+              <ArrowLeft data-icon="inline-start" />
+              {t("Volver")}
+            </Button>
+          }
+        />
+      )}
 
       {/* Stepper */}
       <ol className="flex items-center gap-2 sm:gap-3">
@@ -584,6 +590,17 @@ export function UserWizard({ mode, userId }: UserWizardProps) {
           {/* PASO 1 — Información básica */}
           {step === 0 && (
             <div className="animate-slide-up flex flex-col gap-4">
+              {embedded && onBackToSelector && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  onClick={onBackToSelector}
+                >
+                  <ArrowLeft data-icon="inline-start" />
+                  {t("Atrás")}
+                </Button>
+              )}
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
                   label={t("Nombre")}

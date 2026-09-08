@@ -13,6 +13,7 @@ import {
   Briefcase,
   Building2,
   CheckCircle2,
+  KeyRound,
   Stethoscope,
   UserRound,
   Users,
@@ -57,6 +58,14 @@ const ALL_OPTIONS: ModeOption[] = [
     icon: Users,
     title: "Paciente",
     description: "Registra un nuevo paciente para seguimiento y citas.",
+  },
+  {
+    mode: "user",
+    permission: "Users.Create",
+    icon: KeyRound,
+    title: "Usuario de plataforma",
+    description:
+      "Crea credenciales de acceso con roles y permisos, sin perfil de empleado ni paciente.",
   },
 ];
 

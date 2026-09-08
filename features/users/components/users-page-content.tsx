@@ -332,7 +332,7 @@ export function UsersPageContent() {
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => router.push("/users/nuevo")}
+                  onClick={() => router.push("/people/new?mode=user")}
                   className="bg-brand-gradient text-white shadow-md shadow-brand-navy/25 transition-all hover:-translate-y-0.5 hover:opacity-95 hover:shadow-lg"
                 >
                   <Plus data-icon="inline-start" />
@@ -433,7 +433,7 @@ export function UsersPageContent() {
               filters.role !== "all" ||
               filters.createdWithin !== "all"
             }
-            onCreate={() => router.push("/users/nuevo")}
+            onCreate={() => router.push("/people/new?mode=user")}
             onClearFilters={() =>
               setFilters({
                 search: "",

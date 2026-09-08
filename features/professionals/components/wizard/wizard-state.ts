@@ -8,11 +8,11 @@ import type { ProfessionalClinicAssignment } from "@/features/professionals/serv
 
 // --- Modo del wizard ---
 
-export type Mode = "professional" | "employee" | "patient";
+export type Mode = "professional" | "employee" | "patient" | "user";
 
 /** Parsea el parámetro de query ?mode= y valida que sea un modo conocido. */
 export function parseMode(raw: string | undefined | null): Mode | null {
-  if (raw === "professional" || raw === "employee" || raw === "patient")
+  if (raw === "professional" || raw === "employee" || raw === "patient" || raw === "user")
     return raw;
   return null;
 }
@@ -31,7 +31,7 @@ export function parseContext(
 
 /** Mapa de modos disponibles por contexto (sin filtrar permisos). */
 const CONTEXT_MODES: Record<WizardContext, Mode[]> = {
-  staff: ["professional", "employee"],
+  staff: ["professional", "employee", "user"],
   patient: ["patient"],
 };
 
@@ -50,6 +50,7 @@ export function getAvailableModes(
     { mode: "professional", permission: "Professionals.Create" },
     { mode: "employee", permission: "Employees.Create" },
     { mode: "patient", permission: "Patients.Create" },
+    { mode: "user", permission: "Users.Create" },
   ];
 
   const candidates = context ? CONTEXT_MODES[context] : allModes.map((m) => m.mode);
@@ -80,10 +81,12 @@ export function groupModes(
 
   const team = modes.filter((m) => m === "professional" || m === "employee");
   const patients = modes.filter((m) => m === "patient");
+  const users = modes.filter((m) => m === "user");
   const groups: ModeGroup[] = [];
 
   if (team.length > 0) groups.push({ label: "Equipo", modes: team });
   if (patients.length > 0) groups.push({ label: "Pacientes", modes: patients });
+  if (users.length > 0) groups.push({ label: "Accesos", modes: users });
 
   return groups;
 }
@@ -262,6 +265,21 @@ export const PATIENT_STEPS: StepDef[] = [
   { key: "review", label: "Revisar y enviar", hint: "Confirmación final" },
 ];
 
+/** Pasos del wizard de usuario (se renderiza embebido, no usa el stepper del shell). */
+export const USER_STEPS: StepDef[] = [
+  {
+    key: "user-info",
+    label: "Información básica",
+    hint: "Identidad y credenciales",
+  },
+  { key: "user-roles", label: "Roles", hint: "Qué puede hacer por su rol" },
+  {
+    key: "user-permissions",
+    label: "Permisos adicionales",
+    hint: "Ajustes finos por módulo",
+  },
+];
+
 export function getSteps(mode: Mode): StepDef[] {
   switch (mode) {
     case "professional":
@@ -270,6 +288,8 @@ export function getSteps(mode: Mode): StepDef[] {
       return EMPLOYEE_STEPS;
     case "patient":
       return PATIENT_STEPS;
+    case "user":
+      return USER_STEPS;
   }
 }
 

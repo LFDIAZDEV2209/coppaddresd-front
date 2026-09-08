@@ -17,6 +17,7 @@ import {
   Check,
   CheckCircle2,
   Clipboard,
+  KeyRound,
   Loader2,
   Send,
   Stethoscope,
@@ -62,6 +63,7 @@ import { ScheduleStep } from "./wizard/steps/schedule-step";
 import { JobStep } from "./wizard/steps/job-step";
 import { PatientClinicStep } from "./wizard/steps/patient-clinic-step";
 import { ReviewStep } from "./wizard/steps/review-step";
+import { UserWizard } from "@/features/users/components/user-wizard";
 
 // Iconos Lucide por nombre de paso (para el stepper visual)
 const STEP_ICONS: Record<string, React.ElementType> = {
@@ -306,7 +308,9 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
       ? t("Nuevo profesional")
       : mode === "employee"
         ? t("Nuevo empleado")
-        : t("Nuevo paciente");
+        : mode === "user"
+          ? t("Nuevo usuario")
+          : t("Nuevo paciente");
 
   const headerDescription = !mode
     ? t(
@@ -320,16 +324,20 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
         ? t(
             "Crea el perfil, asigna sus clínicas y permisos, y envía la invitación por correo para que complete su acceso.",
           )
-        : t(
-            "Registra los datos básicos del paciente. Podrás completar la información clínica después.",
-          );
+        : mode === "user"
+          ? t(
+              "Crea credenciales de acceso con roles y permisos, sin perfil de empleado ni paciente.",
+            )
+          : t(
+              "Registra los datos básicos del paciente. Podrás completar la información clínica después.",
+            );
 
   const headerIcon = !mode
     ? UserRound
     : mode === "professional"
       ? Stethoscope
-      : mode === "employee"
-        ? UserRound
+      : mode === "user"
+        ? KeyRound
         : UserRound;
 
   return (
@@ -340,8 +348,8 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
         icon={headerIcon}
       />
 
-      {/* Stepper visual (solo si hay modo seleccionado) */}
-      {mode && (
+      {/* Stepper visual (solo si hay modo seleccionado y no es usuario) */}
+      {mode && mode !== "user" && (
         <nav
           aria-label={t("Progreso del formulario")}
           className="flex items-stretch overflow-hidden rounded-2xl border border-border bg-card px-4 py-4 sm:px-6"
@@ -541,7 +549,18 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
             />
           )}
 
-          {/* Pasos del modo */}
+          {/* Modo usuario: wizard embebido con sus propios pasos */}
+          {mode === "user" && step >= 0 && (
+            <UserWizard
+              mode="create"
+              embedded
+              onBackToSelector={
+                availableModes.length > 1 ? () => setStep(-1) : undefined
+              }
+            />
+          )}
+
+          {/* Pasos del modo (no usuario) */}
           {mode &&
             step >= 0 &&
             step < totalSteps &&
@@ -550,7 +569,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 form={form}
                 setForm={setForm}
                 onNext={goNext}
-                onBack={mode ? goBack : () => setStep(-1)}
+                onBack={availableModes.length > 1 ? () => setStep(-1) : undefined}
               />
             )}
 
