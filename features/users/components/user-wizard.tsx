@@ -24,6 +24,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
+import { ProfessionalAvatar } from "@/features/professionals/components/professional-visuals";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -602,164 +604,197 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
 
           {/* PASO 1 — Información básica */}
           {step === 0 && (
-            <div className="animate-slide-up flex flex-col gap-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field
-                  label={t("Nombre")}
-                  required
-                  error={touched.has("firstName") ? fieldErrors.firstName : ""}
-                >
-                  <Input
-                    value={form.firstName}
-                    onChange={(e) => update("firstName", e.target.value)}
-                    onBlur={handleBlur("firstName")}
-                    placeholder={t("Ej. María")}
-                    disabled={saving}
-                    aria-invalid={Boolean(fieldErrors.firstName)}
-                  />
-                </Field>
-                <Field
-                  label={t("Apellido")}
-                  required
-                  error={touched.has("lastName") ? fieldErrors.lastName : ""}
-                >
-                  <Input
-                    value={form.lastName}
-                    onChange={(e) => update("lastName", e.target.value)}
-                    onBlur={handleBlur("lastName")}
-                    placeholder={t("Ej. González")}
-                    disabled={saving}
-                    aria-invalid={Boolean(fieldErrors.lastName)}
-                  />
-                </Field>
-                <Field
-                  label={t("Email")}
-                  required
-                  error={touched.has("email") ? fieldErrors.email : ""}
-                  hint={isEdit ? t("El email no se puede cambiar.") : undefined}
-                >
-                  <Input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => update("email", e.target.value)}
-                    onBlur={handleBlur("email")}
-                    placeholder={t("ej. usuario@coppaddresd.com")}
-                    disabled={saving || isEdit}
-                    aria-invalid={Boolean(fieldErrors.email)}
-                    autoComplete="off"
-                  />
-                </Field>
-
-                {isEdit ? (
-                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[13px] font-medium">
-                        {t("Usuario activo")}
-                      </span>
-                      <span className="text-[11.5px] text-muted-foreground">
-                        {t("Los usuarios inactivos no pueden iniciar sesión.")}
-                      </span>
-                    </div>
-                    <Switch
-                      checked={form.isActive}
-                      onCheckedChange={(checked) => update("isActive", checked)}
-                      disabled={saving}
-                      aria-label={t("Usuario activo")}
+            <div className="animate-slide-up flex flex-col gap-0">
+              <SectionHeader
+                title={t("Información básica")}
+                description={t("Identidad y credenciales")}
+                icon={UserRound}
+                variant="primary"
+              />
+              <div className="flex flex-col gap-4 p-5 sm:p-6">
+                <div className="flex gap-5">
+                  <div className="hidden shrink-0 flex-col items-center gap-2 sm:flex">
+                    <ProfessionalAvatar
+                      employee={{
+                        firstName: form.firstName.trim() || "?",
+                        lastName: form.lastName.trim(),
+                      }}
+                      size="lg"
                     />
+                    <span className="text-[10.5px] text-muted-foreground">
+                      {t("Vista previa")}
+                    </span>
                   </div>
-                ) : (
-                  <Field
-                    label={t("Contraseña inicial")}
-                    required
-                    error={touched.has("password") ? fieldErrors.password : ""}
-                  >
-                    <div className="flex gap-1.5">
-                      <div className="relative flex-1">
-                        <Input
-                          type={form.showPassword ? "text" : "password"}
-                          value={form.password}
-                          onChange={(e) => {
-                            update("password", e.target.value);
-                            update("autoPassword", false);
-                          }}
-                          onBlur={handleBlur("password")}
-                          placeholder={t("Mínimo 8 caracteres")}
-                          disabled={saving}
-                          aria-invalid={Boolean(fieldErrors.password)}
-                          autoComplete="new-password"
-                          className="pr-9"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            update("showPassword", !form.showPassword)
-                          }
-                          className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                          aria-label={
-                            form.showPassword
-                              ? t("Ocultar contraseña")
-                              : t("Mostrar contraseña")
-                          }
-                        >
-                          {form.showPassword ? (
-                            <EyeOff className="size-4" />
-                          ) : (
-                            <Eye className="size-4" />
-                          )}
-                        </button>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleGenerate}
+                  <div className="grid flex-1 gap-4 sm:grid-cols-2">
+                    <Field
+                      label={t("Nombre")}
+                      required
+                      error={touched.has("firstName") ? fieldErrors.firstName : ""}
+                    >
+                      <Input
+                        value={form.firstName}
+                        onChange={(e) => update("firstName", e.target.value)}
+                        onBlur={handleBlur("firstName")}
+                        placeholder={t("Ej. María")}
                         disabled={saving}
-                        title={t("Generar contraseña segura")}
+                        aria-invalid={Boolean(fieldErrors.firstName)}
+                      />
+                    </Field>
+                    <Field
+                      label={t("Apellido")}
+                      required
+                      error={touched.has("lastName") ? fieldErrors.lastName : ""}
+                    >
+                      <Input
+                        value={form.lastName}
+                        onChange={(e) => update("lastName", e.target.value)}
+                        onBlur={handleBlur("lastName")}
+                        placeholder={t("Ej. González")}
+                        disabled={saving}
+                        aria-invalid={Boolean(fieldErrors.lastName)}
+                      />
+                    </Field>
+                    <Field
+                      label={t("Email")}
+                      required
+                      error={touched.has("email") ? fieldErrors.email : ""}
+                      hint={
+                        isEdit
+                          ? t("El email no se puede cambiar.")
+                          : t("El usuario usará este correo para iniciar sesión.")
+                      }
+                    >
+                      <Input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => update("email", e.target.value)}
+                        onBlur={handleBlur("email")}
+                        placeholder={t("ej. usuario@coppaddresd.com")}
+                        disabled={saving || isEdit}
+                        aria-invalid={Boolean(fieldErrors.email)}
+                        autoComplete="off"
+                      />
+                    </Field>
+
+                    {isEdit ? (
+                      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[13px] font-medium">
+                            {t("Usuario activo")}
+                          </span>
+                          <span className="text-[11.5px] text-muted-foreground">
+                            {t("Los usuarios inactivos no pueden iniciar sesión.")}
+                          </span>
+                        </div>
+                        <Switch
+                          checked={form.isActive}
+                          onCheckedChange={(checked) => update("isActive", checked)}
+                          disabled={saving}
+                          aria-label={t("Usuario activo")}
+                        />
+                      </div>
+                    ) : (
+                      <Field
+                        label={t("Contraseña inicial")}
+                        required
+                        error={touched.has("password") ? fieldErrors.password : ""}
                       >
-                        <Wand2 data-icon="inline-start" />
-                        <span className="hidden sm:inline">{t("Generar")}</span>
-                      </Button>
-                    </div>
-                  </Field>
+                        <div className="flex gap-1.5">
+                          <div className="relative flex-1">
+                            <Input
+                              type={form.showPassword ? "text" : "password"}
+                              value={form.password}
+                              onChange={(e) => {
+                                update("password", e.target.value);
+                                update("autoPassword", false);
+                              }}
+                              onBlur={handleBlur("password")}
+                              placeholder={t("Mínimo 8 caracteres")}
+                              disabled={saving}
+                              aria-invalid={Boolean(fieldErrors.password)}
+                              autoComplete="new-password"
+                              className="pr-9"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                update("showPassword", !form.showPassword)
+                              }
+                              className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                              aria-label={
+                                form.showPassword
+                                  ? t("Ocultar contraseña")
+                                  : t("Mostrar contraseña")
+                              }
+                            >
+                              {form.showPassword ? (
+                                <EyeOff className="size-4" />
+                              ) : (
+                                <Eye className="size-4" />
+                              )}
+                            </button>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleGenerate}
+                            disabled={saving}
+                            title={t("Generar contraseña segura")}
+                          >
+                            <Wand2 data-icon="inline-start" />
+                            <span className="hidden sm:inline">{t("Generar")}</span>
+                          </Button>
+                        </div>
+                      </Field>
+                    )}
+                  </div>
+                </div>
+
+                {/* Checklist en vivo de la política de contraseñas */}
+                {!isEdit && (
+                  <PasswordChecklist
+                    password={form.password}
+                    errors={passwordRules}
+                  />
+                )}
+
+                {form.autoPassword && form.password && !isEdit && (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2.5">
+                    <p className="flex items-center gap-1.5 text-[12px] text-teal-800">
+                      <BadgeCheck className="size-4 shrink-0" />
+                      {t(
+                        "Contraseña generada. Cópiala y compártela de forma segura; también podrá reiniciarla después.",
+                      )}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      onClick={() => void copyPassword()}
+                    >
+                      {copied ? (
+                        <Check data-icon="inline-start" />
+                      ) : (
+                        <ClipboardCopy data-icon="inline-start" />
+                      )}
+                      {copied ? t("¡Copiada!") : t("Copiar")}
+                    </Button>
+                  </div>
                 )}
               </div>
-
-              {/* Checklist en vivo de la política de contraseñas */}
-              {!isEdit && (
-                <PasswordChecklist
-                  password={form.password}
-                  errors={passwordRules}
-                />
-              )}
-
-              {form.autoPassword && form.password && !isEdit && (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2.5">
-                  <p className="flex items-center gap-1.5 text-[12px] text-teal-800">
-                    <BadgeCheck className="size-4 shrink-0" />
-                    {t(
-                      "Contraseña generada. Cópiala y compártela de forma segura; también podrá reiniciarla después.",
-                    )}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="xs"
-                    onClick={() => void copyPassword()}
-                  >
-                    {copied ? (
-                      <Check data-icon="inline-start" />
-                    ) : (
-                      <ClipboardCopy data-icon="inline-start" />
-                    )}
-                    {copied ? t("¡Copiada!") : t("Copiar")}
-                  </Button>
-                </div>
-              )}
             </div>
           )}
 
           {/* PASO 2 — Roles con preview dinámico */}
           {step === 1 && (
-            <div className="animate-slide-up flex flex-col gap-3">
+            <div className="animate-slide-up flex flex-col gap-0">
+              <SectionHeader
+                title={t("Roles")}
+                description={t("Qué puede hacer por su rol")}
+                icon={ShieldCheck}
+                variant="primary"
+              />
+              <div className="flex flex-col gap-3 p-5 sm:p-6">
               {!canAssignRoles ? (
                 <Notice
                   icon={Lock}
@@ -794,47 +829,56 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                   )}
                 </>
               )}
+              </div>
             </div>
           )}
 
           {/* PASO 3 — Permisos directos */}
           {step === 2 && (
-            <div className="animate-slide-up flex flex-col gap-3">
-              {!canAssignPermissions ? (
-                <Notice
-                  icon={Lock}
-                  text={t(
-                    "No tienes permiso para asignar permisos directos (Permissions.Assign). Los roles seleccionados siguen aplicando.",
-                  )}
-                />
-              ) : (
-                <>
-                  {inheritedIds.size > 0 && (
-                    <div className="flex items-start gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2.5">
-                      <Info className="mt-0.5 size-4 shrink-0 text-teal-700" />
-                      <p className="text-[12px] text-teal-800">
-                        {t(
-                          "{count} permisos ya vienen incluidos por los roles seleccionados.",
-                          { count: String(inheritedIds.size) },
-                        )}{" "}
-                        {t(
-                          "Abajo solo verás los permisos ADICIONALES que puedes conceder.",
-                        )}
-                      </p>
-                    </div>
-                  )}
-                  <PermissionSelector
-                    permissions={permissions.filter(
-                      (permission) => !inheritedIds.has(permission.id),
+            <div className="animate-slide-up flex flex-col gap-0">
+              <SectionHeader
+                title={t("Permisos adicionales")}
+                description={t("Ajustes finos por módulo")}
+                icon={KeyRound}
+                variant="primary"
+              />
+              <div className="flex flex-col gap-3 p-5 sm:p-6">
+                {!canAssignPermissions ? (
+                  <Notice
+                    icon={Lock}
+                    text={t(
+                      "No tienes permiso para asignar permisos directos (Permissions.Assign). Los roles seleccionados siguen aplicando.",
                     )}
-                    inheritedIds={inheritedIds}
-                    inheritedOrigin={undefined}
-                    selected={permissionIds}
-                    onToggle={togglePermission}
-                    disabled={saving}
                   />
-                </>
-              )}
+                ) : (
+                  <>
+                    {inheritedIds.size > 0 && (
+                      <div className="flex items-start gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2.5">
+                        <Info className="mt-0.5 size-4 shrink-0 text-teal-700" />
+                        <p className="text-[12px] text-teal-800">
+                          {t(
+                            "{count} permisos ya vienen incluidos por los roles seleccionados.",
+                            { count: String(inheritedIds.size) },
+                          )}{" "}
+                          {t(
+                            "Abajo solo verás los permisos ADICIONALES que puedes conceder.",
+                          )}
+                        </p>
+                      </div>
+                    )}
+                    <PermissionSelector
+                      permissions={permissions.filter(
+                        (permission) => !inheritedIds.has(permission.id),
+                      )}
+                      inheritedIds={inheritedIds}
+                      inheritedOrigin={undefined}
+                      selected={permissionIds}
+                      onToggle={togglePermission}
+                      disabled={saving}
+                    />
+                  </>
+                )}
+              </div>
             </div>
           )}
 
