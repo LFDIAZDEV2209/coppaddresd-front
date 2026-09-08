@@ -460,19 +460,19 @@ export function UserDetail({ userId }: UserDetailProps) {
           variant="primary"
           actions={
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-md bg-primary/10 px-2 py-1 text-[10.5px] font-semibold text-primary">
+              <span className="rounded-md bg-white/15 px-2 py-1 text-[10.5px] font-semibold text-white">
                 {inheritedCount} {t("heredados")}
               </span>
-              <span className="rounded-md bg-primary/10 px-2 py-1 text-[10.5px] font-semibold text-primary">
+              <span className="rounded-md bg-white/15 px-2 py-1 text-[10.5px] font-semibold text-white">
                 {directCount} {t("directos")}
               </span>
               <div className="relative w-full max-w-[210px]">
-                <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-white/70" />
                 <Input
                   value={permissionQuery}
                   onChange={(e) => setPermissionQuery(e.target.value)}
                   placeholder={t("Buscar permiso...")}
-                  className="h-8 pl-8 text-xs"
+                  className="h-8 border-white/20 bg-white/95 pl-8 text-xs placeholder:text-slate-400"
                   aria-label={t("Buscar permisos")}
                 />
               </div>
