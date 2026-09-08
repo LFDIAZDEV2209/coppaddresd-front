@@ -54,6 +54,7 @@ import { UsersToolbar } from "./users-toolbar";
 import { UsersTable } from "./users-table";
 import { UsersCards } from "./users-cards";
 import { BulkRolesProvider, UsersBulkBar } from "./users-bulk-bar";
+import { UserPermissionsDialog } from "./user-permissions-dialog";
 import { useT } from "@/providers/i18n-provider";
 
 /**
@@ -96,6 +97,7 @@ export function UsersPageContent() {
     permissions: Permission[];
   } | null>(null);
   const [deleting, setDeleting] = useState<User | undefined>();
+  const [permissionsUser, setPermissionsUser] = useState<User | undefined>();
   const [deleteSaving, setDeleteSaving] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [notice, setNotice] = useState<{
@@ -411,6 +413,7 @@ export function UsersPageContent() {
                 onEdit={(user) => router.push(`/users/${user.id}/editar`)}
                 onToggleActive={(user) => void toggleActive(user)}
                 onDelete={setDeleting}
+                onPermissions={setPermissionsUser}
               />
             ) : (
               <UsersCards
@@ -421,6 +424,7 @@ export function UsersPageContent() {
                 onEdit={(user) => router.push(`/users/${user.id}/editar`)}
                 onToggleActive={(user) => void toggleActive(user)}
                 onDelete={setDeleting}
+                onPermissions={setPermissionsUser}
               />
             )}
           </div>
@@ -561,6 +565,19 @@ export function UsersPageContent() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Diálogo de permisos directos del usuario */}
+        {permissionsUser && (
+          <UserPermissionsDialog
+            userId={permissionsUser.id}
+            userName={`${permissionsUser.firstName} ${permissionsUser.lastName}`}
+            roles={permissionsUser.roles}
+            open={Boolean(permissionsUser)}
+            onOpenChange={(open) => {
+              if (!open) setPermissionsUser(undefined);
+            }}
+          />
+        )}
       </div>
     </BulkRolesProvider>
   );

@@ -46,3 +46,24 @@ export async function removePermissionFromRole(
 export async function fetchUserPermissions(userId: string): Promise<Permission[]> {
   return apiFetch<Permission[]>(`${PATH}/user/${userId}`);
 }
+
+/** Asigna un permiso directo a un usuario (POST /api/auth/permissions/user/{userId}). */
+export async function assignPermissionToUser(
+  userId: string,
+  permissionId: string,
+): Promise<void> {
+  await apiFetch<void>(`${PATH}/user/${userId}`, {
+    method: "POST",
+    body: JSON.stringify({ permissionId }),
+  });
+}
+
+/** Quita un permiso directo de un usuario (DELETE /api/auth/permissions/user/{userId}/{permissionId}). */
+export async function removePermissionFromUser(
+  userId: string,
+  permissionId: string,
+): Promise<void> {
+  await apiFetch<void>(`${PATH}/user/${userId}/${permissionId}`, {
+    method: "DELETE",
+  });
+}

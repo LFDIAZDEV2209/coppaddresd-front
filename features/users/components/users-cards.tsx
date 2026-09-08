@@ -7,6 +7,7 @@ import {
   Eye,
   MoreHorizontal,
   Pencil,
+  ShieldCheck,
   Trash2,
   UserCheck,
   UserX,
@@ -35,6 +36,7 @@ interface UsersCardsProps {
   onEdit: (user: User) => void;
   onToggleActive: (user: User) => void;
   onDelete: (user: User) => void;
+  onPermissions: (user: User) => void;
 }
 
 /**
@@ -51,10 +53,12 @@ export function UsersCards({
   onEdit,
   onToggleActive,
   onDelete,
+  onPermissions,
 }: UsersCardsProps) {
   const { hasPermission } = useAuth();
   const canUpdate = hasPermission("Users.Update");
   const canDelete = hasPermission("Users.Delete");
+  const canAssignPermissions = hasPermission("Permissions.Assign");
   const t = useT();
 
   return (
@@ -148,6 +152,14 @@ export function UsersCards({
                           >
                             <UserCheck className="size-4" />
                             {t("Activar")}
+                          </DropdownMenuItem>
+                        )}
+                        {canAssignPermissions && (
+                          <DropdownMenuItem
+                            onClick={() => onPermissions(user)}
+                          >
+                            <ShieldCheck className="size-4" />
+                            {t("Permisos")}
                           </DropdownMenuItem>
                         )}
                       </>

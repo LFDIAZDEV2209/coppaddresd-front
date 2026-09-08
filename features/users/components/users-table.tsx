@@ -10,6 +10,7 @@ import {
   Eye,
   MoreHorizontal,
   Pencil,
+  ShieldCheck,
   Trash2,
   UserCheck,
   UserRoundCog,
@@ -55,6 +56,7 @@ interface UsersTableProps {
   onEdit: (user: User) => void;
   onToggleActive: (user: User) => void;
   onDelete: (user: User) => void;
+  onPermissions: (user: User) => void;
 }
 
 /** Columnas ordenables: clic = asc → clic de nuevo = desc → clic de nuevo = asc. */
@@ -126,10 +128,12 @@ export function UsersTable({
   onEdit,
   onToggleActive,
   onDelete,
+  onPermissions,
 }: UsersTableProps) {
   const { hasPermission } = useAuth();
   const canUpdate = hasPermission("Users.Update");
   const canDelete = hasPermission("Users.Delete");
+  const canAssignPermissions = hasPermission("Permissions.Assign");
   const allSelected = users.length > 0 && selectedIds.size === users.length;
   const t = useT();
 
@@ -267,11 +271,17 @@ export function UsersTable({
                               {t("Activar")}
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem onClick={() => onEdit(user)}>
-                            <UserRoundCog className="size-4" />
-                            {t("Gestionar roles")}
+                        <DropdownMenuItem onClick={() => onEdit(user)}>
+                          <UserRoundCog className="size-4" />
+                          {t("Gestionar roles")}
+                        </DropdownMenuItem>
+                        {canAssignPermissions && (
+                          <DropdownMenuItem onClick={() => onPermissions(user)}>
+                            <ShieldCheck className="size-4" />
+                            {t("Permisos")}
                           </DropdownMenuItem>
-                        </>
+                        )}
+                      </>
                       )}
                       {canDelete && (
                         <>
