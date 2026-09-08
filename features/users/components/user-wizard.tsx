@@ -38,7 +38,6 @@ import { useT } from "@/providers/i18n-provider";
 import type { Permission } from "@/features/permissions/types";
 import type { Role } from "@/features/roles/types";
 import { fetchRoles } from "@/features/roles/services/roles-service";
-import { listSelectableRoles } from "@/features/roles/utils/legacy-roles";
 import {
   fetchPermissions,
   fetchRolePermissions,
@@ -290,8 +289,9 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
 
   const inheritedIds = useMemo(() => new Set(inherited.keys()), [inherited]);
 
-  // Roles seleccionables: excluye alias legado (Physician, Nutritionist, Psychologist).
-  const selectableRoles = useMemo(() => listSelectableRoles(roles), [roles]);
+  // Roles seleccionables: todos los roles del catálogo (los roles legado
+  // ya no existen — el backend los elimina al iniciar).
+  const selectableRoles = roles;
 
   const update = <K extends keyof typeof form>(
     field: K,
