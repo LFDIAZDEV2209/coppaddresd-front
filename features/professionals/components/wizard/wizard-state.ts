@@ -17,6 +17,77 @@ export function parseMode(raw: string | undefined | null): Mode | null {
   return null;
 }
 
+// --- Contexto de creación ---
+
+export type WizardContext = "staff" | "patient";
+
+/** Parsea el parámetro de query ?context= y valida que sea un contexto conocido. */
+export function parseContext(
+  raw: string | undefined | null,
+): WizardContext | null {
+  if (raw === "staff" || raw === "patient") return raw;
+  return null;
+}
+
+/** Mapa de modos disponibles por contexto (sin filtrar permisos). */
+const CONTEXT_MODES: Record<WizardContext, Mode[]> = {
+  staff: ["professional", "employee"],
+  patient: ["patient"],
+};
+
+/**
+ * Devuelve los modos disponibles según el contexto y los permisos del usuario.
+ * - context=staff → solo profesional y empleado
+ * - context=patient → solo paciente
+ * - sin contexto → todos los modos
+ * Siempre aplica el gate de permisos por encima.
+ */
+export function getAvailableModes(
+  context: WizardContext | null,
+  hasPermission: (code: string) => boolean,
+): Mode[] {
+  const allModes: { mode: Mode; permission: string }[] = [
+    { mode: "professional", permission: "Professionals.Create" },
+    { mode: "employee", permission: "Employees.Create" },
+    { mode: "patient", permission: "Patients.Create" },
+  ];
+
+  const candidates = context ? CONTEXT_MODES[context] : allModes.map((m) => m.mode);
+
+  return allModes
+    .filter((m) => candidates.includes(m.mode))
+    .filter((m) => hasPermission(m.permission))
+    .map((m) => m.mode);
+}
+
+/** Etiquetas de agrupación para el selector de modo. */
+export interface ModeGroup {
+  label: string;
+  modes: Mode[];
+}
+
+/**
+ * Agrupa los modos disponibles en secciones para el selector visual.
+ * Equipo = profesional + empleado, Pacientes = paciente.
+ * Si hay context explícito, no agrupa (el selector ya está filtrado).
+ */
+export function groupModes(
+  modes: Mode[],
+  context: WizardContext | null,
+): ModeGroup[] {
+  // Con contexto explícito, no necesitamos agrupar
+  if (context) return [{ label: "", modes }];
+
+  const team = modes.filter((m) => m === "professional" || m === "employee");
+  const patients = modes.filter((m) => m === "patient");
+  const groups: ModeGroup[] = [];
+
+  if (team.length > 0) groups.push({ label: "Equipo", modes: team });
+  if (patients.length > 0) groups.push({ label: "Pacientes", modes: patients });
+
+  return groups;
+}
+
 // --- Horarios de atención ---
 
 export type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";

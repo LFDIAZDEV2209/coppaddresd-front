@@ -69,7 +69,7 @@ export function ProfessionalDirectory() {
   const canCreate = can("Professionals.Create");
   const canInvite = can("Professionals.Update");
 
-  const openCreate = () => router.push("/people/new");
+  const openCreate = () => router.push("/people/new?context=staff");
   const openDetail = (employee: EmployeeListItem) =>
     router.push(`/employees/${employee.id}`);
 

@@ -7,6 +7,7 @@
 "use client";
 
 import { useT } from "@/providers/i18n-provider";
+import { useAuth } from "@/providers/auth-provider";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -47,6 +48,8 @@ import {
   type FormState,
   EMPTY_FORM,
   parseMode,
+  parseContext,
+  getAvailableModes,
   getSteps,
   DAY_ORDER,
   DAY_TO_WEEKDAY,
@@ -73,19 +76,31 @@ const STEP_ICONS: Record<string, React.ElementType> = {
 
 interface PeopleWizardProps {
   initialMode?: string | null;
+  initialContext?: string | null;
 }
 
-export function PeopleWizard({ initialMode }: PeopleWizardProps) {
+export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps) {
   const t = useT();
   const router = useRouter();
+  const { hasPermission } = useAuth();
 
   const parsedMode = parseMode(initialMode);
+  const parsedContext = parseContext(initialContext);
+
+  // Cuando context=patient y no hay modo explícito, forzar paciente y saltar selector
+  const effectiveMode =
+    parsedMode ?? (parsedContext === "patient" ? "patient" : null);
+
+  // Calcular modos disponibles para decidir si el selector es necesario
+  const availableModes = getAvailableModes(parsedContext, hasPermission);
+  const skipSelector =
+    effectiveMode !== null || availableModes.length <= 1;
 
   // Estado del wizard
-  const [step, setStep] = useState(parsedMode ? 0 : -1); // -1 = selector de modo
+  const [step, setStep] = useState(skipSelector ? 0 : -1); // -1 = selector de modo
   const [form, setForm] = useState<FormState>({
     ...EMPTY_FORM,
-    mode: parsedMode,
+    mode: effectiveMode,
   });
   const [organizations, setOrganizations] = useState<OrganizationTree[]>([]);
   const [types, setTypes] = useState<ProfessionalTypeDto[]>([]);
@@ -522,6 +537,7 @@ export function PeopleWizard({ initialMode }: PeopleWizardProps) {
               setForm={setForm}
               onNext={goNext}
               onBack={() => {}}
+              context={parsedContext}
             />
           )}
 
