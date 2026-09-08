@@ -83,6 +83,7 @@ export function ClubMembersTab({ clubId }: { clubId: string }) {
   useEffect(() => {
     let active = true;
     if (!addSearch.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAddResults([]);
       return;
     }
@@ -101,7 +102,6 @@ export function ClubMembersTab({ clubId }: { clubId: string }) {
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addSearch, members]);
 
   const applyAdd = async (profileId: string, role: ClubMemberRole) => {

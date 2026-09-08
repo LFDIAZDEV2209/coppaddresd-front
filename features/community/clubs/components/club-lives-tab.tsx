@@ -286,6 +286,7 @@ function ScheduleLiveDialog({
   useEffect(() => {
     let active = true;
     if (!search.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       return;
     }

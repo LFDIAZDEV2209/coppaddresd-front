@@ -382,7 +382,7 @@ export async function scheduleLive(
     embedUrl?: string | null;
   },
 ): Promise<LiveSession> {
-  const data = await svc.mutate<{ scheduleLive: any }>(svc.SCHEDULE_LIVE, {
+  const data = await svc.mutate<{ scheduleLive: Wire }>(svc.SCHEDULE_LIVE, {
     clubId,
     input: {
       title: input.title,
@@ -400,7 +400,7 @@ export async function addClubMember(
   profileId: string,
   role: ClubMember["role"],
 ): Promise<ClubMember> {
-  const data = await svc.mutate<{ addClubMember: any }>(svc.ADD_CLUB_MEMBER, {
+  const data = await svc.mutate<{ addClubMember: Wire }>(svc.ADD_CLUB_MEMBER, {
     clubId,
     profileId,
     role,
