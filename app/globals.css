@@ -97,6 +97,13 @@
     #07425f 60%,
     #0e5f63 100%
   );
+  /* Banda suave para SectionHeader primary — tinte claro natural */
+  --brand-gradient-soft: linear-gradient(
+    135deg,
+    color-mix(in srgb, #023467 8%, white) 0%,
+    color-mix(in srgb, #07425f 6%, white) 60%,
+    color-mix(in srgb, #0e5f63 8%, white) 100%
+  );
 
   --background: #eff2f7;
   --foreground: #1a1d2e;
@@ -188,6 +195,13 @@
   --primary-foreground: #ffffff;
   --primary-soft: color-mix(in srgb, var(--accent-color) 24%, #0b1120);
   --primary-strong: color-mix(in srgb, var(--accent-color) 60%, white);
+  /* Banda suave en modo oscuro — mezcla sobre #0b1120 */
+  --brand-gradient-soft: linear-gradient(
+    135deg,
+    color-mix(in srgb, #023467 18%, #0b1120) 0%,
+    color-mix(in srgb, #07425f 14%, #0b1120) 60%,
+    color-mix(in srgb, #0e5f63 18%, #0b1120) 100%
+  );
 
   --secondary: #1e293b;
   --secondary-foreground: #94a3b8;
@@ -414,6 +428,9 @@
 /* Degradado oficial de marca navy→teal (CTAs, paneles de acento) */
 .bg-brand-gradient {
   background: var(--brand-gradient);
+}
+.bg-brand-gradient-soft {
+  background: var(--brand-gradient-soft);
 }
 
 /* Brillo del CtaPill que sigue al cursor (vars --mx/--my seteadas por JS).
