@@ -120,6 +120,54 @@ export async function removePatientProfessional(
   });
 }
 
+// --- Creación masiva de pacientes (CSV) ---
+
+/** Fila individual enviada al bulk endpoint de pacientes. */
+export interface BulkPatientCreateRow {
+  firstName: string;
+  lastName: string;
+  documentNumber: string | null;
+  email: string | null;
+  status: string;
+}
+
+export interface BulkCreatePatientsInput {
+  clinicId?: string | null;
+  rows: BulkPatientCreateRow[];
+}
+
+export interface BulkRowResult {
+  line: number;
+  success: boolean;
+  patientId?: string | null;
+  error?: string | null;
+}
+
+export interface BulkCreatePatientsResult {
+  results: BulkRowResult[];
+  created: number;
+  failed: number;
+}
+
+/**
+ * Crea pacientes de forma masiva.
+ * POST /api/v1/patients/bulk — cada fila se procesa de forma independiente.
+ */
+export async function createBulkPatients(
+  input: BulkCreatePatientsInput,
+): Promise<BulkCreatePatientsResult> {
+  return apiFetch<BulkCreatePatientsResult>(
+    `${env.apiUrl}/api/v1/patients/bulk`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        clinicId: input.clinicId ?? null,
+        rows: input.rows,
+      }),
+    },
+  );
+}
+
 /** Catálogo estático: cache en memoria con TTL (evita re-peticiones al navegar). */
 const INSURERS_TTL_MS = 5 * 60_000;
 let insurersCache: { data: Insurer[]; expires: number } | null = null;
