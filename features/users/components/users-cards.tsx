@@ -182,7 +182,7 @@ export function UsersCards({
             </div>
 
             {/* Roles */}
-            <RoleChips roles={user.roles} max={3} />
+            <RoleChips roles={user.roles} scopedRoles={user.scopedRoles} max={3} />
 
             {/* Meta: estado + fechas */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl bg-muted/40 p-2.5">

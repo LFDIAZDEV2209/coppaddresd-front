@@ -214,7 +214,7 @@ export function UsersTable({
                 </Link>
               </TableCell>
               <TableCell>
-                <RoleChips roles={user.roles} />
+                <RoleChips roles={user.roles} scopedRoles={user.scopedRoles} />
               </TableCell>
               <TableCell>
                 <UserStatusBadge isActive={user.isActive} />

@@ -16,8 +16,17 @@ export interface User {
   lastName: string;
   isActive: boolean;
   createdAt: string;
-  /** Nombres de los roles asignados al usuario. */
+  /** Nombres de los roles asignados al usuario (globales). */
   roles: string[];
+  /** Roles con scope (clínica/organización). */
+  scopedRoles?: ScopedUserRole[] | null;
+}
+
+/** Rol asignado a un usuario dentro de un scope (clínica/organización). */
+export interface ScopedUserRole {
+  roleName: string;
+  scopeType: string;
+  scopeName?: string | null;
 }
 
 export type UserSortField =

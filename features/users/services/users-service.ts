@@ -85,7 +85,9 @@ export function filterUsers(users: User[], filters: UsersFilters): User[] {
       if (user.isActive !== active) return false;
     }
     if (filters.role === "none") {
-      if (user.roles.length > 0) return false;
+      // "Sin roles" solo cuando no hay roles globales NI scoped.
+      const hasScoped = (user.scopedRoles?.length ?? 0) > 0;
+      if (user.roles.length > 0 || hasScoped) return false;
     } else if (filters.role !== "all" && !user.roles.includes(filters.role)) {
       return false;
     }
@@ -148,7 +150,8 @@ export async function fetchUserStats(): Promise<UserStats> {
 
   for (const user of users) {
     if (user.isActive) active++;
-    if (user.roles.length === 0) withoutRoles++;
+    if (user.roles.length === 0 && (user.scopedRoles?.length ?? 0) === 0)
+      withoutRoles++;
     if (new Date(user.createdAt).getTime() >= weekAgo) newThisWeek++;
   }
 
