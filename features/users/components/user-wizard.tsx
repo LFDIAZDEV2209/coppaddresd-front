@@ -550,14 +550,14 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
       </ol>
 
       {loading ? (
-        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
+        <div className={cn("flex flex-col gap-4 p-6", !embedded && "rounded-2xl border border-border bg-card")}>
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-40 w-full" />
         </div>
       ) : loadError ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft px-4 py-3.5">
+        <div className={cn("flex flex-wrap items-center justify-between gap-3 px-4 py-3.5", !embedded && "rounded-2xl border border-destructive/20 bg-destructive-soft")}>
           <span className="text-sm text-destructive">{loadError}</span>
           <Button
             variant="outline"
@@ -569,7 +569,7 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
           </Button>
         </div>
       ) : (
-        <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 sm:p-6">
+        <div className={cn("flex flex-col gap-5 p-5 sm:p-6", !embedded && "rounded-2xl border border-border bg-card")}>
           {submitErrors && submitErrors.length > 0 && (
             <div
               className="rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive"
@@ -590,17 +590,6 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
           {/* PASO 1 — Información básica */}
           {step === 0 && (
             <div className="animate-slide-up flex flex-col gap-4">
-              {embedded && onBackToSelector && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="self-start"
-                  onClick={onBackToSelector}
-                >
-                  <ArrowLeft data-icon="inline-start" />
-                  {t("Atrás")}
-                </Button>
-              )}
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
                   label={t("Nombre")}
@@ -840,8 +829,8 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
           <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4">
             <Button
               variant="outline"
-              onClick={goBack}
-              disabled={step === 0 || saving}
+              onClick={step === 0 && embedded && onBackToSelector ? onBackToSelector : goBack}
+              disabled={step === 0 && !(embedded && onBackToSelector) || saving}
             >
               <ArrowLeft data-icon="inline-start" />
               {t("Anterior")}

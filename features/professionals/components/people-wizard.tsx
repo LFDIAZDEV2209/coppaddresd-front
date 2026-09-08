@@ -183,6 +183,13 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
   const goNext = useCallback(() => setStep((s) => s + 1), []);
   const goBack = useCallback(() => setStep((s) => s - 1), []);
 
+  // Volver al selector de modo: limpiar la selección para que el selector
+  // muestre las cards sin pre-selección (sin ring ni check).
+  const backToSelector = useCallback(() => {
+    setForm((f) => ({ ...f, mode: null }));
+    setStep(-1);
+  }, []);
+
   // Mapeo de schedules del form a payload del backend (weekday 1..7)
   const buildSchedulePayload = useCallback(() => {
     if (!mode || mode !== "professional") return [];
@@ -576,7 +583,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
               mode="create"
               embedded
               onBackToSelector={
-                availableModes.length > 1 ? () => setStep(-1) : undefined
+                availableModes.length > 1 ? backToSelector : undefined
               }
             />
           )}
@@ -590,7 +597,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 form={form}
                 setForm={setForm}
                 onNext={goNext}
-                onBack={availableModes.length > 1 ? () => setStep(-1) : undefined}
+                onBack={availableModes.length > 1 ? backToSelector : undefined}
               />
             )}
 

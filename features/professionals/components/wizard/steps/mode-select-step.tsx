@@ -112,6 +112,59 @@ export function ModeSelectStep({
     onNext();
   };
 
+  // Separar grupos de 1 card (compactos) para renderizarlos juntos en una fila 2-col
+  const compactModes: Mode[] = [];
+  const regularGroups: typeof groups = [];
+  for (const group of groups) {
+    if (group.modes.length === 1) {
+      compactModes.push(...group.modes);
+    } else {
+      regularGroups.push(group);
+    }
+  }
+
+  /** Renderiza una tarjeta de modo individual. */
+  const renderModeCard = (mode: Mode) => {
+    const opt = optionsByMode.get(mode)!;
+    const Icon = opt.icon;
+    const selected = form.mode === opt.mode;
+    return (
+      <button
+        key={opt.mode}
+        type="button"
+        onClick={() => handleSelect(opt.mode)}
+        className={cn(
+          "flex flex-col items-center gap-3 rounded-2xl border p-5 text-center transition-all",
+          selected
+            ? "border-primary bg-primary/5 ring-1 ring-primary"
+            : "border-border hover:border-primary/40 hover:bg-muted/30",
+        )}
+      >
+        <span
+          className={cn(
+            "flex size-12 items-center justify-center rounded-xl",
+            selected
+              ? "bg-primary text-primary-foreground"
+              : "bg-primary-soft text-primary",
+          )}
+        >
+          <Icon className="size-6" />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[14px] font-bold">
+            {t(opt.title)}
+          </span>
+          <span className="mt-1 block text-[12px] leading-snug text-muted-foreground">
+            {t(opt.description)}
+          </span>
+        </span>
+        {selected && (
+          <CheckCircle2 className="size-5 text-primary" />
+        )}
+      </button>
+    );
+  };
+
   return (
     <div className="animate-slide-up flex flex-col gap-0">
       <SectionHeader
@@ -123,7 +176,8 @@ export function ModeSelectStep({
         variant="primary"
       />
       <div className="flex flex-col gap-5 p-5 sm:p-6">
-        {groups.map((group) => (
+        {/* Grupos normales (2+ cards): cada uno su propia fila */}
+        {regularGroups.map((group) => (
           <div key={group.label || "all"} className="flex flex-col gap-2">
             {group.label && (
               <span className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -135,54 +189,20 @@ export function ModeSelectStep({
                 "stagger-children grid grid-cols-1 gap-3",
                 group.modes.length === 3
                   ? "sm:grid-cols-3"
-                  : group.modes.length === 2
-                    ? "sm:grid-cols-2"
-                    : "sm:grid-cols-1",
+                  : "sm:grid-cols-2",
               )}
             >
-              {group.modes.map((mode) => {
-                const opt = optionsByMode.get(mode)!;
-                const Icon = opt.icon;
-                const selected = form.mode === opt.mode;
-                return (
-                  <button
-                    key={opt.mode}
-                    type="button"
-                    onClick={() => handleSelect(opt.mode)}
-                    className={cn(
-                      "flex flex-col items-center gap-3 rounded-2xl border p-5 text-center transition-all",
-                      selected
-                        ? "border-primary bg-primary/5 ring-1 ring-primary"
-                        : "border-border hover:border-primary/40 hover:bg-muted/30",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex size-12 items-center justify-center rounded-xl",
-                        selected
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-primary-soft text-primary",
-                      )}
-                    >
-                      <Icon className="size-6" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-[14px] font-bold">
-                        {t(opt.title)}
-                      </span>
-                      <span className="mt-1 block text-[12px] leading-snug text-muted-foreground">
-                        {t(opt.description)}
-                      </span>
-                    </span>
-                    {selected && (
-                      <CheckCircle2 className="size-5 text-primary" />
-                    )}
-                  </button>
-                );
-              })}
+              {group.modes.map(renderModeCard)}
             </div>
           </div>
         ))}
+
+        {/* Grupos compactos (1 card cada uno): todos juntos en una fila 2-col */}
+        {compactModes.length > 0 && (
+          <div className="stagger-children grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {compactModes.map(renderModeCard)}
+          </div>
+        )}
 
         {availableModes.length === 0 && (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
