@@ -12,14 +12,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
-  Building2,
-  CalendarClock,
-  Check,
   CheckCircle2,
   Clipboard,
   KeyRound,
   Loader2,
-  Send,
   Stethoscope,
   UserRound,
 } from "lucide-react";
@@ -42,7 +38,6 @@ import type { Role } from "@/features/roles/types";
 import { createPatient } from "@/features/patients/services/patients-service";
 import type { PatientInput } from "@/features/patients/types";
 import { ApiError } from "@/lib/api/http";
-import { cn } from "@/lib/utils";
 
 import {
   type Mode,
@@ -63,18 +58,8 @@ import { ScheduleStep } from "./wizard/steps/schedule-step";
 import { JobStep } from "./wizard/steps/job-step";
 import { PatientClinicStep } from "./wizard/steps/patient-clinic-step";
 import { ReviewStep } from "./wizard/steps/review-step";
+import { StepNav } from "./wizard/step-nav";
 import { UserWizard } from "@/features/users/components/user-wizard";
-
-// Iconos Lucide por nombre de paso (para el stepper visual)
-const STEP_ICONS: Record<string, React.ElementType> = {
-  identity: UserRound,
-  clinics: Building2,
-  profession: Stethoscope,
-  schedule: CalendarClock,
-  review: Send,
-  job: UserRound,
-  clinic: Building2,
-};
 
 interface PeopleWizardProps {
   initialMode?: string | null;
@@ -378,77 +363,11 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
 
       {/* Stepper visual (solo si hay modo seleccionado y no es usuario) */}
       {mode && mode !== "user" && (
-        <nav
-          aria-label={t("Progreso del formulario")}
-          className="flex items-stretch overflow-hidden rounded-2xl border border-border bg-card px-4 py-4 sm:px-6"
-        >
-          {steps.map((s, i) => {
-            const Icon = STEP_ICONS[s.key] ?? UserRound;
-            const active = stepIndex === i;
-            const done = stepIndex > i;
-            const clickable = done;
-            return (
-              <div
-                key={s.key}
-                className="flex flex-1 items-center gap-2 last:flex-none sm:gap-3"
-              >
-                <div className="flex min-w-0 flex-col items-center gap-1.5 sm:flex-row sm:gap-2.5">
-                  <button
-                    type="button"
-                    disabled={!clickable}
-                    onClick={() => clickable && setStep(i)}
-                    aria-current={active ? "step" : undefined}
-                    aria-label={`${s.label}${done ? " (completado)" : ""}`}
-                    className={cn(
-                      "flex size-10 shrink-0 items-center justify-center rounded-full border transition-all duration-200 sm:size-11",
-                      done &&
-                        "border-success bg-success text-white shadow-sm shadow-success/30",
-                      active &&
-                        "scale-105 border-[var(--sidebar)] bg-[var(--sidebar)] text-white shadow-md shadow-[var(--sidebar)]/30 ring-4 ring-primary/15",
-                      !done &&
-                        !active &&
-                        "border-border bg-muted/40 text-muted-foreground",
-                    )}
-                  >
-                    {done ? (
-                      <Check className="size-4.5 sm:size-5" />
-                    ) : (
-                      <Icon className="size-4 sm:size-4.5" />
-                    )}
-                  </button>
-                  <span
-                    className={cn(
-                      "hidden max-w-36 flex-col leading-tight text-center sm:flex sm:text-left",
-                      done && "cursor-pointer",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "truncate text-[11.5px] font-bold",
-                        active ? "text-[var(--sidebar)]" : "text-foreground",
-                        !done && !active && "text-muted-foreground",
-                      )}
-                    >
-                      {s.label}
-                    </span>
-                    <span className="truncate text-[10px] text-muted-foreground">
-                      {done ? t("Completado") : s.hint}
-                    </span>
-                  </span>
-                </div>
-                {i < steps.length - 1 && (
-                  <div
-                    aria-hidden
-                    className={cn(
-                      "h-0.5 min-w-3 flex-1 rounded-full transition-colors duration-300",
-                      stepIndex > i ? "bg-success" : "bg-border",
-                    )}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </nav>
+        <StepNav
+          steps={steps}
+          currentIndex={stepIndex}
+          onStepClick={(i) => setStep(i)}
+        />
       )}
 
       {/* Éxito tras creación */}

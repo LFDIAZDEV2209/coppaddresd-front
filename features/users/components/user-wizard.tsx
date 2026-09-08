@@ -56,6 +56,8 @@ import {
 } from "../services/users-service";
 import { generatePassword } from "../services/users-mock";
 import { PermissionSelector } from "./permission-selector";
+import { StepNav } from "@/features/professionals/components/wizard/step-nav";
+import { USER_STEPS } from "@/features/professionals/components/wizard/wizard-state";
 
 interface UserWizardProps {
   /** "create" en /users/nuevo · "edit" en /users/{id}/editar. */
@@ -99,6 +101,13 @@ const emptyFieldErrors: UserFieldErrors = {
 };
 
 const ALL_FIELDS = ["email", "password", "firstName", "lastName"] as const;
+
+/** Iconos Lucide para los pasos del wizard de usuario (USER_STEPS). */
+const USER_STEP_ICONS: Record<string, React.ElementType> = {
+  "user-info": UserRound,
+  "user-roles": ShieldCheck,
+  "user-permissions": KeyRound,
+};
 
 /**
  * Experiencia dedicada de creación/edición de usuario (reemplaza al modal
@@ -487,67 +496,71 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
       )}
 
       {/* Stepper */}
-      <ol className="flex items-center gap-2 sm:gap-3">
-        {STEPS.map((stepDef, index) => {
-          const done = index < step;
-          const current = index === step;
-          return (
-            <li
-              key={stepDef.label}
-              className="flex flex-1 items-center gap-2 sm:gap-3"
-            >
-              <div
-                className={cn(
-                  "flex items-center gap-2.5 rounded-xl border px-2.5 py-2 transition-all duration-200 sm:px-3.5",
-                  current
-                    ? "border-primary/30 bg-primary/[0.06] shadow-sm"
-                    : done
-                      ? "border-success/30 bg-success/[0.06]"
-                      : "border-border/70 bg-card",
-                )}
+      {embedded ? (
+        <StepNav steps={USER_STEPS} currentIndex={step} icons={USER_STEP_ICONS} />
+      ) : (
+        <ol className="flex items-center gap-2 sm:gap-3">
+          {STEPS.map((stepDef, index) => {
+            const done = index < step;
+            const current = index === step;
+            return (
+              <li
+                key={stepDef.label}
+                className="flex flex-1 items-center gap-2 sm:gap-3"
               >
-                <span
+                <div
                   className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-bold transition-all duration-300",
+                    "flex items-center gap-2.5 rounded-xl border px-2.5 py-2 transition-all duration-200 sm:px-3.5",
                     current
-                      ? "scale-105 bg-brand-gradient text-white shadow-sm"
+                      ? "border-primary/30 bg-primary/[0.06] shadow-sm"
                       : done
-                        ? "bg-success text-white"
-                        : "bg-muted text-muted-foreground",
+                        ? "border-success/30 bg-success/[0.06]"
+                        : "border-border/70 bg-card",
                   )}
                 >
-                  {done ? (
-                    <Check className="size-3.5" />
-                  ) : (
-                    <stepDef.icon className="size-3.5" />
-                  )}
-                </span>
-                <span className="hidden min-w-0 flex-col leading-tight min-[520px]:flex">
                   <span
                     className={cn(
-                      "truncate text-[12px] font-semibold",
-                      current ? "text-foreground" : "text-muted-foreground",
+                      "flex size-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-bold transition-all duration-300",
+                      current
+                        ? "scale-105 bg-brand-gradient text-white shadow-sm"
+                        : done
+                          ? "bg-success text-white"
+                          : "bg-muted text-muted-foreground",
                     )}
                   >
-                    {t(stepDef.label)}
+                    {done ? (
+                      <Check className="size-3.5" />
+                    ) : (
+                      <stepDef.icon className="size-3.5" />
+                    )}
                   </span>
-                  <span className="hidden truncate text-[10.5px] text-muted-foreground/80 sm:inline">
-                    {t(stepDef.hint)}
+                  <span className="hidden min-w-0 flex-col leading-tight min-[520px]:flex">
+                    <span
+                      className={cn(
+                        "truncate text-[12px] font-semibold",
+                        current ? "text-foreground" : "text-muted-foreground",
+                      )}
+                    >
+                      {t(stepDef.label)}
+                    </span>
+                    <span className="hidden truncate text-[10.5px] text-muted-foreground/80 sm:inline">
+                      {t(stepDef.hint)}
+                    </span>
                   </span>
-                </span>
-              </div>
-              {index < STEPS.length - 1 && (
-                <span
-                  className={cn(
-                    "h-px flex-1 transition-colors duration-500",
-                    done ? "bg-success/60" : "bg-border",
-                  )}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ol>
+                </div>
+                {index < STEPS.length - 1 && (
+                  <span
+                    className={cn(
+                      "h-px flex-1 transition-colors duration-500",
+                      done ? "bg-success/60" : "bg-border",
+                    )}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      )}
 
       {loading ? (
         <div className={cn("flex flex-col gap-4 p-6", !embedded && "rounded-2xl border border-border bg-card")}>
