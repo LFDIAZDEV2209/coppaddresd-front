@@ -613,7 +613,7 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                 title={t("Información básica")}
                 description={t("Identidad y credenciales")}
                 icon={UserRound}
-                variant="primary"
+                variant="strong"
               />
               <div className="flex flex-col gap-4 p-5 sm:p-6">
                 <div className="flex gap-5">
@@ -796,7 +796,7 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                 title={t("Roles")}
                 description={t("Qué puede hacer por su rol")}
                 icon={ShieldCheck}
-                variant="primary"
+                variant="strong"
               />
               <div className="flex flex-col gap-3 p-5 sm:p-6">
               {!canAssignRoles ? (
@@ -844,7 +844,7 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                 title={t("Permisos adicionales")}
                 description={t("Ajustes finos por módulo")}
                 icon={KeyRound}
-                variant="primary"
+                variant="strong"
               />
               <div className="flex flex-col gap-3 p-5 sm:p-6">
                 {!canAssignPermissions ? (

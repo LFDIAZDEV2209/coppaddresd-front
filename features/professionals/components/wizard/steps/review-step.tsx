@@ -90,7 +90,7 @@ export function ReviewStep({
         title={t("Revisa y envía")}
         description={t("Confirma los datos antes de crear")}
         icon={Send}
-        variant="primary"
+        variant="strong"
       />
       <div className="flex flex-col gap-5 p-5 sm:p-6">
         <div className="overflow-hidden rounded-xl border border-border">

@@ -106,7 +106,7 @@ export function ClinicsStep({
         title={t("Clínicas")}
         description={t("Organización y sedes")}
         icon={Building2}
-        variant="primary"
+        variant="strong"
       />
       <div className="flex flex-col gap-5 p-5 sm:p-6">
         <div className="flex flex-col gap-1.5">

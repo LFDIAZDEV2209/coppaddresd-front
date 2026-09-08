@@ -152,7 +152,7 @@ export function ScheduleStep({
           "Disponibilidad del profesional para agendar citas, por clínica",
         )}
         icon={CalendarClock}
-        variant="primary"
+        variant="strong"
       />
       <div className="flex flex-col gap-5 p-5 sm:p-6">
         {assignedClinics.length === 0 ? (

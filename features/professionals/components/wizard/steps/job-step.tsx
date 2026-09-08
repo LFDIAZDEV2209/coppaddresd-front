@@ -24,7 +24,7 @@ export function JobStep({ form, setForm, onNext, onBack }: StepProps) {
         title={t("Puesto de trabajo")}
         description={t("Cargo y departamento del empleado")}
         icon={Briefcase}
-        variant="primary"
+        variant="strong"
       />
       <div className="flex flex-col gap-4 p-5 sm:p-6">
         <Field label={t("Cargo")} required>
