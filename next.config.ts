@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
       { source: "/professionals", destination: "/employees", permanent: true },
       { source: "/employees/new", destination: "/people/new", permanent: true },
       { source: "/patients/new", destination: "/people/new?mode=patient", permanent: true },
-      { source: "/users/nuevo", destination: "/people/new?mode=user", permanent: true },
+      { source: "/users/nuevo", destination: "/people/new", permanent: true },
     ];
   },
 };
