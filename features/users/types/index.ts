@@ -149,6 +149,11 @@ export interface BulkUserRow {
   email: string;
   /** Nombre del rol (opcional). */
   role: string;
+  /**
+   * Nombre de la clínica (opcional). Si se omite, el rol se asigna global.
+   * La existencia se valida server-side; el front solo trimea el valor.
+   */
+  clinicName?: string;
   /** "activo" | "inactivo" (opcional, default activo). */
   status: string;
   /** Errores de validación de la fila (vacío = fila válida). */

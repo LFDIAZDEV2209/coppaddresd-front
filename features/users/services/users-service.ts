@@ -240,6 +240,8 @@ export interface BulkCreateUserRowInput {
   lastName: string;
   email: string;
   roleName: string | null;
+  /** Nombre de la clínica para role scoped (opcional). Server-side validation. */
+  clinicName?: string | null;
   status: string;
 }
 

@@ -143,6 +143,7 @@ export function UserBulkImport() {
         lastName: "",
         email: "",
         role: "",
+        clinicName: undefined,
         status: "activo",
         errors: [],
       },
@@ -177,6 +178,8 @@ export function UserBulkImport() {
       lastName: row.lastName.trim(),
       email: row.email.trim(),
       roleName: row.role ? row.role : null,
+      // clínica opcional: si vacía → null (rol global)
+      clinicName: row.clinicName?.trim() || null,
       status: (row.status || "activo").trim().toLowerCase(),
     }));
 
@@ -361,7 +364,7 @@ export function UserBulkImport() {
               </span>
               <span className="text-[12.5px] text-muted-foreground">
                 {t(
-                  "CSV con separador ';' · columnas: nombre, apellido, email, rol, estado",
+                  "CSV con separador ';' · columnas: nombre, email, rol, clínica (opcional), estado",
                 )}
               </span>
             </span>
@@ -433,6 +436,7 @@ export function UserBulkImport() {
                   <th className="w-52 px-2 py-2">{t("Nombre")}</th>
                   <th className="min-w-[300px] px-2 py-2">{t("Email")}</th>
                   <th className="w-48 px-2 py-2">{t("Rol")}</th>
+                  <th className="w-44 px-2 py-2">{t("Clínica (opcional)")}</th>
                   <th className="w-36 px-2 py-2">{t("Estado")}</th>
                   <th className="w-2/5 min-w-[220px] px-2 py-2">
                     {t("Validación")}
@@ -515,6 +519,18 @@ export function UserBulkImport() {
                               label: role,
                             })),
                           ]}
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <EditableCell
+                          value={row.clinicName ?? ""}
+                          placeholder={t("Clínica (opcional)")}
+                          invalid={false}
+                          onChange={(value) =>
+                            updateRow(index, {
+                              clinicName: value.trim() || undefined,
+                            })
+                          }
                         />
                       </td>
                       <td className="px-2 py-1.5">
