@@ -183,6 +183,16 @@ export function ProfessionalBulkImport() {
     // Solo filas válidas (el backend igual valida por fila, pero evitamos
     // enviar errores ya detectados en cliente). Mapeo: professionalType -> professionalTypeName.
     const validRows = rows.filter((row) => row.errors.length === 0);
+
+    // Guarda de lote vacío: si no hay filas válidas, no llamamos al API
+    // y mantenemos al usuario en el preview editable para que corrija.
+    if (validRows.length === 0) {
+      setBulkError(
+        t("No hay filas válidas para importar. Corregí las filas con errores o agregá nuevas filas."),
+      );
+      setStage("preview");
+      return;
+    }
     const payload = validRows.map((row) => ({
       firstName: row.firstName.trim(),
       lastName: row.lastName.trim(),
@@ -691,6 +701,18 @@ export function ProfessionalBulkImport() {
               />
             )}
           </div>
+          {/* Aviso explícito cuando todas las filas fallaron */}
+          {result.created === 0 && result.skipped > 0 && (
+            <div
+              className="flex w-full max-w-xl items-start gap-2 rounded-lg border border-destructive/30 bg-destructive-soft px-3 py-2.5 text-[12.5px] text-destructive"
+              role="alert"
+            >
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              <span className="flex-1">
+                {t("Ninguna fila fue creada. Revisa los errores por fila.")}
+              </span>
+            </div>
+          )}
           {failedRows.length > 0 && (
             <div className="mt-2 w-full max-w-xl rounded-xl border border-warning/30 bg-warning-soft/40 p-3 text-left">
               <p className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-warning-foreground">
