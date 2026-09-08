@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { User, UsersFilters, PaginatedResult } from "../types";
+import type { PaginatedResult, User, UserSort, UsersFilters } from "../types";
 import { fetchUsers } from "../services/users-service";
 
 interface UseUsersReturn {
   result: PaginatedResult<User> | null;
   loading: boolean;
   filters: UsersFilters;
+  sort: UserSort;
   selectedIds: Set<string>;
   error: string | null;
   setFilters: (filters: Partial<UsersFilters>) => void;
+  setSort: (sort: UserSort) => void;
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
   toggleSelect: (id: string) => void;
@@ -33,11 +35,16 @@ export function useUsers(
     search: "",
     status: "all",
     role: "all",
+    createdWithin: "all",
+  });
+  const [sort, setSortState] = useState<UserSort>({
+    field: null,
+    dir: "desc",
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [reloadKey, setReloadKey] = useState(0);
 
-  // Guard de secuencia: cada cambio de página/filtro aborta la request
+  // Guard de secuencia: cada cambio de página/filtro/sort aborta la request
   // anterior (apiFetch soporta signal externo). Las respuestas fuera de orden
   // se cancelan y nunca pisan datos más recientes; el flag `cancelled` hace lo
   // mismo para el pruneo de selectedIds.
@@ -48,7 +55,13 @@ export function useUsers(
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchUsers(page, pageSize, filters, controller.signal);
+        const data = await fetchUsers(
+          page,
+          pageSize,
+          filters,
+          sort,
+          controller.signal,
+        );
         if (cancelled) return;
         setResult(data);
         // Pruneo de selecciones que ya no existen en la página actual.
@@ -75,12 +88,16 @@ export function useUsers(
       clearTimeout(timer);
       controller.abort();
     };
-  }, [page, pageSize, filters, reloadKey]);
+  }, [page, pageSize, filters, sort, reloadKey]);
 
   const setFilters = useCallback((partial: Partial<UsersFilters>) => {
     setFiltersState((prev) => ({ ...prev, ...partial }));
     setPageState(1);
     setSelectedIds(new Set());
+  }, []);
+
+  const setSort = useCallback((next: UserSort) => {
+    setSortState(next);
   }, []);
 
   const setPage = useCallback((p: number) => {
@@ -126,9 +143,11 @@ export function useUsers(
     result,
     loading,
     filters,
+    sort,
     selectedIds,
     error,
     setFilters,
+    setSort,
     setPage,
     setPageSize,
     toggleSelect,

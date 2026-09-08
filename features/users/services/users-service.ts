@@ -12,17 +12,33 @@ import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type {
   PaginatedResult,
+  PermissionWithOrigin,
   User,
   UserCreateInput,
+  UserSort,
+  UserStats,
   UserUpdateInput,
   UsersFilters,
 } from "../types";
+import { getMockLastAccess } from "./users-mock";
+import type { Permission } from "@/features/permissions/types";
 import type { Role } from "@/features/roles/types";
+import {
+  fetchRolePermissions,
+  fetchUserPermissions,
+} from "@/features/permissions/services/permissions-service";
 
 const PATH = `${env.apiUrl}/api/auth/users`;
 
+const CREATED_WITHIN_MS: Record<UsersFilters["createdWithin"], number> = {
+  all: Number.POSITIVE_INFINITY,
+  "7d": 7 * 24 * 60 * 60 * 1000,
+  "30d": 30 * 24 * 60 * 60 * 1000,
+  "90d": 90 * 24 * 60 * 60 * 1000,
+};
+
 /**
- * Lista paginada de usuarios con filtros aplicados client-side.
+ * Lista paginada de usuarios con filtros + ordenamiento aplicados client-side.
  * `signal` permite abortar la request cuando cambian filtros/página (guard de
  * secuencia en use-users).
  */
@@ -30,32 +46,13 @@ export async function fetchUsers(
   page: number,
   pageSize: number,
   filters: UsersFilters,
+  sort: UserSort,
   signal?: AbortSignal,
 ): Promise<PaginatedResult<User>> {
   const users = await apiFetch<User[]>(PATH, { signal });
 
-  const query = filters.search.trim().toLowerCase();
-  const filtered = users.filter((user) => {
-    if (query) {
-      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
-      const email = user.email.toLowerCase();
-      if (!fullName.includes(query) && !email.includes(query)) return false;
-    }
-    if (filters.status !== "all") {
-      const active = filters.status === "active";
-      if (user.isActive !== active) return false;
-    }
-    if (filters.role !== "all" && !user.roles.includes(filters.role)) {
-      return false;
-    }
-    return true;
-  });
-
-  // Los más recientes primero.
-  filtered.sort(
-    (a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  const filtered = filterUsers(users, filters);
+  sortUsers(filtered, sort);
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -69,6 +66,132 @@ export async function fetchUsers(
     pageSize,
     totalPages,
   };
+}
+
+/** Búsqueda (nombre, apellido, email) + filtros de estado/rol/fecha/sin roles. */
+export function filterUsers(users: User[], filters: UsersFilters): User[] {
+  const query = filters.search.trim().toLowerCase();
+  const withinMs = CREATED_WITHIN_MS[filters.createdWithin];
+  const now = Date.now();
+
+  return users.filter((user) => {
+    if (query) {
+      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+      const email = user.email.toLowerCase();
+      if (!fullName.includes(query) && !email.includes(query)) return false;
+    }
+    if (filters.status !== "all") {
+      const active = filters.status === "active";
+      if (user.isActive !== active) return false;
+    }
+    if (filters.role === "none") {
+      if (user.roles.length > 0) return false;
+    } else if (filters.role !== "all" && !user.roles.includes(filters.role)) {
+      return false;
+    }
+    if (
+      withinMs !== Number.POSITIVE_INFINITY &&
+      now - new Date(user.createdAt).getTime() > withinMs
+    ) {
+      return false;
+    }
+    return true;
+  });
+}
+
+/** Ordenamiento client-side; "lastAccess" usa el mock determinista. */
+export function sortUsers(users: User[], sort: UserSort): User[] {
+  const factor = sort.dir === "asc" ? 1 : -1;
+  const byField: Record<
+    NonNullable<UserSort["field"]>,
+    (a: User, b: User) => number
+  > = {
+    name: (a, b) =>
+      `${a.firstName} ${a.lastName}`.localeCompare(
+        `${b.firstName} ${b.lastName}`,
+        "es",
+      ),
+    email: (a, b) => a.email.localeCompare(b.email, "es"),
+    status: (a, b) => Number(b.isActive) - Number(a.isActive),
+    createdAt: (a, b) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    lastAccess: (a, b) => getMockLastAccess(a.id) - getMockLastAccess(b.id),
+  };
+
+  if (sort.field) {
+    users.sort((a, b) => factor * byField[sort.field!](a, b));
+  } else {
+    // Sin orden activo: los más recientes primero (default histórico).
+    users.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  }
+  return users;
+}
+
+/** Obtiene un usuario por id (GET /api/auth/users/{id}, Users.View). */
+export async function fetchUser(id: string): Promise<User> {
+  return apiFetch<User>(`${PATH}/${id}`);
+}
+
+/**
+ * Estadísticas del módulo calculadas sobre la lista completa (misma fuente
+ * que la tabla): total, activos, inactivos, sin roles y creados en 7 días.
+ */
+export async function fetchUserStats(): Promise<UserStats> {
+  const users = await apiFetch<User[]>(PATH);
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  let active = 0;
+  let withoutRoles = 0;
+  let newThisWeek = 0;
+
+  for (const user of users) {
+    if (user.isActive) active++;
+    if (user.roles.length === 0) withoutRoles++;
+    if (new Date(user.createdAt).getTime() >= weekAgo) newThisWeek++;
+  }
+
+  return {
+    total: users.length,
+    active,
+    inactive: users.length - active,
+    withoutRoles,
+    newThisWeek,
+  };
+}
+
+/**
+ * Permisos del usuario para la vista de detalle, con ORIGEN:
+ * - heredados: unión de los permisos de cada rol asignado (etiquetados con
+ *   el nombre del rol que los aporta).
+ * - directos: los asignados directamente al usuario.
+ * Los heredados se deduplican conservando el primer rol que los aporta.
+ */
+export async function fetchUserPermissionSummary(
+  userId: string,
+  roles: Role[],
+): Promise<{ inherited: PermissionWithOrigin[]; direct: Permission[] }> {
+  const direct = await fetchUserPermissions(userId);
+
+  const byRole = await Promise.all(
+    roles.map(async (role) => ({
+      roleName: role.name,
+      permissions: await fetchRolePermissions(role.id),
+    })),
+  );
+
+  const inherited: PermissionWithOrigin[] = [];
+  const seen = new Set<string>();
+  for (const entry of byRole) {
+    for (const permission of entry.permissions) {
+      if (seen.has(permission.id)) continue;
+      seen.add(permission.id);
+      inherited.push({ ...permission, originRole: entry.roleName });
+    }
+  }
+
+  return { inherited, direct };
 }
 
 /**
@@ -120,8 +243,10 @@ export function getFullName(user: User): string {
 }
 
 export function getInitials(user: User): string {
-  return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase() ||
-    "US";
+  return (
+    `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase() ||
+    "US"
+  );
 }
 
 export function getStatusLabel(active: boolean): "Activo" | "Inactivo" {
@@ -129,10 +254,7 @@ export function getStatusLabel(active: boolean): "Activo" | "Inactivo" {
 }
 
 // Badges de estado y fechas: compartidos con el módulo de roles.
-export {
-  getStatusColor,
-  formatDate,
-} from "@/features/auth-common/utils";
+export { getStatusColor, formatDate } from "@/features/auth-common/utils";
 
 /** Catálogo de roles para el multi-select (GET /api/auth/roles). */
 export { fetchRoles } from "@/features/roles/services/roles-service";

@@ -31,6 +31,11 @@ export interface ProfessionalFilters {
   clinicId: string;
 }
 
+/**
+ * Estado del directorio de profesionales. Una sola ruta de carga (efecto
+ * declarativo sobre filtros/página) con AbortController; las stats se
+ * cargan una vez y se refrescan con `retry` tras mutaciones (invitar).
+ */
 export function useProfessionals(pageSize = 10) {
   const { can } = useAppContext();
   const [result, setResult] = useState<PaginatedEmployees | null>(null);
@@ -62,12 +67,16 @@ export function useProfessionals(pageSize = 10) {
     return () => clearTimeout(timer);
   }, [filters.search]);
 
+  // Stats: una sola carga al montar (el alcance lo resuelve el backend).
   useEffect(() => {
     const controller = new AbortController();
     let cancelled = false;
     void fetchEmployeeStats(controller.signal)
       .then((data) => {
-        if (!cancelled) setStats(data);
+        if (!cancelled) {
+          setStats(data);
+          setStatsError(null);
+        }
       })
       .catch((cause: unknown) => {
         if (cancelled) return;
@@ -106,38 +115,15 @@ export function useProfessionals(pageSize = 10) {
     };
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [employees, employeeStats] = await Promise.all([
-        fetchEmployees({
-          page,
-          pageSize,
-          search: debouncedSearch,
-          status: filters.status === "all" ? undefined : filters.status,
-          specialtyId:
-            filters.specialtyId === "all" ? undefined : filters.specialtyId,
-          roleId: filters.roleId === "all" ? undefined : filters.roleId,
-          clinicId: filters.clinicId === "all" ? undefined : filters.clinicId,
-        }),
-        fetchEmployeeStats(),
-      ]);
-      setResult(employees);
-      setStats(employeeStats);
-      setStatsError(null);
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Ocurrió un error inesperado.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, page, pageSize, debouncedSearch]);
-
+  // Listado: reacciona a filtros/página. Única ruta de carga (sin doble fetch).
   useEffect(() => {
     const controller = new AbortController();
     let cancelled = false;
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError(null);
+    }, 0);
     void fetchEmployees(
       {
         page,
@@ -152,21 +138,23 @@ export function useProfessionals(pageSize = 10) {
       controller.signal,
     )
       .then((data) => {
-        if (!cancelled) setResult(data);
+        if (cancelled) return;
+        setResult(data);
+        setLoading(false);
       })
       .catch((cause: unknown) => {
-        if (!cancelled)
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : "Ocurrió un error inesperado.",
-          );
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (cancelled) return;
+        if (cause instanceof Error && cause.name === "AbortError") return;
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Ocurrió un error inesperado.",
+        );
+        setLoading(false);
       });
     return () => {
       cancelled = true;
+      clearTimeout(timer);
       controller.abort();
     };
   }, [filters, page, pageSize, debouncedSearch]);
@@ -174,15 +162,33 @@ export function useProfessionals(pageSize = 10) {
   const setFilters = useCallback((partial: Partial<ProfessionalFilters>) => {
     setFiltersState((current) => ({ ...current, ...partial }));
     setPageState(1);
-    setLoading(true);
-    setError(null);
   }, []);
 
   const setPage = useCallback((nextPage: number) => {
     setPageState(nextPage);
-    setLoading(true);
-    setError(null);
   }, []);
+
+  const refresh = useCallback(() => {
+    void fetchEmployees({
+      page,
+      pageSize,
+      search: debouncedSearch,
+      status: filters.status === "all" ? undefined : filters.status,
+      specialtyId:
+        filters.specialtyId === "all" ? undefined : filters.specialtyId,
+      roleId: filters.roleId === "all" ? undefined : filters.roleId,
+      clinicId: filters.clinicId === "all" ? undefined : filters.clinicId,
+    })
+      .then((data) => setResult(data))
+      .catch(() => undefined);
+    // La stats también se refrescan (una invitación cambia "Invitados").
+    void fetchEmployeeStats()
+      .then((data) => {
+        setStats(data);
+        setStatsError(null);
+      })
+      .catch(() => undefined);
+  }, [filters, page, pageSize, debouncedSearch]);
 
   const clinics = organizations.flatMap((org) =>
     org.clinics.map((clinic) => ({ ...clinic, organizationName: org.name })),
@@ -201,7 +207,8 @@ export function useProfessionals(pageSize = 10) {
     canManageCatalogs,
     setFilters,
     setPage,
-    retry: load,
+    refresh,
+    retry: refresh,
   };
 }
 

@@ -14,16 +14,22 @@ import {
   Clipboard,
   Clock,
   GraduationCap,
+  Info,
   Loader2,
   MailPlus,
   MapPin,
+  Pencil,
   Send,
   Stethoscope,
   UserRound,
+  X,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
 import {
   fetchOrganizationTree,
@@ -41,6 +47,7 @@ import { fetchRoles } from "@/features/roles/services/roles-service";
 import type { Role } from "@/features/roles/types";
 import { ApiError } from "@/lib/api/http";
 import { cn } from "@/lib/utils";
+import { ProfessionalAvatar } from "./professional-visuals";
 
 const SPECIALTY_CATEGORIES = [
   "Medicina",
@@ -196,8 +203,10 @@ export function ProfessionalWizard() {
         setTypes(ts);
         setSpecialties(ss);
         setRoles(rs);
-        if (orgs.length > 0) {
-          setForm((f) => ({ ...f, organizationId: orgs[0].id }));
+        // Organización por defecto: la primera CON clínicas (evita la lista vacía).
+        const withClinics = orgs.find((o) => o.clinics.length > 0);
+        if (withClinics) {
+          setForm((f) => ({ ...f, organizationId: withClinics.id }));
         }
       } catch {
         if (!cancelled)
@@ -238,6 +247,22 @@ export function ProfessionalWizard() {
     form.firstName.trim() !== "" &&
     form.lastName.trim() !== "" &&
     /\S+@\S+\.\S+/.test(form.email);
+
+  // Errores por campo (se muestran al salir del campo — patrón Usuarios).
+  const [touched, setTouched] = useState<Set<string>>(new Set());
+  const fieldErrors = useMemo(() => {
+    const errors: Record<string, string> = {};
+    if (form.firstName.trim() === "")
+      errors.firstName = t("El nombre es obligatorio.");
+    if (form.lastName.trim() === "")
+      errors.lastName = t("El apellido es obligatorio.");
+    if (form.email.trim() === "") errors.email = t("El correo es obligatorio.");
+    else if (!/\S+@\S+\.\S+/.test(form.email))
+      errors.email = t("Ingresa un correo válido (ej. nombre@clinica.com).");
+    return errors;
+  }, [form.firstName, form.lastName, form.email, t]);
+  const handleBlur = (field: string) => () =>
+    setTouched((current) => new Set(current).add(field));
 
   const canContinueStep1 =
     form.organizationId !== "" && form.clinicAssignments.length > 0;
@@ -455,17 +480,19 @@ export function ProfessionalWizard() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
+    <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Nuevo profesional")}
-        description={t("Crea el perfil, asigna sus clínicas, permisos y horarios de atención, y envía la invitación por correo.")}
+        description={t(
+          "Crea el perfil, asigna sus clínicas, permisos y horarios de atención, y envía la invitación por correo.",
+        )}
         icon={Stethoscope}
       />
 
       {/* Stepper profesional: círculos con iconos, conectores y navegación por pasos completados. */}
       <nav
         aria-label={t("Progreso del formulario")}
-        className="mt-6 flex items-stretch rounded-2xl border border-border bg-card px-4 py-4 sm:px-6"
+        className="flex items-stretch overflow-hidden rounded-2xl border border-border bg-card px-4 py-4 sm:px-6"
       >
         {STEPS.map((s, i) => {
           const Icon = s.icon;
@@ -489,7 +516,7 @@ export function ProfessionalWizard() {
                     done &&
                       "border-success bg-success text-white shadow-sm shadow-success/30",
                     active &&
-                      "border-[var(--sidebar)] bg-[var(--sidebar)] text-white shadow-md shadow-[var(--sidebar)]/30 ring-4 ring-primary/15",
+                      "scale-105 border-[var(--sidebar)] bg-[var(--sidebar)] text-white shadow-md shadow-[var(--sidebar)]/30 ring-4 ring-primary/15",
                     !done &&
                       !active &&
                       "border-border bg-muted/40 text-muted-foreground",
@@ -503,21 +530,21 @@ export function ProfessionalWizard() {
                 </button>
                 <span
                   className={cn(
-                    "hidden flex-col leading-tight text-center sm:flex sm:text-left",
+                    "hidden max-w-36 flex-col leading-tight text-center sm:flex sm:text-left",
                     done && "cursor-pointer",
                   )}
                 >
                   <span
                     className={cn(
-                      "text-[11.5px] font-bold whitespace-nowrap",
+                      "truncate text-[11.5px] font-bold",
                       active ? "text-[var(--sidebar)]" : "text-foreground",
                       !done && !active && "text-muted-foreground",
                     )}
                   >
                     {s.label}
                   </span>
-                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                    {done ? "Completado" : s.hint}
+                  <span className="truncate text-[10px] text-muted-foreground">
+                    {done ? t("Completado") : s.hint}
                   </span>
                 </span>
               </div>
@@ -537,7 +564,7 @@ export function ProfessionalWizard() {
 
       {/* Éxito: enlace de invitación copiable (si se envió). */}
       {created && (
-        <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
+        <div className="animate-scale-in mt-6 flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-3">
             <span className="flex size-11 items-center justify-center rounded-xl bg-success-soft text-success-foreground">
               <BadgeCheck className="size-6" />
@@ -624,7 +651,7 @@ export function ProfessionalWizard() {
 
           {/* Paso 1: datos básicos */}
           {step === 0 && (
-            <div className="flex flex-col gap-0">
+            <div className="animate-slide-up flex flex-col gap-0">
               <SectionHeader
                 title={t("Datos básicos")}
                 description={t("Identidad y contacto del profesional")}
@@ -632,48 +659,89 @@ export function ProfessionalWizard() {
                 variant="primary"
               />
               <div className="flex flex-col gap-4 p-5 sm:p-6">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label={t("Nombre")}>
-                    <input
-                      value={form.firstName}
-                      onChange={(e) =>
-                        setForm({ ...form, firstName: e.target.value })
-                      }
-                      placeholder={t("Jane")}
-                      className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                <div className="flex gap-5">
+                  <div className="hidden shrink-0 flex-col items-center gap-2 sm:flex">
+                    <ProfessionalAvatar
+                      employee={{
+                        firstName: form.firstName.trim() || "?",
+                        lastName: form.lastName.trim(),
+                      }}
+                      size="lg"
                     />
-                  </Field>
-                  <Field label={t("Apellido")}>
-                    <input
-                      value={form.lastName}
-                      onChange={(e) =>
-                        setForm({ ...form, lastName: e.target.value })
+                    <span className="text-[10.5px] text-muted-foreground">
+                      {t("Vista previa")}
+                    </span>
+                  </div>
+                  <div className="grid flex-1 gap-4 sm:grid-cols-2">
+                    <Field
+                      label={t("Nombre")}
+                      required
+                      error={
+                        touched.has("firstName") ? fieldErrors.firstName : ""
                       }
-                      placeholder={t("Doe")}
-                      className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </Field>
-                  <Field label={t("Correo electrónico")}>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) =>
-                        setForm({ ...form, email: e.target.value })
+                    >
+                      <Input
+                        value={form.firstName}
+                        onChange={(e) =>
+                          setForm({ ...form, firstName: e.target.value })
+                        }
+                        onBlur={handleBlur("firstName")}
+                        placeholder={t("Jane")}
+                        disabled={saving}
+                        aria-invalid={Boolean(fieldErrors.firstName)}
+                      />
+                    </Field>
+                    <Field
+                      label={t("Apellido")}
+                      required
+                      error={
+                        touched.has("lastName") ? fieldErrors.lastName : ""
                       }
-                      placeholder={t("jane.doe@mediquer.com")}
-                      className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </Field>
-                  <Field label={t("Teléfono (opcional)")}>
-                    <input
-                      value={form.phone}
-                      onChange={(e) =>
-                        setForm({ ...form, phone: e.target.value })
-                      }
-                      placeholder={t("555-010-2244")}
-                      className="h-10 w-full rounded-lg border border-border bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </Field>
+                    >
+                      <Input
+                        value={form.lastName}
+                        onChange={(e) =>
+                          setForm({ ...form, lastName: e.target.value })
+                        }
+                        onBlur={handleBlur("lastName")}
+                        placeholder={t("Doe")}
+                        disabled={saving}
+                        aria-invalid={Boolean(fieldErrors.lastName)}
+                      />
+                    </Field>
+                    <Field
+                      label={t("Correo electrónico")}
+                      required
+                      error={touched.has("email") ? fieldErrors.email : ""}
+                      hint={t(
+                        "El profesional usará este correo para acceder al ERP.",
+                      )}
+                    >
+                      <Input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) =>
+                          setForm({ ...form, email: e.target.value })
+                        }
+                        onBlur={handleBlur("email")}
+                        placeholder={t("jane.doe@mediquer.com")}
+                        disabled={saving}
+                        aria-invalid={Boolean(fieldErrors.email)}
+                        autoComplete="off"
+                      />
+                    </Field>
+                    <Field label={t("Teléfono (opcional)")}>
+                      <Input
+                        value={form.phone}
+                        onChange={(e) =>
+                          setForm({ ...form, phone: e.target.value })
+                        }
+                        placeholder={t("555-010-2244")}
+                        disabled={saving}
+                        autoComplete="off"
+                      />
+                    </Field>
+                  </div>
                 </div>
 
                 <div className="mt-2 flex justify-end">
@@ -691,7 +759,7 @@ export function ProfessionalWizard() {
 
           {/* Paso 2: organización, clínicas y permisos */}
           {step === 1 && (
-            <div className="flex flex-col gap-0">
+            <div className="animate-slide-up flex flex-col gap-0">
               <SectionHeader
                 title={t("Clínicas y permisos")}
                 description={t("Organización, sedes y rol por clínica")}
@@ -700,147 +768,174 @@ export function ProfessionalWizard() {
               />
               <div className="flex flex-col gap-5 p-5 sm:p-6">
                 <Field label={t("Organización")}>
-                  <select
+                  <NativeSelect
                     value={form.organizationId}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       setForm({
                         ...form,
-                        organizationId: e.target.value,
+                        organizationId: value,
                         clinicAssignments: [],
                         schedules: {},
                       })
                     }
-                    className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    {organizations.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.name}
-                      </option>
-                    ))}
-                  </select>
+                    options={organizations.map((o) => ({
+                      value: o.id,
+                      label: o.name,
+                    }))}
+                    ariaLabel={t("Organización")}
+                  />
                 </Field>
 
                 <div className="flex flex-col gap-3">
                   <p className="text-[12.5px] font-semibold text-muted-foreground">
-                    Clínicas asignadas
+                    {t("Clínicas asignadas")}
+                    {form.clinicAssignments.length > 0 && (
+                      <span className="ml-1.5 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10.5px] font-bold text-primary">
+                        {form.clinicAssignments.length}
+                      </span>
+                    )}
                   </p>
-                  {activeOrg?.clinics.map((clinic) => {
-                    const assignment = form.clinicAssignments.find(
-                      (c) => c.clinicId === clinic.id,
-                    );
-                    const selected = Boolean(assignment);
-                    return (
-                      <div
-                        key={clinic.id}
-                        className={`rounded-xl border p-4 transition-colors ${
-                          selected
-                            ? "border-primary/50 bg-primary/5"
-                            : "border-border"
-                        }`}
-                      >
-                        <label className="flex cursor-pointer items-start gap-3">
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={() => toggleClinic(clinic.id)}
-                            className="mt-0.5 size-4 accent-[var(--primary)]"
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-[13px] font-semibold">
-                              {clinic.name}
+                  {activeOrg && activeOrg.clinics.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border py-10 text-center">
+                      <span className="flex size-11 items-center justify-center rounded-xl bg-warning-soft text-warning-foreground">
+                        <Building2 className="size-5" />
+                      </span>
+                      <p className="max-w-sm text-[12.5px] text-muted-foreground">
+                        {t(
+                          "Esta organización no tiene clínicas. Selecciona otra organización para continuar.",
+                        )}
+                      </p>
+                    </div>
+                  ) : (
+                    activeOrg?.clinics.map((clinic) => {
+                      const assignment = form.clinicAssignments.find(
+                        (c) => c.clinicId === clinic.id,
+                      );
+                      const selected = Boolean(assignment);
+                      return (
+                        <div
+                          key={clinic.id}
+                          className={cn(
+                            "overflow-hidden rounded-xl border transition-colors",
+                            selected
+                              ? "border-primary/50 bg-primary/[0.04]"
+                              : "border-border hover:border-border",
+                          )}
+                        >
+                          <label className="flex cursor-pointer items-center gap-3 px-4 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={() => toggleClinic(clinic.id)}
+                              className="size-4 accent-[var(--primary)]"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[13px] font-semibold">
+                                {clinic.name}
+                              </span>
+                              <span className="block text-[11.5px] text-muted-foreground">
+                                {clinic.locations.length}{" "}
+                                {clinic.locations.length === 1
+                                  ? t("sede")
+                                  : t("sedes")}
+                              </span>
                             </span>
-                            <span className="block text-[11.5px] text-muted-foreground">
-                              {clinic.locations.length} sede(s)
-                            </span>
-                          </span>
-                        </label>
+                            {assignment && clinic.locations.length === 0 && (
+                              <span className="text-[11px] text-muted-foreground">
+                                {t("Sin sedes para asignar")}
+                              </span>
+                            )}
+                          </label>
 
-                        {assignment && (
-                          <div className="mt-3 flex flex-col gap-3 pl-7">
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              <Field label={t("Rol en esta clínica")}>
-                                <select
+                          {assignment && (
+                            <div className="animate-fade-in flex flex-col gap-4 border-t border-border/60 bg-background/50 px-4 py-4 sm:flex-row sm:items-start sm:gap-5">
+                              <div className="flex flex-1 flex-col gap-1.5">
+                                <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                                  {t("Rol en esta clínica")}
+                                </p>
+                                <NativeSelect
                                   value={assignment.roleId ?? ""}
-                                  onChange={(e) =>
+                                  onChange={(value) =>
                                     updateAssignment(clinic.id, {
-                                      roleId: e.target.value || null,
+                                      roleId: value || null,
                                     })
                                   }
-                                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                >
-                                  <option value="">— Sin rol —</option>
-                                  {roles.map((r) => (
-                                    <option key={r.id} value={r.id}>
-                                      {r.name}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                              <label className="flex items-end gap-2 pb-2.5">
-                                <input
-                                  type="checkbox"
-                                  checked={assignment.isPrimary}
-                                  onChange={() =>
-                                    setForm((f) => ({
-                                      ...f,
-                                      clinicAssignments:
-                                        f.clinicAssignments.map((c) => ({
-                                          ...c,
-                                          isPrimary: c.clinicId === clinic.id,
-                                        })),
-                                    }))
-                                  }
-                                  className="size-4 accent-[var(--primary)]"
-                                />
-                                <span className="text-[12.5px] font-medium">
-                                  Clínica principal
-                                </span>
-                              </label>
-                            </div>
-
-                            {clinic.locations.length > 0 && (
-                              <div>
-                                <p className="mb-1.5 flex items-center gap-1 text-[12px] font-medium text-muted-foreground">
-                                  <MapPin className="size-3" />
-                                  Sedes asignadas
-                                </p>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {clinic.locations.map((loc) => {
-                                    const on = assignment.locationIds.includes(
-                                      loc.id,
-                                    );
-                                    return (
-                                      <button
-                                        key={loc.id}
-                                        type="button"
-                                        onClick={() =>
-                                          toggleLocation(clinic.id, loc.id)
-                                        }
-                                        className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
-                                          on
-                                            ? "border-primary bg-primary text-primary-foreground"
-                                            : "border-border hover:border-primary/40"
-                                        }`}
-                                      >
-                                        {on && (
-                                          <CheckCircle2 className="size-3" />
-                                        )}
-                                        {loc.name}
-                                      </button>
-                                    );
+                                  options={[
+                                    { value: "", label: t("— Sin rol —") },
+                                    ...roles.map((r) => ({
+                                      value: r.id,
+                                      label: r.name,
+                                    })),
+                                  ]}
+                                  ariaLabel={t("Rol en {clinic}", {
+                                    clinic: clinic.name,
                                   })}
-                                </div>
+                                />
                               </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {activeOrg && activeOrg.clinics.length === 0 && (
-                    <p className="text-[12.5px] text-muted-foreground">
-                      Esta organización no tiene clínicas.
-                    </p>
+                              {clinic.locations.length > 0 && (
+                                <div className="flex flex-1 flex-col gap-1.5">
+                                  <p className="flex items-center gap-1 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                                    <MapPin className="size-3" />
+                                    {t("Sedes asignadas")}
+                                  </p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {clinic.locations.map((loc) => {
+                                      const on =
+                                        assignment.locationIds.includes(loc.id);
+                                      return (
+                                        <button
+                                          key={loc.id}
+                                          type="button"
+                                          onClick={() =>
+                                            toggleLocation(clinic.id, loc.id)
+                                          }
+                                          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                                            on
+                                              ? "border-primary bg-primary text-primary-foreground"
+                                              : "border-border hover:border-primary/40"
+                                          }`}
+                                        >
+                                          {on && (
+                                            <CheckCircle2 className="size-3" />
+                                          )}
+                                          {loc.name}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setForm((f) => ({
+                                    ...f,
+                                    clinicAssignments: f.clinicAssignments.map(
+                                      (c) => ({
+                                        ...c,
+                                        isPrimary: c.clinicId === clinic.id,
+                                      }),
+                                    ),
+                                  }))
+                                }
+                                aria-pressed={assignment.isPrimary}
+                                className={cn(
+                                  "inline-flex h-8 shrink-0 items-center gap-1.5 self-start rounded-full border px-3 text-[12px] font-semibold transition-colors",
+                                  assignment.isPrimary
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                                )}
+                              >
+                                {assignment.isPrimary && (
+                                  <CheckCircle2 className="size-3.5" />
+                                )}
+                                {t("Clínica principal")}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
                   )}
                 </div>
 
@@ -863,7 +958,7 @@ export function ProfessionalWizard() {
 
           {/* Paso 3: profesión (opcional) */}
           {step === 2 && (
-            <div className="flex flex-col gap-0">
+            <div className="animate-slide-up flex flex-col gap-0">
               <SectionHeader
                 title={t("Profesión y especialidades")}
                 description={t("Tipo de profesional y áreas que puede atender")}
@@ -871,25 +966,55 @@ export function ProfessionalWizard() {
                 variant="primary"
               />
               <div className="flex flex-col gap-5 p-5 sm:p-6">
-                <p className="text-[12.5px] text-muted-foreground">
-                  Opcional: si lo dejas vacío, el profesional lo completará al
-                  aceptar la invitación (perfil autogestionable).
+                <p className="flex items-start gap-2 rounded-xl border border-border/60 bg-muted/40 px-4 py-3 text-[12.5px] text-muted-foreground">
+                  <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+                  {t(
+                    "Opcional: si lo dejas vacío, el profesional lo completará al aceptar la invitación (perfil autogestionable).",
+                  )}
                 </p>
 
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {types.map((t) => (
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[12.5px] font-semibold text-muted-foreground">
+                    {t("Tipo de profesional")}
+                    <span className="ml-1.5 text-[11px] font-normal">
+                      {t("{count} disponibles", {
+                        count: String(types.length),
+                      })}
+                    </span>
+                  </p>
+                  {form.professionalTypeId && (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      className="text-muted-foreground"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          professionalTypeId: "",
+                          specialtyIds: [],
+                        })
+                      }
+                    >
+                      <X data-icon="inline-start" />
+                      {t("Sin tipo")}
+                    </Button>
+                  )}
+                </div>
+
+                <div className="stagger-children grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {types.map((type) => (
                     <button
-                      key={t.id}
+                      key={type.id}
                       type="button"
                       onClick={() => {
                         setForm({
                           ...form,
-                          professionalTypeId: t.id,
+                          professionalTypeId: type.id,
                           specialtyIds: [],
                         });
                       }}
                       className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
-                        form.professionalTypeId === t.id
+                        form.professionalTypeId === type.id
                           ? "border-primary bg-primary/5 ring-1 ring-primary"
                           : "border-border hover:border-primary/40"
                       }`}
@@ -897,7 +1022,7 @@ export function ProfessionalWizard() {
                       <span
                         className={cn(
                           "flex size-9 shrink-0 items-center justify-center rounded-lg",
-                          form.professionalTypeId === t.id
+                          form.professionalTypeId === type.id
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted text-muted-foreground",
                         )}
@@ -906,10 +1031,10 @@ export function ProfessionalWizard() {
                       </span>
                       <span className="min-w-0">
                         <span className="block truncate text-[13px] font-semibold">
-                          {t.name}
+                          {type.name}
                         </span>
                         <span className="mt-0.5 block truncate text-[11.5px] text-muted-foreground">
-                          {t.description}
+                          {type.description}
                         </span>
                       </span>
                     </button>
@@ -974,10 +1099,12 @@ export function ProfessionalWizard() {
 
           {/* Paso 4: horarios de atención (prototipo frontend) */}
           {step === 3 && (
-            <div className="flex flex-col gap-0">
+            <div className="animate-slide-up flex flex-col gap-0">
               <SectionHeader
                 title={t("Horarios de atención")}
-                description={t("Disponibilidad del profesional para agendar citas, por clínica")}
+                description={t(
+                  "Disponibilidad del profesional para agendar citas, por clínica",
+                )}
                 icon={CalendarClock}
                 variant="primary"
               />
@@ -1068,7 +1195,7 @@ export function ProfessionalWizard() {
                             </div>
 
                             {hasCustom && (
-                              <div className="flex flex-col gap-4 p-4">
+                              <div className="animate-fade-in flex flex-col gap-4 p-4">
                                 {/* Días de la semana */}
                                 <div>
                                   <p className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-muted-foreground">
@@ -1145,7 +1272,7 @@ export function ProfessionalWizard() {
                                   {schedule.sameEveryDay ? (
                                     <div className="grid gap-3 sm:grid-cols-2">
                                       <Field label={t("Desde")}>
-                                        <input
+                                        <Input
                                           type="time"
                                           value={
                                             schedule.days[firstEnabled ?? "mon"]
@@ -1160,11 +1287,10 @@ export function ProfessionalWizard() {
                                               ].end,
                                             )
                                           }
-                                          className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                                         />
                                       </Field>
                                       <Field label={t("Hasta")}>
-                                        <input
+                                        <Input
                                           type="time"
                                           value={
                                             schedule.days[firstEnabled ?? "mon"]
@@ -1179,7 +1305,6 @@ export function ProfessionalWizard() {
                                               e.target.value,
                                             )
                                           }
-                                          className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                                         />
                                       </Field>
                                     </div>
@@ -1196,7 +1321,7 @@ export function ProfessionalWizard() {
                                             {DAY_LABELS[day].full}
                                           </span>
                                           <div className="flex flex-1 items-center gap-2">
-                                            <input
+                                            <Input
                                               type="time"
                                               value={schedule.days[day].start}
                                               onChange={(e) =>
@@ -1205,12 +1330,12 @@ export function ProfessionalWizard() {
                                                 })
                                               }
                                               aria-label={`Inicio ${DAY_LABELS[day].full}`}
-                                              className="h-9 w-full rounded-lg border border-border bg-background px-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-32"
+                                              className="w-full sm:w-32"
                                             />
                                             <span className="text-xs text-muted-foreground">
                                               a
                                             </span>
-                                            <input
+                                            <Input
                                               type="time"
                                               value={schedule.days[day].end}
                                               onChange={(e) =>
@@ -1219,7 +1344,7 @@ export function ProfessionalWizard() {
                                                 })
                                               }
                                               aria-label={`Fin ${DAY_LABELS[day].full}`}
-                                              className="h-9 w-full rounded-lg border border-border bg-background px-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-32"
+                                              className="w-full sm:w-32"
                                             />
                                           </div>
                                         </div>
@@ -1259,7 +1384,7 @@ export function ProfessionalWizard() {
 
           {/* Paso 5: revisión */}
           {step === 4 && (
-            <div className="flex flex-col gap-0">
+            <div className="animate-slide-up flex flex-col gap-0">
               <SectionHeader
                 title={t("Revisa y envía")}
                 description={t("Confirma los datos antes de crear e invitar")}
@@ -1269,32 +1394,39 @@ export function ProfessionalWizard() {
               <div className="flex flex-col gap-5 p-5 sm:p-6">
                 <div className="overflow-hidden rounded-xl border border-border">
                   <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-muted/20 p-4 text-[13px] sm:grid-cols-3">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Nombre
+                        {t("Nombre")}
                       </p>
-                      <p className="mt-0.5 font-medium">
+                      <p className="mt-0.5 truncate font-medium">
                         {form.firstName} {form.lastName}
                       </p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Correo
+                        {t("Correo")}
                       </p>
-                      <p className="mt-0.5 font-medium">{form.email}</p>
+                      <p className="mt-0.5 truncate font-medium">
+                        {form.email}
+                      </p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Organización
+                        {t("Organización")}
                       </p>
-                      <p className="mt-0.5 font-medium">{activeOrg?.name}</p>
+                      <p className="mt-0.5 truncate font-medium">
+                        {activeOrg?.name}
+                      </p>
                     </div>
                   </div>
 
                   <div className="border-t border-border p-4">
-                    <p className="text-[12px] font-semibold text-muted-foreground">
-                      Clínicas y roles
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[12px] font-semibold text-muted-foreground">
+                        {t("Clínicas y roles")}
+                      </p>
+                      <ReviewEditButton onClick={() => setStep(1)} />
+                    </div>
                     <div className="mt-2 flex flex-col gap-2">
                       {summaryClinics.map(({ clinic, role, locations }) => (
                         <div
@@ -1303,12 +1435,13 @@ export function ProfessionalWizard() {
                         >
                           <span className="font-semibold">{clinic!.name}</span>
                           <span className="text-muted-foreground">·</span>
-                          <span>{role?.name ?? "Sin rol"}</span>
+                          <span>{role?.name ?? t("Sin rol")}</span>
                           {locations.length > 0 && (
                             <>
                               <span className="text-muted-foreground">·</span>
-                              <span className="text-muted-foreground">
-                                Sedes: {locations.map((l) => l.name).join(", ")}
+                              <span className="min-w-0 truncate text-muted-foreground">
+                                {t("Sedes")}:{" "}
+                                {locations.map((l) => l.name).join(", ")}
                               </span>
                             </>
                           )}
@@ -1319,10 +1452,13 @@ export function ProfessionalWizard() {
 
                   {form.professionalTypeId && (
                     <div className="border-t border-border p-4">
-                      <p className="text-[12px] font-semibold text-muted-foreground">
-                        Profesión
-                      </p>
-                      <p className="mt-1 text-[12.5px]">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[12px] font-semibold text-muted-foreground">
+                          {t("Profesión")}
+                        </p>
+                        <ReviewEditButton onClick={() => setStep(2)} />
+                      </div>
+                      <p className="mt-1 min-w-0 text-[12.5px]">
                         {selectedType?.name}
                         {form.specialtyIds.length > 0 &&
                           ` · ${form.specialtyIds
@@ -1338,10 +1474,13 @@ export function ProfessionalWizard() {
 
                   {/* Resumen de horarios de atención */}
                   <div className="border-t border-border p-4">
-                    <p className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-foreground">
-                      <CalendarClock className="size-3.5" />
-                      Horarios de atención
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-foreground">
+                        <CalendarClock className="size-3.5" />
+                        {t("Horarios de atención")}
+                      </p>
+                      <ReviewEditButton onClick={() => setStep(3)} />
+                    </div>
                     <div className="mt-2 flex flex-col gap-2">
                       {summaryClinics.map(({ clinic }) => {
                         const schedule =
@@ -1430,17 +1569,55 @@ export function ProfessionalWizard() {
   );
 }
 
+/** Botón "Cambiar" de las secciones de revisión: salta al paso indicado. */
+function ReviewEditButton({ onClick }: { onClick: () => void }) {
+  const t = useT();
+  return (
+    <Button
+      variant="ghost"
+      size="xs"
+      className="text-muted-foreground"
+      onClick={onClick}
+    >
+      <Pencil data-icon="inline-start" className="size-3" />
+      {t("Cambiar")}
+    </Button>
+  );
+}
+
 function Field({
   label,
+  required,
+  error,
+  hint,
   children,
 }: {
   label: string;
+  required?: boolean;
+  error?: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <label className="mb-1.5 block text-[12.5px] font-medium">{label}</label>
+    <div className="flex flex-col gap-1.5">
+      <Label>
+        {label}
+        {required && (
+          <span className="ml-1 text-destructive" aria-hidden="true">
+            *
+          </span>
+        )}
+      </Label>
       {children}
+      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+      {error && (
+        <p
+          className="text-xs leading-snug whitespace-pre-line text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }

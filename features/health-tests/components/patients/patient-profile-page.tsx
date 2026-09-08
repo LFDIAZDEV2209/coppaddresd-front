@@ -69,7 +69,7 @@ import {
 } from "../../lib/format";
 import { categoryAccent, riskHex, scoreBarColor } from "../shared/colors";
 import { RiskBadge, SeverityBadge, TestStateBadge } from "../shared/badges";
-import { ScoreBar, ProgressRing } from "../shared/progress";
+import { ScoreBar } from "../shared/progress";
 import { ChartCard, StatSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
 import { healthTestsApi } from "../../services/health-tests-service";
