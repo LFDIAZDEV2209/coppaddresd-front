@@ -642,6 +642,10 @@ export function ProfessionalBulkImport() {
               "Se creará el perfil de cada profesional válido y se enviará la invitación de primer acceso. Las filas con errores se omitirán y podrás corregirlas después.",
             )}
           </p>
+          <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+            <Info className="size-3.5 shrink-0" />
+            {t("Se enviará una invitación por correo a cada empleado creado.")}
+          </p>
           <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
             <Button
               onClick={() => void startImport()}
@@ -701,6 +705,12 @@ export function ProfessionalBulkImport() {
               />
             )}
           </div>
+          {result.created > 0 && (
+            <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+              <Info className="size-3.5 shrink-0" />
+              {t("recibió la invitación por correo")}
+            </p>
+          )}
           {/* Aviso explícito cuando todas las filas fallaron */}
           {result.created === 0 && result.skipped > 0 && (
             <div

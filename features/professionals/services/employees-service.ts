@@ -310,6 +310,7 @@ export interface BulkRowResult {
   line: number;
   success: boolean;
   employeeId?: string | null;
+  userId?: string | null;
   error?: string | null;
 }
 

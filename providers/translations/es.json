@@ -2215,6 +2215,7 @@
   "Se eliminará la rutina \"{name}\" y todos sus ejercicios. Esta acción no se puede deshacer.": "Se eliminará la rutina \"{name}\" y todos sus ejercicios. Esta acción no se puede deshacer.",
   "Se enviará como Equipo ANTARES a los miembros inactivos": "Se enviará como Equipo ANTARES a los miembros inactivos",
   "Se enviará como Equipo ANTARES al grupo": "Se enviará como Equipo ANTARES al grupo",
+  "Se enviará una invitación por correo a cada empleado creado.": "Se enviará una invitación por correo a cada empleado creado.",
   "Se indexa automáticamente: chunking + embeddings en el AI Service.": "Se indexa automáticamente: chunking + embeddings en el AI Service.",
   "Se indexará con RAG y quedará disponible para el agente.": "Se indexará con RAG y quedará disponible para el agente.",
   "Se registrarán {count} {item} por un valor total de": "Se registrarán {count} {item} por un valor total de",
