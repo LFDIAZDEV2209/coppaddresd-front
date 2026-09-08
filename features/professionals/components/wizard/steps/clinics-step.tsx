@@ -52,8 +52,9 @@ export function ClinicsStep({
     [organizations, form.organizationId],
   );
 
-  const canContinue =
-    form.organizationId !== "" && form.clinicAssignments.length > 0;
+  // Las clínicas son opcionales: el backend acepta empleados sin asignaciones
+  // (scoped assignments quedan vacíos y la invitación no lleva scopes).
+  const canContinue = form.organizationId !== "";
 
   const toggleClinic = useCallback((clinicId: string) => {
     setForm((f) => {
@@ -159,9 +160,12 @@ export function ClinicsStep({
               <span className="flex size-11 items-center justify-center rounded-xl bg-warning-soft text-warning-foreground">
                 <Building2 className="size-5" />
               </span>
-              <p className="max-w-sm text-[12.5px] text-muted-foreground">
+              <p className="max-w-sm text-[12.5px] font-medium text-foreground">
+                {t("Esta organización aún no tiene clínicas.")}
+              </p>
+              <p className="max-w-sm text-[12px] text-muted-foreground">
                 {t(
-                  "Esta organización no tiene clínicas. Selecciona otra organización para continuar.",
+                  "Podés continuar sin asignar clínicas y hacerlo después desde el perfil.",
                 )}
               </p>
             </div>
