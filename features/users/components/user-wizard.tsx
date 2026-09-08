@@ -588,10 +588,10 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
           </Button>
         </div>
       ) : (
-        <div className={cn("flex flex-col gap-5 p-5 sm:p-6", !embedded && "rounded-2xl border border-border bg-card")}>
+        <div className={cn("flex flex-col gap-5", !embedded && "overflow-hidden rounded-2xl border border-border bg-card")}>
           {submitErrors && submitErrors.length > 0 && (
             <div
-              className="rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive"
+              className="mx-5 mt-5 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive sm:mx-6 sm:mt-6"
               role="alert"
             >
               {submitErrors.length === 1 ? (
@@ -886,8 +886,8 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
             </div>
           )}
 
-          {/* Footer de navegación */}
-          <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4">
+          {/* Footer de navegación — padding propio porque la tarjeta ya no lo aporta */}
+          <div className="flex items-center justify-between gap-3 border-t border-border/60 px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
             <Button
               variant="outline"
               onClick={step === 0 && embedded && onBackToSelector ? onBackToSelector : goBack}
