@@ -64,7 +64,7 @@ export function IdentityStep({ form, setForm, onNext, onBack }: IdentityStepProp
             : t("Identidad y contacto del profesional")
         }
         icon={UserRound}
-        variant="strong"
+        variant="primary"
       />
       <div className="flex flex-col gap-4 p-5 sm:p-6">
         <div className="flex gap-5">

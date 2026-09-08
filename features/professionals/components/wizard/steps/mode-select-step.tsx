@@ -173,7 +173,7 @@ export function ModeSelectStep({
           "Selecciona el tipo de persona que vas a agregar al directorio.",
         )}
         icon={UserRound}
-        variant="strong"
+        variant="primary"
       />
       <div className="flex flex-col gap-5 p-5 sm:p-6">
         {/* Grupos normales (2+ cards): cada uno su propia fila */}

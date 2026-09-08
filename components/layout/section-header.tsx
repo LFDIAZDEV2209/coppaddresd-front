@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type HeaderVariant = "primary" | "strong" | "secondary" | "tertiary" | "destructive";
+type HeaderVariant = "primary" | "secondary" | "tertiary" | "destructive";
 
 interface SectionHeaderProps {
   title: string;
@@ -20,34 +20,30 @@ export function SectionHeader({
   variant = "primary",
   className,
 }: SectionHeaderProps) {
-  // primary usa el token suave --brand-gradient-soft; strong lleva el gradiente completo (pasos del wizard); PageHeader conserva el fuerte
+  // primary lleva el gradiente completo de marca (el usuario lo prefiere); PageHeader usa el mismo
   const styles = {
-    primary: "bg-brand-gradient-soft text-foreground rounded-none border-b border-border/60 px-4 py-3",
-    strong: "bg-brand-gradient text-white rounded-none px-4 py-3",
+    primary: "bg-brand-gradient text-white rounded-none px-4 py-3",
     secondary: "bg-primary-soft text-foreground rounded-xl px-4 py-3",
     tertiary: "bg-transparent text-foreground px-0 py-2",
     destructive: "bg-destructive text-white rounded-none px-4 py-3",
   };
 
   const iconStyles = {
-    primary: "bg-primary/10 text-primary",
-    strong: "bg-white text-[var(--sidebar)]",
+    primary: "bg-white text-[var(--sidebar)]",
     secondary: "bg-primary/10 text-primary",
     tertiary: "bg-muted text-muted-foreground",
     destructive: "bg-white text-destructive",
   };
 
   const titleStyles = {
-    primary: "text-[13px] font-bold text-foreground",
-    strong: "text-[13px] font-bold text-white",
+    primary: "text-[13px] font-bold text-white",
     secondary: "text-[13px] font-semibold text-foreground",
     tertiary: "text-[13px] font-semibold text-foreground",
     destructive: "text-[13px] font-bold text-white",
   };
 
   const descStyles = {
-    primary: "text-[11px] text-muted-foreground",
-    strong: "text-[11px] text-white/75",
+    primary: "text-[11px] text-white/75",
     secondary: "text-[11px] text-muted-foreground",
     tertiary: "text-[11px] text-muted-foreground",
     destructive: "text-[11px] text-white/80",

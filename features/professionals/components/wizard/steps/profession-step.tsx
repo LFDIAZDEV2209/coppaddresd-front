@@ -75,7 +75,7 @@ export function ProfessionStep({
         title={t("Profesión y especialidades")}
         description={t("Tipo de profesional y áreas que puede atender")}
         icon={Stethoscope}
-        variant="strong"
+        variant="primary"
       />
       <div className="flex flex-col gap-5 p-5 sm:p-6">
         <p className="flex items-start gap-2 rounded-xl border border-border/60 bg-muted/40 px-4 py-3 text-[12.5px] text-muted-foreground">
