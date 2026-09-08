@@ -47,7 +47,6 @@ export function ProfessionalDirectory() {
     statsError,
     filters,
     specialties,
-    roles,
     clinics,
     loading,
     error,
@@ -77,7 +76,6 @@ export function ProfessionalDirectory() {
     filters.search.trim() !== "" ||
     filters.status !== "all" ||
     filters.specialtyId !== "all" ||
-    filters.roleId !== "all" ||
     filters.clinicId !== "all";
 
   const clearFilters = () =>
@@ -85,7 +83,6 @@ export function ProfessionalDirectory() {
       search: "",
       status: "all",
       specialtyId: "all",
-      roleId: "all",
       clinicId: "all",
     });
 
@@ -231,13 +228,6 @@ export function ProfessionalDirectory() {
         onRemove: () => setFilters({ specialtyId: "all" }),
       });
     }
-    if (filters.roleId !== "all") {
-      chips.push({
-        key: "role",
-        label: `${t("Rol")}: ${roles.find((r) => r.id === filters.roleId)?.name ?? filters.roleId}`,
-        onRemove: () => setFilters({ roleId: "all" }),
-      });
-    }
     if (filters.clinicId !== "all") {
       chips.push({
         key: "clinic",
@@ -246,14 +236,14 @@ export function ProfessionalDirectory() {
       });
     }
     return chips;
-  }, [filters, specialties, roles, clinics, setFilters, t]);
+  }, [filters, specialties, clinics, setFilters, t]);
 
   return (
     <div className="stagger-children flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Profesionales")}
         description={t(
-          "Gestiona el equipo clínico, sus especialidades, roles y acceso al ERP",
+          "Gestiona el equipo clínico, sus especialidades y acceso al ERP",
         )}
         icon={Stethoscope}
         actions={
@@ -310,7 +300,6 @@ export function ProfessionalDirectory() {
       <DirectoryToolbar
         filters={filters}
         specialties={specialties}
-        roles={roles}
         clinics={clinics}
         view={view}
         onViewChange={setView}

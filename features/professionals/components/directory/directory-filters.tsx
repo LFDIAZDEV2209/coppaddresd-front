@@ -7,7 +7,6 @@ import {
   Search,
   SlidersHorizontal,
   Stethoscope,
-  UserCheck,
   UserRound,
   X,
 } from "lucide-react";
@@ -28,7 +27,6 @@ import { statusLabel } from "../professional-visuals";
 export function DirectoryToolbar({
   filters,
   specialties,
-  roles,
   clinics,
   view,
   onViewChange,
@@ -44,11 +42,9 @@ export function DirectoryToolbar({
     search: string;
     status: string;
     specialtyId: string;
-    roleId: string;
     clinicId: string;
   };
   specialties: { id: string; name: string; isActive: boolean }[];
-  roles: { id: string; name: string }[];
   clinics: { id: string; name: string }[];
   view: DataView;
   onViewChange: (view: DataView) => void;
@@ -59,7 +55,6 @@ export function DirectoryToolbar({
       search: string;
       status: string;
       specialtyId: string;
-      roleId: string;
       clinicId: string;
     }>,
   ) => void;
@@ -148,32 +143,6 @@ export function DirectoryToolbar({
                   {specialty.name}
                 </SelectItem>
               ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.roleId}
-          onValueChange={(value) => onFilterChange({ roleId: value ?? "all" })}
-        >
-          <SelectTrigger
-            className="h-9 w-[140px] bg-card"
-            aria-label={t("Filtrar por rol")}
-          >
-            <UserCheck className="mr-2 size-3.5 text-muted-foreground" />
-            <SelectValue>
-              {filters.roleId === "all"
-                ? t("Roles")
-                : (roles.find((r) => r.id === filters.roleId)?.name ??
-                  t("Roles"))}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("Todos los roles")}</SelectItem>
-            {roles.map((role) => (
-              <SelectItem key={role.id} value={role.id}>
-                {role.name}
-              </SelectItem>
-            ))}
           </SelectContent>
         </Select>
 

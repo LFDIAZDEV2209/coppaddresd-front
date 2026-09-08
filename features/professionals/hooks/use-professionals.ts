@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAppContext } from "@/providers/context-provider";
-import { fetchRoles } from "@/features/roles/services/roles-service";
-import type { Role } from "@/features/roles/types";
 import {
   fetchOrganizationTree,
   type OrganizationTree,
@@ -27,7 +25,6 @@ export interface ProfessionalFilters {
   search: string;
   status: string;
   specialtyId: string;
-  roleId: string;
   clinicId: string;
 }
 
@@ -44,7 +41,6 @@ export function useProfessionals(pageSize = 10) {
     search: "",
     status: "all",
     specialtyId: "all",
-    roleId: "all",
     clinicId: "all",
   });
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -53,7 +49,6 @@ export function useProfessionals(pageSize = 10) {
   const [error, setError] = useState<string | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [specialties, setSpecialties] = useState<SpecialtyDto[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
   const [organizations, setOrganizations] = useState<OrganizationTree[]>([]);
 
   // Configuración crítica: la gestión de catálogos requiere System.AdminSettings.
@@ -94,19 +89,17 @@ export function useProfessionals(pageSize = 10) {
     };
   }, []);
 
-  // Catálogos de los filtros (especialidades, roles, árbol org) — una sola carga.
+  // Catálogos de los filtros (especialidades, árbol org) — una sola carga.
   useEffect(() => {
     const controller = new AbortController();
     let cancelled = false;
     void Promise.allSettled([
       fetchSpecialties(),
-      fetchRoles(),
       fetchOrganizationTree(),
-    ]).then(([specialtiesResult, rolesResult, orgsResult]) => {
+    ]).then(([specialtiesResult, orgsResult]) => {
       if (cancelled) return;
       if (specialtiesResult.status === "fulfilled")
         setSpecialties(specialtiesResult.value);
-      if (rolesResult.status === "fulfilled") setRoles(rolesResult.value);
       if (orgsResult.status === "fulfilled") setOrganizations(orgsResult.value);
     });
     return () => {
@@ -124,19 +117,18 @@ export function useProfessionals(pageSize = 10) {
       setLoading(true);
       setError(null);
     }, 0);
-    void fetchEmployees(
-      {
-        page,
-        pageSize,
-        search: debouncedSearch,
-        status: filters.status === "all" ? undefined : filters.status,
-        specialtyId:
-          filters.specialtyId === "all" ? undefined : filters.specialtyId,
-        roleId: filters.roleId === "all" ? undefined : filters.roleId,
-        clinicId: filters.clinicId === "all" ? undefined : filters.clinicId,
-      },
-      controller.signal,
-    )
+      void fetchEmployees(
+        {
+          page,
+          pageSize,
+          search: debouncedSearch,
+          status: filters.status === "all" ? undefined : filters.status,
+          specialtyId:
+            filters.specialtyId === "all" ? undefined : filters.specialtyId,
+          clinicId: filters.clinicId === "all" ? undefined : filters.clinicId,
+        },
+        controller.signal,
+      )
       .then((data) => {
         if (cancelled) return;
         setResult(data);
@@ -176,7 +168,6 @@ export function useProfessionals(pageSize = 10) {
       status: filters.status === "all" ? undefined : filters.status,
       specialtyId:
         filters.specialtyId === "all" ? undefined : filters.specialtyId,
-      roleId: filters.roleId === "all" ? undefined : filters.roleId,
       clinicId: filters.clinicId === "all" ? undefined : filters.clinicId,
     })
       .then((data) => setResult(data))
@@ -200,7 +191,6 @@ export function useProfessionals(pageSize = 10) {
     statsError,
     filters,
     specialties,
-    roles,
     clinics,
     loading,
     error,
