@@ -229,6 +229,47 @@ export async function deleteUser(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
 }
 
+// --- Creación masiva de usuarios (CSV) ---
+
+/** Fila individual enviada al bulk endpoint de usuarios. */
+export interface BulkCreateUserRowInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  roleName: string | null;
+  status: string;
+}
+
+/** Resultado individual de una fila en la importación masiva. */
+export interface BulkUserRowResult {
+  line: number;
+  success: boolean;
+  userId?: string;
+  email?: string;
+  temporaryPassword?: string;
+  error?: string;
+}
+
+/** Resultado agregado de la importación masiva de usuarios. */
+export interface BulkCreateUsersResult {
+  results: BulkUserRowResult[];
+  created: number;
+  failed: number;
+}
+
+/**
+ * Crea usuarios de forma masiva.
+ * POST /api/auth/users/bulk — cada fila se procesa de forma independiente.
+ */
+export async function createBulkUsers(
+  rows: BulkCreateUserRowInput[],
+): Promise<BulkCreateUsersResult> {
+  return apiFetch<BulkCreateUsersResult>(`${PATH}/bulk`, {
+    method: "POST",
+    body: JSON.stringify({ rows }),
+  });
+}
+
 // --- Lecturas de asignaciones del usuario (precarga del form de edición) ---
 
 /** Roles asignados a un usuario (GET /api/auth/roles/user/{userId}). */

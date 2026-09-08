@@ -2723,5 +2723,11 @@
   "Documento (opcional)": "Documento (opcional)",
   "email@dominio.com (opcional)": "email@dominio.com (opcional)",
   "Formato no soportado todavía. Guardá tu planilla como CSV (separador ';') y volvé a intentarlo.": "Formato no soportado todavía. Guardá tu planilla como CSV (separador ';') y volvé a intentarlo.",
-  "El archivo no tiene filas. Descargá la plantilla y probá de nuevo.": "El archivo no tiene filas. Descargá la plantilla y probá de nuevo."
+  "El archivo no tiene filas. Descargá la plantilla y probá de nuevo.": "El archivo no tiene filas. Descargá la plantilla y probá de nuevo.",
+  "Credenciales de usuario creadas": "Credenciales de usuario creadas",
+  "Estas contraseñas se muestran solo una vez. Copialas y compartilas de forma segura.": "Estas contraseñas se muestran solo una vez. Copialas y compartilas de forma segura.",
+  "Contraseña temporal": "Contraseña temporal",
+  "Copiar": "Copiar",
+  "Copiar todas las credenciales": "Copiar todas las credenciales",
+  "Ir a usuarios": "Ir a usuarios"
 }

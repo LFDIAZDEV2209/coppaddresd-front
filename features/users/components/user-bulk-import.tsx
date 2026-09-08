@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  Copy,
   Download,
   FileSpreadsheet,
   FileUp,
@@ -27,23 +28,28 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/i18n-provider";
 import { fetchRoles } from "@/features/roles/services/roles-service";
-import type { BulkUserRow, BulkPreview, BulkResult } from "../types";
+import { ApiError } from "@/lib/api/http";
+import type { BulkUserRow, BulkPreview } from "../types";
 import {
   downloadTemplate,
   parseUsersCsv,
-  simulateBulkCreate,
   validateBulkRows,
 } from "../services/users-mock";
+import {
+  createBulkUsers,
+  type BulkCreateUsersResult,
+} from "../services/users-service";
 
 type Stage = "upload" | "preview" | "confirm" | "processing" | "result";
 
 /**
- * Experiencia dedicada de creación masiva de usuarios (MOCK).
+ * Experiencia dedicada de creación masiva de usuarios.
  *
  * Flujo: carga de archivo → PREVIEW EDITABLE (corrige errores en línea,
  * agrega/elimina filas, revalidación instantánea) → confirmación →
- * progreso → resultado. La creación se SIMULA en users-mock.ts; al existir
- * el endpoint real se reemplaza sin tocar la UI.
+ * procesamiento (POST /api/auth/users/bulk, request único con spinner
+ * indeterminado) → resultado con mapeo de results[] por line, incluyendo
+ * contraseñas temporales de los usuarios creados.
  */
 export function UserBulkImport() {
   const t = useT();
@@ -53,11 +59,14 @@ export function UserBulkImport() {
   const [roleNames, setRoleNames] = useState<string[]>([]);
   const [rows, setRows] = useState<BulkUserRow[]>([]);
   const [preview, setPreview] = useState<BulkPreview | null>(null);
-  const [result, setResult] = useState<BulkResult | null>(null);
-  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [result, setResult] = useState<BulkCreateUsersResult | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [failedRows, setFailedRows] = useState<
+    Array<{ line: number; error: string }>
+  >([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -143,12 +152,73 @@ export function UserBulkImport() {
   const startImport = async () => {
     if (!preview) return;
     setStage("processing");
-    setProgress({ done: 0, total: preview.valid });
-    const res = await simulateBulkCreate(rows, (done, total) =>
-      setProgress({ done, total }),
-    );
-    setResult(res);
-    setStage("result");
+    setBulkError(null);
+    setFailedRows([]);
+
+    // Solo filas válidas: el backend igual valida por fila, pero evitamos
+    // enviar errores ya detectados en cliente.
+    const validRows = rows.filter((row) => row.errors.length === 0);
+
+    // Guarda de lote vacío: si no hay filas válidas, no llamamos al API
+    // y mantenemos al usuario en el preview editable para que corrija.
+    if (validRows.length === 0) {
+      setBulkError(
+        t(
+          "No hay filas válidas para importar. Corregí las filas con errores o agregá nuevas filas.",
+        ),
+      );
+      setStage("preview");
+      return;
+    }
+
+    // Mapeo de filas válidas al contrato del backend.
+    const payload = validRows.map((row) => ({
+      firstName: row.firstName.trim(),
+      lastName: row.lastName.trim(),
+      email: row.email.trim(),
+      roleName: row.role ? row.role : null,
+      status: (row.status || "activo").trim().toLowerCase(),
+    }));
+
+    try {
+      const response = await createBulkUsers(payload);
+
+      // Mapea results[] por line a las filas UI para mostrar errores de fila.
+      if (response.results && response.results.length > 0) {
+        const failures = response.results
+          .filter((r) => !r.success)
+          .map((r) => ({
+            line: validRows[r.line - 1]?.line ?? r.line,
+            error: r.error ?? t("Error desconocido"),
+          }));
+        setFailedRows(failures);
+
+        // Actualiza las filas UI con errores del servidor.
+        if (failures.length > 0) {
+          const lineToError = new Map(failures.map((f) => [f.line, f.error]));
+          const updated = validRows.map((row) => {
+            const err = lineToError.get(row.line);
+            if (err) return { ...row, errors: [...row.errors, err] };
+            return row;
+          });
+          const invalidRows = rows.filter((row) => row.errors.length > 0);
+          const merged = [...invalidRows, ...updated];
+          setRows(merged);
+        }
+      }
+
+      setResult(response);
+      setStage("result");
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : t(
+              "No se pudo completar la importación. Verifica tu conexión e intenta de nuevo.",
+            );
+      setBulkError(message);
+      setStage("confirm");
+    }
   };
 
   const reset = () => {
@@ -156,7 +226,8 @@ export function UserBulkImport() {
     setRows([]);
     setPreview(null);
     setResult(null);
-    setProgress({ done: 0, total: 0 });
+    setBulkError(null);
+    setFailedRows([]);
     setFileError(null);
     setFileName(null);
     if (inputRef.current) inputRef.current.value = "";
@@ -221,6 +292,26 @@ export function UserBulkImport() {
           );
         })}
       </ol>
+
+      {/* Banner de error global reintentable */}
+      {bulkError && stage !== "processing" && stage !== "result" && (
+        <div
+          className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive-soft px-3 py-2.5 text-[12.5px] text-destructive"
+          role="alert"
+        >
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{bulkError}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void startImport()}
+            className="shrink-0"
+          >
+            <RotateCcw data-icon="inline-start" />
+            {t("Reintentar")}
+          </Button>
+        </div>
+      )}
 
       {/* ETAPA: carga de archivo */}
       {stage === "upload" && (
@@ -539,7 +630,7 @@ export function UserBulkImport() {
         </div>
       )}
 
-      {/* ETAPA: procesando */}
+      {/* ETAPA: procesando — request único, estado indeterminado */}
       {stage === "processing" && (
         <div className="animate-scale-in flex flex-col items-center gap-5 rounded-2xl border border-border bg-card px-6 py-14">
           <LoaderCircle className="size-10 animate-spin text-primary" />
@@ -547,21 +638,12 @@ export function UserBulkImport() {
             <p className="text-[15px] font-semibold text-foreground">
               {t("Creando usuarios...")}
             </p>
-            <p className="text-[13px] tabular-nums text-muted-foreground">
-              {progress.done} / {progress.total}
+            <p className="text-[13px] text-muted-foreground">
+              {t("Enviando lote al servidor...")}
             </p>
           </div>
           <div className="h-2.5 w-full max-w-sm overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-brand-gradient transition-all duration-300"
-              style={{
-                width: `${
-                  progress.total === 0
-                    ? 0
-                    : Math.round((progress.done / progress.total) * 100)
-                }%`,
-              }}
-            />
+            <div className="h-full w-full animate-pulse rounded-full bg-brand-gradient opacity-80" />
           </div>
         </div>
       )}
@@ -569,7 +651,6 @@ export function UserBulkImport() {
       {/* ETAPA: resultado */}
       {stage === "result" && result && (
         <div className="animate-scale-in flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-12 text-center">
-          {" "}
           <span className="flex size-14 items-center justify-center rounded-2xl bg-success/15 text-success">
             <CheckCircle2 className="size-7" />
           </span>
@@ -582,14 +663,128 @@ export function UserBulkImport() {
               icon={CheckCircle2}
               label={`${result.created} ${t("creados")}`}
             />
-            {result.skipped > 0 && (
+            {result.failed > 0 && (
               <SummaryChip
                 tone="warning"
                 icon={AlertTriangle}
-                label={`${result.skipped} ${t("omitidos")}`}
+                label={`${result.failed} ${t("con errores")}`}
               />
             )}
           </div>
+
+          {/* Aviso explícito cuando todas las filas fallaron */}
+          {result.created === 0 && result.failed > 0 && (
+            <div
+              className="flex w-full max-w-xl items-start gap-2 rounded-lg border border-destructive/30 bg-destructive-soft px-3 py-2.5 text-[12.5px] text-destructive"
+              role="alert"
+            >
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              <span className="flex-1">
+                {t("Ninguna fila fue creada. Revisa los errores por fila.")}
+              </span>
+            </div>
+          )}
+
+          {/* Tabla de credenciales de usuarios creados */}
+          {(() => {
+            const createdResults = result.results.filter(
+              (r) => r.success && r.temporaryPassword,
+            );
+            if (createdResults.length === 0) return null;
+            return (
+              <div className="mt-2 w-full max-w-xl rounded-xl border border-primary/30 bg-primary/5 p-3 text-left">
+                <p className="mb-1 flex items-center gap-1.5 text-[12px] font-semibold text-foreground">
+                  <Info className="size-3.5" />
+                  {t("Credenciales de usuario creadas")}
+                </p>
+                <p className="mb-2 text-[11.5px] text-muted-foreground">
+                  {t(
+                    "Estas contraseñas se muestran solo una vez. Copialas y compartilas de forma segura.",
+                  )}
+                </p>
+                <div className="overflow-x-auto rounded-lg border border-border/60 bg-card">
+                  <table className="w-full text-left text-[11.5px]">
+                    <thead>
+                      <tr className="border-b border-border/60 bg-muted/50 text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
+                        <th className="px-2.5 py-1.5">{t("Email")}</th>
+                        <th className="px-2.5 py-1.5">
+                          {t("Contraseña temporal")}
+                        </th>
+                        <th className="w-10 px-2.5 py-1.5" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {createdResults.map((r) => (
+                        <tr
+                          key={r.email}
+                          className="border-t border-border/40"
+                        >
+                          <td className="px-2.5 py-1.5 font-medium text-foreground">
+                            {r.email}
+                          </td>
+                          <td className="px-2.5 py-1.5 font-mono text-foreground">
+                            {r.temporaryPassword}
+                          </td>
+                          <td className="px-2.5 py-1.5 text-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(
+                                  `${r.email}\t${r.temporaryPassword}`,
+                                );
+                              }}
+                              className="text-primary hover:text-primary/80"
+                              title={t("Copiar")}
+                            >
+                              <Copy className="size-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    const text = createdResults
+                      .map((r) => `${r.email}\t${r.temporaryPassword}`)
+                      .join("\n");
+                    void navigator.clipboard.writeText(text);
+                  }}
+                >
+                  <Copy data-icon="inline-start" />
+                  {t("Copiar todas las credenciales")}
+                </Button>
+              </div>
+            );
+          })()}
+
+          {/* Detalle de filas con error del backend */}
+          {failedRows.length > 0 && (
+            <div className="mt-2 w-full max-w-xl rounded-xl border border-warning/30 bg-warning-soft/40 p-3 text-left">
+              <p className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-warning-foreground">
+                <AlertTriangle className="size-3.5" />
+                {t("Detalles de filas con error")}
+              </p>
+              <ul className="flex flex-col gap-1.5">
+                {failedRows.map((f) => (
+                  <li
+                    key={f.line}
+                    className="flex items-start gap-2 rounded-md bg-card px-2.5 py-1.5 text-[12px] text-foreground"
+                  >
+                    <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                      {t("Línea {line}", { line: String(f.line) })}
+                    </span>
+                    <span className="flex-1">{f.error}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
             <Button onClick={() => router.push("/users")}>
               <UsersIcon data-icon="inline-start" />
@@ -600,11 +795,6 @@ export function UserBulkImport() {
               {t("Importar otro archivo")}
             </Button>
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground/80">
-            {t(
-              "Simulación de demostración: la creación masiva real se conectará al backend.",
-            )}
-          </p>
         </div>
       )}
     </div>
