@@ -38,6 +38,7 @@ import { useT } from "@/providers/i18n-provider";
 import type { Permission } from "@/features/permissions/types";
 import type { Role } from "@/features/roles/types";
 import { fetchRoles } from "@/features/roles/services/roles-service";
+import { listSelectableRoles } from "@/features/roles/utils/legacy-roles";
 import {
   fetchPermissions,
   fetchRolePermissions,
@@ -288,6 +289,9 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
   }, [roleIds, rolePreview, roles]);
 
   const inheritedIds = useMemo(() => new Set(inherited.keys()), [inherited]);
+
+  // Roles seleccionables: excluye alias legado (Physician, Nutritionist, Psychologist).
+  const selectableRoles = useMemo(() => listSelectableRoles(roles), [roles]);
 
   const update = <K extends keyof typeof form>(
     field: K,
@@ -810,7 +814,7 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                     )}
                   </p>
                   <div className="grid gap-2.5 md:grid-cols-2">
-                    {roles.map((role) => (
+                    {selectableRoles.map((role) => (
                       <RoleCard
                         key={role.id}
                         role={role}
@@ -822,7 +826,7 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                       />
                     ))}
                   </div>
-                  {roles.length === 0 && (
+                  {selectableRoles.length === 0 && (
                     <p className="py-6 text-center text-[13px] text-muted-foreground">
                       {t("No hay roles disponibles en el catálogo.")}
                     </p>
