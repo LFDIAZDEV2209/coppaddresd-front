@@ -501,71 +501,9 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
         />
       )}
 
-      {/* Stepper */}
-      {embedded ? (
+      {/* Stepper embebido (el standalone va integrado dentro de la tarjeta del paso) */}
+      {embedded && (
         <StepNav steps={USER_STEPS} currentIndex={step} icons={USER_STEP_ICONS} />
-      ) : (
-        <ol className="flex items-center gap-2 sm:gap-3">
-          {STEPS.map((stepDef, index) => {
-            const done = index < step;
-            const current = index === step;
-            return (
-              <li
-                key={stepDef.label}
-                className="flex flex-1 items-center gap-2 sm:gap-3"
-              >
-                <div
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-xl border px-2.5 py-2 transition-all duration-200 sm:px-3.5",
-                    current
-                      ? "border-primary/30 bg-primary/[0.06] shadow-sm"
-                      : done
-                        ? "border-success/30 bg-success/[0.06]"
-                        : "border-border/70 bg-card",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "flex size-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-bold transition-all duration-300",
-                      current
-                        ? "scale-105 bg-brand-gradient text-white shadow-sm"
-                        : done
-                          ? "bg-success text-white"
-                          : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {done ? (
-                      <Check className="size-3.5" />
-                    ) : (
-                      <stepDef.icon className="size-3.5" />
-                    )}
-                  </span>
-                  <span className="hidden min-w-0 flex-col leading-tight min-[520px]:flex">
-                    <span
-                      className={cn(
-                        "truncate text-[12px] font-semibold",
-                        current ? "text-foreground" : "text-muted-foreground",
-                      )}
-                    >
-                      {t(stepDef.label)}
-                    </span>
-                    <span className="hidden truncate text-[10.5px] text-muted-foreground/80 sm:inline">
-                      {t(stepDef.hint)}
-                    </span>
-                  </span>
-                </div>
-                {index < STEPS.length - 1 && (
-                  <span
-                    className={cn(
-                      "h-px flex-1 transition-colors duration-500",
-                      done ? "bg-success/60" : "bg-border",
-                    )}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ol>
       )}
 
       {loading ? (
@@ -589,6 +527,10 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
         </div>
       ) : (
         <div className={cn("flex flex-col gap-5", !embedded && "overflow-hidden rounded-2xl border border-border bg-card")}>
+          {/* El stepper vive dentro de la tarjeta: una sola caja, banda a sangre debajo */}
+          {!embedded && (
+            <StepNav steps={USER_STEPS} currentIndex={step} icons={USER_STEP_ICONS} bare />
+          )}
           {submitErrors && submitErrors.length > 0 && (
             <div
               className="mx-5 mt-5 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive sm:mx-6 sm:mt-6"
