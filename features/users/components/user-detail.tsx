@@ -452,27 +452,27 @@ export function UserDetail({ userId }: UserDetailProps) {
         </section>
       </div>
 
-      {/* Permisos con origen */}
-      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+      {/* Permisos con origen — la banda queda a sangre: es el borde superior de la tarjeta */}
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader
           title={t("Permisos efectivos")}
           icon={KeyRound}
           variant="primary"
           actions={
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-md bg-white/15 px-2 py-1 text-[10.5px] font-semibold text-white">
+              <span className="rounded-md bg-primary/10 px-2 py-1 text-[10.5px] font-semibold text-primary">
                 {inheritedCount} {t("heredados")}
               </span>
-              <span className="rounded-md bg-white/15 px-2 py-1 text-[10.5px] font-semibold text-white">
+              <span className="rounded-md bg-primary/10 px-2 py-1 text-[10.5px] font-semibold text-primary">
                 {directCount} {t("directos")}
               </span>
               <div className="relative w-full max-w-[210px]">
-                <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-slate-400" />
+                <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={permissionQuery}
                   onChange={(e) => setPermissionQuery(e.target.value)}
                   placeholder={t("Buscar permiso...")}
-                  className="h-8 border-white/20 bg-white/95 pl-8 text-xs placeholder:text-slate-400"
+                  className="h-8 pl-8 text-xs"
                   aria-label={t("Buscar permisos")}
                 />
               </div>
