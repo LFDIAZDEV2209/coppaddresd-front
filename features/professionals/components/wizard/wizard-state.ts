@@ -234,12 +234,12 @@ export interface StepDef {
 
 export const PROFESSIONAL_STEPS: StepDef[] = [
   { key: "identity", label: "Datos básicos", hint: "Identidad y contacto" },
+  { key: "profession", label: "Profesión", hint: "Tipo y especialidades" },
   {
     key: "clinics",
     label: "Clínicas y permisos",
     hint: "Organización y acceso",
   },
-  { key: "profession", label: "Profesión", hint: "Tipo y especialidades" },
   {
     key: "schedule",
     label: "Horarios de atención",

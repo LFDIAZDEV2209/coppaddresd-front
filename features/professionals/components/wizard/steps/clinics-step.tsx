@@ -24,7 +24,7 @@ import {
 } from "@/features/professionals/services/employees-service";
 import type { Role } from "@/features/roles/types";
 import { cn } from "@/lib/utils";
-import type { FormState } from "../wizard-state";
+import type { FormState, Mode } from "../wizard-state";
 
 interface ClinicsStepProps {
   form: FormState;
@@ -34,6 +34,7 @@ interface ClinicsStepProps {
   organizations: OrganizationTree[];
   roles: Role[];
   loading?: boolean;
+  mode?: Mode;
 }
 
 export function ClinicsStep({
@@ -44,6 +45,7 @@ export function ClinicsStep({
   organizations,
   roles,
   loading = false,
+  mode,
 }: ClinicsStepProps) {
   const t = useT();
 
@@ -55,6 +57,16 @@ export function ClinicsStep({
   // Las clínicas son opcionales: el backend acepta empleados sin asignaciones
   // (scoped assignments quedan vacíos y la invitación no lleva scopes).
   const canContinue = form.organizationId !== "";
+
+  // Busca el rol cuyo nombre coincide con "Professional" (insensible a mayúsculas).
+  // Se usa para preseleccionar el rol por defecto al asignar clínicas en modo profesional.
+  const professionalRoleId = useMemo(() => {
+    if (mode !== "professional") return null;
+    const match = roles.find(
+      (r) => r.name.toLowerCase() === "professional",
+    );
+    return match?.id ?? null;
+  }, [mode, roles]);
 
   const toggleClinic = useCallback((clinicId: string) => {
     setForm((f) => {
@@ -74,7 +86,9 @@ export function ClinicsStep({
         clinicId,
         isPrimary: f.clinicAssignments.length === 0,
         status: "Active",
-        roleId: null,
+        // En modo profesional, preseleccionar el rol "Professional" si existe en la lista.
+        // En empleado u otros modos, el valor queda null (sin rol preseleccionado).
+        roleId: professionalRoleId,
         locationIds: [],
       };
       return {
@@ -82,7 +96,7 @@ export function ClinicsStep({
         clinicAssignments: [...f.clinicAssignments, item],
       };
     });
-  }, [setForm]);
+  }, [setForm, professionalRoleId]);
 
   const updateAssignment = useCallback(
     (clinicId: string, patch: Partial<ProfessionalClinicAssignment>) => {

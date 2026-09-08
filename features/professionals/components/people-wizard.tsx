@@ -629,6 +629,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 organizations={organizations}
                 roles={roles}
                 loading={catalogLoading}
+                mode={form.mode ?? undefined}
               />
             )}
 

@@ -1,6 +1,6 @@
 /**
  * Paso de revisión — adapta el resumen al modo activo.
- * - Profesional: identidad + clínicas/roles + profesión + horarios + invitación
+ * - Profesional: identidad + profesión + clínicas/roles + horarios + invitación
  * - Empleado: identidad + clínicas/roles + puesto + invitación
  * - Paciente: identidad + clínica
  */
@@ -146,7 +146,42 @@ export function ReviewStep({
             )}
           </div>
 
-          {/* Clínicas y roles (profesional/empleado) */}
+          {/* Clínica del paciente */}
+          {isPatient && summaryClinics.length > 0 && (
+            <div className="border-t border-border p-4">
+              <p className="text-[12px] font-semibold text-muted-foreground">
+                {t("Clínica")}
+              </p>
+              <p className="mt-1 text-[12.5px]">
+                {summaryClinics.map(({ clinic }) => clinic!.name).join(", ")}
+              </p>
+            </div>
+          )}
+
+          {/* Profesión (solo profesional) — sección reordenada: va antes de clínicas */}
+          {isProfessional && form.professionalTypeId && (
+            <div className="border-t border-border p-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-foreground">
+                  <Stethoscope className="size-3.5" />
+                  {t("Profesión")}
+                </p>
+              </div>
+              <p className="mt-1 min-w-0 text-[12.5px]">
+                {selectedType?.name}
+                {form.specialtyIds.length > 0 &&
+                  ` · ${form.specialtyIds
+                    .map(
+                      (id) =>
+                        specialties.find((s) => s.id === id)?.name,
+                    )
+                    .filter(Boolean)
+                    .join(", ")}`}
+              </p>
+            </div>
+          )}
+
+          {/* Clínicas y roles (profesional/empleado) — después de profesión en modo profesional */}
           {!isPatient && summaryClinics.length > 0 && (
             <div className="border-t border-border p-4">
               <div className="flex items-center justify-between gap-2">
@@ -176,41 +211,6 @@ export function ReviewStep({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Clínica del paciente */}
-          {isPatient && summaryClinics.length > 0 && (
-            <div className="border-t border-border p-4">
-              <p className="text-[12px] font-semibold text-muted-foreground">
-                {t("Clínica")}
-              </p>
-              <p className="mt-1 text-[12.5px]">
-                {summaryClinics.map(({ clinic }) => clinic!.name).join(", ")}
-              </p>
-            </div>
-          )}
-
-          {/* Profesión (solo profesional) */}
-          {isProfessional && form.professionalTypeId && (
-            <div className="border-t border-border p-4">
-              <div className="flex items-center justify-between gap-2">
-                <p className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-foreground">
-                  <Stethoscope className="size-3.5" />
-                  {t("Profesión")}
-                </p>
-              </div>
-              <p className="mt-1 min-w-0 text-[12.5px]">
-                {selectedType?.name}
-                {form.specialtyIds.length > 0 &&
-                  ` · ${form.specialtyIds
-                    .map(
-                      (id) =>
-                        specialties.find((s) => s.id === id)?.name,
-                    )
-                    .filter(Boolean)
-                    .join(", ")}`}
-              </p>
             </div>
           )}
 
