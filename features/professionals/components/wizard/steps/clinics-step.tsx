@@ -1,7 +1,6 @@
 /**
- * Paso de clínicas y permisos — compartido entre profesional y empleado.
- * Extraído del monolito ProfessionalWizard (paso 2, líneas 761–957).
- * Requiere organizations, roles y las funciones de toggle/assignment.
+ * Paso de clínicas — compartido entre profesional y empleado.
+ * El rol se asume desde la profesión (no se selecciona por clínica).
  */
 
 "use client";
@@ -22,9 +21,8 @@ import {
   type OrganizationTree,
   type ProfessionalClinicAssignment,
 } from "@/features/professionals/services/employees-service";
-import type { Role } from "@/features/roles/types";
 import { cn } from "@/lib/utils";
-import type { FormState, Mode } from "../wizard-state";
+import type { FormState } from "../wizard-state";
 
 interface ClinicsStepProps {
   form: FormState;
@@ -32,9 +30,7 @@ interface ClinicsStepProps {
   onNext: () => void;
   onBack: () => void;
   organizations: OrganizationTree[];
-  roles: Role[];
   loading?: boolean;
-  mode?: Mode;
 }
 
 export function ClinicsStep({
@@ -43,9 +39,7 @@ export function ClinicsStep({
   onNext,
   onBack,
   organizations,
-  roles,
   loading = false,
-  mode,
 }: ClinicsStepProps) {
   const t = useT();
 
@@ -57,16 +51,6 @@ export function ClinicsStep({
   // Las clínicas son opcionales: el backend acepta empleados sin asignaciones
   // (scoped assignments quedan vacíos y la invitación no lleva scopes).
   const canContinue = form.organizationId !== "";
-
-  // Busca el rol cuyo nombre coincide con "Professional" (insensible a mayúsculas).
-  // Se usa para preseleccionar el rol por defecto al asignar clínicas en modo profesional.
-  const professionalRoleId = useMemo(() => {
-    if (mode !== "professional") return null;
-    const match = roles.find(
-      (r) => r.name.toLowerCase() === "professional",
-    );
-    return match?.id ?? null;
-  }, [mode, roles]);
 
   const toggleClinic = useCallback((clinicId: string) => {
     setForm((f) => {
@@ -82,13 +66,12 @@ export function ClinicsStep({
           schedules: rest,
         };
       }
+      // roleId se asigna al enviar según el modo (profesional → "Professional").
       const item: ProfessionalClinicAssignment = {
         clinicId,
         isPrimary: f.clinicAssignments.length === 0,
         status: "Active",
-        // En modo profesional, preseleccionar el rol "Professional" si existe en la lista.
-        // En empleado u otros modos, el valor queda null (sin rol preseleccionado).
-        roleId: professionalRoleId,
+        roleId: null,
         locationIds: [],
       };
       return {
@@ -96,19 +79,7 @@ export function ClinicsStep({
         clinicAssignments: [...f.clinicAssignments, item],
       };
     });
-  }, [setForm, professionalRoleId]);
-
-  const updateAssignment = useCallback(
-    (clinicId: string, patch: Partial<ProfessionalClinicAssignment>) => {
-      setForm((f) => ({
-        ...f,
-        clinicAssignments: f.clinicAssignments.map((c) =>
-          c.clinicId === clinicId ? { ...c, ...patch } : c,
-        ),
-      }));
-    },
-    [setForm],
-  );
+  }, [setForm]);
 
   const toggleLocation = useCallback(
     (clinicId: string, locationId: string) => {
@@ -132,8 +103,8 @@ export function ClinicsStep({
   return (
     <div className="animate-slide-up flex flex-col gap-0">
       <SectionHeader
-        title={t("Clínicas y permisos")}
-        description={t("Organización, sedes y rol por clínica")}
+        title={t("Clínicas")}
+        description={t("Organización y sedes")}
         icon={Building2}
         variant="primary"
       />
@@ -226,34 +197,6 @@ export function ClinicsStep({
 
                   {assignment && (
                     <div className="animate-fade-in flex flex-col gap-4 border-t border-border/60 bg-background/50 px-4 py-4 sm:flex-row sm:items-start sm:gap-5">
-                      <div className="flex flex-1 flex-col gap-1.5">
-                        <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-                          {t("Rol en esta clínica")}
-                        </p>
-                        <NativeSelect
-                          value={assignment.roleId ?? ""}
-                          onChange={(value) =>
-                            updateAssignment(clinic.id, {
-                              roleId: value || null,
-                            })
-                          }
-                          options={
-                            loading
-                              ? [{ value: "", label: t("Cargando...") }]
-                              : [
-                                  { value: "", label: t("— Sin rol —") },
-                                  ...roles.map((r) => ({
-                                    value: r.id,
-                                    label: r.name,
-                                  })),
-                                ]
-                          }
-                          disabled={loading}
-                          ariaLabel={t("Rol en {clinic}", {
-                            clinic: clinic.name,
-                          })}
-                        />
-                      </div>
                       {clinic.locations.length > 0 && (
                         <div className="flex flex-1 flex-col gap-1.5">
                           <p className="flex items-center gap-1 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">

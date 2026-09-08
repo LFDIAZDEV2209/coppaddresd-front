@@ -1,7 +1,7 @@
 /**
  * Paso de revisión — adapta el resumen al modo activo.
- * - Profesional: identidad + profesión + clínicas/roles + horarios + invitación
- * - Empleado: identidad + clínicas/roles + puesto + invitación
+ * - Profesional: identidad + profesión + clínicas + horarios + invitación
+ * - Empleado: identidad + clínicas + puesto + invitación
  * - Paciente: identidad + clínica
  */
 
@@ -28,7 +28,6 @@ import {
   type ProfessionalTypeDto,
   type SpecialtyDto,
 } from "@/features/professionals/services/professional-catalogs-service";
-import type { Role } from "@/features/roles/types";
 import { ReviewEditButton } from "../shared";
 import {
   type FormState,
@@ -45,7 +44,6 @@ interface ReviewStepProps {
   onBack: () => void;
   saving: boolean;
   organizations: OrganizationTree[];
-  roles: Role[];
   types: ProfessionalTypeDto[];
   specialties: SpecialtyDto[];
 }
@@ -57,7 +55,6 @@ export function ReviewStep({
   onBack,
   saving,
   organizations,
-  roles,
   types,
   specialties,
 }: ReviewStepProps) {
@@ -77,10 +74,9 @@ export function ReviewStep({
   const summaryClinics = form.clinicAssignments
     .map((c) => {
       const clinic = activeOrg?.clinics.find((x) => x.id === c.clinicId);
-      const role = roles.find((r) => r.id === c.roleId);
       const locations =
         clinic?.locations.filter((l) => c.locationIds.includes(l.id)) ?? [];
-      return { clinic, role, locations };
+      return { clinic, locations };
     })
     .filter((s) => s.clinic);
 
@@ -181,24 +177,22 @@ export function ReviewStep({
             </div>
           )}
 
-          {/* Clínicas y roles (profesional/empleado) — después de profesión en modo profesional */}
+          {/* Clínicas (profesional/empleado) — después de profesión en modo profesional */}
           {!isPatient && summaryClinics.length > 0 && (
             <div className="border-t border-border p-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[12px] font-semibold text-muted-foreground">
-                  {t("Clínicas y roles")}
+                  {t("Clínicas")}
                 </p>
                 <ReviewEditButton onClick={onBack} />
               </div>
               <div className="mt-2 flex flex-col gap-2">
-                {summaryClinics.map(({ clinic, role, locations }) => (
+                {summaryClinics.map(({ clinic, locations }) => (
                   <div
                     key={clinic!.id}
                     className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-muted/40 px-3 py-2 text-[12.5px]"
                   >
                     <span className="font-semibold">{clinic!.name}</span>
-                    <span className="text-muted-foreground">·</span>
-                    <span>{role?.name ?? t("Sin rol")}</span>
                     {locations.length > 0 && (
                       <>
                         <span className="text-muted-foreground">·</span>
