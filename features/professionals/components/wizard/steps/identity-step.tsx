@@ -8,7 +8,7 @@
 
 import { useT } from "@/providers/i18n-provider";
 import { useCallback, useState, useMemo } from "react";
-import { ArrowRight, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, UserRound } from "lucide-react";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,11 @@ import { ProfessionalAvatar } from "../../professional-visuals";
 import { Field } from "../shared";
 import type { StepProps } from "../wizard-state";
 
-export function IdentityStep({ form, setForm, onNext }: StepProps) {
+interface IdentityStepProps extends Omit<StepProps, "onBack"> {
+  onBack?: () => void;
+}
+
+export function IdentityStep({ form, setForm, onNext, onBack }: IdentityStepProps) {
   const t = useT();
   const isPatient = form.mode === "patient";
 
@@ -200,7 +204,13 @@ export function IdentityStep({ form, setForm, onNext }: StepProps) {
           </div>
         </div>
 
-        <div className="mt-2 flex justify-end">
+        <div className="mt-2 flex items-center justify-between">
+          {onBack && (
+            <Button variant="outline" onClick={onBack}>
+              <ArrowLeft data-icon="inline-start" />
+              {t("Atrás")}
+            </Button>
+          )}
           <Button onClick={onNext} disabled={!canContinue}>
             {t("Continuar")}
             <ArrowRight data-icon="inline-end" />
