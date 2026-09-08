@@ -8,14 +8,13 @@
 
 import { useT } from "@/providers/i18n-provider";
 import { useAuth } from "@/providers/auth-provider";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
   CheckCircle2,
   Clipboard,
   KeyRound,
-  Loader2,
   Stethoscope,
   UserRound,
 } from "lucide-react";
@@ -61,6 +60,27 @@ import { ReviewStep } from "./wizard/steps/review-step";
 import { StepNav } from "./wizard/step-nav";
 import { UserWizard } from "@/features/users/components/user-wizard";
 
+// --- Caché de sesión para catálogos del wizard (~5 min TTL) ---
+// Evita re-fetch al volver al selector de modo y re-elegir en la misma sesión.
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface CacheEntry<T> {
+  data: T;
+  expiry: number;
+}
+
+const sessionCache: {
+  organizations: CacheEntry<OrganizationTree[]> | null;
+  professionalTypes: CacheEntry<ProfessionalTypeDto[]> | null;
+  specialties: CacheEntry<SpecialtyDto[]> | null;
+  roles: CacheEntry<Role[]> | null;
+} = {
+  organizations: null,
+  professionalTypes: null,
+  specialties: null,
+  roles: null,
+};
+
 interface PeopleWizardProps {
   initialMode?: string | null;
   initialContext?: string | null;
@@ -93,7 +113,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
   const [types, setTypes] = useState<ProfessionalTypeDto[]>([]);
   const [specialties, setSpecialties] = useState<SpecialtyDto[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{
@@ -104,59 +124,145 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Cargar catálogos de forma condicional según el modo efectivo.
-  // - user: el UserWizard embebido carga sus propios roles/permisos; no necesitamos nada del shell.
-  // - patient: solo el árbol de organizaciones (selector de clínica).
-  // - profesional / empleado / selector de modo: los 4 catálogos en paralelo.
+  // Ref para evitar re-fetch de catálogos ya cargados (ciclo de vida del componente)
+  const loadedRef = useRef({
+    organizations: false,
+    professionalTypes: false,
+    specialties: false,
+    roles: false,
+  });
+
+  // Cargar catálogos de forma condicional según el modo SELECCIONADO (no al montar).
+  // Cuando form.mode=null (selector de modo), NO se hace fetch — el selector
+  // necesita cero datos. Al elegir un modo, se carga solo lo que ese modo requiere:
+  //   - patient → solo árbol de organizaciones
+  //   - employee → organizaciones + roles
+  //   - professional → los 4 catálogos en paralelo
+  //   - user → nada (UserWizard embebido carga los suyos)
+  // Se usa caché de sesión (~5 min) y ref para evitar re-fetch.
   useEffect(() => {
+    const mode = form.mode;
+    if (!mode || mode === "user") return;
+
     let cancelled = false;
+
     (async () => {
+      setCatalogLoading(true);
       try {
-        if (effectiveMode === "user") {
-          // El UserWizard embebido carga sus propios catálogos internamente
-          return;
-        }
+        const tasks: Promise<void>[] = [];
 
-        if (effectiveMode === "patient") {
-          // Paciente: solo necesitamos el árbol de organizaciones (selector de clínica)
-          const orgs = await fetchOrganizationTree();
-          if (cancelled) return;
-          setOrganizations(orgs);
-          const withClinics = orgs.find((o) => o.clinics.length > 0);
-          if (withClinics) {
-            setForm((f) => ({ ...f, organizationId: withClinics.id }));
+        // Organizaciones (necesario para patient, employee, professional)
+        if (!loadedRef.current.organizations) {
+          loadedRef.current.organizations = true;
+          const entry = sessionCache.organizations;
+          if (entry && Date.now() < entry.expiry) {
+            setOrganizations(entry.data);
+            const withClinics = entry.data.find((o) => o.clinics.length > 0);
+            if (withClinics) {
+              setForm((f) => ({ ...f, organizationId: withClinics.id }));
+            }
+          } else {
+            tasks.push(
+              fetchOrganizationTree().then((orgs) => {
+                if (cancelled) return;
+                setOrganizations(orgs);
+                sessionCache.organizations = {
+                  data: orgs,
+                  expiry: Date.now() + CACHE_TTL_MS,
+                };
+                const withClinics = orgs.find((o) => o.clinics.length > 0);
+                if (withClinics) {
+                  setForm((f) => ({ ...f, organizationId: withClinics.id }));
+                }
+              }),
+            );
           }
-          return;
         }
 
-        // Profesional / Empleado / selector de modo: cargar los 4 catálogos en paralelo
-        const [orgs, ts, ss, rs] = await Promise.all([
-          fetchOrganizationTree(),
-          fetchProfessionalTypes(),
-          fetchSpecialties(),
-          fetchRoles(),
-        ]);
-        if (cancelled) return;
-        setOrganizations(orgs);
-        setTypes(ts);
-        setSpecialties(ss);
-        setRoles(rs);
-        // Organización por defecto: la primera CON clínicas
-        const withClinics = orgs.find((o) => o.clinics.length > 0);
-        if (withClinics) {
-          setForm((f) => ({ ...f, organizationId: withClinics.id }));
+        // Tipos profesionales (solo modo professional)
+        if (mode === "professional" && !loadedRef.current.professionalTypes) {
+          loadedRef.current.professionalTypes = true;
+          const entry = sessionCache.professionalTypes;
+          if (entry && Date.now() < entry.expiry) {
+            setTypes(entry.data);
+          } else {
+            tasks.push(
+              fetchProfessionalTypes().then((ts) => {
+                if (cancelled) return;
+                setTypes(ts);
+                sessionCache.professionalTypes = {
+                  data: ts,
+                  expiry: Date.now() + CACHE_TTL_MS,
+                };
+              }),
+            );
+          }
         }
+
+        // Especialidades (solo modo professional)
+        if (mode === "professional" && !loadedRef.current.specialties) {
+          loadedRef.current.specialties = true;
+          const entry = sessionCache.specialties;
+          if (entry && Date.now() < entry.expiry) {
+            setSpecialties(entry.data);
+          } else {
+            tasks.push(
+              fetchSpecialties().then((ss) => {
+                if (cancelled) return;
+                setSpecialties(ss);
+                sessionCache.specialties = {
+                  data: ss,
+                  expiry: Date.now() + CACHE_TTL_MS,
+                };
+              }),
+            );
+          }
+        }
+
+        // Roles (modo professional y employee)
+        if (
+          (mode === "professional" || mode === "employee") &&
+          !loadedRef.current.roles
+        ) {
+          loadedRef.current.roles = true;
+          const entry = sessionCache.roles;
+          if (entry && Date.now() < entry.expiry) {
+            setRoles(entry.data);
+          } else {
+            tasks.push(
+              fetchRoles().then((rs) => {
+                if (cancelled) return;
+                setRoles(rs);
+                sessionCache.roles = {
+                  data: rs,
+                  expiry: Date.now() + CACHE_TTL_MS,
+                };
+              }),
+            );
+          }
+        }
+
+        await Promise.all(tasks);
       } catch {
-        if (!cancelled)
+        if (!cancelled) {
           setError("No se pudieron cargar los catálogos. Intenta nuevamente.");
+          // Permitir reintentar al volver al selector y re-elegir
+          loadedRef.current = {
+            organizations: false,
+            professionalTypes: false,
+            specialties: false,
+            roles: false,
+          };
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setCatalogLoading(false);
       }
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [effectiveMode]);
+  }, [form.mode]);
 
   // Pasos del modo actual
   const mode = form.mode;
@@ -304,15 +410,6 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
   };
 
   // --- Renderizado ---
-
-  if (loading) {
-    return (
-      <div className="mx-auto flex min-h-[60vh] max-w-4xl items-center justify-center text-muted-foreground">
-        <Loader2 className="mr-2 size-5 animate-spin" />
-        {t("Cargando catálogos...")}
-      </div>
-    );
-  }
 
   // Título del page header según modo
   const headerTitle = !mode
@@ -531,6 +628,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 onBack={goBack}
                 organizations={organizations}
                 roles={roles}
+                loading={catalogLoading}
               />
             )}
 
@@ -553,6 +651,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 }
                 types={types}
                 specialties={specialties}
+                loading={catalogLoading}
                 onNext={goNext}
                 onBack={goBack}
               />
@@ -593,6 +692,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 onNext={goNext}
                 onBack={goBack}
                 organizations={organizations}
+                loading={catalogLoading}
               />
             )}
 

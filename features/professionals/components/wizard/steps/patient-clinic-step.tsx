@@ -21,6 +21,7 @@ interface PatientClinicStepProps {
   onNext: () => void;
   onBack: () => void;
   organizations: OrganizationTree[];
+  loading?: boolean;
 }
 
 export function PatientClinicStep({
@@ -29,6 +30,7 @@ export function PatientClinicStep({
   onNext,
   onBack,
   organizations,
+  loading = false,
 }: PatientClinicStepProps) {
   const t = useT();
 
@@ -64,7 +66,7 @@ export function PatientClinicStep({
               {t("Organización")}
             </label>
             <NativeSelect
-              value={form.organizationId}
+              value={loading ? "" : form.organizationId}
               onChange={(value) =>
                 setForm({
                   ...form,
@@ -72,10 +74,12 @@ export function PatientClinicStep({
                   clinicAssignments: [],
                 })
               }
-              options={organizations.map((o) => ({
-                value: o.id,
-                label: o.name,
-              }))}
+              options={
+                loading
+                  ? [{ value: "", label: t("Cargando...") }]
+                  : organizations.map((o) => ({ value: o.id, label: o.name }))
+              }
+              disabled={loading}
               ariaLabel={t("Organización")}
             />
           </div>

@@ -33,6 +33,7 @@ interface ClinicsStepProps {
   onBack: () => void;
   organizations: OrganizationTree[];
   roles: Role[];
+  loading?: boolean;
 }
 
 export function ClinicsStep({
@@ -42,6 +43,7 @@ export function ClinicsStep({
   onBack,
   organizations,
   roles,
+  loading = false,
 }: ClinicsStepProps) {
   const t = useT();
 
@@ -124,7 +126,7 @@ export function ClinicsStep({
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium">{t("Organización")}</label>
           <NativeSelect
-            value={form.organizationId}
+            value={loading ? "" : form.organizationId}
             onChange={(value) =>
               setForm({
                 ...form,
@@ -133,10 +135,12 @@ export function ClinicsStep({
                 schedules: {},
               })
             }
-            options={organizations.map((o) => ({
-              value: o.id,
-              label: o.name,
-            }))}
+            options={
+              loading
+                ? [{ value: "", label: t("Cargando...") }]
+                : organizations.map((o) => ({ value: o.id, label: o.name }))
+            }
+            disabled={loading}
             ariaLabel={t("Organización")}
           />
         </div>
@@ -215,13 +219,18 @@ export function ClinicsStep({
                               roleId: value || null,
                             })
                           }
-                          options={[
-                            { value: "", label: t("— Sin rol —") },
-                            ...roles.map((r) => ({
-                              value: r.id,
-                              label: r.name,
-                            })),
-                          ]}
+                          options={
+                            loading
+                              ? [{ value: "", label: t("Cargando...") }]
+                              : [
+                                  { value: "", label: t("— Sin rol —") },
+                                  ...roles.map((r) => ({
+                                    value: r.id,
+                                    label: r.name,
+                                  })),
+                                ]
+                          }
+                          disabled={loading}
                           ariaLabel={t("Rol en {clinic}", {
                             clinic: clinic.name,
                           })}

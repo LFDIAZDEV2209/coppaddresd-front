@@ -13,6 +13,7 @@ import {
   ArrowRight,
   BadgeCheck,
   Info,
+  Loader2,
   Stethoscope,
   X,
 } from "lucide-react";
@@ -32,6 +33,7 @@ interface ProfessionStepProps {
   setSpecialtyIds: (ids: string[]) => void;
   types: ProfessionalTypeDto[];
   specialties: SpecialtyDto[];
+  loading?: boolean;
   onNext: () => void;
   onBack: () => void;
 }
@@ -43,6 +45,7 @@ export function ProfessionStep({
   setSpecialtyIds,
   types,
   specialties,
+  loading = false,
   onNext,
   onBack,
 }: ProfessionStepProps) {
@@ -107,6 +110,12 @@ export function ProfessionStep({
           )}
         </div>
 
+        {loading && types.length === 0 && (
+          <div className="flex items-center gap-2 rounded-xl border border-dashed border-border px-4 py-8 text-center text-[12.5px] text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
+            {t("Cargando...")}
+          </div>
+        )}
         <div className="stagger-children grid grid-cols-1 gap-2 sm:grid-cols-2">
           {types.map((type) => (
             <button
