@@ -46,6 +46,7 @@ import { useT } from "@/providers/i18n-provider";
 import { groupPermissionsByModule } from "@/features/permissions/types";
 import type { Permission } from "@/features/permissions/types";
 import type { Role } from "@/features/roles/types";
+import { fetchRoles } from "@/features/roles/services/roles-service";
 import type { PermissionWithOrigin, User } from "../types";
 import {
   deleteUser,
@@ -105,9 +106,30 @@ export function UserDetail({ userId }: UserDetailProps) {
     try {
       const loadedUser = await fetchUser(userId);
       const loadedRoles = await fetchUserRoles(userId);
+      // Los roles scoped (clínica/organización) también aportan permisos
+      // heredados: resolvemos sus Role del catálogo para sumarlos al resumen.
+      const scopedNames = (loadedUser.scopedRoles ?? []).map((scoped) =>
+        scoped.roleName.toLowerCase(),
+      );
+      let summaryRoles = loadedRoles;
+      if (scopedNames.length > 0) {
+        try {
+          const catalog = await fetchRoles();
+          const extra = catalog.filter(
+            (role) =>
+              scopedNames.includes(role.name.toLowerCase()) &&
+              !loadedRoles.some((loaded) => loaded.id === role.id),
+          );
+          if (extra.length > 0) {
+            summaryRoles = [...loadedRoles, ...extra];
+          }
+        } catch {
+          // Sin Roles.View el resumen queda limitado a roles globales.
+        }
+      }
       const loadedSummary = await fetchUserPermissionSummary(
         userId,
-        loadedRoles,
+        summaryRoles,
       );
       setUser(loadedUser);
       setRoles(loadedRoles);
@@ -195,6 +217,10 @@ export function UserDetail({ userId }: UserDetailProps) {
     () => groupPermissionsByModule(filteredPermissions),
     [filteredPermissions],
   );
+
+  // Roles con alcance (clínica/organización): llegan en la respuesta del
+  // detalle y complementan a los roles globales de GET /roles/user/{id}.
+  const scopedRoles = user?.scopedRoles ?? [];
 
   // --- Estados de carga/error/vacío ---
   if (loading) {
@@ -304,7 +330,12 @@ export function UserDetail({ userId }: UserDetailProps) {
               <Mail className="size-3.5 shrink-0" />
               {user.email}
             </p>
-            <RoleChips roles={user.roles} max={4} className="mt-0.5" />
+            <RoleChips
+              roles={user.roles}
+              scopedRoles={user.scopedRoles}
+              max={4}
+              className="mt-0.5"
+            />
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {canUpdate && (
@@ -405,7 +436,7 @@ export function UserDetail({ userId }: UserDetailProps) {
             variant="primary"
           />
           <div className="flex flex-col gap-3 p-5">
-            {roles.length === 0 ? (
+            {roles.length === 0 && scopedRoles.length === 0 ? (
               <div className="rounded-lg border border-dashed border-warning/40 bg-warning-soft px-3 py-3">
                 <p className="text-[12.5px] text-warning-foreground">
                   {t(
@@ -414,6 +445,8 @@ export function UserDetail({ userId }: UserDetailProps) {
                 </p>
               </div>
             ) : (
+              <>
+                {roles.length > 0 && (
               <ul className="flex flex-col gap-2">
                 {roles.map((role) => {
                   const rolePermissionCount = summary?.inherited.filter(
@@ -447,6 +480,16 @@ export function UserDetail({ userId }: UserDetailProps) {
                   );
                 })}
               </ul>
+                )}
+                {scopedRoles.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("Roles con alcance")}
+                    </p>
+                    <RoleChips roles={[]} scopedRoles={scopedRoles} />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>
