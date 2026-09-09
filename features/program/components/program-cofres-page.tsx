@@ -9,6 +9,10 @@ import {
   CheckCircle2,
   Flame,
   Clock,
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import {
   BarChart,
@@ -26,6 +30,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -45,15 +50,39 @@ import {
 } from "../services/program-erp-constants";
 import { ChartTabs, usePersistedTab } from "./chart-tabs";
 import { PagedListFooter } from "./paged-list-footer";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { ErpCofresHitos, ProgramErpCofresDto } from "../types/erp";
+import type { ProgramErpCofresDto, PaginatedErpCofresTabla } from "../types/erp";
 
 const MILESTONE_KEYS = [7, 11, 22, 50] as const;
 
 // --- Componente principal ---
 
 export function ProgramCofresPage() {
-  const { data, loading, error, retry } = useProgramCofres();
+  const {
+    data,
+    loading,
+    error,
+    pageSize,
+    search,
+    setPage,
+    setPageSize,
+    setFilters,
+    retry,
+  } = useProgramCofres(1, 5);
+
+  const [searchInput, setSearchInput] = useState(search);
+  const [sortBy, setSortBy] = useState<string>("xp");
+  const [sortDir, setSortDir] = useState<string>("desc");
+
+  const handleSearch = () => {
+    setFilters({ search: searchInput, sortBy, sortDir });
+  };
+
+  const handleSort = (field: string) => {
+    const newDir = sortBy === field && sortDir === "desc" ? "asc" : "desc";
+    setSortBy(field);
+    setSortDir(newDir);
+    setFilters({ search: searchInput, sortBy: field, sortDir: newDir });
+  };
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -72,12 +101,23 @@ export function ProgramCofresPage() {
         }
       />
 
-      {loading ? (
+      {loading && !data ? (
         <CofresSkeleton />
       ) : error ? (
         <CofresError message={error} onRetry={retry} />
       ) : data ? (
-        <CofresContent data={data} />
+        <CofresContent
+          data={data}
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+          sortBy={sortBy}
+          sortDir={sortDir}
+          handleSearch={handleSearch}
+          handleSort={handleSort}
+          pageSize={pageSize}
+          setPage={setPage}
+          setPageSize={setPageSize}
+        />
       ) : null}
     </div>
   );
@@ -87,17 +127,32 @@ export function ProgramCofresPage() {
 
 function CofresContent({
   data,
+  searchInput,
+  setSearchInput,
+  sortBy,
+  sortDir,
+  handleSearch,
+  handleSort,
+  pageSize,
+  setPage,
+  setPageSize,
 }: {
-  data: import("../types/erp").ProgramErpCofresDto;
+  data: ProgramErpCofresDto;
+  searchInput: string;
+  setSearchInput: (v: string) => void;
+  sortBy: string;
+  sortDir: string;
+  handleSearch: () => void;
+  handleSort: (field: string) => void;
+  pageSize: number;
+  setPage: (p: number) => void;
+  setPageSize: (s: number) => void;
 }) {
   const { xp_por_categoria, milestones, tabla } = data;
 
-  const totalPatients = tabla.length;
-  const totalXp = tabla.reduce((sum, r) => sum + r.total_xp, 0);
-  const totalPending = tabla.reduce(
-    (sum, r) => sum + r.pending_clinical_count,
-    0,
-  );
+  const totalPatients = data.total_active_patients;
+  const totalXp = data.total_xp_awarded;
+  const totalPending = data.total_pending_clinical;
 
   return (
     <div className="flex flex-col gap-6">
@@ -129,7 +184,11 @@ function CofresContent({
         />
         <StatCard
           label="Próximos (≤3 d)"
-          value={data.proximos_a_desbloquear !== undefined ? String(data.proximos_a_desbloquear) : "—"}
+          value={
+            data.proximos_a_desbloquear !== undefined
+              ? String(data.proximos_a_desbloquear)
+              : "—"
+          }
           icon={Clock}
           variant="warning"
           context="≤3 días"
@@ -203,34 +262,113 @@ function CofresContent({
         </div>
       </section>
 
-      {/* Patient table — paginated */}
-      <CofresTablaPaginada tabla={tabla} />
+      {/* Patient table — paginated from server */}
+      <CofresTablaPaginada
+        tabla={tabla}
+        searchInput={searchInput}
+        setSearchInput={setSearchInput}
+        sortBy={sortBy}
+        sortDir={sortDir}
+        handleSearch={handleSearch}
+        handleSort={handleSort}
+        pageSize={pageSize}
+        setPage={setPage}
+        setPageSize={setPageSize}
+      />
     </div>
   );
 }
 
-function CofresTablaPaginada({ tabla }: { tabla: ProgramErpCofresDto["tabla"] }) {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
-  const totalPages = Math.max(1, Math.ceil(tabla.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const pageRows = tabla.slice((safePage - 1) * pageSize, safePage * pageSize);
+function CofresTablaPaginada({
+  tabla,
+  searchInput,
+  setSearchInput,
+  sortBy,
+  sortDir,
+  handleSearch,
+  handleSort,
+  pageSize,
+  setPage,
+  setPageSize,
+}: {
+  tabla: PaginatedErpCofresTabla;
+  searchInput: string;
+  setSearchInput: (v: string) => void;
+  sortBy: string;
+  sortDir: string;
+  handleSearch: () => void;
+  handleSort: (field: string) => void;
+  pageSize: number;
+  setPage: (p: number) => void;
+  setPageSize: (s: number) => void;
+}) {
+  const sortIcon = (field: string) => {
+    if (sortBy !== field) {
+      return <ArrowUpDown className="size-3 text-muted-foreground/50" />;
+    }
+    return sortDir === "asc" ? (
+      <ArrowUp className="size-3 text-primary" />
+    ) : (
+      <ArrowDown className="size-3 text-primary" />
+    );
+  };
 
   return (
     <section className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
-      <SectionHeader
-        title={`${tabla.length} pacientes`}
-        description="Progreso individual de cofres y XP"
-        icon={Gift}
-        variant="primary"
-      />
+      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between border-b border-border">
+        <div>
+          <h2 className="text-sm font-semibold">{tabla.total} pacientes</h2>
+          <p className="text-xs text-muted-foreground">
+            Progreso individual de cofres y XP · Página {tabla.page} de {tabla.totalPages}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar paciente..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="pl-8 text-xs"
+            />
+          </div>
+          <Button variant="outline" size="sm" onClick={handleSearch}>
+            Buscar
+          </Button>
+        </div>
+      </div>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Paciente</TableHead>
-              <TableHead className="text-right">Racha</TableHead>
-              <TableHead className="text-right">XP Total</TableHead>
+              <TableHead>
+                <button
+                  type="button"
+                  onClick={() => handleSort("patient_name")}
+                  className="flex items-center gap-1 hover:text-foreground cursor-pointer"
+                >
+                  Paciente {sortIcon("patient_name")}
+                </button>
+              </TableHead>
+              <TableHead className="text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSort("current_streak")}
+                  className="inline-flex items-center gap-1 hover:text-foreground cursor-pointer"
+                >
+                  Racha {sortIcon("current_streak")}
+                </button>
+              </TableHead>
+              <TableHead className="text-right">
+                <button
+                  type="button"
+                  onClick={() => handleSort("xp")}
+                  className="inline-flex items-center gap-1 hover:text-foreground cursor-pointer"
+                >
+                  XP Total {sortIcon("xp")}
+                </button>
+              </TableHead>
               <TableHead className="text-center">Nivel</TableHead>
               <TableHead className="hidden text-center md:table-cell">
                 <span className="text-[10px]">7d</span>
@@ -248,14 +386,14 @@ function CofresTablaPaginada({ tabla }: { tabla: ProgramErpCofresDto["tabla"] })
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageRows.length === 0 ? (
+            {tabla.data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">
                   No hay datos de cofres disponibles.
                 </TableCell>
               </TableRow>
             ) : (
-              pageRows.map((row) => (
+              tabla.data.map((row) => (
                 <TableRow key={row.patient_id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -313,11 +451,14 @@ function CofresTablaPaginada({ tabla }: { tabla: ProgramErpCofresDto["tabla"] })
         </Table>
       </div>
       <PagedListFooter
-        page={safePage}
-        totalPages={totalPages}
+        page={tabla.page}
+        totalPages={tabla.totalPages}
         onPageChange={setPage}
         pageSize={pageSize}
-        onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+        onPageSizeChange={(s) => {
+          setPageSize(s);
+          setPage(1);
+        }}
       />
     </section>
   );

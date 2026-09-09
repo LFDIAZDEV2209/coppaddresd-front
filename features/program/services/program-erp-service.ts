@@ -53,9 +53,22 @@ export async function fetchErpAdherencia(
 // --- Cofres y XP ---
 
 export async function fetchErpCofres(
+  page: number = 1,
+  pageSize: number = 10,
+  search?: string,
+  sortBy?: string,
+  sortDir?: string,
   signal?: AbortSignal,
 ): Promise<ProgramErpCofresDto> {
-  return apiFetch<ProgramErpCofresDto>(`${PATH}/cofres`, { signal });
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  if (search?.trim()) params.set("search", search.trim());
+  if (sortBy) params.set("sortBy", sortBy);
+  if (sortDir) params.set("sortDir", sortDir);
+
+  return apiFetch<ProgramErpCofresDto>(`${PATH}/cofres?${params.toString()}`, { signal });
 }
 
 // --- Perfil 360 del paciente ---

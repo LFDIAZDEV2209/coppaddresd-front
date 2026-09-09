@@ -199,10 +199,21 @@ export interface ErpCofresPatientRow {
   nb_current_streak: number;
 }
 
+export interface PaginatedErpCofresTabla {
+  data: ErpCofresPatientRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export interface ProgramErpCofresDto {
+  total_active_patients: number;
+  total_xp_awarded: number;
+  total_pending_clinical: number;
   xp_por_categoria: ErpXpByCategory[];
   milestones: ErpMilestoneCounts;
-  tabla: ErpCofresPatientRow[];
+  tabla: PaginatedErpCofresTabla;
   // --- Optional fields ---
   proximos_a_desbloquear?: number;
 }

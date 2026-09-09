@@ -96,11 +96,15 @@ function parseValue(
 function useCountUp(target: string, duration = 750): string {
   const parsed = parseValue(target);
   const [display, setDisplay] = useState(target);
+  const [prevTarget, setPrevTarget] = useState(target);
+
+  if (prevTarget !== target) {
+    setPrevTarget(target);
+    setDisplay(target);
+  }
 
   useEffect(() => {
-    setDisplay(target);
-    if (!parsed) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!parsed || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const start = performance.now();
     let raf = 0;
     const tick = (now: number) => {
