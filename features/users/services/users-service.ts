@@ -242,6 +242,8 @@ export interface BulkCreateUserRowInput {
   roleName: string | null;
   /** Nombre de la clínica para role scoped (opcional). Server-side validation. */
   clinicName?: string | null;
+  /** Código de clínica (opcional, precedence sobre clinicName). */
+  clinicCode?: string | null;
   status: string;
 }
 

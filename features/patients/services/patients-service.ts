@@ -129,6 +129,8 @@ export interface BulkPatientCreateRow {
   documentNumber: string | null;
   email: string | null;
   status: string;
+  /** Código de clínica (opcional, sin rol). */
+  clinicCode?: string | null;
 }
 
 export interface BulkCreatePatientsInput {

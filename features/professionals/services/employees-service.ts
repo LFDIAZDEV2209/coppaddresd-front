@@ -299,6 +299,8 @@ export interface BulkCreateRow {
   email: string;
   professionalTypeName: string | null;
   status: string;
+  /** Clínicas asignadas con su rol (opcional, solo para empleados/profesionales). */
+  clinicas?: Array<{ code: string; roleName: string }>;
 }
 
 export interface BulkCreateEmployeesInput {
