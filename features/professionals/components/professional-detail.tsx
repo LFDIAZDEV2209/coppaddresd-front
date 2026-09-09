@@ -20,7 +20,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { InfoItem } from "@/components/ui/info-item";
-import { Switch } from "@/components/ui/switch";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,11 +59,29 @@ export function ProfessionalDetail({ id }: { id: string }) {
     kind: "ok" | "error";
     message: string;
   } | null>(null);
-  const [accessByClinic, setAccessByClinic] = useState<Record<string, boolean>>({});
+  // Rol elegido por clínica (roleId; "" = sin acceso). Se inicializa desde
+  // los roles scoped actuales y se reemplaza completo al guardar.
+  const [roleByClinic, setRoleByClinic] = useState<Record<string, string>>({});
   const [dirty, setDirty] = useState(false);
   const [invitationLink, setInvitationLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
+
+  // Construir el mapa clinicId → roleId desde los roles scoped actuales.
+  const mapScopedRoles = useCallback(
+    (sc: ProfessionalScopes | null) => {
+      const map: Record<string, string> = {};
+      if (sc && !sc.requiresInvitation) {
+        for (const role of sc.roles) {
+          if (role.scopeType === "Clinic" && role.scopeId) {
+            map[role.scopeId] = role.roleId;
+          }
+        }
+      }
+      return map;
+    },
+    [],
+  );
 
   const load = useCallback(
     async (showSpinner = false) => {
@@ -75,13 +93,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         ]);
         setEmployee(emp);
         setScopes(sc);
-        if (sc && !sc.requiresInvitation) {
-          const map: Record<string, boolean> = {};
-          for (const role of sc.roles) {
-            if (role.scopeId) map[role.scopeId] = true;
-          }
-          setAccessByClinic(map);
-        }
+        setRoleByClinic(mapScopedRoles(sc));
         setDirty(false);
       } catch {
         setFeedback({
@@ -92,7 +104,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         if (showSpinner) setLoading(false);
       }
     },
-    [id, t],
+    [id, t, mapScopedRoles],
   );
 
   useEffect(() => {
@@ -108,13 +120,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         setEmployee(emp);
         setScopes(sc);
         setRoles(rs);
-        if (sc && !sc.requiresInvitation) {
-          const map: Record<string, boolean> = {};
-          for (const role of sc.roles) {
-            if (role.scopeId) map[role.scopeId] = true;
-          }
-          setAccessByClinic(map);
-        }
+        setRoleByClinic(mapScopedRoles(sc));
       } catch {
         if (!cancelled) {
           setFeedback({
@@ -129,7 +135,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id, t]);
+  }, [id, t, mapScopedRoles]);
 
   const canManageScopes = useMemo(
     () =>
@@ -184,29 +190,30 @@ export function ProfessionalDetail({ id }: { id: string }) {
     setBusy(true);
     setFeedback(null);
     try {
-      // Resolver el rol "Professional" (case-insensitive) del catálogo.
-      const professionalRoleId =
-        roles.find((r) => r.name.toLowerCase() === "professional")?.id ??
-        undefined;
-
+      // Roles deseados: preservar los de scope Organization/Global tal como
+      // están y reconstruir los de clínica según lo seleccionado en la UI.
+      // "Sin acceso" (roleId vacío) elimina el rol de esa clínica porque el
+      // reemplazo es total.
       const rolesToApply: Array<{
         roleId: string;
         scopeType: string;
         scopeId: string | null;
-      }> = [];
-
-      // Solo incluir clínicas con acceso activo y ProfessionalRoleId válido.
-      if (professionalRoleId) {
-        for (const [clinicId, hasAccess] of Object.entries(accessByClinic)) {
-          if (hasAccess) {
-            rolesToApply.push({
-              roleId: professionalRoleId,
-              scopeType: "Clinic",
-              scopeId: clinicId,
-            });
-          }
-        }
-      }
+      }> = [
+        ...(scopes?.roles ?? [])
+          .filter((r) => r.scopeType !== "Clinic")
+          .map((r) => ({
+            roleId: r.roleId,
+            scopeType: r.scopeType,
+            scopeId: r.scopeId,
+          })),
+        ...Object.entries(roleByClinic)
+          .filter(([, roleId]) => roleId !== "")
+          .map(([clinicId, roleId]) => ({
+            roleId,
+            scopeType: "Clinic",
+            scopeId: clinicId,
+          })),
+      ];
 
       await updateProfessionalScopes(id, {
         roles: rolesToApply,
@@ -406,7 +413,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
             <SectionHeader
               title={t("Acceso por clínica")}
               description={t(
-                "El acceso se otorga por clínica según la profesión del profesional",
+                "El acceso se otorga por clínica; podés elegir un rol distinto en cada una.",
               )}
               icon={ShieldCheck}
               variant="primary"
@@ -450,22 +457,30 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           )}
                         </p>
                         <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-                          {accessByClinic[clinic.clinicId]
-                            ? t("Acceso clínico activo")
-                            : t("Sin acceso")}
+                          {roles.find(
+                            (r) =>
+                              r.id === roleByClinic[clinic.clinicId] &&
+                              roleByClinic[clinic.clinicId] !== "",
+                          )?.name ?? t("Sin acceso")}
                         </p>
                       </div>
-                      <Switch
-                        size="sm"
-                        checked={accessByClinic[clinic.clinicId] ?? false}
-                        onCheckedChange={(checked) => {
-                          setAccessByClinic((prev) => ({
+                      <NativeSelect
+                        value={roleByClinic[clinic.clinicId] ?? ""}
+                        onChange={(value) => {
+                          setRoleByClinic((prev) => ({
                             ...prev,
-                            [clinic.clinicId]: checked,
+                            [clinic.clinicId]: value,
                           }));
                           setDirty(true);
                         }}
-                        aria-label={t("Acceso clínico")}
+                        options={[
+                          { value: "", label: t("Sin acceso") },
+                          ...roles
+                            .filter((r) => r.isActive)
+                            .map((r) => ({ value: r.id, label: r.name })),
+                        ]}
+                        ariaLabel={t("Rol en esta clínica")}
+                        className="w-full sm:w-48"
                       />
                     </div>
                   ))}

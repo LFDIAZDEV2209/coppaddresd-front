@@ -2745,10 +2745,8 @@
   "Copiar todas las credenciales": "Copiar todas las credenciales",
   "Ir a usuarios": "Ir a usuarios",
   "Acceso por clínica": "Acceso por clínica",
-  "El acceso se otorga por clínica según la profesión del profesional": "El acceso se otorga por clínica según la profesión del profesional",
-  "Acceso clínico": "Acceso clínico",
-  "Acceso clínico activo": "Acceso clínico activo",
   "Sin acceso": "Sin acceso",
   "Gestiona el equipo clínico, sus especialidades y acceso al ERP": "Gestiona el equipo clínico, sus especialidades y acceso al ERP",
-  "Rol en esta clínica": "Rol en esta clínica"
+  "Rol en esta clínica": "Rol en esta clínica",
+  "El acceso se otorga por clínica; podés elegir un rol distinto en cada una.": "El acceso se otorga por clínica; podés elegir un rol distinto en cada una."
 }
