@@ -324,7 +324,7 @@ export function UsersPageContent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push("/users/importar")}
+                  onClick={() => router.push("/people/importar")}
                   title={t("Crear usuarios masivamente")}
                 >
                   <Upload data-icon="inline-start" />

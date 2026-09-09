@@ -252,7 +252,7 @@ export function ProfessionalDirectory() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => router.push("/employees/importar")}
+                onClick={() => router.push("/people/importar")}
               >
                 <FileUp data-icon="inline-start" />
                 {t("Creación masiva")}

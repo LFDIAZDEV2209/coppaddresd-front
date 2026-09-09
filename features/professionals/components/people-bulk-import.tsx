@@ -47,10 +47,8 @@ import {
   downloadPeopleTemplateCsv,
   parsePeopleCsv,
   validatePeopleRows,
-  type PeopleCsvRow,
-  type PeoplePreview,
 } from "../services/people-csv";
-import { ApiError } from "@/lib/api/http";
+import type { PeopleCsvRow, PeoplePreview } from "../services/people-csv";
 
 type Stage = "upload" | "preview" | "confirm" | "processing" | "result";
 

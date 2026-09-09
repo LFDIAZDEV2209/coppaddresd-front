@@ -43,6 +43,9 @@ const nextConfig: NextConfig = {
       { source: "/employees/new", destination: "/people/new", permanent: true },
       { source: "/patients/new", destination: "/people/new?mode=patient", permanent: true },
       { source: "/users/nuevo", destination: "/people/new", permanent: true },
+      { source: "/employees/importar", destination: "/people/importar", permanent: true },
+      { source: "/patients/importar", destination: "/people/importar", permanent: true },
+      { source: "/users/importar", destination: "/people/importar", permanent: true },
     ];
   },
 };

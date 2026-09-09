@@ -47,9 +47,6 @@ const VALID_TYPES: PersonType[] = [
 const VALID_STATUSES_STAFF = ["activo", "invitado", "inactivo"];
 const VALID_STATUSES_PATIENT = ["activo", "inactivo"];
 
-/** Regex para parsear pares código:rol dentro de la celda clinicas. */
-const CLINIC_PAIR_RE = /^\s*([^:,:\s]+)\s*:\s*([^,]+?)\s*(,|$)/;
-
 // --- Plantilla CSV ---
 
 /** Encabezados + 4 filas de ejemplo (una por tipo). */

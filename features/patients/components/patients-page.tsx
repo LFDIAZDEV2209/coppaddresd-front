@@ -115,7 +115,7 @@ export function PatientsPage() {
   const canDelete = can("Patients.Delete");
 
   const openCreate = () => router.push("/people/new?context=patient");
-  const openImport = () => router.push("/patients/importar");
+  const openImport = () => router.push("/people/importar");
   const openDetail = (patient: PatientListItem) =>
     router.push(`/patients/${patient.id}`);
   const openEdit = (patient: PatientListItem) =>
