@@ -18,6 +18,7 @@ import {
   Mail,
   RefreshCw,
   ShieldCheck,
+  ShieldPlus,
   UserRound,
   Users as UsersIcon,
   Wand2,
@@ -58,6 +59,7 @@ import {
 } from "../services/users-service";
 import { generatePassword } from "../services/users-mock";
 import { PermissionSelector } from "./permission-selector";
+import { RoleCreateDialog } from "@/features/roles/components/role-create-dialog";
 import { StepNav } from "@/features/professionals/components/wizard/step-nav";
 import { USER_STEPS } from "@/features/professionals/components/wizard/wizard-state";
 
@@ -171,6 +173,23 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
     null,
   );
   const [copied, setCopied] = useState(false);
+  const [createRoleOpen, setCreateRoleOpen] = useState(false);
+
+  /** Refetch roles y seleccionar el recién creado. */
+  const handleRoleCreated = useCallback(
+    (createdRole: { id: string }) => {
+      void (async () => {
+        try {
+          const updatedRoles = await fetchRoles();
+          setRoles(updatedRoles);
+          setRoleIds((prev) => new Set([...prev, createdRole.id]));
+        } catch {
+          // La recarga falla: el usuario puede reintentar al abrir el diálogo.
+        }
+      })();
+    },
+    [],
+  );
 
   const loadCatalog = useCallback(async () => {
     setLoading(true);
@@ -761,6 +780,18 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                         disabled={saving}
                       />
                     ))}
+                    {/* Botón para crear rol personalizado */}
+                    {hasPermission("Roles.Create") && (
+                      <button
+                        type="button"
+                        onClick={() => setCreateRoleOpen(true)}
+                        disabled={saving}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border p-3.5 text-[12.5px] font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                      >
+                        <ShieldPlus className="size-4" aria-hidden="true" />
+                        {t("Rol personalizado")}
+                      </button>
+                    )}
                   </div>
                   {selectableRoles.length === 0 && (
                     <p className="py-6 text-center text-[13px] text-muted-foreground">
@@ -860,6 +891,13 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
           </div>
         </div>
       )}
+
+      {/* Diálogo para crear rol personalizado */}
+      <RoleCreateDialog
+        open={createRoleOpen}
+        onOpenChange={setCreateRoleOpen}
+        onSuccess={handleRoleCreated}
+      />
     </div>
   );
 }

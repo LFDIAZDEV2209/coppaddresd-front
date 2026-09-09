@@ -38,6 +38,7 @@ import {
 } from "../services/roles-service";
 import type { Role, RoleCreateInput, RoleUpdateInput } from "../types";
 import { RoleCard } from "./role-card";
+import { RoleCreateDialog } from "./role-create-dialog";
 import { RoleFormDialog } from "./role-form-dialog";
 import { RolePermissionsPanel } from "./role-permissions-panel";
 
@@ -67,6 +68,7 @@ export function RolesPageContent() {
   const [pendingRoleId, setPendingRoleId] = useState<string | null>(null);
 
   const [formOpen, setFormOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Role | undefined>();
   const [savingRole, setSavingRole] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -160,7 +162,7 @@ export function RolesPageContent() {
 
   const openCreate = () => {
     setEditing(undefined);
-    setFormOpen(true);
+    setCreateDialogOpen(true);
   };
   const openEdit = (role: Role) => {
     setEditing(role);
@@ -198,6 +200,16 @@ export function RolesPageContent() {
       setSavingRole(false);
     }
   };
+
+  /** Callback tras crear rol personalizado: refresca la lista y selecciona. */
+  const handleCustomRoleCreated = useCallback(
+    (createdRole: Role) => {
+      void refreshRoles().then(() => {
+        setSelectedRoleId(createdRole.id);
+      });
+    },
+    [refreshRoles],
+  );
 
   const confirmDelete = async () => {
     if (!deleting) return;
@@ -402,6 +414,12 @@ export function RolesPageContent() {
         saving={savingRole}
         onOpenChange={setFormOpen}
         onSubmit={submitRole}
+      />
+
+      <RoleCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={handleCustomRoleCreated}
       />
 
       {/* Confirmación: cambiar de rol con cambios sin guardar */}
