@@ -189,7 +189,7 @@ export function ProgramTemplatesPage() {
                     Código
                   </TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Días
+                    Duración
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">
                     Versión
@@ -220,8 +220,13 @@ export function ProgramTemplatesPage() {
                     <TableCell className="hidden md:table-cell text-sm font-mono">
                       {tpl.code}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {tpl.totalWeeks}
+                    <TableCell className="hidden md:table-cell text-xs">
+                      <span className="font-medium text-foreground">
+                        {tpl.totalWeeks} {tpl.totalWeeks === 1 ? "semana" : "semanas"}
+                      </span>
+                      <span className="block text-muted-foreground">
+                        ({tpl.totalWeeks * 7} días)
+                      </span>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">
                       v{tpl.version}

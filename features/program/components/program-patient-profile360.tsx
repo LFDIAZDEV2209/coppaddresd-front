@@ -76,19 +76,21 @@ export function ProgramPatientProfile360({
       return;
     }
     let cancelled = false;
-    setEnrollmentLoading(true);
-    setEnrollmentError(null);
     fetchEnrollmentById(enrollmentId)
       .then((enr) => {
-        if (!cancelled) setEnrollment(enr);
+        if (!cancelled) {
+          setEnrollment(enr);
+          setEnrollmentError(null);
+        }
       })
       .catch((err) => {
-        if (!cancelled)
+        if (!cancelled) {
           setEnrollmentError(
             err instanceof Error
               ? err.message
               : "No se pudo cargar la inscripción.",
           );
+        }
       })
       .finally(() => {
         if (!cancelled) setEnrollmentLoading(false);
@@ -97,6 +99,10 @@ export function ProgramPatientProfile360({
       cancelled = true;
     };
   }, [enrollmentId]);
+
+  const activeEnrollment = enrollmentId ? enrollment : null;
+  const activeEnrollmentLoading = enrollmentId ? enrollmentLoading : false;
+  const activeEnrollmentError = enrollmentId ? enrollmentError : null;
 
   const handleRetryEnrollment = () => {
     if (!enrollmentId) return;
@@ -241,9 +247,9 @@ export function ProgramPatientProfile360({
                   <div className="min-w-0">
                     <EnrollmentDetailTabWrapper
                       enrollmentId={enrollmentId}
-                      enrollment={enrollment}
-                      loading={enrollmentLoading || loading}
-                      error={enrollmentError}
+                      enrollment={activeEnrollment}
+                      loading={activeEnrollmentLoading || loading}
+                      error={activeEnrollmentError}
                       onRetry={handleRetryEnrollment}
                     >
                       {(enr) => <EnrollmentBaselineTab enrollment={enr} />}
@@ -260,9 +266,9 @@ export function ProgramPatientProfile360({
           <section aria-label="Contenido">
             <EnrollmentDetailTabWrapper
               enrollmentId={enrollmentId}
-              enrollment={enrollment}
-              loading={enrollmentLoading || loading}
-              error={enrollmentError}
+              enrollment={activeEnrollment}
+              loading={activeEnrollmentLoading || loading}
+              error={activeEnrollmentError}
               onRetry={handleRetryEnrollment}
             >
               {(enr) => <EnrollmentContentTab enrollment={enr} />}
@@ -274,9 +280,9 @@ export function ProgramPatientProfile360({
           <section aria-label="Historial XP">
             <EnrollmentDetailTabWrapper
               enrollmentId={enrollmentId}
-              enrollment={enrollment}
-              loading={enrollmentLoading || loading}
-              error={enrollmentError}
+              enrollment={activeEnrollment}
+              loading={activeEnrollmentLoading || loading}
+              error={activeEnrollmentError}
               onRetry={handleRetryEnrollment}
             >
               {(enr) => <EnrollmentXpLedgerTab enrollment={enr} />}

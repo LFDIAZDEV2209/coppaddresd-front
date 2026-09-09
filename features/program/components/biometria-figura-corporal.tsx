@@ -148,6 +148,16 @@ export function BiometriaFiguraCorporal({
     };
   }, []);
 
+  const updateTipPos = useCallback(
+    (e: React.MouseEvent) => {
+      const rect = wrapperRef.current?.getBoundingClientRect();
+      if (rect) {
+        setTipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      }
+    },
+    [],
+  );
+
   const handleMouseOver = useCallback(
     (e: React.MouseEvent) => {
       if (pinnedZone) return;
@@ -157,27 +167,21 @@ export function BiometriaFiguraCorporal({
       const zone = id ? (slugToZone[id] ?? null) : null;
       if (zone) {
         setHoverZone(zone);
-        const rect = wrapperRef.current?.getBoundingClientRect();
-        if (rect)
-          setTipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        updateTipPos(e);
       } else {
-        // hovering a non-measurable part or empty space -> keep no tooltip
-        // only clear if hovering the wrapper background itself (id is wrapper)
         if ((e.target as HTMLElement) === wrapperRef.current)
           setHoverZone(null);
       }
     },
-    [pinnedZone],
+    [pinnedZone, updateTipPos],
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (pinnedZone || !hoverZone) return;
-      const rect = wrapperRef.current?.getBoundingClientRect();
-      if (rect)
-        setTipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      updateTipPos(e);
     },
-    [pinnedZone, hoverZone],
+    [pinnedZone, hoverZone, updateTipPos],
   );
 
   const handleMouseLeave = useCallback(() => {

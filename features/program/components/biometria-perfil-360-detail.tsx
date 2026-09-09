@@ -74,7 +74,7 @@ export function useBiometriaPatient(patientId: string) {
     return () => {
       cancelled = true;
     };
-  }, [patientId, fetchData]);
+  }, [patientId]);
 
   return { data, loading, error, retry: fetchData };
 }
@@ -325,23 +325,25 @@ export function BiometriaHistorySections({
   const [pageSize, setPageSize] = useState(7);
   const historialTotal = data.historial_semanal.length;
   const totalPages = Math.max(1, Math.ceil(historialTotal / pageSize));
+  const currentPage = Math.min(page, totalPages);
   const paginatedHistorial = useMemo(
-    () => data.historial_semanal.slice((page - 1) * pageSize, page * pageSize),
-    [data.historial_semanal, page, pageSize],
+    () =>
+      data.historial_semanal.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize,
+      ),
+    [data.historial_semanal, currentPage, pageSize],
   );
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- clamp page, intentional
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset on data change
     setPage(1);
   }, [historialTotal]);
-  if (
-    data.adherence_heatmap.length === 0 &&
-    data.historial_semanal.length === 0
-  )
-    return null;
   const hasHeatmap = data.adherence_heatmap.length > 0;
   const hasHistorial = data.historial_semanal.length > 0;
 
@@ -351,6 +353,8 @@ export function BiometriaHistorySections({
     : null;
   const offset =
     firstDate && !isNaN(firstDate.getTime()) ? (firstDate.getDay() + 6) % 7 : 0;
+
+  if (!hasHeatmap && !hasHistorial) return null;
 
   if (hasHeatmap && hasHistorial) {
     return (

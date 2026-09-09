@@ -118,7 +118,6 @@ export function ProgramPerfil360Page({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- UI sync, intentional
     if (selectedPatient) setShowSearch(false);
   }, [selectedPatient]);
-
   if (selectedPatient) {
     return (
       <div className="flex flex-col gap-6 p-4 sm:p-6">

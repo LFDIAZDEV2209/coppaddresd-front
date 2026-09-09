@@ -48,6 +48,15 @@ const nextConfig: NextConfig = {
       { source: "/users/importar", destination: "/people/importar", permanent: true },
     ];
   },
+
+  // Almacenamiento de la comunidad (portadas, logos, media): el ERP en dev
+  // reenvía /storage al gateway (única entrada pública), igual que /api.
+  async rewrites() {
+    const storageTarget = process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5080";
+    return [
+      { source: "/storage/:path*", destination: `${storageTarget}/storage/:path*` },
+    ];
+  },
 };
 
 export default nextConfig;

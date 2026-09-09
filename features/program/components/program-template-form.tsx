@@ -41,15 +41,20 @@ export function ProgramTemplateFormDialog({
   const [code, setCode] = useState(template && "code" in template ? template.code : "");
   const [name, setName] = useState(template ? template.name : "");
   const [description, setDescription] = useState(template?.description ?? "");
-  const [totalWeeks, setTotalWeeks] = useState(template?.totalWeeks ?? 83);
+  const [totalDays, setTotalDays] = useState(
+    template?.totalWeeks ? template.totalWeeks * 7 : 83,
+  );
+
+  const calculatedWeeks = Math.max(1, Math.ceil((totalDays || 1) / 7));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const input = {
+    const input: CreateTemplateInput = {
       code: code.trim(),
       name: name.trim(),
       description: description.trim() || null,
-      totalWeeks,
+      totalDays,
+      totalWeeks: calculatedWeeks,
       days: template && "days" in template ? template.days : [],
     };
     await onSubmit(input, isEdit && template ? template.id : undefined);
@@ -111,18 +116,23 @@ export function ProgramTemplateFormDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="tpl-weeks" className="text-sm font-medium">
+            <label htmlFor="tpl-days" className="text-sm font-medium">
               Total de días *
             </label>
             <Input
-              id="tpl-weeks"
+              id="tpl-days"
               type="number"
               min={1}
-              max={520}
-              value={totalWeeks}
-              onChange={(e) => setTotalWeeks(Number(e.target.value))}
+              max={3650}
+              value={totalDays}
+              onChange={(e) => setTotalDays(Number(e.target.value))}
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Equivale a {calculatedWeeks}{" "}
+              {calculatedWeeks === 1 ? "semana" : "semanas"} ({calculatedWeeks * 7}{" "}
+              días en ciclo semanal).
+            </p>
           </div>
 
           <DialogFooter>

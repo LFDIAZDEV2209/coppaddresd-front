@@ -35,13 +35,23 @@ const BAR_GRADIENTS: (readonly [string, string] | null)[] = [
 ];
 
 /**
- * Actividad semanal: barras teal con pico en gradiente de marca, línea de
- * promedio punteada y eje con escala real. Hover: la barra se acentúa,
- * las demás se atenúan y aparece el tooltip con día, valor y variación.
+ * Actividad diaria / semanal: barras con degradado, pico en gradiente de marca,
+ * línea de promedio punteada y eje con escala real.
+ * Soporta series largas (p. ej. 30 puntos del endpoint de KPIs): el ancho de
+ * barra es fluido y las etiquetas de día se espacian para no colisionar.
  */
 export function ActivityChart({ data }: ActivityChartProps) {
   const t = useT();
   const [hovered, setHovered] = useState<number | null>(null);
+
+  if (data.length === 0) {
+    return (
+      <div className="flex h-[240px] items-center justify-center rounded-lg bg-muted/30 text-sm text-muted-foreground">
+        {t("Sin actividad en el período")}
+      </div>
+    );
+  }
+
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   const avg = Math.round(
     data.reduce((s, d) => s + d.value, 0) / Math.max(data.length, 1),
@@ -51,6 +61,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
     0,
   );
   const avgPx = (avg / maxValue) * 180;
+  const labelEvery = data.length > 12 ? Math.ceil(data.length / 12) : 1;
 
   return (
     <div className="flex items-end gap-0">
@@ -75,7 +86,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
         </div>
 
         {data.map((point, index) => {
-          const heightPercent = (point.value / maxValue) * 100;
+          const heightPercent = maxValue > 0 ? (point.value / maxValue) * 100 : 0;
           const isPeak = index === peakIndex;
           const isHovered = hovered === index;
           const align =
@@ -97,10 +108,12 @@ export function ActivityChart({ data }: ActivityChartProps) {
             };
           }
 
+          const isLabelVisible = index % labelEvery === 0;
+
           return (
             <div
-              key={point.day}
-              className="relative z-20 flex flex-1 cursor-pointer flex-col items-center gap-2"
+              key={`${point.day}-${index}`}
+              className="relative z-20 flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-2"
               onMouseEnter={() => setHovered(index)}
               onMouseLeave={() => setHovered(null)}
             >
@@ -112,7 +125,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
                   visible={isHovered}
                   align={align}
                   title={t(DAY_LONG[point.day] ?? point.day)}
-                  label={t("Conversaciones")}
+                  label={t("Registros")}
                   value={String(point.value)}
                   delta={delta}
                   style={{
@@ -125,7 +138,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
                 >
                   <div
                     className={cn(
-                      "bar-grow-y mx-auto w-[30px] rounded-t-[10px] transition-[opacity,filter,transform] duration-200",
+                      "bar-grow-y mx-auto w-full max-w-[30px] rounded-t-[10px] transition-[opacity,filter,transform] duration-200",
                       isPeak && "bg-brand-gradient",
                       isHovered && !isPeak && "brightness-110",
                       hovered !== null && !isHovered && "opacity-50",
@@ -135,7 +148,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
                       animationDelay: `${index * 60}ms`,
                       background: isPeak
                         ? undefined
-                        : `linear-gradient(180deg, ${BAR_GRADIENTS[index]?.[0]}, ${BAR_GRADIENTS[index]?.[1]})`,
+                        : `linear-gradient(180deg, ${BAR_GRADIENTS[index % BAR_GRADIENTS.length]?.[0] ?? "#2dd4bf"}, ${BAR_GRADIENTS[index % BAR_GRADIENTS.length]?.[1] ?? "#0f766e"})`,
                       boxShadow:
                         isHovered || isPeak
                           ? "0 6px 16px -4px rgba(3,93,77,0.35)"
@@ -146,13 +159,13 @@ export function ActivityChart({ data }: ActivityChartProps) {
               </div>
               <span
                 className={cn(
-                  "text-[11px] transition-colors duration-200",
+                  "max-w-full truncate text-[11px] transition-colors duration-200",
                   isHovered || isPeak
                     ? "font-bold text-brand-teal"
                     : "font-medium text-muted-foreground",
                 )}
               >
-                {point.day}
+                {isLabelVisible ? point.day : "\u00A0"}
               </span>
             </div>
           );

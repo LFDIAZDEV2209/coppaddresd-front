@@ -63,16 +63,16 @@ export function ContentTable({
   const [pageSize, setPageSize] = useState(10);
 
   const totalPages = Math.max(1, Math.ceil(content.weeks.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
   const pagedWeeks = useMemo(
-    () => content.weeks.slice((page - 1) * pageSize, page * pageSize),
-    [content.weeks, page, pageSize],
+    () => content.weeks.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [content.weeks, currentPage, pageSize],
   );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- clamp page, intentional
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
-
   const handlePageSizeChange = useCallback((size: number) => {
     setPageSize(size);
     setPage(1);
@@ -137,7 +137,7 @@ export function ContentTable({
         </p>
       ) : (
         <PagedListFooter
-          page={page}
+          page={currentPage}
           totalPages={totalPages}
           onPageChange={setPage}
           pageSize={pageSize}

@@ -799,7 +799,6 @@ function AlertasCriticasCard({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- clamp page on alerts shrink
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
-
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
       <div className="p-5 pb-3">
