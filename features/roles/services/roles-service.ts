@@ -40,6 +40,17 @@ export async function deleteRole(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
 }
 
+/** Reemplaza todos los permisos de un rol (PUT /api/auth/roles/{id}/permissions). */
+export async function setRolePermissions(
+  roleId: string,
+  permissionIds: string[],
+): Promise<void> {
+  await apiFetch<void>(`${PATH}/${roleId}/permissions`, {
+    method: "PUT",
+    body: JSON.stringify({ permissionIds }),
+  });
+}
+
 // Badges de estado y fechas: compartidos con el módulo de usuarios.
 export {
   getStatusColor,
