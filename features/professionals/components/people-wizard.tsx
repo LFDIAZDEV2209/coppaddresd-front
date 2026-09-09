@@ -304,15 +304,6 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
     setError(null);
     try {
       if (mode === "professional" || mode === "employee") {
-        // En modo profesional, asignar el rol "Professional" a cada clínica
-        // (se asume desde la profesión, no se selecciona por clínica).
-        const professionalRoleId =
-          mode === "professional"
-            ? (roles.find(
-                (r) => r.name.toLowerCase() === "professional",
-              )?.id ?? null)
-            : null;
-
         const result = await createProfessional({
           organizationId: form.organizationId,
           firstName: form.firstName.trim(),
@@ -323,9 +314,11 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
           // Empleado: payload clínico vacío (sin tipo ni especialidades)
           professionalTypeId:
             mode === "professional" ? form.professionalTypeId || null : null,
+          // El rol por clínica se elige en el paso de clínicas (modo
+          // profesional); en empleado no se envía rol.
           clinics: form.clinicAssignments.map((c) => ({
             ...c,
-            roleId: professionalRoleId,
+            roleId: mode === "professional" ? (c.roleId ?? null) : null,
           })),
           specialtyIds: mode === "professional" ? form.specialtyIds : [],
           jobTitle: form.jobTitle.trim() || null,
@@ -409,7 +402,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
             : "No se pudo crear el profesional. Intenta nuevamente.",
       );
     }
-  }, [mode, form, buildSchedulePayload, roles]);
+  }, [mode, form, buildSchedulePayload]);
 
   const copyInvitationLink = async () => {
     if (!created?.invitationLink) return;
@@ -641,6 +634,8 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 onNext={goNext}
                 onBack={goBack}
                 organizations={organizations}
+                roles={roles}
+                mode={mode}
                 loading={catalogLoading}
               />
             )}
@@ -722,6 +717,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 organizations={organizations}
                 types={types}
                 specialties={specialties}
+                roles={roles}
               />
             )}
         </div>

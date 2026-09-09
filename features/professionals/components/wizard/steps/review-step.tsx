@@ -28,6 +28,7 @@ import {
   type ProfessionalTypeDto,
   type SpecialtyDto,
 } from "@/features/professionals/services/professional-catalogs-service";
+import type { Role } from "@/features/roles/types";
 import { ReviewEditButton } from "../shared";
 import {
   type FormState,
@@ -46,6 +47,7 @@ interface ReviewStepProps {
   organizations: OrganizationTree[];
   types: ProfessionalTypeDto[];
   specialties: SpecialtyDto[];
+  roles: Role[];
 }
 
 export function ReviewStep({
@@ -57,9 +59,14 @@ export function ReviewStep({
   organizations,
   types,
   specialties,
+  roles,
 }: ReviewStepProps) {
   const t = useT();
   const mode = form.mode as Mode;
+
+  const isProfessional = mode === "professional";
+  const isEmployee = mode === "employee";
+  const isPatient = mode === "patient";
 
   const activeOrg = useMemo(
     () => organizations.find((o) => o.id === form.organizationId) ?? null,
@@ -76,13 +83,14 @@ export function ReviewStep({
       const clinic = activeOrg?.clinics.find((x) => x.id === c.clinicId);
       const locations =
         clinic?.locations.filter((l) => c.locationIds.includes(l.id)) ?? [];
-      return { clinic, locations };
+      // Rol elegido por clínica (solo modo profesional).
+      const roleName =
+        isProfessional && c.roleId
+          ? roles.find((r) => r.id === c.roleId)?.name
+          : undefined;
+      return { clinic, locations, roleName };
     })
     .filter((s) => s.clinic);
-
-  const isProfessional = mode === "professional";
-  const isEmployee = mode === "employee";
-  const isPatient = mode === "patient";
 
   return (
     <div className="animate-slide-up flex flex-col gap-0">
@@ -187,7 +195,7 @@ export function ReviewStep({
                 <ReviewEditButton onClick={onBack} />
               </div>
               <div className="mt-2 flex flex-col gap-2">
-                {summaryClinics.map(({ clinic, locations }) => (
+                {summaryClinics.map(({ clinic, locations, roleName }) => (
                   <div
                     key={clinic!.id}
                     className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-muted/40 px-3 py-2 text-[12.5px]"
@@ -199,6 +207,14 @@ export function ReviewStep({
                         <span className="min-w-0 truncate text-muted-foreground">
                           {t("Sedes")}:{" "}
                           {locations.map((l) => l.name).join(", ")}
+                        </span>
+                      </>
+                    )}
+                    {isProfessional && roleName && (
+                      <>
+                        <span className="text-muted-foreground">·</span>
+                        <span className="text-muted-foreground">
+                          {roleName}
                         </span>
                       </>
                     )}

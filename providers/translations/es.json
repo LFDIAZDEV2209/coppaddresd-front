@@ -316,7 +316,7 @@
   "atención inmediata": "atención inmediata",
   "Atendidas": "Atendidas",
   "atienden a este paciente": "atienden a este paciente",
-    "Esta organización aún no tiene clínicas.": "Esta organización aún no tiene clínicas.",
+  "Esta organización aún no tiene clínicas.": "Esta organización aún no tiene clínicas.",
   "Podés continuar sin asignar clínicas y hacerlo después desde el perfil.": "Podés continuar sin asignar clínicas y hacerlo después desde el perfil.",
   "Atrás": "Atrás",
   "Auditoría": "Auditoría",
@@ -2279,7 +2279,6 @@
   "Seleccionar todos los permisos de {module}": "Seleccionar todos los permisos de {module}",
   "Seleccionar tipo de documento": "Seleccionar tipo de documento",
   "Seleccionar todos": "Seleccionar todos",
-  "Seleccionar todos los permisos de {module}": "Seleccionar todos los permisos de {module}",
   "Seleccionar…": "Seleccionar…",
   "Semana": "Semana",
   "Semana anterior": "Semana anterior",
@@ -2750,5 +2749,6 @@
   "Acceso clínico": "Acceso clínico",
   "Acceso clínico activo": "Acceso clínico activo",
   "Sin acceso": "Sin acceso",
-  "Gestiona el equipo clínico, sus especialidades y acceso al ERP": "Gestiona el equipo clínico, sus especialidades y acceso al ERP"
+  "Gestiona el equipo clínico, sus especialidades y acceso al ERP": "Gestiona el equipo clínico, sus especialidades y acceso al ERP",
+  "Rol en esta clínica": "Rol en esta clínica"
 }

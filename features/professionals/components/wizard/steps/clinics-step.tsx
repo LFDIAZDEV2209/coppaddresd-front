@@ -1,6 +1,7 @@
 /**
  * Paso de clínicas — compartido entre profesional y empleado.
- * El rol se asume desde la profesión (no se selecciona por clínica).
+ * En modo profesional cada clínica puede llevar un rol distinto
+ * (se preselecciona "Professional" y es editable por clínica).
  */
 
 "use client";
@@ -21,8 +22,9 @@ import {
   type OrganizationTree,
   type ProfessionalClinicAssignment,
 } from "@/features/professionals/services/employees-service";
+import type { Role } from "@/features/roles/types";
 import { cn } from "@/lib/utils";
-import type { FormState } from "../wizard-state";
+import type { FormState, Mode } from "../wizard-state";
 
 interface ClinicsStepProps {
   form: FormState;
@@ -30,6 +32,8 @@ interface ClinicsStepProps {
   onNext: () => void;
   onBack: () => void;
   organizations: OrganizationTree[];
+  roles: Role[];
+  mode: Mode;
   loading?: boolean;
 }
 
@@ -39,6 +43,8 @@ export function ClinicsStep({
   onNext,
   onBack,
   organizations,
+  roles,
+  mode,
   loading = false,
 }: ClinicsStepProps) {
   const t = useT();
@@ -46,6 +52,16 @@ export function ClinicsStep({
   const activeOrg = useMemo(
     () => organizations.find((o) => o.id === form.organizationId) ?? null,
     [organizations, form.organizationId],
+  );
+
+  // Roles activos del catálogo para el selector por clínica.
+  const activeRoles = useMemo(() => roles.filter((r) => r.isActive), [roles]);
+
+  // Rol clínico por defecto: "Professional" (case-insensitive).
+  const professionalRoleId = useMemo(
+    () =>
+      roles.find((r) => r.name.toLowerCase() === "professional")?.id ?? null,
+    [roles],
   );
 
   // Las clínicas son opcionales: el backend acepta empleados sin asignaciones
@@ -66,12 +82,13 @@ export function ClinicsStep({
           schedules: rest,
         };
       }
-      // roleId se asigna al enviar según el modo (profesional → "Professional").
+      // En modo profesional la clínica se agrega con el rol "Professional"
+      // preseleccionado (editable por clínica). En empleado queda sin rol.
       const item: ProfessionalClinicAssignment = {
         clinicId,
         isPrimary: f.clinicAssignments.length === 0,
         status: "Active",
-        roleId: null,
+        roleId: mode === "professional" ? professionalRoleId : null,
         locationIds: [],
       };
       return {
@@ -79,7 +96,20 @@ export function ClinicsStep({
         clinicAssignments: [...f.clinicAssignments, item],
       };
     });
-  }, [setForm]);
+  }, [setForm, mode, professionalRoleId]);
+
+  // Cambiar el rol asignado a una clínica ("" = sin rol).
+  const setClinicRole = useCallback(
+    (clinicId: string, roleId: string) => {
+      setForm((f) => ({
+        ...f,
+        clinicAssignments: f.clinicAssignments.map((c) =>
+          c.clinicId === clinicId ? { ...c, roleId: roleId || null } : c,
+        ),
+      }));
+    },
+    [setForm],
+  );
 
   const toggleLocation = useCallback(
     (clinicId: string, locationId: string) => {
@@ -228,6 +258,26 @@ export function ClinicsStep({
                               );
                             })}
                           </div>
+                        </div>
+                      )}
+                      {mode === "professional" && (
+                        <div className="flex w-full flex-col gap-1.5 sm:w-44 sm:shrink-0">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            {t("Rol en esta clínica")}
+                          </p>
+                          <NativeSelect
+                            value={assignment.roleId ?? ""}
+                            onChange={(value) => setClinicRole(clinic.id, value)}
+                            options={
+                              activeRoles.length === 0
+                                ? [{ value: "", label: t("Cargando...") }]
+                                : activeRoles.map((r) => ({
+                                    value: r.id,
+                                    label: r.name,
+                                  }))
+                            }
+                            ariaLabel={t("Rol en esta clínica")}
+                          />
                         </div>
                       )}
                       <button
