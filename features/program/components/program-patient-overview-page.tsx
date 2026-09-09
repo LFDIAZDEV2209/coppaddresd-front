@@ -974,7 +974,7 @@ export function ClinicalEvolutionCard({
         />
       </div>
       <div className="flex flex-1 flex-col p-3 pt-2">
-        <div className="min-h-[260px] flex-1">
+        <div className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
