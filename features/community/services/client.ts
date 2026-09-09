@@ -15,6 +15,12 @@ import { env } from "@/lib/config/env";
 let currentToken: string | null = getAccessToken();
 
 const communityAuth = authExchange(async (utils) => ({
+  // getAuth es obligatorio en authExchange: devuelve el estado de auth actual
+  // (token o null). Sin él, el exchange nunca adjunta el Bearer tras una recarga.
+  getAuth: async () => {
+    const token = getAccessToken();
+    return token ? { token } : null;
+  },
   addAuthToOperation(operation) {
     currentToken = getAccessToken();
     if (!currentToken) return operation;

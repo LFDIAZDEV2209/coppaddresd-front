@@ -653,6 +653,22 @@ export function getBreadcrumbSegments(
     return segments;
   }
 
+  // Rutas anidadas del módulo de usuarios (nuevo/importar/detalle/editar).
+  if (pathname.startsWith("/users/")) {
+    segments.push({ label: "Usuarios", href: "/users" });
+    const rest = pathname.slice("/users/".length);
+    if (rest === "nuevo") {
+      segments.push({ label: "Nuevo usuario" });
+    } else if (rest === "importar") {
+      segments.push({ label: "Importar masivamente" });
+    } else if (rest.endsWith("/editar")) {
+      segments.push({ label: "Editar usuario" });
+    } else {
+      segments.push({ label: "Detalle de usuario" });
+    }
+    return segments;
+  }
+
   const allItems = navModules.flatMap((m) => m.items);
   const current = allItems.find((item) => item.href === pathname);
 

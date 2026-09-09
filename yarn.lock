@@ -616,7 +616,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fullcalendar/core@npm:^6.1.21":
+"@fullcalendar/core@npm:6.1.21":
   version: 6.1.21
   resolution: "@fullcalendar/core@npm:6.1.21"
   dependencies:
@@ -625,7 +625,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fullcalendar/daygrid@npm:^6.1.21, @fullcalendar/daygrid@npm:~6.1.21":
+"@fullcalendar/daygrid@npm:6.1.21, @fullcalendar/daygrid@npm:~6.1.21":
   version: 6.1.21
   resolution: "@fullcalendar/daygrid@npm:6.1.21"
   peerDependencies:
@@ -634,7 +634,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fullcalendar/interaction@npm:^6.1.21":
+"@fullcalendar/interaction@npm:6.1.21":
   version: 6.1.21
   resolution: "@fullcalendar/interaction@npm:6.1.21"
   peerDependencies:
@@ -643,7 +643,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fullcalendar/react@npm:^6.1.21":
+"@fullcalendar/react@npm:6.1.21":
   version: 6.1.21
   resolution: "@fullcalendar/react@npm:6.1.21"
   peerDependencies:
@@ -654,7 +654,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fullcalendar/timegrid@npm:^6.1.21":
+"@fullcalendar/timegrid@npm:6.1.21":
   version: 6.1.21
   resolution: "@fullcalendar/timegrid@npm:6.1.21"
   dependencies:
@@ -3183,11 +3183,11 @@ __metadata:
   dependencies:
     "@base-ui/react": "npm:^1.7.0"
     "@floating-ui/dom": "npm:^1.8.0"
-    "@fullcalendar/core": "npm:^6.1.21"
-    "@fullcalendar/daygrid": "npm:^6.1.21"
-    "@fullcalendar/interaction": "npm:^6.1.21"
-    "@fullcalendar/react": "npm:^6.1.21"
-    "@fullcalendar/timegrid": "npm:^6.1.21"
+    "@fullcalendar/core": "npm:6.1.21"
+    "@fullcalendar/daygrid": "npm:6.1.21"
+    "@fullcalendar/interaction": "npm:6.1.21"
+    "@fullcalendar/react": "npm:6.1.21"
+    "@fullcalendar/timegrid": "npm:6.1.21"
     "@tailwindcss/postcss": "npm:^4"
     "@tiptap/core": "npm:^3.30.2"
     "@tiptap/pm": "npm:^3.30.2"
@@ -3217,6 +3217,7 @@ __metadata:
     shadcn: "npm:^4.17.0"
     tailwind-merge: "npm:^3.6.0"
     tailwindcss: "npm:^4"
+    temporal-polyfill: "npm:^1.0.4"
     turndown: "npm:^7.2.4"
     tw-animate-css: "npm:^1.4.0"
     typescript: "npm:^5"
@@ -8326,6 +8327,30 @@ __metadata:
   version: 2.3.3
   resolution: "tapable@npm:2.3.3"
   checksum: 10c0/47992e861053f861154e92fb4a98ac4ab47b6463717e60792dd1e8c755da0c4964cd8bb68c308a9066d6da89000b6310457b4d5d985c30de4ccc29066068cc17
+  languageName: node
+  linkType: hard
+
+"temporal-polyfill@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "temporal-polyfill@npm:1.0.4"
+  dependencies:
+    temporal-spec: "npm:1.0.1"
+    temporal-utils: "npm:1.0.2"
+  checksum: 10c0/b93905805462090e94069841bfa99d162aaec07766a2fa4a8aed28159e3c3296c03a3224b5c6ea14cc65890f299094b21d1702ee6d3cd15cdaae967c22809b33
+  languageName: node
+  linkType: hard
+
+"temporal-spec@npm:1.0.1":
+  version: 1.0.1
+  resolution: "temporal-spec@npm:1.0.1"
+  checksum: 10c0/99f6bfe4a8e59cd0664d0e97706798a1e10d42b1b682da9b60778a4cb9a23362da01ea3d83a674ef426ed743bbab835e2e3d1acea5d2d4a9eabe33863237b014
+  languageName: node
+  linkType: hard
+
+"temporal-utils@npm:1.0.2":
+  version: 1.0.2
+  resolution: "temporal-utils@npm:1.0.2"
+  checksum: 10c0/062cacb33662e4e2547e1ebea98e994d3835d98bf528744256714cd0c4219d43ffd526a500bbce12392468f802a01de058885e8d73453c11ed7ca67fa6e327fb
   languageName: node
   linkType: hard
 

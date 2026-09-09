@@ -41,7 +41,7 @@ export function ClubModerationTab({ clubId }: { clubId: string }) {
     report: ModerationReport,
     action: "RESUELTO" | "IGNORADO",
   ) => {
-    await resolveReport(report.id, action);
+    await resolveReport(report.id, action, clubId);
     await load();
   };
 

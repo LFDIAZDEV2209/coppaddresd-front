@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { LoaderCircle, Shield } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,7 +33,10 @@ interface RoleFormDialogProps {
    * que el dialog muestre el error (ej. "El nombre del rol ya existe")
    * dentro del modal.
    */
-  onSubmit: (input: RoleCreateInput | RoleUpdateInput, id?: string) => Promise<void>;
+  onSubmit: (
+    input: RoleCreateInput | RoleUpdateInput,
+    id?: string,
+  ) => Promise<void>;
 }
 
 const emptyForm = {
@@ -66,7 +70,10 @@ export function RoleFormDialog({
   // Errores del backend/red: se muestran en una caja dentro del modal.
   const [submitErrors, setSubmitErrors] = useState<string[] | null>(null);
 
-  const update = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => {
+  const update = <K extends keyof typeof form>(
+    field: K,
+    value: (typeof form)[K],
+  ) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
@@ -132,7 +139,17 @@ export function RoleFormDialog({
               <Shield className="size-5" />
             </div>
             <div className="flex flex-col gap-1">
-              <DialogTitle>{role ? t("Editar rol") : t("Nuevo rol")}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                {role ? t("Editar rol") : t("Nuevo rol")}
+                {role?.isSystem && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-semibold text-muted-foreground"
+                  >
+                    {t("Sistema")}
+                  </Badge>
+                )}
+              </DialogTitle>
               <DialogDescription>
                 {role
                   ? t("Actualizá los datos básicos del rol.")
@@ -196,7 +213,9 @@ export function RoleFormDialog({
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium">{t("Rol activo")}</span>
                 <span className="text-xs text-muted-foreground">
-                  {t("Los roles inactivos no pueden asignarse a nuevos usuarios.")}
+                  {t(
+                    "Los roles inactivos no pueden asignarse a nuevos usuarios.",
+                  )}
                 </span>
               </div>
               <Switch
@@ -220,7 +239,10 @@ export function RoleFormDialog({
             <Button type="submit" disabled={saving}>
               {saving ? (
                 <>
-                  <LoaderCircle className="animate-spin" data-icon="inline-start" />
+                  <LoaderCircle
+                    className="animate-spin"
+                    data-icon="inline-start"
+                  />
                   {t("Guardando...")}
                 </>
               ) : role ? (

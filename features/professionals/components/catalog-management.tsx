@@ -2,6 +2,7 @@
 
 import { useT } from "@/providers/i18n-provider";
 import { useCallback, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import {
   BadgePlus,
   BookOpenText,
@@ -220,7 +221,9 @@ export function CatalogManagement() {
     >
       <SectionHeader
         title={t("Catálogos del sistema")}
-        description={t("Gestiona tipos de profesional y especialidades (configuración crítica — Super Admin)")}
+        description={t(
+          "Gestiona tipos de profesional y especialidades (configuración crítica — Super Admin)",
+        )}
         icon={BookOpenText}
         variant="primary"
         actions={
@@ -276,7 +279,9 @@ export function CatalogManagement() {
                     <TableHead>{t("Nombre")}</TableHead>
                     <TableHead>{t("Código")}</TableHead>
                     <TableHead className="w-24">{t("Estado")}</TableHead>
-                    <TableHead className="w-20 text-right">{t("Acciones")}</TableHead>
+                    <TableHead className="w-20 text-right">
+                      {t("Acciones")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -292,13 +297,20 @@ export function CatalogManagement() {
                       </TableCell>
                       <TableCell>
                         <span
-                          className={
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold",
                             type.isActive
-                              ? "text-xs font-semibold text-success-foreground"
-                              : "text-xs font-semibold text-destructive"
-                          }
+                              ? "bg-success text-white"
+                              : "bg-destructive-soft text-destructive",
+                          )}
                         >
-                          {type.isActive ? "Activo" : "Inactivo"}
+                          <span
+                            className={cn(
+                              "size-1.5 rounded-full",
+                              type.isActive ? "bg-white/80" : "bg-destructive",
+                            )}
+                          />
+                          {type.isActive ? t("Activo") : t("Inactivo")}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -360,7 +372,9 @@ export function CatalogManagement() {
                     <TableHead>{t("Nombre")}</TableHead>
                     <TableHead>{t("Categoría")}</TableHead>
                     <TableHead className="w-24">{t("Estado")}</TableHead>
-                    <TableHead className="w-20 text-right">{t("Acciones")}</TableHead>
+                    <TableHead className="w-20 text-right">
+                      {t("Acciones")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -378,13 +392,22 @@ export function CatalogManagement() {
                       </TableCell>
                       <TableCell>
                         <span
-                          className={
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold",
                             specialty.isActive
-                              ? "text-xs font-semibold text-success-foreground"
-                              : "text-xs font-semibold text-destructive"
-                          }
+                              ? "bg-success text-white"
+                              : "bg-destructive-soft text-destructive",
+                          )}
                         >
-                          {specialty.isActive ? "Activo" : "Inactivo"}
+                          <span
+                            className={cn(
+                              "size-1.5 rounded-full",
+                              specialty.isActive
+                                ? "bg-white/80"
+                                : "bg-destructive",
+                            )}
+                          />
+                          {specialty.isActive ? t("Activo") : t("Inactivo")}
                         </span>
                       </TableCell>
                       <TableCell>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Radio, CalendarPlus, Mic2, Send } from "lucide-react";
+import { Radio, CalendarPlus, Mic2, Send, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -22,6 +22,7 @@ import {
   scheduleLive,
   sendLiveChatMessage,
 } from "../mock/clubs-api";
+import { searchProfiles } from "../services/clubs-service";
 import { LIVE_STATUS_COLORS, formatDateTime, initials } from "./clubs-helpers";
 
 export function ClubLivesTab({
@@ -186,11 +187,23 @@ export function ClubLivesTab({
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex aspect-video items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-destructive/20 via-muted/40 to-muted">
-            <Radio className="size-10 text-destructive" />
-            <span className="text-sm font-black uppercase tracking-widest text-destructive">
-              {t("En transmisión")}
-            </span>
+          <div className="flex aspect-video items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-destructive/20 via-muted/40 to-muted">
+            {activeLive?.embedUrl ? (
+              <iframe
+                src={activeLive.embedUrl}
+                title={activeLive.title}
+                className="size-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : (
+              <>
+                <Radio className="size-10 text-destructive" />
+                <span className="text-sm font-black uppercase tracking-widest text-destructive">
+                  {t("En transmisión")}
+                </span>
+              </>
+            )}
           </div>
           <div className="flex h-48 flex-col gap-2 overflow-y-auto rounded-xl border border-border bg-muted/40 p-3">
             {activeLive?.chat.length === 0 ? (
@@ -262,8 +275,37 @@ function ScheduleLiveDialog({
   const t = useT();
   const [title, setTitle] = useState("");
   const [scheduledStartAt, setScheduledStartAt] = useState("");
-  const [speakers, setSpeakers] = useState("");
+  const [embedUrl, setEmbedUrl] = useState("");
+  const [speakers, setSpeakers] = useState<string[]>([]);
+  const [speakerNames, setSpeakerNames] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<{ id: string; displayName: string }[]>([]);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    if (!search.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResults([]);
+      return;
+    }
+    setSearching(true);
+    searchProfiles(search)
+      .then((data) => {
+        if (active) {
+          setResults(data.filter((p) => !speakers.includes(p.id)));
+        }
+      })
+      .catch(() => setResults([]))
+      .finally(() => {
+        if (active) setSearching(false);
+      });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const save = async () => {
     if (!title.trim() || !scheduledStartAt) {
@@ -273,11 +315,8 @@ function ScheduleLiveDialog({
     await scheduleLive(clubId, {
       title: title.trim(),
       scheduledStartAt: new Date(scheduledStartAt).toISOString(),
-      speakers: speakers
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .map(() => "m-3"),
+      speakers,
+      embedUrl: embedUrl.trim() || null,
     });
     onSaved();
   };
@@ -310,12 +349,63 @@ function ScheduleLiveDialog({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>{t("Ponentes")}</Label>
+            <Label>{t("Enlace del live (YouTube/Vimeo/embed)")}</Label>
             <Input
-              value={speakers}
-              onChange={(e) => setSpeakers(e.target.value)}
-              placeholder={t("Nombres separados por coma")}
+              value={embedUrl}
+              onChange={(e) => setEmbedUrl(e.target.value)}
+              placeholder="https://www.youtube.com/embed/…"
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>{t("Ponentes")}</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {speakers.map((id) => (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary"
+                >
+                  {speakerNames[id] ?? id}
+                  <button
+                    type="button"
+                    className="text-primary/60 hover:text-primary"
+                    onClick={() => setSpeakers((s) => s.filter((x) => x !== id))}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("Buscar usuarios de la plataforma…")}
+            />
+            {searching && (
+              <span className="text-xs text-muted-foreground">{t("Buscando…")}</span>
+            )}
+            {!searching && results.length > 0 && (
+              <div className="flex max-h-40 flex-col gap-0.5 overflow-y-auto rounded-lg border border-border bg-muted/30 p-1">
+                {results.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="flex items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                    onClick={() => {
+                      setSpeakers((s) => [...s, p.id]);
+                      setSpeakerNames((n) => ({ ...n, [p.id]: p.displayName }));
+                      setResults((r) => r.filter((x) => x.id !== p.id));
+                      setSearch("");
+                    }}
+                  >
+                    <span>{p.displayName}</span>
+                    <UserPlus className="size-3.5 text-muted-foreground" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {!searching && search.trim() && results.length === 0 && (
+              <span className="text-xs text-muted-foreground">{t("Sin resultados")}</span>
+            )}
           </div>
           {error && <span className="text-xs text-destructive">{error}</span>}
         </div>

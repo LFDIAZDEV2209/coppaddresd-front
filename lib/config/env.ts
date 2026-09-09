@@ -9,9 +9,14 @@
  */
 export const env = {
   apiUrl: process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5080",
-  // Comunidad (GraphQL) — servicio standalone de la comunidad.
+  // Comunidad (GraphQL) — el servicio standalone de la comunidad se consume
+  // SIEMPRE a través del gateway (ruta /api/v1/community y /storage). El
+  // override NEXT_PUBLIC_COMMUNITY_API_URL solo existe para casos especiales
+  // (p. ej. entorno sin gateway); por defecto es la misma URL del gateway.
   communityApiUrl:
-    process.env.NEXT_PUBLIC_COMMUNITY_API_URL ?? "http://localhost:5200",
+    process.env.NEXT_PUBLIC_COMMUNITY_API_URL ??
+    process.env.NEXT_PUBLIC_GATEWAY_URL ??
+    "http://localhost:5080",
   // Código de aplicación que identifica este cliente ante el Auth Service
   // ("erp" para el frontend administrativo, "app" para la móvil). Determina
   // el claim `aud` del JWT y el acceso vía UserApplication.
