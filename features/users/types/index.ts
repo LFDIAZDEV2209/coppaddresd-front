@@ -137,38 +137,3 @@ export interface UserFormValues {
    */
   assignmentsChanged: boolean;
 }
-
-/**
- * Fila normalizada del archivo de importación masiva (mock). Los errores se
- * validan contra las mismas reglas que la creación individual.
- */
-export interface BulkUserRow {
-  line: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  /** Nombre del rol (opcional). */
-  role: string;
-  /**
-   * Nombre de la clínica (opcional). Si se omite, el rol se asigna global.
-   * La existencia se valida server-side; el front solo trimea el valor.
-   */
-  clinicName?: string;
-  /** "activo" | "inactivo" (opcional, default activo). */
-  status: string;
-  /** Errores de validación de la fila (vacío = fila válida). */
-  errors: string[];
-}
-
-/** Resumen del preview de importación. */
-export interface BulkPreview {
-  valid: number;
-  invalid: number;
-  duplicates: number;
-}
-
-/** Resultado simulado de la importación masiva (mock). */
-export interface BulkResult {
-  created: number;
-  skipped: number;
-}
