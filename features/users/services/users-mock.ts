@@ -53,16 +53,17 @@ export function generatePassword(): string {
 
 /**
  * Encabezados + 3 filas de ejemplo de la plantilla CSV de importación.
- * Columnas: nombre;email;rol;clinica;estado
+ * Columnas: nombre;apellido;email;rol;clinica;estado
+ * - apellido es OBLIGATORIO (validado en validateBulkRows).
  * - clinica es OPCIONAL: si se omite o deja en blanco, el rol se asigna global.
  * - La existencia de la clínica se valida server-side.
  */
 export function buildUsersTemplateCsv(): string {
   const lines = [
-    "nombre;email;rol;clinica;estado",
-    "María González;maria.gonzalez@ejemplo.com;Professional;;activo",
-    "Juan Pérez;juan.perez@ejemplo.com;Receptionist;;activo",
-    "Ana Torres;ana.torres@ejemplo.com;;Clínica Norte;inactivo",
+    "nombre;apellido;email;rol;clinica;estado",
+    "María;González;maria.gonzalez@ejemplo.com;Professional;;activo",
+    "Juan;Pérez;juan.perez@ejemplo.com;Receptionist;;activo",
+    "Ana;Torres;ana.torres@ejemplo.com;;Clínica Norte;inactivo",
   ];
   return lines.join("\n");
 }
@@ -82,7 +83,7 @@ export function downloadTemplate(): void {
 
 /**
  * Parsea el CSV de importación (separador ";" — igual que la plantilla).
- * Formato: nombre;email;rol;clinica;estado
+ * Formato: nombre;apellido;email;rol;clinica;estado
  * - clinica (columna 5) es opcional: si se omite, se deja como "".
  * - La existencia de la clínica se valida server-side, no aquí.
  * Parser simple: soporta valores entre comillas dobles y BOM inicial.
@@ -97,12 +98,12 @@ export function parseUsersCsv(raw: string): BulkUserRow[] {
     rows.push({
       line: i + 1,
       firstName: (cells[0] ?? "").trim(),
-      lastName: "", // Columna eliminada del template; el backend infiere del nombre si es necesario
-      email: (cells[1] ?? "").trim(),
-      role: (cells[2] ?? "").trim(),
+      lastName: (cells[1] ?? "").trim(),
+      email: (cells[2] ?? "").trim(),
+      role: (cells[3] ?? "").trim(),
       // Columna clinica: opcional, trim; existencia validada server-side
-      clinicName: (cells[3] ?? "").trim() || undefined,
-      status: (cells[4] ?? "activo").trim().toLowerCase(),
+      clinicName: (cells[4] ?? "").trim() || undefined,
+      status: (cells[5] ?? "activo").trim().toLowerCase(),
       errors: [],
     });
   }
@@ -156,6 +157,7 @@ export function validateBulkRows(
     const email = row.email.toLowerCase();
 
     if (!row.firstName) row.errors.push("Nombre obligatorio");
+    if (!row.lastName) row.errors.push("Apellido obligatorio");
     if (!email) {
       row.errors.push("Email obligatorio");
     } else if (!EMAIL_PATTERN.test(email)) {

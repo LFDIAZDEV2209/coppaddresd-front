@@ -364,7 +364,7 @@ export function UserBulkImport() {
               </span>
               <span className="text-[12.5px] text-muted-foreground">
                 {t(
-                  "CSV con separador ';' · columnas: nombre, email, rol, clínica (opcional), estado",
+                  "CSV con separador ';' · columnas: nombre, apellido, email, rol, clínica (opcional), estado",
                 )}
               </span>
             </span>
@@ -429,12 +429,13 @@ export function UserBulkImport() {
           </div>
 
           <div className="max-h-[440px] overflow-auto rounded-xl border border-border/70">
-            <table className="w-full min-w-[880px] text-left text-[12.5px]">
+            <table className="w-full min-w-[980px] text-left text-[12.5px]">
               <thead className="sticky top-0 z-10 bg-muted/90 backdrop-blur">
                 <tr className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
                   <th className="w-10 px-2 py-2">#</th>
-                  <th className="w-52 px-2 py-2">{t("Nombre")}</th>
-                  <th className="min-w-[300px] px-2 py-2">{t("Email")}</th>
+                  <th className="w-40 px-2 py-2">{t("Nombre")}</th>
+                  <th className="w-40 px-2 py-2">{t("Apellido")}</th>
+                  <th className="min-w-[240px] px-2 py-2">{t("Email")}</th>
                   <th className="w-48 px-2 py-2">{t("Rol")}</th>
                   <th className="w-44 px-2 py-2">{t("Clínica (opcional)")}</th>
                   <th className="w-36 px-2 py-2">{t("Estado")}</th>
@@ -481,6 +482,8 @@ export function UserBulkImport() {
                             updateRow(index, { firstName: value })
                           }
                         />
+                      </td>
+                      <td className="px-2 py-1.5">
                         <EditableCell
                           value={row.lastName}
                           placeholder={t("Apellido")}

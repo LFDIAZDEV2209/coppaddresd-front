@@ -2706,7 +2706,7 @@
   "3. Confirmar": "3. Confirmar",
   "4. Resultado": "4. Resultado",
   "Arrastrá tu archivo o hacé clic para elegirlo": "Arrastrá tu archivo o hacé clic para elegirlo",
-  "CSV con separador ';' · columnas: nombre, email, rol, clínica (opcional), estado": "CSV con separador ';' · columnas: nombre, email, rol, clínica (opcional), estado",
+  "CSV con separador ';' · columnas: nombre, apellido, email, rol, clínica (opcional), estado": "CSV con separador ';' · columnas: nombre, apellido, email, rol, clínica (opcional), estado",
   "CSV con separador ';' · columnas: nombre, apellido, documento, email, estado": "CSV con separador ';' · columnas: nombre, apellido, documento, email, estado",
   "plantilla-pacientes.csv": "plantilla-pacientes.csv",
   "Descargar plantilla": "Descargar plantilla",
