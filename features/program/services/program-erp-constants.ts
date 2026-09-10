@@ -145,6 +145,29 @@ export function initials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
+/**
+ * Parsea una fecha "YYYY-MM-DD" del backend como fecha LOCAL.
+ * `new Date("2026-09-10")` se interpreta como medianoche UTC y en
+ * America/Bogota (UTC-5) muestra el día anterior — por eso el heatmap
+ * "no mostraba hoy". Usar este helper para etiquetas de día.
+ */
+export function parseLocalDate(isoDate: string): Date | null {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(isoDate.trim());
+  if (!m) {
+    const d = new Date(isoDate);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+/** Hoy en hora local como "YYYY-MM-DD" (misma base que el backend). */
+export function todayLocalKey(): string {
+  const n = new Date();
+  const mm = String(n.getMonth() + 1).padStart(2, "0");
+  const dd = String(n.getDate()).padStart(2, "0");
+  return `${n.getFullYear()}-${mm}-${dd}`;
+}
+
 /** Tiempo relativo en español (hace X min, hace X h). */
 export function relativeTime(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();
