@@ -67,8 +67,8 @@ export function ActivityChart({ data }: ActivityChartProps) {
     <div className="flex items-end gap-0">
       {/* Eje con escala real */}
       <div className="flex w-10 shrink-0 flex-col-reverse items-end justify-between pb-8 text-[10px] text-muted-foreground">
-        {[0, Math.round(maxValue / 2), maxValue].map((v) => (
-          <span key={v}>{v}</span>
+        {[0, Math.round(maxValue / 2), maxValue].map((v, i) => (
+          <span key={i}>{v}</span>
         ))}
       </div>
 

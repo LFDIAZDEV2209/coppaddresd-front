@@ -3,17 +3,14 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
-import { getDemoCredentials } from "@/lib/api/auth-service";
 import Image from "next/image";
 import {
   Activity,
   AlertTriangle,
   Bot,
   CalendarDays,
-  CheckCircle2,
   Eye,
   EyeOff,
-  HeartPulse,
   KeyRound,
   Mail,
   MessageCircle,
@@ -87,12 +84,6 @@ export default function LoginPage() {
     await doLogin();
   };
 
-  const fillDemo = (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError("");
-  };
-
   return (
     <div className="grid min-h-dvh w-full overflow-x-hidden lg:grid-cols-[minmax(0,520px)_1fr]">
       {/* ─── Izquierda: formulario ─── */}
@@ -107,7 +98,7 @@ export default function LoginPage() {
           width={816}
           height={519}
           priority
-          className="mx-auto h-14 w-auto"
+          className="mx-auto h-24 w-auto"
         />
 
         {/* Contenido centrado verticalmente */}
@@ -224,34 +215,6 @@ export default function LoginPage() {
                 className="mt-1"
               />
             </form>
-
-            {/* Credenciales demo — solo en desarrollo */}
-            {process.env.NODE_ENV === "development" && (
-              <div className="mt-6 flex items-start gap-3 rounded-xl border border-border/70 bg-card p-4">
-                <HeartPulse className="mt-0.5 size-5 shrink-0 text-brand-teal" />
-                <div className="flex flex-col gap-2">
-                  <span className="text-[12px] font-semibold text-foreground">
-                    {t("Credenciales de demostración")}
-                  </span>
-                  {getDemoCredentials().map((cred) => (
-                    <button
-                      key={cred.email}
-                      type="button"
-                      onClick={() => fillDemo(cred.email, cred.password)}
-                      className="group flex min-w-0 cursor-pointer flex-wrap items-center gap-x-2 gap-y-1 text-left text-[11.5px] text-muted-foreground transition-colors hover:text-brand-navy"
-                    >
-                      <CheckCircle2 className="size-3 shrink-0 text-brand-teal" />
-                      <span className="truncate font-mono">{cred.email}</span>
-                      <span className="text-muted-foreground/50">·</span>
-                      <span className="font-mono">{cred.password}</span>
-                      <span className="ml-auto rounded-md bg-secondary-soft px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
-                        {cred.role}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -281,7 +244,10 @@ export default function LoginPage() {
         <div className="pointer-events-none absolute -bottom-32 -left-24 size-[420px] rounded-full bg-brand-teal/20 blur-[120px]" />
         <div className="pointer-events-none absolute top-10 right-1/4 size-[360px] rounded-full bg-brand-blue-mid/15 blur-[110px]" />
 
-        {/* Transición wave orgánica hacia el formulario (responsive SVG) */}
+        {/* Transición wave orgánica — el río serpentea: los bordes
+            blanco↔verde↔navy ondulan lateralmente (morph SMIL sincronizado,
+            6.5s). La franja verde entera se mueve entre el panel blanco y
+            el navy; un brillo tenue deriva dentro para dar corriente. */}
         <svg
           aria-hidden="true"
           className="pointer-events-none absolute inset-y-0 left-0 z-[5] h-full w-[130px]"
@@ -289,36 +255,90 @@ export default function LoginPage() {
           preserveAspectRatio="none"
         >
           <defs>
-            <linearGradient id="wave-stroke" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#87aeca" />
-              <stop offset="55%" stopColor="#5581a2" />
-              <stop offset="100%" stopColor="#035d4d" />
-            </linearGradient>
             <linearGradient id="wave-halo" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#0c4c6b" />
               <stop offset="100%" stopColor="#035d4d" />
             </linearGradient>
+            <clipPath id="river-band">
+              <path d="M0 0 H84 C126 170 30 360 80 540 C118 700 56 860 72 1000 H0 Z">
+                <animate
+                  attributeName="d"
+                  dur="6.5s"
+                  repeatCount="indefinite"
+                  calcMode="spline"
+                  keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"
+                  values="M0 0 H84 C126 170 30 360 80 540 C118 700 56 860 72 1000 H0 Z; M0 0 H86 C118 175 44 355 78 538 C130 695 52 855 74 1000 H0 Z; M0 0 H84 C126 170 30 360 80 540 C118 700 56 860 72 1000 H0 Z"
+                />
+              </path>
+            </clipPath>
+            <filter id="river-soft" x="-20%" y="-5%" width="140%" height="110%">
+              <feGaussianBlur stdDeviation="7" />
+            </filter>
           </defs>
-          {/* Halo gradiente: suaviza la transición entre el blanco y el navy */}
+          {/* Banda verde — su silueta serpentea (fallback estático) */}
           <path
             d="M0 0 H84 C126 170 30 360 80 540 C118 700 56 860 72 1000 H0 Z"
             fill="url(#wave-halo)"
-            fillOpacity="0.5"
-          />
-          {/* Wave principal blanca (mismo color del panel del formulario) */}
+            fillOpacity="0.9"
+          >
+            <animate
+              attributeName="d"
+              dur="6.5s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"
+              values="M0 0 H84 C126 170 30 360 80 540 C118 700 56 860 72 1000 H0 Z; M0 0 H86 C118 175 44 355 78 538 C130 695 52 855 74 1000 H0 Z; M0 0 H84 C126 170 30 360 80 540 C118 700 56 860 72 1000 H0 Z"
+            />
+          </path>
+          {/* Brillo tenue que deriva dentro de la banda (corriente sutil) */}
+          <g clipPath="url(#river-band)" filter="url(#river-soft)" className="river-flow">
+            <path
+              d="M71.1 -1000L64.1 -950L55.5 -900L46.1 -850L37 -800L28.9 -750L22.7 -700L18.9 -650L18.1 -600L20.1 -550L24.9 -500L31.9 -450L40.5 -400L49.9 -350L59 -300L67.1 -250L73.3 -200L77.1 -150L77.9 -100L75.9 -50L71.1 0L64.1 50L55.5 100L46.1 150L37 200L28.9 250L22.7 300L18.9 350L18.1 400L20.1 450L24.9 500L31.9 550L40.5 600L49.9 650L59 700L67.1 750L73.3 800L77.1 850L77.9 900L75.9 950L71.1 1000L64.1 1050L55.5 1100L46.1 1150L37 1200L28.9 1250L22.7 1300L18.9 1350L18.1 1400L20.1 1450L24.9 1500L31.9 1550L40.5 1600L49.9 1650L59 1700L67.1 1750L73.3 1800L77.1 1850L77.9 1900L75.9 1950L71.1 2000L91.1 2000L95.9 1950L97.9 1900L97.1 1850L93.3 1800L87.1 1750L79 1700L69.9 1650L60.5 1600L51.9 1550L44.9 1500L40.1 1450L38.1 1400L38.9 1350L42.7 1300L48.9 1250L57 1200L66.1 1150L75.5 1100L84.1 1050L91.1 1000L95.9 950L97.9 900L97.1 850L93.3 800L87.1 750L79 700L69.9 650L60.5 600L51.9 550L44.9 500L40.1 450L38.1 400L38.9 350L42.7 300L48.9 250L57 200L66.1 150L75.5 100L84.1 50L91.1 0L95.9 -50L97.9 -100L97.1 -150L93.3 -200L87.1 -250L79 -300L69.9 -350L60.5 -400L51.9 -450L44.9 -500L40.1 -550L38.1 -600L38.9 -650L42.7 -700L48.9 -750L57 -800L66.1 -850L75.5 -900L84.1 -950L91.1 -1000Z"
+              fill="#ffffff"
+              fillOpacity="0.22"
+            >
+              <animateTransform
+                attributeName="transform"
+                type="translate"
+                from="0 0"
+                to="0 -1000"
+                dur="4.5s"
+                repeatCount="indefinite"
+              />
+            </path>
+          </g>
+          {/* Wave blanca del formulario — su borde serpentea con la banda */}
           <path
             d="M0 0 H56 C108 160 6 350 58 530 C102 690 28 860 48 1000 H0 Z"
             fill="var(--background)"
-          />
-          {/* Trazo con gradiente del logo siguiendo el borde de la wave */}
+          >
+            <animate
+              attributeName="d"
+              dur="6.5s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"
+              values="M0 0 H56 C108 160 6 350 58 530 C102 690 28 860 48 1000 H0 Z; M0 0 H50 C88 165 22 345 64 530 C110 685 24 855 46 1000 H0 Z; M0 0 H56 C108 160 6 350 58 530 C102 690 28 860 48 1000 H0 Z"
+            />
+          </path>
+          {/* Borde teal del lado navy — pegado a la silueta de la banda */}
           <path
-            d="M56 0 C108 160 6 350 58 530 C102 690 28 860 48 1000"
+            d="M84 0 C126 170 30 360 80 540 C118 700 56 860 72 1000"
             fill="none"
-            stroke="url(#wave-stroke)"
-            strokeOpacity="0.6"
-            strokeWidth="2.5"
+            stroke="#87aeca"
+            strokeOpacity="0.4"
+            strokeWidth="2"
             vectorEffect="non-scaling-stroke"
-          />
+          >
+            <animate
+              attributeName="d"
+              dur="6.5s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"
+              values="M84 0 C126 170 30 360 80 540 C118 700 56 860 72 1000; M86 0 C118 175 44 355 78 538 C130 695 52 855 74 1000; M84 0 C126 170 30 360 80 540 C118 700 56 860 72 1000"
+            />
+          </path>
         </svg>
 
         {/* Marca */}

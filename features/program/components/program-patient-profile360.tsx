@@ -5,6 +5,9 @@ import { RefreshCw, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientOverview } from "../hooks/use-patient-overview";
+import { useEnrollmentSnapshot } from "../hooks/use-enrollment-snapshot";
+import { useT } from "@/providers/i18n-provider";
+import { ProgramGamificacionTab } from "./program-gamificacion-tab";
 import { usePersistedTab } from "./chart-tabs";
 import {
   BiometriaHeroSections,
@@ -40,8 +43,9 @@ export function ProgramPatientProfile360({
   isSearchOpen,
 }: ProgramPatientProfile360Props) {
   void _onBack;
+  const t = useT();
   const [activeTab, setActiveTab] = usePersistedTab(
-    "perfil360:unified-v2",
+    "perfil360:unified-v3",
     "resumen",
   );
   const { data, loading, error, retry } = usePatientOverview(patientId);
@@ -53,6 +57,7 @@ export function ProgramPatientProfile360({
 
   const tabs = [
     { key: "resumen", label: "Resumen" },
+    { key: "gamificacion", label: t("Gamificación") },
     { key: "clinica", label: "Clínica" },
     { key: "contenido", label: "Contenido" },
     { key: "xp-ledger", label: "Historial XP" },
@@ -62,6 +67,12 @@ export function ProgramPatientProfile360({
   const safeTab = tabs.some((t) => t.key === activeTab) ? activeTab : "resumen";
 
   const enrollmentId = data?.enrollment?.enrollment_id ?? null;
+  const {
+    data: snapshot,
+    loading: snapshotLoading,
+    error: snapshotError,
+    retry: retrySnapshot,
+  } = useEnrollmentSnapshot(enrollmentId);
 
   const [enrollment, setEnrollment] = useState<ProgramEnrollment | null>(null);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
@@ -221,7 +232,7 @@ export function ProgramPatientProfile360({
               <PatientResumenBody data={data} hideMisiones />
             ) : null}
 
-            {/* Historial biometría: heatmap + tabla semanal */}
+            {/* Historial biometría: tabla semanal (el heatmap vive en Gamificación) */}
             {biometriaLoading ? null : biometriaData ? (
               <BiometriaHistorySections data={biometriaData} />
             ) : null}
@@ -259,6 +270,21 @@ export function ProgramPatientProfile360({
                 <PatientClinicaBottom data={data} />
               </>
             ) : null}
+          </section>
+        )}
+
+        {safeTab === "gamificacion" && (
+          <section aria-label="Gamificación">
+            <ProgramGamificacionTab
+              overview={data ?? null}
+              overviewLoading={loading}
+              snapshot={snapshot}
+              snapshotLoading={snapshotLoading}
+              snapshotError={snapshotError}
+              onRetrySnapshot={retrySnapshot}
+              heatmap={biometriaData?.adherence_heatmap ?? null}
+              heatmapLoading={biometriaLoading}
+            />
           </section>
         )}
 
