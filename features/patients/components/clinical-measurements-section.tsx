@@ -215,7 +215,11 @@ function MeasurementCard({ group }: { group: ClinicalMeasurementDto[] }) {
   const t = useT();
   const first = group[0];
   const sourceLabel =
-    first.source === "mobile" ? t("App móvil") : first.source;
+    first.source === "mobile"
+      ? t("App móvil")
+      : first.source === "lab"
+      ? t("Examen de laboratorio")
+      : first.source;
   return (
     <li className="rounded-xl border border-border bg-muted/30 p-3">
       <div className="mb-3 flex items-center justify-between gap-2">
