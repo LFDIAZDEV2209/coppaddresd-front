@@ -559,3 +559,11 @@
     animation: none;
   }
 }
+
+/* Río del login — las corrientes se mueven por SMIL (animateTransform);
+   con movimiento reducido se ocultan y queda la banda teal estática. */
+@media (prefers-reduced-motion: reduce) {
+  .river-flow {
+    display: none;
+  }
+}
