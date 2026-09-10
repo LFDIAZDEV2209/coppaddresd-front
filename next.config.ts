@@ -1,7 +1,14 @@
-﻿import type { NextConfig } from "next";
+﻿import path from "path";
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+
+  // El root de Turbopack es este repo. Sin esto, Next autodetecta lockfiles
+  // sueltos en carpetas superiores (fuera del repo) y emite un warning.
+  turbopack: {
+    root: path.join(__dirname),
+  },
 
   images: {
     remotePatterns: [
@@ -27,6 +34,18 @@ const nextConfig: NextConfig = {
       { source: "/program/adaptations", destination: "/program/clinica?view=adaptaciones", permanent: false },
       { source: "/program/interventions", destination: "/program/clinica?view=intervenciones", permanent: false },
       { source: "/program/patients/:id", destination: "/program/gestion?view=perfil-360&patient=:id", permanent: false },
+
+      // ── F1: people-area redirects ──────────────────────────────────
+      { source: "/professionals/new", destination: "/people/new", permanent: true },
+      { source: "/professionals/importar", destination: "/employees/importar", permanent: true },
+      { source: "/professionals/:id", destination: "/employees/:id", permanent: true },
+      { source: "/professionals", destination: "/employees", permanent: true },
+      { source: "/employees/new", destination: "/people/new", permanent: true },
+      { source: "/patients/new", destination: "/people/new?mode=patient", permanent: true },
+      { source: "/users/nuevo", destination: "/people/new", permanent: true },
+      { source: "/employees/importar", destination: "/people/importar", permanent: true },
+      { source: "/patients/importar", destination: "/people/importar", permanent: true },
+      { source: "/users/importar", destination: "/people/importar", permanent: true },
     ];
   },
 

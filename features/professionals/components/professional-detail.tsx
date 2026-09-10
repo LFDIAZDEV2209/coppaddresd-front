@@ -59,11 +59,29 @@ export function ProfessionalDetail({ id }: { id: string }) {
     kind: "ok" | "error";
     message: string;
   } | null>(null);
+  // Rol elegido por clínica (roleId; "" = sin acceso). Se inicializa desde
+  // los roles scoped actuales y se reemplaza completo al guardar.
   const [roleByClinic, setRoleByClinic] = useState<Record<string, string>>({});
   const [dirty, setDirty] = useState(false);
   const [invitationLink, setInvitationLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
+
+  // Construir el mapa clinicId → roleId desde los roles scoped actuales.
+  const mapScopedRoles = useCallback(
+    (sc: ProfessionalScopes | null) => {
+      const map: Record<string, string> = {};
+      if (sc && !sc.requiresInvitation) {
+        for (const role of sc.roles) {
+          if (role.scopeType === "Clinic" && role.scopeId) {
+            map[role.scopeId] = role.roleId;
+          }
+        }
+      }
+      return map;
+    },
+    [],
+  );
 
   const load = useCallback(
     async (showSpinner = false) => {
@@ -75,13 +93,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         ]);
         setEmployee(emp);
         setScopes(sc);
-        if (sc && !sc.requiresInvitation) {
-          const map: Record<string, string> = {};
-          for (const role of sc.roles) {
-            if (role.scopeId) map[role.scopeId] = role.roleId;
-          }
-          setRoleByClinic(map);
-        }
+        setRoleByClinic(mapScopedRoles(sc));
         setDirty(false);
       } catch {
         setFeedback({
@@ -92,7 +104,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         if (showSpinner) setLoading(false);
       }
     },
-    [id, t],
+    [id, t, mapScopedRoles],
   );
 
   useEffect(() => {
@@ -108,13 +120,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         setEmployee(emp);
         setScopes(sc);
         setRoles(rs);
-        if (sc && !sc.requiresInvitation) {
-          const map: Record<string, string> = {};
-          for (const role of sc.roles) {
-            if (role.scopeId) map[role.scopeId] = role.roleId;
-          }
-          setRoleByClinic(map);
-        }
+        setRoleByClinic(mapScopedRoles(sc));
       } catch {
         if (!cancelled) {
           setFeedback({
@@ -129,7 +135,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id, t]);
+  }, [id, t, mapScopedRoles]);
 
   const canManageScopes = useMemo(
     () =>
@@ -184,17 +190,30 @@ export function ProfessionalDetail({ id }: { id: string }) {
     setBusy(true);
     setFeedback(null);
     try {
+      // Roles deseados: preservar los de scope Organization/Global tal como
+      // están y reconstruir los de clínica según lo seleccionado en la UI.
+      // "Sin acceso" (roleId vacío) elimina el rol de esa clínica porque el
+      // reemplazo es total.
       const rolesToApply: Array<{
         roleId: string;
         scopeType: string;
         scopeId: string | null;
-      }> = Object.entries(roleByClinic)
-        .filter(([, roleId]) => roleId)
-        .map(([clinicId, roleId]) => ({
-          roleId,
-          scopeType: "Clinic",
-          scopeId: clinicId,
-        }));
+      }> = [
+        ...(scopes?.roles ?? [])
+          .filter((r) => r.scopeType !== "Clinic")
+          .map((r) => ({
+            roleId: r.roleId,
+            scopeType: r.scopeType,
+            scopeId: r.scopeId,
+          })),
+        ...Object.entries(roleByClinic)
+          .filter(([, roleId]) => roleId !== "")
+          .map(([clinicId, roleId]) => ({
+            roleId,
+            scopeType: "Clinic",
+            scopeId: clinicId,
+          })),
+      ];
 
       await updateProfessionalScopes(id, {
         roles: rolesToApply,
@@ -256,7 +275,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         <Button
           variant="outline"
           className="mt-4"
-          onClick={() => router.push("/professionals")}
+          onClick={() => router.push("/employees")}
         >
           {t("Volver al directorio")}
         </Button>
@@ -313,7 +332,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => router.push("/professionals")}
+              onClick={() => router.push("/employees")}
             >
               {t("Volver al directorio")}
             </Button>
@@ -392,9 +411,9 @@ export function ProfessionalDetail({ id }: { id: string }) {
         <div className="space-y-5 lg:col-span-2">
           <section className="overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
-              title={t("Permisos por clínica")}
+              title={t("Acceso por clínica")}
               description={t(
-                "El rol se asigna por clínica: el profesional puede tener permisos distintos en cada una",
+                "El acceso se otorga por clínica; podés elegir un rol distinto en cada una.",
               )}
               icon={ShieldCheck}
               variant="primary"
@@ -438,12 +457,11 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           )}
                         </p>
                         <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-                          {currentRoleName(
-                            clinic.clinicId,
-                            roleByClinic,
-                            scopes,
-                            roles,
-                          )}
+                          {roles.find(
+                            (r) =>
+                              r.id === roleByClinic[clinic.clinicId] &&
+                              roleByClinic[clinic.clinicId] !== "",
+                          )?.name ?? t("Sin acceso")}
                         </p>
                       </div>
                       <NativeSelect
@@ -456,16 +474,13 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           setDirty(true);
                         }}
                         options={[
-                          { value: "", label: t("Sin rol") },
-                          ...roles.map((r) => ({
-                            value: r.id,
-                            label: r.name,
-                          })),
+                          { value: "", label: t("Sin acceso") },
+                          ...roles
+                            .filter((r) => r.isActive)
+                            .map((r) => ({ value: r.id, label: r.name })),
                         ]}
-                        className="sm:w-56"
-                        ariaLabel={t("Rol en {clinic}", {
-                          clinic: clinic.clinicName,
-                        })}
+                        ariaLabel={t("Rol en esta clínica")}
+                        className="w-full sm:w-48"
                       />
                     </div>
                   ))}
@@ -604,17 +619,3 @@ export function ProfessionalDetail({ id }: { id: string }) {
   );
 }
 
-function currentRoleName(
-  clinicId: string,
-  roleByClinic: Record<string, string>,
-  scopes: ProfessionalScopes | null,
-  roles: Role[],
-): string {
-  const selected = roleByClinic[clinicId];
-  if (selected) {
-    const role = roles.find((r) => r.id === selected);
-    return role?.name ?? "Sin rol asignado";
-  }
-  const role = scopes?.roles.find((r) => r.scopeId === clinicId);
-  return role?.roleName ?? "Sin rol asignado";
-}

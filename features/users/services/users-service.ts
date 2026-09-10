@@ -85,7 +85,9 @@ export function filterUsers(users: User[], filters: UsersFilters): User[] {
       if (user.isActive !== active) return false;
     }
     if (filters.role === "none") {
-      if (user.roles.length > 0) return false;
+      // "Sin roles" solo cuando no hay roles globales NI scoped.
+      const hasScoped = (user.scopedRoles?.length ?? 0) > 0;
+      if (user.roles.length > 0 || hasScoped) return false;
     } else if (filters.role !== "all" && !user.roles.includes(filters.role)) {
       return false;
     }
@@ -148,7 +150,8 @@ export async function fetchUserStats(): Promise<UserStats> {
 
   for (const user of users) {
     if (user.isActive) active++;
-    if (user.roles.length === 0) withoutRoles++;
+    if (user.roles.length === 0 && (user.scopedRoles?.length ?? 0) === 0)
+      withoutRoles++;
     if (new Date(user.createdAt).getTime() >= weekAgo) newThisWeek++;
   }
 
@@ -227,6 +230,51 @@ export async function updateUser(
 /** Elimina un usuario (DELETE /api/auth/users/{id}) → 204. */
 export async function deleteUser(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
+}
+
+// --- Creación masiva de usuarios (CSV) ---
+
+/** Fila individual enviada al bulk endpoint de usuarios. */
+export interface BulkCreateUserRowInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  roleName: string | null;
+  /** Nombre de la clínica para role scoped (opcional). Server-side validation. */
+  clinicName?: string | null;
+  /** Código de clínica (opcional, precedence sobre clinicName). */
+  clinicCode?: string | null;
+  status: string;
+}
+
+/** Resultado individual de una fila en la importación masiva. */
+export interface BulkUserRowResult {
+  line: number;
+  success: boolean;
+  userId?: string;
+  email?: string;
+  temporaryPassword?: string;
+  error?: string;
+}
+
+/** Resultado agregado de la importación masiva de usuarios. */
+export interface BulkCreateUsersResult {
+  results: BulkUserRowResult[];
+  created: number;
+  failed: number;
+}
+
+/**
+ * Crea usuarios de forma masiva.
+ * POST /api/auth/users/bulk — cada fila se procesa de forma independiente.
+ */
+export async function createBulkUsers(
+  rows: BulkCreateUserRowInput[],
+): Promise<BulkCreateUsersResult> {
+  return apiFetch<BulkCreateUsersResult>(`${PATH}/bulk`, {
+    method: "POST",
+    body: JSON.stringify({ rows }),
+  });
 }
 
 // --- Lecturas de asignaciones del usuario (precarga del form de edición) ---

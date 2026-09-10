@@ -289,3 +289,83 @@ export async function updateProfessionalScopes(
     body: JSON.stringify(input),
   });
 }
+
+// --- Creación masiva de empleados (CSV) ---
+
+/** Fila individual enviada al bulk endpoint. */
+export interface BulkCreateRow {
+  firstName: string;
+  lastName: string;
+  email: string;
+  professionalTypeName: string | null;
+  status: string;
+  /** Clínicas asignadas con su rol (opcional, solo para empleados/profesionales). */
+  clinicas?: Array<{ code: string; roleName: string }>;
+}
+
+export interface BulkCreateEmployeesInput {
+  organizationId: string;
+  rows: BulkCreateRow[];
+}
+
+export interface BulkRowResult {
+  line: number;
+  success: boolean;
+  employeeId?: string | null;
+  userId?: string | null;
+  error?: string | null;
+}
+
+export interface BulkCreateResult {
+  results: BulkRowResult[];
+  created: number;
+  failed: number;
+}
+
+/**
+ * Crea empleados de forma masiva.
+ * POST /api/v1/employees/bulk — cada fila se procesa de forma independiente.
+ */
+export async function createBulkEmployees(
+  input: BulkCreateEmployeesInput,
+): Promise<BulkCreateResult> {
+  return apiFetch<BulkCreateResult>(`${env.apiUrl}/api/v1/employees/bulk`, {
+    method: "POST",
+    body: JSON.stringify({
+      organizationId: input.organizationId,
+      rows: input.rows,
+    }),
+  });
+}
+
+// --- Horarios semanales de atención del profesional ---
+
+/** Franja horaria semanal (contrato del backend: weekday 1=lun..7=dom, HH:mm). */
+export interface ProfessionalScheduleSlot {
+  weekday: number;
+  startTime: string;
+  endTime: string;
+}
+
+/** Lee los horarios semanales de atención de un profesional. */
+export async function fetchProfessionalSchedules(
+  id: string,
+): Promise<ProfessionalScheduleSlot[]> {
+  return apiFetch<ProfessionalScheduleSlot[]>(
+    `${env.apiUrl}/api/v1/professionals/${id}/schedules`,
+  );
+}
+
+/** Reemplaza los horarios semanales de atención (PUT total-replace). */
+export async function saveProfessionalSchedules(
+  id: string,
+  schedules: ProfessionalScheduleSlot[],
+): Promise<void> {
+  await apiFetch<void>(
+    `${env.apiUrl}/api/v1/professionals/${id}/schedules`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ schedules }),
+    },
+  );
+}

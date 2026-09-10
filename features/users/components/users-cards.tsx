@@ -7,6 +7,7 @@ import {
   Eye,
   MoreHorizontal,
   Pencil,
+  ShieldCheck,
   Trash2,
   UserCheck,
   UserX,
@@ -35,6 +36,7 @@ interface UsersCardsProps {
   onEdit: (user: User) => void;
   onToggleActive: (user: User) => void;
   onDelete: (user: User) => void;
+  onPermissions: (user: User) => void;
 }
 
 /**
@@ -51,10 +53,12 @@ export function UsersCards({
   onEdit,
   onToggleActive,
   onDelete,
+  onPermissions,
 }: UsersCardsProps) {
   const { hasPermission } = useAuth();
   const canUpdate = hasPermission("Users.Update");
   const canDelete = hasPermission("Users.Delete");
+  const canAssignPermissions = hasPermission("Permissions.Assign");
   const t = useT();
 
   return (
@@ -150,6 +154,14 @@ export function UsersCards({
                             {t("Activar")}
                           </DropdownMenuItem>
                         )}
+                        {canAssignPermissions && (
+                          <DropdownMenuItem
+                            onClick={() => onPermissions(user)}
+                          >
+                            <ShieldCheck className="size-4" />
+                            {t("Permisos")}
+                          </DropdownMenuItem>
+                        )}
                       </>
                     )}
                     {canDelete && (
@@ -170,7 +182,7 @@ export function UsersCards({
             </div>
 
             {/* Roles */}
-            <RoleChips roles={user.roles} max={3} />
+            <RoleChips roles={user.roles} scopedRoles={user.scopedRoles} max={3} />
 
             {/* Meta: estado + fechas */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl bg-muted/40 p-2.5">

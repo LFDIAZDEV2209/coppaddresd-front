@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/i18n-provider";
 import { getFullName, getInitials } from "../services/users-service";
-import type { User } from "../types";
+import type { User, ScopedUserRole } from "../types";
 
 /**
  * Visuales compartidos del módulo de usuarios (tabla, cards, detalle):
@@ -49,37 +49,66 @@ export function UserStatusBadge({ isActive }: { isActive: boolean }) {
   );
 }
 
-/** Chips de roles con icono; muestra "+N" si hay más. */
+/** Chips de roles (globales + scoped) con icono; muestra "+N" si hay más. */
 export function RoleChips({
   roles,
+  scopedRoles,
   max = 2,
   className,
 }: {
   roles: string[];
+  scopedRoles?: ScopedUserRole[] | null;
   max?: number;
   className?: string;
 }) {
   const t = useT();
-  const visible = roles.slice(0, max);
-  const extra = roles.length - visible.length;
+
+  // Combinar roles globales y scoped en una lista unificada para el display.
+  const allChips: { label: string; scoped: boolean }[] = [];
+
+  for (const role of roles) {
+    allChips.push({ label: role, scoped: false });
+  }
+  if (scopedRoles) {
+    for (const sr of scopedRoles) {
+      const label = sr.scopeName
+        ? `${sr.roleName} · ${sr.scopeName}`
+        : sr.roleName;
+      allChips.push({ label, scoped: true });
+    }
+  }
+
+  const visible = allChips.slice(0, max);
+  const extra = allChips.length - visible.length;
+  const hasNoRoles = allChips.length === 0;
 
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)}>
-      {roles.length === 0 && (
+      {hasNoRoles && (
         <span className="inline-flex items-center gap-1 rounded-md bg-warning px-2 py-0.5 text-[10.5px] font-semibold text-white shadow-sm">
           <ShieldAlert className="size-3" />
           {t("Sin roles")}
         </span>
       )}
-      {visible.map((role) => (
-        <span
-          key={role}
-          className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"
-        >
-          <ShieldCheck className="size-3 text-primary" />
-          {role}
-        </span>
-      ))}
+      {visible.map((chip) =>
+        chip.scoped ? (
+          <span
+            key={chip.label}
+            className="inline-flex items-center gap-1 rounded-md border border-dashed border-primary/40 bg-primary/[0.06] px-2 py-0.5 text-[11px] font-medium text-primary"
+          >
+            <ShieldCheck className="size-3 text-primary/70" />
+            {chip.label}
+          </span>
+        ) : (
+          <span
+            key={chip.label}
+            className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"
+          >
+            <ShieldCheck className="size-3 text-primary" />
+            {chip.label}
+          </span>
+        ),
+      )}
       {extra > 0 && (
         <span className="inline-flex items-center rounded-md border border-border px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
           +{extra}

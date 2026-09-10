@@ -16,8 +16,17 @@ export interface User {
   lastName: string;
   isActive: boolean;
   createdAt: string;
-  /** Nombres de los roles asignados al usuario. */
+  /** Nombres de los roles asignados al usuario (globales). */
   roles: string[];
+  /** Roles con scope (clínica/organización). */
+  scopedRoles?: ScopedUserRole[] | null;
+}
+
+/** Rol asignado a un usuario dentro de un scope (clínica/organización). */
+export interface ScopedUserRole {
+  roleName: string;
+  scopeType: string;
+  scopeName?: string | null;
 }
 
 export type UserSortField =
@@ -127,34 +136,4 @@ export interface UserFormValues {
    * invalida el security stamp cuando hay cambios efectivos.
    */
   assignmentsChanged: boolean;
-}
-
-/**
- * Fila normalizada del archivo de importación masiva (mock). Los errores se
- * validan contra las mismas reglas que la creación individual.
- */
-export interface BulkUserRow {
-  line: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  /** Nombre del rol (opcional). */
-  role: string;
-  /** "activo" | "inactivo" (opcional, default activo). */
-  status: string;
-  /** Errores de validación de la fila (vacío = fila válida). */
-  errors: string[];
-}
-
-/** Resumen del preview de importación. */
-export interface BulkPreview {
-  valid: number;
-  invalid: number;
-  duplicates: number;
-}
-
-/** Resultado simulado de la importación masiva (mock). */
-export interface BulkResult {
-  created: number;
-  skipped: number;
 }

@@ -137,7 +137,7 @@ export const navModules: NavModule[] = [
       },
       {
         label: "Profesionales",
-        href: "/professionals",
+        href: "/employees",
         icon: Stethoscope,
         color: "#0E7490",
         permission: "Professionals.View",

@@ -20,6 +20,7 @@ export function SectionHeader({
   variant = "primary",
   className,
 }: SectionHeaderProps) {
+  // primary lleva el gradiente completo de marca (el usuario lo prefiere); PageHeader usa el mismo
   const styles = {
     primary: "bg-brand-gradient text-white rounded-none px-4 py-3",
     secondary: "bg-primary-soft text-foreground rounded-xl px-4 py-3",

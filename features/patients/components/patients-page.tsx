@@ -8,6 +8,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   Eye,
+  FileUp,
   LayoutGrid,
   MoreHorizontal,
   Pencil,
@@ -113,7 +114,8 @@ export function PatientsPage() {
   const canEdit = can("Patients.Update");
   const canDelete = can("Patients.Delete");
 
-  const openCreate = () => router.push("/patients/new");
+  const openCreate = () => router.push("/people/new?context=patient");
+  const openImport = () => router.push("/people/importar");
   const openDetail = (patient: PatientListItem) =>
     router.push(`/patients/${patient.id}`);
   const openEdit = (patient: PatientListItem) =>
@@ -141,10 +143,16 @@ export function PatientsPage() {
         icon={UserRound}
         actions={
           canCreate ? (
-            <Button size="sm" onClick={openCreate}>
-              <Plus data-icon="inline-start" />
-              Nuevo paciente
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={openImport}>
+                <FileUp data-icon="inline-start" />
+                Importar CSV
+              </Button>
+              <Button size="sm" onClick={openCreate}>
+                <Plus data-icon="inline-start" />
+                Nuevo paciente
+              </Button>
+            </div>
           ) : undefined
         }
       />
