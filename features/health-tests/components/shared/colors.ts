@@ -143,3 +143,19 @@ export function riskHex(risk: RiskLevel): string {
   };
   return map[risk];
 }
+
+/** Paleta pastel del mapa de calor geográfico (riesgo alto por estado). */
+export const mapRiskPalette = {
+  low: "#A8E6CF",
+  medium: "#F7DBA7",
+  high: "#F5B7B1",
+  none: "#E8EEF6",
+} as const;
+
+/** Color pastel de un estado según el % de pacientes de riesgo alto. */
+export function mapRiskColor(highRiskPct: number | null): string {
+  if (highRiskPct == null) return mapRiskPalette.none;
+  if (highRiskPct < 20) return mapRiskPalette.low;
+  if (highRiskPct < 40) return mapRiskPalette.medium;
+  return mapRiskPalette.high;
+}
