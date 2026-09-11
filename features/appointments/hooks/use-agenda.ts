@@ -15,11 +15,21 @@ interface UseAgendaReturn {
  * Agenda del profesional en un rango [from, to] (dashboard "Mi agenda" y
  * calendario). Los ids de rango se normalizan a ISO-8601 UTC para la API.
  */
-export function useAgenda(professionalId: string | null, from: Date, to: Date): UseAgendaReturn {
+export function useAgenda(
+  professionalId: string | null,
+  from: Date,
+  to: Date,
+): UseAgendaReturn {
   const [appointments, setAppointments] = useState<AppointmentDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Claves por valor: los callers pueden pasar instancias Date nuevas en cada
+  // render (p. ej. `anchor ?? new Date()`); depender de la identidad del
+  // objeto re-dispara el fetch en bucle. El ISO string compara por valor.
+  const fromISO = from.toISOString();
+  const toISO = to.toISOString();
 
   useEffect(() => {
     if (!professionalId) {
@@ -29,11 +39,7 @@ export function useAgenda(professionalId: string | null, from: Date, to: Date): 
     let active = true;
     (async () => {
       try {
-        const result = await fetchAgenda(
-          professionalId,
-          from.toISOString(),
-          to.toISOString(),
-        );
+        const result = await fetchAgenda(professionalId, fromISO, toISO);
         if (!active) return;
         setAppointments(result);
         setError(null);
@@ -48,7 +54,7 @@ export function useAgenda(professionalId: string | null, from: Date, to: Date): 
     return () => {
       active = false;
     };
-  }, [professionalId, from, to, refreshKey]);
+  }, [professionalId, fromISO, toISO, refreshKey]);
 
   const refetch = useCallback(() => {
     setLoading(true);

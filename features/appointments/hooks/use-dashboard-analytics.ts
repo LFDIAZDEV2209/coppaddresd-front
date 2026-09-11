@@ -2,7 +2,10 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { DashboardAnalyticsDto } from "../types";
-import { fetchAdminAnalytics, fetchMyAnalytics } from "../services/appointments-service";
+import {
+  fetchAdminAnalytics,
+  fetchMyAnalytics,
+} from "../services/appointments-service";
 
 interface UseDashboardAnalyticsReturn {
   analytics: DashboardAnalyticsDto | null;
@@ -23,10 +26,17 @@ export function useDashboardAnalytics(
   to?: Date | null,
   enabled = true,
 ): UseDashboardAnalyticsReturn {
-  const [analytics, setAnalytics] = useState<DashboardAnalyticsDto | null>(null);
+  const [analytics, setAnalytics] = useState<DashboardAnalyticsDto | null>(
+    null,
+  );
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Claves por valor (ver use-agenda): depender de la identidad de los Date
+  // re-dispara el fetch en bucle si el caller crea instancias por render.
+  const fromISO = from?.toISOString() ?? null;
+  const toISO = to?.toISOString() ?? null;
 
   useEffect(() => {
     if (!enabled) {
@@ -37,8 +47,8 @@ export function useDashboardAnalytics(
       try {
         const result =
           scope === "admin"
-            ? await fetchAdminAnalytics({ from: from?.toISOString() ?? null, to: to?.toISOString() ?? null })
-            : await fetchMyAnalytics({ from: from?.toISOString() ?? null, to: to?.toISOString() ?? null });
+            ? await fetchAdminAnalytics({ from: fromISO, to: toISO })
+            : await fetchMyAnalytics({ from: fromISO, to: toISO });
         if (!active) return;
         setAnalytics(result);
         setError(null);
@@ -52,7 +62,7 @@ export function useDashboardAnalytics(
     return () => {
       active = false;
     };
-  }, [scope, from, to, refreshKey, enabled]);
+  }, [scope, fromISO, toISO, refreshKey, enabled]);
 
   const refetch = useCallback(() => {
     setLoading(true);
