@@ -64,9 +64,20 @@ export function StatSkeleton({ count = 4 }: { count?: number }) {
 }
 
 /** Esqueleto de tarjeta con header (chart/lista). */
-export function ChartCardSkeleton({ height = "h-64" }: { height?: string }) {
+export function ChartCardSkeleton({
+  height = "h-64",
+  className,
+}: {
+  height?: string;
+  className?: string;
+}) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl border border-border bg-card",
+        className,
+      )}
+    >
       <Skeleton className="h-12 w-full rounded-none" />
       <div className={cn("flex items-center justify-center p-5", height)}>
         <Skeleton className="h-40 w-full max-w-md" />
