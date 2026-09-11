@@ -8,6 +8,7 @@ import type {
   CoverageByTest,
   CoverageTrendPoint,
   HealthAlert,
+  HealthGeoFilter,
   HealthProfessional,
   HealthTest,
   IndicatorAggregate,
@@ -25,36 +26,62 @@ import {
 import { ApiError } from "@/lib/api/http";
 
 /** Estado genérico de carga async (reutilizable por todos los hooks). */
-export function useAsyncData<T>(loader: () => Promise<T>) {
+export function useAsyncData<T>(loader: () => Promise<T>, key?: string) {
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
+  // Clave de la última respuesta liquidada: mientras no coincida con la clave
+  // vigente, el hook está cargando (evita setState síncrono dentro del efecto).
+  const [settledKey, setSettledKey] = useState<string | null>(null);
   const loaderRef = useRef(loader);
+  const requestIdRef = useRef(0);
+  const effectiveKeyRef = useRef("");
+
+  // `key` permite recargar cuando cambia un filtro (p. ej. geo) sin perder
+  // los datos previos mientras llega la respuesta nueva.
+  const effectiveKey = `${key ?? "default"}#${reloadNonce}`;
 
   useEffect(() => {
     loaderRef.current = loader;
+    effectiveKeyRef.current = effectiveKey;
   });
 
-  const load = useCallback(async () => {
-    try {
-      const result = await loaderRef.current();
-      setData(result);
-      setError(null);
-      setErrorCode(null);
-    } catch (e) {
-      setError("Intenta de nuevo más tarde.");
-      setErrorCode(e instanceof ApiError ? e.code : null);
-    } finally {
-      setLoading(false);
-    }
+  const load = useCallback(() => {
+    const requestId = ++requestIdRef.current;
+    Promise.resolve()
+      .then(() => loaderRef.current())
+      .then((result) => {
+        if (requestId !== requestIdRef.current) return;
+        setData(result);
+        setError(null);
+        setErrorCode(null);
+      })
+      .catch((e: unknown) => {
+        if (requestId !== requestIdRef.current) return;
+        setError("Intenta de nuevo más tarde.");
+        setErrorCode(e instanceof ApiError ? e.code : null);
+      })
+      .finally(() => {
+        if (requestId === requestIdRef.current) {
+          setSettledKey(effectiveKeyRef.current);
+        }
+      });
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    load();
+  }, [load, effectiveKey]);
 
-  return { data, loading, error, errorCode, reload: load };
+  const reload = useCallback(() => setReloadNonce((n) => n + 1), []);
+
+  return {
+    data,
+    loading: settledKey !== effectiveKey,
+    error,
+    errorCode,
+    reload,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -71,12 +98,20 @@ export interface DashboardData {
   stats: HealthTestStats;
 }
 
-export function useDashboard() {
-  const masterRows = useAsyncData(healthTestsApi.getMasterRows);
+export function useDashboard(filter?: HealthGeoFilter) {
+  const geoKey = `${filter?.stateCode ?? ""}|${filter?.cityId ?? ""}`;
+  const masterRows = useAsyncData(
+    () => healthTestsApi.getMasterRows(filter),
+    `master:${geoKey}`,
+  );
   const tests = useAsyncData(healthTestsApi.listTests);
   const alerts = useAsyncData(healthTestsApi.listAlerts);
-  const trend = useAsyncData(healthTestsApi.getCoverageTrend);
-  const stats = useAsyncData(healthTestsApi.getStats);
+  const trend = useAsyncData(
+    () => healthTestsApi.getCoverageTrend(filter),
+    `trend:${geoKey}`,
+  );
+  // Los KPIs se mantienen globales: el filtro geo solo afecta mapa y gráficas.
+  const stats = useAsyncData(healthTestsApi.getStats, "stats");
 
   const loading =
     masterRows.loading ||
