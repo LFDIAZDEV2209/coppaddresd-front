@@ -12,6 +12,7 @@ import type {
   EvaluationResponseItem,
   EvaluationResultItem,
   HealthAlert,
+  HealthGeoFilter,
   HealthProfessional,
   HealthTest,
   IndicatorAggregate,
@@ -91,6 +92,22 @@ const TTL_MASTER = 30_000;
 const TTL_CATALOG = 300_000;
 const TTL_STATS = 30_000;
 
+/** Clave estable para cache/dedupe incluyendo el filtro geo. */
+function geoFilterKey(filter?: HealthGeoFilter): string {
+  if (!filter || (!filter.stateCode && !filter.cityId)) return "all";
+  return `${filter.stateCode ?? ""}:${filter.cityId ?? ""}`;
+}
+
+/** Query params del filtro geo (`state` + `cityId`; el backend prioriza cityId). */
+function geoFilterParams(filter?: HealthGeoFilter): string {
+  if (!filter) return "";
+  const params = new URLSearchParams();
+  if (filter.stateCode) params.set("state", filter.stateCode);
+  if (filter.cityId) params.set("cityId", filter.cityId);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export interface HealthTestsApi {
   listPatients(): Promise<PatientProfile[]>;
   getPatient(id: string): Promise<PatientProfile | null>;
@@ -114,9 +131,9 @@ export interface HealthTestsApi {
   listProfessionals(): Promise<HealthProfessional[]>;
   listAlerts(patientId?: string): Promise<HealthAlert[]>;
   listBatteries(): Promise<Battery[]>;
-  getStats(): Promise<HealthTestStats>;
-  getCoverageTrend(): Promise<CoverageTrendPoint[]>;
-  getMasterRows(): Promise<PatientMasterRow[]>;
+  getStats(filter?: HealthGeoFilter): Promise<HealthTestStats>;
+  getCoverageTrend(filter?: HealthGeoFilter): Promise<CoverageTrendPoint[]>;
+  getMasterRows(filter?: HealthGeoFilter): Promise<PatientMasterRow[]>;
   getPendingPatients(): Promise<PendingPatientRow[]>;
   getCoverageByTest(): Promise<CoverageByTest[]>;
   getCoverageByCategory(): Promise<CoverageByCategory[]>;
@@ -837,16 +854,18 @@ async function listBatteries(): Promise<Battery[]> {
   });
 }
 
-async function getStats(): Promise<HealthTestStats> {
-  return cached("stats", TTL_STATS, () =>
-    apiFetch<HealthTestStats>(`${BASE}/stats`),
+async function getStats(filter?: HealthGeoFilter): Promise<HealthTestStats> {
+  return cached(`stats:${geoFilterKey(filter)}`, TTL_STATS, () =>
+    apiFetch<HealthTestStats>(`${BASE}/stats${geoFilterParams(filter)}`),
   );
 }
 
-async function getCoverageTrend(): Promise<CoverageTrendPoint[]> {
+async function getCoverageTrend(
+  filter?: HealthGeoFilter,
+): Promise<CoverageTrendPoint[]> {
   const [stats, masterRows] = await Promise.all([
-    apiFetch<StatsDto>(`${BASE}/stats`),
-    getMasterRows().catch(() => [] as PatientMasterRow[]),
+    apiFetch<StatsDto>(`${BASE}/stats${geoFilterParams(filter)}`),
+    getMasterRows(filter).catch(() => [] as PatientMasterRow[]),
   ]);
   const total = Math.max(stats.totalPatients, 1);
   const months: CoverageTrendPoint[] = [];
@@ -889,9 +908,13 @@ async function getCoverageTrend(): Promise<CoverageTrendPoint[]> {
   return months;
 }
 
-async function getMasterRows(): Promise<PatientMasterRow[]> {
-  return cached("master", TTL_MASTER, async () => {
-    const rows = await apiFetch<MasterRowDto[]>(`${BASE}/master`);
+async function getMasterRows(
+  filter?: HealthGeoFilter,
+): Promise<PatientMasterRow[]> {
+  return cached(`master:${geoFilterKey(filter)}`, TTL_MASTER, async () => {
+    const rows = await apiFetch<MasterRowDto[]>(
+      `${BASE}/master${geoFilterParams(filter)}`,
+    );
     return rows.map(mapMasterRow);
   });
 }
