@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -37,7 +37,14 @@ import { StatCard } from "@/components/feedback/stat-card";
 import { useDashboard } from "../../hooks/use-health-tests";
 import { useHealthGeo } from "../../hooks/use-health-geo";
 import { HealthTestsUsaMap } from "../geo/health-tests-usa-map";
-import type { HealthAlert, RiskLevel } from "../../types";
+import { GeoFilterSelect } from "../geo/geo-filter-select";
+import type {
+  HealthAlert,
+  HealthGeoFilter,
+  HealthTest,
+  PatientMasterRow,
+  RiskLevel,
+} from "../../types";
 import { RISK_LABELS, riskSeverity } from "../../lib/domain";
 import { formatDate } from "../../lib/format";
 import { riskHex, severityHex } from "../shared/colors";
@@ -51,29 +58,29 @@ import { ModuleErrorState } from "../shared/module-states";
 
 /**
  * Dashboard global del módulo de Tests de Salud.
- * Todas las métricas se derivan del service (mock hoy, API mañana).
+ * Los KPIs son globales; el filtro geo (estado/ciudad) del mapa acota la
+ * tabla maestra del backend y, con ella, todas las gráficas.
  */
 export function HealthTestsDashboard() {
   const t = useT();
-  const { data, loading, error, reload } = useDashboard();
+  const [geoFilter, setGeoFilter] = useState<HealthGeoFilter>({
+    stateCode: null,
+    cityId: null,
+  });
+  const { data, loading, error, reload } = useDashboard(geoFilter);
+  const filterActive = Boolean(geoFilter.stateCode || geoFilter.cityId);
 
+  // KPIs del backend (/stats) sin filtro geo: contexto global estable.
   const stats = useMemo(() => {
     if (!data) return null;
-    const { patients, masterRows, tests, alerts, stats: serverStats } = data;
-    const totalAssignments = patients.length * tests.length;
-    // KPIs del backend (/stats): fuentes reales de la BD.
+    const { tests, alerts, stats: serverStats } = data;
     const completed = serverStats.completed;
     const evaluated =
       serverStats.totalPatients > 0
         ? Math.min(completed, serverStats.totalPatients)
         : 0;
-    const inProgress = masterRows.reduce(
-      (acc, row) =>
-        acc +
-        row.patient.results.filter((r) => r.state === "en-progreso").length,
-      0,
-    );
     const pending = serverStats.withPending;
+    const totalAssignments = serverStats.totalPatients * tests.length;
     const coverage =
       totalAssignments === 0
         ? 0
@@ -81,18 +88,64 @@ export function HealthTestsDashboard() {
     const activeAlerts = alerts.filter(
       (a) => a.status === "activa" || a.status === "en-revision",
     ).length;
-    const atRisk = serverStats.highRisk;
     return {
       totalAssignments,
       completed,
-      inProgress,
       evaluated,
       pending,
       coverage,
       activeAlerts,
-      atRisk,
     };
   }, [data]);
+
+  // Métricas de las gráficas: derivadas de la tabla maestra (filtrada por zona).
+  const coverageMetrics = useMemo(() => {
+    if (!data) return null;
+    const total = data.masterRows.length * data.tests.length;
+    let completed = 0;
+    let inProgress = 0;
+    for (const row of data.masterRows) {
+      for (const r of row.patient.results) {
+        if (r.state === "completado") completed += 1;
+        else if (r.state === "en-progreso") inProgress += 1;
+      }
+    }
+    const pending = Math.max(total - completed - inProgress, 0);
+    return {
+      total,
+      completed,
+      inProgress,
+      pending,
+      coverage: total === 0 ? 0 : Math.round((completed / total) * 100),
+    };
+  }, [data]);
+
+  const zonePatientIds = useMemo(
+    () => new Set(data?.masterRows.map((r) => r.patient.id) ?? []),
+    [data?.masterRows],
+  );
+
+  const riskDistribution = useMemo(
+    () => riskDistributionOf(data?.masterRows.map((r) => r.patient) ?? []),
+    [data?.masterRows],
+  );
+
+  const filteredAtRisk = useMemo(
+    () =>
+      riskDistribution.items
+        .filter((i) => i.risk === "alto" || i.risk === "critico")
+        .reduce((acc, i) => acc + i.value, 0),
+    [riskDistribution],
+  );
+
+  const recentAlerts = useMemo(() => {
+    const list = (data?.alerts ?? []).filter(
+      (a) => !filterActive || zonePatientIds.has(a.patientId),
+    );
+    return [...list]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 5);
+  }, [data?.alerts, filterActive, zonePatientIds]);
 
   const header = (
     <PageHeader
@@ -119,13 +172,13 @@ export function HealthTestsDashboard() {
       <div className="flex flex-col gap-6 p-4 sm:p-6">
         <div className="h-[76px] rounded-t-xl bg-muted/70" />
         <StatSkeleton count={4} />
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <ChartCardSkeleton />
-          <ChartCardSkeleton />
+          <ChartCardSkeleton className="xl:col-span-2" />
         </div>
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <ChartCardSkeleton />
-          <ChartCardSkeleton />
+          <ChartCardSkeleton className="xl:col-span-2" />
         </div>
       </div>
     );
@@ -140,25 +193,25 @@ export function HealthTestsDashboard() {
     );
   }
 
-  if (!data || !stats) return null;
+  if (!data || !stats || !coverageMetrics) return null;
 
   const pieData = [
-    { name: t("Completados"), value: stats.completed, color: "#10B981" },
-    { name: t("En progreso"), value: stats.inProgress, color: "#0EA5E9" },
+    {
+      name: t("Completados"),
+      value: coverageMetrics.completed,
+      color: "#10B981",
+    },
+    {
+      name: t("En progreso"),
+      value: coverageMetrics.inProgress,
+      color: "#0EA5E9",
+    },
     {
       name: t("Pendientes"),
-      value: stats.totalAssignments - stats.completed - stats.inProgress,
+      value: coverageMetrics.pending,
       color: "#94A3B8",
     },
   ];
-
-  const riskDistribution = riskDistributionOf(
-    data.masterRows.map((r) => r.patient),
-  );
-
-  const recentAlerts = [...data.alerts]
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 5);
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -198,13 +251,18 @@ export function HealthTestsDashboard() {
         />
       </div>
 
-      {/* --- Mapa de riesgo geográfico — idéntico a programa/dashboard (USA SVG + Top ciudades + Alertas) --- */}
-      <HealthGeoMapRow />
+      {/* --- Mapa de riesgo geográfico + filtro acumulado estado/ciudad --- */}
+      <HealthGeoMapRow
+        filter={geoFilter}
+        onFilterChange={setGeoFilter}
+        updating={loading}
+        zonePatientIds={zonePatientIds}
+      />
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <ChartCard
           title={t("Cobertura de la batería")}
-          description={t("Estado global de las evaluaciones asignadas")}
+          description={t("Estado de las evaluaciones asignadas")}
           icon={ClipboardCheck}
           actions={
             <Link
@@ -216,78 +274,85 @@ export function HealthTestsDashboard() {
             </Link>
           }
         >
-          <div className="flex flex-col items-center gap-6 sm:flex-row">
-            <div className="relative size-44 shrink-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={58}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    strokeWidth={0}
-                  >
-                    {pieData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => [`${value}`, ""]}
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: "1px solid var(--border)",
-                      fontSize: 12,
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-foreground">
-                  {stats.coverage}%
-                </span>
-                <span className="text-[10.5px] text-muted-foreground">
-                  {t("Cobertura")}
-                </span>
-              </div>
-            </div>
-            <div className="flex w-full flex-col gap-2.5">
-              {pieData.map((entry) => (
-                <div
-                  key={entry.name}
-                  className="flex items-center justify-between text-[12.5px]"
-                >
-                  <span className="flex items-center gap-2 text-muted-foreground">
-                    <span
-                      className="size-2.5 rounded-full"
-                      style={{ backgroundColor: entry.color }}
+          {coverageMetrics.total === 0 ? (
+            <p className="py-10 text-center text-xs text-muted-foreground">
+              {t("Sin pacientes evaluados todavía")}
+            </p>
+          ) : (
+            <div className="flex flex-col items-center gap-6 sm:flex-row">
+              <div className="relative size-44 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={58}
+                      outerRadius={80}
+                      paddingAngle={3}
+                      strokeWidth={0}
+                    >
+                      {pieData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) => [`${value}`, ""]}
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid var(--border)",
+                        fontSize: 12,
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                      }}
                     />
-                    {entry.name}
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-foreground">
+                    {coverageMetrics.coverage}%
                   </span>
-                  <span className="font-semibold text-foreground">
-                    {entry.value}
+                  <span className="text-[10.5px] text-muted-foreground">
+                    {t("Cobertura")}
                   </span>
                 </div>
-              ))}
-              <div className="mt-1 flex items-center justify-between border-t border-border pt-2.5 text-[12.5px]">
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <TrendingUp className="size-3.5 text-success" />
-                  {t("Pacientes en la batería")}
-                </span>
-                <span className="font-semibold text-foreground">
-                  {data.patients.length}
-                </span>
+              </div>
+              <div className="flex w-full flex-col gap-2.5">
+                {pieData.map((entry) => (
+                  <div
+                    key={entry.name}
+                    className="flex items-center justify-between text-[12.5px]"
+                  >
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <span
+                        className="size-2.5 rounded-full"
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      {entry.name}
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {entry.value}
+                    </span>
+                  </div>
+                ))}
+                <div className="mt-1 flex items-center justify-between border-t border-border pt-2.5 text-[12.5px]">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <TrendingUp className="size-3.5 text-success" />
+                    {t("Pacientes en la batería")}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {data.patients.length}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </ChartCard>
 
         <ChartCard
           title={t("Evolución de la cobertura")}
           description={t("Porcentaje de tests completados · últimos 12 meses")}
           icon={TrendingUp}
+          className="xl:col-span-2"
           actions={
             <Link
               href="/health-tests/cobertura"
@@ -359,7 +424,7 @@ export function HealthTestsDashboard() {
         </ChartCard>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <ChartCard
           title={t("Distribución por nivel de riesgo")}
           description={t(
@@ -425,7 +490,7 @@ export function HealthTestsDashboard() {
                     {t("Riesgo elevado (alto o crítico)")}
                   </span>
                   <span className="font-semibold text-destructive">
-                    {stats.atRisk}
+                    {filteredAtRisk}
                   </span>
                 </div>
               </div>
@@ -437,6 +502,7 @@ export function HealthTestsDashboard() {
           title={t("Alertas recientes")}
           description={t("Resultados que requieren atención")}
           icon={BellRing}
+          className="xl:col-span-2"
           actions={
             <Link
               href="/health-tests/alertas"
@@ -477,15 +543,43 @@ export function HealthTestsDashboard() {
           </Link>
         }
       >
-        <CategoryCoverageChart />
+        <CategoryCoverageChart
+          masterRows={data.masterRows}
+          tests={data.tests}
+        />
       </ChartCard>
     </div>
   );
 }
 
-/* --- Mapa idéntico a program/dashboard: USA SVG choropleth por % alto riesgo --- */
-function HealthGeoMapRow() {
+/* --- Mapa de riesgo + cards laterales derivadas del filtro acumulado --- */
+interface HealthGeoMapRowProps {
+  filter: HealthGeoFilter;
+  onFilterChange: (filter: HealthGeoFilter) => void;
+  updating: boolean;
+  zonePatientIds: Set<string>;
+}
+
+function HealthGeoMapRow({
+  filter,
+  onFilterChange,
+  updating,
+  zonePatientIds,
+}: HealthGeoMapRowProps) {
+  const t = useT();
   const { data, loading, error } = useHealthGeo();
+  const filterActive = Boolean(filter.stateCode || filter.cityId);
+
+  const filteredCities = useMemo(() => {
+    if (!data) return [];
+    const { cityId, stateCode } = filter;
+    if (cityId) return data.cities.filter((c) => c.cityId === cityId);
+    if (stateCode)
+      return data.cities.filter(
+        (c) => c.stateAbbr?.toUpperCase() === stateCode.toUpperCase(),
+      );
+    return data.cities;
+  }, [data, filter]);
 
   if (loading && !data) {
     return (
@@ -510,26 +604,52 @@ function HealthGeoMapRow() {
   }
   if (!data || data.cities.length === 0) return null;
 
-  const top3 = [...data.cities].sort((a, b) => b.count - a.count).slice(0, 3);
+  const top3 = [...filteredCities]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+  const totalMapped = filteredCities.reduce((acc, c) => acc + c.count, 0);
+  const highRiskMapped = Math.round(
+    filteredCities.reduce(
+      (acc, c) => acc + ((c.highRiskPct ?? 0) / 100) * c.count,
+      0,
+    ),
+  );
+  const alerts = data.alerts.filter(
+    (a) => !filterActive || zonePatientIds.has(a.patientId),
+  );
 
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
       <div className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col">
         <SectionHeader
-          title="Mapa de calor — Riesgo alto"
-          description="Distribución geográfica de pacientes con riesgo alto/crítico"
+          title={t("Mapa de calor — Riesgo alto")}
+          description={t(
+            "Distribución geográfica de pacientes con riesgo alto/crítico",
+          )}
           icon={MapPinned}
           variant="primary"
+          actions={
+            <GeoFilterSelect
+              cities={data.cities}
+              value={filter}
+              onChange={onFilterChange}
+              updating={updating}
+            />
+          }
         />
         <div className="flex flex-1 items-center justify-center p-4">
-          <HealthTestsUsaMap cities={data.cities} />
+          <HealthTestsUsaMap
+            cities={data.cities}
+            value={filter}
+            onFilterChange={onFilterChange}
+          />
         </div>
       </div>
       <div className="flex flex-col gap-4">
         <div className="rounded-2xl border border-border bg-card p-5">
           <SectionHeader
-            title="Top ciudades"
-            description="Por número de pacientes"
+            title={t("Top ciudades")}
+            description={t("Por número de pacientes")}
             icon={Users}
             variant="secondary"
           />
@@ -554,19 +674,21 @@ function HealthGeoMapRow() {
               </div>
             ))}
             {top3.length === 0 && (
-              <p className="text-xs text-muted-foreground">Sin datos</p>
+              <p className="text-xs text-muted-foreground">{t("Sin datos")}</p>
             )}
           </div>
           <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-xs">
             <span className="text-muted-foreground">
-              Total pacientes mapeados
+              {t("Total pacientes mapeados")}
             </span>
-            <span className="font-semibold">{data.totalPatients}</span>
+            <span className="font-semibold">{totalMapped}</span>
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Con riesgo alto</span>
+            <span className="text-muted-foreground">
+              {t("Con riesgo alto")}
+            </span>
             <span className="font-semibold text-destructive">
-              {data.highRiskCount}
+              {highRiskMapped}
             </span>
           </div>
         </div>
@@ -579,31 +701,33 @@ function HealthGeoMapRow() {
               <div className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
                 <div className="flex items-center gap-2">
                   <h3 className="truncate text-[13px] font-semibold text-foreground">
-                    Alertas críticas
+                    {t("Alertas críticas")}
                   </h3>
                   <Badge
                     variant="outline"
                     className="shrink-0 border-destructive/20 bg-white text-destructive text-[10px] font-bold"
                   >
-                    {data.alerts.length}
+                    {alerts.length}
                   </Badge>
                 </div>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  Pacientes con riesgo alto/crítico
+                  {t("Pacientes con riesgo alto/crítico")}
                 </p>
               </div>
             </div>
           </div>
-          {data.alerts.length === 0 ? (
+          {alerts.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-5 pb-8 pt-4 text-center">
-              <p className="text-sm font-medium">Sin alertas geográficas</p>
+              <p className="text-sm font-medium">
+                {t("Sin alertas geográficas")}
+              </p>
               <p className="text-xs text-muted-foreground">
-                Todos los pacientes dentro de rango.
+                {t("Todos los pacientes dentro de rango.")}
               </p>
             </div>
           ) : (
             <div className="flex flex-col gap-2 px-3 pb-3">
-              {data.alerts.slice(0, 4).map((a) => (
+              {alerts.slice(0, 4).map((a) => (
                 <Link
                   key={a.patientId}
                   href={`/health-tests/pacientes/${a.patientId}`}
@@ -695,22 +819,27 @@ function AlertRow({ alert }: { alert: HealthAlert }) {
   );
 }
 
-function CategoryCoverageChart() {
+function CategoryCoverageChart({
+  masterRows,
+  tests,
+}: {
+  masterRows: PatientMasterRow[];
+  tests: HealthTest[];
+}) {
   const t = useT();
-  const { data, loading, error, reload } = useDashboard();
   const categories = useMemo(() => {
-    if (!data) return [];
     const byCategory = new Map<
       string,
       { name: string; coverage: number; color: string }
     >();
-    for (const test of data.tests) {
-      const completed = data.masterRows.filter((row) =>
+    const total = masterRows.length;
+    for (const test of tests) {
+      const completed = masterRows.filter((row) =>
         row.patient.results.some(
           (r) => r.testCode === test.code && r.state === "completado",
         ),
       ).length;
-      const coverage = Math.round((completed / data.masterRows.length) * 100);
+      const coverage = total === 0 ? 0 : Math.round((completed / total) * 100);
       const current = byCategory.get(test.category) ?? {
         name: test.category,
         coverage: 0,
@@ -723,13 +852,14 @@ function CategoryCoverageChart() {
       });
     }
     return [...byCategory.values()].sort((a, b) => a.coverage - b.coverage);
-  }, [data]);
+  }, [masterRows, tests]);
 
-  if (loading && !data)
-    return <div className="h-56 w-full animate-pulse rounded-xl bg-muted" />;
-  if (error && !data)
-    return <ModuleErrorState message={error} onRetry={reload} />;
-  if (!data) return null;
+  if (masterRows.length === 0)
+    return (
+      <p className="py-10 text-center text-xs text-muted-foreground">
+        {t("Sin pacientes evaluados todavía")}
+      </p>
+    );
 
   const chartData = categories.map((c) => ({
     name: c.name,
