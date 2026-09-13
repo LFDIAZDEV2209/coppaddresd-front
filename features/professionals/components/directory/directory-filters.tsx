@@ -185,7 +185,9 @@ export function DirectoryToolbar({
           >
             <RefreshCw className={loading ? "animate-spin" : undefined} />
           </Button>
-          <ViewToggle value={view} onValueChange={onViewChange} />
+          <div className="hidden md:block">
+            <ViewToggle value={view} onValueChange={onViewChange} />
+          </div>
         </div>
       </div>
 

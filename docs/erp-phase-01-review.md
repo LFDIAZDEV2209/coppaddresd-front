@@ -2,6 +2,8 @@
 
 ## Corrección visual solicitada por Luis
 
+Corrección responsive posterior: en pantallas menores de `md`, el directorio presenta siempre tarjetas completas y oculta el selector tabla/tarjetas; así no se recortan el estado ni las acciones. La tabla se conserva desde tablet/escritorio. Las tablas de catálogos de Super Admin usan desplazamiento horizontal contenido cuando exceden el ancho disponible. En 390 px no hay desbordamiento del documento; los contenedores de catálogo miden 314 px y exponen scroll para sus tablas de 494–615 px. Lint y build correctos tras el ajuste; la comprobación de dispositivo físico de Luis permanece pendiente.
+
 Se reemplazó el busto rechazado por una familia 3D propia de objetos brillantes: maletín clínico azul, check verde, invitación naranja y pausa coral. Sprite transparente `public/images/professionals/directory-icons-3d.png`, generado con imagegen integrado; se usa en cabecera, cuatro estadísticas y encabezado del listado. Animaciones de entrada y saludo al hover/foco, sin bucles continuos, respetando reduced-motion.
 
 Cabecera y encabezado de tabla ahora usan superficies claras; estadísticas sin barras laterales, números más legibles e iconos protagonistas. Badges Activo verde sólido #087d43/blanco, Invitado amarillo #ffc400/texto oscuro e Inactivo rojo #c83237/blanco. Se corrigió el conflicto entre translate de Tailwind y transform del switch: control de dominio con primitiva Base UI, círculo blanco de 20 px dentro de un rail de 46×26 px, movimiento por left. No cambia permisos ni coordinación backend.
@@ -41,7 +43,7 @@ Pencil no pudo conectar con la aplicación de escritorio. Impeccable automatizad
 
 ## Revisión pendiente antes de cerrar
 
-Validar con Luis escritorio amplio y móvil real (el navegador integrado solo se comprobó al ancho disponible), foco visible, contraste en ambos temas y experiencia visual final. No se simuló doble clic mediante navegador; el bloqueo síncrono de operaciones está implementado y los fallos de coordinación se cubren en backend. La prueba de sesiones paciente/ERP es de integración aislada, no una videollamada ni envío de notificaciones reales.
+Validar con Luis escritorio amplio y móvil real (el navegador integrado comprobó 390 px sin desbordamiento y la alternativa de tarjetas; falta el dispositivo físico), foco visible, contraste en ambos temas y experiencia visual final. No se simuló doble clic mediante navegador; el bloqueo síncrono de operaciones está implementado y los fallos de coordinación se cubren en backend. La prueba de sesiones paciente/ERP es de integración aislada, no una videollamada ni envío de notificaciones reales.
 
 La búsqueda previa no encuentra el texto concatenado «Ana Torres», pero permite buscar por campos individuales; registrar este límite para la fase de filtros, sin ampliar el cambio actual.
 

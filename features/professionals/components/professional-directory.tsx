@@ -338,21 +338,7 @@ export function ProfessionalDirectory() {
               <DirectorySkeleton />
             ) : result && result.data.length > 0 ? (
               <>
-                {view === "table" ? (
-                  <DirectoryTable
-                    employees={result.data}
-                    canInvite={canInvite}
-                    invitingId={invitingId}
-                    copiedId={copiedId}
-                    selected={selected}
-                    allSelected={allVisibleSelected}
-                    someSelected={someVisibleSelected}
-                    onToggleAll={toggleAllVisible}
-                    onToggleOne={toggleOne}
-                    onOpen={openDetail}
-                    onInvite={onInvite}
-                  />
-                ) : (
+                <div className="md:hidden">
                   <DirectoryCards
                     employees={result.data}
                     canInvite={canInvite}
@@ -363,6 +349,36 @@ export function ProfessionalDirectory() {
                     onOpen={openDetail}
                     onInvite={onInvite}
                   />
+                </div>
+                {view === "table" ? (
+                  <div className="hidden md:block">
+                    <DirectoryTable
+                      employees={result.data}
+                      canInvite={canInvite}
+                      invitingId={invitingId}
+                      copiedId={copiedId}
+                      selected={selected}
+                      allSelected={allVisibleSelected}
+                      someSelected={someVisibleSelected}
+                      onToggleAll={toggleAllVisible}
+                      onToggleOne={toggleOne}
+                      onOpen={openDetail}
+                      onInvite={onInvite}
+                    />
+                  </div>
+                ) : (
+                  <div className="hidden md:block">
+                    <DirectoryCards
+                      employees={result.data}
+                      canInvite={canInvite}
+                      invitingId={invitingId}
+                      copiedId={copiedId}
+                      selected={selected}
+                      onToggleOne={toggleOne}
+                      onOpen={openDetail}
+                      onInvite={onInvite}
+                    />
+                  </div>
                 )}
                 {selected.size > 0 && (
                   <BulkBar
