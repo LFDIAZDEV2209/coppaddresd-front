@@ -8,7 +8,6 @@ import {
   ArrowUpDown,
   Building2,
   Stethoscope,
-  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,13 +19,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { SectionHeader } from "@/components/layout/section-header";
-import {
-  fullName,
-  ProfessionalAvatar,
-  ProfessionalStatusBadge,
-} from "../professional-visuals";
+import { DirectoryIcon } from "./directory-icon";
+import { fullName, ProfessionalAvatar } from "../professional-visuals";
 import { ActionsMenu } from "./actions-menu";
+import { ProfessionalAccess } from "./professional-access";
 import type { EmployeeListItem } from "../../services/employees-service";
 
 // --- Tabla ---
@@ -91,7 +87,7 @@ function SortableHead({
             <ArrowDown className="size-3" />
           )
         ) : (
-          <ArrowUpDown className="size-3 opacity-40" />
+          <ArrowUpDown className="size-3 text-muted-foreground" />
         )}
       </button>
     </TableHead>
@@ -138,12 +134,15 @@ export function DirectoryTable({
 
   return (
     <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
-      <SectionHeader
-        title={`${employees.length} ${t("profesionales visibles")}`}
-        description={t("Equipo del ERP")}
-        icon={UserRound}
-        variant="primary"
-      />
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <DirectoryIcon kind="team" className="directory-3d-icon--small" />
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">
+            {employees.length} {t("profesionales visibles")}
+          </h2>
+          <p className="text-xs text-muted-foreground">{t("Equipo del ERP")}</p>
+        </div>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -220,7 +219,7 @@ export function DirectoryTable({
               </TableCell>
               <TableCell className="hidden md:table-cell">
                 {employee.professionalTypeName ? (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-foreground/80">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
                     <Stethoscope className="size-3 text-primary" />
                     {employee.professionalTypeName}
                   </span>
@@ -241,7 +240,7 @@ export function DirectoryTable({
                     employee.specialtyNames.slice(0, 2).map((name) => (
                       <span
                         key={name}
-                        className="rounded-full bg-primary/8 px-2 py-0.5 text-[11px] font-medium text-primary"
+                        className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary"
                       >
                         {name}
                       </span>
@@ -262,7 +261,7 @@ export function DirectoryTable({
                     employee.clinicNames.slice(0, 2).map((name) => (
                       <span
                         key={name}
-                        className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground"
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
                       >
                         <Building2 className="size-3" />
                         {name}
@@ -279,7 +278,7 @@ export function DirectoryTable({
                 </div>
               </TableCell>
               <TableCell>
-                <ProfessionalStatusBadge status={employee.status} />
+                <ProfessionalAccess employee={employee} />
               </TableCell>
               <TableCell>
                 <ActionsMenu

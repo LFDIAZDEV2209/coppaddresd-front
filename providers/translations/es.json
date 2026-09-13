@@ -2780,8 +2780,7 @@
   "y todas sus asignaciones. Esta acción no se puede deshacer.": "y todas sus asignaciones. Esta acción no se puede deshacer.",
   "Ya empezaron sus evaluaciones": "Ya empezaron sus evaluaciones",
   "Ya reposteaste esta publicación": "Ya reposteaste esta publicación",
-
-"Portada del club": "Portada del club",
+  "Portada del club": "Portada del club",
   "Sin portada": "Sin portada",
   "Subiendo…": "Subiendo…",
   "Subir portada": "Subir portada",
@@ -2838,5 +2837,13 @@
   "Desbloqueado": "Desbloqueado",
   "Bloqueado — continúa tu racha": "Bloqueado — continúa tu racha",
   "Siguiente hito en": "Siguiente hito en",
-  "Gamificación": "Gamificación"
+  "Gamificación": "Gamificación",
+  "No se pudo cambiar el acceso. Actualiza el directorio e inténtalo de nuevo.": "No se pudo cambiar el acceso. Actualiza el directorio e inténtalo de nuevo.",
+  "No pudimos confirmar el cambio. Reintenta para comprobarlo.": "No pudimos confirmar el cambio. Reintenta para comprobarlo.",
+  "Acceso al ERP de {name}": "Acceso al ERP de {name}",
+  "Sincronizando…": "Sincronizando…",
+  "Por confirmar": "Por confirmar",
+  "Tu acceso está protegido": "Tu acceso está protegido",
+  "Sin permiso para cambiar el acceso": "Sin permiso para cambiar el acceso",
+  "Solo afecta al ERP; conserva el acceso como paciente.": "Solo afecta al ERP; conserva el acceso como paciente."
 }

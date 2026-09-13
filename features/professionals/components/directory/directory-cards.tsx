@@ -7,9 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   fullName,
   ProfessionalAvatar,
-  ProfessionalStatusBadge,
 } from "../professional-visuals";
 import { ActionsMenu } from "./actions-menu";
+import { ProfessionalAccess } from "./professional-access";
 import type { EmployeeListItem } from "../../services/employees-service";
 
 // --- Vista de tarjetas ---
@@ -35,15 +35,15 @@ export function DirectoryCards({
 }) {
   const t = useT();
   return (
-    <div className="stagger-children grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {employees.map((employee) => (
         <div
           key={employee.id}
           className={cn(
             "hover-lift flex flex-col gap-3 rounded-2xl border bg-card p-4 transition-all",
             selected.has(employee.id)
-              ? "border-primary ring-1 ring-primary/30"
-              : "border-border/70",
+              ? "border-primary ring-1 ring-primary"
+              : "border-border",
           )}
         >
           <div className="flex items-start justify-between gap-2">
@@ -78,7 +78,7 @@ export function DirectoryCards({
           </button>
 
           {employee.professionalTypeName && (
-            <span className="inline-flex w-fit items-center gap-1 rounded-full border border-border/70 bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-foreground/80">
+            <span className="inline-flex w-fit items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
               <Stethoscope className="size-3 text-primary" />
               {employee.professionalTypeName}
             </span>
@@ -89,7 +89,7 @@ export function DirectoryCards({
               {employee.specialtyNames.slice(0, 3).map((name) => (
                 <span
                   key={name}
-                  className="rounded-full bg-primary/8 px-2 py-0.5 text-[11px] font-medium text-primary"
+                  className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary"
                 >
                   {name}
                 </span>
@@ -109,8 +109,8 @@ export function DirectoryCards({
             </p>
           )}
 
-          <div className="mt-auto border-t border-border/60 pt-3">
-            <ProfessionalStatusBadge status={employee.status} />
+          <div className="mt-auto border-t border-border pt-3">
+            <ProfessionalAccess employee={employee} />
           </div>
         </div>
       ))}
