@@ -2,7 +2,11 @@
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare yarn@4.18.0 --activate
+# Yarn se instala desde el registry de npm en lugar de corepack: corepack
+# descarga la release desde repo.yarnpkg.com y en CI esa descarga falla de
+# forma intermitente ("Error when performing the request"). La imagen ya trae
+# shims de corepack en /usr/local/bin, así que se eliminan antes de instalar.
+RUN rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg && npm install -g @yarnpkg/cli-dist@4.18.0 && yarn --version
 
 FROM base AS deps
 
