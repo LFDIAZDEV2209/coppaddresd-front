@@ -5,7 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
-import { AppContextProvider, useAppContext } from "@/providers/context-provider";
+import {
+  AppContextProvider,
+  useAppContext,
+} from "@/providers/context-provider";
 import { PermissionRouteGuard } from "@/components/feedback/permission-route-guard";
 
 /** Redirige a /onboarding si el profesional aún no completó su wizard. */
@@ -45,7 +48,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-1 flex-col overflow-hidden min-w-0">
             <Topbar onMenuClick={() => setMobileOpen(true)} />
 
-            <main className="flex-1 overflow-y-auto">
+            <main className="relative min-h-0 flex-1 overflow-y-auto">
               <PermissionRouteGuard>{children}</PermissionRouteGuard>
             </main>
           </div>
