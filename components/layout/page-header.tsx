@@ -5,6 +5,7 @@ interface PageHeaderProps {
   title: string;
   description: string;
   icon: LucideIcon;
+  leadingVisual?: React.ReactNode;
   actions?: React.ReactNode;
   /**
    * Tono del fondo: "brand" (default) usa el token ÚNICO --brand-gradient
@@ -23,6 +24,7 @@ export function PageHeader({
   title,
   description,
   icon: Icon,
+  leadingVisual,
   actions,
   tone = "brand",
   className,
@@ -35,9 +37,11 @@ export function PageHeader({
         className,
       )}
     >
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--sidebar)] shadow-sm">
-        <Icon className="size-5" />
-      </div>
+      {leadingVisual ?? (
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--sidebar)] shadow-sm">
+          <Icon className="size-5" />
+        </div>
+      )}
 
       <div className="flex flex-1 flex-col gap-0.5 overflow-hidden min-w-0">
         <h1 className="text-lg font-bold text-white tracking-tight truncate">

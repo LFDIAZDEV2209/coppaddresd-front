@@ -257,7 +257,7 @@ export function CatalogManagement() {
       ) : (
         <div className="grid gap-6 p-5 md:grid-cols-2">
           {/* Tipos de profesional */}
-          <div className="flex flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
               <h3 className="flex items-center gap-2 text-sm font-semibold">
                 <Stethoscope className="size-4 text-primary" />
@@ -272,7 +272,7 @@ export function CatalogManagement() {
                 Agregar
               </Button>
             </div>
-            <div className="overflow-hidden rounded-xl border border-border/70">
+            <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-border/70">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -350,7 +350,7 @@ export function CatalogManagement() {
           </div>
 
           {/* Especialidades */}
-          <div className="flex flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
               <h3 className="flex items-center gap-2 text-sm font-semibold">
                 <BookOpenText className="size-4 text-primary" />
@@ -365,7 +365,7 @@ export function CatalogManagement() {
                 Agregar
               </Button>
             </div>
-            <div className="overflow-hidden rounded-xl border border-border/70">
+            <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-border/70">
               <Table>
                 <TableHeader>
                   <TableRow>

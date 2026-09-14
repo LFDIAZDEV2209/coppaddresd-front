@@ -1355,7 +1355,7 @@
   "Guardado a medias — pendiente de envío": "Partially saved — pending submission",
   "Guardados a medias": "Saved halfway",
   "Guardando...": "Saving...",
-  "Guardando…": "Saving...",
+  "Guardando…": "Saving…",
   "Guardar": "Save",
   "Guardar borrador": "Save draft",
   "Guardar cambios": "Save changes",
@@ -3046,5 +3046,13 @@
   "Motivo no especificado": "Reason not specified",
   "Clínico": "Clinical",
   "Vistas del paciente": "Patient views",
-  "Información clínica": "Clinical information"
+  "Información clínica": "Clinical information",
+  "No se pudo cambiar el acceso. Actualiza el directorio e inténtalo de nuevo.": "Could not change access. Refresh the directory and try again.",
+  "No pudimos confirmar el cambio. Reintenta para comprobarlo.": "We could not confirm the change. Retry to check it.",
+  "Acceso al ERP de {name}": "ERP access for {name}",
+  "Sincronizando…": "Syncing…",
+  "Por confirmar": "Unconfirmed",
+  "Tu acceso está protegido": "Your access is protected",
+  "Sin permiso para cambiar el acceso": "No permission to change access",
+  "Solo afecta al ERP; conserva el acceso como paciente.": "Only affects the ERP; patient access is preserved."
 }

@@ -18,19 +18,19 @@ export function statusLabel(status: string): string {
 function statusColor(status: string) {
   const colors: Record<string, { bg: string; text: string; dot: string }> = {
     Active: {
-      bg: "var(--success-soft)",
-      text: "var(--success-foreground)",
-      dot: "var(--success-foreground)",
+      bg: "#087d43",
+      text: "#ffffff",
+      dot: "#ffffff",
     },
     Invited: {
-      bg: "var(--warning-soft)",
-      text: "var(--warning-foreground)",
-      dot: "var(--warning)",
+      bg: "#ffc400",
+      text: "#422500",
+      dot: "#422500",
     },
     Inactive: {
-      bg: "var(--destructive-soft)",
-      text: "var(--destructive)",
-      dot: "var(--destructive)",
+      bg: "#c83237",
+      text: "#ffffff",
+      dot: "#ffffff",
     },
   };
   return (

@@ -185,7 +185,9 @@ export function DirectoryToolbar({
           >
             <RefreshCw className={loading ? "animate-spin" : undefined} />
           </Button>
-          <ViewToggle value={view} onValueChange={onViewChange} />
+          <div className="hidden md:block">
+            <ViewToggle value={view} onValueChange={onViewChange} />
+          </div>
         </div>
       </div>
 
@@ -200,13 +202,13 @@ export function DirectoryToolbar({
           {activeChips.map((chip) => (
             <span
               key={chip.key}
-              className="animate-scale-in inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 py-0.5 pr-1 pl-2.5 text-[11px] font-medium text-primary transition-all hover:bg-primary/15"
+              className="animate-scale-in inline-flex items-center gap-1 rounded-full border border-primary bg-primary-soft py-0.5 pr-1 pl-2.5 text-[11px] font-medium text-primary transition-all hover:bg-muted"
             >
               {chip.label}
               <button
                 type="button"
                 onClick={chip.onRemove}
-                className="flex items-center justify-center rounded-full p-0.5 transition-colors hover:bg-primary/20"
+                className="flex items-center justify-center rounded-full p-0.5 transition-colors hover:bg-card"
                 aria-label={t("Quitar filtro {label}", { label: chip.label })}
               >
                 <X className="size-3" />
