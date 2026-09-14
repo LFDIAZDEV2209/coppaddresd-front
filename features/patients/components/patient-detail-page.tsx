@@ -40,6 +40,9 @@ import { StatusBadge } from "@/components/feedback/status-badge";
 import { StatCard } from "@/components/feedback/stat-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePersistedTab } from "@/features/program/components/chart-tabs";
+import { ProgramControlesTab } from "@/features/program/components/program-controles-tab";
+import { cn } from "@/lib/utils";
 import { getPatient } from "../services/patients-service";
 import { PatientProfessionalsSection } from "./patient-professionals-section";
 import { ClinicalMeasurementsSection } from "./clinical-measurements-section";
@@ -63,6 +66,10 @@ export function PatientDetailPage({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [activeTab, setActiveTab] = usePersistedTab(
+    "patient-detail:v1",
+    "general",
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -120,6 +127,18 @@ export function PatientDetailPage({ id }: { id: string }) {
       </div>
     );
 
+  // Pestañas del detalle: las etiquetas viven en los diccionarios i18n.
+  const tabs = [
+    { key: "general", label: t("General") },
+    { key: "clinico", label: t("Clínico") },
+    { key: "controles", label: t("Controles") },
+  ];
+
+  // Fallback por si sessionStorage conserva una pestaña de una versión previa.
+  const safeTab = tabs.some((tab) => tab.key === activeTab)
+    ? activeTab
+    : "general";
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <Button
@@ -154,210 +173,257 @@ export function PatientDetailPage({ id }: { id: string }) {
         }
       />
 
-      {/* Stats del paciente con colores representativos. */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label={t("Edad")}
-          value={getAge(patient.dateOfBirth)}
-          icon={CalendarDays}
-          variant="primary"
-          context={t("Años cumplidos")}
-        />
-        <StatCard
-          label={t("Género")}
-          value={patient.gender ?? "No registrado"}
-          icon={UserRound}
-          variant="info"
-          context={t("Perfil demográfico")}
-        />
-        <StatCard
-          label={t("Clínica")}
-          value={patient.clinicName ?? "Sin asignar"}
-          icon={Building2}
-          variant="success"
-          context={patient.locationName ?? "Sin sede"}
-        />
-        <StatCard
-          label={t("Aseguradora")}
-          value={patient.insurerName ?? "Sin aseguradora"}
-          icon={Shield}
-          variant="warning"
-          context={patient.memberId ?? "Sin número de miembro"}
-        />
+      {/* Pestañas de navegación del detalle. */}
+      <div
+        role="tablist"
+        aria-label={t("Vistas del paciente")}
+        className="inline-flex w-fit flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-sm"
+      >
+        {tabs.map((tab) => {
+          const isActive = safeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg px-5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      <PatientProfessionalsSection patientId={patient.id} />
+      {/* General: demografía, contacto, cobertura y estilo de vida. */}
+      {safeTab === "general" && (
+        <section
+          aria-label={t("Información general")}
+          className="flex flex-col gap-6"
+        >
+          {/* Stats del paciente con colores representativos. */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label={t("Edad")}
+              value={getAge(patient.dateOfBirth)}
+              icon={CalendarDays}
+              variant="primary"
+              context={t("Años cumplidos")}
+            />
+            <StatCard
+              label={t("Género")}
+              value={patient.gender ?? "No registrado"}
+              icon={UserRound}
+              variant="info"
+              context={t("Perfil demográfico")}
+            />
+            <StatCard
+              label={t("Clínica")}
+              value={patient.clinicName ?? "Sin asignar"}
+              icon={Building2}
+              variant="success"
+              context={patient.locationName ?? "Sin sede"}
+            />
+            <StatCard
+              label={t("Aseguradora")}
+              value={patient.insurerName ?? "Sin aseguradora"}
+              icon={Shield}
+              variant="warning"
+              context={patient.memberId ?? "Sin número de miembro"}
+            />
+          </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <DetailCard
-          title={t("Datos personales")}
-          icon={UserRound}
-          tone="primary"
-          items={[
-            {
-              icon: CreditCard,
-              label: "Tipo de documento",
-              value: patient.documentTypeName ?? "No registrado",
-            },
-            {
-              icon: CreditCard,
-              label: "Número de documento",
-              value: patient.documentNumber ?? "No registrado",
-            },
-            {
-              icon: CalendarDays,
-              label: "Fecha de nacimiento",
-              value: formatDate(patient.dateOfBirth),
-            },
-            {
-              icon: UserRound,
-              label: "Etnia",
-              value: patient.ethnicityName ?? "No registrada",
-            },
-            {
-              icon: Droplets,
-              label: "Grupo sanguíneo",
-              value: patient.bloodTypeName ?? "No registrado",
-            },
-            {
-              icon: Heart,
-              label: "Estado civil",
-              value: patient.maritalStatus ?? "No registrado",
-            },
-          ]}
-        />
-        <DetailCard
-          title={t("Contacto")}
-          icon={MapPin}
-          tone="info"
-          items={[
-            {
-              icon: Phone,
-              label: "Teléfono",
-              value: formatPhone(patient) ?? "No registrado",
-            },
-            {
-              icon: Mail,
-              label: "Correo",
-              value: patient.email ?? "No registrado",
-            },
-            {
-              icon: MapPin,
-              label: "Dirección",
-              value:
-                [
-                  patient.address,
-                  patient.cityName,
-                  patient.stateCode,
-                  patient.countryName,
-                ]
-                  .filter(Boolean)
-                  .join(", ") || "No registrada",
-            },
-            {
-              icon: MapPin,
-              label: "Código postal",
-              value: patient.postalCode ?? "No registrado",
-            },
-          ]}
-        />
-      </div>
+          <PatientProfessionalsSection patientId={patient.id} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <DetailCard
-          title={t("Cobertura")}
-          icon={Shield}
-          tone="warning"
-          items={[
-            {
-              icon: Shield,
-              label: "Aseguradora",
-              value: patient.insurerName ?? "Sin aseguradora",
-            },
-            {
-              icon: CreditCard,
-              label: "Número de miembro",
-              value: patient.memberId ?? "No registrado",
-            },
-          ]}
-        />
-        <DetailCard
-          title={t("Clínica y sede")}
-          icon={Building2}
-          tone="success"
-          items={[
-            {
-              icon: Building2,
-              label: "Clínica",
-              value: patient.clinicName ?? "Sin asignar",
-            },
-            {
-              icon: MapPin,
-              label: "Sede",
-              value: patient.locationName ?? "No registrada",
-            },
-          ]}
-        />
-      </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <DetailCard
+              title={t("Datos personales")}
+              icon={UserRound}
+              tone="primary"
+              items={[
+                {
+                  icon: CreditCard,
+                  label: "Tipo de documento",
+                  value: patient.documentTypeName ?? "No registrado",
+                },
+                {
+                  icon: CreditCard,
+                  label: "Número de documento",
+                  value: patient.documentNumber ?? "No registrado",
+                },
+                {
+                  icon: CalendarDays,
+                  label: "Fecha de nacimiento",
+                  value: formatDate(patient.dateOfBirth),
+                },
+                {
+                  icon: UserRound,
+                  label: "Etnia",
+                  value: patient.ethnicityName ?? "No registrada",
+                },
+                {
+                  icon: Droplets,
+                  label: "Grupo sanguíneo",
+                  value: patient.bloodTypeName ?? "No registrado",
+                },
+                {
+                  icon: Heart,
+                  label: "Estado civil",
+                  value: patient.maritalStatus ?? "No registrado",
+                },
+              ]}
+            />
+            <DetailCard
+              title={t("Contacto")}
+              icon={MapPin}
+              tone="info"
+              items={[
+                {
+                  icon: Phone,
+                  label: "Teléfono",
+                  value: formatPhone(patient) ?? "No registrado",
+                },
+                {
+                  icon: Mail,
+                  label: "Correo",
+                  value: patient.email ?? "No registrado",
+                },
+                {
+                  icon: MapPin,
+                  label: "Dirección",
+                  value:
+                    [
+                      patient.address,
+                      patient.cityName,
+                      patient.stateCode,
+                      patient.countryName,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") || "No registrada",
+                },
+                {
+                  icon: MapPin,
+                  label: "Código postal",
+                  value: patient.postalCode ?? "No registrado",
+                },
+              ]}
+            />
+          </div>
 
-      <DetailCard
-        title={t("Estilo de vida e historial")}
-        icon={HeartPulse}
-        tone="destructive"
-        items={[
-          {
-            icon: Cigarette,
-            label: "Tabaquismo",
-            value: patient.smokingStatus ?? "No registrado",
-          },
-          {
-            icon: Wine,
-            label: "Consumo de alcohol",
-            value: patient.alcoholStatus ?? "No registrado",
-          },
-          {
-            icon: Dumbbell,
-            label: "Nivel de ejercicio",
-            value: patient.exerciseLevel ?? "No registrado",
-          },
-          {
-            icon: UserRound,
-            label: "Discapacidad",
-            value: patient.disability ?? "No registrada",
-          },
-          {
-            icon: Hospital,
-            label: "Hospitalizaciones",
-            value: patient.hospitalizationHistory ?? "No registrado",
-          },
-          {
-            icon: Scissors,
-            label: "Cirugías",
-            value: patient.surgeryHistory ?? "No registradas",
-          },
-        ]}
-      />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <DetailCard
+              title={t("Cobertura")}
+              icon={Shield}
+              tone="warning"
+              items={[
+                {
+                  icon: Shield,
+                  label: "Aseguradora",
+                  value: patient.insurerName ?? "Sin aseguradora",
+                },
+                {
+                  icon: CreditCard,
+                  label: "Número de miembro",
+                  value: patient.memberId ?? "No registrado",
+                },
+              ]}
+            />
+            <DetailCard
+              title={t("Clínica y sede")}
+              icon={Building2}
+              tone="success"
+              items={[
+                {
+                  icon: Building2,
+                  label: "Clínica",
+                  value: patient.clinicName ?? "Sin asignar",
+                },
+                {
+                  icon: MapPin,
+                  label: "Sede",
+                  value: patient.locationName ?? "No registrada",
+                },
+              ]}
+            />
+          </div>
 
-      {patient.notes && (
-        <DetailCard
-          title={t("Notas")}
-          icon={ClipboardPenLine}
-          tone="primary"
-          items={[
-            {
-              icon: ClipboardPenLine,
-              label: "Notas clínicas",
-              value: patient.notes,
-            },
-          ]}
-        />
+          <DetailCard
+            title={t("Estilo de vida e historial")}
+            icon={HeartPulse}
+            tone="destructive"
+            items={[
+              {
+                icon: Cigarette,
+                label: "Tabaquismo",
+                value: patient.smokingStatus ?? "No registrado",
+              },
+              {
+                icon: Wine,
+                label: "Consumo de alcohol",
+                value: patient.alcoholStatus ?? "No registrado",
+              },
+              {
+                icon: Dumbbell,
+                label: "Nivel de ejercicio",
+                value: patient.exerciseLevel ?? "No registrado",
+              },
+              {
+                icon: UserRound,
+                label: "Discapacidad",
+                value: patient.disability ?? "No registrada",
+              },
+              {
+                icon: Hospital,
+                label: "Hospitalizaciones",
+                value: patient.hospitalizationHistory ?? "No registrado",
+              },
+              {
+                icon: Scissors,
+                label: "Cirugías",
+                value: patient.surgeryHistory ?? "No registradas",
+              },
+            ]}
+          />
+
+          {patient.notes && (
+            <DetailCard
+              title={t("Notas")}
+              icon={ClipboardPenLine}
+              tone="primary"
+              items={[
+                {
+                  icon: ClipboardPenLine,
+                  label: "Notas clínicas",
+                  value: patient.notes,
+                },
+              ]}
+            />
+          )}
+        </section>
       )}
 
-      <DiagnosesSection patient={patient} />
-      <MedicationsSection patient={patient} />
-      <AllergiesSection patient={patient} />
-      <VitalSignsSection patient={patient} />
-      <ClinicalMeasurementsSection patientId={patient.id} />
+      {/* Clínico: diagnósticos, medicamentos, alergias y mediciones. */}
+      {safeTab === "clinico" && (
+        <section
+          aria-label={t("Información clínica")}
+          className="flex flex-col gap-6"
+        >
+          <DiagnosesSection patient={patient} />
+          <MedicationsSection patient={patient} />
+          <AllergiesSection patient={patient} />
+          <VitalSignsSection patient={patient} />
+          <ClinicalMeasurementsSection patientId={patient.id} />
+        </section>
+      )}
+
+      {/* Controles: vista de progreso de controles del programa (UC-004). */}
+      {safeTab === "controles" && <ProgramControlesTab patientId={patient.id} />}
     </div>
   );
 }

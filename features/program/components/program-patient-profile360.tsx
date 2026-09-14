@@ -25,6 +25,7 @@ import {
 import { EnrollmentContentTab } from "./enrollment-detail/tabs/enrollment-content-tab";
 import { EnrollmentBaselineTab } from "./enrollment-detail/tabs/enrollment-baseline-tab";
 import { EnrollmentXpLedgerTab } from "./enrollment-detail/tabs/enrollment-xp-ledger-tab";
+import { ProgramControlesTab } from "./program-controles-tab";
 import { fetchEnrollmentById } from "../services/program-enrollments-service";
 import type { ProgramEnrollment } from "../types";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,7 @@ export function ProgramPatientProfile360({
     { key: "resumen", label: "Resumen" },
     { key: "gamificacion", label: t("Gamificación") },
     { key: "clinica", label: "Clínica" },
+    { key: "controles", label: t("Controles") },
     { key: "contenido", label: "Contenido" },
     { key: "xp-ledger", label: "Historial XP" },
   ];
@@ -270,6 +272,15 @@ export function ProgramPatientProfile360({
                 <PatientClinicaBottom data={data} />
               </>
             ) : null}
+          </section>
+        )}
+
+        {safeTab === "controles" && (
+          <section aria-label="Controles del programa">
+            <ProgramControlesTab
+              patientId={patientId}
+              clinicalMetrics={data?.mediciones_clinicas ?? null}
+            />
           </section>
         )}
 

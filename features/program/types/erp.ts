@@ -499,3 +499,66 @@ export interface PatientOverviewDto {
   clinical_reviews: ErpClinicalReviewSummary[];
   daily_checkins: ErpDailyCheckinSummary[];
 }
+
+// --- UC-004: Controles de hitos del programa (ERP) ---
+// El backend expone estos DTOs en snake_case (igual que el resto del archivo);
+// no normalizar a camelCase en el borde.
+
+/** Documento de examen de laboratorio vinculado a un control (o null). */
+export interface PatientControlDocumentDto {
+  exam_batch_id: string;
+  /** Clave del archivo en el storage (nullable); se firma antes de abrirlo. */
+  source_key: string | null;
+  observed_at: string; // ISO datetime
+  measurement_count: number;
+  metric_codes: string[];
+}
+
+/** Hito de control del programa (día 7, 14, 21…). */
+export interface PatientControlMilestoneDto {
+  milestone_day: number;
+  target_date: string; // YYYY-MM-DD (fecha local de la inscripción)
+  /** pending | sent | responded | followed_up | completed | closed_without_exam | missed | failed | skipped */
+  status: string;
+  control_id: string | null;
+  sent_at: string | null;
+  responded_at: string | null;
+  followup_sent_at: string | null;
+  completed_at: string | null;
+  /** declined | no_upload_timeout | … */
+  closed_reason: string | null;
+  document: PatientControlDocumentDto | null;
+}
+
+/** Control en curso: el hito más reciente con control abierto. */
+export interface PatientControlCurrentDto {
+  control_id: string;
+  milestone_day: number;
+  status: string;
+  sent_at: string | null;
+}
+
+/** Contadores agregados de adherencia a controles. */
+export interface PatientControlAdherenceDto {
+  completed: number;
+  missed: number;
+  closed_without_exam: number;
+  pending: number;
+  responded: number;
+  followups_sent: number;
+  messages_sent: number;
+}
+
+/** Respuesta de GET /api/v1/program/erp/patients/{patientId}/controls. */
+export interface PatientControlsDto {
+  enrollment: {
+    id: string;
+    start_local_date: string; // YYYY-MM-DD
+    timezone: string;
+    status: string;
+  };
+  current_control: PatientControlCurrentDto | null;
+  next_due: { milestone_day: number; target_date: string } | null;
+  milestones: PatientControlMilestoneDto[];
+  adherence: PatientControlAdherenceDto;
+}
