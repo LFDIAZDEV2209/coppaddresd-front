@@ -4,19 +4,39 @@ import { useState } from "react";
 import {
   Activity,
   Award,
+  BadgeCheck,
   BarChart3,
+  Bone,
+  Briefcase,
+  Building2,
   CalendarPlus,
   ChartArea,
+  Coffee,
+  Compass,
+  Droplets,
+  EyeOff,
+  Flower2,
+  GraduationCap,
+  HeartCrack,
   HeartHandshake,
   HeartPulse,
+  HousePlus,
+  Landmark,
+  Mars,
   PhoneCall,
+  Pill,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
+  Unlink,
+  User,
   UserCheck,
   UserRound,
   UserRoundX,
   Users,
+  Venus,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -97,6 +117,53 @@ function formatMonth(year: number, month: number): string {
   });
 }
 
+/** Icono por línea de cada distribución (badge con el tinte del item). */
+const GENDER_ICONS: Record<string, LucideIcon> = {
+  Masculino: Mars,
+  Femenino: Venus,
+};
+const AGE_ICONS: Record<string, LucideIcon> = {
+  "18-30": Sparkles,
+  "31-45": Briefcase,
+  "46-55": Compass,
+  "56-65": Coffee,
+  "65+": HeartHandshake,
+};
+/** Clave = valor crudo del backend (antes de traducir la etiqueta). */
+const MARITAL_ICONS: Record<string, LucideIcon> = {
+  Single: User,
+  Married: HeartHandshake,
+  Divorced: HeartCrack,
+  Widowed: Flower2,
+  Separated: Unlink,
+  "Domestic Partnership": HousePlus,
+  "Prefer Not to Say": EyeOff,
+};
+/** Capítulo CIE-10 por letra inicial del código. */
+const DIAGNOSIS_ICONS: Record<string, LucideIcon> = {
+  I: HeartPulse,
+  E: Pill,
+  M: Bone,
+  D: Droplets,
+};
+/** Sin semántica propia: rotación institucional determinista por índice. */
+const INSURER_ICONS: LucideIcon[] = [
+  ShieldCheck,
+  Building2,
+  Landmark,
+  BadgeCheck,
+  Award,
+  HeartHandshake,
+];
+const PROFESSIONAL_ICONS: LucideIcon[] = [
+  Stethoscope,
+  GraduationCap,
+  UserRound,
+  HeartPulse,
+  Award,
+  Briefcase,
+];
+
 function SummarySkeleton() {
   return (
     <div className="flex flex-col gap-4">
@@ -162,30 +229,40 @@ export function PatientSummaryView({
   const genderItems = data.genderDistribution.map((slice) => ({
     label: slice.value ?? t("Sin dato"),
     value: slice.count,
+    icon: (slice.value && GENDER_ICONS[slice.value]) || User,
   }));
-  const ageItems = data.ageDistribution.map((slice) => ({
+  const ageItems = data.ageDistribution.map((slice, index) => ({
     label: slice.value ?? "—",
     value: slice.count,
+    icon:
+      (slice.value && AGE_ICONS[slice.value]) ||
+      [Sparkles, Briefcase, Compass, Coffee, HeartHandshake][index % 5],
   }));
   const maritalItems = data.maritalStatusDistribution.map((slice) => ({
     label: slice.value
       ? t(MARITAL_LABELS[slice.value] ?? slice.value)
       : t("Sin dato"),
     value: slice.count,
+    icon: (slice.value && MARITAL_ICONS[slice.value]) || User,
   }));
-  const insurerItems = data.insurerDistribution.map((slice) => ({
+  const insurerItems = data.insurerDistribution.map((slice, index) => ({
     label: slice.name ?? t("Sin aseguradora"),
     value: slice.count,
+    icon: INSURER_ICONS[index % INSURER_ICONS.length],
   }));
   const diagnosisItems = data.topDiagnoses.map((slice) => ({
     label: slice.description
       ? `${slice.code} · ${slice.description}`
       : slice.code,
     value: slice.count,
+    icon:
+      (slice.code && DIAGNOSIS_ICONS[slice.code[0]?.toUpperCase()]) ||
+      Stethoscope,
   }));
-  const professionalItems = data.topProfessionals.map((slice) => ({
+  const professionalItems = data.topProfessionals.map((slice, index) => ({
     label: slice.name,
     value: slice.count,
+    icon: PROFESSIONAL_ICONS[index % PROFESSIONAL_ICONS.length],
   }));
   const growthData = data.newPatientsByMonth.map((point) => ({
     month: formatMonth(point.year, point.month),
@@ -501,7 +578,7 @@ export function PatientSummaryView({
             icon={PhoneCall}
             variant="primary"
           />
-          <div className="flex flex-col items-center justify-center gap-3 p-5 py-8">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-5 py-8">
             <span className="text-4xl font-bold tabular-nums text-foreground">
               {data.emergencyContactPct.toFixed(1)}%
             </span>

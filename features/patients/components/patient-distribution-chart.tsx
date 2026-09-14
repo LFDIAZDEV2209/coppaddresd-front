@@ -13,6 +13,38 @@ export interface DistributionItem {
   label: string;
   value: number;
   hint?: string;
+  /** Icono Lucide del registro (badge con el tinte del item). */
+  icon?: LucideIcon;
+}
+
+/**
+ * Badge circular del registro: glifo Lucide sobre el tinte del item
+ * (color-mix con transparente → adapta a claro/oscuro). Decorativo.
+ */
+function ItemBadge({
+  icon: Icon,
+  color,
+  size,
+}: {
+  icon: LucideIcon;
+  color: string;
+  size: "md" | "sm";
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-full",
+        size === "md" ? "size-8" : "size-7",
+      )}
+      style={{
+        backgroundColor: `color-mix(in srgb, ${color} 16%, transparent)`,
+        color,
+      }}
+    >
+      <Icon aria-hidden className={size === "md" ? "size-4" : "size-3.5"} />
+    </span>
+  );
 }
 
 /** Respeta `prefers-reduced-motion` para desactivar animaciones de recharts. */
@@ -157,11 +189,19 @@ export function PatientDistributionChart({
             <ul className="flex w-full flex-col gap-2 text-sm sm:w-auto">
               {items.map((item, index) => (
                 <li key={item.label} className="flex items-center gap-2">
-                  <span
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: colors[index % colors.length] }}
-                    aria-hidden
-                  />
+                  {item.icon ? (
+                    <ItemBadge
+                      icon={item.icon}
+                      color={colors[index % colors.length]}
+                      size="sm"
+                    />
+                  ) : (
+                    <span
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: colors[index % colors.length] }}
+                      aria-hidden
+                    />
+                  )}
                   <span
                     className="min-w-0 flex-1 truncate font-medium"
                     title={item.hint ?? item.label}
@@ -182,11 +222,18 @@ export function PatientDistributionChart({
           </div>
         ) : (
           <ul className="flex animate-fade-in flex-col gap-3" role="list">
-            {items.map((item) => (
-              <li key={item.label} className="flex flex-col gap-1">
-                <div className="flex items-baseline justify-between gap-3 text-sm">
+            {items.map((item, index) => (
+              <li key={item.label} className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2.5 text-sm">
+                  {item.icon && (
+                    <ItemBadge
+                      icon={item.icon}
+                      color={colors[index % colors.length]}
+                      size="md"
+                    />
+                  )}
                   <span
-                    className="truncate font-medium"
+                    className="min-w-0 flex-1 truncate font-medium"
                     title={item.hint ?? item.label}
                   >
                     {item.label}

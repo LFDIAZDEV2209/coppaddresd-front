@@ -534,7 +534,7 @@ export function PatientsPage() {
       <nav
         role="tablist"
         aria-label={t("Secciones de pacientes")}
-        className="flex gap-1 overflow-x-auto border-b border-border"
+        className="no-scrollbar flex gap-1 overflow-x-auto border-b border-border"
       >
         {PATIENT_TABS.map((item) => {
           const Icon = item.icon;
