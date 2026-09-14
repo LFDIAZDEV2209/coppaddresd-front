@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useT } from "@/providers/i18n-provider";
 import {
   USA_STATE_PATHS,
@@ -8,13 +8,17 @@ import {
   STATE_NAMES,
 } from "@/lib/geo/usa-states-paths";
 import type { HealthGeoCity } from "../../services/health-geo-service";
-import type { HealthGeoFilter } from "../../types";
 import { mapRiskColor, mapRiskPalette } from "../shared/colors";
+
+/** Neón del hover (cian) y de la selección (lima); distintivos sobre el pastel. */
+const NEON_HOVER = "#22D3EE";
+const NEON_SELECTED = "#A3E635";
 
 interface StateAgg {
   highRiskPct: number | null;
   avgScore: number | null;
   totalCount: number;
+  evaluatedCount: number;
   cities: HealthGeoCity[];
 }
 
@@ -28,48 +32,60 @@ function aggregateByState(cities: HealthGeoCity[]): Record<string, StateAgg> {
         highRiskPct: null,
         avgScore: null,
         totalCount: 0,
+        evaluatedCount: 0,
         cities: [],
       };
-    map[key].cities.push(c);
-    map[key].totalCount += c.count;
+    const agg = map[key];
+    agg.cities.push(c);
+    agg.totalCount += c.count;
+    agg.evaluatedCount += c.evaluatedCount;
   }
   for (const agg of Object.values(map)) {
-    const validRisk = agg.cities.filter((c) => c.highRiskPct != null);
-    if (validRisk.length > 0)
-      agg.highRiskPct =
-        validRisk.reduce((s, c) => s + c.highRiskPct!, 0) / validRisk.length;
-    const validScore = agg.cities.filter((c) => c.avgScore != null);
-    if (validScore.length > 0)
+    // % ponderado por pacientes evaluados (Σ altos / Σ evaluados); sin
+    // evaluaciones queda null → gris "Sin datos" (nunca un 0% engañoso).
+    if (agg.evaluatedCount > 0) {
+      const highCount = agg.cities.reduce(
+        (s, c) => s + ((c.highRiskPct ?? 0) / 100) * c.evaluatedCount,
+        0,
+      );
+      agg.highRiskPct = (highCount / agg.evaluatedCount) * 100;
+    }
+    if (agg.evaluatedCount > 0) {
       agg.avgScore =
-        validScore.reduce((s, c) => s + c.avgScore!, 0) / validScore.length;
+        agg.cities.reduce(
+          (s, c) => s + (c.avgScore ?? 0) * c.evaluatedCount,
+          0,
+        ) / agg.evaluatedCount;
+    }
   }
   return map;
 }
 
 interface Props {
   cities: HealthGeoCity[];
-  /** Filtro geo controlado por el dashboard (estado o ciudad). */
-  value?: HealthGeoFilter;
-  onFilterChange?: (filter: HealthGeoFilter) => void;
+  /** Códigos de estado seleccionados (multi-selección: la unión acota los charts). */
+  selectedStates?: string[];
+  onToggleState?: (stateCode: string) => void;
+  /** Limpia la selección completa (tecla Escape). */
+  onClear?: () => void;
 }
 
-export function HealthTestsUsaMap({ cities, value, onFilterChange }: Props) {
+export function HealthTestsUsaMap({
+  cities,
+  selectedStates,
+  onToggleState,
+  onClear,
+}: Props) {
   const t = useT();
   const [hovered, setHovered] = useState<string | null>(null);
-  const [popoverFor, setPopoverFor] = useState<string | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const svgRef = useRef<SVGSVGElement>(null);
 
   const stateData = aggregateByState(cities);
-
-  const activeState = value?.stateCode
-    ? value.stateCode.toUpperCase()
-    : value?.cityId
-      ? (cities
-          .find((c) => c.cityId === value.cityId)
-          ?.stateAbbr?.toUpperCase() ?? null)
-      : null;
-  const hasActiveFilter = Boolean(value?.stateCode || value?.cityId);
+  const selected = useMemo(
+    () => new Set((selectedStates ?? []).map((s) => s.toUpperCase())),
+    [selectedStates],
+  );
+  const hasSelection = selected.size > 0;
 
   const patientsLabel = useCallback(
     (count: number) =>
@@ -83,66 +99,51 @@ export function HealthTestsUsaMap({ cities, value, onFilterChange }: Props) {
     setTooltipPos({ x: e.clientX, y: e.clientY });
   }, []);
 
-  const handlePathClick = useCallback(
+  const handleToggle = useCallback(
     (abbr: string) => {
       const agg = stateData[abbr];
       if (!agg || agg.cities.length === 0) return;
-      setPopoverFor((prev) => (prev === abbr ? null : abbr));
+      onToggleState?.(abbr);
     },
-    [stateData],
+    [stateData, onToggleState],
   );
-
-  const handleCityClick = useCallback(
-    (city: HealthGeoCity) => {
-      if (!city.cityId) return;
-      onFilterChange?.({ stateCode: city.stateAbbr ?? null, cityId: city.cityId });
-      setPopoverFor(null);
-    },
-    [onFilterChange],
-  );
-
-  const handleStateTodosClick = useCallback(() => {
-    if (!popoverFor) return;
-    onFilterChange?.({ stateCode: popoverFor, cityId: null });
-    setPopoverFor(null);
-  }, [popoverFor, onFilterChange]);
-
-  const handleClearFilter = useCallback(() => {
-    onFilterChange?.({ stateCode: null, cityId: null });
-    setPopoverFor(null);
-  }, [onFilterChange]);
 
   const handlePathKeyDown = useCallback(
     (e: React.KeyboardEvent, abbr: string) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        handlePathClick(abbr);
-      } else if (e.key === "Escape") {
-        setPopoverFor(null);
+        handleToggle(abbr);
+      } else if (e.key === "Escape" && hasSelection) {
+        onClear?.();
       }
     },
-    [handlePathClick],
+    [handleToggle, hasSelection, onClear],
   );
 
   const hoveredData = hovered ? stateData[hovered] : null;
-  const popoverData = popoverFor ? stateData[popoverFor] : null;
+  const hoveredSelected = hovered ? selected.has(hovered) : false;
 
   const tooltipStyle: React.CSSProperties = (() => {
-    const width = 200;
-    const height = 112;
+    const width = 210;
+    const height = 150;
     const pad = 8;
     if (typeof window === "undefined")
       return { left: tooltipPos.x + 14, top: tooltipPos.y - 12 };
     return {
-      left: Math.max(pad, Math.min(tooltipPos.x + 14, window.innerWidth - width - pad)),
-      top: Math.max(pad, Math.min(tooltipPos.y - 12, window.innerHeight - height - pad)),
+      left: Math.max(
+        pad,
+        Math.min(tooltipPos.x + 14, window.innerWidth - width - pad),
+      ),
+      top: Math.max(
+        pad,
+        Math.min(tooltipPos.y - 12, window.innerHeight - height - pad),
+      ),
     };
   })();
 
   return (
     <div className="relative flex w-full flex-col items-center rounded-xl">
       <svg
-        ref={svgRef}
         viewBox={USA_VIEWBOX}
         className="h-[360px] w-full rounded-xl"
         role="img"
@@ -152,36 +153,52 @@ export function HealthTestsUsaMap({ cities, value, onFilterChange }: Props) {
         {Object.entries(USA_STATE_PATHS).map(([abbr, d]) => {
           const agg = stateData[abbr];
           const pct = agg?.highRiskPct ?? null;
+          const interactive = Boolean(agg && agg.cities.length > 0);
           const isHovered = hovered === abbr;
-          const isPopover = popoverFor === abbr;
-          const isActive = activeState === abbr;
-          const dimmed = hasActiveFilter && !isActive;
+          const isSelected = selected.has(abbr);
+          const dimmed = hasSelection && !isSelected;
+
+          // Neón: cian intenso al pasar el mouse, lima cuando el estado está elegido.
+          const stroke = isHovered
+            ? NEON_HOVER
+            : isSelected
+              ? NEON_SELECTED
+              : "#FFFFFF";
+          const strokeWidth = isHovered ? 3.4 : isSelected ? 2.6 : 0.9;
+          const filter = isHovered
+            ? `saturate(1.9) brightness(0.86) contrast(1.18) drop-shadow(0 0 3px rgba(34, 211, 238, 1)) drop-shadow(0 0 14px rgba(34, 211, 238, 0.95))`
+            : isSelected
+              ? `saturate(1.25) drop-shadow(0 0 4px rgba(163, 230, 53, 0.9)) drop-shadow(0 0 12px rgba(163, 230, 53, 0.75))`
+              : undefined;
+
           return (
             <path
               key={abbr}
               d={d}
               fill={mapRiskColor(pct)}
-              stroke={isActive ? "var(--primary)" : "#FFFFFF"}
-              strokeWidth={isActive ? 1.6 : 0.9}
-              role="button"
-              tabIndex={0}
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+              role={interactive ? "button" : "img"}
+              tabIndex={interactive ? 0 : -1}
               aria-label={`${STATE_NAMES[abbr] ?? abbr}. ${
                 pct != null
                   ? t("Alto riesgo: {value}%", { value: pct.toFixed(1) })
                   : t("Sin datos")
               }`}
-              className="cursor-pointer outline-none transition-all duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--primary)]"
+              className={`outline-none transition-all duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--primary)] ${
+                interactive ? "cursor-pointer" : "cursor-default"
+              }`}
               style={{
-                opacity: dimmed ? 0.45 : 1,
-                filter: isHovered
-                  ? "brightness(0.97) saturate(1.15) drop-shadow(0 2px 3px rgba(15, 42, 71, 0.25))"
-                  : isPopover
-                    ? "drop-shadow(0 2px 4px rgba(15, 42, 71, 0.18))"
-                    : undefined,
+                opacity: dimmed ? 0.35 : 1,
+                filter,
+                // "Pop" sutil del estado bajo el cursor (origen en su propio centro).
+                transformBox: isHovered ? "fill-box" : undefined,
+                transformOrigin: isHovered ? "center" : undefined,
+                transform: isHovered ? "scale(1.025)" : undefined,
               }}
               onMouseEnter={() => setHovered(abbr)}
               onMouseLeave={() => setHovered(null)}
-              onClick={() => handlePathClick(abbr)}
+              onClick={() => handleToggle(abbr)}
               onKeyDown={(e) => handlePathKeyDown(e, abbr)}
             >
               <title>
@@ -196,9 +213,9 @@ export function HealthTestsUsaMap({ cities, value, onFilterChange }: Props) {
         })}
       </svg>
 
-      {hovered && !popoverFor && (
+      {hovered && (
         <div
-          className="pointer-events-none fixed z-50 w-[200px] rounded-xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur-sm"
+          className="pointer-events-none fixed z-50 w-[210px] rounded-xl border border-[#22D3EE]/60 bg-card/95 p-3 shadow-[0_0_20px_rgba(34,211,238,0.35)] backdrop-blur-sm"
           style={tooltipStyle}
         >
           <div className="flex items-center justify-between gap-2">
@@ -219,9 +236,14 @@ export function HealthTestsUsaMap({ cities, value, onFilterChange }: Props) {
                   ? t("Alto riesgo: {value}%", {
                       value: hoveredData.highRiskPct.toFixed(1),
                     })
-                  : t("Sin datos")}
+                  : t("Sin evaluaciones")}
               </span>
               <span>{patientsLabel(hoveredData.totalCount)}</span>
+              <span>
+                {t("{count} evaluados", {
+                  count: String(hoveredData.evaluatedCount),
+                })}
+              </span>
               {hoveredData.avgScore != null && (
                 <span>
                   {t("Score promedio: {value}", {
@@ -229,74 +251,17 @@ export function HealthTestsUsaMap({ cities, value, onFilterChange }: Props) {
                   })}
                 </span>
               )}
+              <span className="mt-1 border-t border-border pt-1.5 text-[10.5px] font-semibold text-[#0E7490]">
+                {hoveredSelected
+                  ? t("Clic para quitar del filtro")
+                  : t("Clic para agregar al filtro")}
+              </span>
             </div>
           ) : (
             <p className="mt-2 text-[11px] text-muted-foreground">
               {t("Sin datos")}
             </p>
           )}
-        </div>
-      )}
-
-      {popoverFor && popoverData && (
-        <div className="absolute left-1/2 top-1/2 z-50 w-60 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur-sm">
-          <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {STATE_NAMES[popoverFor] ?? popoverFor}
-            </p>
-            <span
-              className="size-2.5 shrink-0 rounded-full ring-1 ring-black/5"
-              style={{
-                backgroundColor: mapRiskColor(popoverData.highRiskPct),
-              }}
-            />
-          </div>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {popoverData.highRiskPct != null
-              ? t("Alto riesgo: {value}%", {
-                  value: popoverData.highRiskPct.toFixed(1),
-                })
-              : t("Sin datos")}{" "}
-            · {patientsLabel(popoverData.totalCount)}
-          </p>
-          <div className="mt-2 flex max-h-44 flex-col gap-0.5 overflow-y-auto">
-            {[...popoverData.cities]
-              .sort((a, b) => b.count - a.count)
-              .map((c) => (
-                <button
-                  key={c.cityId ?? c.name}
-                  type="button"
-                  disabled={!c.cityId}
-                  onClick={() => handleCityClick(c)}
-                  className="flex items-center justify-between rounded-md px-2 py-1 text-left text-xs transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <span className="truncate">{c.name}</span>
-                  <span className="ml-2 shrink-0 tabular-nums text-muted-foreground">
-                    {c.count}
-                  </span>
-                </button>
-              ))}
-          </div>
-          <div className="mt-2 flex gap-1.5">
-            <button
-              type="button"
-              onClick={handleStateTodosClick}
-              className="flex-1 rounded-md bg-primary px-2 py-1.5 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              {t("Ver todos en {state}", {
-                state: STATE_NAMES[popoverFor] ?? popoverFor,
-              })}
-            </button>
-            <button
-              type="button"
-              onClick={handleClearFilter}
-              className="rounded-md border border-border px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted"
-              title={t("Limpiar filtro")}
-              aria-label={t("Limpiar filtro")}
-            >
-              ✕
-            </button>
-          </div>
         </div>
       )}
 

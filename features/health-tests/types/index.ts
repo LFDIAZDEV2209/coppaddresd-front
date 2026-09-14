@@ -71,12 +71,10 @@ export type PatientTypification =
 
 export type PatientStatus = "activo" | "inactivo";
 
-/** Filtro geográfico acumulado del dashboard (estado y/o ciudad). */
+/** Filtro geográfico del dashboard: estados seleccionados (unión). */
 export interface HealthGeoFilter {
-  /** Código del estado (ej: "CA"). */
-  stateCode: string | null;
-  /** Id de ciudad; tiene precedencia sobre el estado. */
-  cityId: string | null;
+  /** Códigos de estado seleccionados (ej: ["NY", "FL"]); vacío = todos. */
+  stateCodes: string[];
 }
 
 export interface PatientTestResult {

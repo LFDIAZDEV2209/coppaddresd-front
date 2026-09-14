@@ -94,18 +94,23 @@ const TTL_STATS = 30_000;
 
 /** Clave estable para cache/dedupe incluyendo el filtro geo. */
 function geoFilterKey(filter?: HealthGeoFilter): string {
-  if (!filter || (!filter.stateCode && !filter.cityId)) return "all";
-  return `${filter.stateCode ?? ""}:${filter.cityId ?? ""}`;
+  const states = normalizeStateCodes(filter?.stateCodes);
+  return states.length === 0 ? "all" : states.join(",");
 }
 
-/** Query params del filtro geo (`state` + `cityId`; el backend prioriza cityId). */
+/** Códigos normalizados (mayúsculas, sin duplicados, orden estable). */
+function normalizeStateCodes(stateCodes?: string[]): string[] {
+  if (!stateCodes || stateCodes.length === 0) return [];
+  return [...new Set(stateCodes.map((s) => s.trim().toUpperCase()))].sort();
+}
+
+/** Query params del filtro geo (un `state` por código; el backend une las zonas). */
 function geoFilterParams(filter?: HealthGeoFilter): string {
-  if (!filter) return "";
+  const states = normalizeStateCodes(filter?.stateCodes);
+  if (states.length === 0) return "";
   const params = new URLSearchParams();
-  if (filter.stateCode) params.set("state", filter.stateCode);
-  if (filter.cityId) params.set("cityId", filter.cityId);
-  const qs = params.toString();
-  return qs ? `?${qs}` : "";
+  for (const code of states) params.append("state", code);
+  return `?${params.toString()}`;
 }
 
 export interface HealthTestsApi {

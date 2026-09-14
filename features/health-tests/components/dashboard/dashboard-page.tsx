@@ -1,18 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
   ArrowRight,
   BellRing,
   ClipboardCheck,
+  FilterX,
   HeartPulse,
   Hourglass,
+  MousePointerClick,
   PieChart as PieChartIcon,
+  RefreshCw,
   Users,
   TrendingUp,
   MapPinned,
+  X,
 } from "lucide-react";
 import {
   Area,
@@ -37,7 +41,7 @@ import { StatCard } from "@/components/feedback/stat-card";
 import { useDashboard } from "../../hooks/use-health-tests";
 import { useHealthGeo } from "../../hooks/use-health-geo";
 import { HealthTestsUsaMap } from "../geo/health-tests-usa-map";
-import { GeoFilterSelect } from "../geo/geo-filter-select";
+import { STATE_NAMES } from "@/lib/geo/usa-states-paths";
 import type {
   HealthAlert,
   HealthGeoFilter,
@@ -58,19 +62,29 @@ import { ModuleErrorState } from "../shared/module-states";
 
 /**
  * Dashboard global del módulo de Tests de Salud.
- * Los KPIs son globales; el filtro geo (estado/ciudad) del mapa acota la
- * tabla maestra del backend y, con ella, todas las gráficas.
+ * El filtro geo (multi-selección de estados del mapa) acota KPIs, tabla maestra
+ * del backend y, con ella, todas las gráficas; sin selección se muestra todo.
  */
 export function HealthTestsDashboard() {
   const t = useT();
   const [geoFilter, setGeoFilter] = useState<HealthGeoFilter>({
-    stateCode: null,
-    cityId: null,
+    stateCodes: [],
   });
   const { data, loading, error, reload } = useDashboard(geoFilter);
-  const filterActive = Boolean(geoFilter.stateCode || geoFilter.cityId);
+  const filterActive = geoFilter.stateCodes.length > 0;
 
-  // KPIs del backend (/stats) sin filtro geo: contexto global estable.
+  const toggleState = useCallback((code: string) => {
+    const up = code.toUpperCase();
+    setGeoFilter((prev) => ({
+      stateCodes: prev.stateCodes.includes(up)
+        ? prev.stateCodes.filter((c) => c !== up)
+        : [...prev.stateCodes, up],
+    }));
+  }, []);
+
+  const clearStates = useCallback(() => setGeoFilter({ stateCodes: [] }), []);
+
+  // KPIs del backend (/stats) acotados al filtro geo vigente.
   const stats = useMemo(() => {
     if (!data) return null;
     const { tests, alerts, stats: serverStats } = data;
@@ -251,10 +265,11 @@ export function HealthTestsDashboard() {
         />
       </div>
 
-      {/* --- Mapa de riesgo geográfico + filtro acumulado estado/ciudad --- */}
+      {/* --- Mapa de riesgo geográfico + multi-selección de estados --- */}
       <HealthGeoMapRow
-        filter={geoFilter}
-        onFilterChange={setGeoFilter}
+        selectedStates={geoFilter.stateCodes}
+        onToggleState={toggleState}
+        onClear={clearStates}
         updating={loading}
         zonePatientIds={zonePatientIds}
       />
@@ -552,34 +567,34 @@ export function HealthTestsDashboard() {
   );
 }
 
-/* --- Mapa de riesgo + cards laterales derivadas del filtro acumulado --- */
+/* --- Mapa de riesgo + cards laterales derivadas de los estados elegidos --- */
 interface HealthGeoMapRowProps {
-  filter: HealthGeoFilter;
-  onFilterChange: (filter: HealthGeoFilter) => void;
+  selectedStates: string[];
+  onToggleState: (stateCode: string) => void;
+  onClear: () => void;
   updating: boolean;
   zonePatientIds: Set<string>;
 }
 
 function HealthGeoMapRow({
-  filter,
-  onFilterChange,
+  selectedStates,
+  onToggleState,
+  onClear,
   updating,
   zonePatientIds,
 }: HealthGeoMapRowProps) {
   const t = useT();
   const { data, loading, error } = useHealthGeo();
-  const filterActive = Boolean(filter.stateCode || filter.cityId);
+  const filterActive = selectedStates.length > 0;
 
   const filteredCities = useMemo(() => {
     if (!data) return [];
-    const { cityId, stateCode } = filter;
-    if (cityId) return data.cities.filter((c) => c.cityId === cityId);
-    if (stateCode)
-      return data.cities.filter(
-        (c) => c.stateAbbr?.toUpperCase() === stateCode.toUpperCase(),
-      );
-    return data.cities;
-  }, [data, filter]);
+    if (selectedStates.length === 0) return data.cities;
+    const wanted = new Set(selectedStates.map((s) => s.toUpperCase()));
+    return data.cities.filter((c) =>
+      c.stateAbbr ? wanted.has(c.stateAbbr.toUpperCase()) : false,
+    );
+  }, [data, selectedStates]);
 
   if (loading && !data) {
     return (
@@ -608,9 +623,14 @@ function HealthGeoMapRow({
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
   const totalMapped = filteredCities.reduce((acc, c) => acc + c.count, 0);
+  const totalEvaluated = filteredCities.reduce(
+    (acc, c) => acc + c.evaluatedCount,
+    0,
+  );
+  // Riesgo alto ponderado por evaluados (el % por ciudad ya usa esa base).
   const highRiskMapped = Math.round(
     filteredCities.reduce(
-      (acc, c) => acc + ((c.highRiskPct ?? 0) / 100) * c.count,
+      (acc, c) => acc + ((c.highRiskPct ?? 0) / 100) * c.evaluatedCount,
       0,
     ),
   );
@@ -629,10 +649,10 @@ function HealthGeoMapRow({
           icon={MapPinned}
           variant="primary"
           actions={
-            <GeoFilterSelect
-              cities={data.cities}
-              value={filter}
-              onChange={onFilterChange}
+            <GeoStateChips
+              selectedStates={selectedStates}
+              onToggleState={onToggleState}
+              onClear={onClear}
               updating={updating}
             />
           }
@@ -640,8 +660,9 @@ function HealthGeoMapRow({
         <div className="flex flex-1 items-center justify-center p-4">
           <HealthTestsUsaMap
             cities={data.cities}
-            value={filter}
-            onFilterChange={onFilterChange}
+            selectedStates={selectedStates}
+            onToggleState={onToggleState}
+            onClear={onClear}
           />
         </div>
       </div>
@@ -682,6 +703,12 @@ function HealthGeoMapRow({
               {t("Total pacientes mapeados")}
             </span>
             <span className="font-semibold">{totalMapped}</span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">
+              {t("Pacientes evaluados")}
+            </span>
+            <span className="font-semibold">{totalEvaluated}</span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">
@@ -751,6 +778,65 @@ function HealthGeoMapRow({
         </div>
       </div>
     </section>
+  );
+}
+
+/* --- Chips de estados elegidos (reemplazan el dropdown de regiones) --- */
+interface GeoStateChipsProps {
+  selectedStates: string[];
+  onToggleState: (stateCode: string) => void;
+  onClear: () => void;
+  updating: boolean;
+}
+
+function GeoStateChips({
+  selectedStates,
+  onToggleState,
+  onClear,
+  updating,
+}: GeoStateChipsProps) {
+  const t = useT();
+
+  if (selectedStates.length === 0) {
+    return (
+      <span className="flex items-center gap-1.5 text-[11.5px] text-white/60">
+        <MousePointerClick className="size-3.5" />
+        {t("Sin filtro: haz clic en un estado del mapa")}
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
+      {updating && <RefreshCw className="size-3 animate-spin text-white/70" />}
+      {selectedStates.map((code) => {
+        const name = STATE_NAMES[code] ?? code;
+        return (
+          <span
+            key={code}
+            className="flex items-center gap-1 rounded-full border border-[#A3E635]/60 bg-[#A3E635]/15 px-2 py-0.5 text-[11px] font-semibold text-white shadow-[0_0_10px_rgba(163,230,53,0.35)]"
+          >
+            {name}
+            <button
+              type="button"
+              onClick={() => onToggleState(code)}
+              aria-label={t("Quitar {state}", { state: name })}
+              className="rounded-full p-0.5 transition-colors hover:bg-white/15"
+            >
+              <X className="size-3" />
+            </button>
+          </span>
+        );
+      })}
+      <button
+        type="button"
+        onClick={onClear}
+        className="ml-1 flex items-center gap-1 rounded-full border border-white/25 px-2 py-0.5 text-[11px] font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+      >
+        <FilterX className="size-3" />
+        {t("Limpiar todo")}
+      </button>
+    </div>
   );
 }
 

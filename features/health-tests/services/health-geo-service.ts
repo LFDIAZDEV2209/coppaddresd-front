@@ -8,6 +8,8 @@ export interface HealthGeoCity {
   name: string;
   stateAbbr: string | null;
   count: number;
+  /** Pacientes con evaluación completada (base del % de riesgo). */
+  evaluatedCount: number;
   highRiskPct: number | null;
   avgScore: number | null;
   mapX: number | null;

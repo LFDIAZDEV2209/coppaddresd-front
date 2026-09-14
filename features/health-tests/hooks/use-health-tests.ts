@@ -99,7 +99,10 @@ export interface DashboardData {
 }
 
 export function useDashboard(filter?: HealthGeoFilter) {
-  const geoKey = `${filter?.stateCode ?? ""}|${filter?.cityId ?? ""}`;
+  const geoKey = [...(filter?.stateCodes ?? [])]
+    .map((s) => s.toUpperCase())
+    .sort()
+    .join(",");
   const masterRows = useAsyncData(
     () => healthTestsApi.getMasterRows(filter),
     `master:${geoKey}`,
@@ -110,8 +113,11 @@ export function useDashboard(filter?: HealthGeoFilter) {
     () => healthTestsApi.getCoverageTrend(filter),
     `trend:${geoKey}`,
   );
-  // Los KPIs se mantienen globales: el filtro geo solo afecta mapa y gráficas.
-  const stats = useAsyncData(healthTestsApi.getStats, "stats");
+  // Los KPIs siguen el filtro geo: al seleccionar estados se acotan a la zona.
+  const stats = useAsyncData(
+    () => healthTestsApi.getStats(filter),
+    `stats:${geoKey}`,
+  );
 
   const loading =
     masterRows.loading ||
