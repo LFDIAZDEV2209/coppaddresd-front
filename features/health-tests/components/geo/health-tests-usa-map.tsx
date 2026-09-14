@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { MousePointerClick } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import {
   USA_STATE_PATHS,
@@ -10,9 +11,10 @@ import {
 import type { HealthGeoCity } from "../../services/health-geo-service";
 import { mapRiskColor, mapRiskPalette } from "../shared/colors";
 
-/** Neón del hover (cian) y de la selección (lima); distintivos sobre el pastel. */
-const NEON_HOVER = "#22D3EE";
-const NEON_SELECTED = "#A3E635";
+/** Realce suave del hover y anillo doble de selección (sin glow neón). */
+const HOVER_STROKE = "#334155";
+const SELECTED_STROKE = "var(--primary)";
+const SELECTED_HALO_OPACITY = 0.18;
 
 interface StateAgg {
   highRiskPct: number | null;
@@ -124,8 +126,8 @@ export function HealthTestsUsaMap({
   const hoveredSelected = hovered ? selected.has(hovered) : false;
 
   const tooltipStyle: React.CSSProperties = (() => {
-    const width = 210;
-    const height = 150;
+    const width = 220;
+    const height = 155;
     const pad = 8;
     if (typeof window === "undefined")
       return { left: tooltipPos.x + 14, top: tooltipPos.y - 12 };
@@ -158,17 +160,14 @@ export function HealthTestsUsaMap({
           const isSelected = selected.has(abbr);
           const dimmed = hasSelection && !isSelected;
 
-          // Neón: cian intenso al pasar el mouse, lima cuando el estado está elegido.
-          const stroke = isHovered
-            ? NEON_HOVER
-            : isSelected
-              ? NEON_SELECTED
-              : "#FFFFFF";
-          const strokeWidth = isHovered ? 3.4 : isSelected ? 2.6 : 0.9;
+          // Hover: elevación sutil con borde pizarra. Selección: separación
+          // blanca + anillo primary superpuesto (ver <g> al final del svg).
+          const stroke = isHovered ? HOVER_STROKE : "#FFFFFF";
+          const strokeWidth = isHovered ? 1.75 : isSelected ? 1.5 : 0.9;
           const filter = isHovered
-            ? `saturate(1.9) brightness(0.86) contrast(1.18) drop-shadow(0 0 3px rgba(34, 211, 238, 1)) drop-shadow(0 0 14px rgba(34, 211, 238, 0.95))`
+            ? "brightness(1.04) drop-shadow(0 2px 5px rgb(15 23 42 / 0.22))"
             : isSelected
-              ? `saturate(1.25) drop-shadow(0 0 4px rgba(163, 230, 53, 0.9)) drop-shadow(0 0 12px rgba(163, 230, 53, 0.75))`
+              ? "brightness(1.02)"
               : undefined;
 
           return (
@@ -185,16 +184,16 @@ export function HealthTestsUsaMap({
                   ? t("Alto riesgo: {value}%", { value: pct.toFixed(1) })
                   : t("Sin datos")
               }`}
-              className={`outline-none transition-all duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--primary)] ${
+              className={`outline-none transition-all duration-200 ease-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--primary)] ${
                 interactive ? "cursor-pointer" : "cursor-default"
               }`}
               style={{
-                opacity: dimmed ? 0.35 : 1,
+                opacity: dimmed ? 0.4 : 1,
                 filter,
                 // "Pop" sutil del estado bajo el cursor (origen en su propio centro).
                 transformBox: isHovered ? "fill-box" : undefined,
                 transformOrigin: isHovered ? "center" : undefined,
-                transform: isHovered ? "scale(1.025)" : undefined,
+                transform: isHovered ? "scale(1.015)" : undefined,
               }}
               onMouseEnter={() => setHovered(abbr)}
               onMouseLeave={() => setHovered(null)}
@@ -211,11 +210,48 @@ export function HealthTestsUsaMap({
             </path>
           );
         })}
+        {/* Anillo de selección sobre el resto: halo tenue + contorno primary.
+            Se dibuja al final para que ningún estado vecino lo recorte y se
+            anima con un pop sutil al agregar/estrenar la selección. */}
+        {hasSelection && (
+          <g pointerEvents="none" aria-hidden="true">
+            {[...selected].map((abbr) => {
+              const d = USA_STATE_PATHS[abbr];
+              if (!d) return null;
+              return (
+                <g
+                  key={abbr}
+                  className="animate-select-ring-in motion-reduce:animate-none"
+                  style={{
+                    transformBox: "fill-box",
+                    transformOrigin: "center",
+                  }}
+                >
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke={SELECTED_STROKE}
+                    strokeWidth={6}
+                    strokeLinejoin="round"
+                    opacity={SELECTED_HALO_OPACITY}
+                  />
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke={SELECTED_STROKE}
+                    strokeWidth={2.5}
+                    strokeLinejoin="round"
+                  />
+                </g>
+              );
+            })}
+          </g>
+        )}
       </svg>
 
       {hovered && (
         <div
-          className="pointer-events-none fixed z-50 w-[210px] rounded-xl border border-[#22D3EE]/60 bg-card/95 p-3 shadow-[0_0_20px_rgba(34,211,238,0.35)] backdrop-blur-sm"
+          className="pointer-events-none fixed z-50 w-[220px] animate-in fade-in zoom-in-95 rounded-xl border border-border bg-popover/95 p-3 text-popover-foreground shadow-lg ring-1 ring-foreground/5 backdrop-blur-sm duration-150"
           style={tooltipStyle}
         >
           <div className="flex items-center justify-between gap-2">
@@ -223,7 +259,7 @@ export function HealthTestsUsaMap({
               {STATE_NAMES[hovered] ?? hovered}
             </p>
             <span
-              className="size-2.5 shrink-0 rounded-full ring-1 ring-black/5"
+              className="size-2.5 shrink-0 rounded-full ring-1 ring-border"
               style={{
                 backgroundColor: mapRiskColor(hoveredData?.highRiskPct ?? null),
               }}
@@ -251,7 +287,8 @@ export function HealthTestsUsaMap({
                   })}
                 </span>
               )}
-              <span className="mt-1 border-t border-border pt-1.5 text-[10.5px] font-semibold text-[#0E7490]">
+              <span className="mt-1 flex items-center gap-1 border-t border-border pt-1.5 text-[10.5px] font-semibold text-primary">
+                <MousePointerClick className="size-3 shrink-0" />
                 {hoveredSelected
                   ? t("Clic para quitar del filtro")
                   : t("Clic para agregar al filtro")}

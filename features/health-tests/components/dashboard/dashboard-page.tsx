@@ -161,6 +161,13 @@ export function HealthTestsDashboard() {
       .slice(0, 5);
   }, [data?.alerts, filterActive, zonePatientIds]);
 
+  // Dos columnas de alertas cuando la tarjeta ocupa el ancho completo.
+  const alertColumns = useMemo(() => {
+    if (recentAlerts.length <= 1) return [recentAlerts];
+    const half = Math.ceil(recentAlerts.length / 2);
+    return [recentAlerts.slice(0, half), recentAlerts.slice(half)];
+  }, [recentAlerts]);
+
   const header = (
     <PageHeader
       title={t("Tests de salud")}
@@ -277,7 +284,7 @@ export function HealthTestsDashboard() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <ChartCard
           title={t("Cobertura de la batería")}
-          description={t("Estado de las evaluaciones asignadas")}
+          description={t("Estado de las evaluaciones")}
           icon={ClipboardCheck}
           actions={
             <Link
@@ -294,8 +301,8 @@ export function HealthTestsDashboard() {
               {t("Sin pacientes evaluados todavía")}
             </p>
           ) : (
-            <div className="flex flex-col items-center gap-6 sm:flex-row">
-              <div className="relative size-44 shrink-0">
+            <div className="flex flex-col items-center gap-5">
+              <div className="relative size-40 shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -364,83 +371,6 @@ export function HealthTestsDashboard() {
         </ChartCard>
 
         <ChartCard
-          title={t("Evolución de la cobertura")}
-          description={t("Porcentaje de tests completados · últimos 12 meses")}
-          icon={TrendingUp}
-          className="xl:col-span-2"
-          actions={
-            <Link
-              href="/health-tests/cobertura"
-              className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-white/85 transition-colors hover:text-white"
-            >
-              {t("Ver detalle")}
-              <ArrowRight className="size-3.5" />
-            </Link>
-          }
-        >
-          <div className="h-60 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={data.coverageTrend}
-                margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="covFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="0%"
-                      stopColor="var(--sidebar)"
-                      stopOpacity={0.35}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="var(--sidebar)"
-                      stopOpacity={0.02}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--border)"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
-                  tickLine={false}
-                  axisLine={false}
-                  minTickGap={24}
-                />
-                <YAxis
-                  tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
-                  tickLine={false}
-                  axisLine={false}
-                  domain={[0, 100]}
-                />
-                <Tooltip
-                  formatter={(value) => [`${value}%`, t("Cobertura")]}
-                  labelFormatter={(label) => String(label)}
-                  contentStyle={{
-                    borderRadius: 12,
-                    border: "1px solid var(--border)",
-                    fontSize: 12,
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="coverage"
-                  stroke="var(--sidebar)"
-                  strokeWidth={2}
-                  fill="url(#covFill)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <ChartCard
           title={t("Distribución por nivel de riesgo")}
           description={t(
             "Riesgo poblacional según los resultados de la batería",
@@ -452,8 +382,8 @@ export function HealthTestsDashboard() {
               {t("Sin pacientes evaluados todavía")}
             </p>
           ) : (
-            <div className="flex flex-col items-center gap-6 sm:flex-row">
-              <div className="h-44 w-44 shrink-0">
+            <div className="flex flex-col items-center gap-5">
+              <div className="h-40 w-40 shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -514,54 +444,120 @@ export function HealthTestsDashboard() {
         </ChartCard>
 
         <ChartCard
-          title={t("Alertas recientes")}
-          description={t("Resultados que requieren atención")}
-          icon={BellRing}
-          className="xl:col-span-2"
-          actions={
-            <Link
-              href="/health-tests/alertas"
-              className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-white/85 transition-colors hover:text-white"
-            >
-              {t("Ver todas")}
-              <ArrowRight className="size-3.5" />
-            </Link>
-          }
+          title={t("Cobertura por categoría")}
+          description={t("Adherencia por dominio clínico")}
+          icon={PieChartIcon}
         >
-          {recentAlerts.length === 0 ? (
-            <p className="py-10 text-center text-xs text-muted-foreground">
-              {t("Sin alertas activas")}
-            </p>
-          ) : (
-            <ul className="flex flex-col divide-y divide-border">
-              {recentAlerts.map((alert) => (
-                <AlertRow key={alert.id} alert={alert} />
-              ))}
-            </ul>
-          )}
+          <CategoryCoverageChart
+            masterRows={data.masterRows}
+            tests={data.tests}
+          />
         </ChartCard>
       </div>
 
       <ChartCard
-        title={t("Cobertura por categoría clínica")}
-        description={t(
-          "Qué dominios de la evaluación presentan mejor o peor adherencia",
-        )}
-        icon={PieChartIcon}
+        title={t("Evolución de la cobertura")}
+        description={t("Porcentaje de tests completados · últimos 12 meses")}
+        icon={TrendingUp}
         actions={
           <Link
             href="/health-tests/cobertura"
             className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-white/85 transition-colors hover:text-white"
           >
-            {t("Cobertura completa")}
+            {t("Ver detalle")}
             <ArrowRight className="size-3.5" />
           </Link>
         }
       >
-        <CategoryCoverageChart
-          masterRows={data.masterRows}
-          tests={data.tests}
-        />
+        <div className="h-60 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={data.coverageTrend}
+              margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="covFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="0%"
+                    stopColor="var(--sidebar)"
+                    stopOpacity={0.35}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="var(--sidebar)"
+                    stopOpacity={0.02}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--border)"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
+                tickLine={false}
+                axisLine={false}
+                minTickGap={24}
+              />
+              <YAxis
+                tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
+                tickLine={false}
+                axisLine={false}
+                domain={[0, 100]}
+              />
+              <Tooltip
+                formatter={(value) => [`${value}%`, t("Cobertura")]}
+                labelFormatter={(label) => String(label)}
+                contentStyle={{
+                  borderRadius: 12,
+                  border: "1px solid var(--border)",
+                  fontSize: 12,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="coverage"
+                stroke="var(--sidebar)"
+                strokeWidth={2}
+                fill="url(#covFill)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </ChartCard>
+
+      <ChartCard
+        title={t("Alertas recientes")}
+        description={t("Resultados que requieren atención")}
+        icon={BellRing}
+        actions={
+          <Link
+            href="/health-tests/alertas"
+            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-white/85 transition-colors hover:text-white"
+          >
+            {t("Ver todas")}
+            <ArrowRight className="size-3.5" />
+          </Link>
+        }
+      >
+        {recentAlerts.length === 0 ? (
+          <p className="py-10 text-center text-xs text-muted-foreground">
+            {t("Sin alertas activas")}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-x-8 xl:grid-cols-2">
+            {alertColumns.map((column, index) => (
+              <ul key={index} className="flex flex-col divide-y divide-border">
+                {column.map((alert) => (
+                  <AlertRow key={alert.id} alert={alert} />
+                ))}
+              </ul>
+            ))}
+          </div>
+        )}
       </ChartCard>
     </div>
   );
@@ -814,7 +810,7 @@ function GeoStateChips({
         return (
           <span
             key={code}
-            className="flex items-center gap-1 rounded-full border border-[#A3E635]/60 bg-[#A3E635]/15 px-2 py-0.5 text-[11px] font-semibold text-white shadow-[0_0_10px_rgba(163,230,53,0.35)]"
+            className="flex items-center gap-1 rounded-full border border-white/30 bg-white/15 px-2 py-0.5 text-[11px] font-semibold text-white"
           >
             {name}
             <button
@@ -954,7 +950,7 @@ function CategoryCoverageChart({
   }));
 
   return (
-    <div className="h-56 w-full">
+    <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={chartData}
