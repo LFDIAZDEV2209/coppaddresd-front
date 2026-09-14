@@ -39,6 +39,8 @@ export interface HealthTest {
   frequency: string;
   priority: "alta" | "media" | "baja";
   version: string;
+  /** Id de la versión activa del instrumento (para crear items de batería). */
+  versionId?: string | null;
   timeMinutes: number;
   questionsCount: number;
   sections: string[];
@@ -260,15 +262,34 @@ export interface IndicatorRange {
 
 export interface Battery {
   id: string;
+  /** Código de negocio (único) devuelto por el backend. */
+  code?: string;
   name: string;
   description: string;
   testIds: string[];
+  /** Items con orden, obligatoriedad y frecuencia (detalle de la batería). */
+  items?: BatteryItem[];
   requiredCount: number;
   optionalCount: number;
+  /** Al crear un paciente se le asigna automáticamente esta batería. */
+  autoAssignOnPatientCreate?: boolean;
   state: "activa" | "inactiva" | "borrador";
+  /** Etiqueta de versión/código que se muestra en la tarjeta. */
   version: string;
   createdAt: string;
   assignedPatientCount: number;
+}
+
+/** Item de una batería: un instrumento con su configuración de aplicación. */
+export interface BatteryItem {
+  id: string;
+  instrumentId: string;
+  instrumentName: string | null;
+  versionId: string | null;
+  sortOrder: number;
+  required: boolean;
+  /** Frecuencia de reaplicación en días (null = única vez). */
+  frequencyDays: number | null;
 }
 
 /** Representación agregada de un indicador sobre la población. */

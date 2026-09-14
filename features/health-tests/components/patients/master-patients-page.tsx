@@ -65,7 +65,7 @@ import { RiskBadge } from "../shared/badges";
 import { TestStateBadge } from "../shared/badges";
 import { StatSkeleton, TableSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
-import { categoryAccent, scoreBarColor } from "../shared/colors";
+import { categoryAccent, riskHex, scoreBarColor } from "../shared/colors";
 import { ScoreBar } from "../shared/progress";
 
 const VIEW_KEY = "health-tests-view-mode";
@@ -75,6 +75,30 @@ type RiskFilter =
   "all" | "bajo" | "moderado" | "alto" | "critico" | "sin-evaluar";
 
 const PAGE_SIZE = 8;
+
+/**
+ * Fecha relativa compacta para la tabla: hoy / ayer / «hace N días».
+ * A partir de 30 días (o fecha futura) usa la fecha absoluta.
+ */
+function formatRelativeDate(
+  value: string | null,
+  t: (key: string, params?: Record<string, string>) => string,
+): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfDate = new Date(date);
+  startOfDate.setHours(0, 0, 0, 0);
+  const days = Math.floor(
+    (startOfToday.getTime() - startOfDate.getTime()) / 86_400_000,
+  );
+  if (days <= 0) return t("hoy");
+  if (days === 1) return t("ayer");
+  if (days <= 30) return t("hace {days} días", { days: String(days) });
+  return formatDate(value);
+}
 
 /**
  * Bandeja maestra de pacientes — centro de gestión de Health Tests.
@@ -208,7 +232,7 @@ export function MasterPatientsPage() {
 
   const totals = useMemo(() => {
     if (!data) return null;
-    const evaluated = data.rows.filter((r) => r.completedCount >= 5).length;
+    const evaluated = data.rows.filter((r) => r.completedCount >= 1).length;
     const atRisk = data.rows.filter(
       (r) => r.risk === "alto" || r.risk === "critico",
     ).length;
@@ -258,7 +282,7 @@ export function MasterPatientsPage() {
     <PageHeader
       title={t("Bandeja de pacientes — Tests & Diagnóstico")}
       description={t(
-        "Centro de gestión: todos los pacientes, filtra por batería y test para consultar resultados y análisis IA sin cambiar de página",
+        "Todos los pacientes, su riesgo y sus alertas en un solo listado",
       )}
       icon={Layers}
     />
@@ -266,7 +290,7 @@ export function MasterPatientsPage() {
 
   if (loading && !data) {
     return (
-      <div className="flex flex-col gap-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-4 p-4 sm:p-6">
         <div className="h-[76px] rounded-t-xl bg-muted/70" />
         <StatSkeleton count={4} />
         <TableSkeleton rows={8} />
@@ -276,7 +300,7 @@ export function MasterPatientsPage() {
 
   if (error && !data) {
     return (
-      <div className="flex flex-col gap-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-4 p-4 sm:p-6">
         {header}
         <ModuleErrorState message={error} onRetry={reload} />
       </div>
@@ -286,7 +310,7 @@ export function MasterPatientsPage() {
   if (!data || !totals) return null;
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-4 p-4 sm:p-6">
       {header}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -302,11 +326,11 @@ export function MasterPatientsPage() {
           }
         />
         <StatCard
-          label={t("Evaluados (≥5 tests)")}
+          label={t("Evaluados")}
           value={String(totals.evaluated)}
           icon={UserCheck}
           variant="success"
-          context={t("Batería avanzada o completa")}
+          context={t("Con al menos un test completado")}
         />
         <StatCard
           label={t("Riesgo alto o crítico")}
@@ -334,9 +358,9 @@ export function MasterPatientsPage() {
 
       <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
         <SectionHeader
-          title={t("Pacientes y baterías")}
+          title={t("Listado de pacientes")}
           description={t(
-            "Filtra por batería y test sin crear nuevas vistas — todo es data-driven",
+            "Filtra por batería, test o profesional para acotar los resultados.",
           )}
           icon={SlidersHorizontal}
           variant="primary"
@@ -344,7 +368,9 @@ export function MasterPatientsPage() {
             <>
               <span className="hidden items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-white sm:inline-flex">
                 <Layers className="size-3.5" />
-                {batteries.length} {t("baterías")} · {tests.length} {t("tests")}
+                {batteries.length}{" "}
+                {batteries.length === 1 ? t("batería") : t("baterías")} ·{" "}
+                {tests.length} {tests.length === 1 ? t("test") : t("tests")}
               </span>
               <ToggleGroup
                 value={[view]}
@@ -694,7 +720,9 @@ function SortableHead({
         title={`Ordenar por ${label}`}
         className={cn(
           "inline-flex items-center gap-1 text-[11.5px] font-semibold uppercase tracking-wider transition-colors",
-          active ? "text-white" : "text-white/80 hover:text-white",
+          active
+            ? "text-foreground"
+            : "text-muted-foreground hover:text-foreground",
         )}
       >
         {label}
@@ -736,7 +764,7 @@ function MasterTable({
   };
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-[1120px]">
+      <Table className="min-w-[1120px] [&_td]:py-2 [&_td]:text-[12.5px]">
         <TableHeader>
           <TableRow>
             <SortableHead
@@ -786,16 +814,17 @@ function MasterTable({
               <Fragment key={row.patient.id}>
                 <TableRow
                   className={cn(
-                    "group",
+                    "group border-l-2 odd:bg-muted/20",
                     expanded && "bg-muted/30 hover:bg-muted/30",
                   )}
+                  style={{ borderLeftColor: riskHex(row.risk) }}
                 >
                   <TableCell>
                     <a
                       href={`/health-tests/pacientes/${row.patient.id}`}
                       className="flex items-center gap-3 text-left"
                     >
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
                         {initials(row.patient.firstName, row.patient.lastName)}
                       </span>
                       <span className="flex min-w-0 flex-col gap-0.5">
@@ -840,7 +869,7 @@ function MasterTable({
                           className="h-full rounded-full transition-all duration-500"
                           style={{
                             width: `${row.progressPercent}%`,
-                            backgroundColor: "var(--primary)",
+                            backgroundColor: scoreBarColor(row.risk),
                           }}
                         />
                       </div>
@@ -863,8 +892,11 @@ function MasterTable({
                     )}
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
-                    <span className="text-[12.5px] text-muted-foreground">
-                      {formatDate(row.lastEvaluation)}
+                    <span
+                      className="text-[12.5px] text-muted-foreground"
+                      title={formatDate(row.lastEvaluation)}
+                    >
+                      {formatRelativeDate(row.lastEvaluation, t)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -1396,12 +1428,13 @@ function CategorySummaryCard({
     }
     for (const row of rows) {
       for (const r of row.patient.results) {
-        if (r.score === null || !r.testCode) continue;
+        const pct = r.scorePercentage ?? r.score;
+        if (pct === null || !r.testCode) continue;
         const test = tests.find((x) => x.code === r.testCode);
         if (!test) continue;
         const entry = byCat.get(test.category);
         if (!entry) continue;
-        entry.total += r.score;
+        entry.total += pct;
         entry.cnt += 1;
       }
     }
@@ -1421,21 +1454,21 @@ function CategorySummaryCard({
       <SectionHeader
         title={t("Estado por categoría — pacientes filtrados")}
         description={t(
-          "Promedio de scores (0–100) por dominio clínico · {count} pacientes en filtro",
+          "Promedio de severidad (0–100) por dominio clínico · {count} pacientes en filtro",
           { count: String(count) },
         )}
         icon={Activity}
         variant="primary"
       />
-      <div className="flex flex-col gap-3 p-5">
+      <div className="grid gap-x-8 gap-y-3 p-5 xl:grid-cols-2">
         {data.map((d) => {
           const risk: RiskLevel =
             d.avg >= 70
-              ? "bajo"
+              ? "alto"
               : d.avg >= 40
                 ? "moderado"
                 : d.avg > 0
-                  ? "alto"
+                  ? "bajo"
                   : "sin-evaluar";
           return (
             <div key={d.category} className="flex items-center gap-3">
@@ -1499,7 +1532,9 @@ function RowActions({ row }: { row: PatientMasterRow }) {
           {t("Ver perfil")}
         </DropdownMenuItem>
         <DropdownMenuItem
-          render={<a href={`/health-tests/pacientes/${row.patient.id}`} />}
+          render={
+            <a href={`/health-tests/pacientes/${row.patient.id}#historial`} />
+          }
         >
           <ClipboardCheck />
           {t("Ver evaluaciones")}

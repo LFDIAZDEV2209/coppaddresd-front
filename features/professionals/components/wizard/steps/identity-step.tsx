@@ -12,7 +12,13 @@ import { ArrowLeft, ArrowRight, UserRound } from "lucide-react";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/native-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ProfessionalAvatar } from "../../professional-visuals";
 import { Field } from "../shared";
 import type { StepProps } from "../wizard-state";
@@ -185,19 +191,29 @@ export function IdentityStep({ form, setForm, onNext, onBack }: IdentityStepProp
                   />
                 </Field>
                 <Field label={t("Género (opcional)")}>
-                  <NativeSelect
+                  <Select
                     value={form.gender}
-                    onChange={(value) =>
-                      setForm({ ...form, gender: value })
+                    onValueChange={(value) =>
+                      setForm({ ...form, gender: value ?? "" })
                     }
-                    options={[
-                      { value: "", label: t("— Seleccionar —") },
-                      { value: "Femenino", label: t("Femenino") },
-                      { value: "Masculino", label: t("Masculino") },
-                      { value: "No binario", label: t("No binario") },
-                    ]}
-                    ariaLabel={t("Género")}
-                  />
+                  >
+                    <SelectTrigger
+                      aria-label={t("Género")}
+                      className="h-9! w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">{t("— Seleccionar —")}</SelectItem>
+                      <SelectItem value="Femenino">{t("Femenino")}</SelectItem>
+                      <SelectItem value="Masculino">
+                        {t("Masculino")}
+                      </SelectItem>
+                      <SelectItem value="No binario">
+                        {t("No binario")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
               </>
             )}

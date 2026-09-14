@@ -54,6 +54,13 @@ import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/feedback/stat-card";
 import { SectionHeader } from "@/components/layout/section-header";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { usePatientDetail } from "../../hooks/use-health-tests";
 import {
   patientRisk,
@@ -188,6 +195,12 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
   }, [data, catalogTests]);
 
+  // Etiqueta activa del filtro de test para el SelectValue del trigger.
+  const activeTestOption = useMemo(
+    () => testOptions.find(([code]) => code === testFilter),
+    [testOptions, testFilter],
+  );
+
   const filtered = useMemo(() => {
     if (!data) return [];
     const q = search.trim().toLowerCase();
@@ -223,6 +236,17 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
     testFilter,
     batteryTestCodes,
   ]);
+
+  useEffect(() => {
+    if (!data) return;
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const target = document.getElementById(hash);
+    if (!target) return;
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [data]);
 
   const hasActiveFilters =
     search.trim() !== "" ||
@@ -641,66 +665,115 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
                 className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-[12.5px] text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
               />
             </label>
-            <select
+            <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              aria-label={t("Filtrar por estado")}
-              className="h-9 rounded-lg border border-border bg-background px-3 text-[12.5px] font-medium text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+              onValueChange={(value) => setStatusFilter(value ?? "todos")}
             >
-              <option value="todos">{t("Todos los estados")}</option>
-              <option value="completed">{t("Completado")}</option>
-              <option value="started">{t("En progreso")}</option>
-              <option value="abandoned">{t("Abandonado")}</option>
-            </select>
-            <select
+              <SelectTrigger
+                aria-label={t("Filtrar por estado")}
+                className="h-9! text-[12.5px] font-medium text-foreground"
+              >
+                <SelectValue>
+                  {statusFilter === "completed"
+                    ? t("Completado")
+                    : statusFilter === "started"
+                      ? t("En progreso")
+                      : statusFilter === "abandoned"
+                        ? t("Abandonado")
+                        : t("Todos los estados")}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">{t("Todos los estados")}</SelectItem>
+                <SelectItem value="completed">{t("Completado")}</SelectItem>
+                <SelectItem value="started">{t("En progreso")}</SelectItem>
+                <SelectItem value="abandoned">{t("Abandonado")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              aria-label={t("Filtrar por categoría")}
-              className="h-9 rounded-lg border border-border bg-background px-3 text-[12.5px] font-medium text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+              onValueChange={(value) => setCategoryFilter(value ?? "todos")}
             >
-              <option value="todos">{t("Todas las categorías")}</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                aria-label={t("Filtrar por categoría")}
+                className="h-9! text-[12.5px] font-medium text-foreground"
+              >
+                <SelectValue>
+                  {categoryFilter === "todos"
+                    ? t("Todas las categorías")
+                    : categoryFilter}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">
+                  {t("Todas las categorías")}
+                </SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {/* Fila 2: batería + test + contador + limpiar */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-1 flex-col gap-3 sm:flex-row">
-              <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <Building2 className="size-3.5" />
-                {t("Batería")}
-                <select
-                  value={batteryFilter}
-                  onChange={(e) => setBatteryFilter(e.target.value)}
-                  className="ml-1 h-8 rounded-lg border border-border bg-background px-2.5 text-[12.5px] font-medium normal-case tracking-normal text-foreground outline-none focus:border-primary"
+            <div className="flex flex-1 items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex-row">
+              <Building2 className="size-3.5" />
+              {t("Batería")}
+              <Select
+                value={batteryFilter}
+                onValueChange={(value) => setBatteryFilter(value ?? "todos")}
+              >
+                <SelectTrigger
+                  aria-label={t("Filtrar por batería")}
+                  className="h-8! text-[12.5px] font-medium normal-case tracking-normal text-foreground"
                 >
-                  <option value="todos">{t("Todas")}</option>
+                  <SelectValue>
+                    {batteryFilter === "todos"
+                      ? t("Todas")
+                      : (batteries.find((b) => b.id === batteryFilter)?.name ??
+                        t("Batería"))}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">{t("Todas")}</SelectItem>
                   {batteries.map((b) => (
-                    <option key={b.id} value={b.id}>
+                    <SelectItem key={b.id} value={b.id}>
                       {b.name}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </label>
-              <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <FileWarning className="size-3.5" />
-                {t("Test")}
-                <select
-                  value={testFilter}
-                  onChange={(e) => setTestFilter(e.target.value)}
-                  className="ml-1 h-8 max-w-[220px] truncate rounded-lg border border-border bg-background px-2.5 text-[12.5px] font-medium normal-case tracking-normal text-foreground outline-none focus:border-primary"
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <FileWarning className="size-3.5" />
+              {t("Test")}
+              <Select
+                value={testFilter}
+                onValueChange={(value) => setTestFilter(value ?? "todos")}
+              >
+                <SelectTrigger
+                  aria-label={t("Filtrar por test")}
+                  className="h-8! max-w-[220px] text-[12.5px] font-medium normal-case tracking-normal text-foreground"
                 >
-                  <option value="todos">{t("Todos")}</option>
+                  <SelectValue>
+                    {testFilter === "todos"
+                      ? t("Todos")
+                      : (activeTestOption
+                        ? `${activeTestOption[1]} · ${activeTestOption[0]}`
+                        : testFilter)}
+                  </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="min-w-[280px]">
+                    <SelectItem value="todos">{t("Todos")}</SelectItem>
                   {testOptions.map(([code, name]) => (
-                    <option key={code} value={code}>
+                    <SelectItem key={code} value={code}>
                       {name} · {code}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </label>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2 text-[11px]">
               <span className="rounded-full bg-primary px-2.5 py-1 font-bold text-primary-foreground">
@@ -1065,7 +1138,7 @@ function PatientIaSection({
           </h4>
           <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
             {t(
-              "Completa al menos 3 tests de la batería para desbloquear el perfil integral: radar de 7 dimensiones, DOFA, correlaciones y plan priorizado — igual que en la app móvil ANTARES.",
+              "Completa al menos 3 tests de la batería para desbloquear el perfil integral: radar de 7 dimensiones, DOFA, correlaciones y recomendaciones priorizadas — igual que en la app móvil ANTARES.",
             )}
           </p>
         </div>
@@ -1080,7 +1153,7 @@ function PatientIaSection({
         <SectionHeader
           title={t("Análisis integral ANTARES · IA")}
           description={t(
-            "Síntesis IA — AHS, radar, DOFA, correlaciones y plan priorizado",
+            "Síntesis IA — AHS, radar, DOFA, correlaciones y recomendaciones priorizadas",
           )}
           icon={Sparkles}
           variant="primary"
@@ -1439,10 +1512,10 @@ function PatientIaSection({
         </section>
       ) : null}
 
-      {/* Plan priorizado — header azul */}
+      {/* Recomendaciones — header azul */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <SectionHeader
-          title={t("Plan de intervención priorizado")}
+          title={t("Recomendaciones")}
           description={t("Acciones por especialidad y semana objetivo")}
           icon={Award}
           variant="primary"
@@ -1751,7 +1824,7 @@ function buildIaProfile(
     worstRisk === "alto" || worstRisk === "critico"
       ? {
           title: "Atención prioritaria",
-          text: "Los resultados indican riesgo elevado. Prioriza el plan de la semana 1 y revisa las alertas con tu profesional.",
+          text: "Los resultados indican riesgo elevado. Prioriza las recomendaciones de la semana 1 y revisa las alertas con tu profesional.",
         }
       : worstRisk === "moderado"
         ? {
@@ -1873,7 +1946,7 @@ function buildIaProfile(
       alerts.length > 0
         ? alerts
             .slice(0, 2)
-            .map(() => "Riesgo detectado — seguir plan priorizado")
+            .map(() => "Riesgo detectado — seguir las recomendaciones priorizadas")
         : ["Sin amenazas críticas detectadas"],
   };
 
@@ -1958,7 +2031,7 @@ function buildIaProfile(
         worstRisk === "bajo"
           ? "Perfil en rango favorable: mantén adherencia y completa la batería."
           : worstRisk === "moderado"
-            ? "Hay áreas con margen de mejora clara; el plan priorizado mueve los indicadores desde la semana 1."
+            ? "Hay áreas con margen de mejora clara; las recomendaciones priorizadas mueven los indicadores desde la semana 1."
             : "Riesgo elevado que requiere intervención temprana y seguimiento cercano."
       }`,
     },

@@ -26,7 +26,13 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/native-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   fetchOrganizationTree,
   type OrganizationTree,
@@ -606,20 +612,37 @@ export function PeopleBulkImport() {
                         {row.line}
                       </td>
                       <td className="px-2 py-1.5">
-                        <NativeSelect
+                        <Select
                           value={row.tipo}
-                          invalid={row.errors.some((e) => e.includes("Tipo"))}
-                          onChange={(value) =>
-                            updateRow(index, { tipo: value })
+                          onValueChange={(value) =>
+                            updateRow(index, { tipo: value ?? "" })
                           }
-                          options={[
-                            { value: "", label: t("— sin tipo —") },
-                            { value: "profesional", label: t("Profesional") },
-                            { value: "empleado", label: t("Empleado") },
-                            { value: "paciente", label: t("Paciente") },
-                            { value: "usuario", label: t("Usuario") },
-                          ]}
-                        />
+                        >
+                          <SelectTrigger
+                            className={cn(
+                              "h-9! w-full",
+                              row.errors.some((e) => e.includes("Tipo")) &&
+                                "border-destructive",
+                            )}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">{t("— sin tipo —")}</SelectItem>
+                            <SelectItem value="profesional">
+                              {t("Profesional")}
+                            </SelectItem>
+                            <SelectItem value="empleado">
+                              {t("Empleado")}
+                            </SelectItem>
+                            <SelectItem value="paciente">
+                              {t("Paciente")}
+                            </SelectItem>
+                            <SelectItem value="usuario">
+                              {t("Usuario")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </td>
                       <td className="px-2 py-1.5">
                         <EditableCell
@@ -724,19 +747,34 @@ export function PeopleBulkImport() {
                         />
                       </td>
                       <td className="px-2 py-1.5">
-                        <NativeSelect
+                        <Select
                           value={row.estado}
-                          invalid={row.errors.some((e) => e.includes("Estado"))}
-                          onChange={(value) =>
-                            updateRow(index, { estado: value })
+                          onValueChange={(value) =>
+                            updateRow(index, { estado: value ?? "" })
                           }
-                          options={[
-                            { value: "", label: t("— default —") },
-                            { value: "activo", label: t("Activo") },
-                            { value: "invitado", label: t("Invitado") },
-                            { value: "inactivo", label: t("Inactivo") },
-                          ]}
-                        />
+                        >
+                          <SelectTrigger
+                            className={cn(
+                              "h-9! w-full",
+                              row.errors.some((e) => e.includes("Estado")) &&
+                                "border-destructive",
+                            )}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">{t("— default —")}</SelectItem>
+                            <SelectItem value="activo">
+                              {t("Activo")}
+                            </SelectItem>
+                            <SelectItem value="invitado">
+                              {t("Invitado")}
+                            </SelectItem>
+                            <SelectItem value="inactivo">
+                              {t("Inactivo")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </td>
                       <td className="px-2 py-1.5">
                         {invalid ? (
@@ -830,15 +868,21 @@ export function PeopleBulkImport() {
               <label className="text-[12px] font-semibold text-muted-foreground">
                 {t("Organización")}
               </label>
-              <NativeSelect
+              <Select
                 value={organizationId ?? ""}
-                onChange={(value) => setOrganizationId(value || null)}
-                options={orgTree.map((o) => ({
-                  value: o.id,
-                  label: o.name,
-                }))}
-                className="w-full"
-              />
+                onValueChange={(value) => setOrganizationId(value || null)}
+              >
+                <SelectTrigger className="h-9! w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgTree.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {o.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

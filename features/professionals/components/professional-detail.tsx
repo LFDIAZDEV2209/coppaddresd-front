@@ -20,7 +20,13 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { InfoItem } from "@/components/ui/info-item";
-import { NativeSelect } from "@/components/ui/native-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -464,24 +470,33 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           )?.name ?? t("Sin acceso")}
                         </p>
                       </div>
-                      <NativeSelect
+                      <Select
                         value={roleByClinic[clinic.clinicId] ?? ""}
-                        onChange={(value) => {
+                        onValueChange={(value) => {
                           setRoleByClinic((prev) => ({
                             ...prev,
-                            [clinic.clinicId]: value,
+                            [clinic.clinicId]: value ?? "",
                           }));
                           setDirty(true);
                         }}
-                        options={[
-                          { value: "", label: t("Sin acceso") },
-                          ...roles
+                      >
+                        <SelectTrigger
+                          aria-label={t("Rol en esta clínica")}
+                          className="h-9! w-full sm:w-48"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">{t("Sin acceso")}</SelectItem>
+                          {roles
                             .filter((r) => r.isActive)
-                            .map((r) => ({ value: r.id, label: r.name })),
-                        ]}
-                        ariaLabel={t("Rol en esta clínica")}
-                        className="w-full sm:w-48"
-                      />
+                            .map((r) => (
+                              <SelectItem key={r.id} value={r.id}>
+                                {r.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   ))}
                 </div>

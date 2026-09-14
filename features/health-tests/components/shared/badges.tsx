@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ShieldAlert,
-  ShieldCheck,
-  ShieldQuestion,
-  TriangleAlert,
-} from "lucide-react";
+import { ShieldAlert, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AlertSeverity, RiskLevel, TestState } from "../../types";
 import { riskColors, severityColors, testStateColors } from "./colors";
@@ -21,12 +16,6 @@ export function RiskBadge({
   className?: string;
 }) {
   const colors = riskColors(risk);
-  const Icon =
-    risk === "bajo"
-      ? ShieldCheck
-      : risk === "moderado"
-        ? ShieldQuestion
-        : ShieldAlert;
   return (
     <span
       className={cn(
@@ -35,7 +24,11 @@ export function RiskBadge({
       )}
       style={{ backgroundColor: colors.bg, color: colors.text }}
     >
-      <Icon className="size-3.5" />
+      <span
+        className="size-2 shrink-0 rounded-full"
+        style={{ backgroundColor: colors.dot }}
+        aria-hidden
+      />
       {label ?? risk}
     </span>
   );

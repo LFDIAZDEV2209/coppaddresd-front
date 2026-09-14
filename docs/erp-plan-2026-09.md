@@ -86,6 +86,70 @@ Escenarios iniciales para la propuesta:
 - Given un usuario sin permiso de modificación, When consulta el listado, Then no puede ejecutar el cambio de estado.
 - Given un profesional Invitado, When se muestra el directorio, Then conserva su estado e invitación y no tiene toggle Activo/Inactivo.
 
+## Fase 10: pacientes y baterías
+
+Estado: implementación realizada en frontend; revisión visual de Luis pendiente. Evidencia y límites: [revisión de fase 10](erp-phase-10-review.md).
+
+Artefactos: `../openspec/changes/erp-phase-10-patients-batteries/` desde la raíz del frontend; incluyen propuesta, diseño, delta specs y tareas. Solo frontend: no se modificó backend, base de datos ni app móvil.
+
+Rama de frontend: `feature/erp-phase-10-patients-batteries`, creada desde `dev` local (el `git fetch` falló por credenciales SSH en el entorno; `dev` estaba sincronizada con `origin/dev` según `git status -sb`).
+
+Decisiones confirmadas por Luis:
+
+- «Ver evaluaciones» ancla a `#historial` del perfil; «Ver perfil» abre el perfil arriba. Se rechaza crear una ruta índice de evaluaciones por duplicar contenido existente.
+- «Plan de intervención priorizado» pasa a «Recomendaciones» solo en etiqueta y copy; no cambia la función clínica ni el modelo de datos (cualquier cambio clínico sería una fase aparte con Diomedes).
+- Stat «Evaluados» = pacientes con ≥1 test completado; se descarta el umbral ≥5 por dejar el indicador en 0 de forma permanente con los datos actuales.
+- «Pacientes asignados» y «Cobertura inicial» se derivan en cliente de los datos reales del listado maestro; no se agregó endpoint ni se cambió el contrato del backend.
+- Botón «Nueva batería» visible y deshabilitado con tooltip «Próximamente»; tarjetas de batería sin acciones hasta que exista un flujo de creación/edición.
+
+Bloques ejecutados (≤2 h cada uno): A) propuesta, escenarios y rama; B) enlaces, hash, renombre y traducciones; C) tabla legible, stats y categorías; D) baterías, QA escritorio/móvil, lint/build/i18n y evidencia.
+
+Escenarios implementados:
+
+- Given el listado con filas, When se abren las acciones de una fila, Then «Ver perfil» navega a `/health-tests/pacientes/{id}` y «Ver evaluaciones» a `/health-tests/pacientes/{id}#historial`; al cargar el perfil con hash, la sección «Historial de evaluaciones» queda visible.
+- Given el listado filtrado, When se calcula «Estado por categoría», Then promedia severidad 0–100 (`scorePercentage`) y clasifica ≥70 alto, ≥40 moderado, >0 bajo, 0 sin evaluar.
+- Given los datos reales, When se consulta «Evaluados», Then cuenta pacientes con ≥1 test completado y lo indica en el contexto de la tarjeta.
+- Given una batería activa, When se abre `/health-tests/baterias`, Then «Pacientes asignados» y «Cobertura inicial» reflejan datos reales y la card ocupa el ancho disponible.
+- Given el permiso de gestión, When se intenta crear una batería, Then el botón está deshabilitado y explica «Próximamente».
+
+## Fase 10b: baterías (detalle, creación y asignación)
+
+Estado: implementación realizada en frontend sobre la misma rama de la fase 10; revisión visual de Luis pendiente. Evidencia y límites: [revisión de fase 10b](erp-phase-10b-review.md).
+
+Artefactos: `../openspec/changes/erp-phase-10b-batteries/`. Solo frontend: los endpoints `POST /batteries` y `POST /batteries/{id}/assign` ya existían; no se modificó backend, base de datos ni app móvil.
+
+Decisiones confirmadas por Luis:
+
+- Alcance «detalle + crear + asignar»; el detalle se deriva del listado porque no existe `GET /batteries/{id}`.
+- Formulario de creación completo (obligatorio/opcional, frecuencia y reordenado por test).
+- Asignación masiva con buscador y un único POST.
+- Roadmap de momentos presentacional: Inicial real; Seguimiento, Nutricional y Psicológica como «Próximamente».
+- Corregido en QA el desborde del diálogo de asignación en móvil (`overflow-y-auto`) y la etiqueta cuando no hay seleccionados.
+
+Escenarios implementados:
+
+- Given una batería en el listado, When se revisa su tarjeta, Then muestra acciones «Ver detalle» y «Asignar pacientes» según permisos y la etiqueta de versión usa el code.
+- Given el diálogo de creación, When se define code, nombre, tests, orden, obligatoriedad y frecuencia, Then el POST respeta el orden y los flags, la caché se invalida y se navega al detalle creado.
+- Given el diálogo de asignación, When se seleccionan pacientes y se confirma, Then se hace un único POST y se muestra «Asignaciones creadas: {count}».
+- Given el detalle de una batería, Then muestra stats derivadas, tabla por test, promedio por categoría y distribución por severidad.
+
+## Fase 11: generación de planes sin IA externa
+
+Estado: DESCARTADA Y REVERTIDA por decisión de Luis (la petición original no se reconoce como suya). El código volvió a su estado previo; la evidencia queda como registro en [revisión de fase 11](erp-phase-11-review.md).
+
+Artefactos: `../openspec/changes/erp-phase-11-plans/`. Repos: backend (`dev`) y frontend (rama de fase 10). No se modificó el contrato del endpoint ni se incorporó el repo ausente del ai-service (chat/agents siguen como fase aparte).
+
+Decisiones confirmadas por Luis:
+
+- Generador determinístico dentro del backend (sin ai-service, sin internet, sin `user_id`): `IWellnessPlanGenerator` consume el contexto clínico consolidado y las `PlanSafetyRule` existentes (Mifflin-St Jeor + factor de nivel, plantillas rotativas de 7 días, sustituciones por alérgenos, rutina full-body por nivel).
+- Restricciones derivadas del contexto clínico mostradas como chips «Restricciones aplicadas» tras generar (solo presentación).
+- Cobertura desde el día 1 para nutrición y ejercicio en el mismo endpoint `/wellness/plans/generate`.
+
+Escenarios implementados:
+
+- Given un paciente con contexto clínico, When se pulsa «Generar plan con IA» (o «Generar rutina con IA»), Then el formulario se rellena sin error y sin depender de servicios externos.
+- Given reglas de seguridad activas, When se genera, Then la respuesta incluye restricciones con severidad y el front muestra chips; sin reglas, el bloque queda oculto.
+
 ## Definition of Done por tarea
 
 - Se cumple cada escenario aprobado y se documentan límites o bloqueos.

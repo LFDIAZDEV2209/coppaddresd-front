@@ -17,7 +17,13 @@ import {
 } from "lucide-react";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
-import { NativeSelect } from "@/components/ui/native-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   type OrganizationTree,
   type ProfessionalClinicAssignment,
@@ -141,24 +147,33 @@ export function ClinicsStep({
       <div className="flex flex-col gap-5 p-5 sm:p-6">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium">{t("Organización")}</label>
-          <NativeSelect
+          <Select
             value={loading ? "" : form.organizationId}
-            onChange={(value) =>
+            onValueChange={(value) =>
               setForm({
                 ...form,
-                organizationId: value,
+                organizationId: value ?? "",
                 clinicAssignments: [],
                 schedules: {},
               })
             }
-            options={
-              loading
-                ? [{ value: "", label: t("Cargando...") }]
-                : organizations.map((o) => ({ value: o.id, label: o.name }))
-            }
             disabled={loading}
-            ariaLabel={t("Organización")}
-          />
+          >
+            <SelectTrigger
+              aria-label={t("Organización")}
+              className="h-9! w-full"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {loading && <SelectItem value="">{t("Cargando...")}</SelectItem>}
+              {organizations.map((o) => (
+                <SelectItem key={o.id} value={o.id}>
+                  {o.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex flex-col gap-3">
@@ -265,19 +280,32 @@ export function ClinicsStep({
                           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                             {t("Rol en esta clínica")}
                           </p>
-                          <NativeSelect
+                          <Select
                             value={assignment.roleId ?? ""}
-                            onChange={(value) => setClinicRole(clinic.id, value)}
-                            options={
-                              activeRoles.length === 0
-                                ? [{ value: "", label: t("Cargando...") }]
-                                : activeRoles.map((r) => ({
-                                    value: r.id,
-                                    label: r.name,
-                                  }))
+                            onValueChange={(value) =>
+                              setClinicRole(clinic.id, value ?? "")
                             }
-                            ariaLabel={t("Rol en esta clínica")}
-                          />
+                          >
+                            <SelectTrigger
+                              aria-label={t("Rol en esta clínica")}
+                              className="h-9! w-full"
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {activeRoles.length === 0 ? (
+                                <SelectItem value="">
+                                  {t("Cargando...")}
+                                </SelectItem>
+                              ) : (
+                                activeRoles.map((r) => (
+                                  <SelectItem key={r.id} value={r.id}>
+                                    {r.name}
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
                         </div>
                       )}
                       <button

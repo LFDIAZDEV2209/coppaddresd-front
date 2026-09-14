@@ -11,7 +11,13 @@ import { useMemo } from "react";
 import { ArrowLeft, ArrowRight, Building2, Info } from "lucide-react";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
-import { NativeSelect } from "@/components/ui/native-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { OrganizationTree } from "@/features/professionals/services/employees-service";
 import type { FormState } from "../wizard-state";
 
@@ -65,23 +71,34 @@ export function PatientClinicStep({
             <label className="text-sm font-medium">
               {t("Organización")}
             </label>
-            <NativeSelect
+            <Select
               value={loading ? "" : form.organizationId}
-              onChange={(value) =>
+              onValueChange={(value) =>
                 setForm({
                   ...form,
-                  organizationId: value,
+                  organizationId: value ?? "",
                   clinicAssignments: [],
                 })
               }
-              options={
-                loading
-                  ? [{ value: "", label: t("Cargando...") }]
-                  : organizations.map((o) => ({ value: o.id, label: o.name }))
-              }
               disabled={loading}
-              ariaLabel={t("Organización")}
-            />
+            >
+              <SelectTrigger
+                aria-label={t("Organización")}
+                className="h-9! w-full"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {loading && (
+                  <SelectItem value="">{t("Cargando...")}</SelectItem>
+                )}
+                {organizations.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
 
@@ -99,13 +116,13 @@ export function PatientClinicStep({
             <label className="text-sm font-medium">
               {t("Clínica (opcional)")}
             </label>
-            <NativeSelect
+            <Select
               value={
                 form.clinicAssignments.length > 0
                   ? form.clinicAssignments[0].clinicId
                   : ""
               }
-              onChange={(value) => {
+              onValueChange={(value) => {
                 if (value) {
                   setForm({
                     ...form,
@@ -123,15 +140,19 @@ export function PatientClinicStep({
                   setForm({ ...form, clinicAssignments: [] });
                 }
               }}
-              options={[
-                { value: "", label: t("— Sin clínica —") },
-                ...activeOrg.clinics.map((c) => ({
-                  value: c.id,
-                  label: c.name,
-                })),
-              ]}
-              ariaLabel={t("Clínica")}
-            />
+            >
+              <SelectTrigger aria-label={t("Clínica")} className="h-9! w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t("— Sin clínica —")}</SelectItem>
+                {activeOrg.clinics.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
 

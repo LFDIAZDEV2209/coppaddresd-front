@@ -2,6 +2,7 @@ import type {
   AlertSeverity,
   AlertStatus,
   Battery,
+  BatteryItem,
   ClinicalIndicator,
   CoverageByCategory,
   CoverageByTest,
@@ -64,6 +65,8 @@ const BASE = `${env.apiUrl}/api/v1/health-tests`;
 type CacheEntry<T> = { value: T; expiresAt: number; promise?: Promise<T> };
 const svcCache = new Map<string, CacheEntry<unknown>>();
 const inflight = new Map<string, Promise<unknown>>();
+/** Época de cache: invalida escrituras de promesas lanzadas antes de mutar. */
+let cacheEpoch = 0;
 
 function cached<T>(
   key: string,
@@ -76,9 +79,13 @@ function cached<T>(
     return Promise.resolve(hit.value);
   const pending = inflight.get(key) as Promise<T> | undefined;
   if (pending) return pending;
+  const epochAtStart = cacheEpoch;
   const promise = loader()
     .then((value) => {
-      svcCache.set(key, { value, expiresAt: now + ttlMs });
+      // Si la cache se invalidó mientras cargaba, no repoblar con datos viejos.
+      if (epochAtStart === cacheEpoch) {
+        svcCache.set(key, { value, expiresAt: now + ttlMs });
+      }
       return value;
     })
     .finally(() => {
@@ -86,6 +93,15 @@ function cached<T>(
     });
   inflight.set(key, promise);
   return promise;
+}
+
+/**
+ * Invalida la cache en memoria del módulo. Se llama tras mutaciones (crear
+ * batería, asignar pacientes) para que los hooks recarguen datos frescos.
+ */
+export function invalidateHealthTestsCache(): void {
+  cacheEpoch += 1;
+  svcCache.clear();
 }
 
 const TTL_MASTER = 30_000;
@@ -136,6 +152,9 @@ export interface HealthTestsApi {
   listProfessionals(): Promise<HealthProfessional[]>;
   listAlerts(patientId?: string): Promise<HealthAlert[]>;
   listBatteries(): Promise<Battery[]>;
+  getBattery(batteryId: string): Promise<Battery | null>;
+  createBattery(input: CreateBatteryInput): Promise<Battery>;
+  assignBattery(batteryId: string, patientIds: string[]): Promise<number>;
   getStats(filter?: HealthGeoFilter): Promise<HealthTestStats>;
   getCoverageTrend(filter?: HealthGeoFilter): Promise<CoverageTrendPoint[]>;
   getMasterRows(filter?: HealthGeoFilter): Promise<PatientMasterRow[]>;
@@ -231,7 +250,6 @@ interface IndicatorDefDto {
   isActive: boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface AssignmentDto {
   id: string;
   patientId: string;
@@ -450,6 +468,7 @@ function mapTest(dto: InstrumentDto): HealthTest {
     frequency: "",
     priority: "media",
     version: activeVersion ? `v${activeVersion.versionNumber}` : "—",
+    versionId: activeVersion?.id ?? null,
     timeMinutes: 5,
     questionsCount: 0,
     sections: [],
@@ -501,15 +520,29 @@ function mapAlert(dto: AlertDto): HealthAlert {
 }
 
 function mapBattery(dto: BatteryDto): Battery {
+  const items: BatteryItem[] = [...dto.items]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((i) => ({
+      id: i.id,
+      instrumentId: i.instrumentId,
+      instrumentName: i.instrumentName,
+      versionId: i.versionId,
+      sortOrder: i.sortOrder,
+      required: i.isRequired,
+      frequencyDays: i.frequencyDays,
+    }));
   return {
     id: dto.id,
+    code: dto.code,
     name: dto.name,
     description: dto.description ?? "",
-    testIds: dto.items.map((i) => i.instrumentId),
-    requiredCount: dto.items.filter((i) => i.isRequired).length,
-    optionalCount: dto.items.filter((i) => !i.isRequired).length,
+    testIds: items.map((i) => i.instrumentId),
+    items,
+    requiredCount: items.filter((i) => i.required).length,
+    optionalCount: items.filter((i) => !i.required).length,
+    autoAssignOnPatientCreate: dto.autoAssignOnPatientCreate,
     state: dto.isActive ? "activa" : "inactiva",
-    version: `v${dto.items.length}`,
+    version: dto.code,
     createdAt: dto.createdAt,
     assignedPatientCount: 0,
   };
@@ -859,6 +892,55 @@ async function listBatteries(): Promise<Battery[]> {
   });
 }
 
+/** Item de creación de batería (espejo de BatteryItemInput del backend). */
+export interface CreateBatteryItemInput {
+  instrumentId: string;
+  versionId?: string | null;
+  sortOrder: number;
+  isRequired: boolean;
+  frequencyDays?: number | null;
+}
+
+/** Request de creación de batería (espejo de CreateBatteryRequest). */
+export interface CreateBatteryInput {
+  code: string;
+  name: string;
+  description?: string | null;
+  autoAssignOnPatientCreate: boolean;
+  items: CreateBatteryItemInput[];
+}
+
+/** Detalle de una batería por id: se deriva de la lista cacheada. */
+async function getBattery(batteryId: string): Promise<Battery | null> {
+  const batteries = await listBatteries();
+  return batteries.find((b) => b.id === batteryId) ?? null;
+}
+
+async function createBattery(input: CreateBatteryInput): Promise<Battery> {
+  const dto = await apiFetch<BatteryDto>(`${BASE}/batteries`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  invalidateHealthTestsCache();
+  return mapBattery(dto);
+}
+
+/** Asigna pacientes a una batería y devuelve cuántas asignaciones se crearon. */
+async function assignBattery(
+  batteryId: string,
+  patientIds: string[],
+): Promise<number> {
+  const created = await apiFetch<AssignmentDto[]>(
+    `${BASE}/batteries/${batteryId}/assign`,
+    {
+      method: "POST",
+      body: JSON.stringify({ patientIds }),
+    },
+  );
+  invalidateHealthTestsCache();
+  return created.length;
+}
+
 async function getStats(filter?: HealthGeoFilter): Promise<HealthTestStats> {
   return cached(`stats:${geoFilterKey(filter)}`, TTL_STATS, () =>
     apiFetch<HealthTestStats>(`${BASE}/stats${geoFilterParams(filter)}`),
@@ -965,6 +1047,7 @@ function mapMasterResult(r: MasterPatientResultDto): PatientTestResult {
     testCode: r.testCode,
     state: r.state,
     score: r.score,
+    scorePercentage: r.scorePercentage ?? undefined,
     interpretation: r.qualifier ?? "",
     risk: riskFromSeverity(r.severity),
     updatedAt: ts,
@@ -1162,6 +1245,9 @@ export const healthTestsApi: HealthTestsApi = {
   listProfessionals,
   listAlerts,
   listBatteries,
+  getBattery,
+  createBattery,
+  assignBattery,
   getStats,
   getCoverageTrend,
   getMasterRows,
