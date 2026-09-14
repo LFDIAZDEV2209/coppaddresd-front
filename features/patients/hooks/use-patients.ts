@@ -23,7 +23,7 @@ import type {
 /** Debounce de la búsqueda: los keystrokes no disparan una petición cada uno. */
 const SEARCH_DEBOUNCE_MS = 300;
 
-export function usePatients(pageSize = 10) {
+export function usePatients(pageSize = 10, stateCode: string | null = null) {
   const { can } = useAppContext();
   const [result, setResult] = useState<PaginatedResult<PatientListItem> | null>(
     null,
@@ -102,7 +102,12 @@ export function usePatients(pageSize = 10) {
     setError(null);
     try {
       const [patients, patientStats] = await Promise.all([
-        fetchPatients(page, pageSize, { ...filters, search: debouncedSearch }),
+        fetchPatients(
+          page,
+          pageSize,
+          { ...filters, search: debouncedSearch },
+          stateCode,
+        ),
         fetchPatientStats(),
       ]);
       setResult(patients);
@@ -115,7 +120,7 @@ export function usePatients(pageSize = 10) {
     } finally {
       setLoading(false);
     }
-  }, [filters, page, pageSize, debouncedSearch]);
+  }, [filters, page, pageSize, debouncedSearch, stateCode]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -124,6 +129,7 @@ export function usePatients(pageSize = 10) {
       page,
       pageSize,
       { ...filters, search: debouncedSearch },
+      stateCode,
       controller.signal,
     )
       .then((data) => {
@@ -144,7 +150,7 @@ export function usePatients(pageSize = 10) {
       cancelled = true;
       controller.abort();
     };
-  }, [filters, page, pageSize, debouncedSearch]);
+  }, [filters, page, pageSize, debouncedSearch, stateCode]);
 
   const setFilters = useCallback((partial: Partial<PatientFilters>) => {
     setFiltersState((current) => ({ ...current, ...partial }));

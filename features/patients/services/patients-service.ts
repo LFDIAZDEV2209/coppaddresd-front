@@ -1,9 +1,12 @@
 import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type {
+  ClinicalBoardFilters,
+  ClinicalBoardItem,
   ClinicalMeasurementDto,
   Insurer,
   Patient,
+  PatientDashboard,
   PatientFilters,
   PatientInput,
   PatientListItem,
@@ -16,6 +19,60 @@ import type {
 
 const PATH = `${env.apiUrl}/api/v1/patients`;
 
+/**
+ * Agregados del dashboard general (demografía, crecimiento, top de
+ * profesionales y geografía). `stateCode` acota demografía/crecimiento/top;
+ * el mapa viaja completo. Todo scoped por el backend.
+ */
+export async function fetchPatientDashboard(
+  stateCode: string | null,
+  months: 6 | 12,
+  signal?: AbortSignal,
+): Promise<PatientDashboard> {
+  const params = new URLSearchParams({ months: String(months) });
+  if (stateCode) params.set("state", stateCode);
+  return apiFetch<PatientDashboard>(`${PATH}/dashboard?${params.toString()}`, {
+    signal,
+  });
+}
+
+/** Página del tablero clínico con búsqueda y filtros server-side. */
+export async function fetchClinicalBoard(
+  page: number,
+  pageSize: number,
+  filters: ClinicalBoardFilters,
+  signal?: AbortSignal,
+): Promise<PaginatedResult<ClinicalBoardItem>> {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  const search = filters.search.trim();
+  if (search) params.set("search", search);
+  if (filters.risk !== "all") params.set("risk", filters.risk);
+  if (filters.alerts === "with") params.set("hasAlerts", "true");
+  if (filters.followUp !== "all") params.set("followUp", filters.followUp);
+
+  return apiFetch<PaginatedResult<ClinicalBoardItem>>(
+    `${PATH}/clinical-board?${params.toString()}`,
+    { signal },
+  );
+}
+
+/**
+ * Cambia solo el estado operativo del paciente (Activo↔Inactivo). Endpoint
+ * dedicado: nunca envía el agregado completo (no borra datos clínicos).
+ */
+export async function updatePatientStatus(
+  id: string,
+  status: "Activo" | "Inactivo",
+): Promise<{ id: string; status: string }> {
+  return apiFetch<{ id: string; status: string }>(`${PATH}/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
 export async function fetchPatients(
   page: number,
   pageSize: number,
@@ -23,6 +80,7 @@ export async function fetchPatients(
     sortBy?: PatientSortKey | null;
     sortDir?: PatientSortDir | null;
   },
+  stateCode?: string | null,
   signal?: AbortSignal,
 ): Promise<PaginatedResult<PatientListItem>> {
   const params = new URLSearchParams({
@@ -33,6 +91,7 @@ export async function fetchPatients(
   if (search) params.set("search", search);
   if (filters.status !== "all") params.set("status", filters.status);
   if (filters.insurerId !== "all") params.set("insurerId", filters.insurerId);
+  if (stateCode) params.set("state", stateCode);
   if (filters.sortBy && filters.sortBy !== "createdAt")
     params.set("sortBy", filters.sortBy);
   if (filters.sortDir && filters.sortDir !== "desc")

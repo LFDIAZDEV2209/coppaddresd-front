@@ -17,6 +17,12 @@ export interface PatientListItem {
   clinicId: string | null;
   clinicName: string | null;
   insurerName: string | null;
+  /** Estado de EE. UU. derivado de la ciudad (columna Ubicación). */
+  stateCode: string | null;
+  stateName: string | null;
+  /** Diagnóstico principal (IsPrimary o el más reciente). */
+  primaryDiagnosisCode: string | null;
+  primaryDiagnosisDescription: string | null;
   status: PatientStatus;
   createdAt: string;
   /** Nombres de los profesionales con asignación activa (columna "Profesional"). */
@@ -311,6 +317,92 @@ export interface PaginatedResult<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+// --- Dashboard general (agregados reales, scoped por el backend) ---
+
+/** Rebanada genérica del dashboard (valor + conteo). */
+export interface PatientDashboardSlice {
+  value: string | null;
+  count: number;
+}
+
+/** Rebanada con identidad + nombre (aseguradoras). */
+export interface PatientDashboardNamedSlice {
+  id: string | null;
+  name: string | null;
+  count: number;
+}
+
+/** Diagnóstico agregado del alcance. */
+export interface PatientDashboardDiagnosisSlice {
+  code: string;
+  description: string | null;
+  count: number;
+}
+
+/** Punto mensual de nuevos pacientes (mes UTC). */
+export interface PatientDashboardMonthSlice {
+  year: number;
+  month: number;
+  count: number;
+}
+
+/** Estado de EE. UU. con pacientes y porcentaje sobre el total con estado. */
+export interface PatientDashboardStateSlice {
+  code: string;
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+/** Profesional con más pacientes asignados activos (solo alcance global). */
+export interface PatientDashboardProfessionalSlice {
+  id: string;
+  name: string;
+  count: number;
+}
+
+/** Contrato completo del dashboard de pacientes (GET /patients/dashboard). */
+export interface PatientDashboard {
+  kpis: PatientStats;
+  genderDistribution: PatientDashboardSlice[];
+  ageDistribution: PatientDashboardSlice[];
+  maritalStatusDistribution: PatientDashboardSlice[];
+  insurerDistribution: PatientDashboardNamedSlice[];
+  topDiagnoses: PatientDashboardDiagnosisSlice[];
+  newPatientsByMonth: PatientDashboardMonthSlice[];
+  states: PatientDashboardStateSlice[];
+  topProfessionals: PatientDashboardProfessionalSlice[];
+  emergencyContactPct: number;
+}
+
+// --- Tablero clínico (GET /patients/clinical-board) ---
+
+export type PatientBoardRisk = "low" | "moderate" | "high" | "critical";
+export type PatientFollowUp = "al-dia" | "vencido" | "sin-asignacion";
+
+/** Fila del tablero clínico: cinco señales reales por paciente. */
+export interface ClinicalBoardItem {
+  patientId: string;
+  medicalRecordNumber: string | null;
+  firstName: string;
+  lastName: string;
+  documentNumber: string | null;
+  riskLevel: PatientBoardRisk | null;
+  lastEvaluationAt: string | null;
+  lastEvaluationInstrument: string | null;
+  activeAlertCount: number;
+  maxAlertSeverity: PatientBoardRisk | null;
+  nextEvaluationDueAt: string | null;
+  followUpState: PatientFollowUp;
+}
+
+export interface ClinicalBoardFilters {
+  search: string;
+  risk: PatientBoardRisk | "all";
+  alerts: "all" | "with";
+  followUp: PatientFollowUp | "all";
 }
 
 export interface AppointmentInput {
