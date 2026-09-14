@@ -92,7 +92,8 @@ export function PeopleBulkImport() {
       .then((orgs) => {
         if (cancelled) return;
         setOrgTree(orgs);
-        const withClinics = orgs.find((o) => o.clinics.length > 0) ?? orgs[0] ?? null;
+        const withClinics =
+          orgs.find((o) => o.clinics.length > 0) ?? orgs[0] ?? null;
         if (withClinics) setOrganizationId(withClinics.id);
       })
       .catch(() => {
@@ -199,7 +200,9 @@ export function PeopleBulkImport() {
 
     if (validRows.length === 0) {
       setBulkError(
-        t("No hay filas válidas para importar. Corregí las filas con errores o agregá nuevas filas."),
+        t(
+          "No hay filas válidas para importar. Corregí las filas con errores o agregá nuevas filas.",
+        ),
       );
       setStage("preview");
       return;
@@ -224,9 +227,13 @@ export function PeopleBulkImport() {
       email: row.email.trim(),
       professionalTypeName: row.profesion || null,
       status: (row.estado || "invitado").trim().toLowerCase(),
-      clinicas: row.parsedClinics.length > 0
-        ? row.parsedClinics.map((c) => ({ code: c.code, roleName: c.roleName ?? "" }))
-        : undefined,
+      clinicas:
+        row.parsedClinics.length > 0
+          ? row.parsedClinics.map((c) => ({
+              code: c.code,
+              roleName: c.roleName ?? "",
+            }))
+          : undefined,
     }));
 
     const patientPayload = patients.map((row) => ({
@@ -235,15 +242,24 @@ export function PeopleBulkImport() {
       documentNumber: row.documento.trim() || null,
       email: row.email.trim() || null,
       status: (row.estado || "activo").trim().toLowerCase(),
-      clinicCode: row.parsedClinics.length > 0 ? row.parsedClinics[0]?.code ?? null : null,
+      clinicCode:
+        row.parsedClinics.length > 0
+          ? (row.parsedClinics[0]?.code ?? null)
+          : null,
     }));
 
     const userPayload = users.map((row) => ({
       firstName: row.nombre.trim(),
       lastName: row.apellido.trim(),
       email: row.email.trim(),
-      roleName: row.parsedClinics.length > 0 ? row.parsedClinics[0]?.roleName ?? null : null,
-      clinicCode: row.parsedClinics.length > 0 ? row.parsedClinics[0]?.code ?? null : null,
+      roleName:
+        row.parsedClinics.length > 0
+          ? (row.parsedClinics[0]?.roleName ?? null)
+          : null,
+      clinicCode:
+        row.parsedClinics.length > 0
+          ? (row.parsedClinics[0]?.code ?? null)
+          : null,
       status: (row.estado || "invitado").trim().toLowerCase(),
     }));
 
@@ -261,9 +277,12 @@ export function PeopleBulkImport() {
     ]);
 
     // Procesar resultados
-    const empResult = settled[0]?.status === "fulfilled" ? settled[0].value : null;
-    const patResult = settled[1]?.status === "fulfilled" ? settled[1].value : null;
-    const usrResult = settled[2]?.status === "fulfilled" ? settled[2].value : null;
+    const empResult =
+      settled[0]?.status === "fulfilled" ? settled[0].value : null;
+    const patResult =
+      settled[1]?.status === "fulfilled" ? settled[1].value : null;
+    const usrResult =
+      settled[2]?.status === "fulfilled" ? settled[2].value : null;
 
     const empFailed = settled[0]?.status === "rejected";
     const patFailed = settled[1]?.status === "rejected";
@@ -304,8 +323,9 @@ export function PeopleBulkImport() {
       if (patFailed) failedGroups.push(t("pacientes"));
       if (usrFailed) failedGroups.push(t("usuarios"));
       setBulkError(
-        t("No se pudo completar la importación. Verifica tu conexión e intenta de nuevo.") +
-          ` (${failedGroups.join(", ")})`,
+        t(
+          "No se pudo completar la importación. Verifica tu conexión e intenta de nuevo.",
+        ) + ` (${failedGroups.join(", ")})`,
       );
     }
 
@@ -361,7 +381,7 @@ export function PeopleBulkImport() {
             variant="outline"
             size="sm"
             onClick={() =>
-              stage === "upload" ? router.push("/people") : reset()
+              stage === "upload" ? router.push("/patients") : reset()
             }
           >
             <ArrowLeft data-icon="inline-start" />
@@ -541,21 +561,19 @@ export function PeopleBulkImport() {
           </div>
 
           <div className="max-h-[440px] overflow-auto rounded-xl border border-border/70">
-            <table className="w-full min-w-[1100px] text-left text-[12.5px]">
-              <thead className="sticky top-0 z-10 bg-muted/90 backdrop-blur">
+            <table className="w-full min-w-[1700px] text-left text-[12.5px]">
+              <thead className="sticky top-0 z-10 bg-muted">
                 <tr className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
                   <th className="w-10 px-2 py-2">#</th>
                   <th className="w-28 px-2 py-2">{t("Tipo")}</th>
                   <th className="w-44 px-2 py-2">{t("Nombre")}</th>
                   <th className="w-44 px-2 py-2">{t("Apellido")}</th>
-                  <th className="min-w-[220px] px-2 py-2">{t("Email")}</th>
-                  <th className="w-36 px-2 py-2">{t("Documento")}</th>
+                  <th className="min-w-[260px] px-2 py-2">{t("Email")}</th>
+                  <th className="w-40 px-2 py-2">{t("Documento")}</th>
                   <th className="w-40 px-2 py-2">{t("Profesión")}</th>
                   <th className="w-56 px-2 py-2">{t("Clínicas")}</th>
                   <th className="w-28 px-2 py-2">{t("Estado")}</th>
-                  <th className="w-2/5 min-w-[200px] px-2 py-2">
-                    {t("Validación")}
-                  </th>
+                  <th className="min-w-[240px] px-2 py-2">{t("Validación")}</th>
                   <th className="w-10 px-2 py-2" />
                 </tr>
               </thead>
@@ -666,8 +684,7 @@ export function PeopleBulkImport() {
                           placeholder={t("central:Professional")}
                           invalid={row.errors.some(
                             (e) =>
-                              e.includes("clínica") ||
-                              e.includes("Clínicas"),
+                              e.includes("clínica") || e.includes("Clínicas"),
                           )}
                           onChange={(value) => {
                             // Re-parsear clínicas al editar
@@ -681,16 +698,24 @@ export function PeopleBulkImport() {
                                 );
                                 if (match) {
                                   const code = match[1]?.trim() ?? "";
-                                  const roleName = match[2]?.trim() || undefined;
+                                  const roleName =
+                                    match[2]?.trim() || undefined;
                                   if (code) return { code, roleName } as const;
                                 }
                                 return null;
                               })
                               .filter(
-                                (p): p is { readonly code: string; readonly roleName: string | undefined } =>
-                                  p !== null,
+                                (
+                                  p,
+                                ): p is {
+                                  readonly code: string;
+                                  readonly roleName: string | undefined;
+                                } => p !== null,
                               );
-                            const pairs: Array<{ code: string; roleName?: string }> = rawPairs;
+                            const pairs: Array<{
+                              code: string;
+                              roleName?: string;
+                            }> = rawPairs;
                             updateRow(index, {
                               clinicasRaw: value,
                               parsedClinics: pairs,
@@ -701,9 +726,7 @@ export function PeopleBulkImport() {
                       <td className="px-2 py-1.5">
                         <NativeSelect
                           value={row.estado}
-                          invalid={row.errors.some((e) =>
-                            e.includes("Estado"),
-                          )}
+                          invalid={row.errors.some((e) => e.includes("Estado"))}
                           onChange={(value) =>
                             updateRow(index, { estado: value })
                           }
@@ -822,11 +845,15 @@ export function PeopleBulkImport() {
           {/* Notas informativas */}
           <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
             <Info className="size-3.5 shrink-0" />
-            {t("Se enviará una invitación por correo a cada profesional y empleado creado.")}
+            {t(
+              "Se enviará una invitación por correo a cada profesional y empleado creado.",
+            )}
           </p>
           <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
             <Info className="size-3.5 shrink-0" />
-            {t("Los usuarios creados recibirán una contraseña temporal que se mostrará en el resultado.")}
+            {t(
+              "Los usuarios creados recibirán una contraseña temporal que se mostrará en el resultado.",
+            )}
           </p>
 
           <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
@@ -947,10 +974,7 @@ export function PeopleBulkImport() {
                   </thead>
                   <tbody>
                     {userCredentials.map((r) => (
-                      <tr
-                        key={r.email}
-                        className="border-t border-border/40"
-                      >
+                      <tr key={r.email} className="border-t border-border/40">
                         <td className="px-2.5 py-1.5 font-medium text-foreground">
                           {r.email}
                         </td>
@@ -1017,9 +1041,9 @@ export function PeopleBulkImport() {
           )}
 
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-            <Button onClick={() => router.push("/people")}>
+            <Button onClick={() => router.push("/patients")}>
               <UsersIcon data-icon="inline-start" />
-              {t("Ir a personas")}
+              {t("Ir a pacientes")}
             </Button>
             <Button variant="outline" onClick={reset}>
               <FileUp data-icon="inline-start" />

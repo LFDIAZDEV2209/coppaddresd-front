@@ -1,0 +1,277 @@
+.root {
+  display: inline-block;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex: 0 0 auto;
+  vertical-align: middle;
+  pointer-events: none;
+}
+.interaction,
+.float,
+.artwork {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.interaction {
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.artwork {
+  transform-origin: 50% 70%;
+  overflow: visible;
+}
+.root[data-motion="true"] .float {
+  animation: float var(--icon-duration) ease-in-out var(--icon-delay) infinite;
+}
+.root[data-motion="true"] .artwork {
+  animation: sway var(--icon-duration) ease-in-out var(--icon-delay) infinite;
+}
+.root[data-motion] .float,
+.root[data-motion] .artwork {
+  animation-play-state: paused;
+}
+.root[data-running="true"] .float,
+.root[data-running="true"] .artwork {
+  animation-play-state: running;
+}
+:global([data-icon-motion]):is(:hover, :focus-visible)
+  .root[data-motion="true"]
+  .interaction {
+  transform: translateY(-3px) scale(1.12) rotate(-3deg);
+}
+:global([data-icon-motion]):active .root[data-motion="true"] .interaction {
+  transform: scale(0.94);
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(var(--icon-tilt));
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+}
+.lid {
+  transform-box: view-box;
+  transform-origin: 20px 52px;
+}
+.supplies {
+  transform-origin: 58px 54px;
+  transform: translateY(26px);
+}
+.root[data-animated-icon="medical-kit"] .artwork {
+  animation-name: none;
+}
+.letter {
+  transform-origin: 56px 60px;
+}
+.sent {
+  transform-origin: 92px 28px;
+}
+.checkDisc,
+.stopDisc,
+.stopBars {
+  transform-origin: 58px 56px;
+}
+.checkStroke {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.sparkles {
+  transform-origin: 60px 56px;
+}
+.root[data-motion="true"] .lid {
+  animation: kit-open var(--icon-duration) ease-in-out var(--icon-delay)
+    infinite;
+}
+.root[data-motion="true"] .supplies {
+  animation: kit-reveal var(--icon-duration) ease-in-out var(--icon-delay)
+    infinite;
+}
+.root[data-motion="true"] .letter {
+  animation: letter-send var(--icon-duration) cubic-bezier(0.22, 1, 0.36, 1)
+    var(--icon-delay) infinite;
+}
+.root[data-motion="true"] .sent {
+  animation: sent-confirm var(--icon-duration) ease-in-out var(--icon-delay)
+    infinite;
+}
+.root[data-motion="true"] .checkDisc {
+  animation: check-turn var(--icon-duration) ease-in-out var(--icon-delay)
+    infinite;
+}
+.root[data-motion="true"] .checkStroke {
+  animation: check-draw var(--icon-duration) ease-in-out var(--icon-delay)
+    infinite;
+}
+.root[data-motion="true"] .sparkles {
+  animation: check-spark var(--icon-duration) ease-in-out var(--icon-delay)
+    infinite;
+}
+.root[data-motion="true"] .stopDisc {
+  animation: stop-press var(--icon-duration) ease-in-out var(--icon-delay)
+    infinite;
+}
+.root[data-motion="true"] .stopBars {
+  animation: stop-lock var(--icon-duration) ease-in-out var(--icon-delay)
+    infinite;
+}
+.root[data-motion] .artwork * {
+  animation-play-state: inherit;
+}
+@keyframes kit-open {
+  0%,
+  12%,
+  74%,
+  100% {
+    transform: rotate(0deg);
+  }
+  27%,
+  52% {
+    transform: rotate(-16deg);
+  }
+}
+@keyframes kit-reveal {
+  0%,
+  14%,
+  72%,
+  100% {
+    transform: translateY(26px);
+  }
+  30%,
+  51% {
+    transform: translateY(8px);
+  }
+}
+@keyframes letter-send {
+  0%,
+  14%,
+  92%,
+  100% {
+    transform: translate(0, 0) rotate(0) scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(0, -19px) rotate(-8deg) scale(1);
+    opacity: 1;
+  }
+  48%,
+  64% {
+    transform: translate(35px, -38px) rotate(18deg) scale(0.55);
+    opacity: 0;
+  }
+  66% {
+    transform: translate(0, 18px) scale(0.9);
+    opacity: 0;
+  }
+  82% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes sent-confirm {
+  0%,
+  30%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  46%,
+  68% {
+    transform: scale(1);
+  }
+}
+@keyframes check-turn {
+  0%,
+  10%,
+  70%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  24% {
+    transform: rotate(-12deg) scale(0.94);
+  }
+  43% {
+    transform: rotate(6deg) scale(1.04);
+  }
+}
+@keyframes check-draw {
+  0%,
+  12%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+  22%,
+  29% {
+    stroke-dashoffset: 1;
+  }
+  49%,
+  94% {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes check-spark {
+  0%,
+  35%,
+  72%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50%,
+  57% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+@keyframes stop-press {
+  0%,
+  15%,
+  62%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  29%,
+  37% {
+    transform: translate(4px, 5px) scale(0.92);
+  }
+  49% {
+    transform: translate(-1px, -1px) scale(1.02);
+  }
+}
+@keyframes stop-lock {
+  0%,
+  17%,
+  70%,
+  100% {
+    transform: scaleX(1);
+  }
+  30% {
+    transform: scaleX(0.64);
+  }
+  49% {
+    transform: scaleX(1.1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .root[data-motion] .float,
+  .root[data-motion] .artwork {
+    animation: none;
+  }
+  .root .interaction {
+    transition: none;
+    transform: none !important;
+  }
+  .root[data-motion] .artwork * {
+    animation: none;
+  }
+}

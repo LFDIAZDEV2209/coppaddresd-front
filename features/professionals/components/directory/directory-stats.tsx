@@ -1,12 +1,7 @@
 "use client";
 
 import { useT } from "@/providers/i18n-provider";
-import {
-  MailPlus,
-  UserCheck,
-  UserX,
-  Users,
-} from "lucide-react";
+import { DirectoryIcon, type DirectoryIconKind } from "./directory-icon";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -14,9 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface StatDef {
   key: string;
   label: string;
-  icon: typeof Users;
-  iconBg: string;
-  accent: string;
+  icon: DirectoryIconKind;
   getValue: (stats: {
     total: number;
     active: number;
@@ -49,9 +42,7 @@ export function DirectoryStats({
     {
       key: "total",
       label: "Total de profesionales",
-      icon: Users,
-      iconBg: "bg-brand-gradient text-white shadow-sm",
-      accent: "var(--brand-gradient)",
+      icon: "team",
       getValue: (s) => s.total,
       context: "Directorio completo",
       isActive: () => filters.status === "all",
@@ -60,9 +51,7 @@ export function DirectoryStats({
     {
       key: "active",
       label: "Activos",
-      icon: UserCheck,
-      iconBg: "bg-success text-white",
-      accent: "var(--success)",
+      icon: "active",
       getValue: (s) => s.active,
       context: "En el equipo activo",
       isActive: (f) => f.status === "Active",
@@ -71,9 +60,7 @@ export function DirectoryStats({
     {
       key: "invited",
       label: "Invitados",
-      icon: MailPlus,
-      iconBg: "bg-warning text-white",
-      accent: "var(--warning)",
+      icon: "invited",
       getValue: (s) => s.invited,
       context: "Pendientes de primer acceso",
       isActive: (f) => f.status === "Invited",
@@ -82,9 +69,7 @@ export function DirectoryStats({
     {
       key: "inactive",
       label: "Inactivos",
-      icon: UserX,
-      iconBg: "bg-slate-400 text-white",
-      accent: "#94a3b8",
+      icon: "inactive",
       getValue: (s) => s.inactive,
       context: "Sin actividad en el ERP",
       isActive: (f) => f.status === "Inactive",
@@ -93,49 +78,38 @@ export function DirectoryStats({
   ];
 
   return (
-    <div className="stagger-children grid grid-cols-2 gap-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
       {defs.map((def) => {
         const value = stats ? def.getValue(stats) : null;
         const active = def.isActive(filters);
         return (
           <button
+            data-icon-motion
             key={def.key}
             type="button"
             disabled={!stats}
             onClick={() => onStatFilter(def.filter)}
             aria-pressed={active}
             className={cn(
-              "group relative flex items-center gap-3 overflow-hidden rounded-xl border bg-card p-3.5 pl-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none",
+              "directory-stat group relative flex items-center gap-3 rounded-2xl border bg-card p-4 text-left disabled:pointer-events-none",
               active
-                ? "border-primary ring-1 ring-primary/30"
-                : "border-border/70 hover:border-border",
+                ? "border-primary ring-1 ring-primary"
+                : "border-border hover:border-border",
             )}
           >
-            <span
-              aria-hidden
-              className="absolute inset-y-0 left-0 w-1"
-              style={{ background: def.accent }}
-            />
-            <span
-              className={cn(
-                "flex size-9 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105",
-                def.iconBg,
-              )}
-            >
-              <def.icon className="size-4" />
-            </span>
+            <DirectoryIcon kind={def.icon} />
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
+              <span className="text-xs font-semibold text-foreground">
                 {t(def.label)}
               </span>
               {stats ? (
-                <span className="text-xl leading-none font-bold tabular-nums text-foreground">
+                <span className="text-3xl leading-tight font-bold tabular-nums text-foreground">
                   {value}
                 </span>
               ) : (
                 <Skeleton className="h-5 w-10" />
               )}
-              <span className="truncate text-[10.5px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 {stats ? t(def.context) : "—"}
               </span>
             </span>

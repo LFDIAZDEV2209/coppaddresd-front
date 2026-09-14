@@ -582,3 +582,190 @@
     display: none;
   }
 }
+
+/* Profesionales: controles y superficies sólidos, sin atenuar estados deshabilitados. */
+.professional-directory-header {
+  flex-wrap: wrap;
+  background: none;
+  box-shadow: none;
+  padding: 0.5rem 0;
+  gap: 1rem;
+}
+.professional-directory-header h1 {
+  color: var(--foreground);
+  font-size: clamp(1.5rem, 2vw, 1.875rem);
+}
+.professional-directory-header p {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  white-space: normal;
+}
+.professional-directory .animate-slide-up,
+.professional-directory .animate-slide-down,
+.professional-directory .animate-scale-in {
+  animation: none;
+}
+@media (max-width: 639px) {
+  .professional-directory-header > div:last-child {
+    flex-wrap: wrap;
+  }
+}
+.professional-directory .professional-access-switch {
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: #65758b;
+  cursor: pointer;
+  opacity: 1;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out;
+}
+.professional-directory .professional-access-switch[data-checked] {
+  background: #087d43;
+}
+.professional-directory .professional-access-switch [data-slot="switch-thumb"] {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  /* Neutraliza la traslación porcentual del Switch compartido; aquí usamos left. */
+  translate: none !important;
+  transform: none !important;
+  background: #ffffff;
+  box-shadow: 0 1px 3px #06351c;
+  transition: left 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.professional-directory
+  .professional-access-switch
+  [data-slot="switch-thumb"][data-checked] {
+  left: 23px;
+  translate: none !important;
+  transform: none !important;
+}
+.professional-directory .professional-access-switch:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+}
+.professional-directory .professional-access-switch:disabled {
+  cursor: not-allowed;
+}
+.directory-3d-icon {
+  width: 76px;
+  height: 76px;
+}
+.directory-3d-icon--hero {
+  width: 88px;
+  height: 88px;
+}
+.directory-3d-icon--small {
+  width: 48px;
+  height: 48px;
+}
+.directory-stat {
+  min-height: 126px;
+  transition:
+    border-color 180ms,
+    box-shadow 180ms;
+}
+.directory-stat:hover {
+  box-shadow: 0 8px 20px -12px #163a59;
+}
+.directory-stat:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+}
+@media (max-width: 639px) {
+  .directory-stat {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: 12px;
+  }
+  .directory-3d-icon {
+    width: 64px;
+    height: 64px;
+  }
+  .directory-3d-icon--hero {
+    width: 64px;
+    height: 64px;
+  }
+  .directory-3d-icon--small {
+    width: 40px;
+    height: 40px;
+  }
+  .professional-directory-header > div:last-child {
+    width: 100%;
+  }
+}
+.professional-directory :is(button, [data-slot="checkbox"]):disabled,
+.professional-directory [data-disabled] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .professional-directory *,
+  .professional-directory *::before,
+  .professional-directory *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ── Dashboard de pacientes: superficies sólidas y toggle de estado ── */
+.patient-status-toggle .patient-status-switch {
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: #65758b;
+  cursor: pointer;
+  opacity: 1;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out;
+}
+.patient-status-toggle .patient-status-switch[data-checked] {
+  background: #087d43;
+}
+.patient-status-toggle .patient-status-switch [data-slot="switch-thumb"] {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  /* Neutraliza la traslación porcentual del Switch compartido; aquí usamos left. */
+  translate: none !important;
+  transform: none !important;
+  background: #ffffff;
+  box-shadow: 0 1px 3px #06351c;
+  transition: left 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.patient-status-toggle
+  .patient-status-switch
+  [data-slot="switch-thumb"][data-checked] {
+  left: 23px;
+  translate: none !important;
+  transform: none !important;
+}
+.patient-status-toggle .patient-status-switch:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+}
+.patient-status-toggle .patient-status-switch:disabled {
+  cursor: not-allowed;
+}
+@media (max-width: 639px) {
+  .patient-status-toggle {
+    min-width: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .patient-status-toggle *,
+  .patient-status-toggle *::before,
+  .patient-status-toggle *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

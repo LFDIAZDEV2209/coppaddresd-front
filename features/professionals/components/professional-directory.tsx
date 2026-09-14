@@ -3,6 +3,7 @@
 import { useT } from "@/providers/i18n-provider";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DirectoryIcon } from "./directory/directory-icon";
 import {
   FileUp,
   MailPlus,
@@ -29,6 +30,7 @@ import { DirectoryStats } from "./directory/directory-stats";
 import { DirectoryToolbar } from "./directory/directory-filters";
 import { DirectoryTable } from "./directory/directory-table";
 import { DirectoryCards } from "./directory/directory-cards";
+import { ProfessionalAccessProvider } from "./directory/professional-access";
 
 /**
  * Directorio de profesionales del ERP con el lenguaje visual del módulo de
@@ -239,154 +241,179 @@ export function ProfessionalDirectory() {
   }, [filters, specialties, clinics, setFilters, t]);
 
   return (
-    <div className="stagger-children flex flex-col gap-6 p-4 sm:p-6">
-      <PageHeader
-        title={t("Profesionales")}
-        description={t(
-          "Gestiona el equipo clínico, sus especialidades y acceso al ERP",
+    <ProfessionalAccessProvider
+      employees={result?.data ?? []}
+      onChanged={retry}
+    >
+      <div className="professional-directory flex flex-col gap-6 p-4 sm:p-6">
+        <PageHeader
+          className="professional-directory-header"
+          leadingVisual={
+            <DirectoryIcon kind="team" className="directory-3d-icon--hero" />
+          }
+          title={t("Profesionales")}
+          description={t(
+            "Gestiona el equipo clínico, sus especialidades y acceso al ERP",
+          )}
+          icon={Stethoscope}
+          actions={
+            canCreate ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => router.push("/people/importar")}
+                >
+                  <FileUp data-icon="inline-start" />
+                  {t("Creación masiva")}
+                </Button>
+                <Button size="sm" onClick={openCreate}>
+                  <Plus data-icon="inline-start" />
+                  {t("Nuevo profesional")}
+                </Button>
+              </>
+            ) : undefined
+          }
+        />
+
+        {/* Stats cards clicables: cada métrica aplica su filtro (clic de nuevo lo quita). */}
+        <DirectoryStats
+          stats={stats}
+          filters={filters}
+          onStatFilter={setFilters}
+        />
+
+        {statsError && (
+          <p
+            className="animate-slide-down rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning-foreground"
+            role="alert"
+          >
+            {t("No pudimos cargar las estadísticas")}: {statsError}
+          </p>
         )}
-        icon={Stethoscope}
-        actions={
-          canCreate ? (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => router.push("/people/importar")}
+
+        {feedback && (
+          <p
+            className={cn(
+              "animate-slide-down rounded-xl px-4 py-3 text-sm",
+              feedback.kind === "ok"
+                ? "bg-success-soft text-success-foreground"
+                : "bg-destructive-soft text-destructive",
+            )}
+            role="status"
+          >
+            {feedback.message}
+          </p>
+        )}
+
+        {/* Toolbar de filtros con chips activos y contador de resultados. */}
+        <DirectoryToolbar
+          filters={filters}
+          specialties={specialties}
+          clinics={clinics}
+          view={view}
+          onViewChange={setView}
+          loading={loading}
+          onRefresh={retry}
+          onFilterChange={setFilters}
+          activeChips={activeChips}
+          onClearFilters={clearFilters}
+          resultCount={result?.total ?? 0}
+          isFiltered={isFiltered}
+        />
+
+        {error && !result ? (
+          <ErrorState message={error} onRetry={retry} />
+        ) : (
+          <>
+            {error && (
+              <p
+                className="animate-slide-down rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
+                role="alert"
               >
-                <FileUp data-icon="inline-start" />
-                {t("Creación masiva")}
-              </Button>
-              <Button size="sm" onClick={openCreate}>
-                <Plus data-icon="inline-start" />
-                {t("Nuevo profesional")}
-              </Button>
-            </>
-          ) : undefined
-        }
-      />
+                {error}
+              </p>
+            )}
+            {loading && !result ? (
+              <DirectorySkeleton />
+            ) : result && result.data.length > 0 ? (
+              <>
+                <div className="md:hidden">
+                  <DirectoryCards
+                    employees={result.data}
+                    canInvite={canInvite}
+                    invitingId={invitingId}
+                    copiedId={copiedId}
+                    selected={selected}
+                    onToggleOne={toggleOne}
+                    onOpen={openDetail}
+                    onInvite={onInvite}
+                  />
+                </div>
+                {view === "table" ? (
+                  <div className="hidden md:block">
+                    <DirectoryTable
+                      employees={result.data}
+                      canInvite={canInvite}
+                      invitingId={invitingId}
+                      copiedId={copiedId}
+                      selected={selected}
+                      allSelected={allVisibleSelected}
+                      someSelected={someVisibleSelected}
+                      onToggleAll={toggleAllVisible}
+                      onToggleOne={toggleOne}
+                      onOpen={openDetail}
+                      onInvite={onInvite}
+                    />
+                  </div>
+                ) : (
+                  <div className="hidden md:block">
+                    <DirectoryCards
+                      employees={result.data}
+                      canInvite={canInvite}
+                      invitingId={invitingId}
+                      copiedId={copiedId}
+                      selected={selected}
+                      onToggleOne={toggleOne}
+                      onOpen={openDetail}
+                      onInvite={onInvite}
+                    />
+                  </div>
+                )}
+                {selected.size > 0 && (
+                  <BulkBar
+                    count={selected.size}
+                    invitedCount={selectedInvited.length}
+                    busy={bulkInviting}
+                    onInvite={onBulkInvite}
+                    onClear={() => setSelected(new Set())}
+                  />
+                )}
+              </>
+            ) : (
+              <EmptyState
+                filtered={isFiltered}
+                canCreate={canCreate}
+                onCreate={openCreate}
+                onClear={clearFilters}
+              />
+            )}
+            {result && result.total > 0 && (
+              <Pagination
+                page={result.page}
+                totalPages={result.totalPages}
+                total={result.total}
+                pageSize={result.pageSize}
+                onPageChange={setPage}
+              />
+            )}
+          </>
+        )}
 
-      {/* Stats cards clicables: cada métrica aplica su filtro (clic de nuevo lo quita). */}
-      <DirectoryStats
-        stats={stats}
-        filters={filters}
-        onStatFilter={setFilters}
-      />
-
-      {statsError && (
-        <p
-          className="animate-slide-down rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning-foreground"
-          role="alert"
-        >
-          {t("No pudimos cargar las estadísticas")}: {statsError}
-        </p>
-      )}
-
-      {feedback && (
-        <p
-          className={cn(
-            "animate-slide-down rounded-xl px-4 py-3 text-sm",
-            feedback.kind === "ok"
-              ? "bg-success-soft text-success-foreground"
-              : "bg-destructive-soft text-destructive",
-          )}
-          role="status"
-        >
-          {feedback.message}
-        </p>
-      )}
-
-      {/* Toolbar de filtros con chips activos y contador de resultados. */}
-      <DirectoryToolbar
-        filters={filters}
-        specialties={specialties}
-        clinics={clinics}
-        view={view}
-        onViewChange={setView}
-        loading={loading}
-        onRefresh={retry}
-        onFilterChange={setFilters}
-        activeChips={activeChips}
-        onClearFilters={clearFilters}
-        resultCount={result?.total ?? 0}
-        isFiltered={isFiltered}
-      />
-
-      {error && !result ? (
-        <ErrorState message={error} onRetry={retry} />
-      ) : (
-        <>
-          {error && (
-            <p
-              className="animate-slide-down rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
-              role="alert"
-            >
-              {error}
-            </p>
-          )}
-          {loading && !result ? (
-            <DirectorySkeleton />
-          ) : result && result.data.length > 0 ? (
-            <>
-              {view === "table" ? (
-                <DirectoryTable
-                  employees={result.data}
-                  canInvite={canInvite}
-                  invitingId={invitingId}
-                  copiedId={copiedId}
-                  selected={selected}
-                  allSelected={allVisibleSelected}
-                  someSelected={someVisibleSelected}
-                  onToggleAll={toggleAllVisible}
-                  onToggleOne={toggleOne}
-                  onOpen={openDetail}
-                  onInvite={onInvite}
-                />
-              ) : (
-                <DirectoryCards
-                  employees={result.data}
-                  canInvite={canInvite}
-                  invitingId={invitingId}
-                  copiedId={copiedId}
-                  selected={selected}
-                  onToggleOne={toggleOne}
-                  onOpen={openDetail}
-                  onInvite={onInvite}
-                />
-              )}
-              {selected.size > 0 && (
-                <BulkBar
-                  count={selected.size}
-                  invitedCount={selectedInvited.length}
-                  busy={bulkInviting}
-                  onInvite={onBulkInvite}
-                  onClear={() => setSelected(new Set())}
-                />
-              )}
-            </>
-          ) : (
-            <EmptyState
-              filtered={isFiltered}
-              canCreate={canCreate}
-              onCreate={openCreate}
-              onClear={clearFilters}
-            />
-          )}
-          {result && result.total > 0 && (
-            <Pagination
-              page={result.page}
-              totalPages={result.totalPages}
-              total={result.total}
-              pageSize={result.pageSize}
-              onPageChange={setPage}
-            />
-          )}
-        </>
-      )}
-
-      {/* Gestión de catálogos (tipos y especialidades): solo Super Admin. */}
-      {canManageCatalogs && <CatalogManagement />}
-    </div>
+        {/* Gestión de catálogos (tipos y especialidades): solo Super Admin. */}
+        {canManageCatalogs && <CatalogManagement />}
+      </div>
+    </ProfessionalAccessProvider>
   );
 }
 
@@ -408,7 +435,7 @@ function BulkBar({
   const t = useT();
   return (
     <div className="animate-slide-up sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3 shadow-lg shadow-black/5">
-      <span className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[12.5px] font-semibold text-primary">
+      <span className="flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-[12.5px] font-semibold text-primary">
         <UserRound className="size-3.5" />
         {t("{count} seleccionados", { count: String(count) })}
       </span>
@@ -520,7 +547,7 @@ function ErrorState({
 }) {
   const t = useT();
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive bg-destructive-soft py-14 text-center">
       <p className="text-sm font-semibold text-destructive">
         {t("No pudimos cargar el directorio")}
       </p>

@@ -16,6 +16,9 @@ export interface EmployeeListItem {
   jobTitle: string | null;
   department: string | null;
   status: string;
+  userId?: string | null;
+  pendingStatus?: string | null;
+  pendingOperationId?: string | null;
   isProfessional: boolean;
   professionalTypeName: string | null;
   specialtyNames: string[];
@@ -28,6 +31,26 @@ export interface PaginatedEmployees {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+export interface ProfessionalAccessResult {
+  operationId: string;
+  status: "Active" | "Inactive";
+  pending: boolean;
+}
+
+export function changeProfessionalAccess(
+  id: string,
+  status: "Active" | "Inactive",
+  operationId: string,
+) {
+  return apiFetch<ProfessionalAccessResult>(
+    `${env.apiUrl}/api/v1/employees/${id}/access`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ status, operationId }),
+    },
+  );
 }
 
 export interface EmployeeClinic {
@@ -113,10 +136,14 @@ export interface EmployeeStats {
 
 export async function fetchEmployeeStats(
   signal?: AbortSignal,
+  fresh = false,
 ): Promise<EmployeeStats> {
-  return apiFetch<EmployeeStats>(`${env.apiUrl}/api/v1/professionals/stats`, {
-    signal,
-  });
+  return apiFetch<EmployeeStats>(
+    `${env.apiUrl}/api/v1/professionals/stats${fresh ? "?fresh=true" : ""}`,
+    {
+      signal,
+    },
+  );
 }
 
 export async function fetchEmployee(id: string): Promise<EmployeeDetail> {
@@ -361,11 +388,8 @@ export async function saveProfessionalSchedules(
   id: string,
   schedules: ProfessionalScheduleSlot[],
 ): Promise<void> {
-  await apiFetch<void>(
-    `${env.apiUrl}/api/v1/professionals/${id}/schedules`,
-    {
-      method: "PUT",
-      body: JSON.stringify({ schedules }),
-    },
-  );
+  await apiFetch<void>(`${env.apiUrl}/api/v1/professionals/${id}/schedules`, {
+    method: "PUT",
+    body: JSON.stringify({ schedules }),
+  });
 }
