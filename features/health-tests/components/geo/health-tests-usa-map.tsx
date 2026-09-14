@@ -11,9 +11,12 @@ import {
 import type { HealthGeoCity } from "../../services/health-geo-service";
 import { mapRiskColor, mapRiskPalette } from "../shared/colors";
 
-/** Realce suave del hover y anillo doble de selección (sin glow neón). */
-const HOVER_STROKE = "#334155";
-const SELECTED_STROKE = "var(--primary)";
+/** Hover y selección comparten el mismo anillo doble (halo + contorno
+ * primary): el hover es apenas más fino y tenue, casi idéntico. */
+const RING_STROKE = "var(--primary)";
+const HOVER_RING_WIDTH = 2.25;
+const HOVER_HALO_OPACITY = 0.14;
+const SELECTED_RING_WIDTH = 2.5;
 const SELECTED_HALO_OPACITY = 0.18;
 
 interface StateAgg {
@@ -160,10 +163,11 @@ export function HealthTestsUsaMap({
           const isSelected = selected.has(abbr);
           const dimmed = hasSelection && !isSelected;
 
-          // Hover: elevación sutil con borde pizarra. Selección: separación
-          // blanca + anillo primary superpuesto (ver <g> al final del svg).
-          const stroke = isHovered ? HOVER_STROKE : "#FFFFFF";
-          const strokeWidth = isHovered ? 1.75 : isSelected ? 1.5 : 0.9;
+          // Hover y selección: separación blanca en el trazo base y anillo
+          // superpuesto casi idéntico (ver <g> al final del svg); el hover
+          // conserva la elevación sutil para sentirse interactivo.
+          const stroke = "#FFFFFF";
+          const strokeWidth = isHovered || isSelected ? 1.5 : 0.9;
           const filter = isHovered
             ? "brightness(1.04) drop-shadow(0 2px 5px rgb(15 23 42 / 0.22))"
             : isSelected
@@ -210,14 +214,18 @@ export function HealthTestsUsaMap({
             </path>
           );
         })}
-        {/* Anillo de selección sobre el resto: halo tenue + contorno primary.
+        {/* Anillo doble sobre el resto: halo tenue + contorno primary, tanto
+            para hover como para selección (el hover apenas más fino/tenue).
             Se dibuja al final para que ningún estado vecino lo recorte y se
-            anima con un pop sutil al agregar/estrenar la selección. */}
-        {hasSelection && (
+            anima con un pop sutil al pasar o estrenar la selección. */}
+        {(hasSelection || hovered) && (
           <g pointerEvents="none" aria-hidden="true">
-            {[...selected].map((abbr) => {
+            {[
+              ...new Set([...selected, ...(hovered ? [hovered] : [])]),
+            ].map((abbr) => {
               const d = USA_STATE_PATHS[abbr];
               if (!d) return null;
+              const isSel = selected.has(abbr);
               return (
                 <g
                   key={abbr}
@@ -230,16 +238,18 @@ export function HealthTestsUsaMap({
                   <path
                     d={d}
                     fill="none"
-                    stroke={SELECTED_STROKE}
+                    stroke={RING_STROKE}
                     strokeWidth={6}
                     strokeLinejoin="round"
-                    opacity={SELECTED_HALO_OPACITY}
+                    opacity={
+                      isSel ? SELECTED_HALO_OPACITY : HOVER_HALO_OPACITY
+                    }
                   />
                   <path
                     d={d}
                     fill="none"
-                    stroke={SELECTED_STROKE}
-                    strokeWidth={2.5}
+                    stroke={RING_STROKE}
+                    strokeWidth={isSel ? SELECTED_RING_WIDTH : HOVER_RING_WIDTH}
                     strokeLinejoin="round"
                   />
                 </g>
