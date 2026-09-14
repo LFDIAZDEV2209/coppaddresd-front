@@ -3,14 +3,17 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
+import { getDemoCredentials } from "@/lib/api/auth-service";
 import Image from "next/image";
 import {
   Activity,
   AlertTriangle,
   Bot,
   CalendarDays,
+  CheckCircle2,
   Eye,
   EyeOff,
+  HeartPulse,
   KeyRound,
   Mail,
   MessageCircle,
@@ -82,6 +85,13 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await doLogin();
+  };
+
+  // Rellena los campos con las credenciales demo (solo en desarrollo).
+  const fillDemo = (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setError("");
   };
 
   return (
@@ -215,6 +225,34 @@ export default function LoginPage() {
                 className="mt-1"
               />
             </form>
+
+            {/* Credenciales de demostración — solo en desarrollo */}
+            {process.env.NODE_ENV === "development" && (
+              <div className="mt-7 flex items-start gap-3 rounded-xl border border-border/70 bg-accent/40 p-4">
+                <HeartPulse className="mt-0.5 size-5 shrink-0 text-brand-teal" />
+                <div className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-foreground">
+                    {t("Credenciales de demostración")}
+                  </span>
+                  {getDemoCredentials().map((cred) => (
+                    <button
+                      key={cred.email}
+                      type="button"
+                      onClick={() => fillDemo(cred.email, cred.password)}
+                      className="group flex items-center gap-2 text-left text-[11.5px] text-muted-foreground transition-colors hover:text-brand-navy cursor-pointer"
+                    >
+                      <CheckCircle2 className="size-3 text-brand-teal group-hover:text-brand-navy" />
+                      <span className="font-mono">{cred.email}</span>
+                      <span className="text-muted-foreground/50">·</span>
+                      <span className="font-mono">{cred.password}</span>
+                      <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px]">
+                        {cred.role}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
