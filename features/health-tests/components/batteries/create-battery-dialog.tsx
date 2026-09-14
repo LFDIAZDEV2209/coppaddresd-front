@@ -361,7 +361,7 @@ export function CreateBatteryDialog({
             )}
           </div>
 
-          <DialogFooter className="-mx-6 -mb-5 px-6">
+          <DialogFooter className="m-0 shrink-0 px-6 py-4">
             <Button
               type="button"
               variant="outline"

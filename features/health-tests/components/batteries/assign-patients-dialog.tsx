@@ -1,10 +1,13 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { CheckCircle2, LoaderCircle, Search } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RISK_LABELS } from "../../lib/domain";
+import type { RiskLevel } from "../../types";
+import { RiskBadge } from "../shared/badges";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +21,20 @@ export interface AssignPatientOption {
   id: string;
   name: string;
   detail?: string;
+  risk?: RiskLevel;
+  clinic?: string;
 }
+
+/** Iniciales (máx. 2) para el avatar de la fila. */
+const initialsOf = (name: string): string =>
+  name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
 /**
  * Asignación masiva de una batería: buscador, selección múltiple y un único
@@ -44,6 +60,20 @@ export function AssignPatientsDialog({
   const [result, setResult] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(search);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [showFade, setShowFade] = useState(true);
+
+  // El fade inferior señala que hay más pacientes; se oculta al llegar al fondo.
+  const updateFade = () => {
+    const el = listRef.current;
+    if (!el) return;
+    setShowFade(el.scrollHeight - el.scrollTop - el.clientHeight > 4);
+  };
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: 0 });
+    updateFade();
+  }, [deferredSearch]);
 
   const normalized = deferredSearch.trim().toLowerCase();
   const filtered = patients.filter(
@@ -110,8 +140,8 @@ export function AssignPatientsDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-x-hidden overflow-y-auto p-0 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent sm:max-w-xl">
-        <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
+      <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden p-0 sm:max-w-xl">
+        <DialogHeader className="shrink-0 border-b border-border bg-primary-soft px-6 py-5">
           <DialogTitle>{t("Asignar pacientes")}</DialogTitle>
           <DialogDescription>
             {t("Asigna la batería {name} a los pacientes seleccionados.", {
@@ -139,7 +169,7 @@ export function AssignPatientsDialog({
           </div>
         ) : (
           <>
-            <div className="flex flex-col gap-3 px-6 py-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-3 px-6 py-4">
               <label className="flex items-center gap-2 rounded-md border border-input bg-background px-3">
                 <Search className="size-3.5 shrink-0 text-muted-foreground" />
                 <input
@@ -161,34 +191,69 @@ export function AssignPatientsDialog({
                     count: String(filteredIds.length),
                   })}
                 </span>
+                {selected.size > 0 && (
+                  <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
+                    {selected.size}
+                  </span>
+                )}
               </label>
 
-              <div className="max-h-72 overflow-x-hidden overflow-y-auto rounded-xl border border-border [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5">
-                {filtered.map((patient) => (
-                  <label
-                    key={patient.id}
-                    className="flex cursor-pointer items-center gap-3 border-b border-border/60 px-3 py-2 last:border-b-0 hover:bg-muted"
-                  >
-                    <Checkbox
-                      checked={selected.has(patient.id)}
-                      onCheckedChange={() => togglePatient(patient.id)}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[12.5px] font-medium">
-                        {patient.name}
+              <div className="relative flex min-h-0 flex-1 flex-col">
+                <div
+                  ref={listRef}
+                  onScroll={updateFade}
+                  className="min-h-0 flex-1 snap-y snap-mandatory overflow-x-hidden overflow-y-auto rounded-xl border border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
+                {filtered.map((patient) => {
+                  const isSelected = selected.has(patient.id);
+                  const sub = [patient.detail, patient.clinic]
+                    .filter(Boolean)
+                    .join(" · ");
+                  return (
+                    <label
+                      key={patient.id}
+                      className={`flex cursor-pointer snap-start items-center gap-3 border-b border-border/60 px-3 py-2.5 last:border-b-0 hover:bg-muted ${isSelected ? "bg-primary-soft" : ""}`}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => togglePatient(patient.id)}
+                      />
+                      <span
+                        aria-hidden
+                        className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary-soft text-[11px] font-bold text-primary"
+                      >
+                        {initialsOf(patient.name)}
                       </span>
-                      {patient.detail && (
-                        <span className="block truncate text-[11px] text-muted-foreground">
-                          {patient.detail}
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[12.5px] font-medium">
+                          {patient.name}
                         </span>
+                        {sub && (
+                          <span className="block truncate text-[11px] text-muted-foreground">
+                            {sub}
+                          </span>
+                        )}
+                      </span>
+                      {patient.risk && patient.risk !== "sin-evaluar" && (
+                        <RiskBadge
+                          risk={patient.risk}
+                          label={RISK_LABELS[patient.risk]}
+                        />
                       )}
-                    </span>
-                  </label>
-                ))}
+                    </label>
+                  );
+                })}
                 {filtered.length === 0 && (
                   <p className="px-3 py-8 text-center text-[12px] text-muted-foreground">
                     {t("Sin pacientes para el filtro actual")}
                   </p>
+                )}
+                </div>
+                {showFade && filtered.length > 0 && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-px bottom-px h-10 rounded-b-xl bg-gradient-to-b from-transparent via-card/90 to-card"
+                  />
                 )}
               </div>
             </div>
@@ -202,7 +267,14 @@ export function AssignPatientsDialog({
               </p>
             )}
 
-            <DialogFooter className="-mx-6 -mb-4 px-6">
+            <DialogFooter className="m-0 shrink-0 px-6 py-4">
+              {selected.size > 0 && (
+                <span className="mr-auto self-center text-[12px] font-medium text-muted-foreground">
+                  {t("{count} seleccionados", {
+                    count: String(selected.size),
+                  })}
+                </span>
+              )}
               <Button
                 type="button"
                 variant="outline"

@@ -137,6 +137,8 @@ export function BatteriesPage() {
       id: row.patient.id,
       name: `${row.patient.firstName} ${row.patient.lastName}`,
       detail: row.patient.documentNumber,
+      risk: row.risk,
+      clinic: row.patient.clinic,
     }),
   );
 
