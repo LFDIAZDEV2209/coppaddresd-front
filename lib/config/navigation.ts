@@ -143,21 +143,6 @@ export const navModules: NavModule[] = [
         permission: "Professionals.View",
       },
       {
-        label: "Roles y permisos",
-        href: "/roles",
-        icon: ShieldCheck,
-        color: "#10B981",
-        permission: "System.AdminSettings",
-      },
-    ],
-  },
-  {
-    label: "Pacientes",
-    icon: UserRound,
-    color: "#0E7490",
-    permission: ["Patients.View", "Patients.ViewOwn"],
-    items: [
-      {
         label: "Pacientes",
         href: "/patients",
         icon: UserRound,
@@ -177,7 +162,15 @@ export const navModules: NavModule[] = [
         href: "/patients/prescriptions",
         icon: ClipboardPenLine,
         color: "#F59E0B",
+        hidden: true,
         permission: "Prescriptions.View",
+      },
+      {
+        label: "Roles y permisos",
+        href: "/roles",
+        icon: ShieldCheck,
+        color: "#10B981",
+        permission: "System.AdminSettings",
       },
     ],
   },
