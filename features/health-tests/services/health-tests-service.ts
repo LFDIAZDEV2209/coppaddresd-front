@@ -947,9 +947,27 @@ async function getStats(filter?: HealthGeoFilter): Promise<HealthTestStats> {
   );
 }
 
+/** Punto de tendencia del backend (endpoint /coverage-trend, rollup mensual). */
+interface TrendPointDto {
+  label: string;
+  coverage: number;
+  completed: number;
+}
+
 async function getCoverageTrend(
   filter?: HealthGeoFilter,
 ): Promise<CoverageTrendPoint[]> {
+  // Sin filtro geo: el backend lo resuelve con el rollup diario (1 query).
+  // Con filtro geo se conserva el cálculo cliente (master ya está filtrado).
+  const states = normalizeStateCodes(filter?.stateCodes);
+  if (states.length === 0) {
+    const points = await apiFetch<TrendPointDto[]>(`${BASE}/coverage-trend`);
+    return points.map((p) => ({
+      label: p.label,
+      coverage: p.coverage,
+      completed: p.completed,
+    }));
+  }
   const [stats, masterRows] = await Promise.all([
     apiFetch<StatsDto>(`${BASE}/stats${geoFilterParams(filter)}`),
     getMasterRows(filter).catch(() => [] as PatientMasterRow[]),

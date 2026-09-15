@@ -15,9 +15,16 @@ import { mapRiskColor, mapRiskPalette } from "../shared/colors";
  * primary): el hover es apenas más fino y tenue, casi idéntico. */
 const RING_STROKE = "var(--primary)";
 const HOVER_RING_WIDTH = 2.25;
-const HOVER_HALO_OPACITY = 0.14;
+const HOVER_HALO_OPACITY = 0.1;
 const SELECTED_RING_WIDTH = 2.5;
-const SELECTED_HALO_OPACITY = 0.18;
+const SELECTED_HALO_OPACITY = 0.12;
+
+/** Rellenos sólidos: el mapa base queda intenso y la selección
+ * mantiene el color pleno para no lavar el tono. */
+const BASE_FILL_OPACITY = 1;
+const HOVER_FILL_OPACITY = 1;
+const SELECTED_FILL_OPACITY = 1;
+const DIMMED_FILL_OPACITY = 0.35;
 
 interface StateAgg {
   highRiskPct: number | null;
@@ -166,8 +173,17 @@ export function HealthTestsUsaMap({
           // Hover y selección: separación blanca en el trazo base y anillo
           // superpuesto casi idéntico (ver <g> al final del svg); el hover
           // conserva la elevación sutil para sentirse interactivo.
+          // El relleno usa fillOpacity (no opacity) para suavizar el color
+          // sin atenuar trazo ni anillo.
           const stroke = "#FFFFFF";
           const strokeWidth = isHovered || isSelected ? 1.5 : 0.9;
+          const fillOpacity = dimmed
+            ? DIMMED_FILL_OPACITY
+            : isHovered
+              ? HOVER_FILL_OPACITY
+              : isSelected
+                ? SELECTED_FILL_OPACITY
+                : BASE_FILL_OPACITY;
           const filter = isHovered
             ? "brightness(1.04) drop-shadow(0 2px 5px rgb(15 23 42 / 0.22))"
             : isSelected
@@ -179,6 +195,7 @@ export function HealthTestsUsaMap({
               key={abbr}
               d={d}
               fill={mapRiskColor(pct)}
+              fillOpacity={fillOpacity}
               stroke={stroke}
               strokeWidth={strokeWidth}
               role={interactive ? "button" : "img"}
@@ -192,7 +209,6 @@ export function HealthTestsUsaMap({
                 interactive ? "cursor-pointer" : "cursor-default"
               }`}
               style={{
-                opacity: dimmed ? 0.4 : 1,
                 filter,
                 // "Pop" sutil del estado bajo el cursor (origen en su propio centro).
                 transformBox: isHovered ? "fill-box" : undefined,
