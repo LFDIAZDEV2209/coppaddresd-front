@@ -7,7 +7,7 @@
 .copp-calendar {
   /* Paleta base del calendario = tokens del design system */
   --fc-page-bg-color: transparent;
-  --fc-border-color: var(--border);
+  --fc-border-color: color-mix(in srgb, var(--border) 65%, transparent);
   --fc-neutral-bg-color: var(--card);
   --fc-today-bg-color: color-mix(in srgb, var(--primary) 6%, transparent);
   --fc-highlight-color: color-mix(in srgb, var(--primary) 14%, transparent);
@@ -32,10 +32,22 @@
 }
 
 /* ── Encabezados de día ─────────────────────────────────────────────── */
+.copp-calendar .fc-col-header {
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+}
+
 .copp-calendar .fc-col-header-cell {
   padding: 0;
-  background: var(--card);
+  background: transparent;
   font-weight: inherit;
+}
+
+.copp-calendar .fc-timeGridWeek-view .fc-col-header-cell-cushion,
+.copp-calendar .fc-timeGridDay-view .fc-col-header-cell-cushion {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .copp-calendar .fc-col-header-cell-cushion {
@@ -77,7 +89,7 @@
 
 /* ── Grilla horaria (semana/día) ────────────────────────────────────── */
 .copp-calendar .fc-timegrid-slot {
-  height: 2.1em;
+  height: 2.5em;
 }
 
 .copp-calendar .fc-timegrid-slot-label-cushion,
@@ -107,7 +119,12 @@
 }
 
 .copp-calendar .fc-timegrid-now-indicator-arrow {
-  display: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -5px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--fc-now-indicator-color);
 }
 
 /* ── Eventos ────────────────────────────────────────────────────────── */
@@ -138,33 +155,37 @@
   gap: 1px;
   overflow: hidden;
   border-left: 3px solid transparent;
-  border-radius: 6px;
-  padding: 3px 6px 4px;
+  border-radius: 10px;
+  padding: 5px 9px 6px;
   text-align: left;
   transition:
     box-shadow 150ms ease,
-    filter 150ms ease;
+    filter 150ms ease,
+    transform 150ms ease;
   user-select: none;
 }
 
 .copp-calendar .cal-event:hover {
-  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.18);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px -6px rgb(0 0 0 / 0.28);
   filter: brightness(0.97);
 }
 
 .copp-calendar .cal-event-time {
-  font-size: 10.5px;
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .copp-calendar .cal-event-title {
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.35;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -172,20 +193,21 @@
 }
 
 .copp-calendar .cal-event-meta {
-  font-size: 10px;
-  line-height: 1.3;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 0.85;
+  opacity: 0.78;
 }
 
-/* Eventos compactos (franjas < 45 min): una sola línea */
+/* Eventos compactos (franjas < 45 min): punto + paciente en una línea */
 .copp-calendar .cal-event.is-compact {
   flex-direction: row;
   align-items: center;
-  gap: 4px;
-  padding-block: 2px;
+  gap: 6px;
+  padding-block: 4px;
 }
 
 .copp-calendar .cal-event.is-compact .cal-event-title {
@@ -194,14 +216,14 @@
   -webkit-line-clamp: 1;
 }
 
-/* Evento "day-dot" para la vista mes */
+/* Evento "day-dot" para la vista mes: píldora con punto + hora + nombre */
 .copp-calendar .cal-dot-event {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   width: 100%;
-  border-radius: 5px;
-  padding: 2px 6px;
+  border-radius: 7px;
+  padding: 4px 9px;
   cursor: pointer;
   transition: filter 150ms ease;
   white-space: nowrap;
@@ -210,6 +232,11 @@
 
 .copp-calendar .cal-dot-event:hover {
   filter: brightness(0.96);
+}
+
+.copp-calendar .cal-dot-event .cal-event-title {
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* ── Vista mes: altura de celdas y "+N más" ─────────────────────────── */
@@ -257,4 +284,160 @@
 
 .copp-calendar .fc-scroller::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ── Cabecera de día estilo Teams (renderizada por dayHeaderContent) ─── */
+.copp-calendar .cal-col-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 2px;
+  line-height: 1.2;
+}
+
+.copp-calendar .cal-col-dow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+
+.copp-calendar .cal-col-day {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.copp-calendar .cal-col-head.is-today .cal-col-dow {
+  color: var(--primary-strong);
+}
+
+.copp-calendar .cal-col-head.is-today .cal-col-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* ── Horario no laboral atenuado ──────────────────────────────────────── */
+.copp-calendar .fc-non-business {
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+
+/* ── Transición al alternar Agenda | Calendario (una sola, contenida) ─── */
+.agenda-view-enter {
+  animation: agenda-view-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes agenda-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agenda-view-enter {
+    animation: none;
+  }
+}
+
+/* ── Mes: número clicable + hover de celda ───────────────────────────── */
+.copp-calendar .fc-daygrid-day-number {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 150ms ease;
+}
+
+.copp-calendar .fc-daygrid-day-number:hover {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.copp-calendar .fc-daygrid-day:hover {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+/* ── Mes: encabezado de una línea ("DOM 4") ──────────────────────────── */
+.copp-calendar .cal-col-head.is-month {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  letter-spacing: 0.08em;
+}
+
+.copp-calendar .cal-col-head.is-month .cal-col-dow {
+  font-size: 11px;
+}
+
+.copp-calendar .cal-col-head.is-month .cal-col-day {
+  font-size: 13px;
+}
+
+/* ── Mes: indicador sutil de ocupación ───────────────────────────────── */
+.copp-calendar .cal-month-day {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copp-calendar .cal-occupancy {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+}
+
+.copp-calendar .cal-occupancy i {
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--muted-foreground);
+  opacity: 0.45;
+}
+
+.copp-calendar .cal-occupancy.is-level-2 i,
+.copp-calendar .cal-occupancy.is-level-3 i {
+  background: var(--primary-strong);
+  opacity: 0.75;
+}
+
+.copp-calendar .cal-occupancy.is-level-3 i {
+  opacity: 1;
+}
+
+/* ── Día: columna centrada con ancho máximo ──────────────────────────── */
+@media (min-width: 768px) {
+  .copp-calendar .fc-timeGridDay-view .fc-timegrid-event-harness {
+    max-width: 680px;
+  }
+}
+
+/* ── Evento seleccionado (popover abierto): anillo visible ────────────── */
+.copp-calendar .fc-event.is-selected .cal-event,
+.copp-calendar .fc-event.is-selected .cal-dot-event {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* ── Día: tipografía mayor y contenido con aire ───────────────────────── */
+.copp-calendar .fc-timeGridDay-view .cal-event {
+  padding: 9px 13px;
+}
+
+.copp-calendar .fc-timeGridDay-view .cal-event-time {
+  font-size: 12px;
+}
+
+.copp-calendar .fc-timeGridDay-view .cal-event-title {
+  font-size: 13.5px;
 }

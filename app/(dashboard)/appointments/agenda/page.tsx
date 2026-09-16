@@ -1,4 +1,4 @@
-import { AgendaRouter } from "@/features/appointments/components/agenda-router";
+import { AgendaWorkspace } from "@/features/appointments/components/agenda-workspace";
 
 export default async function Page({
   searchParams,
@@ -6,5 +6,5 @@ export default async function Page({
   searchParams: Promise<{ fecha?: string }>;
 }) {
   const { fecha } = await searchParams;
-  return <AgendaRouter initialDate={fecha ?? null} />;
+  return <AgendaWorkspace initialDate={fecha ?? null} />;
 }
