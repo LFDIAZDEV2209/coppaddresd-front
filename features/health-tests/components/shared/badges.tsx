@@ -17,7 +17,7 @@ import {
   testStateTones,
   type Tone,
 } from "./colors";
-import { dotStyle, pillStyle, softPillStyle } from "./depth";
+import { dotStyle, flatPillStyle, neonDotStyle, softPillStyle } from "./depth";
 
 /** Primera letra en mayúscula (critica → Critica). */
 function capitalize(value: string) {
@@ -25,8 +25,8 @@ function capitalize(value: string) {
 }
 
 /**
- * Píldora de estado con relieve: relleno saturado en degradado, brillo
- * interior y punto luminoso. Base común de todos los badges del módulo.
+ * Píldora de estado plana (sin relieve) con punto neón. Base común de los
+ * badges de severidad, riesgo, estado de test y estado de alerta.
  */
 function ToneBadge({
   tone,
@@ -43,11 +43,11 @@ function ToneBadge({
         "inline-flex items-center gap-1.5 rounded-full px-2.5 py-[5px] text-[11.5px] font-semibold",
         className,
       )}
-      style={pillStyle(tone)}
+      style={flatPillStyle(tone)}
     >
       <span
         className="size-2 shrink-0 rounded-full"
-        style={dotStyle(tone)}
+        style={neonDotStyle(tone)}
         aria-hidden
       />
       {label}

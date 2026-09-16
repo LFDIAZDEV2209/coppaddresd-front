@@ -500,34 +500,37 @@ export function AlertsPage() {
                   </div>
                 </PopoverContent>
               </Popover>
-              <span className="ml-auto text-[11.5px] text-muted-foreground">
-                {filtered.length} {t("alertas")}
-              </span>
-            </div>
-
-            {selectedAlerts.length > 0 && (
-              <div className="flex flex-wrap items-center justify-end gap-2 border-b border-border px-5 py-2.5">
-                <span className="text-[11.5px] text-muted-foreground">
-                  {selectedAlerts.length} {t("seleccionadas")}
+              {selectedAlerts.length > 0 ? (
+                <div className="ml-auto flex flex-wrap items-center gap-1.5 rounded-full bg-brand-gradient py-1 pl-3 pr-1 text-white shadow-sm">
+                  <span className="text-[11.5px] font-medium">
+                    {selectedAlerts.length} {t("seleccionadas")}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 border border-white/35 bg-white/15 px-2.5 text-[11.5px] text-white hover:bg-white/25 hover:text-white"
+                    onClick={() => setNotifyOpen(true)}
+                  >
+                    <Send className="size-3.5" />
+                    {t("Notificar")} {selectedAlerts.length}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-[11.5px] text-white/85 hover:bg-white/15 hover:text-white"
+                    onClick={() => setSelectedIds([])}
+                  >
+                    {t("Quitar selección")}
+                  </Button>
+                </div>
+              ) : (
+                <span className="ml-auto text-[11.5px] text-muted-foreground">
+                  {filtered.length} {t("alertas")}
                 </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => setNotifyOpen(true)}
-                >
-                  <Send className="size-3.5" />
-                  {t("Notificar")} {selectedAlerts.length}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setSelectedIds([])}
-                >
-                  {t("Quitar selección")}
-                </Button>
-              </div>
-            )}
+              )}
+            </div>
 
             {filtered.length === 0 ? (
               <ModuleEmptyState
@@ -643,7 +646,13 @@ function AlertsTable({
   return (
     <div className="overflow-x-auto">
       <Table className="w-full">
-        <TableHeader>
+        <TableHeader
+          className="[&_th]:text-[var(--brand-navy)]"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, color-mix(in srgb, var(--brand-navy) 9%, transparent), color-mix(in srgb, var(--brand-teal) 12%, transparent))",
+          }}
+        >
           <TableRow>
             <TableHead className="w-10">
               <input

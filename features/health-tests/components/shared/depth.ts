@@ -22,6 +22,24 @@ export function pillStyle(tone: Tone): CSSProperties {
   };
 }
 
+/** Píldora plana para severidad/estado: color sólido, sin degradado. */
+export function flatPillStyle(tone: Tone): CSSProperties {
+  return {
+    color: tone.text,
+    backgroundColor: tone.solid,
+    border: `1px solid color-mix(in srgb, ${tone.darker} 58%, transparent)`,
+    boxShadow: "0 1px 2px rgba(16, 24, 40, 0.12)",
+  };
+}
+
+/** Punto tipo neón: núcleo claro y halo del propio tono. */
+export function neonDotStyle(tone: Tone): CSSProperties {
+  return {
+    backgroundColor: `color-mix(in srgb, white 74%, ${tone.solid})`,
+    boxShadow: `0 0 0 1px color-mix(in srgb, ${tone.solid} 50%, transparent), 0 0 6px 1px color-mix(in srgb, ${tone.solid} 85%, transparent)`,
+  };
+}
+
 /** Píldora tenue para estados secundarios (fondo suave, texto oscuro). */
 export function softPillStyle(tone: Tone): CSSProperties {
   return {
