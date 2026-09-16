@@ -61,8 +61,9 @@ import { AlertsInsightsRail } from "./alerts-insights";
 import { useAlerts } from "../../hooks/use-health-tests";
 import type { AlertSeverity, AlertStatus, HealthAlert } from "../../types";
 import { formatDate, initials } from "../../lib/format";
-import { carbon, severityHex } from "../shared/colors";
-import { SeverityBadge } from "../shared/badges";
+import { carbon, severityHex, tones } from "../shared/colors";
+import { chipStyle } from "../shared/depth";
+import { AlertStatusBadge, SeverityBadge } from "../shared/badges";
 import { StatSkeleton, TableSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
 import { NotificationsTimeline } from "./notifications-timeline";
@@ -84,25 +85,12 @@ const STATUS_NEXT: Record<AlertStatus, AlertStatus[]> = {
 
 const ALERT_PAGE_SIZE = 10;
 
-function statusColor(status: AlertStatus): string {
-  switch (status) {
-    case "activa":
-      return carbon.red60;
-    case "en-revision":
-      return carbon.yellow60;
-    case "atendida":
-      return carbon.green60;
-    default:
-      return carbon.gray60;
-  }
-}
-
-const PILL_ACCENT: Record<string, string> = {
-  destructive: carbon.red60,
-  warning: carbon.yellow60,
-  info: carbon.blue70,
-  navy: carbon.gray100,
-};
+const PILL_ACCENT = {
+  destructive: tones.red,
+  warning: tones.amber,
+  info: tones.sky,
+  navy: tones.slate,
+} as const;
 
 function StatusPill({
   icon: Icon,
@@ -118,12 +106,18 @@ function StatusPill({
   const accent = PILL_ACCENT[tone];
 
   return (
-    <div className="flex items-center gap-2.5 rounded-full border border-border bg-card px-3.5 py-1.5">
-      <Icon className="size-3.5" style={{ color: accent }} aria-hidden />
+    <div className="flex items-center gap-2.5 rounded-full border border-border bg-card py-1.5 pl-1.5 pr-3.5 shadow-sm transition-shadow hover:shadow-md">
+      <span
+        className="flex shrink-0 items-center justify-center rounded-lg"
+        style={chipStyle(accent, 26)}
+        aria-hidden
+      >
+        <Icon className="size-3.5" />
+      </span>
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <span
         className="text-sm font-semibold tabular-nums"
-        style={{ color: accent }}
+        style={{ color: accent.deep }}
       >
         {value}
       </span>
@@ -356,7 +350,12 @@ export function AlertsPage() {
 
       <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-12">
         <div className="order-2 flex flex-col gap-5 xl:order-1 xl:col-span-8">
-          <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card">
+          <section className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+            <span
+              aria-hidden
+              className="absolute inset-x-0 top-0 z-10 h-1"
+              style={{ backgroundColor: carbon.blue60 }}
+            />
             <SectionHeader
               title={t("Gestión de alertas")}
               description={t("Filtra por severidad, estado o paciente")}
@@ -719,15 +718,10 @@ function AlertsTable({
                   {formatDate(alert.createdAt)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                    style={{
-                      backgroundColor: `${statusColor(alert.status)}1A`,
-                      color: statusColor(alert.status),
-                    }}
-                  >
-                    {STATUS_LABELS[alert.status]}
-                  </span>
+                  <AlertStatusBadge
+                    status={alert.status}
+                    label={STATUS_LABELS[alert.status]}
+                  />
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <div className="flex items-center justify-end gap-1.5">

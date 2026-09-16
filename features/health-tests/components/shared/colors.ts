@@ -1,203 +1,200 @@
-import type { AlertSeverity, RiskLevel, TestState } from "../../types";
+import type {
+  AlertSeverity,
+  NotificationStatus,
+  RiskLevel,
+  TestState,
+} from "../../types";
 
 /**
- * Colores semánticos del módulo de Tests de Salud.
+ * Paleta semántica del módulo de Tests de Salud.
  *
- * Paleta basada en IBM Carbon Design System (Apache-2.0): tonos funcionales
- * pensados para consolas clínicas de uso prolongado — el color comunica,
- * no decora. Cada estado usa un fondo teñido ( *-10 ) con texto oscuro
- * ( *-60/70 ) para garantizar contraste AA sobre superficies claras.
- *
- * Estos valores son exclusivos del módulo de Tests de Salud; el resto del
- * ERP conserva sus tokens de tema en globals.css.
+ * Sigue la línea visual del dashboard: saturada y con relieve, no pastel.
+ * Cada tono expone:
+ *  - solid   → relleno vivo (gráficas)
+ *  - deep    → relleno profundo (píldoras/chips con texto encima)
+ *  - darker  → borde y relieve
+ *  - text    → color de texto legible sobre `deep` (contraste AA)
+ *  - soft    → fondo tenue + texto oscuro (superficies tranquilas)
  */
+export interface Tone {
+  solid: string;
+  deep: string;
+  darker: string;
+  text: string;
+  soft: string;
+  softText: string;
+}
+
+/** Tonos base (mismos matices que la paleta de gráficas del dashboard). */
+export const tones = {
+  red: {
+    solid: "#DC2626",
+    deep: "#B91C1C",
+    darker: "#7F1D1D",
+    text: "#FFFFFF",
+    soft: "#FEE2E2",
+    softText: "#991B1B",
+  },
+  orange: {
+    solid: "#EA580C",
+    deep: "#C2410C",
+    darker: "#9A3412",
+    text: "#FFFFFF",
+    soft: "#FFEDD5",
+    softText: "#9A3412",
+  },
+  amber: {
+    solid: "#D97706",
+    deep: "#B45309",
+    darker: "#92400E",
+    text: "#1A1203",
+    soft: "#FEF3C7",
+    softText: "#92400E",
+  },
+  emerald: {
+    solid: "#059669",
+    deep: "#047857",
+    darker: "#065F46",
+    text: "#FFFFFF",
+    soft: "#D1FAE5",
+    softText: "#065F46",
+  },
+  sky: {
+    solid: "#0284C7",
+    deep: "#0369A1",
+    darker: "#075985",
+    text: "#FFFFFF",
+    soft: "#E0F2FE",
+    softText: "#075985",
+  },
+  slate: {
+    solid: "#64748B",
+    deep: "#475569",
+    darker: "#334155",
+    text: "#FFFFFF",
+    soft: "#F1F5F9",
+    softText: "#334155",
+  },
+} satisfies Record<string, Tone>;
+
+/** Tokens neutros heredados del paso anterior (texto/superficies/bordes). */
 export const carbon = {
-  /* Interactivo / acento primario */
-  blue60: "#0f62fe",
-  blue70: "#0043ce",
-  blue10: "#edf5ff",
-  blue20: "#d0e2ff",
-  /* Éxito (riesgo bajo, completado, entregado) */
-  green60: "#198038",
-  green70: "#0e6027",
-  green50: "#24a148",
-  green10: "#defbe6",
-  /* Advertencia (riesgo moderado, en revisión) */
-  yellow30: "#f1c21b",
-  yellow60: "#8e6a00",
-  yellow10: "#fcf4d6",
-  /* Riesgo alto */
-  orange40: "#ff832b",
-  orange70: "#8a3800",
-  orange10: "#fff2e8",
-  /* Crítico / error */
-  red60: "#da1e28",
-  red70: "#a2191f",
-  red10: "#fff1f1",
-  /* Categóricos */
-  purple60: "#8a3ffc",
-  magenta60: "#d02670",
-  teal60: "#007d79",
-  cyan50: "#1192e8",
-  /* Neutros */
+  blue60: "#0F62FE",
+  blue70: "#0043CE",
   gray100: "#161616",
   gray70: "#525252",
-  gray60: "#6f6f6f",
-  gray50: "#8d8d8d",
-  gray30: "#c6c6c6",
-  gray20: "#e0e0e0",
-  gray10: "#f4f4f4",
-  white: "#ffffff",
+  gray60: "#6F6F6F",
+  gray50: "#8D8D8D",
+  gray20: "#E0E0E0",
+  gray10: "#F4F4F4",
+  white: "#FFFFFF",
 } as const;
 
-/** Escala de riesgo clínico: verde → amarillo → naranja → rojo. */
+/** Rampa clínica de severidad: verde → ámbar → naranja → rojo. */
+export const severityTones: Record<AlertSeverity, Tone> = {
+  baja: tones.emerald,
+  media: tones.amber,
+  alta: tones.orange,
+  critica: tones.red,
+  informativa: tones.slate,
+};
+
+/** Rampa de riesgo, alineada a la de severidad. */
+export const riskTones: Record<RiskLevel, Tone> = {
+  bajo: tones.emerald,
+  moderado: tones.amber,
+  alto: tones.orange,
+  critico: tones.red,
+  "sin-evaluar": tones.slate,
+};
+
+/** Estados de un test de salud. */
+export const testStateTones: Record<TestState, Tone> = {
+  completado: tones.emerald,
+  "en-progreso": tones.sky,
+  pendiente: tones.slate,
+  vencido: tones.amber,
+};
+
+/** Estados de gestión de una alerta. */
+export const alertStatusTones: Record<string, Tone> = {
+  activa: tones.red,
+  "en-revision": tones.amber,
+  atendida: tones.emerald,
+  cerrada: tones.slate,
+};
+
+/** Estados de entrega de una notificación. */
+export const notificationStatusTones: Record<NotificationStatus, Tone> = {
+  sent: tones.emerald,
+  queued: tones.slate,
+  failed: tones.red,
+  skipped: tones.amber,
+};
+
+/** Tonos de acento por severidad (iconos y chips). */
+export function severityTone(severity: AlertSeverity): Tone {
+  return severityTones[severity] ?? tones.slate;
+}
+
+export function riskTone(risk: RiskLevel): Tone {
+  return riskTones[risk] ?? tones.slate;
+}
+
+/* ------------------------------------------------------------------ */
+/* Compatibilidad: helpers previos que devuelven { bg, text, dot }      */
+/* ------------------------------------------------------------------ */
+
 export function riskColors(risk: RiskLevel) {
-  const map: Record<RiskLevel, { bg: string; text: string; dot: string }> = {
-    bajo: {
-      bg: carbon.green10,
-      text: carbon.green70,
-      dot: carbon.green60,
-    },
-    moderado: {
-      bg: carbon.yellow10,
-      text: carbon.yellow60,
-      dot: carbon.yellow30,
-    },
-    alto: {
-      bg: carbon.orange10,
-      text: carbon.orange70,
-      dot: carbon.orange40,
-    },
-    critico: {
-      bg: carbon.red10,
-      text: carbon.red70,
-      dot: carbon.red60,
-    },
-    "sin-evaluar": {
-      bg: carbon.gray10,
-      text: carbon.gray70,
-      dot: carbon.gray50,
-    },
-  };
-  return map[risk];
+  const tone = riskTone(risk);
+  return { bg: tone.soft, text: tone.softText, dot: tone.solid };
 }
 
-/** Escala de severidad de alertas (misma semántica que el riesgo). */
 export function severityColors(severity: AlertSeverity) {
-  const map: Record<AlertSeverity, { bg: string; text: string; dot: string }> =
-    {
-      critica: {
-        bg: carbon.red10,
-        text: carbon.red70,
-        dot: carbon.red60,
-      },
-      alta: {
-        bg: carbon.orange10,
-        text: carbon.orange70,
-        dot: carbon.orange40,
-      },
-      media: {
-        bg: carbon.yellow10,
-        text: carbon.yellow60,
-        dot: carbon.yellow30,
-      },
-      baja: {
-        bg: carbon.blue10,
-        text: carbon.blue70,
-        dot: carbon.blue60,
-      },
-      informativa: {
-        bg: carbon.gray10,
-        text: carbon.gray70,
-        dot: carbon.gray50,
-      },
-    };
-  return map[severity];
+  const tone = severityTone(severity);
+  return { bg: tone.soft, text: tone.softText, dot: tone.solid };
 }
 
-/** Estado de ejecución de un test. */
 export function testStateColors(state: TestState) {
-  const map: Record<TestState, { bg: string; text: string; dot: string }> = {
-    completado: {
-      bg: carbon.green10,
-      text: carbon.green70,
-      dot: carbon.green60,
-    },
-    "en-progreso": {
-      bg: carbon.blue10,
-      text: carbon.blue70,
-      dot: carbon.blue60,
-    },
-    pendiente: {
-      bg: carbon.gray10,
-      text: carbon.gray70,
-      dot: carbon.gray50,
-    },
-    vencido: {
-      bg: carbon.yellow10,
-      text: carbon.yellow60,
-      dot: carbon.yellow30,
-    },
-  };
-  return map[state];
+  const tone = testStateTones[state] ?? tones.slate;
+  return { bg: tone.soft, text: tone.softText, dot: tone.solid };
 }
 
 /** Color de acento para una categoría de test (consistente con los emojis). */
 export function categoryAccent(category: string): string {
   const map: Record<string, string> = {
-    "historia-clinica": carbon.blue60,
-    nutricion: carbon.green60,
-    movimiento: carbon.orange40,
-    sueno: carbon.purple60,
-    adherencia: carbon.cyan50,
-    "salud-mental": carbon.magenta60,
-    cardiometabolico: carbon.red60,
+    "historia-clinica": "#0369A1",
+    nutricion: "#047857",
+    movimiento: "#C2410C",
+    sueno: "#7C3AED",
+    adherencia: "#0284C7",
+    "salud-mental": "#4F46E5",
+    cardiometabolico: "#B91C1C",
   };
-  return map[category] ?? carbon.gray60;
+  return map[category] ?? tones.slate.solid;
 }
 
 /** Color de barra según el nivel de riesgo del resultado. */
 export function scoreBarColor(risk: RiskLevel): string {
-  const map: Record<RiskLevel, string> = {
-    bajo: carbon.green60,
-    moderado: carbon.yellow30,
-    alto: carbon.orange40,
-    critico: carbon.red60,
-    "sin-evaluar": carbon.gray50,
-  };
-  return map[risk];
+  return riskTone(risk).deep;
 }
 
 /** Color de acento por severidad para iconos/grafías. */
 export function severityHex(severity: AlertSeverity): string {
-  const map: Record<AlertSeverity, string> = {
-    critica: carbon.red60,
-    alta: carbon.orange40,
-    media: carbon.yellow30,
-    baja: carbon.blue60,
-    informativa: carbon.gray60,
-  };
-  return map[severity];
+  return severityTone(severity).solid;
 }
 
 /** Color de acento por nivel de riesgo para grafías. */
 export function riskHex(risk: RiskLevel): string {
-  const map: Record<RiskLevel, string> = {
-    bajo: carbon.green60,
-    moderado: carbon.yellow30,
-    alto: carbon.orange40,
-    critico: carbon.red60,
-    "sin-evaluar": carbon.gray50,
-  };
-  return map[risk];
+  return riskTone(risk).solid;
 }
 
 /** Paleta del mapa de calor geográfico (riesgo alto por estado). */
 export const mapRiskPalette = {
-  low: carbon.green50,
-  medium: carbon.yellow30,
-  high: carbon.red60,
-  none: carbon.gray30,
+  low: tones.emerald.solid,
+  medium: tones.amber.solid,
+  high: tones.red.solid,
+  none: "#C6C6C6",
 } as const;
 
 /** Color de un estado según el % de pacientes de riesgo alto. */

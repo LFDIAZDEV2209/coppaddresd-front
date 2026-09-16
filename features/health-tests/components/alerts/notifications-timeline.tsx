@@ -17,6 +17,9 @@ import {
 import { useNotifications } from "../../hooks/use-notifications";
 import type { NotificationStatus } from "../../types";
 import { formatDate } from "../../lib/format";
+import { notificationStatusTones, tones } from "../shared/colors";
+import { chipStyle, dotStyle } from "../shared/depth";
+import { DeliveryStatusBadge } from "../shared/badges";
 import { TableSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
 import { NotificationsHistory } from "./notifications-history";
@@ -28,13 +31,12 @@ const STATUS_LABELS: Record<NotificationStatus, string> = {
   skipped: "Omitida",
 };
 
-/* Punto de estado con la rampa Carbon (verde/neutro/rojo/amarillo). */
-const STATUS_DOT: Record<NotificationStatus, string> = {
-  sent: "bg-[#24a148]",
-  queued: "bg-[#8d8d8d]",
-  failed: "bg-[#da1e28]",
-  skipped: "bg-[#f1c21b]",
-};
+/** Punto de estado de entrega con brillo (verde/neutro/rojo/ámbar). */
+function statusDotStyle(status: NotificationStatus) {
+  return dotStyle(
+    notificationStatusTones[status] ?? notificationStatusTones.queued,
+  );
+}
 
 const RECENT_SIZE = 4;
 
@@ -59,14 +61,17 @@ export function NotificationsTimeline({
   return (
     <section
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border border-border bg-card",
+        "flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md",
         className,
       )}
     >
       {/* Cabecera compacta del rail: el título corto evita el truncado
           y el botón queda legible sobre el degradado de marca. */}
       <div className="flex items-center gap-3 bg-brand-gradient px-4 py-3 text-white">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--sidebar)]">
+        <div
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white"
+          style={chipStyle(tones.sky, 32)}
+        >
           <BellRing className="size-4" />
         </div>
         <div className="min-w-0 flex-1">
@@ -117,17 +122,27 @@ export function NotificationsTimeline({
                 aria-hidden
               >
                 <span
-                  className={`size-2 rounded-full ${STATUS_DOT[item.status]}`}
+                  className="size-2 rounded-full"
+                  style={statusDotStyle(item.status)}
                 />
               </span>
               <div className="flex w-full min-w-0 max-w-3xl flex-1 flex-col gap-1.5">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="flex items-center gap-1.5 font-medium">
-                    {item.channel === "sms" ? (
-                      <Send className="size-3.5 text-muted-foreground" />
-                    ) : (
-                      <MailWarning className="size-3.5 text-muted-foreground" />
-                    )}
+                    <span
+                      className="flex size-5 shrink-0 items-center justify-center rounded-md text-white"
+                      style={chipStyle(
+                        item.channel === "sms" ? tones.sky : tones.slate,
+                        20,
+                      )}
+                      aria-hidden
+                    >
+                      {item.channel === "sms" ? (
+                        <Send className="size-3" />
+                      ) : (
+                        <MailWarning className="size-3" />
+                      )}
+                    </span>
                     {item.channel === "sms" ? t("SMS") : t("Comunidad")}
                   </span>
                   <span className="text-muted-foreground">·</span>
@@ -146,7 +161,10 @@ export function NotificationsTimeline({
                     {item.templateName ?? t("Sin plantilla (texto libre)")}
                   </span>
                   <span>·</span>
-                  <span>{t(STATUS_LABELS[item.status])}</span>
+                  <DeliveryStatusBadge
+                    status={item.status}
+                    label={t(STATUS_LABELS[item.status])}
+                  />
                 </div>
               </div>
             </li>

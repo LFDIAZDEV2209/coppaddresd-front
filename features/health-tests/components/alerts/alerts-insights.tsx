@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 import { Activity, TrendingUp } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Cell,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -14,22 +14,23 @@ import {
 
 import { useT } from "@/providers/i18n-provider";
 import { useNotificationCharts } from "../../hooks/use-notifications";
-import { carbon } from "../shared/colors";
+import { alertStatusTones, severityTones, tones } from "../shared/colors";
+import { barStyle, chipStyle, dotStyle } from "../shared/depth";
 import { ModuleErrorState } from "../shared/module-states";
 import { StatSkeleton } from "../shared/module-chart-card";
 
 // Colores y etiquetas por severidad (claves del backend y variantes en español).
 // Rampa Carbon: rojo crítico → naranja alto → amarillo medio → azul bajo.
 const SEVERITY_FILL: Record<string, string> = {
-  critical: carbon.red60,
-  critica: carbon.red60,
-  high: carbon.orange40,
-  alta: carbon.orange40,
-  moderate: carbon.yellow30,
-  media: carbon.yellow30,
-  low: carbon.blue60,
-  baja: carbon.blue60,
-  informativa: carbon.gray60,
+  critical: severityTones.critica.solid,
+  critica: severityTones.critica.solid,
+  high: severityTones.alta.solid,
+  alta: severityTones.alta.solid,
+  moderate: severityTones.media.solid,
+  media: severityTones.media.solid,
+  low: severityTones.baja.solid,
+  baja: severityTones.baja.solid,
+  informativa: severityTones.informativa.solid,
 };
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -55,7 +56,19 @@ const STATUS_LABEL: Record<string, string> = {
   cerrada: "Cerrada",
 };
 
-const FALLBACK = carbon.gray50;
+const FALLBACK = tones.slate.solid;
+
+/** Alias de claves de estado del backend a las del módulo. */
+const STATUS_ALIASES: Record<string, string> = {
+  active: "activa",
+  reviewing: "en-revision",
+  resolved: "atendida",
+  closed: "cerrada",
+};
+
+function statusTone(key: string) {
+  return alertStatusTones[STATUS_ALIASES[key] ?? key] ?? tones.slate;
+}
 
 function toPoints(
   record: Record<string, number> | undefined,
@@ -120,9 +133,22 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
   }
 
   return (
-    <section className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+    <section className="relative flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+      <span
+        aria-hidden
+        className="absolute inset-x-0 top-0 z-10 h-1"
+        style={{
+          backgroundImage: `linear-gradient(90deg, ${severityTones.critica.solid} 0%, ${severityTones.alta.solid} 35%, ${severityTones.media.solid} 68%, ${severityTones.baja.solid} 100%)`,
+        }}
+      />
       <header className="flex items-center gap-2 px-4 py-3">
-        <Activity className="size-4" style={{ color: carbon.blue60 }} />
+        <span
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg"
+          style={chipStyle(tones.sky, 28)}
+          aria-hidden
+        >
+          <Activity className="size-4" />
+        </span>
         <h2 className="text-sm font-semibold">{t("Pulso de riesgo")}</h2>
       </header>
 
@@ -148,7 +174,8 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
                       innerRadius={32}
                       outerRadius={50}
                       paddingAngle={2}
-                      strokeWidth={0}
+                      stroke="#FFFFFF"
+                      strokeWidth={1}
                     >
                       {severities.map((entry) => (
                         <Cell
@@ -221,10 +248,10 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
                 <span className="h-1.5 overflow-hidden rounded-full bg-muted">
                   <span
                     className="block h-full rounded-full"
-                    style={{
-                      backgroundColor: carbon.blue60,
-                      width: `${Math.max(6, (item.value / indicatorMax) * 100)}%`,
-                    }}
+                    style={barStyle(
+                      tones.sky,
+                      Math.max(6, (item.value / indicatorMax) * 100),
+                    )}
                   />
                 </span>
               </li>
@@ -244,17 +271,37 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
             {t("Sin actividad en el periodo")}
           </p>
         ) : (
-          <ResponsiveContainer width="100%" height={72}>
-            <LineChart data={trend}>
-              <Line
+          <ResponsiveContainer width="100%" height={76}>
+            <AreaChart data={trend}>
+              <defs>
+                <linearGradient id="ht-trend-line" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor={tones.emerald.solid} />
+                  <stop offset="55%" stopColor={tones.sky.solid} />
+                  <stop offset="100%" stopColor="#4F46E5" />
+                </linearGradient>
+                <linearGradient id="ht-trend-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="0%"
+                    stopColor={tones.sky.solid}
+                    stopOpacity={0.32}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={tones.sky.solid}
+                    stopOpacity={0.02}
+                  />
+                </linearGradient>
+              </defs>
+              <Area
                 type="monotone"
                 dataKey="value"
-                stroke={carbon.blue60}
+                stroke="url(#ht-trend-line)"
                 strokeWidth={2}
+                fill="url(#ht-trend-fill)"
                 dot={false}
               />
               <Tooltip content={<MiniTooltip />} />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>
@@ -273,11 +320,19 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
             {statuses.map((entry) => (
               <li
                 key={entry.key}
-                className="flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs"
+                className="flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
+                style={{
+                  backgroundColor: statusTone(entry.key).soft,
+                  borderColor: statusTone(entry.key).solid,
+                  color: statusTone(entry.key).softText,
+                }}
               >
-                <span className="text-muted-foreground">
-                  {t(entry.label)}
-                </span>
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={dotStyle(statusTone(entry.key))}
+                  aria-hidden
+                />
+                <span>{t(entry.label)}</span>
                 <span className="font-semibold tabular-nums">
                   {entry.value}
                 </span>
