@@ -223,6 +223,15 @@ export function AlertsPage() {
     [alerts, selectedIds],
   );
 
+  // Permite cobrar TODOS los resultados del filtro, no solo la página visible.
+  const allFilteredSelected =
+    filtered.length > 0 &&
+    filtered.every((alert) => selectedIds.includes(alert.id));
+
+  function selectAllFiltered() {
+    setSelectedIds(filtered.map((alert) => alert.id));
+  }
+
   const isFiltered =
     search.trim() !== "" ||
     severity !== "all" ||
@@ -505,6 +514,17 @@ export function AlertsPage() {
                   <span className="text-[11.5px] font-medium">
                     {selectedAlerts.length} {t("seleccionadas")}
                   </span>
+                  {!allFilteredSelected && filtered.length > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-[11.5px] text-white/85 hover:bg-white/15 hover:text-white"
+                      onClick={selectAllFiltered}
+                    >
+                      {t("Seleccionar los")} {filtered.length}
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     size="sm"
@@ -526,9 +546,22 @@ export function AlertsPage() {
                   </Button>
                 </div>
               ) : (
-                <span className="ml-auto text-[11.5px] text-muted-foreground">
-                  {filtered.length} {t("alertas")}
-                </span>
+                <div className="ml-auto flex items-center gap-2">
+                  <span className="text-[11.5px] text-muted-foreground">
+                    {filtered.length} {t("alertas")}
+                  </span>
+                  {filtered.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[11.5px]"
+                      onClick={selectAllFiltered}
+                    >
+                      {t("Seleccionar los")} {filtered.length}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
 
