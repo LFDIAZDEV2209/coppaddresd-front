@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
+  AlertTriangle,
   ArrowRight,
   BellRing,
   ClipboardCheck,
@@ -70,7 +71,8 @@ export function HealthTestsDashboard() {
   const [geoFilter, setGeoFilter] = useState<HealthGeoFilter>({
     stateCodes: [],
   });
-  const { data, loading, error, reload } = useDashboard(geoFilter);
+  const { data, loading, error, failedSections, partial, reload } =
+    useDashboard(geoFilter);
   const filterActive = geoFilter.stateCodes.length > 0;
 
   const toggleState = useCallback((code: string) => {
@@ -83,6 +85,19 @@ export function HealthTestsDashboard() {
   }, []);
 
   const clearStates = useCallback(() => setGeoFilter({ stateCodes: [] }), []);
+
+  // Etiquetas (traducidas) de las secciones que fallaron: el tablero degrada
+  // sección por sección en vez de quedar en blanco por un solo endpoint caído.
+  const failedSectionLabels = useMemo(() => {
+    const labels: Record<string, string> = {
+      masterRows: t("Tabla maestra"),
+      tests: t("Tests"),
+      alerts: t("Alertas"),
+      coverageTrend: t("Cobertura"),
+      stats: t("Estadísticas"),
+    };
+    return failedSections.map((key) => labels[key] ?? key);
+  }, [failedSections, t]);
 
   // KPIs del backend (/stats) acotados al filtro geo vigente.
   const stats = useMemo(() => {
@@ -237,6 +252,35 @@ export function HealthTestsDashboard() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       {header}
+
+      {partial && (
+        <div
+          className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-warning/30 bg-warning-soft/40 px-4 py-2.5 text-xs"
+          role="status"
+        >
+          <AlertTriangle className="size-4 shrink-0 text-warning" />
+          <p className="text-muted-foreground">
+            {t(
+              "Algunas secciones no se pudieron cargar. Los totales pueden estar incompletos.",
+            )}
+            {failedSectionLabels.length > 0 && (
+              <span className="text-foreground/80">
+                {" "}
+                {failedSectionLabels.join(", ")}
+              </span>
+            )}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto"
+            onClick={reload}
+          >
+            <RefreshCw data-icon="inline-start" />
+            {t("Reintentar")}
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard

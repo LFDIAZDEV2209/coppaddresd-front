@@ -98,6 +98,24 @@ export interface DashboardData {
   stats: HealthTestStats;
 }
 
+/** Errores por sección del tablero (null = esa sección cargó bien). */
+export interface DashboardSectionErrors {
+  masterRows: string | null;
+  tests: string | null;
+  alerts: string | null;
+  coverageTrend: string | null;
+  stats: string | null;
+}
+
+/** Valores neutros para secciones que fallaron (evita romper los derivados). */
+const EMPTY_STATS: HealthTestStats = {
+  totalPatients: 0,
+  withPending: 0,
+  completed: 0,
+  highRisk: 0,
+  activeAlerts: 0,
+};
+
 export function useDashboard(filter?: HealthGeoFilter) {
   const geoKey = [...(filter?.stateCodes ?? [])]
     .map((s) => s.toUpperCase())
@@ -125,12 +143,26 @@ export function useDashboard(filter?: HealthGeoFilter) {
     alerts.loading ||
     trend.loading ||
     stats.loading;
-  const error =
-    masterRows.error ??
-    tests.error ??
-    alerts.error ??
-    trend.error ??
-    stats.error;
+
+  // Errores por sección: permite degradar una parte sin tumbar todo el tablero.
+  const errors = useMemo<DashboardSectionErrors>(
+    () => ({
+      masterRows: masterRows.error,
+      tests: tests.error,
+      alerts: alerts.error,
+      coverageTrend: trend.error,
+      stats: stats.error,
+    }),
+    [masterRows.error, tests.error, alerts.error, trend.error, stats.error],
+  );
+
+  const failedSections = useMemo(
+    () =>
+      (Object.keys(errors) as (keyof DashboardSectionErrors)[]).filter(
+        (k) => errors[k] !== null,
+      ),
+    [errors],
+  );
 
   const reload = useCallback(() => {
     void masterRows.reload();
@@ -141,27 +173,65 @@ export function useDashboard(filter?: HealthGeoFilter) {
   }, [masterRows, tests, alerts, trend, stats]);
 
   const data = useMemo<DashboardData | null>(() => {
-    if (
-      !masterRows.data ||
-      !tests.data ||
-      !alerts.data ||
-      !trend.data ||
-      !stats.data
-    ) {
-      return null;
+    const hasAny =
+      masterRows.data !== null ||
+      tests.data !== null ||
+      alerts.data !== null ||
+      trend.data !== null ||
+      stats.data !== null;
+    // Mientras carga no se pinta parcial (evita destellos con ceros); una vez
+    // liquidado, cualquier sección disponible basta para renderizar el tablero.
+    if (loading && hasAny) {
+      const allResolved =
+        masterRows.data !== null &&
+        tests.data !== null &&
+        alerts.data !== null &&
+        trend.data !== null &&
+        stats.data !== null;
+      if (!allResolved) return null;
     }
+    if (!hasAny) return null;
+    const master = (masterRows.data as PatientMasterRow[] | null) ?? [];
     return {
-      patients: (masterRows.data as PatientMasterRow[]).map((r) => r.patient),
-      masterRows: masterRows.data as PatientMasterRow[],
-      tests: tests.data,
-      alerts: alerts.data,
+      patients: master.map((r) => r.patient),
+      masterRows: master,
+      tests: (tests.data as HealthTest[] | null) ?? [],
+      alerts: (alerts.data as HealthAlert[] | null) ?? [],
       professionals: [] as HealthProfessional[],
-      coverageTrend: trend.data,
-      stats: stats.data,
+      coverageTrend: (trend.data as CoverageTrendPoint[] | null) ?? [],
+      stats: (stats.data as HealthTestStats | null) ?? EMPTY_STATS,
     };
-  }, [masterRows.data, tests.data, alerts.data, trend.data, stats.data]);
+  }, [
+    loading,
+    masterRows.data,
+    tests.data,
+    alerts.data,
+    trend.data,
+    stats.data,
+  ]);
 
-  return { data, loading, error, reload, metrics: healthTestMetrics };
+  // `error` completo solo cuando NINGUNA sección cargó: en cuanto hay datos
+  // parciales, la UI muestra lo disponible y avisa por sección (`errors`).
+  const error = data
+    ? null
+    : (masterRows.error ??
+      tests.error ??
+      alerts.error ??
+      trend.error ??
+      stats.error);
+
+  const partial = data !== null && failedSections.length > 0;
+
+  return {
+    data,
+    loading,
+    error,
+    errors,
+    failedSections,
+    partial,
+    reload,
+    metrics: healthTestMetrics,
+  };
 }
 
 /* ------------------------------------------------------------------ */
