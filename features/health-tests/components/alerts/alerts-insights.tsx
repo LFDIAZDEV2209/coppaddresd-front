@@ -13,6 +13,7 @@ import {
 } from "recharts";
 
 import { useT } from "@/providers/i18n-provider";
+import { cn } from "@/lib/utils";
 import { useNotificationCharts } from "../../hooks/use-notifications";
 import { alertStatusTones, severityTones, tones } from "../shared/colors";
 import { barStyle, chipStyle, dotStyle } from "../shared/depth";
@@ -84,7 +85,13 @@ function toPoints(
  * Riel lateral del cockpit de alertas: resume el pulso de riesgo sin competir
  * con la tabla. Versiones compactas de severidad, indicadores y tendencia.
  */
-export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
+export function AlertsInsightsRail({
+  days = 30,
+  className,
+}: {
+  days?: number;
+  className?: string;
+}) {
   const t = useT();
   const { data, loading, error, reload } = useNotificationCharts(days);
 
@@ -133,7 +140,12 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
   }
 
   return (
-    <section className="relative flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+    <section
+      className={cn(
+        "relative flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md",
+        className,
+      )}
+    >
       <header className="flex items-center gap-2 px-4 py-3">
         <span
           className="flex size-7 shrink-0 items-center justify-center rounded-lg"
