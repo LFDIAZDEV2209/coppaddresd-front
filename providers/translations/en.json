@@ -1232,6 +1232,7 @@
   "Empleado": "Employee",
   "En al menos un indicador": "In at least one indicator",
   "En blanco": "Blank",
+  "En cola": "In Queue",
   "en curso": "in progress",
   "En el equipo activo": "In the active team",
   "en el período": "in the period",
@@ -1517,6 +1518,7 @@
   "Filtrar por usuario (ID)": "Filter by user (ID)",
   "Filtrar por visibilidad": "Filter by visibility",
   "Filtrar tipo de movimiento": "Filter movement type",
+  "Filtros": "Filters",
   "filtros activos": "active filters",
   "Filtros de asignaciones": "Assignment filters",
   "Filtros de auditoría": "Audit filters",
@@ -1708,6 +1710,7 @@
   "Información del usuario": "User information",
   "Información general": "General information",
   "Información personal": "Personal information",
+  "Informativa": "Informational",
   "Ingresa un correo válido (ej. nombre@clinica.com).": "Enter a valid email (e.g. name@clinic.com).",
   "Inhalada": "Inhaled",
   "Inicial": "Initial",
@@ -3521,7 +3524,5 @@
   "XP total": "Total XP",
   "y todas sus asignaciones. Esta acción no se puede deshacer.": "and all their assignments. This action cannot be undone.",
   "Ya empezaron sus evaluaciones": "They have started their evaluations",
-  "Ya reposteaste esta publicación": "You already reposted this post",
-  "Filtros": "Filters",
-  "Informativa": "Informational"
+  "Ya reposteaste esta publicación": "You already reposted this post"
 }
