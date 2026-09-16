@@ -34,10 +34,10 @@ const STATUS_DOT: Record<NotificationStatus, string> = {
   skipped: "bg-warning",
 };
 
-const RECENT_SIZE = 6;
+const RECENT_SIZE = 4;
 
 /**
- * Banda inferior del cockpit: últimas entregas en formato línea de tiempo.
+ * Actividad reciente del rail: últimas entregas en formato línea de tiempo.
  * El registro completo (con filtros y paginación) se abre en un diálogo.
  */
 export function NotificationsTimeline() {

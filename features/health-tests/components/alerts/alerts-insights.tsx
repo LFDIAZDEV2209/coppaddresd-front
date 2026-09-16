@@ -85,7 +85,7 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
     () =>
       Object.entries(data?.alertsByIndicator ?? {})
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 4)
+        .slice(0, 3)
         .map(([label, value]) => ({ label, value })),
     [data?.alertsByIndicator]
   );
@@ -124,7 +124,7 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
         <h2 className="text-sm font-semibold">{t("Pulso de riesgo")}</h2>
       </header>
 
-      <div className="flex flex-col gap-3 px-4 py-4">
+      <div className="flex flex-col gap-2 px-4 py-3">
         <h3 className="text-xs font-medium text-muted-foreground">
           {t("Alertas por severidad")}
         </h3>
@@ -135,65 +135,67 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
           </p>
         ) : (
           <>
-            <div className="relative">
-              <ResponsiveContainer width="100%" height={140}>
-                <PieChart>
-                  <Pie
-                    data={severities}
-                    dataKey="value"
-                    nameKey="label"
-                    innerRadius={40}
-                    outerRadius={62}
-                    paddingAngle={2}
-                    strokeWidth={0}
-                  >
-                    {severities.map((entry) => (
-                      <Cell
-                        key={entry.key}
-                        fill={SEVERITY_FILL[entry.key] ?? FALLBACK}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<MiniTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-lg font-semibold tabular-nums">
-                  {severityTotal}
-                </span>
-                <span className="text-[10.5px] text-muted-foreground">
-                  {t("Alertas")}
-                </span>
+            <div className="grid grid-cols-[7rem_1fr] items-center gap-3">
+              <div className="relative">
+                <ResponsiveContainer width="100%" height={112}>
+                  <PieChart>
+                    <Pie
+                      data={severities}
+                      dataKey="value"
+                      nameKey="label"
+                      innerRadius={32}
+                      outerRadius={50}
+                      paddingAngle={2}
+                      strokeWidth={0}
+                    >
+                      {severities.map((entry) => (
+                        <Cell
+                          key={entry.key}
+                          fill={SEVERITY_FILL[entry.key] ?? FALLBACK}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<MiniTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-lg font-semibold tabular-nums">
+                    {severityTotal}
+                  </span>
+                  <span className="text-[10.5px] text-muted-foreground">
+                    {t("Alertas")}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <ul className="flex flex-col gap-1.5">
-              {severities.map((entry) => (
-                <li
-                  key={entry.key}
-                  className="flex items-center justify-between gap-2 text-xs"
-                >
-                  <span className="flex items-center gap-2 text-muted-foreground">
-                    <span
-                      className="size-2 rounded-full"
-                      style={{
-                        backgroundColor: SEVERITY_FILL[entry.key] ?? FALLBACK,
-                      }}
-                      aria-hidden
-                    />
-                    {t(entry.label)}
-                  </span>
-                  <span className="font-semibold tabular-nums">
-                    {entry.value}
-                  </span>
-                </li>
-              ))}
-            </ul>
+              <ul className="flex min-w-0 flex-col gap-1.5">
+                {severities.map((entry) => (
+                  <li
+                    key={entry.key}
+                    className="flex items-center justify-between gap-2 text-xs"
+                  >
+                    <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                      <span
+                        className="size-2 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor: SEVERITY_FILL[entry.key] ?? FALLBACK,
+                        }}
+                        aria-hidden
+                      />
+                      <span className="truncate">{t(entry.label)}</span>
+                    </span>
+                    <span className="font-semibold tabular-nums">
+                      {entry.value}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </>
         )}
       </div>
 
-      <div className="flex flex-col gap-3 px-4 py-4">
+      <div className="flex flex-col gap-2 px-4 py-3">
         <h3 className="text-xs font-medium text-muted-foreground">
           {t("Indicadores con más alertas")}
         </h3>
@@ -228,7 +230,7 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
         )}
       </div>
 
-      <div className="flex flex-col gap-3 px-4 py-4">
+      <div className="flex flex-col gap-2 px-4 py-3">
         <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
           <TrendingUp className="size-3.5" />
           {t("Tendencia (30 días)")}
@@ -239,7 +241,7 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
             {t("Sin actividad en el periodo")}
           </p>
         ) : (
-          <ResponsiveContainer width="100%" height={110}>
+          <ResponsiveContainer width="100%" height={72}>
             <LineChart data={trend}>
               <Line
                 type="monotone"
@@ -254,7 +256,7 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
         )}
       </div>
 
-      <div className="flex flex-col gap-3 px-4 py-4">
+      <div className="flex flex-col gap-2 px-4 py-3">
         <h3 className="text-xs font-medium text-muted-foreground">
           {t("Alertas por estado")}
         </h3>

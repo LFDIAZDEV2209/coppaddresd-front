@@ -6,12 +6,15 @@ import type { LucideIcon } from "lucide-react";
 import {
   BellRing,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   Filter,
   MoreHorizontal,
   Search,
   Send,
   ShieldAlert,
+  SlidersHorizontal,
   Sparkles,
   Stethoscope,
   XCircle,
@@ -23,6 +26,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -70,6 +81,8 @@ const STATUS_NEXT: Record<AlertStatus, AlertStatus[]> = {
   atendida: ["cerrada", "activa"],
   cerrada: ["activa"],
 };
+
+const ALERT_PAGE_SIZE = 10;
 
 function statusColor(status: AlertStatus): string {
   switch (status) {
@@ -133,6 +146,8 @@ export function AlertsPage() {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [notifyOpen, setNotifyOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [pageState, setPageState] = useState({ key: "", page: 1 });
 
   const alerts = data?.alerts;
 
@@ -187,6 +202,15 @@ export function AlertsPage() {
       );
   }, [alerts, data?.patients, search, severity, status, indicator, from, to]);
 
+  const filterKey = [search, severity, status, indicator, from, to].join("\u0000");
+  const pageCount = Math.max(1, Math.ceil(filtered.length / ALERT_PAGE_SIZE));
+  const alertPage = pageState.key === filterKey ? pageState.page : 1;
+  const currentPage = Math.min(alertPage, pageCount);
+  const pagedAlerts = useMemo(() => {
+    const start = (currentPage - 1) * ALERT_PAGE_SIZE;
+    return filtered.slice(start, start + ALERT_PAGE_SIZE);
+  }, [currentPage, filtered]);
+
   const counts = useMemo(() => {
     const result: Record<AlertStatus, number> = {
       activa: 0,
@@ -213,6 +237,12 @@ export function AlertsPage() {
     from !== "" ||
     to !== "";
 
+  const additionalFilterCount = [
+    indicator !== "all",
+    from !== "",
+    to !== "",
+  ].filter(Boolean).length;
+
   function clearFilters() {
     setSearch("");
     setSeverity("all");
@@ -220,6 +250,14 @@ export function AlertsPage() {
     setIndicator("all");
     setFrom("");
     setTo("");
+    setFiltersOpen(false);
+  }
+
+  function clearAdditionalFilters() {
+    setIndicator("all");
+    setFrom("");
+    setTo("");
+    setFiltersOpen(false);
   }
 
   function toggleSelected(id: string) {
@@ -229,8 +267,14 @@ export function AlertsPage() {
   }
 
   function toggleAll() {
+    const pageIds = pagedAlerts.map((alert) => alert.id);
+    const allPageSelected =
+      pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+
     setSelectedIds((prev) =>
-      prev.length === filtered.length ? [] : filtered.map((alert) => alert.id),
+      allPageSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : Array.from(new Set([...prev, ...pageIds])),
     );
   }
 
@@ -311,118 +355,161 @@ export function AlertsPage() {
       </div>
 
       <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
-        <div className="flex flex-col gap-5 xl:col-span-8">
+        <div className="order-2 flex flex-col gap-5 xl:order-1 xl:col-span-8">
           <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
               title={t("Gestión de alertas")}
               description={t("Filtra por severidad, estado o paciente")}
               icon={Filter}
               variant="primary"
-            actions={
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/70" />
-                    <Input
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      className="h-8 w-44 border-white/25 bg-white/15 pl-8 text-white placeholder:text-white/60 [&::placeholder]:text-white/60"
-                      placeholder={t("Buscar...")}
-                      aria-label={t("Buscar alertas")}
-                    />
-                  </div>
-                  <Select
-                    value={severity}
-                    onValueChange={(value) => setSeverity(value as AlertSeverity | "all")}
-                    items={{
-                      all: t("Toda severidad"),
-                      critica: t("Crítica"),
-                      alta: t("Alta"),
-                      media: t("Media"),
-                      baja: t("Baja"),
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-36 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("Toda severidad")}</SelectItem>
-                      <SelectItem value="critica">{t("Crítica")}</SelectItem>
-                      <SelectItem value="alta">{t("Alta")}</SelectItem>
-                      <SelectItem value="media">{t("Media")}</SelectItem>
-                      <SelectItem value="baja">{t("Baja")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={status}
-                    onValueChange={(value) => setStatus(value as AlertStatus | "all")}
-                    items={{ all: t("Todo estado"), ...STATUS_LABELS }}
-                  >
-                    <SelectTrigger className="h-8 w-36 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("Todo estado")}</SelectItem>
-                      {(Object.keys(STATUS_LABELS) as AlertStatus[]).map((key) => (
-                        <SelectItem key={key} value={key}>
-                          {STATUS_LABELS[key]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={indicator}
-                    onValueChange={(value) => setIndicator(value ?? "all")}
-                    items={{
-                      all: t("Todo indicador"),
-                      ...Object.fromEntries(indicators.map((item) => [item, item])),
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-40 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("Todo indicador")}</SelectItem>
-                      {indicators.map((item) => (
-                        <SelectItem key={item} value={item}>
-                          {item}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span className="ml-1 text-[11.5px] font-medium text-white/80">
-                    {t("Rango de fechas")}
-                  </span>
-                  <Input
-                    type="date"
-                    value={from}
-                    onChange={(event) => setFrom(event.target.value)}
-                    aria-label={t("Desde")}
-                    className="h-8 w-36 border-white/25 bg-white/15 text-white [&>svg]:text-white/70"
-                  />
-                  <Input
-                    type="date"
-                    value={to}
-                    onChange={(event) => setTo(event.target.value)}
-                    aria-label={t("Hasta")}
-                    className="h-8 w-36 border-white/25 bg-white/15 text-white [&>svg]:text-white/70"
-                  />
-                  {(from || to) && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="text-white hover:bg-white/15 hover:text-white"
-                      onClick={() => {
-                        setFrom("");
-                        setTo("");
-                      }}
-                    >
-                      {t("Limpiar fechas")}
-                    </Button>
-                  )}
-                </div>
-              }
             />
+
+            <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-4 py-3">
+              <div className="relative min-w-[12rem] flex-1">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="h-9 w-full pl-8"
+                  placeholder={t("Buscar...")}
+                  aria-label={t("Buscar alertas")}
+                />
+              </div>
+              <Select
+                value={severity}
+                onValueChange={(value) => setSeverity(value as AlertSeverity | "all")}
+                items={{
+                  all: t("Toda severidad"),
+                  critica: t("Crítica"),
+                  alta: t("Alta"),
+                  media: t("Media"),
+                  baja: t("Baja"),
+                }}
+              >
+                <SelectTrigger className="h-9 w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("Toda severidad")}</SelectItem>
+                  <SelectItem value="critica">{t("Crítica")}</SelectItem>
+                  <SelectItem value="alta">{t("Alta")}</SelectItem>
+                  <SelectItem value="media">{t("Media")}</SelectItem>
+                  <SelectItem value="baja">{t("Baja")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={status}
+                onValueChange={(value) => setStatus(value as AlertStatus | "all")}
+                items={{ all: t("Todo estado"), ...STATUS_LABELS }}
+              >
+                <SelectTrigger className="h-9 w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("Todo estado")}</SelectItem>
+                  {(Object.keys(STATUS_LABELS) as AlertStatus[]).map((key) => (
+                    <SelectItem key={key} value={key}>
+                      {STATUS_LABELS[key]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+                <PopoverTrigger
+                  render={
+                    <Button type="button" variant="outline" size="sm">
+                      <SlidersHorizontal className="size-3.5" />
+                      {t("Más filtros")}
+                      {additionalFilterCount > 0 && (
+                        <span className="ml-0.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                          {additionalFilterCount}
+                        </span>
+                      )}
+                    </Button>
+                  }
+                />
+                <PopoverContent align="end" className="w-80 p-4">
+                  <PopoverHeader>
+                    <PopoverTitle>{t("Más filtros")}</PopoverTitle>
+                    <PopoverDescription>
+                      {t("Refina la lista de alertas")}
+                    </PopoverDescription>
+                  </PopoverHeader>
+                  <div className="mt-4 flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-medium text-foreground">
+                        {t("Indicador")}
+                      </span>
+                      <Select
+                        value={indicator}
+                        onValueChange={(value) => setIndicator(value ?? "all")}
+                        items={{
+                          all: t("Todo indicador"),
+                          ...Object.fromEntries(indicators.map((item) => [item, item])),
+                        }}
+                      >
+                        <SelectTrigger className="h-9 w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t("Todo indicador")}</SelectItem>
+                          {indicators.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {item}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-xs font-medium text-foreground">
+                          {t("Desde")}
+                        </span>
+                        <Input
+                          type="date"
+                          value={from}
+                          onChange={(event) => setFrom(event.target.value)}
+                          aria-label={t("Desde")}
+                          className="h-9 w-full"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-xs font-medium text-foreground">
+                          {t("Hasta")}
+                        </span>
+                        <Input
+                          type="date"
+                          value={to}
+                          onChange={(event) => setTo(event.target.value)}
+                          aria-label={t("Hasta")}
+                          className="h-9 w-full"
+                        />
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+                      <span className="text-[11px] text-muted-foreground">
+                        {additionalFilterCount > 0
+                          ? `${additionalFilterCount} ${t("filtros activos")}`
+                          : t("Sin filtros adicionales")}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={additionalFilterCount === 0}
+                        onClick={clearAdditionalFilters}
+                      >
+                        {t("Limpiar filtros")}
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <span className="ml-auto text-[11.5px] text-muted-foreground">
+                {filtered.length} {t("alertas")}
+              </span>
+            </div>
 
             {selectedAlerts.length > 0 && (
               <div className="flex flex-wrap items-center justify-end gap-2 border-b border-border px-5 py-2.5">
@@ -460,15 +547,56 @@ export function AlertsPage() {
                 onClear={clearFilters}
               />
             ) : (
-              <AlertsTable
-                alerts={filtered}
-                patients={data.patients}
-                onChangeStatus={changeStatus}
-                canReview={canReview}
-                selectedIds={selectedIds}
-                onToggle={toggleSelected}
-                onToggleAll={toggleAll}
-              />
+              <>
+                <AlertsTable
+                  alerts={pagedAlerts}
+                  patients={data.patients}
+                  onChangeStatus={changeStatus}
+                  canReview={canReview}
+                  selectedIds={selectedIds}
+                  onToggle={toggleSelected}
+                  onToggleAll={toggleAll}
+                />
+                {pageCount > 1 && (
+                  <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5">
+                    <span className="text-[11.5px] text-muted-foreground">
+                      {t("Página")} {currentPage} {t("de")} {pageCount} · {filtered.length} {t("alertas")}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t("Anterior")}
+                        disabled={currentPage === 1}
+                        onClick={() =>
+                          setPageState({
+                            key: filterKey,
+                            page: Math.max(1, currentPage - 1),
+                          })
+                        }
+                      >
+                        <ChevronLeft className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t("Siguiente")}
+                        disabled={currentPage === pageCount}
+                        onClick={() =>
+                          setPageState({
+                            key: filterKey,
+                            page: Math.min(pageCount, currentPage + 1),
+                          })
+                        }
+                      >
+                        <ChevronRight className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="flex items-center gap-2 border-t border-border px-5 py-3 text-[11.5px] text-muted-foreground">
@@ -478,12 +606,11 @@ export function AlertsPage() {
           </section>
         </div>
 
-        <div className="flex flex-col gap-5 xl:col-span-4">
+        <div className="order-1 flex flex-col gap-5 xl:order-2 xl:col-span-4">
           <AlertsInsightsRail />
+          <NotificationsTimeline />
         </div>
       </div>
-
-      <NotificationsTimeline />
 
       <NotifyWizard
         open={notifyOpen}
@@ -516,7 +643,8 @@ function AlertsTable({
   onToggleAll,
 }: AlertsTableProps) {
   const t = useT();
-  const allSelected = alerts.length > 0 && selectedIds.length === alerts.length;
+  const allSelected =
+    alerts.length > 0 && alerts.every((alert) => selectedIds.includes(alert.id));
 
   return (
     <div className="overflow-x-auto">
@@ -528,7 +656,7 @@ function AlertsTable({
                 type="checkbox"
                 checked={allSelected}
                 onChange={onToggleAll}
-                aria-label={t("Seleccionar todas las alertas")}
+                aria-label={t("Seleccionar alertas de esta página")}
                 className="size-4 rounded border-border"
               />
             </TableHead>

@@ -3191,5 +3191,10 @@
   "Crítica": "Crítica",
   "Alta": "Alta",
   "Media": "Media",
-  "Baja": "Baja"
+  "Baja": "Baja",
+  "filtros activos": "filtros activos",
+  "Más filtros": "Más filtros",
+  "Refina la lista de alertas": "Refina la lista de alertas",
+  "Seleccionar alertas de esta página": "Seleccionar alertas de esta página",
+  "Sin filtros adicionales": "Sin filtros adicionales"
 }
