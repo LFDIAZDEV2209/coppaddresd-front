@@ -1,0 +1,149 @@
+"use client";
+
+import { useState } from "react";
+import { BellRing, History, MailWarning, Send } from "lucide-react";
+
+import { useT } from "@/providers/i18n-provider";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { SectionHeader } from "@/components/layout/section-header";
+import { useNotifications } from "../../hooks/use-notifications";
+import type { NotificationStatus } from "../../types";
+import { formatDate } from "../../lib/format";
+import { TableSkeleton } from "../shared/module-chart-card";
+import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
+import { NotificationsHistory } from "./notifications-history";
+
+const STATUS_LABELS: Record<NotificationStatus, string> = {
+  sent: "Enviada",
+  queued: "En cola",
+  failed: "Fallida",
+  skipped: "Omitida",
+};
+
+const STATUS_DOT: Record<NotificationStatus, string> = {
+  sent: "bg-success",
+  queued: "bg-muted-foreground",
+  failed: "bg-destructive",
+  skipped: "bg-warning",
+};
+
+const RECENT_SIZE = 6;
+
+/**
+ * Banda inferior del cockpit: últimas entregas en formato línea de tiempo.
+ * El registro completo (con filtros y paginación) se abre en un diálogo.
+ */
+export function NotificationsTimeline() {
+  const t = useT();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const { data, loading, error, reload } = useNotifications({
+    page: 1,
+    pageSize: RECENT_SIZE,
+  });
+
+  const items = data?.items ?? [];
+
+  return (
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <SectionHeader
+        title={t("Notificaciones enviadas")}
+        description={t("Actividad de notificaciones")}
+        icon={BellRing}
+        variant="primary"
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHistoryOpen(true)}
+          >
+            <History className="size-3.5" />
+            {t("Ver historial completo")}
+          </Button>
+        }
+      />
+
+      {loading && !data ? (
+        <div className="p-5">
+          <TableSkeleton rows={4} />
+        </div>
+      ) : error && !data ? (
+        <div className="p-5">
+          <ModuleErrorState message={error} onRetry={reload} />
+        </div>
+      ) : items.length === 0 ? (
+        <ModuleEmptyState
+          title={t("Sin notificaciones")}
+          description={t("Aún no se han enviado notificaciones a pacientes.")}
+          className="m-5"
+        />
+      ) : (
+        <ol className="relative flex flex-col gap-5 px-5 py-5 sm:pl-9">
+          <span
+            className="absolute left-6 top-8 bottom-8 hidden w-px bg-border sm:block"
+            aria-hidden
+          />
+          {items.map((item) => (
+            <li key={item.id} className="relative flex gap-4 sm:pl-7">
+              <span
+                className="absolute -left-3 top-1 hidden size-4 items-center justify-center rounded-full border border-border bg-card sm:flex"
+                aria-hidden
+              >
+                <span
+                  className={`size-2 rounded-full ${STATUS_DOT[item.status]}`}
+                />
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    {item.channel === "sms" ? (
+                      <Send className="size-3.5 text-muted-foreground" />
+                    ) : (
+                      <MailWarning className="size-3.5 text-muted-foreground" />
+                    )}
+                    {item.channel === "sms" ? t("SMS") : t("Comunidad")}
+                  </span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="truncate text-muted-foreground">
+                    {item.patientName ?? "—"}
+                  </span>
+                  <span className="ml-auto shrink-0 text-muted-foreground">
+                    {formatDate(item.sentAt ?? item.createdAt)}
+                  </span>
+                </div>
+                <p className="line-clamp-2 text-sm text-foreground">
+                  {item.renderedBody}
+                </p>
+                <div className="flex flex-wrap items-center gap-2 text-[11.5px] text-muted-foreground">
+                  <span>
+                    {item.templateName ?? t("Sin plantilla (texto libre)")}
+                  </span>
+                  <span>·</span>
+                  <span>{t(STATUS_LABELS[item.status])}</span>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>{t("Notificaciones enviadas")}</DialogTitle>
+            <DialogDescription>
+              {t("Historial de entregas por canal y estado")}
+            </DialogDescription>
+          </DialogHeader>
+          <NotificationsHistory />
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}

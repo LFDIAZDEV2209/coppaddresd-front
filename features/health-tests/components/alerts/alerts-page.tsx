@@ -2,11 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
   BellRing,
   CheckCircle2,
-  ClipboardList,
   Eye,
   Filter,
   Search,
@@ -23,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
-import { StatCard } from "@/components/feedback/stat-card";
 import {
   Select,
   SelectContent,
@@ -46,7 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertsInsightsRail } from "./alerts-insights";
 
 import { useAlerts } from "../../hooks/use-health-tests";
 import type { AlertSeverity, AlertStatus, HealthAlert } from "../../types";
@@ -55,8 +53,7 @@ import { severityHex } from "../shared/colors";
 import { SeverityBadge } from "../shared/badges";
 import { StatSkeleton, TableSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
-import { AlertsCharts } from "./alerts-charts";
-import { NotificationsHistory } from "./notifications-history";
+import { NotificationsTimeline } from "./notifications-timeline";
 import { NotifyWizard } from "./notify-wizard";
 
 const STATUS_LABELS: Record<AlertStatus, string> = {
@@ -84,6 +81,40 @@ function statusColor(status: AlertStatus): string {
     default:
       return "var(--muted-foreground)";
   }
+}
+
+const PILL_ACCENT: Record<string, string> = {
+  destructive: "var(--destructive)",
+  warning: "var(--warning)",
+  info: "var(--info)",
+  navy: "var(--foreground)",
+};
+
+function StatusPill({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number;
+  tone: keyof typeof PILL_ACCENT;
+}) {
+  const accent = PILL_ACCENT[tone];
+
+  return (
+    <div className="flex items-center gap-2.5 rounded-full border border-border bg-card px-3.5 py-1.5">
+      <Icon className="size-3.5" style={{ color: accent }} aria-hidden />
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span
+        className="text-sm font-semibold tabular-nums"
+        style={{ color: accent }}
+      >
+        {value}
+      </span>
+    </div>
+  );
 }
 
 export function AlertsPage() {
@@ -239,66 +270,52 @@ export function AlertsPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       {header}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label={t("Activas")}
-          value={String(counts.activa)}
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusPill
           icon={ShieldAlert}
-          variant="destructive"
-          context={t("Requieren revisión")}
+          label={t("Activas")}
+          value={counts.activa}
+          tone="destructive"
         />
-        <StatCard
-          label={t("En revisión")}
-          value={String(counts["en-revision"])}
+        <StatusPill
           icon={Eye}
-          variant="warning"
-          context={t("Siendo atendidas")}
+          label={t("En revisión")}
+          value={counts["en-revision"]}
+          tone="warning"
         />
-        <StatCard
-          label={t("Atendidas")}
-          value={String(counts.atendida)}
+        <StatusPill
           icon={CheckCircle2}
-          variant="info"
-          context={t("Con acción realizada")}
+          label={t("Atendidas")}
+          value={counts.atendida}
+          tone="info"
         />
-        <StatCard
-          label={t("Cerradas")}
-          value={String(counts.cerrada)}
+        <StatusPill
           icon={XCircle}
-          variant="navy"
-          context={t("Histórico resuelto")}
+          label={t("Cerradas")}
+          value={counts.cerrada}
+          tone="navy"
         />
       </div>
 
-      <Tabs defaultValue="alerts" className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList variant="line">
-            <TabsTrigger value="alerts">
-              <BellRing className="size-3.5" />
-              {t("Alertas")}
-            </TabsTrigger>
-            <TabsTrigger value="charts">
-              <BarChart3 className="size-3.5" />
-              {t("Gráficos")}
-            </TabsTrigger>
-            <TabsTrigger value="history">
-              <ClipboardList className="size-3.5" />
-              {t("Notificaciones enviadas")}
-            </TabsTrigger>
-          </TabsList>
-
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            render={<Link href="/health-tests/alertas/plantillas" />}
-          >
-            <Sparkles className="size-3.5" />
-            {t("Estudio de plantillas")}
-          </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Filter className="size-4" aria-hidden />
+          {t("Gestión de alertas")}
         </div>
 
-        <TabsContent value="alerts">
+        <Button
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={<Link href="/health-tests/alertas/plantillas" />}
+        >
+          <Sparkles className="size-3.5" />
+          {t("Estudio de plantillas")}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
+        <div className="flex flex-col gap-5 xl:col-span-8">
           <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
               title={t("Gestión de alertas")}
@@ -455,16 +472,14 @@ export function AlertsPage() {
               {t("Las transiciones de estado se aplican en esta sesión (mock)")}
             </div>
           </section>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="charts">
-          <AlertsCharts />
-        </TabsContent>
+        <div className="flex flex-col gap-5 xl:col-span-4">
+          <AlertsInsightsRail />
+        </div>
+      </div>
 
-        <TabsContent value="history">
-          <NotificationsHistory />
-        </TabsContent>
-      </Tabs>
+      <NotificationsTimeline />
 
       <NotifyWizard
         open={notifyOpen}
