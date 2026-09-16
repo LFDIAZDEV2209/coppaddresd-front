@@ -385,7 +385,9 @@ export function useAlerts() {
             ? "resolve"
             : status === "cerrada"
               ? "close"
-              : null;
+              : status === "activa"
+                ? "reopen"
+                : null;
       if (!action) return;
 
       setStatusError(null);

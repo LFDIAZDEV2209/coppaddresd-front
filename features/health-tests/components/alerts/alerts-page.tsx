@@ -79,13 +79,13 @@ const STATUS_LABELS: Record<AlertStatus, string> = {
 
 /**
  * Transiciones reales del backend:
- * review → en-revision, resolve → atendida, close → cerrada.
+ * review → en-revision, resolve → atendida, close → cerrada, reopen → activa.
  */
 const STATUS_NEXT: Record<AlertStatus, AlertStatus[]> = {
   activa: ["en-revision", "atendida", "cerrada"],
-  "en-revision": ["atendida", "cerrada"],
-  atendida: ["cerrada"],
-  cerrada: ["en-revision"],
+  "en-revision": ["atendida", "cerrada", "activa"],
+  atendida: ["cerrada", "activa"],
+  cerrada: ["en-revision", "activa"],
 };
 
 const ALERT_PAGE_SIZE = 12;

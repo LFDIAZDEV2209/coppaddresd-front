@@ -886,7 +886,7 @@ async function listAlerts(patientId?: string): Promise<HealthAlert[]> {
 }
 
 /** Acciones de transición que expone el backend (permiso HealthTests.Review). */
-export type AlertTransition = "review" | "resolve" | "close";
+export type AlertTransition = "review" | "resolve" | "close" | "reopen";
 
 async function transitionAlert(
   alertId: string,

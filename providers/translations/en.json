@@ -621,6 +621,7 @@
   "central:Professional": "central:Professional",
   "Cerebro": "Brain",
   "cerrada": "Closed",
+  "Cerrada": "Closed",
   "Cerradas": "Closed",
   "Cerrado (rechazó)": "Closed (declined)",
   "Cerrado (sin examen)": "Closed (no exam)",
@@ -3474,5 +3475,6 @@
   "XP total": "Total XP",
   "y todas sus asignaciones. Esta acción no se puede deshacer.": "and all their assignments. This action cannot be undone.",
   "Ya empezaron sus evaluaciones": "They have started their evaluations",
-  "Ya reposteaste esta publicación": "You already reposted this post"
+  "Ya reposteaste esta publicación": "You already reposted this post",
+  "Reabrir alerta": "Reopen alert"
 }
