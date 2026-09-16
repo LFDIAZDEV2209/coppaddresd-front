@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BellRing,
   Copy,
@@ -15,6 +15,7 @@ import {
   Send,
   Smartphone,
   Sparkles,
+  TriangleAlert,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,8 +46,11 @@ import {
   NOTIFICATION_PLACEHOLDERS,
   notificationsApi,
 } from "../../services/notifications-service";
+import type { NotificationTemplatePreview } from "../../services/notifications-service";
+import { healthTestsApi } from "../../services/health-tests-service";
 import type {
   AlertSeverity,
+  HealthAlert,
   NotificationChannel,
   NotificationTemplate,
   NotificationTemplateVersion,
@@ -81,8 +85,9 @@ const CHANNEL_LABELS: Record<NotificationChannel, string> = {
   sms: "SMS",
 };
 
+/** Render local (datos de ejemplo) usado como respaldo mientras carga la vista previa real. */
 function renderPreview(template: string): string {
-  return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key: string) => {
+  return template.replace(/\[([a-zA-Z0-9_]+)\]/g, (match, key: string) => {
     const value = SAMPLE_CONTEXT[key.toLowerCase()];
     return value ?? match;
   });
@@ -115,7 +120,7 @@ const EMPTY_EDITOR: EditorState = {
   code: "",
   name: "",
   channel: "community",
-  bodyTemplate: "Hola {paciente}, tu resultado de {indicador} fue {valor} ({severidad}). {accion}",
+  bodyTemplate: "Hola [paciente], tu resultado de [indicador] fue [valor] ([severidad]). [accion]",
   severity: "none",
   testCategory: "",
   indicatorCode: "",
@@ -154,13 +159,80 @@ export function TemplateStudio() {
   const [testPhone, setTestPhone] = useState("");
   const [testResult, setTestResult] = useState<string | null>(null);
 
+  // Vista previa con datos reales: se elige una alerta reciente como ejemplo.
+  const [sampleAlerts, setSampleAlerts] = useState<HealthAlert[]>([]);
+  const [patientNames, setPatientNames] = useState<Record<string, string>>({});
+  const [sampleAlertId, setSampleAlertId] = useState("");
+  const [realPreview, setRealPreview] = useState<{
+    key: string;
+    data: NotificationTemplatePreview;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [alerts, patients] = await Promise.all([
+          healthTestsApi.listAlerts(),
+          healthTestsApi.listPatients(),
+        ]);
+        if (cancelled) return;
+        const sample = alerts.slice(0, 10);
+        setSampleAlerts(sample);
+        // Por defecto se previsualiza con una alerta real (la más reciente).
+        setSampleAlertId((current) => current || (sample[0]?.id ?? ""));
+        setPatientNames(
+          Object.fromEntries(
+            patients.map((patient) => [
+              patient.id,
+              `${patient.firstName} ${patient.lastName}`.trim(),
+            ]),
+          ),
+        );
+      } catch {
+        if (!cancelled) setSampleAlerts([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const previewKey = `${editor.id ?? "draft"}|${sampleAlertId}|${editor.channel}|${editor.bodyTemplate}`;
+
+  useEffect(() => {
+    // "sample" = datos de ejemplo locales (sin alerta real) → sin llamada al backend.
+    if (!editor.id || !sampleAlertId || sampleAlertId === "sample") return;
+    const templateId = editor.id;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const data = await notificationsApi.previewTemplate(templateId, {
+            alertId: sampleAlertId,
+            channel: editor.channel,
+            bodyOverride: editor.bodyTemplate,
+          });
+          if (!cancelled) setRealPreview({ key: previewKey, data });
+        } catch {
+          if (!cancelled) setRealPreview(null);
+        }
+      })();
+    }, 350);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewKey]);
+
   const templates = data ?? [];
   const isDraft = editor.id === null;
 
-  const previewBody = useMemo(
-    () => renderPreview(editor.bodyTemplate),
-    [editor.bodyTemplate],
-  );
+  const activeRealPreview = realPreview?.key === previewKey ? realPreview.data : null;
+
+  const previewBody =
+    activeRealPreview?.renderedBody ?? renderPreview(editor.bodyTemplate);
 
   function selectTemplate(template: NotificationTemplate) {
     setEditor({
@@ -623,12 +695,12 @@ export function TemplateStudio() {
                   onClick={() =>
                     setEditor((prev) => ({
                       ...prev,
-                      bodyTemplate: `${prev.bodyTemplate}{${placeholder}}`,
+                      bodyTemplate: `${prev.bodyTemplate}[${placeholder}]`,
                     }))
                   }
                   className="rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[11px] text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
                 >
-                  {`{${placeholder}}`}
+                  {`[${placeholder}]`}
                 </button>
               ))}
             </div>
@@ -639,7 +711,7 @@ export function TemplateStudio() {
               }
               rows={4}
               className="min-h-[110px]"
-              placeholder={t("Escribe el mensaje con datos entre llaves")}
+              placeholder={t("Escribe el mensaje con datos entre corchetes")}
             />
           </div>
 
@@ -677,6 +749,40 @@ export function TemplateStudio() {
 
           {/* Previsualización */}
           <div className="rounded-xl border border-border bg-muted/30 p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold text-muted-foreground">
+                {t("Paciente de ejemplo")}
+              </span>
+              <Select
+                value={sampleAlertId || "sample"}
+                onValueChange={(value) => setSampleAlertId(value === "sample" ? "" : (value ?? ""))}
+              >
+                <SelectTrigger
+                  className="h-8 w-56"
+                  aria-label={t("Paciente de ejemplo")}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sample">{t("Datos de ejemplo")}</SelectItem>
+                  {sampleAlerts.map((alert) => (
+                    <SelectItem key={alert.id} value={alert.id}>
+                      {patientNames[alert.patientId] ?? t("Paciente")} ·{" "}
+                      {alert.indicatorName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {activeRealPreview && !activeRealPreview.isReachable && (
+              <p className="mb-2 flex items-start gap-1.5 text-[11px] text-warning">
+                <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+                {activeRealPreview.skipReason ??
+                  t("El paciente no tiene el contacto de este canal.")}
+              </p>
+            )}
+
             <Tabs defaultValue="sms">
               <TabsList variant="line">
                 <TabsTrigger value="sms">

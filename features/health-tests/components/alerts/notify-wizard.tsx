@@ -37,6 +37,7 @@ import {
   NOTIFICATION_PLACEHOLDERS,
   notificationsApi,
 } from "../../services/notifications-service";
+import type { NotificationTemplatePreview } from "../../services/notifications-service";
 import type {
   HealthAlert,
   NotificationChannel,
@@ -45,6 +46,11 @@ import type {
 import { SeverityBadge } from "../shared/badges";
 
 type WizardStep = 1 | 2 | 3;
+
+/** Segmentos SMS (GSM-7): 160 en un solo mensaje, 153 por segmento encadenado. */
+function smsSegments(body: string): number {
+  return body.length <= 160 ? 1 : Math.ceil(body.length / 153);
+}
 
 const CHANNEL_META: Record<
   NotificationChannel,
@@ -219,6 +225,8 @@ export function NotifyWizard({
 
           {step === 2 && (
             <StepCompose
+              alerts={selectedAlerts}
+              patients={patients}
               channels={channels}
               templates={channelTemplates}
               templateId={templateId}
@@ -438,6 +446,8 @@ function StepRecipients({
 }
 
 function StepCompose({
+  alerts,
+  patients,
   channels,
   templates,
   templateId,
@@ -446,6 +456,8 @@ function StepCompose({
   onBodyChange,
   onInsertPlaceholder,
 }: {
+  alerts: HealthAlert[];
+  patients?: { id: string; firstName: string; lastName: string }[];
   channels: NotificationChannel[];
   templates: { id: string; name: string; channel: NotificationChannel }[];
   templateId: string | null;
@@ -455,9 +467,62 @@ function StepCompose({
   onInsertPlaceholder: (placeholder: string) => void;
 }) {
   const t = useT();
+
+  // Vista previa con datos reales: se usa el primer paciente seleccionado como
+  // ejemplo (el envío completa los datos de cada paciente por separado).
+  const primaryChannel = channels[0] ?? "community";
+  const firstAlert = alerts[0];
+  const firstAlertPatient = patients?.find((item) => item.id === firstAlert?.patientId);
+  const firstAlertName = firstAlertPatient
+    ? `${firstAlertPatient.firstName} ${firstAlertPatient.lastName}`.trim()
+    : null;
+  const previewTemplateId =
+    templateId ??
+    templates.find((template) => template.channel === primaryChannel)?.id ??
+    templates[0]?.id ??
+    null;
+
+  const [previewState, setPreviewState] = useState<{
+    id: string;
+    data: NotificationTemplatePreview;
+  } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  useEffect(() => {
+    if (!previewTemplateId) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        setPreviewLoading(true);
+        try {
+          const data = await notificationsApi.previewTemplate(previewTemplateId, {
+            alertId: firstAlert?.id,
+            channel: primaryChannel,
+            bodyOverride: body.trim() === "" ? undefined : body,
+          });
+          if (!cancelled) setPreviewState({ id: previewTemplateId, data });
+        } catch {
+          if (!cancelled) setPreviewState(null);
+        } finally {
+          if (!cancelled) setPreviewLoading(false);
+        }
+      })();
+    }, 350);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [previewTemplateId, primaryChannel, firstAlert?.id, body]);
+
+  const realPreview =
+    previewState && previewState.id === previewTemplateId ? previewState.data : null;
+  const previewBody =
+    realPreview?.renderedBody ??
+    (body.trim() === "" ? t("El mensaje aparecerá aquí mientras escribes.") : body);
+
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div className="flex flex-col gap-3">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+      <div className="flex flex-col gap-3 lg:col-span-3">
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-semibold text-foreground">
             {t("Plantilla")}
@@ -491,7 +556,7 @@ function StepCompose({
             value={body}
             onChange={(event) => onBodyChange(event.target.value)}
             rows={7}
-            placeholder={t("Escribe el mensaje que recibirá el paciente...")}
+            placeholder={t("Escribe el mensaje con datos entre corchetes")}
             aria-label={t("Mensaje de la notificación")}
           />
         </div>
@@ -508,24 +573,72 @@ function StepCompose({
                 onClick={() => onInsertPlaceholder(placeholder)}
                 className="rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                {`{${placeholder}}`}
+                {`[${placeholder}]`}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <span className="text-xs font-semibold text-foreground">
-          {t("Vista previa")}
-        </span>
-        <div className="rounded-2xl border border-border bg-muted/30 p-4">
-          <p className="whitespace-pre-wrap text-[12.5px] text-foreground">
-            {body.trim() === ""
-              ? t("El mensaje aparecerá aquí mientras escribes.")
-              : body}
-          </p>
+      <div className="flex flex-col gap-3 lg:col-span-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold text-foreground">
+            {t("Vista previa")}
+          </span>
+          <span className="truncate text-[11px] text-muted-foreground">
+            {firstAlert
+              ? `${t("Ejemplo")}: ${firstAlertName ?? t("Paciente")}`
+              : t("Sin paciente de ejemplo")}
+          </span>
         </div>
+
+        {primaryChannel === "sms" ? (
+          <div className="mx-auto w-full max-w-[300px] rounded-[26px] border border-border bg-background p-3 shadow-sm">
+            <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-muted-foreground/30" />
+            <div className="rounded-2xl bg-muted px-3 py-2 text-[12.5px] text-foreground">
+              {previewBody}
+            </div>
+            <p className="mt-2 text-center text-[10.5px] text-muted-foreground">
+              {previewBody.length} {t("caracteres")} · {smsSegments(previewBody)}{" "}
+              {t("segmento(s)")}
+            </p>
+          </div>
+        ) : (
+          <div className="mx-auto w-full max-w-[340px] rounded-2xl border border-border bg-background p-3 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <BellRing className="size-3.5" />
+              </span>
+              <span className="text-xs font-medium text-foreground">
+                {t("Equipo CoppAddresd")}
+              </span>
+            </div>
+            <div className="mt-2 w-fit rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-[12.5px] text-foreground">
+              {previewBody}
+            </div>
+          </div>
+        )}
+
+        {previewLoading && (
+          <span className="text-[11px] text-muted-foreground">
+            {t("Actualizando vista previa...")}
+          </span>
+        )}
+
+        {realPreview && !realPreview.isReachable && (
+          <p className="flex items-start gap-1.5 text-[11px] text-warning">
+            <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+            {realPreview.skipReason ?? t("El paciente no tiene el contacto de este canal.")}
+          </p>
+        )}
+
+        {realPreview && realPreview.missingPlaceholders.length > 0 && (
+          <p className="text-[11px] text-muted-foreground">
+            {t("Sin dato para")}:{" "}
+            {realPreview.missingPlaceholders.map((item) => `[${item}]`).join(" · ")}
+          </p>
+        )}
+
         <p className="text-[11px] text-muted-foreground">
           {t(
             "Los datos se completan automáticamente con la información de cada paciente al enviar.",

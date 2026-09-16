@@ -364,7 +364,35 @@ async function restoreTemplateVersion(
   return mapTemplate(dto);
 }
 
-export interface SendTestInput {
+export interface NotificationTemplatePreviewDto {
+  templateId: string;
+  templateName: string;
+  channel: string;
+  alertId: string | null;
+  patientId: string | null;
+  bodyTemplate: string;
+  renderedBody: string;
+  recipient: string | null;
+  isReachable: boolean;
+  skipReason: string | null;
+  missingPlaceholders: string[];
+}
+
+export interface NotificationTemplatePreview {
+  templateId: string;
+  templateName: string;
+  channel: NotificationChannel;
+  alertId: string | null;
+  patientId: string | null;
+  bodyTemplate: string;
+  renderedBody: string;
+  recipient: string | null;
+  isReachable: boolean;
+  skipReason: string | null;
+  missingPlaceholders: string[];
+}
+
+interface SendTestInput {
   channel: NotificationChannel;
   phoneNumber?: string;
   patientId?: string;
@@ -388,6 +416,41 @@ async function sendTest(
     },
   );
   return mapNotifyItem(dto);
+}
+
+// --- Vista previa real (datos de una alerta) ---
+
+export interface TemplatePreviewInput {
+  alertId?: string | null;
+  channel?: NotificationChannel | null;
+  bodyOverride?: string | null;
+}
+
+async function previewTemplate(
+  templateId: string,
+  input: TemplatePreviewInput = {},
+): Promise<NotificationTemplatePreview> {
+  const params = new URLSearchParams();
+  if (input.alertId) params.set("alertId", input.alertId);
+  if (input.channel) params.set("channel", input.channel);
+  if (input.bodyOverride) params.set("bodyOverride", input.bodyOverride);
+  const query = params.toString();
+  const dto = await apiFetch<NotificationTemplatePreviewDto>(
+    `${BASE}/notification-templates/${templateId}/preview${query ? `?${query}` : ""}`,
+  );
+  return {
+    templateId: dto.templateId,
+    templateName: dto.templateName,
+    channel: mapChannel(dto.channel),
+    alertId: dto.alertId,
+    patientId: dto.patientId,
+    bodyTemplate: dto.bodyTemplate,
+    renderedBody: dto.renderedBody,
+    recipient: dto.recipient,
+    isReachable: dto.isReachable,
+    skipReason: dto.skipReason,
+    missingPlaceholders: dto.missingPlaceholders ?? [],
+  };
 }
 
 // --- Envío masivo y registro ---
@@ -455,6 +518,10 @@ export interface NotificationsApi {
   listTemplateVersions(id: string): Promise<NotificationTemplateVersion[]>;
   restoreTemplateVersion(id: string, version: number): Promise<NotificationTemplate>;
   sendTest(templateId: string, input: SendTestInput): Promise<NotifyAlertItemResult>;
+  previewTemplate(
+    templateId: string,
+    input?: TemplatePreviewInput,
+  ): Promise<NotificationTemplatePreview>;
   notify(input: NotifyAlertsInput): Promise<NotifyAlertsResult>;
   listNotifications(
     filters?: NotifyAlertsFilters,
@@ -472,6 +539,7 @@ export const notificationsApi: NotificationsApi = {
   listTemplateVersions,
   restoreTemplateVersion,
   sendTest,
+  previewTemplate,
   notify,
   listNotifications,
   getCharts,

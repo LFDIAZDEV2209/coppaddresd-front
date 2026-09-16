@@ -3199,5 +3199,13 @@
   "Sin filtros adicionales": "Sin filtros adicionales",
   "Seleccionar los": "Seleccionar los",
   "No se pudo actualizar el estado de la alerta.": "No se pudo actualizar el estado de la alerta.",
-  "Reabrir alerta": "Reabrir alerta"
+  "Reabrir alerta": "Reabrir alerta",
+  "Actualizando vista previa...": "Actualizando vista previa...",
+  "Datos de ejemplo": "Datos de ejemplo",
+  "Ejemplo": "Ejemplo",
+  "El paciente no tiene el contacto de este canal.": "El paciente no tiene el contacto de este canal.",
+  "Escribe el mensaje con datos entre corchetes": "Escribe el mensaje con datos entre corchetes",
+  "Paciente de ejemplo": "Paciente de ejemplo",
+  "Sin dato para": "Sin dato para",
+  "Sin paciente de ejemplo": "Sin paciente de ejemplo"
 }
