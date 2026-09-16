@@ -61,7 +61,7 @@ import { AlertsInsightsRail } from "./alerts-insights";
 import { useAlerts } from "../../hooks/use-health-tests";
 import type { AlertSeverity, AlertStatus, HealthAlert } from "../../types";
 import { formatDate, initials } from "../../lib/format";
-import { severityHex } from "../shared/colors";
+import { carbon, severityHex } from "../shared/colors";
 import { SeverityBadge } from "../shared/badges";
 import { StatSkeleton, TableSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
@@ -87,21 +87,21 @@ const ALERT_PAGE_SIZE = 10;
 function statusColor(status: AlertStatus): string {
   switch (status) {
     case "activa":
-      return "var(--destructive)";
+      return carbon.red60;
     case "en-revision":
-      return "var(--warning)";
+      return carbon.yellow60;
     case "atendida":
-      return "var(--info)";
+      return carbon.green60;
     default:
-      return "var(--muted-foreground)";
+      return carbon.gray60;
   }
 }
 
 const PILL_ACCENT: Record<string, string> = {
-  destructive: "#B02A38",
-  warning: "#8A6100",
-  info: "#2C5F86",
-  navy: "var(--foreground)",
+  destructive: carbon.red60,
+  warning: carbon.yellow60,
+  info: carbon.blue70,
+  navy: carbon.gray100,
 };
 
 function StatusPill({

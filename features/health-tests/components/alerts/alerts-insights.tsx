@@ -14,20 +14,22 @@ import {
 
 import { useT } from "@/providers/i18n-provider";
 import { useNotificationCharts } from "../../hooks/use-notifications";
+import { carbon } from "../shared/colors";
 import { ModuleErrorState } from "../shared/module-states";
 import { StatSkeleton } from "../shared/module-chart-card";
 
 // Colores y etiquetas por severidad (claves del backend y variantes en español).
+// Rampa Carbon: rojo crítico → naranja alto → amarillo medio → azul bajo.
 const SEVERITY_FILL: Record<string, string> = {
-  critical: "#E58C97",
-  critica: "#E58C97",
-  alta: "#EDA57C",
-  high: "#EDA57C",
-  moderate: "#E3B85C",
-  media: "#E3B85C",
-  baja: "#93B8D6",
-  low: "#93B8D6",
-  informativa: "#94A3B8",
+  critical: carbon.red60,
+  critica: carbon.red60,
+  high: carbon.orange40,
+  alta: carbon.orange40,
+  moderate: carbon.yellow30,
+  media: carbon.yellow30,
+  low: carbon.blue60,
+  baja: carbon.blue60,
+  informativa: carbon.gray60,
 };
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -53,7 +55,7 @@ const STATUS_LABEL: Record<string, string> = {
   cerrada: "Cerrada",
 };
 
-const FALLBACK = "#94a3b8";
+const FALLBACK = carbon.gray50;
 
 function toPoints(
   record: Record<string, number> | undefined,
@@ -120,7 +122,7 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
   return (
     <section className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
       <header className="flex items-center gap-2 px-4 py-3">
-        <Activity className="size-4 text-primary" />
+        <Activity className="size-4" style={{ color: carbon.blue60 }} />
         <h2 className="text-sm font-semibold">{t("Pulso de riesgo")}</h2>
       </header>
 
@@ -218,8 +220,9 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
                 </div>
                 <span className="h-1.5 overflow-hidden rounded-full bg-muted">
                   <span
-                    className="block h-full rounded-full bg-primary"
+                    className="block h-full rounded-full"
                     style={{
+                      backgroundColor: carbon.blue60,
                       width: `${Math.max(6, (item.value / indicatorMax) * 100)}%`,
                     }}
                   />
@@ -246,7 +249,7 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke="#2563eb"
+                stroke={carbon.blue60}
                 strokeWidth={2}
                 dot={false}
               />

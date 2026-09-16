@@ -28,11 +28,12 @@ const STATUS_LABELS: Record<NotificationStatus, string> = {
   skipped: "Omitida",
 };
 
+/* Punto de estado con la rampa Carbon (verde/neutro/rojo/amarillo). */
 const STATUS_DOT: Record<NotificationStatus, string> = {
-  sent: "bg-success",
-  queued: "bg-muted-foreground",
-  failed: "bg-destructive",
-  skipped: "bg-warning",
+  sent: "bg-[#24a148]",
+  queued: "bg-[#8d8d8d]",
+  failed: "bg-[#da1e28]",
+  skipped: "bg-[#f1c21b]",
 };
 
 const RECENT_SIZE = 4;
