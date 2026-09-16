@@ -906,7 +906,7 @@ export function AdminAppointments({
                     {appointment.durationMinutes} min
                   </span>
                   <Link
-                    href={`/telemedicine/citas/${appointment.id}`}
+                    href={`/appointments/citas/${appointment.id}`}
                     className={cn(
                       buttonVariants({
                         size: "sm",

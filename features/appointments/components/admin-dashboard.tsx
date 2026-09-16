@@ -251,7 +251,7 @@ export function AdminDashboard() {
               appointments={analytics?.upcomingAppointments ?? []}
               loading={loading}
               emptyMessage={t('Sin citas próximas en el sistema')}
-              hrefBase="/appointments/admin/citas"
+              hrefBase="/appointments/citas"
             />
           </div>
         </section>
