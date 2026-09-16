@@ -16,7 +16,7 @@ import {
   ShieldAlert,
   SlidersHorizontal,
   Sparkles,
-  Stethoscope,
+  TriangleAlert,
   XCircle,
 } from "lucide-react";
 
@@ -44,6 +44,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
@@ -76,11 +77,15 @@ const STATUS_LABELS: Record<AlertStatus, string> = {
   cerrada: "Cerrada",
 };
 
+/**
+ * Transiciones reales del backend:
+ * review → en-revision, resolve → atendida, close → cerrada.
+ */
 const STATUS_NEXT: Record<AlertStatus, AlertStatus[]> = {
-  activa: ["en-revision", "atendida"],
-  "en-revision": ["atendida", "activa"],
-  atendida: ["cerrada", "activa"],
-  cerrada: ["activa"],
+  activa: ["en-revision", "atendida", "cerrada"],
+  "en-revision": ["atendida", "cerrada"],
+  atendida: ["cerrada"],
+  cerrada: ["en-revision"],
 };
 
 const ALERT_PAGE_SIZE = 12;
@@ -129,7 +134,7 @@ export function AlertsPage() {
   const t = useT();
   const { hasPermission } = useAuth();
   const canReview = hasPermission("HealthTests.Review");
-  const { data, loading, error, reload, changeStatus } = useAlerts();
+  const { data, loading, error, reload, changeStatus, statusError } = useAlerts();
 
   const [search, setSearch] = useState("");
   const [severity, setSeverity] = useState<AlertSeverity | "all">("all");
@@ -629,10 +634,12 @@ export function AlertsPage() {
               </>
             )}
 
-            <div className="mt-auto flex items-center gap-2 border-t border-border px-5 py-3 text-[11.5px] text-muted-foreground">
-              <Stethoscope className="size-3.5" />
-              {t("Las transiciones de estado se aplican en esta sesión (mock)")}
-            </div>
+            {statusError ? (
+              <div className="mt-auto flex items-center gap-2 border-t border-border px-5 py-3 text-[11.5px] text-destructive">
+                <TriangleAlert className="size-3.5" />
+                {t(statusError)}
+              </div>
+            ) : null}
           </section>
         </div>
 
@@ -786,15 +793,17 @@ function AlertsTable({
                           <MoreHorizontal className="size-3.5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>{t("Cambiar estado")}</DropdownMenuLabel>
-                          {STATUS_NEXT[alert.status].map((next) => (
-                            <DropdownMenuItem
-                              key={next}
-                              onClick={() => onChangeStatus(alert.id, next)}
-                            >
-                              {STATUS_LABELS[next]}
-                            </DropdownMenuItem>
-                          ))}
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel>{t("Cambiar estado")}</DropdownMenuLabel>
+                            {STATUS_NEXT[alert.status].map((next) => (
+                              <DropdownMenuItem
+                                key={next}
+                                onClick={() => void onChangeStatus(alert.id, next)}
+                              >
+                                {STATUS_LABELS[next]}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuGroup>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}

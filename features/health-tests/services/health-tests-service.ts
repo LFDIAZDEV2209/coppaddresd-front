@@ -151,6 +151,8 @@ export interface HealthTestsApi {
   listIndicators(): Promise<ClinicalIndicator[]>;
   listProfessionals(): Promise<HealthProfessional[]>;
   listAlerts(patientId?: string): Promise<HealthAlert[]>;
+  /** Transición de estado de una alerta (registra revision/resolución/cierre). */
+  transitionAlert(alertId: string, action: AlertTransition): Promise<void>;
   listBatteries(): Promise<Battery[]>;
   getBattery(batteryId: string): Promise<Battery | null>;
   createBattery(input: CreateBatteryInput): Promise<Battery>;
@@ -883,6 +885,17 @@ async function listAlerts(patientId?: string): Promise<HealthAlert[]> {
   return response.data.map(mapAlert);
 }
 
+/** Acciones de transición que expone el backend (permiso HealthTests.Review). */
+export type AlertTransition = "review" | "resolve" | "close";
+
+async function transitionAlert(
+  alertId: string,
+  action: AlertTransition,
+): Promise<void> {
+  await apiFetch(`${BASE}/alerts/${alertId}/${action}`, { method: "POST" });
+  invalidateHealthTestsCache();
+}
+
 async function listBatteries(): Promise<Battery[]> {
   return cached("batteries", TTL_CATALOG, async () => {
     const response = await apiFetch<PaginatedDto<BatteryDto>>(
@@ -1262,6 +1275,7 @@ export const healthTestsApi: HealthTestsApi = {
   listIndicators,
   listProfessionals,
   listAlerts,
+  transitionAlert,
   listBatteries,
   getBattery,
   createBattery,

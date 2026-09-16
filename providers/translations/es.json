@@ -3197,5 +3197,6 @@
   "Refina la lista de alertas": "Refina la lista de alertas",
   "Seleccionar alertas de esta página": "Seleccionar alertas de esta página",
   "Sin filtros adicionales": "Sin filtros adicionales",
-  "Seleccionar los": "Seleccionar los"
+  "Seleccionar los": "Seleccionar los",
+  "No se pudo actualizar el estado de la alerta.": "No se pudo actualizar el estado de la alerta."
 }

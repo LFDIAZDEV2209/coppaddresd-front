@@ -110,7 +110,7 @@ export function NotificationsTimeline({
           className="m-5"
         />
       ) : (
-        <ol className="relative flex flex-col gap-5 px-5 py-5 sm:pl-9">
+        <ol className="relative flex flex-1 flex-col justify-between gap-5 px-5 py-5 sm:pl-9">
           <span
             className="absolute left-6 top-8 bottom-8 hidden w-px bg-border sm:block"
             aria-hidden
