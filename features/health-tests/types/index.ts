@@ -387,7 +387,7 @@ export interface NotificationTemplate {
   testCategory: string | null;
   indicatorCode: string | null;
   subject: string | null;
-  /** Cuerpo con placeholders: {paciente}, {test}, {indicador}, {valor}... */
+  /** Cuerpo con placeholders: [paciente], [test], [indicador], [valor]... */
   bodyTemplate: string;
   isActive: boolean;
   usageCount: number;

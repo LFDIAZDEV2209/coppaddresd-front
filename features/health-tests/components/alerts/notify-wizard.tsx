@@ -163,7 +163,7 @@ export function NotifyWizard({
   }
 
   function insertPlaceholder(placeholder: string) {
-    setBody((current) => `${current}{${placeholder}}`);
+    setBody((current) => `${current}[${placeholder}]`);
   }
 
   async function run(preview: boolean) {
