@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { BellRing, History, MailWarning, Send } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SectionHeader } from "@/components/layout/section-header";
 import { useNotifications } from "../../hooks/use-notifications";
 import type { NotificationStatus } from "../../types";
 import { formatDate } from "../../lib/format";
@@ -40,7 +41,11 @@ const RECENT_SIZE = 4;
  * Actividad reciente del rail: últimas entregas en formato línea de tiempo.
  * El registro completo (con filtros y paginación) se abre en un diálogo.
  */
-export function NotificationsTimeline() {
+export function NotificationsTimeline({
+  className,
+}: {
+  className?: string;
+} = {}) {
   const t = useT();
   const [historyOpen, setHistoryOpen] = useState(false);
   const { data, loading, error, reload } = useNotifications({
@@ -51,23 +56,38 @@ export function NotificationsTimeline() {
   const items = data?.items ?? [];
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
-      <SectionHeader
-        title={t("Notificaciones enviadas")}
-        description={t("Actividad de notificaciones")}
-        icon={BellRing}
-        variant="primary"
-        actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHistoryOpen(true)}
-          >
-            <History className="size-3.5" />
-            {t("Ver historial completo")}
-          </Button>
-        }
-      />
+    <section
+      className={cn(
+        "flex flex-col overflow-hidden rounded-2xl border border-border bg-card",
+        className,
+      )}
+    >
+      {/* Cabecera compacta del rail: el título corto evita el truncado
+          y el botón queda legible sobre el degradado de marca. */}
+      <div className="flex items-center gap-3 bg-brand-gradient px-4 py-3 text-white">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--sidebar)]">
+          <BellRing className="size-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-[13px] font-bold text-white">
+            {t("Notificaciones")}
+          </h2>
+          <p className="truncate text-[11px] text-white/75">
+            {t("Actividad reciente")}
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="shrink-0 border border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+          aria-label={t("Ver historial completo")}
+          title={t("Ver historial completo")}
+          onClick={() => setHistoryOpen(true)}
+        >
+          <History className="size-3.5" />
+          <span className="hidden sm:inline">{t("Ver historial completo")}</span>
+        </Button>
+      </div>
 
       {loading && !data ? (
         <div className="p-5">

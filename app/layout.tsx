@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Sora, Space_Grotesk, Geist_Mono } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -8,15 +8,16 @@ import { AccentProvider } from "@/providers/accent-provider";
 import { I18nProvider } from "@/providers/i18n-provider";
 import "./globals.css";
 
-/* Línea visual COPP-ADRESD (app móvil Antares como referencia):
-   Sora para display/headings, Space Grotesk para UI/cuerpo, Geist Mono intacto. */
-const sora = Sora({
-  variable: "--font-sora",
+/* Línea visual COPP-ADRESD: Plus Jakarta Sans para display/headings, Inter
+   para UI/cuerpo (mejor legibilidad en tablas y densidad de datos), Geist Mono
+   intacto para código y cifras monoespaciadas. */
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
   subsets: ["latin"],
 });
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -42,7 +43,7 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
-      className={`${sora.variable} ${spaceGrotesk.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${plusJakarta.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       {/* suppressHydrationWarning: extensiones del navegador inyectan

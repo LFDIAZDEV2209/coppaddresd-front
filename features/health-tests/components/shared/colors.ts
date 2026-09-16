@@ -8,24 +8,24 @@ import type { AlertSeverity, RiskLevel, TestState } from "../../types";
 export function riskColors(risk: RiskLevel) {
   const map: Record<RiskLevel, { bg: string; text: string; dot: string }> = {
     bajo: {
-      bg: "#10B9811A",
-      text: "#0F8A5F",
-      dot: "#10B981",
+      bg: "#E3F4EC",
+      text: "#0F7A5A",
+      dot: "#5FBF9B",
     },
     moderado: {
-      bg: "#F59E0B1A",
-      text: "#B45309",
-      dot: "#F59E0B",
+      bg: "#FBF0D9",
+      text: "#8A6100",
+      dot: "#E3B85C",
     },
     alto: {
-      bg: "#F973161A",
-      text: "#C2410C",
-      dot: "#F97316",
+      bg: "#FCE7DC",
+      text: "#A8531A",
+      dot: "#EDA57C",
     },
     critico: {
-      bg: "#EF4444",
-      text: "white",
-      dot: "white",
+      bg: "#FBE0E3",
+      text: "#B02A38",
+      dot: "#E58C97",
     },
     "sin-evaluar": {
       bg: "var(--muted)",
@@ -40,24 +40,24 @@ export function severityColors(severity: AlertSeverity) {
   const map: Record<AlertSeverity, { bg: string; text: string; dot: string }> =
     {
       critica: {
-        bg: "#EF4444",
-        text: "white",
-        dot: "white",
+        bg: "#FBE0E3",
+        text: "#B02A38",
+        dot: "#E58C97",
       },
       alta: {
-        bg: "#F973161A",
-        text: "#C2410C",
-        dot: "#F97316",
+        bg: "#FCE7DC",
+        text: "#A8531A",
+        dot: "#EDA57C",
       },
       media: {
-        bg: "#F59E0B1A",
-        text: "#B45309",
-        dot: "#F59E0B",
+        bg: "#FBF0D9",
+        text: "#8A6100",
+        dot: "#E3B85C",
       },
       baja: {
-        bg: "#0EA5E91A",
-        text: "#0369A1",
-        dot: "#0EA5E9",
+        bg: "#E4EEF8",
+        text: "#2C5F86",
+        dot: "#93B8D6",
       },
       informativa: {
         bg: "var(--muted)",
@@ -123,11 +123,11 @@ export function scoreBarColor(risk: RiskLevel): string {
 /** Color de acento por severidad para iconos/grafías. */
 export function severityHex(severity: AlertSeverity): string {
   const map: Record<AlertSeverity, string> = {
-    critica: "#EF4444",
-    alta: "#F97316",
-    media: "#F59E0B",
-    baja: "#0EA5E9",
-    informativa: "#64748B",
+    critica: "#E58C97",
+    alta: "#EDA57C",
+    media: "#E3B85C",
+    baja: "#93B8D6",
+    informativa: "#94A3B8",
   };
   return map[severity];
 }
@@ -135,10 +135,10 @@ export function severityHex(severity: AlertSeverity): string {
 /** Color de acento por nivel de riesgo para grafías. */
 export function riskHex(risk: RiskLevel): string {
   const map: Record<RiskLevel, string> = {
-    bajo: "#10B981",
-    moderado: "#F59E0B",
-    alto: "#F97316",
-    critico: "#EF4444",
+    bajo: "#5FBF9B",
+    moderado: "#E3B85C",
+    alto: "#EDA57C",
+    critico: "#E58C97",
     "sin-evaluar": "#94A3B8",
   };
   return map[risk];

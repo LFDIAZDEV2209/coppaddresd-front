@@ -19,15 +19,15 @@ import { StatSkeleton } from "../shared/module-chart-card";
 
 // Colores y etiquetas por severidad (claves del backend y variantes en español).
 const SEVERITY_FILL: Record<string, string> = {
-  critical: "#dc2626",
-  critica: "#dc2626",
-  alta: "#f97316",
-  high: "#f97316",
-  moderate: "#f59e0b",
-  media: "#f59e0b",
-  baja: "#10b981",
-  low: "#10b981",
-  informativa: "#64748b",
+  critical: "#E58C97",
+  critica: "#E58C97",
+  alta: "#EDA57C",
+  high: "#EDA57C",
+  moderate: "#E3B85C",
+  media: "#E3B85C",
+  baja: "#93B8D6",
+  low: "#93B8D6",
+  informativa: "#94A3B8",
 };
 
 const SEVERITY_LABEL: Record<string, string> = {

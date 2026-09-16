@@ -98,9 +98,9 @@ function statusColor(status: AlertStatus): string {
 }
 
 const PILL_ACCENT: Record<string, string> = {
-  destructive: "var(--destructive)",
-  warning: "var(--warning)",
-  info: "var(--info)",
+  destructive: "#B02A38",
+  warning: "#8A6100",
+  info: "#2C5F86",
   navy: "var(--foreground)",
 };
 
@@ -354,9 +354,9 @@ export function AlertsPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
+      <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-12">
         <div className="order-2 flex flex-col gap-5 xl:order-1 xl:col-span-8">
-          <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+          <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
               title={t("Gestión de alertas")}
               description={t("Filtra por severidad, estado o paciente")}
@@ -558,7 +558,7 @@ export function AlertsPage() {
                   onToggleAll={toggleAll}
                 />
                 {pageCount > 1 && (
-                  <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5">
+                  <div className="mt-auto flex items-center justify-between gap-3 border-t border-border px-4 py-2.5">
                     <span className="text-[11.5px] text-muted-foreground">
                       {t("Página")} {currentPage} {t("de")} {pageCount} · {filtered.length} {t("alertas")}
                     </span>
@@ -599,7 +599,7 @@ export function AlertsPage() {
               </>
             )}
 
-            <div className="flex items-center gap-2 border-t border-border px-5 py-3 text-[11.5px] text-muted-foreground">
+            <div className="mt-auto flex items-center gap-2 border-t border-border px-5 py-3 text-[11.5px] text-muted-foreground">
               <Stethoscope className="size-3.5" />
               {t("Las transiciones de estado se aplican en esta sesión (mock)")}
             </div>
@@ -608,7 +608,7 @@ export function AlertsPage() {
 
         <div className="order-1 flex flex-col gap-5 xl:order-2 xl:col-span-4">
           <AlertsInsightsRail />
-          <NotificationsTimeline />
+          <NotificationsTimeline className="flex-1" />
         </div>
       </div>
 
