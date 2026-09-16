@@ -130,11 +130,14 @@ export function NotificationsTimeline({
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="flex items-center gap-1.5 font-medium">
                     <span
-                      className="flex size-5 shrink-0 items-center justify-center rounded-md text-white"
-                      style={chipStyle(
-                        item.channel === "sms" ? tones.sky : tones.slate,
-                        20,
-                      )}
+                      className="flex size-5 shrink-0 items-center justify-center rounded-full"
+                      style={{
+                        backgroundColor: (
+                          item.channel === "sms" ? tones.sky : tones.slate
+                        ).soft,
+                        color: (item.channel === "sms" ? tones.sky : tones.slate)
+                          .softText,
+                      }}
                       aria-hidden
                     >
                       {item.channel === "sms" ? (

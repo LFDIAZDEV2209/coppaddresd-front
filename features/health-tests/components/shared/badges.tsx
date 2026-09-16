@@ -17,7 +17,12 @@ import {
   testStateTones,
   type Tone,
 } from "./colors";
-import { dotStyle, pillStyle } from "./depth";
+import { dotStyle, pillStyle, softPillStyle } from "./depth";
+
+/** Primera letra en mayúscula (critica → Critica). */
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 /**
  * Píldora de estado con relieve: relleno saturado en degradado, brillo
@@ -65,6 +70,37 @@ export function RiskBadge({
   );
 }
 
+/**
+ * Píldora tenue: fondo suave y texto oscuro. Para estados secundarios
+ * (entregas) donde la píldora saturada compite con la severidad.
+ */
+function SoftBadge({
+  tone,
+  label,
+  className,
+}: {
+  tone: Tone;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[11px] font-medium",
+        className,
+      )}
+      style={softPillStyle(tone)}
+    >
+      <span
+        className="size-1.5 shrink-0 rounded-full"
+        style={dotStyle(tone)}
+        aria-hidden
+      />
+      {label}
+    </span>
+  );
+}
+
 /** Badge de severidad de alerta. */
 export function SeverityBadge({
   severity,
@@ -78,7 +114,7 @@ export function SeverityBadge({
   return (
     <ToneBadge
       tone={severityTone(severity)}
-      label={label ?? severity}
+      label={label ?? capitalize(severity)}
       className={className}
     />
   );
@@ -123,7 +159,7 @@ export function DeliveryStatusBadge({
   className?: string;
 }) {
   const tone = notificationStatusTones[status] ?? notificationStatusTones.queued;
-  return <ToneBadge tone={tone} label={label ?? status} className={className} />;
+  return <SoftBadge tone={tone} label={label ?? status} className={className} />;
 }
 
 /** Icono semántico de severidad (para listas compactas). */

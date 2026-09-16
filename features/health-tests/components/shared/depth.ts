@@ -7,18 +7,27 @@ import type { Tone } from "./colors";
  * interior, sombra inferior y sombra exterior suave.
  */
 
-const INNER_HIGHLIGHT = "inset 0 1px 0 rgba(255, 255, 255, 0.38)";
-const INNER_SHADE = "inset 0 -1px 2px rgba(0, 0, 0, 0.18)";
-const OUTER_SHADOW = "0 1px 2px rgba(16, 24, 40, 0.18)";
+const INNER_HIGHLIGHT = "inset 0 1px 0 rgba(255, 255, 255, 0.42)";
+const INNER_SHADE = "inset 0 -1px 2px rgba(0, 0, 0, 0.12)";
+const OUTER_SHADOW = "0 1px 2px rgba(16, 24, 40, 0.16)";
 
 /** Relleno profundo con degradado vertical (píldoras de estado). */
 export function pillStyle(tone: Tone): CSSProperties {
   return {
     color: tone.text,
     backgroundColor: tone.deep,
-    backgroundImage: `linear-gradient(180deg, color-mix(in srgb, white 26%, ${tone.deep}) 0%, ${tone.deep} 58%, color-mix(in srgb, black 14%, ${tone.deep}) 100%)`,
+    backgroundImage: `linear-gradient(180deg, color-mix(in srgb, white 22%, ${tone.deep}) 0%, ${tone.deep} 62%, color-mix(in srgb, black 10%, ${tone.deep}) 100%)`,
     border: `1px solid ${tone.darker}`,
     boxShadow: `${INNER_HIGHLIGHT}, ${INNER_SHADE}, ${OUTER_SHADOW}`,
+  };
+}
+
+/** Píldora tenue para estados secundarios (fondo suave, texto oscuro). */
+export function softPillStyle(tone: Tone): CSSProperties {
+  return {
+    color: tone.softText,
+    backgroundColor: tone.soft,
+    border: `1px solid color-mix(in srgb, ${tone.darker} 28%, transparent)`,
   };
 }
 
@@ -38,9 +47,9 @@ export function chipStyle(tone: Tone, size = 26): CSSProperties {
     height: size,
     color: tone.text,
     backgroundColor: tone.deep,
-    backgroundImage: `linear-gradient(150deg, color-mix(in srgb, white 32%, ${tone.deep}) 0%, ${tone.deep} 55%, color-mix(in srgb, black 18%, ${tone.deep}) 100%)`,
+    backgroundImage: `linear-gradient(150deg, color-mix(in srgb, white 26%, ${tone.deep}) 0%, ${tone.deep} 58%, color-mix(in srgb, black 10%, ${tone.deep}) 100%)`,
     boxShadow:
-      "inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -2px 3px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(16, 24, 40, 0.22)",
+      "inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 2px rgba(0, 0, 0, 0.14), 0 2px 4px rgba(16, 24, 40, 0.18)",
   };
 }
 

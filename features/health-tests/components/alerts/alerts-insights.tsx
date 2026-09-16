@@ -134,13 +134,6 @@ export function AlertsInsightsRail({ days = 30 }: { days?: number }) {
 
   return (
     <section className="relative flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-      <span
-        aria-hidden
-        className="absolute inset-x-0 top-0 z-10 h-1"
-        style={{
-          backgroundImage: `linear-gradient(90deg, ${severityTones.critica.solid} 0%, ${severityTones.alta.solid} 35%, ${severityTones.media.solid} 68%, ${severityTones.baja.solid} 100%)`,
-        }}
-      />
       <header className="flex items-center gap-2 px-4 py-3">
         <span
           className="flex size-7 shrink-0 items-center justify-center rounded-lg"

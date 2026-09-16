@@ -61,7 +61,7 @@ import { AlertsInsightsRail } from "./alerts-insights";
 import { useAlerts } from "../../hooks/use-health-tests";
 import type { AlertSeverity, AlertStatus, HealthAlert } from "../../types";
 import { formatDate, initials } from "../../lib/format";
-import { carbon, severityHex, tones } from "../shared/colors";
+import { severityHex, tones } from "../shared/colors";
 import { chipStyle } from "../shared/depth";
 import { AlertStatusBadge, SeverityBadge } from "../shared/badges";
 import { StatSkeleton, TableSkeleton } from "../shared/module-chart-card";
@@ -83,12 +83,12 @@ const STATUS_NEXT: Record<AlertStatus, AlertStatus[]> = {
   cerrada: ["activa"],
 };
 
-const ALERT_PAGE_SIZE = 10;
+const ALERT_PAGE_SIZE = 12;
 
 const PILL_ACCENT = {
   destructive: tones.red,
   warning: tones.amber,
-  info: tones.sky,
+  info: tones.emerald,
   navy: tones.slate,
 } as const;
 
@@ -351,11 +351,6 @@ export function AlertsPage() {
       <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-12">
         <div className="order-2 flex flex-col gap-5 xl:order-1 xl:col-span-8">
           <section className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-            <span
-              aria-hidden
-              className="absolute inset-x-0 top-0 z-10 h-1"
-              style={{ backgroundColor: carbon.blue60 }}
-            />
             <SectionHeader
               title={t("Gestión de alertas")}
               description={t("Filtra por severidad, estado o paciente")}
