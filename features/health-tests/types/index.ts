@@ -367,3 +367,134 @@ export interface CoverageTrendPoint {
   coverage: number;
   completed: number;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notificaciones de alertas (SPEC A13)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Canal de entrega de una notificación. */
+export type NotificationChannel = "community" | "sms";
+
+/** Estado de entrega de una notificación. */
+export type NotificationStatus = "queued" | "sent" | "failed" | "skipped";
+
+export interface NotificationTemplate {
+  id: string;
+  code: string;
+  name: string;
+  channel: NotificationChannel;
+  severity: AlertSeverity | null;
+  testCategory: string | null;
+  indicatorCode: string | null;
+  subject: string | null;
+  /** Cuerpo con placeholders: {paciente}, {test}, {indicador}, {valor}... */
+  bodyTemplate: string;
+  isActive: boolean;
+  usageCount: number;
+  versionCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface NotificationTemplateVersion {
+  id: string;
+  templateId: string;
+  version: number;
+  name: string;
+  channel: NotificationChannel;
+  severity: AlertSeverity | null;
+  testCategory: string | null;
+  indicatorCode: string | null;
+  subject: string | null;
+  bodyTemplate: string;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface HealthNotification {
+  id: string;
+  alertId: string | null;
+  patientId: string | null;
+  patientName: string | null;
+  channel: NotificationChannel;
+  templateId: string | null;
+  templateName: string | null;
+  recipient: string;
+  renderedBody: string;
+  status: NotificationStatus;
+  provider: string;
+  providerMessageId: string | null;
+  error: string | null;
+  createdAt: string;
+  sentAt: string | null;
+}
+
+export interface NotifyAlertItemResult {
+  alertId: string | null;
+  patientId: string | null;
+  patientName: string | null;
+  channel: NotificationChannel;
+  status: NotificationStatus;
+  reason: string | null;
+  renderedBody: string;
+  recipient: string;
+}
+
+export interface NotifyAlertsResult {
+  requested: number;
+  sent: number;
+  skipped: number;
+  failed: number;
+  preview: boolean;
+  items: NotifyAlertItemResult[];
+}
+
+export interface NotificationChartPoint {
+  label: string;
+  value: number;
+}
+
+export interface NotificationCharts {
+  alertsBySeverity: Record<string, number>;
+  alertsByStatus: Record<string, number>;
+  alertsByIndicator: Record<string, number>;
+  alertsByDay: NotificationChartPoint[];
+  notificationsByChannel: Record<string, number>;
+  notificationsByStatus: Record<string, number>;
+  notificationsByDay: NotificationChartPoint[];
+}
+
+export interface NotificationTemplateInput {
+  name: string;
+  channel: NotificationChannel;
+  bodyTemplate: string;
+  severity?: AlertSeverity | null;
+  testCategory?: string | null;
+  indicatorCode?: string | null;
+  subject?: string | null;
+  isActive?: boolean;
+  note?: string | null;
+}
+
+export interface CreateNotificationTemplateInput extends NotificationTemplateInput {
+  code: string;
+}
+
+export interface NotifyAlertsInput {
+  alertIds: string[];
+  channels: NotificationChannel[];
+  templateId?: string | null;
+  bodyOverride?: string | null;
+  preview?: boolean;
+}
+
+export interface NotifyAlertsFilters {
+  alertId?: string;
+  patientId?: string;
+  channel?: NotificationChannel;
+  status?: NotificationStatus;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
