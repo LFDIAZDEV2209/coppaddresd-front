@@ -403,7 +403,7 @@
   "atención inmediata": "immediate attention",
   "Atención prioritaria": "Priority Care 365",
   "atendida": "addressed",
-  "Atendida": "addressed",
+  "Atendida": "Handled",
   "Atendidas": "Handled",
   "atienden a este paciente": "attend this patient",
   "Atrás": "Back",
@@ -978,7 +978,7 @@
   "Destacados": "Featured",
   "Destacar": "Feature",
   "Destacar publicación": "Feature post",
-  "Destinatario": "Destinatario",
+  "Destinatario": "Recipient",
   "Destinatarios": "Recipients",
   "Destino": "Destino",
   "Detalle": "Details",
@@ -3521,5 +3521,7 @@
   "XP total": "Total XP",
   "y todas sus asignaciones. Esta acción no se puede deshacer.": "and all their assignments. This action cannot be undone.",
   "Ya empezaron sus evaluaciones": "They have started their evaluations",
-  "Ya reposteaste esta publicación": "You already reposted this post"
+  "Ya reposteaste esta publicación": "You already reposted this post",
+  "Filtros": "Filters",
+  "Informativa": "Informational"
 }

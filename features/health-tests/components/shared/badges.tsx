@@ -2,6 +2,9 @@
 
 import { ShieldAlert, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+import { useT } from "@/providers/i18n-provider";
+
 import type {
   AlertSeverity,
   AlertStatus,
@@ -17,11 +20,65 @@ import {
   testStateTones,
   type Tone,
 } from "./colors";
-import { dotStyle, flatPillStyle, neonDotStyle, softPillStyle } from "./depth";
+import {
+  dotStyle,
+  flatPillStyle,
+  neonDotStyle,
+  softPillStyle,
+  toneChipStyle,
+} from "./depth";
 
 /** Primera letra en mayúscula (critica → Critica). */
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/** Claves i18n de severidad (el texto en español es la propia clave). */
+const SEVERITY_LABEL_KEYS: Record<AlertSeverity, string> = {
+  critica: "Crítica",
+  alta: "Alta",
+  media: "Media",
+  baja: "Baja",
+  informativa: "Informativa",
+};
+
+/** Claves i18n del estado de gestión de una alerta. */
+const ALERT_STATUS_LABEL_KEYS: Record<AlertStatus, string> = {
+  activa: "Activa",
+  "en-revision": "En revisión",
+  atendida: "Atendida",
+  cerrada: "Cerrada",
+};
+
+/**
+ * Chip de tono suave (fondo tenue, borde del color y punto brillante): mismo
+ * lenguaje visual que los chips de "Alertas por estado" del rail.
+ */
+function ToneChip({
+  tone,
+  label,
+  className,
+}: {
+  tone: Tone;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium",
+        className,
+      )}
+      style={toneChipStyle(tone)}
+    >
+      <span
+        className="size-2 shrink-0 rounded-full"
+        style={dotStyle(tone)}
+        aria-hidden
+      />
+      {label}
+    </span>
+  );
 }
 
 /**
@@ -101,7 +158,7 @@ function SoftBadge({
   );
 }
 
-/** Badge de severidad de alerta. */
+/** Badge de severidad de alerta (chip suave, bilingüe). */
 export function SeverityBadge({
   severity,
   label,
@@ -111,10 +168,11 @@ export function SeverityBadge({
   label?: string;
   className?: string;
 }) {
+  const t = useT();
   return (
-    <ToneBadge
+    <ToneChip
       tone={severityTone(severity)}
-      label={label ?? capitalize(severity)}
+      label={label ?? t(SEVERITY_LABEL_KEYS[severity] ?? capitalize(severity))}
       className={className}
     />
   );
@@ -134,7 +192,7 @@ export function TestStateBadge({
   return <ToneBadge tone={tone} label={label ?? state} className={className} />;
 }
 
-/** Badge de estado de gestión de una alerta. */
+/** Badge de estado de gestión de una alerta (chip suave, bilingüe). */
 export function AlertStatusBadge({
   status,
   label,
@@ -144,8 +202,15 @@ export function AlertStatusBadge({
   label?: string;
   className?: string;
 }) {
+  const t = useT();
   const tone = alertStatusTones[status] ?? alertStatusTones.cerrada;
-  return <ToneBadge tone={tone} label={label ?? status} className={className} />;
+  return (
+    <ToneChip
+      tone={tone}
+      label={label ?? t(ALERT_STATUS_LABEL_KEYS[status] ?? status)}
+      className={className}
+    />
+  );
 }
 
 /** Badge de estado de entrega de una notificación. */

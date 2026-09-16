@@ -49,6 +49,18 @@ export function softPillStyle(tone: Tone): CSSProperties {
   };
 }
 
+/**
+ * Chip de tono suave con borde sólido: el lenguaje visual de "Alertas por
+ * estado" del rail (fondo tenue + borde del color + texto oscuro legible).
+ */
+export function toneChipStyle(tone: Tone): CSSProperties {
+  return {
+    color: tone.softText,
+    backgroundColor: tone.soft,
+    borderColor: tone.solid,
+  };
+}
+
 /** Punto brillante (brillo radial + anillo interior). */
 export function dotStyle(tone: Tone): CSSProperties {
   return {

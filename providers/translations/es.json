@@ -3207,5 +3207,9 @@
   "Escribe el mensaje con datos entre corchetes": "Escribe el mensaje con datos entre corchetes",
   "Paciente de ejemplo": "Paciente de ejemplo",
   "Sin dato para": "Sin dato para",
-  "Sin paciente de ejemplo": "Sin paciente de ejemplo"
+  "Sin paciente de ejemplo": "Sin paciente de ejemplo",
+  "Filtros": "Filtros",
+  "Informativa": "Informativa",
+  "Atendida": "Atendida",
+  "Cerrada": "Cerrada"
 }

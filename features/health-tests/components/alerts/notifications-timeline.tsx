@@ -14,11 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useNotifications } from "../../hooks/use-notifications";
+import { useNotifications, useNotificationCharts } from "../../hooks/use-notifications";
 import type { NotificationStatus } from "../../types";
 import { formatDate } from "../../lib/format";
 import { notificationStatusTones, tones } from "../shared/colors";
-import { chipStyle, dotStyle } from "../shared/depth";
+import { chipStyle, dotStyle, toneChipStyle } from "../shared/depth";
 import { DeliveryStatusBadge } from "../shared/badges";
 import { TableSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
@@ -38,7 +38,78 @@ function statusDotStyle(status: NotificationStatus) {
   );
 }
 
-const RECENT_SIZE = 4;
+const RECENT_SIZE = 3;
+
+/** Etiquetas de canal del resumen del historial. */
+const CHANNEL_LABELS: Record<string, string> = {
+  community: "Comunidad",
+  sms: "SMS",
+};
+
+/**
+ * Resumen agregado del periodo (30 días) que encabeza el historial completo:
+ * totales por canal y por estado de entrega.
+ */
+function HistorySummary() {
+  const t = useT();
+  const { data } = useNotificationCharts(30);
+
+  if (!data) {
+    return null;
+  }
+
+  const channels = Object.entries(data.notificationsByChannel ?? {}).filter(
+    ([, value]) => value > 0,
+  );
+  const statuses = Object.entries(data.notificationsByStatus ?? {}).filter(
+    ([, value]) => value > 0,
+  );
+
+  if (channels.length === 0 && statuses.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-border bg-muted/40 px-4 py-3">
+      {channels.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("Canal")}
+          </span>
+          {channels.map(([key, value]) => (
+            <span
+              key={key}
+              className="rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
+              style={toneChipStyle(key === "sms" ? tones.sky : tones.slate)}
+            >
+              {t(CHANNEL_LABELS[key] ?? key)} · {value}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {statuses.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("Estado")}
+          </span>
+          {statuses.map(([key, value]) => (
+            <span
+              key={key}
+              className="rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
+              style={toneChipStyle(
+                notificationStatusTones[key as NotificationStatus] ??
+                  notificationStatusTones.queued,
+              )}
+            >
+              {t(STATUS_LABELS[key as NotificationStatus] ?? key)} · {value}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * Actividad reciente del rail: últimas entregas en formato línea de tiempo.
@@ -176,14 +247,17 @@ export function NotificationsTimeline({
       )}
 
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <DialogContent className="sm:max-w-5xl">
+        <DialogContent className="flex max-h-[88vh] flex-col gap-4 overflow-hidden sm:max-w-6xl">
           <DialogHeader>
             <DialogTitle>{t("Notificaciones enviadas")}</DialogTitle>
             <DialogDescription>
               {t("Historial de entregas por canal y estado")}
             </DialogDescription>
           </DialogHeader>
-          <NotificationsHistory />
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
+            <HistorySummary />
+            <NotificationsHistory variant="dialog" />
+          </div>
         </DialogContent>
       </Dialog>
     </section>

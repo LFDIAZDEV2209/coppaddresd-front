@@ -762,10 +762,7 @@ function AlertsTable({
                   {formatDate(alert.createdAt)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  <AlertStatusBadge
-                    status={alert.status}
-                    label={STATUS_LABELS[alert.status]}
-                  />
+                  <AlertStatusBadge status={alert.status} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <div className="flex items-center justify-end gap-1.5">
