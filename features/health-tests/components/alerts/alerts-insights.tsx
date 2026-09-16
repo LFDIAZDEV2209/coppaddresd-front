@@ -16,7 +16,7 @@ import { useT } from "@/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 import { useNotificationCharts } from "../../hooks/use-notifications";
 import { alertStatusTones, severityTones, tones } from "../shared/colors";
-import { barStyle, chipStyle, dotStyle } from "../shared/depth";
+import { chipStyle, dotStyle } from "../shared/depth";
 import { ModuleErrorState } from "../shared/module-states";
 import { StatSkeleton } from "../shared/module-chart-card";
 
@@ -103,14 +103,6 @@ export function AlertsInsightsRail({
     () => toPoints(data?.alertsByStatus, STATUS_LABEL),
     [data?.alertsByStatus]
   );
-  const indicators = useMemo(
-    () =>
-      Object.entries(data?.alertsByIndicator ?? {})
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([label, value]) => ({ label, value })),
-    [data?.alertsByIndicator]
-  );
   const trend = useMemo(
     () =>
       (data?.alertsByDay ?? []).map((point) => ({
@@ -121,7 +113,6 @@ export function AlertsInsightsRail({
   );
 
   const severityTotal = severities.reduce((acc, item) => acc + item.value, 0);
-  const indicatorMax = indicators[0]?.value ?? 1;
 
   if (loading && !data) {
     return (
@@ -226,42 +217,6 @@ export function AlertsInsightsRail({
               </ul>
             </div>
           </>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2 px-4 py-3">
-        <h3 className="text-xs font-medium text-muted-foreground">
-          {t("Indicadores con más alertas")}
-        </h3>
-
-        {indicators.length === 0 ? (
-          <p className="py-4 text-center text-xs text-muted-foreground">
-            {t("Sin actividad en el periodo")}
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-2.5">
-            {indicators.map((item) => (
-              <li key={item.label} className="flex flex-col gap-1">
-                <div className="flex items-baseline justify-between gap-2 text-xs">
-                  <span className="truncate text-muted-foreground">
-                    {item.label}
-                  </span>
-                  <span className="font-semibold tabular-nums">
-                    {item.value}
-                  </span>
-                </div>
-                <span className="h-1.5 overflow-hidden rounded-full bg-muted">
-                  <span
-                    className="block h-full rounded-full"
-                    style={barStyle(
-                      tones.sky,
-                      Math.max(6, (item.value / indicatorMax) * 100),
-                    )}
-                  />
-                </span>
-              </li>
-            ))}
-          </ul>
         )}
       </div>
 

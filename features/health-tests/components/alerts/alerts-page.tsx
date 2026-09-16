@@ -83,7 +83,7 @@ const STATUS_NEXT: Record<AlertStatus, AlertStatus[]> = {
   cerrada: ["activa"],
 };
 
-const ALERT_PAGE_SIZE = 14;
+const ALERT_PAGE_SIZE = 12;
 
 const PILL_ACCENT = {
   destructive: tones.red,
