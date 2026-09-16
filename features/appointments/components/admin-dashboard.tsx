@@ -22,6 +22,7 @@ import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   RangeToggle,
@@ -35,6 +36,7 @@ import { AppointmentsTrendChart } from "./dashboard/appointments-trend-chart";
 import { StatusDistributionChart } from "./dashboard/status-distribution-chart";
 import { ProfessionalActivityChart } from "./dashboard/professional-activity-chart";
 import { HourlyDistributionChart } from "./dashboard/hourly-distribution-chart";
+import { AppointmentsGeoMap } from "./dashboard/appointments-geo-map";
 import { UpcomingAppointments } from "./dashboard/upcoming-appointments";
 import { QuickActions, type QuickAction } from "./dashboard/quick-actions";
 
@@ -68,26 +70,26 @@ export function AdminDashboard() {
     {
       href: "/appointments/admin/citas",
       icon: CalendarDays,
-      label: t('Citas'),
-      description: t('Todas las citas con filtros'),
+      label: t("Citas"),
+      description: t("Todas las citas con filtros"),
     },
     {
       href: "/appointments/admin/solicitudes",
       icon: Inbox,
-      label: t('Solicitudes'),
-      description: t('Solicitudes de los pacientes'),
+      label: t("Solicitudes"),
+      description: t("Solicitudes de los pacientes"),
     },
     {
       href: "/appointments/admin/profesionales",
       icon: Users,
-      label: t('Profesionales'),
-      description: t('Catálogo de profesionales clínicos'),
+      label: t("Profesionales"),
+      description: t("Catálogo de profesionales clínicos"),
     },
     {
       href: "/appointments/admin/sesiones",
       icon: Video,
-      label: t('Sesiones'),
-      description: t('Sesiones de video realizadas'),
+      label: t("Sesiones"),
+      description: t("Sesiones de video realizadas"),
     },
   ];
 
@@ -107,9 +109,12 @@ export function AdminDashboard() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title={t('Citas · Administración')}
-        description={t('Resumen operativo del módulo de citas')}
+        title={t("Citas · Administración")}
+        description={t("Resumen operativo del módulo de citas")}
         icon={BarChart3}
+        leadingVisual={
+          <AnimatedIcon name="medical-kit" size={40} motion={false} />
+        }
         actions={<RangeToggle value={range} onValueChange={setRange} />}
       />
 
@@ -125,54 +130,79 @@ export function AdminDashboard() {
       {/* Stats cards en UNA línea (xl) — los 6 KPIs del operador. */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-6">
         <StatCard
-          label={t('Citas de hoy')}
+          filled
+          label={t("Citas de hoy")}
           value={kpis ? String(kpis.appointmentsToday) : "—"}
           icon={CalendarCheck}
           variant="primary"
           context={
-            summary ? t('{count} sesiones activas', { count: String(summary.activeSessions) }) : undefined
+            summary
+              ? t("{count} sesiones activas", {
+                  count: String(summary.activeSessions),
+                })
+              : undefined
           }
         />
         <StatCard
-          label={t('Citas en el rango')}
+          label={t("Citas en el rango")}
           value={kpis ? String(kpis.totalAppointments) : "—"}
           icon={CalendarDays}
           variant="info"
-          context={kpis ? t('{count} pacientes únicos', { count: String(kpis.uniquePatients) }) : undefined}
+          context={
+            kpis
+              ? t("{count} pacientes únicos", {
+                  count: String(kpis.uniquePatients),
+                })
+              : undefined
+          }
         />
         <StatCard
-          label={t('Próximos 7 días')}
+          label={t("Próximos 7 días")}
           value={kpis ? String(kpis.upcomingAppointments) : "—"}
           icon={CalendarPlus}
           variant="success"
-          context={kpis ? t('{count} confirmadas pendientes', { count: String(kpis.pending) }) : undefined}
+          context={
+            kpis
+              ? t("{count} confirmadas pendientes", {
+                  count: String(kpis.pending),
+                })
+              : undefined
+          }
         />
         <StatCard
-          label={t('Completadas')}
+          label={t("Completadas")}
           value={kpis ? String(kpis.completed) : "—"}
           icon={Clock}
           variant="success"
           context={
             completedRate !== null
-              ? t('Tasa de finalización {rate}%', { rate: String(completedRate) })
+              ? t("Tasa de finalización {rate}%", {
+                  rate: String(completedRate),
+                })
               : undefined
           }
         />
         <StatCard
-          label={t('Canceladas')}
+          label={t("Canceladas")}
           value={kpis ? String(kpis.cancelled) : "—"}
           icon={CalendarX}
           variant="destructive"
-          context={kpis ? t('{count} no asistieron', { count: String(kpis.noShow) }) : undefined}
+          context={
+            kpis
+              ? t("{count} no asistieron", { count: String(kpis.noShow) })
+              : undefined
+          }
         />
         <StatCard
-          label={t('Profesionales activos')}
+          label={t("Profesionales activos")}
           value={kpis ? String(kpis.activeProfessionals) : "—"}
           icon={Stethoscope}
           variant="warning"
           context={
             summary
-              ? t('{count} solicitudes pendientes', { count: String(summary.requestsPending) })
+              ? t("{count} solicitudes pendientes", {
+                  count: String(summary.requestsPending),
+                })
               : undefined
           }
         />
@@ -181,8 +211,8 @@ export function AdminDashboard() {
       {/* Gráficas: tendencia + distribución por estado en la fila principal. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <DashboardChartCard
-          title={t('Actividad de citas')}
-          description={`${t('Serie temporal en el rango seleccionado')} (${rangeOptions.find((o) => o.key === range)!.label})`}
+          title={t("Actividad de citas")}
+          description={`${t("Serie temporal en el rango seleccionado")} (${rangeOptions.find((o) => o.key === range)!.label})`}
           icon={Activity}
           className="xl:col-span-2"
         >
@@ -193,8 +223,8 @@ export function AdminDashboard() {
         </DashboardChartCard>
 
         <DashboardChartCard
-          title={t('Distribución por estado')}
-          description={t('Citas agrupadas por estado en el rango')}
+          title={t("Distribución por estado")}
+          description={t("Citas agrupadas por estado en el rango")}
           icon={PieChart}
         >
           <StatusDistributionChart
@@ -207,8 +237,10 @@ export function AdminDashboard() {
       {/* Fila secundaria: actividad por profesional + franjas horarias. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <DashboardChartCard
-          title={t('Actividad por profesional')}
-          description={t('Citas totales y completadas por profesional en el rango')}
+          title={t("Actividad por profesional")}
+          description={t(
+            "Citas totales y completadas por profesional en el rango",
+          )}
           icon={Users}
         >
           <ProfessionalActivityChart
@@ -218,8 +250,8 @@ export function AdminDashboard() {
         </DashboardChartCard>
 
         <DashboardChartCard
-          title={t('Franjas de mayor demanda')}
-          description={t('Citas por hora del día en el rango')}
+          title={t("Franjas de mayor demanda")}
+          description={t("Citas por hora del día en el rango")}
           icon={Clock}
         >
           <HourlyDistributionChart
@@ -229,19 +261,22 @@ export function AdminDashboard() {
         </DashboardChartCard>
       </div>
 
+      {/* Mapa de calor por estado del paciente en el rango. */}
+      <AppointmentsGeoMap states={analytics?.states ?? []} loading={loading} />
+
       {/* Próximas citas globales + accesos rápidos. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card xl:col-span-2">
           <SectionHeader
-            title={t('Próximas citas')}
-            description={t('Próximas citas en el sistema')}
+            title={t("Próximas citas")}
+            description={t("Próximas citas en el sistema")}
             icon={CalendarDays}
             actions={
               <Link
                 href="/appointments/admin/citas"
                 className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-white/20"
               >
-                {t('Ver todas')}
+                {t("Ver todas")}
                 <ArrowRight data-icon="inline-end" />
               </Link>
             }
@@ -250,7 +285,7 @@ export function AdminDashboard() {
             <UpcomingAppointments
               appointments={analytics?.upcomingAppointments ?? []}
               loading={loading}
-              emptyMessage={t('Sin citas próximas en el sistema')}
+              emptyMessage={t("Sin citas próximas en el sistema")}
               hrefBase="/appointments/citas"
             />
           </div>
@@ -258,8 +293,8 @@ export function AdminDashboard() {
 
         <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
           <SectionHeader
-            title={t('Accesos rápidos')}
-            description={t('Accesos directos del módulo')}
+            title={t("Accesos rápidos")}
+            description={t("Accesos directos del módulo")}
             icon={UserCog}
           />
           <div className="p-5 pt-4">

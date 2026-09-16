@@ -27,7 +27,7 @@ export function DashboardChartCard({
   return (
     <section
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border border-border bg-card",
+        "flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow duration-200 hover:shadow-md",
         className,
       )}
     >
