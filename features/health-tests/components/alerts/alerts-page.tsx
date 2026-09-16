@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Eye,
   Filter,
+  MoreHorizontal,
   Search,
   Send,
   ShieldAlert,
@@ -270,37 +271,32 @@ export function AlertsPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       {header}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <StatusPill
-          icon={ShieldAlert}
-          label={t("Activas")}
-          value={counts.activa}
-          tone="destructive"
-        />
-        <StatusPill
-          icon={Eye}
-          label={t("En revisión")}
-          value={counts["en-revision"]}
-          tone="warning"
-        />
-        <StatusPill
-          icon={CheckCircle2}
-          label={t("Atendidas")}
-          value={counts.atendida}
-          tone="info"
-        />
-        <StatusPill
-          icon={XCircle}
-          label={t("Cerradas")}
-          value={counts.cerrada}
-          tone="navy"
-        />
-      </div>
-
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Filter className="size-4" aria-hidden />
-          {t("Gestión de alertas")}
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill
+            icon={ShieldAlert}
+            label={t("Activas")}
+            value={counts.activa}
+            tone="destructive"
+          />
+          <StatusPill
+            icon={Eye}
+            label={t("En revisión")}
+            value={counts["en-revision"]}
+            tone="warning"
+          />
+          <StatusPill
+            icon={CheckCircle2}
+            label={t("Atendidas")}
+            value={counts.atendida}
+            tone="info"
+          />
+          <StatusPill
+            icon={XCircle}
+            label={t("Cerradas")}
+            value={counts.cerrada}
+            tone="navy"
+          />
         </div>
 
         <Button
@@ -322,8 +318,8 @@ export function AlertsPage() {
               description={t("Filtra por severidad, estado o paciente")}
               icon={Filter}
               variant="primary"
-              actions={
-                <div className="flex items-center gap-2">
+            actions={
+              <div className="flex flex-wrap items-center justify-end gap-2">
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/70" />
                     <Input
@@ -337,21 +333,29 @@ export function AlertsPage() {
                   <Select
                     value={severity}
                     onValueChange={(value) => setSeverity(value as AlertSeverity | "all")}
+                    items={{
+                      all: t("Toda severidad"),
+                      critica: t("Crítica"),
+                      alta: t("Alta"),
+                      media: t("Media"),
+                      baja: t("Baja"),
+                    }}
                   >
                     <SelectTrigger className="h-8 w-36 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("Toda severidad")}</SelectItem>
-                      <SelectItem value="critica">critica</SelectItem>
-                      <SelectItem value="alta">alta</SelectItem>
-                      <SelectItem value="media">media</SelectItem>
-                      <SelectItem value="baja">baja</SelectItem>
+                      <SelectItem value="critica">{t("Crítica")}</SelectItem>
+                      <SelectItem value="alta">{t("Alta")}</SelectItem>
+                      <SelectItem value="media">{t("Media")}</SelectItem>
+                      <SelectItem value="baja">{t("Baja")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select
                     value={status}
                     onValueChange={(value) => setStatus(value as AlertStatus | "all")}
+                    items={{ all: t("Todo estado"), ...STATUS_LABELS }}
                   >
                     <SelectTrigger className="h-8 w-36 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
                       <SelectValue />
@@ -368,6 +372,10 @@ export function AlertsPage() {
                   <Select
                     value={indicator}
                     onValueChange={(value) => setIndicator(value ?? "all")}
+                    items={{
+                      all: t("Todo indicador"),
+                      ...Object.fromEntries(indicators.map((item) => [item, item])),
+                    }}
                   >
                     <SelectTrigger className="h-8 w-40 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
                       <SelectValue />
@@ -381,68 +389,64 @@ export function AlertsPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              }
-            />
-
-            <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-2.5">
-              <span className="text-[11.5px] font-medium text-muted-foreground">
-                {t("Rango de fechas")}
-              </span>
-              <Input
-                type="date"
-                value={from}
-                onChange={(event) => setFrom(event.target.value)}
-                aria-label={t("Desde")}
-                className="h-8 w-36"
-              />
-              <Input
-                type="date"
-                value={to}
-                onChange={(event) => setTo(event.target.value)}
-                aria-label={t("Hasta")}
-                className="h-8 w-36"
-              />
-              {(from || to) && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setFrom("");
-                    setTo("");
-                  }}
-                >
-                  {t("Limpiar fechas")}
-                </Button>
-              )}
-
-              <div className="ml-auto flex items-center gap-2">
-                {selectedAlerts.length > 0 && (
-                  <>
-                    <span className="text-[11.5px] text-muted-foreground">
-                      {selectedAlerts.length} {t("seleccionadas")}
-                    </span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => setNotifyOpen(true)}
-                    >
-                      <Send className="size-3.5" />
-                      {t("Notificar")} {selectedAlerts.length}
-                    </Button>
+                  <span className="ml-1 text-[11.5px] font-medium text-white/80">
+                    {t("Rango de fechas")}
+                  </span>
+                  <Input
+                    type="date"
+                    value={from}
+                    onChange={(event) => setFrom(event.target.value)}
+                    aria-label={t("Desde")}
+                    className="h-8 w-36 border-white/25 bg-white/15 text-white [&>svg]:text-white/70"
+                  />
+                  <Input
+                    type="date"
+                    value={to}
+                    onChange={(event) => setTo(event.target.value)}
+                    aria-label={t("Hasta")}
+                    className="h-8 w-36 border-white/25 bg-white/15 text-white [&>svg]:text-white/70"
+                  />
+                  {(from || to) && (
                     <Button
                       type="button"
                       size="sm"
                       variant="ghost"
-                      onClick={() => setSelectedIds([])}
+                      className="text-white hover:bg-white/15 hover:text-white"
+                      onClick={() => {
+                        setFrom("");
+                        setTo("");
+                      }}
                     >
-                      {t("Quitar selección")}
+                      {t("Limpiar fechas")}
                     </Button>
-                  </>
-                )}
+                  )}
+                </div>
+              }
+            />
+
+            {selectedAlerts.length > 0 && (
+              <div className="flex flex-wrap items-center justify-end gap-2 border-b border-border px-5 py-2.5">
+                <span className="text-[11.5px] text-muted-foreground">
+                  {selectedAlerts.length} {t("seleccionadas")}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setNotifyOpen(true)}
+                >
+                  <Send className="size-3.5" />
+                  {t("Notificar")} {selectedAlerts.length}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setSelectedIds([])}
+                >
+                  {t("Quitar selección")}
+                </Button>
               </div>
-            </div>
+            )}
 
             {filtered.length === 0 ? (
               <ModuleEmptyState
@@ -516,7 +520,7 @@ function AlertsTable({
 
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-[1100px]">
+      <Table className="w-full">
         <TableHeader>
           <TableRow>
             <TableHead className="w-10">
@@ -529,12 +533,11 @@ function AlertsTable({
               />
             </TableHead>
             <TableHead>{t("Paciente")}</TableHead>
-            <TableHead>{t("Indicador")}</TableHead>
-            <TableHead>{t("Resultado")}</TableHead>
-            <TableHead>{t("Severidad")}</TableHead>
-            <TableHead>{t("Fecha")}</TableHead>
-            <TableHead>{t("Estado")}</TableHead>
-            <TableHead className="text-right">{t("Acciones")}</TableHead>
+            <TableHead className="whitespace-nowrap">{t("Resultado")}</TableHead>
+            <TableHead className="whitespace-nowrap">{t("Severidad")}</TableHead>
+            <TableHead className="whitespace-nowrap">{t("Fecha")}</TableHead>
+            <TableHead className="whitespace-nowrap">{t("Estado")}</TableHead>
+            <TableHead className="whitespace-nowrap text-right">{t("Acciones")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -557,6 +560,7 @@ function AlertsTable({
                   <Link
                     href={`/health-tests/pacientes/${alert.patientId}`}
                     className="flex items-center gap-2.5"
+                    title={alert.message}
                   >
                     <span
                       className="flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-medium"
@@ -577,26 +581,16 @@ function AlertsTable({
                     </span>
                   </Link>
                 </TableCell>
-                <TableCell>
-                  <div className="max-w-[240px]">
-                    <p className="truncate text-[12.5px] font-medium text-foreground">
-                      {alert.indicatorName}
-                    </p>
-                    <p className="truncate text-[11px] text-muted-foreground">
-                      {alert.message}
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell className="text-[12.5px] text-foreground">
+                <TableCell className="whitespace-nowrap text-[12.5px] text-foreground">
                   {alert.resultValue ? `${alert.resultValue}%` : "—"}
                 </TableCell>
                 <TableCell>
                   <SeverityBadge severity={alert.severity} />
                 </TableCell>
-                <TableCell className="text-[12px] text-muted-foreground">
+                <TableCell className="whitespace-nowrap text-[12px] text-muted-foreground">
                   {formatDate(alert.createdAt)}
                 </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <span
                     className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
                     style={{
@@ -607,16 +601,17 @@ function AlertsTable({
                     {STATUS_LABELS[alert.status]}
                   </span>
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-2">
+                <TableCell className="whitespace-nowrap">
+                  <div className="flex items-center justify-end gap-1.5">
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       nativeButton={false}
+                      aria-label={t("Ver perfil del paciente")}
+                      title={t("Perfil")}
                       render={<Link href={`/health-tests/pacientes/${alert.patientId}`} />}
                     >
                       <Eye className="size-3.5" />
-                      {t("Perfil")}
                     </Button>
                     {canReview && (
                       <DropdownMenu>
@@ -624,12 +619,12 @@ function AlertsTable({
                           render={
                             <Button
                               variant="outline"
-                              size="sm"
+                              size="icon-sm"
                               aria-label={t("Cambiar estado de la alerta")}
                             />
                           }
                         >
-                          {t("Estado")}
+                          <MoreHorizontal className="size-3.5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>{t("Cambiar estado")}</DropdownMenuLabel>

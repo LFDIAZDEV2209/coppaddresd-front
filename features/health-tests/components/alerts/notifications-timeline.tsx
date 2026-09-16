@@ -99,7 +99,7 @@ export function NotificationsTimeline() {
                   className={`size-2 rounded-full ${STATUS_DOT[item.status]}`}
                 />
               </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="flex w-full min-w-0 max-w-3xl flex-1 flex-col gap-1.5">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="flex items-center gap-1.5 font-medium">
                     {item.channel === "sms" ? (

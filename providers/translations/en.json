@@ -3457,5 +3457,10 @@
   "Actividad de notificaciones": "Notification activity",
   "Pulso de riesgo": "Risk pulse",
   "Tendencia (30 días)": "Trend (30 days)",
-  "Ver historial completo": "View full history"
+  "Ver historial completo": "View full history",
+  "Ver perfil del paciente": "View patient profile",
+  "Crítica": "Critical",
+  "Alta": "High",
+  "Media": "Moderate",
+  "Baja": "Low"
 }
