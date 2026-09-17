@@ -8,9 +8,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  History,
   MessageSquare,
   Search,
   Send,
+  ShieldAlert,
   Smartphone,
   TriangleAlert,
   XCircle,
@@ -32,7 +34,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { formatDate } from "../../lib/format";
 import { useAlerts } from "../../hooks/use-health-tests";
-import { useNotificationTemplates } from "../../hooks/use-notifications";
+import { useNotificationTemplates, useNotifications } from "../../hooks/use-notifications";
 import {
   NOTIFICATION_PLACEHOLDERS,
   notificationsApi,
@@ -47,7 +49,7 @@ import type {
   NotifyAlertItemResult,
   PatientProfile,
 } from "../../types";
-import { SeverityBadge } from "../shared/badges";
+import { DeliveryStatusBadge, SeverityBadge } from "../shared/badges";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
 import { StatSkeleton, TableSkeleton } from "../shared/module-chart-card";
 
@@ -113,6 +115,7 @@ export function NotifyPage() {
   const t = useT();
   const { data, loading, error, reload } = useAlerts();
   const { data: templates } = useNotificationTemplates({ isActive: true });
+  const recent = useNotifications({ page: 1, pageSize: 5 });
 
   const [step, setStep] = useState<WizardStep>(1);
   const [alertIds, setAlertIds] = useState<string[]>(readStoredSelection);
@@ -781,6 +784,104 @@ export function NotifyPage() {
             </div>
           </section>
 
+          <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <SectionHeader
+              title={t("Alertas incluidas")}
+              description={`${selectedAlerts.length} ${t("pacientes")}`}
+              icon={ShieldAlert}
+              variant="primary"
+            />
+            <div className="flex flex-col gap-2 p-4">
+              {selectedAlerts.length === 0 ? (
+                <span className="text-[11.5px] text-muted-foreground">
+                  {t("Selecciona alertas en el paso 1.")}
+                </span>
+              ) : (
+                <>
+                  <ul className="flex flex-col divide-y divide-border">
+                    {selectedAlerts.slice(0, 5).map((alert) => {
+                      const patient = patients.find((item) => item.id === alert.patientId);
+                      return (
+                        <li
+                          key={alert.id}
+                          className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0"
+                        >
+                          <span className="flex min-w-0 flex-col">
+                            <span className="truncate text-[12.5px] font-medium text-foreground">
+                              {patient
+                                ? `${patient.firstName} ${patient.lastName}`.trim()
+                                : t("Paciente sin nombre")}
+                            </span>
+                            <span className="truncate text-[11px] text-muted-foreground">
+                              {alert.indicatorName} · {formatDate(alert.createdAt)}
+                            </span>
+                          </span>
+                          <SeverityBadge severity={alert.severity} />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {selectedAlerts.length > 5 && (
+                    <span className="text-[11px] text-muted-foreground">
+                      +{selectedAlerts.length - 5} {t("más")}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
+
+          <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <SectionHeader
+              title={t("Últimos envíos")}
+              description={t("Actividad reciente")}
+              icon={History}
+              variant="primary"
+            />
+            <div className="flex flex-col gap-2 p-4">
+              {recent.loading && !recent.data ? (
+                <TableSkeleton rows={3} />
+              ) : recent.data && recent.data.items.length > 0 ? (
+                <ul className="flex flex-col divide-y divide-border">
+                  {recent.data.items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center justify-between gap-2 py-2 first:pt-0 last:pb-0"
+                    >
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-[12.5px] font-medium text-foreground">
+                          {item.patientName ?? "—"}
+                        </span>
+                        <span className="truncate text-[11px] text-muted-foreground">
+                          {item.channel === "sms" ? "SMS" : t("Comunidad")} ·{" "}
+                          {formatDate(item.sentAt ?? item.createdAt)}
+                        </span>
+                      </span>
+                      <DeliveryStatusBadge
+                        status={item.status}
+                        label={t(RESULT_META[item.status].label)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="text-[11.5px] text-muted-foreground">
+                  {t("Aún no se han enviado notificaciones a pacientes.")}
+                </span>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-1 w-fit"
+                nativeButton={false}
+                render={<Link href="/health-tests/alertas/notificaciones" />}
+              >
+                <History className="size-3.5" />
+                {t("Ver historial completo")}
+              </Button>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -874,6 +975,47 @@ const CHANNEL_META: Record<
     description: "Mensaje de texto al teléfono del paciente",
   },
 };
+
+/** Mock del mensaje tal como lo recibirá el paciente en el canal elegido. */
+function MessagePreview({
+  channel,
+  body,
+}: {
+  channel: NotificationChannel;
+  body: string;
+}) {
+  const t = useT();
+
+  if (channel === "sms") {
+    return (
+      <div className="mx-auto w-full max-w-[300px] rounded-[26px] border border-border bg-background p-3 shadow-sm">
+        <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-muted-foreground/30" />
+        <div className="rounded-2xl bg-muted px-3 py-2 text-[12.5px] text-foreground">
+          {body}
+        </div>
+        <p className="mt-2 text-center text-[10.5px] text-muted-foreground">
+          {body.length} {t("caracteres")} · {smsSegments(body)} {t("segmento(s)")}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-[340px] rounded-2xl border border-border bg-background p-3 shadow-sm">
+      <div className="flex items-center gap-2 border-b border-border pb-2">
+        <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <BellRing className="size-3.5" />
+        </span>
+        <span className="text-xs font-medium text-foreground">
+          {t("Equipo CoppAddresd")}
+        </span>
+      </div>
+      <div className="mt-2 w-fit rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-[12.5px] text-foreground">
+        {body}
+      </div>
+    </div>
+  );
+}
 
 function StepCompose({
   alerts,
@@ -1042,40 +1184,9 @@ function StepCompose({
             </span>
           </div>
 
-          {channels.map((channel) =>
-            channel === "sms" ? (
-              <div
-                key={channel}
-                className="mx-auto w-full max-w-[300px] rounded-[26px] border border-border bg-background p-3 shadow-sm"
-              >
-                <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-muted-foreground/30" />
-                <div className="rounded-2xl bg-muted px-3 py-2 text-[12.5px] text-foreground">
-                  {previewBody}
-                </div>
-                <p className="mt-2 text-center text-[10.5px] text-muted-foreground">
-                  {previewBody.length} {t("caracteres")} · {smsSegments(previewBody)}{" "}
-                  {t("segmento(s)")}
-                </p>
-              </div>
-            ) : (
-              <div
-                key={channel}
-                className="mx-auto w-full max-w-[340px] rounded-2xl border border-border bg-background p-3 shadow-sm"
-              >
-                <div className="flex items-center gap-2 border-b border-border pb-2">
-                  <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <BellRing className="size-3.5" />
-                  </span>
-                  <span className="text-xs font-medium text-foreground">
-                    {t("Equipo CoppAddresd")}
-                  </span>
-                </div>
-                <div className="mt-2 w-fit rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-[12.5px] text-foreground">
-                  {previewBody}
-                </div>
-              </div>
-            ),
-          )}
+          {channels.map((channel) => (
+            <MessagePreview key={channel} channel={channel} body={previewBody} />
+          ))}
 
           {previewLoading && (
             <span className="text-[11px] text-muted-foreground">
@@ -1137,6 +1248,7 @@ function StepReview({
   const sent = results?.filter((item) => item.status === "sent").length ?? 0;
   const skipped = results?.filter((item) => item.status === "skipped").length ?? 0;
   const failed = results?.filter((item) => item.status === "failed").length ?? 0;
+  const finalBody = results?.[0]?.renderedBody ?? previewItems?.[0]?.renderedBody ?? null;
 
   return (
     <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
@@ -1253,6 +1365,20 @@ function StepReview({
                 {t("Volver a alertas")}
               </Button>
             </div>
+          </div>
+        )}
+
+        {finalBody && (
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("Mensaje final")}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {t("Así lo recibirá el paciente")}
+              </span>
+            </div>
+            <MessagePreview channel={channels[0] ?? "community"} body={finalBody} />
           </div>
         )}
 
