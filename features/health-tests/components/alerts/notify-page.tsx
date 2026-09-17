@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BellRing,
   CheckCircle2,
@@ -242,7 +243,17 @@ export function NotifyPage() {
     URL.revokeObjectURL(url);
   }
 
-  const hasSelection = selectedAlerts.length > 0;
+  // La selección cruda (ids guardados) está disponible de inmediato; la lista de
+  // alertas llega después de la carga, así que la redirección no puede depender de ella.
+  const hasStoredSelection = alertIds.length > 0;
+  const router = useRouter();
+
+  // Sin selección no hay nada que notificar: se devuelve al usuario a las alertas.
+  useEffect(() => {
+    if (!hasStoredSelection) {
+      router.replace("/health-tests/alertas");
+    }
+  }, [hasStoredSelection, router]);
   const canCompose = channels.length > 0 && (templateId !== null || body.trim() !== "");
 
   if (loading && !data) {
@@ -268,35 +279,9 @@ export function NotifyPage() {
     );
   }
 
-  // Sin selección no hay nada que notificar: se guía de vuelta a la vista de alertas.
-  if (!hasSelection) {
-    return (
-      <div className="flex flex-col gap-6 p-4 sm:p-6">
-        <PageHeader
-          title={t("Notificar a pacientes")}
-          description={t("Envía el resultado de las alertas seleccionadas por comunidad o SMS.")}
-          icon={BellRing}
-          actions={
-            <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/health-tests/alertas" />}>
-              <ChevronLeft className="size-3.5" />
-              {t("Volver a alertas")}
-            </Button>
-          }
-        />
-        <section className="flex max-w-xl flex-col items-start gap-3 rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <TriangleAlert className="size-4 text-warning" />
-            {t("No hay alertas seleccionadas")}
-          </span>
-          <p className="text-[12.5px] text-muted-foreground">
-            {t("Elige las alertas en la vista de alertas y usa «Notificar».")}
-          </p>
-          <Button size="sm" nativeButton={false} render={<Link href="/health-tests/alertas" />}>
-            {t("Ir a alertas")}
-          </Button>
-        </section>
-      </div>
-    );
+  // Sin selección no hay nada que notificar: el efecto de arriba redirige a alertas.
+  if (!hasStoredSelection) {
+    return null;
   }
 
   return (
