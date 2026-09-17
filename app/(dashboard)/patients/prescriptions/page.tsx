@@ -1,5 +1,5 @@
-import { PrescriptionsPage } from "@/features/patients/components/prescriptions-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <PrescriptionsPage />;
+  redirect("/patients");
 }
