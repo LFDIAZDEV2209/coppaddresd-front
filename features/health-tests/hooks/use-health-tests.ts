@@ -20,6 +20,7 @@ import type {
 import {
   healthTestsApi,
   healthTestMetrics,
+  subscribeHealthTestsCache,
   withAttempts,
   type AlertTransition,
   type HealthTestStats,
@@ -75,6 +76,11 @@ export function useAsyncData<T>(loader: () => Promise<T>, key?: string) {
   }, [load, effectiveKey]);
 
   const reload = useCallback(() => setReloadNonce((n) => n + 1), []);
+
+  // Refresco «casi en vivo»: cuando una mutación del módulo invalida la cache
+  // (enviar notificaciones, cambiar el estado de una alerta, editar plantillas)
+  // este hook recarga sus datos sin necesidad de recargar la página.
+  useEffect(() => subscribeHealthTestsCache(reload), [reload]);
 
   return {
     data,

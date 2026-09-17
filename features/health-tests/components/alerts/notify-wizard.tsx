@@ -241,7 +241,9 @@ export function NotifyWizard({
             <StepReview
               alerts={selectedAlerts}
               channels={channels}
-              body={body}
+              templateName={
+                templates?.find((item) => item.id === templateId)?.name ?? null
+              }
               results={results}
             />
           )}
@@ -658,15 +660,36 @@ function StepCompose({
 function StepReview({
   alerts,
   channels,
-  body,
+  templateName,
   results,
 }: {
   alerts: HealthAlert[];
   channels: NotificationChannel[];
-  body: string;
+  templateName: string | null;
   results: NotifyAlertItemResult[] | null;
 }) {
   const t = useT();
+  const [showAll, setShowAll] = useState(false);
+
+  // Agrupa resultados idénticos (mismo estado y mismo texto/motivo) para no
+  // repetir la misma fila una vez por paciente.
+  const grouped = useMemo(() => {
+    const map = new Map<string, { item: NotifyAlertItemResult; count: number }>();
+    for (const item of results ?? []) {
+      const key = `${item.status}|${item.reason ?? item.renderedBody ?? ""}`;
+      const current = map.get(key);
+      if (current) current.count += 1;
+      else map.set(key, { item, count: 1 });
+    }
+    return Array.from(map.values());
+  }, [results]);
+
+  const VISIBLE_GROUPS = 3;
+  const visibleGroups = showAll ? grouped : grouped.slice(0, VISIBLE_GROUPS);
+  const hiddenGroups = Math.max(0, grouped.length - VISIBLE_GROUPS);
+  const renderedExample =
+    results?.find((item) => item.renderedBody)?.renderedBody ?? null;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -684,32 +707,60 @@ function StepReview({
         />
       </div>
 
-      <div className="rounded-xl border border-border bg-muted/30 p-3">
-        <span className="text-[11px] font-semibold text-muted-foreground">
-          {t("Mensaje")}
-        </span>
-        <p className="mt-1 whitespace-pre-wrap text-[12.5px] text-foreground">
-          {body.trim() === ""
-            ? t("Se usará el texto de la plantilla seleccionada.")
-            : body}
-        </p>
+      <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("Plantilla")}
+          </span>
+          <span className="text-[12.5px] font-semibold text-foreground">
+            {templateName ?? t("Texto libre")}
+          </span>
+          <span className="ml-auto flex items-center gap-1.5">
+            {channels.map((channel) => {
+              const meta = CHANNEL_META[channel];
+              const Icon = meta.icon;
+              return (
+                <span
+                  key={channel}
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] text-muted-foreground"
+                >
+                  <Icon className="size-3" />
+                  {channel === "sms" ? "SMS" : t("Comunidad")}
+                </span>
+              );
+            })}
+          </span>
+        </div>
+        {renderedExample && (
+          <div className="flex flex-col gap-1">
+            <span className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("Ejemplo real")}
+            </span>
+            <p className="rounded-lg bg-card px-2.5 py-2 text-[12.5px] text-foreground">
+              {renderedExample}
+            </p>
+          </div>
+        )}
       </div>
 
-      {results && results.length > 0 && (
+      {grouped.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          {results.map((item, index) => {
+          {visibleGroups.map(({ item, count }, index) => {
             const meta = RESULT_META[item.status] ?? RESULT_META.queued;
             const Icon = meta.icon;
             return (
               <div
-                key={`${item.alertId ?? "test"}-${item.channel}-${index}`}
+                key={`${item.status}-${index}`}
                 className="flex items-start gap-3 rounded-lg border border-border px-3 py-2"
               >
                 <Icon className={cn("mt-0.5 size-4 shrink-0", meta.className)} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="text-[12.5px] font-semibold text-foreground">
-                    {item.patientName ?? t("Paciente")} ·{" "}
-                    {item.channel === "sms" ? "SMS" : t("Comunidad")}
+                    {count > 1
+                      ? `${count} ${t("pacientes")}`
+                      : `${item.patientName ?? t("Paciente")} · ${
+                          item.channel === "sms" ? "SMS" : t("Comunidad")
+                        }`}
                   </span>
                   <span className="truncate text-[11px] text-muted-foreground">
                     {item.reason ?? item.renderedBody}
@@ -721,6 +772,20 @@ function StepReview({
               </div>
             );
           })}
+
+          {hiddenGroups > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="self-start text-[11.5px] text-muted-foreground"
+              onClick={() => setShowAll((current) => !current)}
+            >
+              {showAll
+                ? t("Ver menos")
+                : `+${hiddenGroups} ${t("más")}`}
+            </Button>
+          )}
         </div>
       )}
     </div>
