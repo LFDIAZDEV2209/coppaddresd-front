@@ -3254,5 +3254,8 @@
   "Últimos envíos": "Últimos envíos",
   "Mensaje final": "Mensaje final",
   "Así lo recibirá el paciente": "Así lo recibirá el paciente",
-  "Selecciona alertas en el paso 1.": "Selecciona alertas en el paso 1."
+  "Selecciona alertas en el paso 1.": "Selecciona alertas en el paso 1.",
+  "Elige las alertas en la vista de alertas y usa «Notificar».": "Elige las alertas en la vista de alertas y usa «Notificar».",
+  "Ir a alertas": "Ir a alertas",
+  "No hay alertas seleccionadas": "No hay alertas seleccionadas"
 }

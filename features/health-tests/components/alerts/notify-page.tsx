@@ -10,7 +10,6 @@ import {
   Download,
   History,
   MessageSquare,
-  Search,
   Send,
   ShieldAlert,
   Smartphone,
@@ -19,7 +18,6 @@ import {
 } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -41,8 +39,6 @@ import {
 } from "../../services/notifications-service";
 import type { NotificationTemplatePreview } from "../../services/notifications-service";
 import type {
-  AlertSeverity,
-  AlertStatus,
   HealthAlert,
   NotificationChannel,
   NotificationLanguage,
@@ -50,12 +46,10 @@ import type {
   PatientProfile,
 } from "../../types";
 import { DeliveryStatusBadge, SeverityBadge } from "../shared/badges";
-import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
+import { ModuleErrorState } from "../shared/module-states";
 import { StatSkeleton, TableSkeleton } from "../shared/module-chart-card";
 
-type WizardStep = 1 | 2 | 3;
-
-const PICKER_PAGE_SIZE = 10;
+type WizardStep = 1 | 2;
 
 /** Clave de sessionStorage donde la página de alertas entrega la selección. */
 export const NOTIFY_SELECTION_KEY = "ht-notify-alert-ids";
@@ -78,13 +72,6 @@ function readStoredSelection(): string[] {
 // Referencias estables mientras no hay datos (evita memos que cambian en cada render).
 const EMPTY_ALERTS: HealthAlert[] = [];
 const EMPTY_PATIENTS: PatientProfile[] = [];
-
-const STATUS_LABELS: Record<AlertStatus, string> = {
-  activa: "Activa",
-  "en-revision": "En revisión",
-  atendida: "Atendida",
-  cerrada: "Cerrada",
-};
 
 const RESULT_META: Record<
   string,
@@ -118,7 +105,7 @@ export function NotifyPage() {
   const recent = useNotifications({ page: 1, pageSize: 5 });
 
   const [step, setStep] = useState<WizardStep>(1);
-  const [alertIds, setAlertIds] = useState<string[]>(readStoredSelection);
+  const [alertIds] = useState<string[]>(readStoredSelection);
   const [channels, setChannels] = useState<NotificationChannel[]>(["community"]);
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [body, setBody] = useState("");
@@ -126,16 +113,6 @@ export function NotifyPage() {
   const [results, setResults] = useState<NotifyAlertItemResult[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
-
-  // Filtros del selector de alertas
-  const [search, setSearch] = useState("");
-  const [severity, setSeverity] = useState<AlertSeverity | "all">("all");
-  const [status, setStatus] = useState<AlertStatus | "all">("all");
-  const [indicator, setIndicator] = useState<string>("all");
-  const [pageState, setPageState] = useState<{ key: string; page: number }>({
-    key: "",
-    page: 1,
-  });
 
   // La selección ya quedó en memoria: se limpia la clave para no re-sembrar.
   useEffect(() => {
@@ -149,68 +126,10 @@ export function NotifyPage() {
   const alerts = data?.alerts ?? EMPTY_ALERTS;
   const patients = data?.patients ?? EMPTY_PATIENTS;
 
-  const indicators = useMemo(
-    () => Array.from(new Set(alerts.map((alert) => alert.indicatorName))).sort(),
-    [alerts],
-  );
-
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return alerts.filter((alert) => {
-      if (severity !== "all" && alert.severity !== severity) return false;
-      if (status !== "all" && alert.status !== status) return false;
-      if (indicator !== "all" && alert.indicatorName !== indicator) return false;
-      if (term) {
-        const patient = patients.find((item) => item.id === alert.patientId);
-        const haystack = [
-          patient ? `${patient.firstName} ${patient.lastName}`.trim() : "",
-          alert.indicatorName,
-          alert.message,
-        ]
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(term)) return false;
-      }
-      return true;
-    });
-  }, [alerts, patients, severity, status, indicator, search]);
-
-  const filterKey = [search, severity, status, indicator].join("\u0000");
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PICKER_PAGE_SIZE));
-  const currentPage = Math.min(
-    pageState.key === filterKey ? pageState.page : 1,
-    pageCount,
-  );
-  const pagedAlerts = useMemo(
-    () =>
-      filtered.slice(
-        (currentPage - 1) * PICKER_PAGE_SIZE,
-        currentPage * PICKER_PAGE_SIZE,
-      ),
-    [filtered, currentPage],
-  );
-
   const selectedAlerts = useMemo(
     () => alerts.filter((alert) => alertIds.includes(alert.id)),
     [alerts, alertIds],
   );
-  const allPageSelected =
-    pagedAlerts.length > 0 && pagedAlerts.every((alert) => alertIds.includes(alert.id));
-
-  function toggleAlert(id: string) {
-    setAlertIds((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
-  }
-
-  function togglePage() {
-    const pageIds = pagedAlerts.map((alert) => alert.id);
-    setAlertIds((current) =>
-      allPageSelected
-        ? current.filter((id) => !pageIds.includes(id))
-        : Array.from(new Set([...current, ...pageIds])),
-    );
-  }
 
   function toggleChannel(channel: NotificationChannel) {
     setChannels((current) =>
@@ -323,8 +242,8 @@ export function NotifyPage() {
     URL.revokeObjectURL(url);
   }
 
-  const canStep1 = alertIds.length > 0 && channels.length > 0;
-  const canStep2 = body.trim() !== "" || templateId !== null;
+  const hasSelection = selectedAlerts.length > 0;
+  const canCompose = channels.length > 0 && (templateId !== null || body.trim() !== "");
 
   if (loading && !data) {
     return (
@@ -349,6 +268,37 @@ export function NotifyPage() {
     );
   }
 
+  // Sin selección no hay nada que notificar: se guía de vuelta a la vista de alertas.
+  if (!hasSelection) {
+    return (
+      <div className="flex flex-col gap-6 p-4 sm:p-6">
+        <PageHeader
+          title={t("Notificar a pacientes")}
+          description={t("Envía el resultado de las alertas seleccionadas por comunidad o SMS.")}
+          icon={BellRing}
+          actions={
+            <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/health-tests/alertas" />}>
+              <ChevronLeft className="size-3.5" />
+              {t("Volver a alertas")}
+            </Button>
+          }
+        />
+        <section className="flex max-w-xl flex-col items-start gap-3 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <TriangleAlert className="size-4 text-warning" />
+            {t("No hay alertas seleccionadas")}
+          </span>
+          <p className="text-[12.5px] text-muted-foreground">
+            {t("Elige las alertas en la vista de alertas y usa «Notificar».")}
+          </p>
+          <Button size="sm" nativeButton={false} render={<Link href="/health-tests/alertas" />}>
+            {t("Ir a alertas")}
+          </Button>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
@@ -365,224 +315,14 @@ export function NotifyPage() {
 
       <WizardSteps
         step={step}
-        canStep1={canStep1}
-        canStep2={canStep2}
+        canCompose={canCompose}
         onStep={(next) => setStep(next)}
       />
 
-      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
+      <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-12">
         <div className="flex flex-col gap-5 xl:col-span-8">
+
           {step === 1 && (
-            <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <SectionHeader
-                title={t("Destinatarios")}
-                description={t("Elige las alertas y los canales de envío")}
-                icon={Search}
-                variant="primary"
-                actions={
-                  <span className="text-[11.5px] text-white/80">
-                    {filtered.length} {t("alertas")}
-                  </span>
-                }
-              />
-              <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-                <div className="relative min-w-[12rem] flex-1">
-                  <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder={t("Buscar...")}
-                    aria-label={t("Buscar alertas")}
-                    className="h-9 w-full pl-8"
-                  />
-                </div>
-                <Select
-                  value={severity}
-                  onValueChange={(value) => setSeverity(value as AlertSeverity | "all")}
-                  items={{
-                    all: t("Toda severidad"),
-                    critica: t("Crítica"),
-                    alta: t("Alta"),
-                    media: t("Media"),
-                    baja: t("Baja"),
-                    informativa: t("Informativa"),
-                  }}
-                >
-                  <SelectTrigger className="h-9 w-36" aria-label={t("Filtrar por severidad")}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("Toda severidad")}</SelectItem>
-                    <SelectItem value="critica">{t("Crítica")}</SelectItem>
-                    <SelectItem value="alta">{t("Alta")}</SelectItem>
-                    <SelectItem value="media">{t("Media")}</SelectItem>
-                    <SelectItem value="baja">{t("Baja")}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={status}
-                  onValueChange={(value) => setStatus(value as AlertStatus | "all")}
-                  items={{ all: t("Todo estado"), ...STATUS_LABELS }}
-                >
-                  <SelectTrigger className="h-9 w-36" aria-label={t("Filtrar por estado")}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("Todo estado")}</SelectItem>
-                    {(Object.keys(STATUS_LABELS) as AlertStatus[]).map((key) => (
-                      <SelectItem key={key} value={key}>
-                        {t(STATUS_LABELS[key])}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={indicator}
-                  onValueChange={(value) => setIndicator(value ?? "all")}
-                  items={{
-                    all: t("Todo indicador"),
-                    ...Object.fromEntries(indicators.map((item) => [item, item])),
-                  }}
-                >
-                  <SelectTrigger className="h-9 w-40" aria-label={t("Filtrar por indicador")}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("Todo indicador")}</SelectItem>
-                    {indicators.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {pagedAlerts.length === 0 ? (
-                <ModuleEmptyState
-                  title={t("Sin alertas que mostrar")}
-                  description={t("Ninguna alerta coincide con los filtros aplicados.")}
-                  filtered
-                  onClear={() => {
-                    setSearch("");
-                    setSeverity("all");
-                    setStatus("all");
-                    setIndicator("all");
-                  }}
-                />
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-[12.5px]">
-                      <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
-                        <tr>
-                          <th className="w-10 px-3 py-2">
-                            <input
-                              type="checkbox"
-                              className="size-4 accent-primary"
-                              checked={allPageSelected}
-                              onChange={togglePage}
-                              aria-label={t("Seleccionar alertas de esta página")}
-                            />
-                          </th>
-                          <th className="px-2 py-2 font-semibold">{t("Paciente")}</th>
-                          <th className="px-2 py-2 font-semibold">{t("Indicador")}</th>
-                          <th className="whitespace-nowrap px-2 py-2 font-semibold">
-                            {t("Severidad")}
-                          </th>
-                          <th className="whitespace-nowrap px-2 py-2 font-semibold">
-                            {t("Fecha")}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pagedAlerts.map((alert) => {
-                          const patient = patients.find((item) => item.id === alert.patientId);
-                          const checked = alertIds.includes(alert.id);
-                          return (
-                            <tr
-                              key={alert.id}
-                              className={cn(
-                                "border-t border-border transition-colors",
-                                checked ? "bg-primary-soft/20" : "hover:bg-muted/40",
-                              )}
-                            >
-                              <td className="px-3 py-2.5">
-                                <input
-                                  type="checkbox"
-                                  className="size-4 accent-primary"
-                                  checked={checked}
-                                  onChange={() => toggleAlert(alert.id)}
-                                  aria-label={t("Seleccionar alerta")}
-                                />
-                              </td>
-                              <td className="max-w-[16rem] px-2 py-2.5">
-                                <span className="flex min-w-0 flex-col">
-                                  <span className="truncate font-semibold text-foreground">
-                                    {patient
-                                      ? `${patient.firstName} ${patient.lastName}`.trim()
-                                      : t("Paciente sin nombre")}
-                                  </span>
-                                  <span className="truncate text-[11px] text-muted-foreground">
-                                    {alert.message}
-                                  </span>
-                                </span>
-                              </td>
-                              <td className="px-2 py-2.5 text-muted-foreground">
-                                {alert.indicatorName}
-                              </td>
-                              <td className="px-2 py-2.5">
-                                <SeverityBadge severity={alert.severity} />
-                              </td>
-                              <td className="whitespace-nowrap px-2 py-2.5 text-muted-foreground">
-                                {formatDate(alert.createdAt)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  {pageCount > 1 && (
-                    <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5">
-                      <span className="text-[11.5px] text-muted-foreground">
-                        {t("Página")} {currentPage} {t("de")} {pageCount} · {filtered.length}{" "}
-                        {t("alertas")}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t("Anterior")}
-                          disabled={currentPage <= 1}
-                          onClick={() =>
-                            setPageState({ key: filterKey, page: currentPage - 1 })
-                          }
-                        >
-                          <ChevronLeft className="size-3.5" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t("Siguiente")}
-                          disabled={currentPage >= pageCount}
-                          onClick={() =>
-                            setPageState({ key: filterKey, page: currentPage + 1 })
-                          }
-                        >
-                          <ChevronRight className="size-3.5" />
-                        </Button>
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-            </section>
-          )}
-
-          {step === 2 && (
             <StepCompose
               alerts={selectedAlerts}
               patients={patients}
@@ -598,7 +338,7 @@ export function NotifyPage() {
             />
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <StepReview
               alerts={selectedAlerts}
               channels={channels}
@@ -619,7 +359,7 @@ export function NotifyPage() {
           )}
 
           {/* Barra de acciones del asistente (reemplaza la tarjeta Resumen). */}
-          <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+          <div className="sticky bottom-4 z-10 mt-auto flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
             <div className="flex flex-wrap items-center gap-2 text-[11.5px] text-muted-foreground">
               <span className="font-semibold text-foreground">
                 {alertIds.length} {t("pacientes")}
@@ -645,11 +385,11 @@ export function NotifyPage() {
                   {t("Atrás")}
                 </Button>
               )}
-              {step < 3 ? (
+              {step < 2 ? (
                 <Button
                   type="button"
                   size="sm"
-                  disabled={step === 1 ? !canStep1 : !canStep2}
+                  disabled={!canCompose}
                   onClick={() => setStep((step + 1) as WizardStep)}
                 >
                   {t("Continuar")}
@@ -661,7 +401,7 @@ export function NotifyPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={busy || !canStep1}
+                    disabled={busy || !canCompose}
                     onClick={() => void run(true)}
                   >
                     {t("Vista previa")}
@@ -669,7 +409,7 @@ export function NotifyPage() {
                   <Button
                     type="button"
                     size="sm"
-                    disabled={busy || !canStep1}
+                    disabled={busy || !canCompose}
                     onClick={() => void run(false)}
                   >
                     <Send className="size-3.5" />
@@ -890,20 +630,17 @@ export function NotifyPage() {
 
 function WizardSteps({
   step,
-  canStep1,
-  canStep2,
+  canCompose,
   onStep,
 }: {
   step: WizardStep;
-  canStep1: boolean;
-  canStep2: boolean;
+  canCompose: boolean;
   onStep: (step: WizardStep) => void;
 }) {
   const t = useT();
   const steps: { id: WizardStep; label: string; enabled: boolean }[] = [
-    { id: 1, label: "Destinatarios", enabled: true },
-    { id: 2, label: "Mensaje", enabled: canStep1 },
-    { id: 3, label: "Envío", enabled: canStep1 && canStep2 },
+    { id: 1, label: "Mensaje", enabled: true },
+    { id: 2, label: "Envío", enabled: canCompose },
   ];
 
   return (
@@ -941,7 +678,7 @@ function WizardSteps({
               </span>
               {t(item.label)}
             </button>
-            {item.id < 3 && <ChevronRight className="size-3.5 text-muted-foreground" />}
+            {item.id < 2 && <ChevronRight className="size-3.5 text-muted-foreground" />}
           </li>
         );
       })}
@@ -1101,14 +838,14 @@ function StepCompose({
     (body.trim() === "" ? t("El mensaje aparecerá aquí mientras escribes.") : body);
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <SectionHeader
         title={t("Mensaje")}
         description={t("Elige plantilla, idioma y ajusta el texto")}
         icon={MessageSquare}
         variant="primary"
       />
-      <div className="grid grid-cols-1 gap-5 p-4 lg:grid-cols-5">
+      <div className="grid flex-1 grid-cols-1 gap-5 p-4 lg:grid-cols-5">
         <div className="flex flex-col gap-3 lg:col-span-3">
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
@@ -1144,12 +881,13 @@ function StepCompose({
             </Select>
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-1 flex-col gap-1.5">
             <span className="text-xs font-semibold text-foreground">{t("Mensaje")}</span>
             <Textarea
               value={body}
               onChange={(event) => onBodyChange(event.target.value)}
               rows={7}
+              className="min-h-[200px] flex-1 resize-none"
               placeholder={t("Escribe el mensaje con datos entre corchetes")}
               aria-label={t("Mensaje de la notificación")}
             />
@@ -1215,7 +953,7 @@ function StepCompose({
             </p>
           )}
 
-          <p className="text-[11px] text-muted-foreground">
+          <p className="mt-auto text-[11px] text-muted-foreground">
             {t(
               "Los datos se completan automáticamente con la información de cada paciente al enviar.",
             )}
@@ -1251,7 +989,7 @@ function StepReview({
   const finalBody = results?.[0]?.renderedBody ?? previewItems?.[0]?.renderedBody ?? null;
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <SectionHeader
         title={t("Envío")}
         description={t("Revisa y confirma el envío")}

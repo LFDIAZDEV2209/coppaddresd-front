@@ -3567,5 +3567,8 @@
   "Últimos envíos": "Recent deliveries",
   "Mensaje final": "Final message",
   "Así lo recibirá el paciente": "This is how the patient will receive it",
-  "Selecciona alertas en el paso 1.": "Select alerts in step 1."
+  "Selecciona alertas en el paso 1.": "Select alerts in step 1.",
+  "Elige las alertas en la vista de alertas y usa «Notificar».": "Choose the alerts in the alerts view and use \"Notify\".",
+  "Ir a alertas": "Go to alerts",
+  "No hay alertas seleccionadas": "No alerts selected"
 }
