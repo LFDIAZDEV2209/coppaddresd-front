@@ -51,7 +51,7 @@ export function DashboardPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Panel de comunidad")}
-        description={t("Visión general de la actividad de ANTARES Comunidad ADRED")}
+        description={t("Visión general de la actividad de Copp Adresd Comunidad ADRED")}
         icon={LayoutDashboard}
         actions={
           <>

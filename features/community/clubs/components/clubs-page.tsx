@@ -81,7 +81,7 @@ export function ClubsPage() {
       <PageHeader
         title={t("Clubes")}
         description={t(
-          "Crea y gestiona clubes temáticos de la comunidad ANTARES",
+          "Crea y gestiona clubes temáticos de la comunidad Copp Adresd",
         )}
         icon={Users}
         actions={

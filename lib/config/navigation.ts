@@ -587,7 +587,7 @@ export const navModules: NavModule[] = [
         permission: "Community.View",
       },
       {
-        label: "Redes ANTARES",
+        label: "Redes Copp Adresd",
         href: "/community/networks",
         icon: Sparkles,
         hidden: true,
