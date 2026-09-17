@@ -2,18 +2,21 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
   BellRing,
   CheckCircle2,
-  ClipboardList,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   Filter,
+  MoreHorizontal,
   Search,
   Send,
   ShieldAlert,
+  SlidersHorizontal,
   Sparkles,
-  Stethoscope,
+  TriangleAlert,
   XCircle,
 } from "lucide-react";
 
@@ -23,7 +26,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
-import { StatCard } from "@/components/feedback/stat-card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -34,6 +44,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
@@ -46,18 +57,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertsInsightsRail } from "./alerts-insights";
 
 import { useAlerts } from "../../hooks/use-health-tests";
 import type { AlertSeverity, AlertStatus, HealthAlert } from "../../types";
 import { formatDate, initials } from "../../lib/format";
-import { severityHex } from "../shared/colors";
-import { SeverityBadge } from "../shared/badges";
+import { severityHex, tones } from "../shared/colors";
+import { chipStyle } from "../shared/depth";
+import { AlertStatusBadge, SeverityBadge } from "../shared/badges";
 import { StatSkeleton, TableSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
-import { AlertsCharts } from "./alerts-charts";
-import { NotificationsHistory } from "./notifications-history";
-import { NotifyWizard } from "./notify-wizard";
+import { NotificationsTimeline } from "./notifications-timeline";
+import { NOTIFY_SELECTION_KEY } from "./notify-page";
 
 const STATUS_LABELS: Record<AlertStatus, string> = {
   activa: "Activa",
@@ -66,31 +77,64 @@ const STATUS_LABELS: Record<AlertStatus, string> = {
   cerrada: "Cerrada",
 };
 
+/**
+ * Transiciones reales del backend:
+ * review → en-revision, resolve → atendida, close → cerrada, reopen → activa.
+ */
 const STATUS_NEXT: Record<AlertStatus, AlertStatus[]> = {
-  activa: ["en-revision", "atendida"],
-  "en-revision": ["atendida", "activa"],
+  activa: ["en-revision", "atendida", "cerrada"],
+  "en-revision": ["atendida", "cerrada", "activa"],
   atendida: ["cerrada", "activa"],
-  cerrada: ["activa"],
+  cerrada: ["en-revision", "activa"],
 };
 
-function statusColor(status: AlertStatus): string {
-  switch (status) {
-    case "activa":
-      return "var(--destructive)";
-    case "en-revision":
-      return "var(--warning)";
-    case "atendida":
-      return "var(--info)";
-    default:
-      return "var(--muted-foreground)";
-  }
+const ALERT_PAGE_SIZE = 12;
+
+const PILL_ACCENT = {
+  destructive: tones.red,
+  warning: tones.amber,
+  info: tones.emerald,
+  navy: tones.slate,
+} as const;
+
+function StatusPill({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number;
+  tone: keyof typeof PILL_ACCENT;
+}) {
+  const accent = PILL_ACCENT[tone];
+
+  return (
+    <div className="flex items-center gap-2.5 rounded-full border border-border bg-card py-1.5 pl-1.5 pr-3.5 shadow-sm transition-shadow hover:shadow-md">
+      <span
+        className="flex shrink-0 items-center justify-center rounded-lg"
+        style={chipStyle(accent, 26)}
+        aria-hidden
+      >
+        <Icon className="size-3.5" />
+      </span>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span
+        className="text-sm font-semibold tabular-nums"
+        style={{ color: accent.deep }}
+      >
+        {value}
+      </span>
+    </div>
+  );
 }
 
 export function AlertsPage() {
   const t = useT();
   const { hasPermission } = useAuth();
   const canReview = hasPermission("HealthTests.Review");
-  const { data, loading, error, reload, changeStatus } = useAlerts();
+  const { data, loading, error, reload, changeStatus, statusError } = useAlerts();
 
   const [search, setSearch] = useState("");
   const [severity, setSeverity] = useState<AlertSeverity | "all">("all");
@@ -100,7 +144,8 @@ export function AlertsPage() {
   const [to, setTo] = useState("");
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [notifyOpen, setNotifyOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [pageState, setPageState] = useState({ key: "", page: 1 });
 
   const alerts = data?.alerts;
 
@@ -155,6 +200,15 @@ export function AlertsPage() {
       );
   }, [alerts, data?.patients, search, severity, status, indicator, from, to]);
 
+  const filterKey = [search, severity, status, indicator, from, to].join("\u0000");
+  const pageCount = Math.max(1, Math.ceil(filtered.length / ALERT_PAGE_SIZE));
+  const alertPage = pageState.key === filterKey ? pageState.page : 1;
+  const currentPage = Math.min(alertPage, pageCount);
+  const pagedAlerts = useMemo(() => {
+    const start = (currentPage - 1) * ALERT_PAGE_SIZE;
+    return filtered.slice(start, start + ALERT_PAGE_SIZE);
+  }, [currentPage, filtered]);
+
   const counts = useMemo(() => {
     const result: Record<AlertStatus, number> = {
       activa: 0,
@@ -173,6 +227,15 @@ export function AlertsPage() {
     [alerts, selectedIds],
   );
 
+  // Permite cobrar TODOS los resultados del filtro, no solo la página visible.
+  const allFilteredSelected =
+    filtered.length > 0 &&
+    filtered.every((alert) => selectedIds.includes(alert.id));
+
+  function selectAllFiltered() {
+    setSelectedIds(filtered.map((alert) => alert.id));
+  }
+
   const isFiltered =
     search.trim() !== "" ||
     severity !== "all" ||
@@ -181,6 +244,12 @@ export function AlertsPage() {
     from !== "" ||
     to !== "";
 
+  const additionalFilterCount = [
+    indicator !== "all",
+    from !== "",
+    to !== "",
+  ].filter(Boolean).length;
+
   function clearFilters() {
     setSearch("");
     setSeverity("all");
@@ -188,6 +257,14 @@ export function AlertsPage() {
     setIndicator("all");
     setFrom("");
     setTo("");
+    setFiltersOpen(false);
+  }
+
+  function clearAdditionalFilters() {
+    setIndicator("all");
+    setFrom("");
+    setTo("");
+    setFiltersOpen(false);
   }
 
   function toggleSelected(id: string) {
@@ -197,8 +274,14 @@ export function AlertsPage() {
   }
 
   function toggleAll() {
+    const pageIds = pagedAlerts.map((alert) => alert.id);
+    const allPageSelected =
+      pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+
     setSelectedIds((prev) =>
-      prev.length === filtered.length ? [] : filtered.map((alert) => alert.id),
+      allPageSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : Array.from(new Set([...prev, ...pageIds])),
     );
   }
 
@@ -239,192 +322,262 @@ export function AlertsPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       {header}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label={t("Activas")}
-          value={String(counts.activa)}
-          icon={ShieldAlert}
-          variant="destructive"
-          context={t("Requieren revisión")}
-        />
-        <StatCard
-          label={t("En revisión")}
-          value={String(counts["en-revision"])}
-          icon={Eye}
-          variant="warning"
-          context={t("Siendo atendidas")}
-        />
-        <StatCard
-          label={t("Atendidas")}
-          value={String(counts.atendida)}
-          icon={CheckCircle2}
-          variant="info"
-          context={t("Con acción realizada")}
-        />
-        <StatCard
-          label={t("Cerradas")}
-          value={String(counts.cerrada)}
-          icon={XCircle}
-          variant="navy"
-          context={t("Histórico resuelto")}
-        />
-      </div>
-
-      <Tabs defaultValue="alerts" className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList variant="line">
-            <TabsTrigger value="alerts">
-              <BellRing className="size-3.5" />
-              {t("Alertas")}
-            </TabsTrigger>
-            <TabsTrigger value="charts">
-              <BarChart3 className="size-3.5" />
-              {t("Gráficos")}
-            </TabsTrigger>
-            <TabsTrigger value="history">
-              <ClipboardList className="size-3.5" />
-              {t("Notificaciones enviadas")}
-            </TabsTrigger>
-          </TabsList>
-
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            render={<Link href="/health-tests/alertas/plantillas" />}
-          >
-            <Sparkles className="size-3.5" />
-            {t("Estudio de plantillas")}
-          </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill
+            icon={ShieldAlert}
+            label={t("Activas")}
+            value={counts.activa}
+            tone="destructive"
+          />
+          <StatusPill
+            icon={Eye}
+            label={t("En revisión")}
+            value={counts["en-revision"]}
+            tone="warning"
+          />
+          <StatusPill
+            icon={CheckCircle2}
+            label={t("Atendidas")}
+            value={counts.atendida}
+            tone="info"
+          />
+          <StatusPill
+            icon={XCircle}
+            label={t("Cerradas")}
+            value={counts.cerrada}
+            tone="navy"
+          />
         </div>
 
-        <TabsContent value="alerts">
-          <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <Button
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={<Link href="/health-tests/alertas/plantillas" />}
+        >
+          <Sparkles className="size-3.5" />
+          {t("Estudio de plantillas")}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-12">
+        <div className="order-2 flex flex-col gap-5 xl:order-1 xl:col-span-8">
+          <section className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
             <SectionHeader
               title={t("Gestión de alertas")}
               description={t("Filtra por severidad, estado o paciente")}
               icon={Filter}
               variant="primary"
-              actions={
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/70" />
-                    <Input
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      className="h-8 w-44 border-white/25 bg-white/15 pl-8 text-white placeholder:text-white/60 [&::placeholder]:text-white/60"
-                      placeholder={t("Buscar...")}
-                      aria-label={t("Buscar alertas")}
-                    />
-                  </div>
-                  <Select
-                    value={severity}
-                    onValueChange={(value) => setSeverity(value as AlertSeverity | "all")}
-                  >
-                    <SelectTrigger className="h-8 w-36 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("Toda severidad")}</SelectItem>
-                      <SelectItem value="critica">critica</SelectItem>
-                      <SelectItem value="alta">alta</SelectItem>
-                      <SelectItem value="media">media</SelectItem>
-                      <SelectItem value="baja">baja</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={status}
-                    onValueChange={(value) => setStatus(value as AlertStatus | "all")}
-                  >
-                    <SelectTrigger className="h-8 w-36 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("Todo estado")}</SelectItem>
-                      {(Object.keys(STATUS_LABELS) as AlertStatus[]).map((key) => (
-                        <SelectItem key={key} value={key}>
-                          {STATUS_LABELS[key]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={indicator}
-                    onValueChange={(value) => setIndicator(value ?? "all")}
-                  >
-                    <SelectTrigger className="h-8 w-40 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("Todo indicador")}</SelectItem>
-                      {indicators.map((item) => (
-                        <SelectItem key={item} value={item}>
-                          {item}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              }
             />
 
-            <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-2.5">
-              <span className="text-[11.5px] font-medium text-muted-foreground">
-                {t("Rango de fechas")}
-              </span>
-              <Input
-                type="date"
-                value={from}
-                onChange={(event) => setFrom(event.target.value)}
-                aria-label={t("Desde")}
-                className="h-8 w-36"
-              />
-              <Input
-                type="date"
-                value={to}
-                onChange={(event) => setTo(event.target.value)}
-                aria-label={t("Hasta")}
-                className="h-8 w-36"
-              />
-              {(from || to) && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setFrom("");
-                    setTo("");
-                  }}
-                >
-                  {t("Limpiar fechas")}
-                </Button>
-              )}
-
-              <div className="ml-auto flex items-center gap-2">
-                {selectedAlerts.length > 0 && (
-                  <>
-                    <span className="text-[11.5px] text-muted-foreground">
-                      {selectedAlerts.length} {t("seleccionadas")}
-                    </span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => setNotifyOpen(true)}
-                    >
-                      <Send className="size-3.5" />
-                      {t("Notificar")} {selectedAlerts.length}
+            <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-4 py-3">
+              <div className="relative min-w-[12rem] flex-1">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="h-9 w-full pl-8"
+                  placeholder={t("Buscar...")}
+                  aria-label={t("Buscar alertas")}
+                />
+              </div>
+              <Select
+                value={severity}
+                onValueChange={(value) => setSeverity(value as AlertSeverity | "all")}
+                items={{
+                  all: t("Toda severidad"),
+                  critica: t("Crítica"),
+                  alta: t("Alta"),
+                  media: t("Media"),
+                  baja: t("Baja"),
+                }}
+              >
+                <SelectTrigger className="h-9 w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("Toda severidad")}</SelectItem>
+                  <SelectItem value="critica">{t("Crítica")}</SelectItem>
+                  <SelectItem value="alta">{t("Alta")}</SelectItem>
+                  <SelectItem value="media">{t("Media")}</SelectItem>
+                  <SelectItem value="baja">{t("Baja")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={status}
+                onValueChange={(value) => setStatus(value as AlertStatus | "all")}
+                items={{ all: t("Todo estado"), ...STATUS_LABELS }}
+              >
+                <SelectTrigger className="h-9 w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("Todo estado")}</SelectItem>
+                  {(Object.keys(STATUS_LABELS) as AlertStatus[]).map((key) => (
+                    <SelectItem key={key} value={key}>
+                      {STATUS_LABELS[key]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+                <PopoverTrigger
+                  render={
+                    <Button type="button" variant="outline" size="sm">
+                      <SlidersHorizontal className="size-3.5" />
+                      {t("Más filtros")}
+                      {additionalFilterCount > 0 && (
+                        <span className="ml-0.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                          {additionalFilterCount}
+                        </span>
+                      )}
                     </Button>
+                  }
+                />
+                <PopoverContent align="end" className="w-80 p-4">
+                  <PopoverHeader>
+                    <PopoverTitle>{t("Más filtros")}</PopoverTitle>
+                    <PopoverDescription>
+                      {t("Refina la lista de alertas")}
+                    </PopoverDescription>
+                  </PopoverHeader>
+                  <div className="mt-4 flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-medium text-foreground">
+                        {t("Indicador")}
+                      </span>
+                      <Select
+                        value={indicator}
+                        onValueChange={(value) => setIndicator(value ?? "all")}
+                        items={{
+                          all: t("Todo indicador"),
+                          ...Object.fromEntries(indicators.map((item) => [item, item])),
+                        }}
+                      >
+                        <SelectTrigger className="h-9 w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t("Todo indicador")}</SelectItem>
+                          {indicators.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {item}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-xs font-medium text-foreground">
+                          {t("Desde")}
+                        </span>
+                        <Input
+                          type="date"
+                          value={from}
+                          onChange={(event) => setFrom(event.target.value)}
+                          aria-label={t("Desde")}
+                          className="h-9 w-full"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-xs font-medium text-foreground">
+                          {t("Hasta")}
+                        </span>
+                        <Input
+                          type="date"
+                          value={to}
+                          onChange={(event) => setTo(event.target.value)}
+                          aria-label={t("Hasta")}
+                          className="h-9 w-full"
+                        />
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+                      <span className="text-[11px] text-muted-foreground">
+                        {additionalFilterCount > 0
+                          ? `${additionalFilterCount} ${t("filtros activos")}`
+                          : t("Sin filtros adicionales")}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={additionalFilterCount === 0}
+                        onClick={clearAdditionalFilters}
+                      >
+                        {t("Limpiar filtros")}
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {selectedAlerts.length > 0 ? (
+                <div className="ml-auto flex flex-wrap items-center gap-1.5 rounded-full bg-brand-gradient py-1 pl-3 pr-1 text-white shadow-sm">
+                  <span className="text-[11.5px] font-medium">
+                    {selectedAlerts.length} {t("seleccionadas")}
+                  </span>
+                  {!allFilteredSelected && filtered.length > 0 && (
                     <Button
                       type="button"
                       size="sm"
                       variant="ghost"
-                      onClick={() => setSelectedIds([])}
+                      className="h-7 px-2 text-[11.5px] text-white/85 hover:bg-white/15 hover:text-white"
+                      onClick={selectAllFiltered}
                     >
-                      {t("Quitar selección")}
+                      {t("Seleccionar los")} {filtered.length}
                     </Button>
-                  </>
-                )}
-              </div>
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 border border-white/35 bg-white/15 px-2.5 text-[11.5px] text-white hover:bg-white/25 hover:text-white"
+                    nativeButton={false}
+                    render={<Link href="/health-tests/alertas/notificar" />}
+                    onClick={() => {
+                      try {
+                        window.sessionStorage.setItem(
+                          NOTIFY_SELECTION_KEY,
+                          JSON.stringify(selectedAlerts.map((alert) => alert.id)),
+                        );
+                      } catch {
+                        // Sin sessionStorage la página de notificación permite elegir alertas.
+                      }
+                    }}
+                  >
+                    <Send className="size-3.5" />
+                    {t("Notificar")} {selectedAlerts.length}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-[11.5px] text-white/85 hover:bg-white/15 hover:text-white"
+                    onClick={() => setSelectedIds([])}
+                  >
+                    {t("Quitar selección")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="ml-auto flex items-center gap-2">
+                  <span className="text-[11.5px] text-muted-foreground">
+                    {filtered.length} {t("alertas")}
+                  </span>
+                  {filtered.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[11.5px]"
+                      onClick={selectAllFiltered}
+                    >
+                      {t("Seleccionar los")} {filtered.length}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
 
             {filtered.length === 0 ? (
@@ -439,40 +592,72 @@ export function AlertsPage() {
                 onClear={clearFilters}
               />
             ) : (
-              <AlertsTable
-                alerts={filtered}
-                patients={data.patients}
-                onChangeStatus={changeStatus}
-                canReview={canReview}
-                selectedIds={selectedIds}
-                onToggle={toggleSelected}
-                onToggleAll={toggleAll}
-              />
+              <>
+                <AlertsTable
+                  alerts={pagedAlerts}
+                  patients={data.patients}
+                  onChangeStatus={changeStatus}
+                  canReview={canReview}
+                  selectedIds={selectedIds}
+                  onToggle={toggleSelected}
+                  onToggleAll={toggleAll}
+                />
+                {pageCount > 1 && (
+                  <div className="mt-auto flex items-center justify-between gap-3 border-t border-border px-4 py-2.5">
+                    <span className="text-[11.5px] text-muted-foreground">
+                      {t("Página")} {currentPage} {t("de")} {pageCount} · {filtered.length} {t("alertas")}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t("Anterior")}
+                        disabled={currentPage === 1}
+                        onClick={() =>
+                          setPageState({
+                            key: filterKey,
+                            page: Math.max(1, currentPage - 1),
+                          })
+                        }
+                      >
+                        <ChevronLeft className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t("Siguiente")}
+                        disabled={currentPage === pageCount}
+                        onClick={() =>
+                          setPageState({
+                            key: filterKey,
+                            page: Math.min(pageCount, currentPage + 1),
+                          })
+                        }
+                      >
+                        <ChevronRight className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
-            <div className="flex items-center gap-2 border-t border-border px-5 py-3 text-[11.5px] text-muted-foreground">
-              <Stethoscope className="size-3.5" />
-              {t("Las transiciones de estado se aplican en esta sesión (mock)")}
-            </div>
+            {statusError ? (
+              <div className="mt-auto flex items-center gap-2 border-t border-border px-5 py-3 text-[11.5px] text-destructive">
+                <TriangleAlert className="size-3.5" />
+                {t(statusError)}
+              </div>
+            ) : null}
           </section>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="charts">
-          <AlertsCharts />
-        </TabsContent>
-
-        <TabsContent value="history">
-          <NotificationsHistory />
-        </TabsContent>
-      </Tabs>
-
-      <NotifyWizard
-        open={notifyOpen}
-        onOpenChange={setNotifyOpen}
-        alerts={selectedAlerts}
-        patients={data.patients}
-        onCompleted={() => setSelectedIds([])}
-      />
+        <div className="order-1 flex flex-col gap-5 xl:order-2 xl:col-span-4">
+          <AlertsInsightsRail />
+          <NotificationsTimeline className="flex-1" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -497,29 +682,35 @@ function AlertsTable({
   onToggleAll,
 }: AlertsTableProps) {
   const t = useT();
-  const allSelected = alerts.length > 0 && selectedIds.length === alerts.length;
+  const allSelected =
+    alerts.length > 0 && alerts.every((alert) => selectedIds.includes(alert.id));
 
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-[1100px]">
-        <TableHeader>
+      <Table className="w-full">
+        <TableHeader
+          className="[&_th]:text-[var(--brand-navy)]"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, color-mix(in srgb, var(--brand-navy) 9%, transparent), color-mix(in srgb, var(--brand-teal) 12%, transparent))",
+          }}
+        >
           <TableRow>
             <TableHead className="w-10">
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={onToggleAll}
-                aria-label={t("Seleccionar todas las alertas")}
+                aria-label={t("Seleccionar alertas de esta página")}
                 className="size-4 rounded border-border"
               />
             </TableHead>
             <TableHead>{t("Paciente")}</TableHead>
-            <TableHead>{t("Indicador")}</TableHead>
-            <TableHead>{t("Resultado")}</TableHead>
-            <TableHead>{t("Severidad")}</TableHead>
-            <TableHead>{t("Fecha")}</TableHead>
-            <TableHead>{t("Estado")}</TableHead>
-            <TableHead className="text-right">{t("Acciones")}</TableHead>
+            <TableHead className="whitespace-nowrap">{t("Resultado")}</TableHead>
+            <TableHead className="whitespace-nowrap">{t("Severidad")}</TableHead>
+            <TableHead className="whitespace-nowrap">{t("Fecha")}</TableHead>
+            <TableHead className="whitespace-nowrap">{t("Estado")}</TableHead>
+            <TableHead className="whitespace-nowrap text-right">{t("Acciones")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -542,6 +733,7 @@ function AlertsTable({
                   <Link
                     href={`/health-tests/pacientes/${alert.patientId}`}
                     className="flex items-center gap-2.5"
+                    title={alert.message}
                   >
                     <span
                       className="flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-medium"
@@ -562,46 +754,29 @@ function AlertsTable({
                     </span>
                   </Link>
                 </TableCell>
-                <TableCell>
-                  <div className="max-w-[240px]">
-                    <p className="truncate text-[12.5px] font-medium text-foreground">
-                      {alert.indicatorName}
-                    </p>
-                    <p className="truncate text-[11px] text-muted-foreground">
-                      {alert.message}
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell className="text-[12.5px] text-foreground">
+                <TableCell className="whitespace-nowrap text-[12.5px] text-foreground">
                   {alert.resultValue ? `${alert.resultValue}%` : "—"}
                 </TableCell>
                 <TableCell>
                   <SeverityBadge severity={alert.severity} />
                 </TableCell>
-                <TableCell className="text-[12px] text-muted-foreground">
+                <TableCell className="whitespace-nowrap text-[12px] text-muted-foreground">
                   {formatDate(alert.createdAt)}
                 </TableCell>
-                <TableCell>
-                  <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                    style={{
-                      backgroundColor: `${statusColor(alert.status)}1A`,
-                      color: statusColor(alert.status),
-                    }}
-                  >
-                    {STATUS_LABELS[alert.status]}
-                  </span>
+                <TableCell className="whitespace-nowrap">
+                  <AlertStatusBadge status={alert.status} />
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-2">
+                <TableCell className="whitespace-nowrap">
+                  <div className="flex items-center justify-end gap-1.5">
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       nativeButton={false}
+                      aria-label={t("Ver perfil del paciente")}
+                      title={t("Perfil")}
                       render={<Link href={`/health-tests/pacientes/${alert.patientId}`} />}
                     >
                       <Eye className="size-3.5" />
-                      {t("Perfil")}
                     </Button>
                     {canReview && (
                       <DropdownMenu>
@@ -609,23 +784,25 @@ function AlertsTable({
                           render={
                             <Button
                               variant="outline"
-                              size="sm"
+                              size="icon-sm"
                               aria-label={t("Cambiar estado de la alerta")}
                             />
                           }
                         >
-                          {t("Estado")}
+                          <MoreHorizontal className="size-3.5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>{t("Cambiar estado")}</DropdownMenuLabel>
-                          {STATUS_NEXT[alert.status].map((next) => (
-                            <DropdownMenuItem
-                              key={next}
-                              onClick={() => onChangeStatus(alert.id, next)}
-                            >
-                              {STATUS_LABELS[next]}
-                            </DropdownMenuItem>
-                          ))}
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel>{t("Cambiar estado")}</DropdownMenuLabel>
+                            {STATUS_NEXT[alert.status].map((next) => (
+                              <DropdownMenuItem
+                                key={next}
+                                onClick={() => void onChangeStatus(alert.id, next)}
+                              >
+                                {STATUS_LABELS[next]}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuGroup>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}

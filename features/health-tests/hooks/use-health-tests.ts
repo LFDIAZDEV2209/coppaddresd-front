@@ -20,7 +20,9 @@ import type {
 import {
   healthTestsApi,
   healthTestMetrics,
+  subscribeHealthTestsCache,
   withAttempts,
+  type AlertTransition,
   type HealthTestStats,
 } from "../services/health-tests-service";
 import { ApiError } from "@/lib/api/http";
@@ -74,6 +76,11 @@ export function useAsyncData<T>(loader: () => Promise<T>, key?: string) {
   }, [load, effectiveKey]);
 
   const reload = useCallback(() => setReloadNonce((n) => n + 1), []);
+
+  // Refresco «casi en vivo»: cuando una mutación del módulo invalida la cache
+  // (enviar notificaciones, cambiar el estado de una alerta, editar plantillas)
+  // este hook recarga sus datos sin necesidad de recargar la página.
+  useEffect(() => subscribeHealthTestsCache(reload), [reload]);
 
   return {
     data,
@@ -363,6 +370,7 @@ export function useAlerts() {
   const [statusChanges, setStatusChanges] = useState<
     Record<string, HealthAlert["status"]>
   >({});
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   const loading = alerts.loading || patients.loading || tests.loading;
   const error = alerts.error ?? patients.error ?? tests.error;
@@ -373,10 +381,28 @@ export function useAlerts() {
     void tests.reload();
   }, [alerts, patients, tests]);
 
-  /** Mock: transición de estado local (mañana: PATCH al backend). */
+  /** Transición de estado real contra el backend (permiso HealthTests.Review). */
   const changeStatus = useCallback(
-    (alertId: string, status: HealthAlert["status"]) => {
-      setStatusChanges((prev) => ({ ...prev, [alertId]: status }));
+    async (alertId: string, status: HealthAlert["status"]) => {
+      const action: AlertTransition | null =
+        status === "en-revision"
+          ? "review"
+          : status === "atendida"
+            ? "resolve"
+            : status === "cerrada"
+              ? "close"
+              : status === "activa"
+                ? "reopen"
+                : null;
+      if (!action) return;
+
+      setStatusError(null);
+      try {
+        await healthTestsApi.transitionAlert(alertId, action);
+        setStatusChanges((prev) => ({ ...prev, [alertId]: status }));
+      } catch {
+        setStatusError("No se pudo actualizar el estado de la alerta.");
+      }
     },
     [],
   );
@@ -393,7 +419,7 @@ export function useAlerts() {
     };
   }, [alerts.data, patients.data, tests.data, statusChanges]);
 
-  return { data, loading, error, reload, changeStatus };
+  return { data, loading, error, reload, changeStatus, statusError };
 }
 
 /* ------------------------------------------------------------------ */

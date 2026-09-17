@@ -375,20 +375,28 @@ export interface CoverageTrendPoint {
 /** Canal de entrega de una notificación. */
 export type NotificationChannel = "community" | "sms";
 
+/** Idioma de la notificación (el emisor lo elige al enviar). */
+export type NotificationLanguage = "es" | "en";
+
 /** Estado de entrega de una notificación. */
 export type NotificationStatus = "queued" | "sent" | "failed" | "skipped";
 
 export interface NotificationTemplate {
   id: string;
   code: string;
-  name: string;
+  nameEs: string;
+  /** Nombre en inglés (null = falta traducción). */
+  nameEn: string | null;
   channel: NotificationChannel;
   severity: AlertSeverity | null;
   testCategory: string | null;
   indicatorCode: string | null;
-  subject: string | null;
-  /** Cuerpo con placeholders: {paciente}, {test}, {indicador}, {valor}... */
-  bodyTemplate: string;
+  subjectEs: string | null;
+  subjectEn: string | null;
+  /** Cuerpo en español con placeholders: [paciente], [test], [indicador], [valor]... */
+  bodyTemplateEs: string;
+  /** Cuerpo en inglés (null = falta traducción). */
+  bodyTemplateEn: string | null;
   isActive: boolean;
   usageCount: number;
   versionCount: number;
@@ -400,13 +408,16 @@ export interface NotificationTemplateVersion {
   id: string;
   templateId: string;
   version: number;
-  name: string;
+  nameEs: string;
+  nameEn: string | null;
   channel: NotificationChannel;
   severity: AlertSeverity | null;
   testCategory: string | null;
   indicatorCode: string | null;
-  subject: string | null;
-  bodyTemplate: string;
+  subjectEs: string | null;
+  subjectEn: string | null;
+  bodyTemplateEs: string;
+  bodyTemplateEn: string | null;
   note: string | null;
   createdAt: string;
 }
@@ -417,6 +428,7 @@ export interface HealthNotification {
   patientId: string | null;
   patientName: string | null;
   channel: NotificationChannel;
+  language: NotificationLanguage;
   templateId: string | null;
   templateName: string | null;
   recipient: string;
@@ -434,6 +446,7 @@ export interface NotifyAlertItemResult {
   patientId: string | null;
   patientName: string | null;
   channel: NotificationChannel;
+  language: NotificationLanguage;
   status: NotificationStatus;
   reason: string | null;
   renderedBody: string;
@@ -465,13 +478,16 @@ export interface NotificationCharts {
 }
 
 export interface NotificationTemplateInput {
-  name: string;
+  nameEs: string;
   channel: NotificationChannel;
-  bodyTemplate: string;
+  bodyTemplateEs: string;
+  nameEn?: string | null;
+  bodyTemplateEn?: string | null;
   severity?: AlertSeverity | null;
   testCategory?: string | null;
   indicatorCode?: string | null;
-  subject?: string | null;
+  subjectEs?: string | null;
+  subjectEn?: string | null;
   isActive?: boolean;
   note?: string | null;
 }
@@ -485,6 +501,7 @@ export interface NotifyAlertsInput {
   channels: NotificationChannel[];
   templateId?: string | null;
   bodyOverride?: string | null;
+  language?: NotificationLanguage;
   preview?: boolean;
 }
 
@@ -495,6 +512,7 @@ export interface NotifyAlertsFilters {
   status?: NotificationStatus;
   from?: string;
   to?: string;
+  search?: string;
   page?: number;
   pageSize?: number;
 }

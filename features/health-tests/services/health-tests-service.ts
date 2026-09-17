@@ -97,11 +97,48 @@ function cached<T>(
 
 /**
  * Invalida la cache en memoria del módulo. Se llama tras mutaciones (crear
- * batería, asignar pacientes) para que los hooks recarguen datos frescos.
+ * batería, asignar pacientes, enviar notificaciones, cambiar el estado de una
+ * alerta) para que los hooks recarguen datos frescos.
+ *
+ * Además notifica a las vistas montadas: así los KPIs, gráficos, la tira de
+ * notificaciones y el historial se refrescan «casi en vivo» sin recargar la
+ * página. La notificación se agrupa con un pequeño retardo para no disparar
+ * varias recargas cuando una mutación invalida en ráfaga.
  */
 export function invalidateHealthTestsCache(): void {
   cacheEpoch += 1;
   svcCache.clear();
+  scheduleInvalidationNotice();
+}
+
+/** Suscriptores (hooks montados) que quieren recargar al invalidar la cache. */
+const invalidationListeners = new Set<() => void>();
+let invalidationTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleInvalidationNotice(): void {
+  if (invalidationTimer !== null) clearTimeout(invalidationTimer);
+  invalidationTimer = setTimeout(() => {
+    invalidationTimer = null;
+    invalidationListeners.forEach((listener) => {
+      try {
+        listener();
+      } catch {
+        // Un suscriptor roto no debe impedir que el resto recargue.
+      }
+    });
+  }, 250);
+}
+
+/**
+ * Registra un listener de invalidación y devuelve la función para desuscribir.
+ * Pensado para `useAsyncData`: cada hook montado recarga sus datos cuando una
+ * mutación del módulo invalida la cache.
+ */
+export function subscribeHealthTestsCache(listener: () => void): () => void {
+  invalidationListeners.add(listener);
+  return () => {
+    invalidationListeners.delete(listener);
+  };
 }
 
 const TTL_MASTER = 30_000;
@@ -151,6 +188,8 @@ export interface HealthTestsApi {
   listIndicators(): Promise<ClinicalIndicator[]>;
   listProfessionals(): Promise<HealthProfessional[]>;
   listAlerts(patientId?: string): Promise<HealthAlert[]>;
+  /** Transición de estado de una alerta (registra revision/resolución/cierre). */
+  transitionAlert(alertId: string, action: AlertTransition): Promise<void>;
   listBatteries(): Promise<Battery[]>;
   getBattery(batteryId: string): Promise<Battery | null>;
   createBattery(input: CreateBatteryInput): Promise<Battery>;
@@ -883,6 +922,17 @@ async function listAlerts(patientId?: string): Promise<HealthAlert[]> {
   return response.data.map(mapAlert);
 }
 
+/** Acciones de transición que expone el backend (permiso HealthTests.Review). */
+export type AlertTransition = "review" | "resolve" | "close" | "reopen";
+
+async function transitionAlert(
+  alertId: string,
+  action: AlertTransition,
+): Promise<void> {
+  await apiFetch(`${BASE}/alerts/${alertId}/${action}`, { method: "POST" });
+  invalidateHealthTestsCache();
+}
+
 async function listBatteries(): Promise<Battery[]> {
   return cached("batteries", TTL_CATALOG, async () => {
     const response = await apiFetch<PaginatedDto<BatteryDto>>(
@@ -1262,6 +1312,7 @@ export const healthTestsApi: HealthTestsApi = {
   listIndicators,
   listProfessionals,
   listAlerts,
+  transitionAlert,
   listBatteries,
   getBattery,
   createBattery,

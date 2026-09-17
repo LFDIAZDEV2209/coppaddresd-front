@@ -7,6 +7,7 @@ import type {
   NotificationChannel,
   NotificationCharts,
   NotificationChartPoint,
+  NotificationLanguage,
   NotificationStatus,
   NotificationTemplate,
   NotificationTemplateInput,
@@ -42,13 +43,16 @@ interface PaginatedDto<T> {
 interface NotificationTemplateDto {
   id: string;
   code: string;
-  name: string;
+  nameEs: string;
+  nameEn: string | null;
   channel: string;
   severity: string | null;
   testCategory: string | null;
   indicatorCode: string | null;
-  subject: string | null;
-  bodyTemplate: string;
+  subjectEs: string | null;
+  subjectEn: string | null;
+  bodyTemplateEs: string;
+  bodyTemplateEn: string | null;
   isActive: boolean;
   usageCount: number;
   versionCount: number;
@@ -60,13 +64,16 @@ interface NotificationTemplateVersionDto {
   id: string;
   templateId: string;
   version: number;
-  name: string;
+  nameEs: string;
+  nameEn: string | null;
   channel: string;
   severity: string | null;
   testCategory: string | null;
   indicatorCode: string | null;
-  subject: string | null;
-  bodyTemplate: string;
+  subjectEs: string | null;
+  subjectEn: string | null;
+  bodyTemplateEs: string;
+  bodyTemplateEn: string | null;
   note: string | null;
   createdAt: string;
 }
@@ -77,6 +84,7 @@ interface NotificationDto {
   patientId: string | null;
   patientName: string | null;
   channel: string;
+  language: string;
   templateId: string | null;
   templateName: string | null;
   recipient: string;
@@ -94,6 +102,7 @@ interface NotifyAlertItemResultDto {
   patientId: string | null;
   patientName: string | null;
   channel: string;
+  language: string;
   status: string;
   reason: string | null;
   renderedBody: string;
@@ -150,6 +159,10 @@ function mapChannel(value: string): NotificationChannel {
   return value === "sms" ? "sms" : "community";
 }
 
+function mapLanguage(value: string | null | undefined): NotificationLanguage {
+  return value === "en" ? "en" : "es";
+}
+
 function mapStatus(value: string): NotificationStatus {
   switch (value) {
     case "sent":
@@ -165,13 +178,16 @@ function mapTemplate(dto: NotificationTemplateDto): NotificationTemplate {
   return {
     id: dto.id,
     code: dto.code,
-    name: dto.name,
+    nameEs: dto.nameEs,
+    nameEn: dto.nameEn,
     channel: mapChannel(dto.channel),
     severity: mapSeverity(dto.severity),
     testCategory: dto.testCategory,
     indicatorCode: dto.indicatorCode,
-    subject: dto.subject,
-    bodyTemplate: dto.bodyTemplate,
+    subjectEs: dto.subjectEs,
+    subjectEn: dto.subjectEn,
+    bodyTemplateEs: dto.bodyTemplateEs,
+    bodyTemplateEn: dto.bodyTemplateEn,
     isActive: dto.isActive,
     usageCount: dto.usageCount ?? 0,
     versionCount: dto.versionCount ?? 0,
@@ -187,13 +203,16 @@ function mapTemplateVersion(
     id: dto.id,
     templateId: dto.templateId,
     version: dto.version,
-    name: dto.name,
+    nameEs: dto.nameEs,
+    nameEn: dto.nameEn,
     channel: mapChannel(dto.channel),
     severity: mapSeverity(dto.severity),
     testCategory: dto.testCategory,
     indicatorCode: dto.indicatorCode,
-    subject: dto.subject,
-    bodyTemplate: dto.bodyTemplate,
+    subjectEs: dto.subjectEs,
+    subjectEn: dto.subjectEn,
+    bodyTemplateEs: dto.bodyTemplateEs,
+    bodyTemplateEn: dto.bodyTemplateEn,
     note: dto.note,
     createdAt: dto.createdAt,
   };
@@ -206,6 +225,7 @@ function mapNotification(dto: NotificationDto): HealthNotification {
     patientId: dto.patientId,
     patientName: dto.patientName,
     channel: mapChannel(dto.channel),
+    language: mapLanguage(dto.language),
     templateId: dto.templateId,
     templateName: dto.templateName,
     recipient: dto.recipient,
@@ -225,6 +245,7 @@ function mapNotifyItem(dto: NotifyAlertItemResultDto): NotifyAlertItemResult {
     patientId: dto.patientId,
     patientName: dto.patientName,
     channel: mapChannel(dto.channel),
+    language: mapLanguage(dto.language),
     status: mapStatus(dto.status),
     reason: dto.reason,
     renderedBody: dto.renderedBody,
@@ -279,13 +300,16 @@ function templateBody(
   input: CreateNotificationTemplateInput | NotificationTemplateInput,
 ) {
   return {
-    name: input.name,
+    nameEs: input.nameEs,
+    nameEn: input.nameEn ?? null,
     channel: input.channel,
-    bodyTemplate: input.bodyTemplate,
+    bodyTemplateEs: input.bodyTemplateEs,
+    bodyTemplateEn: input.bodyTemplateEn ?? null,
     severity: severityToBackend(input.severity),
     testCategory: input.testCategory ?? null,
     indicatorCode: input.indicatorCode ?? null,
-    subject: input.subject ?? null,
+    subjectEs: input.subjectEs ?? null,
+    subjectEn: input.subjectEn ?? null,
     isActive: input.isActive ?? true,
     note: input.note ?? null,
   };
@@ -333,11 +357,19 @@ async function setTemplateActive(
 async function cloneTemplate(
   id: string,
   code: string,
-  name?: string,
+  nameEs?: string,
+  nameEn?: string,
 ): Promise<NotificationTemplate> {
   const dto = await apiFetch<NotificationTemplateDto>(
     `${BASE}/notification-templates/${id}/clone`,
-    { method: "POST", body: JSON.stringify({ code, name: name ?? null }) },
+    {
+      method: "POST",
+      body: JSON.stringify({
+        code,
+        nameEs: nameEs ?? null,
+        nameEn: nameEn ?? null,
+      }),
+    },
   );
   invalidateHealthTestsCache();
   return mapTemplate(dto);
@@ -364,8 +396,42 @@ async function restoreTemplateVersion(
   return mapTemplate(dto);
 }
 
-export interface SendTestInput {
+export interface NotificationTemplatePreviewDto {
+  templateId: string;
+  templateName: string;
+  channel: string;
+  language: string;
+  alertId: string | null;
+  patientId: string | null;
+  bodyTemplate: string;
+  renderedBody: string;
+  recipient: string | null;
+  isReachable: boolean;
+  skipReason: string | null;
+  usedFallbackLanguage: boolean;
+  missingPlaceholders: string[];
+}
+
+export interface NotificationTemplatePreview {
+  templateId: string;
+  templateName: string;
   channel: NotificationChannel;
+  language: NotificationLanguage;
+  alertId: string | null;
+  patientId: string | null;
+  bodyTemplate: string;
+  renderedBody: string;
+  recipient: string | null;
+  isReachable: boolean;
+  skipReason: string | null;
+  /** El idioma pedido no tenía traducción y se usó el español. */
+  usedFallbackLanguage: boolean;
+  missingPlaceholders: string[];
+}
+
+interface SendTestInput {
+  channel: NotificationChannel;
+  language?: NotificationLanguage;
   phoneNumber?: string;
   patientId?: string;
   bodyOverride?: string;
@@ -381,6 +447,7 @@ async function sendTest(
       method: "POST",
       body: JSON.stringify({
         channel: input.channel,
+        language: input.language ?? "es",
         phoneNumber: input.phoneNumber ?? null,
         patientId: input.patientId ?? null,
         bodyOverride: input.bodyOverride ?? null,
@@ -388,6 +455,45 @@ async function sendTest(
     },
   );
   return mapNotifyItem(dto);
+}
+
+// --- Vista previa real (datos de una alerta) ---
+
+export interface TemplatePreviewInput {
+  alertId?: string | null;
+  channel?: NotificationChannel | null;
+  bodyOverride?: string | null;
+  language?: NotificationLanguage;
+}
+
+async function previewTemplate(
+  templateId: string,
+  input: TemplatePreviewInput = {},
+): Promise<NotificationTemplatePreview> {
+  const params = new URLSearchParams();
+  if (input.alertId) params.set("alertId", input.alertId);
+  if (input.channel) params.set("channel", input.channel);
+  if (input.bodyOverride) params.set("bodyOverride", input.bodyOverride);
+  if (input.language) params.set("language", input.language);
+  const query = params.toString();
+  const dto = await apiFetch<NotificationTemplatePreviewDto>(
+    `${BASE}/notification-templates/${templateId}/preview${query ? `?${query}` : ""}`,
+  );
+  return {
+    templateId: dto.templateId,
+    templateName: dto.templateName,
+    channel: mapChannel(dto.channel),
+    language: mapLanguage(dto.language),
+    alertId: dto.alertId,
+    patientId: dto.patientId,
+    bodyTemplate: dto.bodyTemplate,
+    renderedBody: dto.renderedBody,
+    recipient: dto.recipient,
+    isReachable: dto.isReachable,
+    skipReason: dto.skipReason,
+    usedFallbackLanguage: dto.usedFallbackLanguage ?? false,
+    missingPlaceholders: dto.missingPlaceholders ?? [],
+  };
 }
 
 // --- Envío masivo y registro ---
@@ -400,6 +506,7 @@ async function notify(input: NotifyAlertsInput): Promise<NotifyAlertsResult> {
       channels: input.channels,
       templateId: input.templateId ?? null,
       bodyOverride: input.bodyOverride ?? null,
+      language: input.language ?? "es",
       preview: input.preview ?? false,
     }),
   });
@@ -420,6 +527,7 @@ async function listNotifications(
   if (filters.status) params.set("status", filters.status);
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
+  if (filters.search) params.set("search", filters.search);
 
   const response = await apiFetch<PaginatedDto<NotificationDto>>(
     `${BASE}/notifications?${params.toString()}`,
@@ -451,10 +559,19 @@ export interface NotificationsApi {
     input: NotificationTemplateInput,
   ): Promise<NotificationTemplate>;
   setTemplateActive(id: string, isActive: boolean): Promise<NotificationTemplate>;
-  cloneTemplate(id: string, code: string, name?: string): Promise<NotificationTemplate>;
+  cloneTemplate(
+    id: string,
+    code: string,
+    nameEs?: string,
+    nameEn?: string,
+  ): Promise<NotificationTemplate>;
   listTemplateVersions(id: string): Promise<NotificationTemplateVersion[]>;
   restoreTemplateVersion(id: string, version: number): Promise<NotificationTemplate>;
   sendTest(templateId: string, input: SendTestInput): Promise<NotifyAlertItemResult>;
+  previewTemplate(
+    templateId: string,
+    input?: TemplatePreviewInput,
+  ): Promise<NotificationTemplatePreview>;
   notify(input: NotifyAlertsInput): Promise<NotifyAlertsResult>;
   listNotifications(
     filters?: NotifyAlertsFilters,
@@ -472,6 +589,7 @@ export const notificationsApi: NotificationsApi = {
   listTemplateVersions,
   restoreTemplateVersion,
   sendTest,
+  previewTemplate,
   notify,
   listNotifications,
   getCharts,

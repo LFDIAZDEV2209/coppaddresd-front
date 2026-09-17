@@ -61,6 +61,7 @@ export function useNotifications(params?: {
   status?: NotificationStatus;
   from?: string;
   to?: string;
+  search?: string;
   page?: number;
   pageSize?: number;
 }) {
@@ -70,9 +71,10 @@ export function useNotifications(params?: {
   const status = params?.status;
   const from = params?.from;
   const to = params?.to;
+  const search = params?.search;
   const page = params?.page ?? 1;
   const pageSize = params?.pageSize ?? 20;
-  const key = `notif-log:${alertId ?? ""}:${patientId ?? ""}:${channel ?? ""}:${status ?? ""}:${from ?? ""}:${to ?? ""}:${page}:${pageSize}`;
+  const key = `notif-log:${alertId ?? ""}:${patientId ?? ""}:${channel ?? ""}:${status ?? ""}:${from ?? ""}:${to ?? ""}:${search ?? ""}:${page}:${pageSize}`;
 
   const loader = useCallback(
     () =>
@@ -83,10 +85,11 @@ export function useNotifications(params?: {
         status,
         from,
         to,
+        search,
         page,
         pageSize,
       }),
-    [alertId, patientId, channel, status, from, to, page, pageSize],
+    [alertId, patientId, channel, status, from, to, search, page, pageSize],
   );
 
   return useAsyncData(loader, key);
