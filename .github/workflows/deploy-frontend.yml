@@ -30,7 +30,7 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Corepack ANTES de setup-node: el cache de yarn ejecuta yarn cache dir
       # y con Yarn 1 global falla por packageManager (yarn@4.18.0).
@@ -39,7 +39,7 @@ jobs:
           corepack enable
           corepack prepare yarn@4.18.0 --activate
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: "yarn"
@@ -62,10 +62,10 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::933629770820:role/cooppadresd-gha-frontend
           aws-region: ${{ env.AWS_REGION }}
@@ -75,14 +75,14 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Setup Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Caché GHA: el Dockerfile ya separa deps/builder/runner; pushes de
       # solo-código reutilizan node_modules y el build baja a ~1-3 min.
       # push:false + docker push clasico: buildx resolviendo el tag exige
       # ecr:BatchGetImage y el rol GHA no lo tiene; el push clasico si funciona.
       - name: Build imagen (${{ github.sha }})
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
