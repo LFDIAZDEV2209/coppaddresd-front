@@ -127,7 +127,7 @@ export const erpNavSections: ErpNavSection[] = [
         permission: "Community.View",
       },
       {
-        label: "Redes ANTARES",
+        label: "Redes Copp Adresd",
         href: "/community/networks",
         icon: Share2,
         permission: "Community.Manage",
@@ -136,4 +136,4 @@ export const erpNavSections: ErpNavSection[] = [
   },
 ];
 
-export const communityBrand = "ANTARES · ERP Comunidad";
+export const communityBrand = "Copp Adresd · ERP Comunidad";

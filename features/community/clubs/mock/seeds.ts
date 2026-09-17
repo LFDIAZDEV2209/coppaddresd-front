@@ -148,7 +148,7 @@ function post(
 
 export function createSeeds(): SeedClub[] {
   const managers = [
-    member("m-1", "Equipo ANTARES", "ADMIN", 60_000),
+    member("m-1", "Equipo Copp Adresd", "ADMIN", 60_000),
     member("m-2", "María Fernanda Rojas", "ADMIN", 30_000),
     member("m-3", "Carlos Andrés Pardo", "MODERADOR", 20_000),
   ];

@@ -65,7 +65,7 @@ export function GroupsPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Grupos/Chats")}
-        description={t("Gestión de grupos y chats de ANTARES")}
+        description={t("Gestión de grupos y chats de Copp Adresd")}
         icon={MessageCircle}
       />
 
@@ -143,7 +143,7 @@ export function GroupsPage() {
           <DialogHeader>
             <DialogTitle>{t("Enviar mensaje al grupo")}</DialogTitle>
             <DialogDescription>
-              {t("Se enviará como Equipo ANTARES al grupo") + ": " + (messageTarget?.name ?? "")}
+              {t("Se enviará como Equipo Copp Adresd al grupo") + ": " + (messageTarget?.name ?? "")}
             </DialogDescription>
           </DialogHeader>
           <Textarea

@@ -1124,7 +1124,7 @@ function PatientIaSection({
     return (
       <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <SectionHeader
-          title={t("Análisis integral ANTARES · IA")}
+          title={t("Análisis integral Copp Adresd · IA")}
           description={t("Se genera automáticamente al completar evaluaciones")}
           icon={Sparkles}
           variant="primary"
@@ -1138,7 +1138,7 @@ function PatientIaSection({
           </h4>
           <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
             {t(
-              "Completa al menos 3 tests de la batería para desbloquear el perfil integral: radar de 7 dimensiones, DOFA, correlaciones y recomendaciones priorizadas — igual que en la app móvil ANTARES.",
+              "Completa al menos 3 tests de la batería para desbloquear el perfil integral: radar de 7 dimensiones, DOFA, correlaciones y recomendaciones priorizadas — igual que en la app móvil Copp Adresd.",
             )}
           </p>
         </div>
@@ -1151,7 +1151,7 @@ function PatientIaSection({
       {/* Hero AHS — cabecera azul + síntesis */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <SectionHeader
-          title={t("Análisis integral ANTARES · IA")}
+          title={t("Análisis integral Copp Adresd · IA")}
           description={t(
             "Síntesis IA — AHS, radar, DOFA, correlaciones y recomendaciones priorizadas",
           )}
@@ -1218,7 +1218,7 @@ function PatientIaSection({
               <div className="flex flex-col gap-1.5">
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-white/70">
                   <Sparkles className="size-3" />
-                  {t("Perfil ANTARES · IA")}
+                  {t("Perfil Copp Adresd · IA")}
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur">
@@ -1971,7 +1971,7 @@ function buildIaProfile(
     });
   }
 
-  const prof = patient.professionalName || "Equipo ANTARES";
+  const prof = patient.professionalName || "Equipo Copp Adresd";
   const plan = [
     {
       specialty: "Nutrición",
@@ -2009,7 +2009,7 @@ function buildIaProfile(
     },
     {
       specialty: "Comunidad",
-      title: "Activar comunidad ANTARES según tipificación",
+      title: "Activar comunidad Copp Adresd según tipificación",
       prof: "",
       week: "",
       color: "#5581A2",
