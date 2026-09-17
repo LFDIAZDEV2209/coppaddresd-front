@@ -161,7 +161,6 @@ export function NotificationsPage() {
     const header = [
       t("Paciente"),
       t("Canal"),
-      t("Idioma"),
       t("Destinatario"),
       t("Plantilla"),
       t("Estado"),
@@ -171,7 +170,6 @@ export function NotificationsPage() {
     const rows = items.map((item) => [
       item.patientName ?? "—",
       t(CHANNEL_LABELS[item.channel]),
-      item.language === "en" ? "English" : "Español",
       item.recipient,
       item.templateName ?? t("Sin plantilla (texto libre)"),
       t(STATUS_LABELS[item.status]),
@@ -348,7 +346,6 @@ export function NotificationsPage() {
                   <TableRow>
                     <TableHead>{t("Paciente")}</TableHead>
                     <TableHead>{t("Canal")}</TableHead>
-                    <TableHead>{t("Idioma")}</TableHead>
                     <TableHead>{t("Destinatario")}</TableHead>
                     <TableHead>{t("Plantilla")}</TableHead>
                     <TableHead>{t("Estado")}</TableHead>
@@ -376,9 +373,6 @@ export function NotificationsPage() {
                               )}
                               {t(CHANNEL_LABELS[item.channel])}
                             </span>
-                          </TableCell>
-                          <TableCell className="text-[12px] text-muted-foreground">
-                            {item.language === "en" ? "English" : "Español"}
                           </TableCell>
                           <TableCell className="max-w-[180px] truncate text-[12px] text-muted-foreground">
                             {item.recipient}
@@ -411,7 +405,7 @@ export function NotificationsPage() {
                         </TableRow>
                         {expanded && (
                           <TableRow key={`${item.id}-detail`} className="bg-muted/30">
-                            <TableCell colSpan={8} className="whitespace-normal">
+                            <TableCell colSpan={7} className="whitespace-normal">
                               <div className="flex flex-col gap-2 py-1 text-[12px]">
                                 <p className="text-foreground">{item.renderedBody}</p>
                                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-muted-foreground">
@@ -550,38 +544,53 @@ export function NotificationsPage() {
                     {t("Sin actividad en el periodo")}
                   </p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={140}>
-                    <AreaChart data={dayPoints}>
-                      <defs>
-                        <linearGradient id="notif-day-fill" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.35} />
-                          <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.02} />
-                        </linearGradient>
-                      </defs>
-                      <XAxis
-                        dataKey="label"
-                        tick={{ fontSize: 10 }}
-                        tickLine={false}
-                        axisLine={false}
-                        interval="preserveStartEnd"
-                      />
-                      <YAxis
-                        width={28}
-                        allowDecimals={false}
-                        tick={{ fontSize: 10 }}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <Tooltip />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#0EA5E9"
-                        strokeWidth={2}
-                        fill="url(#notif-day-fill)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  <>
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span
+                          className="size-2 rounded-full bg-[#0EA5E9]"
+                          aria-hidden
+                        />
+                        {t("Envíos por día")}
+                      </span>
+                      <span className="tabular-nums">
+                        {dayPoints.reduce((sum, point) => sum + point.value, 0)}{" "}
+                        {t("en el periodo")}
+                      </span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={140}>
+                      <AreaChart data={dayPoints}>
+                        <defs>
+                          <linearGradient id="notif-day-fill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.35} />
+                            <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis
+                          dataKey="label"
+                          tick={{ fontSize: 10 }}
+                          tickLine={false}
+                          axisLine={false}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis
+                          width={28}
+                          allowDecimals={false}
+                          tick={{ fontSize: 10 }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <Tooltip />
+                        <Area
+                          type="monotone"
+                          dataKey="value"
+                          stroke="#0EA5E9"
+                          strokeWidth={2}
+                          fill="url(#notif-day-fill)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </>
                 )}
               </ChartCard>
 
@@ -595,28 +604,51 @@ export function NotificationsPage() {
                     {t("Sin actividad en el periodo")}
                   </p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={140}>
-                    <PieChart>
-                      <Pie
-                        data={channelPoints}
-                        dataKey="value"
-                        nameKey="key"
-                        innerRadius={38}
-                        outerRadius={58}
-                        paddingAngle={2}
-                        stroke="#FFFFFF"
-                        strokeWidth={1}
-                      >
-                        {channelPoints.map((point) => (
-                          <Cell
-                            key={point.key}
-                            fill={CHANNEL_COLORS[point.key] ?? "#94A3B8"}
+                  <>
+                    <ResponsiveContainer width="100%" height={140}>
+                      <PieChart>
+                        <Pie
+                          data={channelPoints}
+                          dataKey="value"
+                          nameKey="key"
+                          innerRadius={38}
+                          outerRadius={58}
+                          paddingAngle={2}
+                          stroke="#FFFFFF"
+                          strokeWidth={1}
+                        >
+                          {channelPoints.map((point) => (
+                            <Cell
+                              key={point.key}
+                              fill={CHANNEL_COLORS[point.key] ?? "#94A3B8"}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <ul className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px]">
+                      {channelPoints.map((point) => (
+                        <li
+                          key={point.key}
+                          className="inline-flex items-center gap-1.5 text-muted-foreground"
+                        >
+                          <span
+                            className="size-2 rounded-full"
+                            style={{
+                              backgroundColor:
+                                CHANNEL_COLORS[point.key] ?? "#94A3B8",
+                            }}
+                            aria-hidden
                           />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                          {t(CHANNEL_LABELS[point.key as NotificationChannel] ?? point.key)}
+                          <strong className="tabular-nums text-foreground">
+                            {point.value}
+                          </strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
                 )}
               </ChartCard>
             </>

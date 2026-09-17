@@ -614,6 +614,74 @@ export function NotifyPage() {
               onDownloadCsv={downloadCsv}
             />
           )}
+
+          {/* Barra de acciones del asistente (reemplaza la tarjeta Resumen). */}
+          <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 text-[11.5px] text-muted-foreground">
+              <span className="font-semibold text-foreground">
+                {alertIds.length} {t("pacientes")}
+              </span>
+              <span aria-hidden>·</span>
+              <span>
+                {channels
+                  .map((channel) => (channel === "sms" ? "SMS" : t("Comunidad")))
+                  .join(" · ")}
+              </span>
+              <span aria-hidden>·</span>
+              <span>{language === "en" ? "English" : t("Español")}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {step > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStep((step - 1) as WizardStep)}
+                >
+                  <ChevronLeft className="size-3.5" />
+                  {t("Atrás")}
+                </Button>
+              )}
+              {step < 3 ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={step === 1 ? !canStep1 : !canStep2}
+                  onClick={() => setStep((step + 1) as WizardStep)}
+                >
+                  {t("Continuar")}
+                  <ChevronRight className="size-3.5" />
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={busy || !canStep1}
+                    onClick={() => void run(true)}
+                  >
+                    {t("Vista previa")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={busy || !canStep1}
+                    onClick={() => void run(false)}
+                  >
+                    <Send className="size-3.5" />
+                    {t("Enviar")} {alertIds.length}
+                  </Button>
+                </>
+              )}
+            </div>
+            {sendError && (
+              <p className="flex w-full items-start gap-1.5 text-[11px] text-destructive">
+                <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+                {sendError}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-5 xl:sticky xl:top-4 xl:col-span-4 xl:self-start">
@@ -713,79 +781,6 @@ export function NotifyPage() {
             </div>
           </section>
 
-          <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <SectionHeader
-              title={t("Resumen")}
-              description={t("Selección actual")}
-              icon={BellRing}
-              variant="primary"
-            />
-            <div className="grid grid-cols-2 gap-3 p-4">
-              <SummaryTile label={t("Pacientes")} value={String(alertIds.length)} />
-              <SummaryTile label={t("Canales")} value={String(channels.length)} />
-              <SummaryTile
-                label={t("Idioma")}
-                value={language === "en" ? "English" : t("Español")}
-              />
-              <SummaryTile
-                label={t("Plantilla")}
-                value={
-                  templateId ? t("Seleccionada") : t("Texto libre")
-                }
-              />
-            </div>
-            <div className="flex flex-col gap-2 border-t border-border px-4 py-3">
-              {step > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setStep((step - 1) as WizardStep)}
-                >
-                  <ChevronLeft className="size-3.5" />
-                  {t("Atrás")}
-                </Button>
-              )}
-              {step < 3 ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={step === 1 ? !canStep1 : !canStep2}
-                  onClick={() => setStep((step + 1) as WizardStep)}
-                >
-                  {t("Continuar")}
-                  <ChevronRight className="size-3.5" />
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={busy || !canStep1}
-                    onClick={() => void run(true)}
-                  >
-                    {t("Vista previa")}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={busy || !canStep1}
-                    onClick={() => void run(false)}
-                  >
-                    <Send className="size-3.5" />
-                    {t("Enviar")} {alertIds.length}
-                  </Button>
-                </>
-              )}
-              {sendError && (
-                <p className="flex items-start gap-1.5 text-[11px] text-destructive">
-                  <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
-                  {sendError}
-                </p>
-              )}
-            </div>
-          </section>
         </div>
       </div>
     </div>

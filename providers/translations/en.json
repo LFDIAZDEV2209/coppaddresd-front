@@ -3560,5 +3560,7 @@
   "Usa Vista previa para revisar sin enviar, o Enviar para entregar ahora.": "Use Preview to review without sending, or Send to deliver now.",
   "Ver detalle de la entrega": "View delivery detail",
   "Volver a alertas": "Back to alerts",
-  "Vista previa por paciente": "Per-patient preview"
+  "Vista previa por paciente": "Per-patient preview",
+  "Envíos por día": "Deliveries per day",
+  "en el periodo": "in the period"
 }
