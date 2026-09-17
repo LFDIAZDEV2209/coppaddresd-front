@@ -845,8 +845,8 @@ function StepCompose({
         icon={MessageSquare}
         variant="primary"
       />
-      <div className="grid flex-1 grid-cols-1 gap-5 p-4 lg:grid-cols-5">
-        <div className="flex flex-col gap-3 lg:col-span-3">
+        <div className="flex flex-1 flex-col gap-5 p-4">
+          <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold text-foreground">{t("Plantilla")}</span>
@@ -867,7 +867,7 @@ function StepCompose({
               <SelectTrigger aria-label={t("Elegir plantilla")}>
                 <SelectValue>{t("Sin plantilla (texto libre)")}</SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="w-[26rem]! max-w-[90vw]">
                 <SelectItem value="none">{t("Sin plantilla (texto libre)")}</SelectItem>
                 {templates.map((template) => (
                   <SelectItem key={template.id} value={template.id}>
@@ -912,7 +912,7 @@ function StepCompose({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 lg:col-span-2">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-foreground">{t("Vista previa")}</span>
             <span className="truncate text-[11px] text-muted-foreground">
