@@ -35,6 +35,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/feedback/stat-card";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -342,10 +343,13 @@ export function AdminAppointments({
         title={t("Citas")}
         description={
           isProfessional
-            ? "Mis citas de telemedicina"
-            : "Todas las citas de telemedicina"
+            ? t("Mis citas de telemedicina")
+            : t("Todas las citas de telemedicina")
         }
         icon={CalendarDays}
+        leadingVisual={
+          <AnimatedIcon name="medical-kit" size={40} motion={false} />
+        }
         actions={
           <ToggleGroup
             value={[view]}
@@ -392,9 +396,10 @@ export function AdminAppointments({
         </p>
       )}
 
-      {/* KPIs operativos: dos filas de tres tarjetas con aire entre ellas. */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+      {/* KPIs operativos: una sola fila en desktop, colapso progresivo. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
+          filled
           label={t("Citas de hoy")}
           value={summary ? String(summary.appointmentsToday) : "—"}
           icon={CalendarCheck}
@@ -440,7 +445,7 @@ export function AdminAppointments({
           variant="destructive"
           context={
             summary && summary.alertsUnread > 0
-              ? "Revisar centro de alertas"
+              ? t("Revisar centro de alertas")
               : undefined
           }
         />
@@ -452,7 +457,7 @@ export function AdminAppointments({
           <div className="flex items-center gap-2 text-primary-foreground">
             <SlidersHorizontal className="size-4" />
             <span className="text-[13px] font-semibold tracking-wide">
-              Filtros
+              {t("Filtros")}
             </span>
           </div>
           {activeFilterCount > 0 && (
@@ -508,19 +513,23 @@ export function AdminAppointments({
                   <SelectValue placeholder={t("Estado")}>
                     {(value) =>
                       value === ALL
-                        ? "Todos los estados"
-                        : (statusOptions.find(
-                            (option) => option.value === value,
-                          )?.label ?? value)
+                        ? t("Todos los estados")
+                        : t(
+                            statusOptions.find(
+                              (option) => option.value === value,
+                            )?.label ?? value,
+                          )
                     }
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value={ALL}>{t("Todos los estados")}</SelectItem>
+                    <SelectItem value={ALL}>
+                      {t("Todos los estados")}
+                    </SelectItem>
                     {statusOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        {t(option.label)}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -544,7 +553,7 @@ export function AdminAppointments({
                     <SelectValue placeholder={t("Profesional")}>
                       {(value) =>
                         value === ALL
-                          ? "Todos los profesionales"
+                          ? t("Todos los profesionales")
                           : ((catalogs?.professionals ?? []).find(
                               (professional) => professional.id === value,
                             )?.fullName ?? value)
@@ -554,7 +563,7 @@ export function AdminAppointments({
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value={ALL}>
-                        Todos los profesionales
+                        {t("Todos los profesionales")}
                       </SelectItem>
                       {(catalogs?.professionals ?? []).map((professional) => (
                         <SelectItem
@@ -584,7 +593,7 @@ export function AdminAppointments({
                   <User className="size-3.5 shrink-0 text-muted-foreground" />
                   <SelectValue placeholder={t("Paciente")}>
                     {(value) => {
-                      if (value === ALL) return "Todos los pacientes";
+                      if (value === ALL) return t("Todos los pacientes");
                       const patient = (catalogs?.patients ?? []).find(
                         (item) => item.id === value,
                       );
@@ -598,7 +607,9 @@ export function AdminAppointments({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value={ALL}>{t("Todos los pacientes")}</SelectItem>
+                    <SelectItem value={ALL}>
+                      {t("Todos los pacientes")}
+                    </SelectItem>
                     {(catalogs?.patients ?? []).map((patient) => (
                       <SelectItem key={patient.id} value={patient.id}>
                         {[patient.firstName, patient.lastName]
@@ -626,7 +637,7 @@ export function AdminAppointments({
                   <SelectValue placeholder={t("Sede")}>
                     {(value) =>
                       value === ALL
-                        ? "Todas las sedes"
+                        ? t("Todas las sedes")
                         : ((catalogs?.locations ?? []).find(
                             (location) => location.id === value,
                           )?.name ?? value)
@@ -702,18 +713,18 @@ export function AdminAppointments({
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium text-foreground">
-              {hasActiveFilters ? "Sin resultados" : "No hay citas"}
+              {hasActiveFilters ? t("Sin resultados") : t("No hay citas")}
             </p>
             <p className="text-[12.5px] text-muted-foreground">
               {hasActiveFilters
-                ? "Ninguna cita coincide con los filtros aplicados."
-                : "Cuando existan citas de telemedicina aparecerán aquí."}
+                ? t("Ninguna cita coincide con los filtros aplicados.")
+                : t("Cuando existan citas de telemedicina aparecerán aquí.")}
             </p>
           </div>
           {hasActiveFilters && (
             <Button variant="outline" size="sm" onClick={clearAll}>
               <RotateCcw className="size-3.5" data-icon="inline-start" />
-              Limpiar filtros
+              {t("Limpiar filtros")}
             </Button>
           )}
         </div>
@@ -765,7 +776,7 @@ export function AdminAppointments({
                   onSort={handleSort}
                 />
                 <TableHead className="text-right text-white/80 uppercase">
-                  Acción
+                  {t("Acción")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -834,7 +845,7 @@ export function AdminAppointments({
                       })}
                     >
                       <Eye className="size-3.5" />
-                      Ver
+                      {t("Ver")}
                     </Link>
                   </TableCell>
                 </TableRow>
@@ -903,7 +914,7 @@ export function AdminAppointments({
                 <div className="mt-auto flex items-center justify-between gap-3 pt-1">
                   <span className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
                     <Timer className="size-3.5" />
-                    {appointment.durationMinutes} min
+                    {t("{n} min", { n: String(appointment.durationMinutes) })}
                   </span>
                   <Link
                     href={`/appointments/citas/${appointment.id}`}
@@ -916,7 +927,7 @@ export function AdminAppointments({
                     )}
                   >
                     <Video className="size-3.5" />
-                    Ver detalle
+                    {t("Ver detalle")}
                     <ChevronRight className="size-3.5" data-icon="inline-end" />
                   </Link>
                 </div>
@@ -932,8 +943,15 @@ export function AdminAppointments({
           <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
             <User className="size-3.5" />
             {hasSearch
-              ? `${visibleItems.length} de ${total} citas`
-              : `Mostrando ${rowStart}–${rowEnd} de ${total} citas`}
+              ? t("{count} de {total} citas", {
+                  count: String(visibleItems.length),
+                  total: String(total),
+                })
+              : t("Mostrando {from}–{to} de {total} citas", {
+                  from: String(rowStart),
+                  to: String(rowEnd),
+                  total: String(total),
+                })}
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -943,10 +961,13 @@ export function AdminAppointments({
               onClick={() => setPage(page - 1)}
             >
               <ChevronLeft className="size-3.5" data-icon="inline-start" />
-              Anterior
+              {t("Anterior")}
             </Button>
             <span className="text-[12px] text-muted-foreground">
-              Página {page} de {totalPages}
+              {t("Página {page} de {totalPages}", {
+                page: String(page),
+                totalPages: String(totalPages),
+              })}
             </span>
             <Button
               variant="outline"
@@ -954,7 +975,7 @@ export function AdminAppointments({
               disabled={page >= totalPages}
               onClick={() => setPage(page + 1)}
             >
-              Siguiente
+              {t("Siguiente")}
               <ChevronRight className="size-3.5" data-icon="inline-end" />
             </Button>
           </div>

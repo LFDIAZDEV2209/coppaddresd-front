@@ -3614,4 +3614,15 @@
   "Se eliminará el registro de {name}. Esta acción no se puede deshacer.": "The record of {name} will be deleted. This action cannot be undone.",
   "Seguimiento vencido": "Overdue follow-up",
   "Ver ficha": "View record"
+  "Mis citas de telemedicina": "My telemedicine appointments",
+  "Filtros": "Filters",
+  "Revisar centro de alertas": "Check the alert center",
+  "Cuando existan citas de telemedicina aparecerán aquí.": "Telemedicine appointments will appear here.",
+  "Mostrando {from}–{to} de {total} citas": "Showing {from}–{to} of {total} appointments",
+  "{count} de {total} citas": "{count} of {total} appointments",
+  "Solicitada": "Requested",
+  "Confirmada": "Confirmed",
+  "En curso": "In progress",
+  "Cancelada": "Cancelled",
+  "No asistió": "No-show"
 }
