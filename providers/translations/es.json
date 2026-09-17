@@ -3189,5 +3189,16 @@
   "Teléfono de prueba": "Teléfono de prueba",
   "Todo canal": "Todo canal",
   "Todo indicador": "Todo indicador",
-  "v": "v"
+  "v": "v",
+  "Mis citas de telemedicina": "Mis citas de telemedicina",
+  "Filtros": "Filtros",
+  "Revisar centro de alertas": "Revisar centro de alertas",
+  "Cuando existan citas de telemedicina aparecerán aquí.": "Cuando existan citas de telemedicina aparecerán aquí.",
+  "Mostrando {from}–{to} de {total} citas": "Mostrando {from}–{to} de {total} citas",
+  "{count} de {total} citas": "{count} de {total} citas",
+  "Solicitada": "Solicitada",
+  "Confirmada": "Confirmada",
+  "En curso": "En curso",
+  "Cancelada": "Cancelada",
+  "No asistió": "No asistió"
 }
