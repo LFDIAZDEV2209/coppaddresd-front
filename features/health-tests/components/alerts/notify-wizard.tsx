@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useNotificationTemplates } from "../../hooks/use-notifications";
 import {
@@ -41,6 +42,7 @@ import type { NotificationTemplatePreview } from "../../services/notifications-s
 import type {
   HealthAlert,
   NotificationChannel,
+  NotificationLanguage,
   NotifyAlertItemResult,
 } from "../../types";
 import { SeverityBadge } from "../shared/badges";
@@ -50,6 +52,16 @@ type WizardStep = 1 | 2 | 3;
 /** Segmentos SMS (GSM-7): 160 en un solo mensaje, 153 por segmento encadenado. */
 function smsSegments(body: string): number {
   return body.length <= 160 ? 1 : Math.ceil(body.length / 153);
+}
+
+/** Cuerpo de la plantilla en el idioma pedido (fallback al español si falta EN). */
+function templateBodyFor(
+  template: { bodyTemplateEs: string; bodyTemplateEn: string | null },
+  language: NotificationLanguage,
+): string {
+  return language === "en"
+    ? (template.bodyTemplateEn ?? template.bodyTemplateEs)
+    : template.bodyTemplateEs;
 }
 
 const CHANNEL_META: Record<
@@ -104,6 +116,7 @@ export function NotifyWizard({
   );
   const [channels, setChannels] = useState<NotificationChannel[]>(["community"]);
   const [templateId, setTemplateId] = useState<string | null>(null);
+  const [language, setLanguage] = useState<NotificationLanguage>("es");
   const [body, setBody] = useState("");
   const [results, setResults] = useState<NotifyAlertItemResult[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -138,6 +151,7 @@ export function NotifyWizard({
     setAlertIds(alerts.map((alert) => alert.id));
     setChannels(["community"]);
     setTemplateId(null);
+    setLanguage("es");
     setBody("");
     setResults(null);
     setError(null);
@@ -159,7 +173,14 @@ export function NotifyWizard({
   function applyTemplate(id: string) {
     setTemplateId(id === "none" ? null : id);
     const template = (templates ?? []).find((item) => item.id === id);
-    if (template) setBody(template.bodyTemplate);
+    if (template) setBody(templateBodyFor(template, language));
+  }
+
+  // Al cambiar el idioma se refresca el cuerpo si hay plantilla elegida.
+  function changeLanguage(next: NotificationLanguage) {
+    setLanguage(next);
+    const template = (templates ?? []).find((item) => item.id === templateId);
+    if (template) setBody(templateBodyFor(template, next));
   }
 
   function insertPlaceholder(placeholder: string) {
@@ -175,6 +196,7 @@ export function NotifyWizard({
         channels,
         templateId,
         bodyOverride: body.trim() === "" ? null : body,
+        language,
         preview,
       });
       setResults(result.items);
@@ -234,6 +256,8 @@ export function NotifyWizard({
               body={body}
               onBodyChange={setBody}
               onInsertPlaceholder={insertPlaceholder}
+              language={language}
+              onLanguageChange={changeLanguage}
             />
           )}
 
@@ -242,7 +266,14 @@ export function NotifyWizard({
               alerts={selectedAlerts}
               channels={channels}
               templateName={
-                templates?.find((item) => item.id === templateId)?.name ?? null
+                (() => {
+                  const template = templates?.find((item) => item.id === templateId);
+                  return template
+                    ? language === "en"
+                      ? (template.nameEn ?? template.nameEs)
+                      : template.nameEs
+                    : null;
+                })()
               }
               results={results}
             />
@@ -457,16 +488,25 @@ function StepCompose({
   body,
   onBodyChange,
   onInsertPlaceholder,
+  language,
+  onLanguageChange,
 }: {
   alerts: HealthAlert[];
   patients?: { id: string; firstName: string; lastName: string }[];
   channels: NotificationChannel[];
-  templates: { id: string; name: string; channel: NotificationChannel }[];
+  templates: {
+    id: string;
+    nameEs: string;
+    nameEn: string | null;
+    channel: NotificationChannel;
+  }[];
   templateId: string | null;
   onTemplateChange: (id: string) => void;
   body: string;
   onBodyChange: (value: string) => void;
   onInsertPlaceholder: (placeholder: string) => void;
+  language: NotificationLanguage;
+  onLanguageChange: (language: NotificationLanguage) => void;
 }) {
   const t = useT();
 
@@ -501,6 +541,7 @@ function StepCompose({
             alertId: firstAlert?.id,
             channel: primaryChannel,
             bodyOverride: body.trim() === "" ? undefined : body,
+            language,
           });
           if (!cancelled) setPreviewState({ id: previewTemplateId, data });
         } catch {
@@ -514,7 +555,7 @@ function StepCompose({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [previewTemplateId, primaryChannel, firstAlert?.id, body]);
+  }, [previewTemplateId, primaryChannel, firstAlert?.id, body, language]);
 
   const realPreview =
     previewState && previewState.id === previewTemplateId ? previewState.data : null;
@@ -526,9 +567,20 @@ function StepCompose({
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
       <div className="flex flex-col gap-3 lg:col-span-3">
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-semibold text-foreground">
-            {t("Plantilla")}
-          </span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-foreground">
+              {t("Plantilla")}
+            </span>
+            <Tabs
+              value={language}
+              onValueChange={(value) => onLanguageChange(value as NotificationLanguage)}
+            >
+              <TabsList variant="line">
+                <TabsTrigger value="es">{t("Español")}</TabsTrigger>
+                <TabsTrigger value="en">{t("English")}</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
           <Select
             value={templateId ?? "none"}
             onValueChange={(value) => onTemplateChange(value ?? "none")}
@@ -542,8 +594,10 @@ function StepCompose({
               </SelectItem>
               {templates.map((template) => (
                 <SelectItem key={template.id} value={template.id}>
-                  {template.name} ·{" "}
-                  {template.channel === "sms" ? "SMS" : t("Comunidad")}
+                  {language === "en"
+                    ? (template.nameEn ?? template.nameEs)
+                    : template.nameEs}{" "}
+                  · {template.channel === "sms" ? "SMS" : t("Comunidad")}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -631,6 +685,13 @@ function StepCompose({
           <p className="flex items-start gap-1.5 text-[11px] text-warning">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
             {realPreview.skipReason ?? t("El paciente no tiene el contacto de este canal.")}
+          </p>
+        )}
+
+        {realPreview && realPreview.usedFallbackLanguage && (
+          <p className="flex items-start gap-1.5 text-[11px] text-warning">
+            <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+            {t("Esta plantilla aún no tiene traducción al inglés; se enviará en español.")}
           </p>
         )}
 

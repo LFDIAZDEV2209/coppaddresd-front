@@ -52,6 +52,7 @@ import type {
   AlertSeverity,
   HealthAlert,
   NotificationChannel,
+  NotificationLanguage,
   NotificationTemplate,
   NotificationTemplateVersion,
 } from "../../types";
@@ -104,13 +105,16 @@ function smsSegments(body: string): number {
 interface EditorState {
   id: string | null;
   code: string;
-  name: string;
+  nameEs: string;
+  nameEn: string;
   channel: NotificationChannel;
-  bodyTemplate: string;
+  bodyTemplateEs: string;
+  bodyTemplateEn: string;
   severity: AlertSeverity | "none";
   testCategory: string;
   indicatorCode: string;
-  subject: string;
+  subjectEs: string;
+  subjectEn: string;
   isActive: boolean;
   note: string;
 }
@@ -118,13 +122,18 @@ interface EditorState {
 const EMPTY_EDITOR: EditorState = {
   id: null,
   code: "",
-  name: "",
+  nameEs: "",
+  nameEn: "",
   channel: "community",
-  bodyTemplate: "Hola [paciente], tu resultado de [indicador] fue [valor] ([severidad]). [accion]",
+  bodyTemplateEs:
+    "Hola [paciente], tu resultado de [indicador] fue [valor] ([severidad]). [accion]",
+  bodyTemplateEn:
+    "Hi [paciente], your [indicador] result was [valor] ([severidad]). [accion]",
   severity: "none",
   testCategory: "",
   indicatorCode: "",
-  subject: "",
+  subjectEs: "",
+  subjectEn: "",
   isActive: true,
   note: "",
 };
@@ -146,6 +155,8 @@ export function TemplateStudio() {
   });
 
   const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
+  // Idioma que se está editando/previsualizando (ES obligatorio, EN opcional).
+  const [editorLang, setEditorLang] = useState<NotificationLanguage>("es");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -198,7 +209,31 @@ export function TemplateStudio() {
     };
   }, []);
 
-  const previewKey = `${editor.id ?? "draft"}|${sampleAlertId}|${editor.channel}|${editor.bodyTemplate}`;
+  const langBody = editorLang === "es" ? editor.bodyTemplateEs : editor.bodyTemplateEn;
+  const langName = editorLang === "es" ? editor.nameEs : editor.nameEn;
+  const missingTranslation = !editor.nameEn.trim() || !editor.bodyTemplateEn.trim();
+
+  /** Actualiza el campo de texto del idioma activo (nombre, asunto o mensaje). */
+  function updateLangText(
+    field: "name" | "subject" | "bodyTemplate",
+    value: string,
+  ) {
+    setEditor((prev) => {
+      const next = { ...prev };
+      if (editorLang === "es") {
+        if (field === "name") next.nameEs = value;
+        else if (field === "subject") next.subjectEs = value;
+        else next.bodyTemplateEs = value;
+      } else {
+        if (field === "name") next.nameEn = value;
+        else if (field === "subject") next.subjectEn = value;
+        else next.bodyTemplateEn = value;
+      }
+      return next;
+    });
+  }
+
+  const previewKey = `${editor.id ?? "draft"}|${sampleAlertId}|${editor.channel}|${editorLang}|${langBody}`;
 
   useEffect(() => {
     // "sample" = datos de ejemplo locales (sin alerta real) → sin llamada al backend.
@@ -211,7 +246,8 @@ export function TemplateStudio() {
           const data = await notificationsApi.previewTemplate(templateId, {
             alertId: sampleAlertId,
             channel: editor.channel,
-            bodyOverride: editor.bodyTemplate,
+            bodyOverride: langBody,
+            language: editorLang,
           });
           if (!cancelled) setRealPreview({ key: previewKey, data });
         } catch {
@@ -231,20 +267,22 @@ export function TemplateStudio() {
 
   const activeRealPreview = realPreview?.key === previewKey ? realPreview.data : null;
 
-  const previewBody =
-    activeRealPreview?.renderedBody ?? renderPreview(editor.bodyTemplate);
+  const previewBody = activeRealPreview?.renderedBody ?? renderPreview(langBody);
 
   function selectTemplate(template: NotificationTemplate) {
     setEditor({
       id: template.id,
       code: template.code,
-      name: template.name,
+      nameEs: template.nameEs,
+      nameEn: template.nameEn ?? "",
       channel: template.channel,
-      bodyTemplate: template.bodyTemplate,
+      bodyTemplateEs: template.bodyTemplateEs,
+      bodyTemplateEn: template.bodyTemplateEn ?? "",
       severity: template.severity ?? "none",
       testCategory: template.testCategory ?? "",
       indicatorCode: template.indicatorCode ?? "",
-      subject: template.subject ?? "",
+      subjectEs: template.subjectEs ?? "",
+      subjectEn: template.subjectEn ?? "",
       isActive: template.isActive,
       note: "",
     });
@@ -257,7 +295,7 @@ export function TemplateStudio() {
   }
 
   async function save() {
-    if (!editor.name.trim() || !editor.bodyTemplate.trim()) {
+    if (!editor.nameEs.trim() || !editor.bodyTemplateEs.trim()) {
       setFeedback(t("Completa el nombre y el mensaje antes de guardar."));
       return;
     }
@@ -270,13 +308,16 @@ export function TemplateStudio() {
     setFeedback(null);
     try {
       const input = {
-        name: editor.name.trim(),
+        nameEs: editor.nameEs.trim(),
+        nameEn: editor.nameEn.trim() || null,
         channel: editor.channel,
-        bodyTemplate: editor.bodyTemplate.trim(),
+        bodyTemplateEs: editor.bodyTemplateEs.trim(),
+        bodyTemplateEn: editor.bodyTemplateEn.trim() || null,
         severity: editor.severity === "none" ? null : editor.severity,
         testCategory: editor.testCategory.trim() || null,
         indicatorCode: editor.indicatorCode.trim() || null,
-        subject: editor.subject.trim() || null,
+        subjectEs: editor.subjectEs.trim() || null,
+        subjectEn: editor.subjectEn.trim() || null,
         isActive: editor.isActive,
         note: editor.note.trim() || null,
       };
@@ -483,7 +524,7 @@ export function TemplateStudio() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate text-sm font-medium text-foreground">
-                        {template.name}
+                        {template.nameEs}
                       </span>
                       <span
                         className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-medium ${
@@ -495,8 +536,17 @@ export function TemplateStudio() {
                         {CHANNEL_LABELS[template.channel]}
                       </span>
                     </div>
+                    {template.nameEn ? (
+                      <span className="truncate text-[11px] text-muted-foreground">
+                        {template.nameEn}
+                      </span>
+                    ) : (
+                      <span className="w-fit rounded-full bg-warning-soft px-2 py-0.5 text-[10.5px] font-medium text-warning">
+                        {t("Falta traducción")}
+                      </span>
+                    )}
                     <p className="line-clamp-2 text-[11.5px] text-muted-foreground">
-                      {template.bodyTemplate}
+                      {template.bodyTemplateEs}
                     </p>
                     <div className="flex items-center gap-3 text-[10.5px] text-muted-foreground">
                       <span>{template.code}</span>
@@ -518,7 +568,7 @@ export function TemplateStudio() {
         {/* Editor */}
         <section className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
           <SectionHeader
-            title={isDraft ? t("Nueva plantilla") : editor.name || t("Plantilla")}
+            title={isDraft ? t("Nueva plantilla") : langName || t("Plantilla")}
             description={
               isDraft
                 ? t("Define el canal, el alcance y el mensaje")
@@ -572,16 +622,32 @@ export function TemplateStudio() {
             }
           />
 
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Tabs
+              value={editorLang}
+              onValueChange={(value) => setEditorLang(value as NotificationLanguage)}
+            >
+              <TabsList variant="line">
+                <TabsTrigger value="es">{t("Español")}</TabsTrigger>
+                <TabsTrigger value="en">{t("English")}</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {missingTranslation && (
+              <span className="flex items-center gap-1.5 rounded-full bg-warning-soft px-2.5 py-1 text-[11px] font-medium text-warning">
+                <TriangleAlert className="size-3.5" />
+                {t("Traducción al inglés pendiente")}
+              </span>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <label className="flex flex-col gap-1.5">
               <span className="text-xs font-medium text-muted-foreground">
                 {t("Nombre")}
               </span>
               <Input
-                value={editor.name}
-                onChange={(event) =>
-                  setEditor((prev) => ({ ...prev, name: event.target.value }))
-                }
+                value={langName}
+                onChange={(event) => updateLangText("name", event.target.value)}
                 placeholder={t("Alerta de riesgo alto")}
               />
             </label>
@@ -693,10 +759,7 @@ export function TemplateStudio() {
                   key={placeholder}
                   type="button"
                   onClick={() =>
-                    setEditor((prev) => ({
-                      ...prev,
-                      bodyTemplate: `${prev.bodyTemplate}[${placeholder}]`,
-                    }))
+                    updateLangText("bodyTemplate", `${langBody}[${placeholder}]`)
                   }
                   className="rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[11px] text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
                 >
@@ -705,10 +768,8 @@ export function TemplateStudio() {
               ))}
             </div>
             <Textarea
-              value={editor.bodyTemplate}
-              onChange={(event) =>
-                setEditor((prev) => ({ ...prev, bodyTemplate: event.target.value }))
-              }
+              value={langBody}
+              onChange={(event) => updateLangText("bodyTemplate", event.target.value)}
               rows={4}
               className="min-h-[110px]"
               placeholder={t("Escribe el mensaje con datos entre corchetes")}
@@ -856,10 +917,11 @@ export function TemplateStudio() {
                 >
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-foreground">
-                      {t("Versión")} {version.version} · {formatDate(version.createdAt)}
+                      {version.nameEs} · {t("Versión")} {version.version} ·{" "}
+                      {formatDate(version.createdAt)}
                     </p>
                     <p className="mt-1 line-clamp-2 text-[11.5px] text-muted-foreground">
-                      {version.bodyTemplate}
+                      {version.bodyTemplateEs}
                     </p>
                     {version.note && (
                       <p className="mt-1 text-[10.5px] italic text-muted-foreground">
