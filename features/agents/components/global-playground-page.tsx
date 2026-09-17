@@ -50,7 +50,7 @@ function AgentPicker({
             return (
               <DropdownMenuItem
                 key={agent.id}
-                onSelect={() => onSelect(agent)}
+                onClick={() => onSelect(agent)}
                 className="flex items-center gap-2.5"
               >
                 <span

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Send,
   LoaderCircle,
@@ -9,13 +9,18 @@ import {
   Wrench,
   Gauge,
   Sparkles,
+  GitBranch,
+  ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { AgentType, AgentExecutionDetail } from "../types";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import type { AgentType, AgentExecutionDetail, AgentGraph } from "../types";
 import { streamChat } from "../services/chat-service";
-import { fetchExecution } from "../services/agents-service";
+import { fetchExecution, fetchAgentGraph } from "../services/agents-service";
+import { useAgentFlow } from "../hooks/use-agent-flow";
+import { AgentFlowDiagram, NODE_LABEL_KEYS } from "./agent-flow-diagram";
 import { getAgentIconOption } from "./agent-icon-picker";
 import { Markdown } from "@/components/markdown";
 import { uuid } from "@/lib/uuid";
@@ -54,11 +59,36 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [nodes, setNodes] = useState<string[]>([]);
+  const [tab, setTab] = useState<"flow" | "detail">("flow");
+  const [graphEntry, setGraphEntry] = useState<{
+    agentId: string;
+    graph: AgentGraph | null;
+  } | null>(null);
   const [detail, setDetail] = useState<AgentExecutionDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const flow = useAgentFlow();
+
+  // Descriptor del grafo del agente (nodos/aristas + config efectiva) para el
+  // diagrama de flujos del panel derecho. Sin setState síncrono en el efecto:
+  // el "cargando" se deriva de si la entrada corresponde al agente actual.
+  useEffect(() => {
+    let active = true;
+    fetchAgentGraph(agent.id)
+      .then((data) => {
+        if (active) setGraphEntry({ agentId: agent.id, graph: data });
+      })
+      .catch(() => {
+        if (active) setGraphEntry({ agentId: agent.id, graph: null });
+      });
+    return () => {
+      active = false;
+    };
+  }, [agent.id]);
+
+  const graphLoading = graphEntry?.agentId !== agent.id;
+  const graph = graphEntry?.agentId === agent.id ? graphEntry.graph : null;
   const threadIdRef = useRef<string>(`playground-${agent.id.slice(0, 8)}`);
   // El checkpointer de LangGraph reenvía el historial completo del thread en
   // cada turno; si una ejecución falla a mitad (loop de tools, stream cortado)
@@ -70,9 +100,9 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
   const clearChat = () => {
     abortRef.current?.abort();
     setMessages([]);
-    setNodes([]);
     setDetail(null);
     setError(null);
+    flow.reset();
     threadIdRef.current = nextThread();
   };
 
@@ -101,12 +131,16 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
       { id: assistantId, role: "assistant", content: "", streaming: true },
     ]);
     setSending(true);
-    setNodes([]);
+    // Cada corrida reinicia la visualización del flujo; el estado del grafo
+    // se reconstruye con los eventos `flow` del stream.
+    flow.reset();
+    setTab("flow");
 
     const controller = new AbortController();
     abortRef.current = controller;
 
     let finishedExecutionId: string | null = null;
+    let streamError = false;
 
     try {
       await streamChat(
@@ -123,23 +157,24 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
                 m.id === assistantId ? { ...m, content: m.content + event.token! } : m,
               ),
             );
-          } else if (event.type === "node" && event.node) {
-            setNodes((current) =>
-              current.includes(event.node!) ? current : [...current, event.node!],
-            );
           } else if (event.type === "done" && event.executionId) {
             finishedExecutionId = event.executionId;
           } else if (event.type === "error" && event.error) {
+            streamError = true;
             setError(event.error);
           }
+          // Alimenta la máquina de estados del flujo (flow/token/done).
+          flow.handleEvent(event);
         },
         controller.signal,
       );
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
+      streamError = true;
       setError(t('No se pudo conectar con el agente. Intentá de nuevo.'));
     } finally {
       setSending(false);
+      flow.complete(streamError);
       setMessages((current) =>
         current.map((m) =>
           m.id === assistantId ? { ...m, streaming: false } : m,
@@ -283,28 +318,122 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
         </div>
       </div>
 
-      {/* --- Panel debug --- */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3">
-          <Sparkles className="size-4 text-primary" />
-          <div className="flex flex-col gap-px">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t('Nodos del grafo')}
-            </span>
-            <div className="flex flex-wrap gap-1">
-              {nodes.length === 0 ? (
-                <span className="text-[12px] text-muted-foreground">—</span>
-              ) : (
-                nodes.map((node) => (
-                  <Badge key={node} variant="secondary" className="font-mono text-[10.5px]">
-                    {node}
-                  </Badge>
-                ))
+      {/* --- Panel derecho: flujo en vivo + detalle --- */}
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as "flow" | "detail")}
+        className="min-w-0"
+      >
+        <TabsList className="w-full">
+          <TabsTrigger value="flow" className="gap-1.5">
+            <GitBranch className="size-3.5" />
+            {t('Flujo en vivo')}
+          </TabsTrigger>
+          <TabsTrigger value="detail" className="gap-1.5">
+            <ListChecks className="size-3.5" />
+            {t('Detalle')}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="flow" className="flex flex-col gap-3">
+          <div className="rounded-xl border border-border bg-card px-4 py-3.5">
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles className="size-4 text-primary" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('Flujo en vivo')}
+              </span>
+              {sending && (
+                <span className="ml-auto inline-flex items-center gap-1 text-[10.5px] text-primary">
+                  <LoaderCircle className="size-3 motion-safe:animate-spin" />
+                  {t('En ejecución')}
+                </span>
               )}
             </div>
+            <AgentFlowDiagram
+              graph={graph}
+              loading={graphLoading}
+              status={flow.status}
+              finished={flow.finished}
+            />
           </div>
-        </div>
 
+          {graph && (
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('Configuración efectiva')}
+              </span>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {graph.config.model && (
+                  <Badge variant="outline" className="font-mono text-[10.5px]">
+                    {graph.config.model}
+                  </Badge>
+                )}
+                {graph.config.temperature != null && (
+                  <Badge variant="secondary" className="text-[10.5px]">
+                    {t('temp {value}', { value: String(graph.config.temperature) })}
+                  </Badge>
+                )}
+                {graph.config.tools.map((tool) => (
+                  <Badge key={tool} variant="secondary" className="font-mono text-[10.5px]">
+                    {tool}
+                  </Badge>
+                ))}
+                {graph.config.rag.enabled && (
+                  <Badge variant="outline" className="text-[10.5px] text-emerald-700">
+                    {t('RAG · {count} KBs', {
+                      count: String(graph.config.rag.knowledgeBaseCount),
+                    })}
+                  </Badge>
+                )}
+                {graph.config.memory.enabled && (
+                  <Badge variant="outline" className="text-[10.5px] text-teal-700">
+                    {t('Memoria · {count} categorías', {
+                      count: String(graph.config.memory.categories.length),
+                    })}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-xl border border-border bg-card px-4 py-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('Pasos de la ejecución')}
+            </span>
+            {flow.steps.filter((step) => step.phase === "end").length === 0 ? (
+              <p className="mt-1 text-[12px] text-muted-foreground">
+                {flow.hasRun
+                  ? t('Sin pasos registrados.')
+                  : t('Enviá un mensaje para ver el flujo en vivo.')}
+              </p>
+            ) : (
+              <ol className="mt-2 flex flex-col gap-1">
+                {flow.steps
+                  .filter((step) => step.phase === "end")
+                  .map((step, index) => (
+                    <li
+                      key={`${step.node}-${step.step}-${index}`}
+                      className="flex items-center gap-2 text-[11.5px] text-muted-foreground"
+                    >
+                      <span className="w-5 text-right font-mono text-[10px]">
+                        {index + 1}.
+                      </span>
+                      <span className="font-medium text-foreground">
+                        {t(NODE_LABEL_KEYS[step.node] ?? step.node)}
+                      </span>
+                      {step.durationMs != null && (
+                        <span className="ml-auto font-mono text-[10.5px]">
+                          {step.durationMs.toLocaleString("es-ES")} ms
+                        </span>
+                      )}
+                    </li>
+                  ))}
+              </ol>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="detail" className="flex flex-col gap-3">
         <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3">
           <FileSearch className="size-4 text-emerald-600" />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -399,7 +528,8 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
             </div>
           </div>
         )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
