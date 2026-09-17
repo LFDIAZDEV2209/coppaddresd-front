@@ -610,12 +610,13 @@ export function NotifyPage() {
                 })()
               }
               results={results}
+              previewItems={reachabilityItems}
               onDownloadCsv={downloadCsv}
             />
           )}
         </div>
 
-        <div className="flex flex-col gap-5 xl:col-span-4">
+        <div className="flex flex-col gap-5 xl:sticky xl:top-4 xl:col-span-4 xl:self-start">
           <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <SectionHeader
               title={t("Canales")}
@@ -628,6 +629,10 @@ export function NotifyPage() {
                 const meta = CHANNEL_META[channel];
                 const Icon = meta.icon;
                 const active = channels.includes(channel);
+                const channelReach =
+                  reachabilityItems?.filter(
+                    (item) => item.channel === channel && item.status !== "skipped",
+                  ).length ?? null;
                 return (
                   <button
                     key={channel}
@@ -635,28 +640,35 @@ export function NotifyPage() {
                     onClick={() => toggleChannel(channel)}
                     aria-pressed={active}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                      "flex items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all",
                       active
-                        ? "border-primary bg-primary-soft/40"
-                        : "border-border hover:bg-muted/50",
+                        ? "border-primary bg-primary-soft/40 shadow-sm ring-1 ring-primary/30"
+                        : "border-border hover:border-primary/40 hover:bg-muted/50",
                     )}
                   >
                     <span
                       className={cn(
-                        "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                        active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                        "flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors",
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
                       )}
                     >
-                      <Icon className="size-4" />
+                      <Icon className="size-5" />
                     </span>
-                    <span className="flex min-w-0 flex-col">
-                      <span className="text-[12.5px] font-semibold text-foreground">
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="text-[13px] font-semibold text-foreground">
                         {t(meta.label)}
                       </span>
                       <span className="text-[11px] text-muted-foreground">
                         {t(meta.description)}
                       </span>
                     </span>
+                    {active && channelReach !== null && (
+                      <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10.5px] font-semibold tabular-nums text-primary">
+                        {channelReach} {t("alcanzables")}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -1114,6 +1126,7 @@ function StepReview({
   language,
   templateName,
   results,
+  previewItems,
   onDownloadCsv,
 }: {
   alerts: HealthAlert[];
@@ -1121,6 +1134,7 @@ function StepReview({
   language: NotificationLanguage;
   templateName: string | null;
   results: NotifyAlertItemResult[] | null;
+  previewItems: NotifyAlertItemResult[] | null;
   onDownloadCsv: () => void;
 }) {
   const t = useT();
@@ -1248,9 +1262,54 @@ function StepReview({
         )}
 
         {!results && (
-          <p className="text-[11.5px] text-muted-foreground">
-            {t("Usa Vista previa para revisar sin enviar, o Enviar para entregar ahora.")}
-          </p>
+          <div className="flex flex-col gap-3">
+            {previewItems && previewItems.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("Vista previa por paciente")}
+                  </span>
+                  <span className="text-[11.5px] text-muted-foreground">
+                    {previewItems.length} {t("pacientes")}
+                  </span>
+                </div>
+                <div className="overflow-x-auto rounded-xl border border-border">
+                  <table className="w-full text-[12px]">
+                    <thead className="bg-muted/40 text-[10.5px] uppercase tracking-wide text-muted-foreground">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-semibold">{t("Paciente")}</th>
+                        <th className="px-3 py-2 text-left font-semibold">{t("Canal")}</th>
+                        <th className="px-3 py-2 text-left font-semibold">{t("Detalle")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewItems.map((item) => (
+                        <tr
+                          key={`${item.alertId ?? "sin-alerta"}-${item.channel}`}
+                          className="border-t border-border"
+                        >
+                          <td className="px-3 py-2 align-top font-medium text-foreground">
+                            {item.patientName ?? "—"}
+                          </td>
+                          <td className="px-3 py-2 align-top text-muted-foreground">
+                            {item.channel === "sms" ? "SMS" : t("Comunidad")}
+                          </td>
+                          <td className="max-w-[26rem] px-3 py-2 align-top">
+                            <span className="line-clamp-2 text-muted-foreground">
+                              {item.reason ?? item.renderedBody}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            <p className="text-[11.5px] text-muted-foreground">
+              {t("Usa Vista previa para revisar sin enviar, o Enviar para entregar ahora.")}
+            </p>
+          </div>
         )}
       </div>
     </section>

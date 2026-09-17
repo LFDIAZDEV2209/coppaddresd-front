@@ -244,229 +244,89 @@ export function NotificationsPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       {header}
 
-      {/* KPIs + gráficos */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
-        <div className="flex flex-col gap-4 xl:col-span-4">
-          <div className="grid grid-cols-2 gap-3">
-            {statusCounts.map((entry) => {
-              const tone = KPI_TONES[entry.key];
-              return (
-                <div
-                  key={entry.key}
-                  className="flex flex-col gap-1 rounded-xl border border-border bg-card px-4 py-3"
-                >
-                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                    {t(STATUS_LABELS[entry.key])}
-                  </span>
-                  <span
-                    className="text-xl font-bold tabular-nums"
-                    style={{ color: tone.accent }}
-                  >
-                    {entry.value}
-                  </span>
-                </div>
-              );
-            })}
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
+        {/* Registro de entregas (izquierda en escritorio) */}
+        <section className="order-2 flex flex-col overflow-hidden rounded-2xl border border-border bg-card xl:order-1 xl:col-span-8">
+          <SectionHeader
+            title={t("Registro de entregas")}
+            description={t("Filtra por canal, estado o paciente")}
+            icon={BellRing}
+            variant="primary"
+          />
+
+          <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
+            <div className="relative min-w-[12rem] flex-1">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={t("Buscar paciente...")}
+                aria-label={t("Buscar por paciente")}
+                className="h-9 w-full pl-8"
+              />
+            </div>
+            <Select
+              value={channel}
+              onValueChange={(value) => setChannel(value as NotificationChannel | "all")}
+              items={{ all: t("Todo canal"), community: t("Comunidad"), sms: "SMS" }}
+            >
+              <SelectTrigger className="h-9 w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("Todo canal")}</SelectItem>
+                <SelectItem value="community">{t("Comunidad")}</SelectItem>
+                <SelectItem value="sms">SMS</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={status}
+              onValueChange={(value) => setStatus(value as NotificationStatus | "all")}
+              items={{
+                all: t("Todo estado"),
+                ...Object.fromEntries(
+                  (Object.keys(STATUS_LABELS) as NotificationStatus[]).map((key) => [
+                    key,
+                    t(STATUS_LABELS[key]),
+                  ]),
+                ),
+              }}
+            >
+              <SelectTrigger className="h-9 w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("Todo estado")}</SelectItem>
+                {(Object.keys(STATUS_LABELS) as NotificationStatus[]).map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {t(STATUS_LABELS[key])}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              type="date"
+              value={from}
+              onChange={(event) => setFrom(event.target.value)}
+              aria-label={t("Desde")}
+              className="h-9 w-36"
+            />
+            <Input
+              type="date"
+              value={to}
+              onChange={(event) => setTo(event.target.value)}
+              aria-label={t("Hasta")}
+              className="h-9 w-36"
+            />
+            {isFiltered && (
+              <Button type="button" size="sm" variant="ghost" onClick={clearFilters}>
+                {t("Limpiar filtros")}
+              </Button>
+            )}
+            <span className="ml-auto text-[11.5px] text-muted-foreground">
+              {total} {t("registros")}
+            </span>
           </div>
-          {channelPoints.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-4 py-3">
-              {channelPoints.map((point) => (
-                <span
-                  key={point.key}
-                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium"
-                  style={{
-                    borderColor: CHANNEL_COLORS[point.key] ?? "#94A3B8",
-                    color: CHANNEL_COLORS[point.key] ?? "#94A3B8",
-                  }}
-                >
-                  {t(CHANNEL_LABELS[point.key as NotificationChannel] ?? point.key)}
-                  <strong className="tabular-nums">{point.value}</strong>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 xl:col-span-8 xl:grid-cols-2">
-          {charts.loading && !charts.data ? (
-            <>
-              <ChartCardSkeleton />
-              <ChartCardSkeleton />
-            </>
-          ) : (
-            <>
-              <ChartCard
-                title={t("Envíos por día (30 días)")}
-                description={t("Notificaciones entregadas en el periodo")}
-                icon={TrendingUp}
-              >
-                {dayPoints.length === 0 ? (
-                  <p className="flex h-[180px] items-center justify-center text-xs text-muted-foreground">
-                    {t("Sin actividad en el periodo")}
-                  </p>
-                ) : (
-                  <ResponsiveContainer width="100%" height={180}>
-                    <AreaChart data={dayPoints}>
-                      <defs>
-                        <linearGradient id="notif-day-fill" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.35} />
-                          <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.02} />
-                        </linearGradient>
-                      </defs>
-                      <XAxis
-                        dataKey="label"
-                        tick={{ fontSize: 10 }}
-                        tickLine={false}
-                        axisLine={false}
-                        interval="preserveStartEnd"
-                      />
-                      <YAxis
-                        width={28}
-                        allowDecimals={false}
-                        tick={{ fontSize: 10 }}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <Tooltip />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#0EA5E9"
-                        strokeWidth={2}
-                        fill="url(#notif-day-fill)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                )}
-              </ChartCard>
-
-              <ChartCard
-                title={t("Por canal")}
-                description={t("Distribución de entregas por canal")}
-                icon={Send}
-              >
-                {channelPoints.length === 0 ? (
-                  <p className="flex h-[180px] items-center justify-center text-xs text-muted-foreground">
-                    {t("Sin actividad en el periodo")}
-                  </p>
-                ) : (
-                  <ResponsiveContainer width="100%" height={180}>
-                    <PieChart>
-                      <Pie
-                        data={channelPoints}
-                        dataKey="value"
-                        nameKey="key"
-                        innerRadius={45}
-                        outerRadius={70}
-                        paddingAngle={2}
-                        stroke="#FFFFFF"
-                        strokeWidth={1}
-                      >
-                        {channelPoints.map((point) => (
-                          <Cell
-                            key={point.key}
-                            fill={CHANNEL_COLORS[point.key] ?? "#94A3B8"}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </ChartCard>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Registro completo */}
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
-        <SectionHeader
-          title={t("Registro de entregas")}
-          description={t("Filtra por canal, estado o paciente")}
-          icon={BellRing}
-          variant="primary"
-          actions={
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/70" />
-                <Input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder={t("Buscar paciente...")}
-                  aria-label={t("Buscar por paciente")}
-                  className="h-8 w-44 border-white/25 bg-white/15 pl-8 text-white placeholder:text-white/60 [&::placeholder]:text-white/60"
-                />
-              </div>
-              <Select
-                value={channel}
-                onValueChange={(value) =>
-                  setChannel(value as NotificationChannel | "all")
-                }
-                items={{ all: t("Todo canal"), community: t("Comunidad"), sms: "SMS" }}
-              >
-                <SelectTrigger className="h-8 w-32 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("Todo canal")}</SelectItem>
-                  <SelectItem value="community">{t("Comunidad")}</SelectItem>
-                  <SelectItem value="sms">SMS</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={status}
-                onValueChange={(value) => setStatus(value as NotificationStatus | "all")}
-                items={{
-                  all: t("Todo estado"),
-                  ...Object.fromEntries(
-                    (Object.keys(STATUS_LABELS) as NotificationStatus[]).map((key) => [
-                      key,
-                      t(STATUS_LABELS[key]),
-                    ]),
-                  ),
-                }}
-              >
-                <SelectTrigger className="h-8 w-32 border-white/25 bg-white/15 text-white data-placeholder:text-white/70 [&>svg]:text-white/70">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("Todo estado")}</SelectItem>
-                  {(Object.keys(STATUS_LABELS) as NotificationStatus[]).map((key) => (
-                    <SelectItem key={key} value={key}>
-                      {t(STATUS_LABELS[key])}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                type="date"
-                value={from}
-                onChange={(event) => setFrom(event.target.value)}
-                aria-label={t("Desde")}
-                className="h-8 w-36 border-white/25 bg-white/15 text-white [&>svg]:text-white/70"
-              />
-              <Input
-                type="date"
-                value={to}
-                onChange={(event) => setTo(event.target.value)}
-                aria-label={t("Hasta")}
-                className="h-8 w-36 border-white/25 bg-white/15 text-white [&>svg]:text-white/70"
-              />
-              {isFiltered && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/15 hover:text-white"
-                  onClick={clearFilters}
-                >
-                  {t("Limpiar filtros")}
-                </Button>
-              )}
-            </div>
-          }
-        />
 
         {items.length === 0 ? (
           <ModuleEmptyState
@@ -629,7 +489,140 @@ export function NotificationsPage() {
             </div>
           </>
         )}
-      </section>
+        </section>
+
+        {/* Panel de indicadores (derecha en escritorio) */}
+        <div className="order-1 flex flex-col gap-4 xl:order-2 xl:col-span-4 xl:sticky xl:top-4">
+          <div className="grid grid-cols-2 gap-3">
+            {statusCounts.map((entry) => {
+              const tone = KPI_TONES[entry.key];
+              return (
+                <div
+                  key={entry.key}
+                  className="flex flex-col gap-1 rounded-xl border border-border bg-card px-4 py-3"
+                >
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {t(STATUS_LABELS[entry.key])}
+                  </span>
+                  <span
+                    className="text-xl font-bold tabular-nums"
+                    style={{ color: tone.accent }}
+                  >
+                    {entry.value}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {channelPoints.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-4 py-3">
+              {channelPoints.map((point) => (
+                <span
+                  key={point.key}
+                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium"
+                  style={{
+                    borderColor: CHANNEL_COLORS[point.key] ?? "#94A3B8",
+                    color: CHANNEL_COLORS[point.key] ?? "#94A3B8",
+                  }}
+                >
+                  {t(CHANNEL_LABELS[point.key as NotificationChannel] ?? point.key)}
+                  <strong className="tabular-nums">{point.value}</strong>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {charts.loading && !charts.data ? (
+            <>
+              <ChartCardSkeleton />
+              <ChartCardSkeleton />
+            </>
+          ) : (
+            <>
+              <ChartCard
+                title={t("Envíos por día (30 días)")}
+                description={t("Notificaciones entregadas en el periodo")}
+                icon={TrendingUp}
+              >
+                {dayPoints.length === 0 ? (
+                  <p className="flex h-[140px] items-center justify-center text-xs text-muted-foreground">
+                    {t("Sin actividad en el periodo")}
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={140}>
+                    <AreaChart data={dayPoints}>
+                      <defs>
+                        <linearGradient id="notif-day-fill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis
+                        dataKey="label"
+                        tick={{ fontSize: 10 }}
+                        tickLine={false}
+                        axisLine={false}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis
+                        width={28}
+                        allowDecimals={false}
+                        tick={{ fontSize: 10 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#0EA5E9"
+                        strokeWidth={2}
+                        fill="url(#notif-day-fill)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </ChartCard>
+
+              <ChartCard
+                title={t("Por canal")}
+                description={t("Distribución de entregas por canal")}
+                icon={Send}
+              >
+                {channelPoints.length === 0 ? (
+                  <p className="flex h-[140px] items-center justify-center text-xs text-muted-foreground">
+                    {t("Sin actividad en el periodo")}
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={140}>
+                    <PieChart>
+                      <Pie
+                        data={channelPoints}
+                        dataKey="value"
+                        nameKey="key"
+                        innerRadius={38}
+                        outerRadius={58}
+                        paddingAngle={2}
+                        stroke="#FFFFFF"
+                        strokeWidth={1}
+                      >
+                        {channelPoints.map((point) => (
+                          <Cell
+                            key={point.key}
+                            fill={CHANNEL_COLORS[point.key] ?? "#94A3B8"}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </ChartCard>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
