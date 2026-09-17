@@ -3598,5 +3598,20 @@
   "Elige las alertas en la vista de alertas y usa «Notificar».": "Choose the alerts in the alerts view and use \"Notify\".",
   "Ir a alertas": "Go to alerts",
   "No hay alertas seleccionadas": "No alerts selected",
-  "Revisa el mensaje de cada paciente y confirma el envío.": "Review each patient's message and confirm the send."
+  "Revisa el mensaje de cada paciente y confirma el envío.": "Review each patient's message and confirm the send.",
+  "Acciones para {name}": "Actions for {name}",
+  "del alcance": "of the scope",
+  "Directorio clínico · riesgo, alertas y seguimiento": "Clinical directory · risk, alerts and follow-up",
+  "Estado clínico": "Clinical status",
+  "Filtrar por estado del paciente": "Filter by patient status",
+  "No pudimos eliminar el paciente.": "We couldn't delete the patient.",
+  "Resumen clínico": "Clinical summary",
+  "Riesgo alto": "High risk",
+  "Riesgo bajo": "Low risk",
+  "Riesgo crítico": "Critical risk",
+  "Riesgo moderado": "Moderate risk",
+  "Riesgo, alertas y seguimiento del alcance": "Risk, alerts and follow-up across the scope",
+  "Se eliminará el registro de {name}. Esta acción no se puede deshacer.": "The record of {name} will be deleted. This action cannot be undone.",
+  "Seguimiento vencido": "Overdue follow-up",
+  "Ver ficha": "View record"
 }

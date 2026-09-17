@@ -3265,5 +3265,20 @@
   "Elige las alertas en la vista de alertas y usa «Notificar».": "Elige las alertas en la vista de alertas y usa «Notificar».",
   "Ir a alertas": "Ir a alertas",
   "No hay alertas seleccionadas": "No hay alertas seleccionadas",
-  "Revisa el mensaje de cada paciente y confirma el envío.": "Revisa el mensaje de cada paciente y confirma el envío."
+  "Revisa el mensaje de cada paciente y confirma el envío.": "Revisa el mensaje de cada paciente y confirma el envío.",
+  "Acciones para {name}": "Acciones para {name}",
+  "del alcance": "del alcance",
+  "Directorio clínico · riesgo, alertas y seguimiento": "Directorio clínico · riesgo, alertas y seguimiento",
+  "Estado clínico": "Estado clínico",
+  "Filtrar por estado del paciente": "Filtrar por estado del paciente",
+  "No pudimos eliminar el paciente.": "No pudimos eliminar el paciente.",
+  "Resumen clínico": "Resumen clínico",
+  "Riesgo alto": "Riesgo alto",
+  "Riesgo bajo": "Riesgo bajo",
+  "Riesgo crítico": "Riesgo crítico",
+  "Riesgo moderado": "Riesgo moderado",
+  "Riesgo, alertas y seguimiento del alcance": "Riesgo, alertas y seguimiento del alcance",
+  "Se eliminará el registro de {name}. Esta acción no se puede deshacer.": "Se eliminará el registro de {name}. Esta acción no se puede deshacer.",
+  "Seguimiento vencido": "Seguimiento vencido",
+  "Ver ficha": "Ver ficha"
 }

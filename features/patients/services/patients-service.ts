@@ -2,7 +2,7 @@ import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type {
   ClinicalBoardFilters,
-  ClinicalBoardItem,
+  ClinicalBoardResult,
   ClinicalMeasurementDto,
   Insurer,
   Patient,
@@ -13,7 +13,6 @@ import type {
   PatientProfessionalAssignment,
   PatientSortKey,
   PatientSortDir,
-  PatientStats,
   PaginatedResult,
 } from "../types";
 
@@ -36,13 +35,18 @@ export async function fetchPatientDashboard(
   });
 }
 
-/** Página del tablero clínico con búsqueda y filtros server-side. */
+/**
+ * Página del tablero clínico con búsqueda y filtros server-side (riesgo,
+ * alertas, seguimiento, estado del paciente, aseguradora y estado geográfico).
+ * Incluye el resumen real para las tarjetas del alcance.
+ */
 export async function fetchClinicalBoard(
   page: number,
   pageSize: number,
   filters: ClinicalBoardFilters,
+  stateCode?: string | null,
   signal?: AbortSignal,
-): Promise<PaginatedResult<ClinicalBoardItem>> {
+): Promise<ClinicalBoardResult> {
   const params = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
@@ -52,8 +56,11 @@ export async function fetchClinicalBoard(
   if (filters.risk !== "all") params.set("risk", filters.risk);
   if (filters.alerts === "with") params.set("hasAlerts", "true");
   if (filters.followUp !== "all") params.set("followUp", filters.followUp);
+  if (filters.status !== "all") params.set("status", filters.status);
+  if (filters.insurerId !== "all") params.set("insurerId", filters.insurerId);
+  if (stateCode) params.set("state", stateCode);
 
-  return apiFetch<PaginatedResult<ClinicalBoardItem>>(
+  return apiFetch<ClinicalBoardResult>(
     `${PATH}/clinical-board?${params.toString()}`,
     { signal },
   );
@@ -102,14 +109,6 @@ export async function fetchPatients(
     { signal },
   );
 }
-
-/** Estadísticas del directorio, scoped por el backend (admin global / propios). */
-export async function fetchPatientStats(
-  signal?: AbortSignal,
-): Promise<PatientStats> {
-  return apiFetch<PatientStats>(`${PATH}/stats`, { signal });
-}
-
 export async function getPatient(id: string): Promise<Patient> {
   return apiFetch<Patient>(`${PATH}/${id}`);
 }
