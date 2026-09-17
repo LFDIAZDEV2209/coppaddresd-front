@@ -3570,5 +3570,6 @@
   "Selecciona alertas en el paso 1.": "Select alerts in step 1.",
   "Elige las alertas en la vista de alertas y usa «Notificar».": "Choose the alerts in the alerts view and use \"Notify\".",
   "Ir a alertas": "Go to alerts",
-  "No hay alertas seleccionadas": "No alerts selected"
+  "No hay alertas seleccionadas": "No alerts selected",
+  "Revisa el mensaje de cada paciente y confirma el envío.": "Review each patient's message and confirm the send."
 }

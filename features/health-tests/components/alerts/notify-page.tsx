@@ -384,15 +384,6 @@ export function NotifyPage() {
                 <>
                   <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={busy || !canCompose}
-                    onClick={() => void run(true)}
-                  >
-                    {t("Vista previa")}
-                  </Button>
-                  <Button
-                    type="button"
                     size="sm"
                     disabled={busy || !canCompose}
                     onClick={() => void run(false)}
@@ -1151,7 +1142,7 @@ function StepReview({
               </div>
             )}
             <p className="text-[11.5px] text-muted-foreground">
-              {t("Usa Vista previa para revisar sin enviar, o Enviar para entregar ahora.")}
+              {t("Revisa el mensaje de cada paciente y confirma el envío.")}
             </p>
           </div>
         )}
