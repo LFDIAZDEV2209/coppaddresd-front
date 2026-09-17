@@ -68,7 +68,7 @@ import { AlertStatusBadge, SeverityBadge } from "../shared/badges";
 import { StatSkeleton, TableSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
 import { NotificationsTimeline } from "./notifications-timeline";
-import { NotifyWizard } from "./notify-wizard";
+import { NOTIFY_SELECTION_KEY } from "./notify-page";
 
 const STATUS_LABELS: Record<AlertStatus, string> = {
   activa: "Activa",
@@ -144,7 +144,6 @@ export function AlertsPage() {
   const [to, setTo] = useState("");
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [notifyOpen, setNotifyOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [pageState, setPageState] = useState({ key: "", page: 1 });
 
@@ -535,7 +534,18 @@ export function AlertsPage() {
                     size="sm"
                     variant="ghost"
                     className="h-7 border border-white/35 bg-white/15 px-2.5 text-[11.5px] text-white hover:bg-white/25 hover:text-white"
-                    onClick={() => setNotifyOpen(true)}
+                    nativeButton={false}
+                    render={<Link href="/health-tests/alertas/notificar" />}
+                    onClick={() => {
+                      try {
+                        window.sessionStorage.setItem(
+                          NOTIFY_SELECTION_KEY,
+                          JSON.stringify(selectedAlerts.map((alert) => alert.id)),
+                        );
+                      } catch {
+                        // Sin sessionStorage la página de notificación permite elegir alertas.
+                      }
+                    }}
                   >
                     <Send className="size-3.5" />
                     {t("Notificar")} {selectedAlerts.length}
@@ -648,14 +658,6 @@ export function AlertsPage() {
           <NotificationsTimeline className="flex-1" />
         </div>
       </div>
-
-      <NotifyWizard
-        open={notifyOpen}
-        onOpenChange={setNotifyOpen}
-        alerts={selectedAlerts}
-        patients={data.patients}
-        onCompleted={() => setSelectedIds([])}
-      />
     </div>
   );
 }

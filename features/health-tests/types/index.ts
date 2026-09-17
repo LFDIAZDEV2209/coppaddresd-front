@@ -512,6 +512,7 @@ export interface NotifyAlertsFilters {
   status?: NotificationStatus;
   from?: string;
   to?: string;
+  search?: string;
   page?: number;
   pageSize?: number;
 }

@@ -1,28 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { BellRing, History, MailWarning, Send } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useNotifications, useNotificationCharts } from "../../hooks/use-notifications";
+import { useNotifications } from "../../hooks/use-notifications";
 import type { NotificationStatus } from "../../types";
 import { formatDate } from "../../lib/format";
 import { notificationStatusTones, tones } from "../shared/colors";
-import { chipStyle, dotStyle, toneChipStyle } from "../shared/depth";
+import { chipStyle, dotStyle } from "../shared/depth";
 import { DeliveryStatusBadge } from "../shared/badges";
 import { TableSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
-import { NotificationsHistory } from "./notifications-history";
 
 const STATUS_LABELS: Record<NotificationStatus, string> = {
   sent: "Enviada",
@@ -40,80 +32,9 @@ function statusDotStyle(status: NotificationStatus) {
 
 const RECENT_SIZE = 3;
 
-/** Etiquetas de canal del resumen del historial. */
-const CHANNEL_LABELS: Record<string, string> = {
-  community: "Comunidad",
-  sms: "SMS",
-};
-
-/**
- * Resumen agregado del periodo (30 días) que encabeza el historial completo:
- * totales por canal y por estado de entrega.
- */
-function HistorySummary() {
-  const t = useT();
-  const { data } = useNotificationCharts(30);
-
-  if (!data) {
-    return null;
-  }
-
-  const channels = Object.entries(data.notificationsByChannel ?? {}).filter(
-    ([, value]) => value > 0,
-  );
-  const statuses = Object.entries(data.notificationsByStatus ?? {}).filter(
-    ([, value]) => value > 0,
-  );
-
-  if (channels.length === 0 && statuses.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-border bg-muted/40 px-4 py-3">
-      {channels.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("Canal")}
-          </span>
-          {channels.map(([key, value]) => (
-            <span
-              key={key}
-              className="rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
-              style={toneChipStyle(key === "sms" ? tones.sky : tones.slate)}
-            >
-              {t(CHANNEL_LABELS[key] ?? key)} · {value}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {statuses.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("Estado")}
-          </span>
-          {statuses.map(([key, value]) => (
-            <span
-              key={key}
-              className="rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
-              style={toneChipStyle(
-                notificationStatusTones[key as NotificationStatus] ??
-                  notificationStatusTones.queued,
-              )}
-            >
-              {t(STATUS_LABELS[key as NotificationStatus] ?? key)} · {value}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /**
  * Actividad reciente del rail: últimas entregas en formato línea de tiempo.
- * El registro completo (con filtros y paginación) se abre en un diálogo.
+ * El registro completo vive en la vista /health-tests/alertas/notificaciones.
  */
 export function NotificationsTimeline({
   className,
@@ -121,7 +42,6 @@ export function NotificationsTimeline({
   className?: string;
 } = {}) {
   const t = useT();
-  const [historyOpen, setHistoryOpen] = useState(false);
   const { data, loading, error, reload } = useNotifications({
     page: 1,
     pageSize: RECENT_SIZE,
@@ -157,9 +77,10 @@ export function NotificationsTimeline({
           variant="ghost"
           size="sm"
           className="shrink-0 border border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+          nativeButton={false}
+          render={<Link href="/health-tests/alertas/notificaciones" />}
           aria-label={t("Ver historial completo")}
           title={t("Ver historial completo")}
-          onClick={() => setHistoryOpen(true)}
         >
           <History className="size-3.5" />
           <span className="hidden sm:inline">{t("Ver historial completo")}</span>
@@ -245,21 +166,6 @@ export function NotificationsTimeline({
           ))}
         </ol>
       )}
-
-      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <DialogContent className="flex max-h-[88vh] flex-col gap-4 overflow-hidden sm:max-w-6xl">
-          <DialogHeader>
-            <DialogTitle>{t("Notificaciones enviadas")}</DialogTitle>
-            <DialogDescription>
-              {t("Historial de entregas por canal y estado")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
-            <HistorySummary />
-            <NotificationsHistory variant="dialog" />
-          </div>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }
