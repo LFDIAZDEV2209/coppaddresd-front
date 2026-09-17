@@ -725,12 +725,12 @@ function MessagePreview({
 
   if (channel === "sms") {
     return (
-      <div className="mx-auto w-full max-w-[300px] rounded-[26px] border border-border bg-background p-3 shadow-sm">
+      <div className="mx-auto w-full max-w-[340px] rounded-[26px] border border-border bg-background p-4 shadow-sm">
         <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-muted-foreground/30" />
-        <div className="rounded-2xl bg-muted px-3 py-2 text-[12.5px] text-foreground">
+        <div className="rounded-2xl bg-muted px-4 py-3 text-[13.5px] text-foreground">
           {body}
         </div>
-        <p className="mt-2 text-center text-[10.5px] text-muted-foreground">
+        <p className="mt-2 text-center text-[11px] text-muted-foreground">
           {body.length} {t("caracteres")} · {smsSegments(body)} {t("segmento(s)")}
         </p>
       </div>
@@ -738,16 +738,16 @@ function MessagePreview({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[340px] rounded-2xl border border-border bg-background p-3 shadow-sm">
-      <div className="flex items-center gap-2 border-b border-border pb-2">
-        <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <BellRing className="size-3.5" />
+    <div className="mx-auto w-full max-w-[560px] rounded-2xl border border-border bg-background p-4 shadow-sm">
+      <div className="flex items-center gap-2.5 border-b border-border pb-3">
+        <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <BellRing className="size-5" />
         </span>
-        <span className="text-xs font-medium text-foreground">
+        <span className="text-sm font-medium text-foreground">
           {t("Equipo CoppAddresd")}
         </span>
       </div>
-      <div className="mt-2 w-fit rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-[12.5px] text-foreground">
+      <div className="mt-3 w-fit rounded-2xl rounded-tl-sm bg-muted px-4 py-3 text-[13.5px] text-foreground">
         {body}
       </div>
     </div>
