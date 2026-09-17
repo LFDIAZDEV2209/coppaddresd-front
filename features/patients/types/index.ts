@@ -382,13 +382,24 @@ export interface PatientDashboard {
 export type PatientBoardRisk = "low" | "moderate" | "high" | "critical";
 export type PatientFollowUp = "al-dia" | "vencido" | "sin-asignacion";
 
-/** Fila del tablero clínico: cinco señales reales por paciente. */
+/**
+ * Fila del tablero clínico: señales clínicas reales por paciente + datos de
+ * directorio (diagnóstico, ubicación, aseguradora, profesionales y estado) para
+ * que la tabla clínica sea la vista única del módulo.
+ */
 export interface ClinicalBoardItem {
   patientId: string;
   medicalRecordNumber: string | null;
   firstName: string;
   lastName: string;
   documentNumber: string | null;
+  primaryDiagnosisCode: string | null;
+  primaryDiagnosisDescription: string | null;
+  stateCode: string | null;
+  stateName: string | null;
+  insurerName: string | null;
+  professionalNames: string[];
+  status: PatientStatus;
   riskLevel: PatientBoardRisk | null;
   lastEvaluationAt: string | null;
   lastEvaluationInstrument: string | null;
@@ -403,6 +414,30 @@ export interface ClinicalBoardFilters {
   risk: PatientBoardRisk | "all";
   alerts: "all" | "with";
   followUp: PatientFollowUp | "all";
+  status: PatientStatus | "all";
+  insurerId: string | "all";
+}
+
+/**
+ * Conteos del alcance y los filtros no clínicos (búsqueda, estado, aseguradora
+ * y estado geográfico). Alimentan las tarjetas-resumen; los buckets de riesgo
+ * replican el SQL del backend (Alto incluye Crítico).
+ */
+export interface ClinicalBoardSummary {
+  total: number;
+  withoutEvaluation: number;
+  riskHigh: number;
+  riskModerate: number;
+  riskLow: number;
+  withActiveAlerts: number;
+  followUpOnTrack: number;
+  followUpOverdue: number;
+  followUpUnassigned: number;
+}
+
+/** Respuesta paginada del tablero clínico con resumen para tarjetas. */
+export interface ClinicalBoardResult extends PaginatedResult<ClinicalBoardItem> {
+  summary: ClinicalBoardSummary;
 }
 
 export interface AppointmentInput {

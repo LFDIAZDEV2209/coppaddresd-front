@@ -6,9 +6,11 @@ import {
   Award,
   BadgeCheck,
   BarChart3,
+  BellRing,
   Bone,
   Briefcase,
   Building2,
+  CalendarClock,
   CalendarPlus,
   ChartArea,
   Coffee,
@@ -25,9 +27,12 @@ import {
   Mars,
   PhoneCall,
   Pill,
+  ShieldAlert,
   ShieldCheck,
+  ShieldQuestion,
   Sparkles,
   Stethoscope,
+  TriangleAlert,
   Unlink,
   User,
   UserCheck,
@@ -56,7 +61,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useT } from "@/providers/i18n-provider";
 import { PatientDistributionChart } from "./patient-distribution-chart";
-import type { PatientDashboard } from "../types";
+import type {
+  ClinicalBoardFilters,
+  ClinicalBoardSummary,
+  PatientDashboard,
+} from "../types";
 
 const GENDER_COLORS = ["#0e7490", "#123b63", "#7fb5e6", "#d4af37", "#64748b"];
 const AGE_COLORS = [
@@ -196,6 +205,8 @@ export function PatientSummaryView({
   months,
   onMonthsChange,
   onRetry,
+  clinicalSummary,
+  onOpenClinical,
 }: {
   data: PatientDashboard | null;
   loading: boolean;
@@ -203,6 +214,8 @@ export function PatientSummaryView({
   months: 6 | 12;
   onMonthsChange: (next: 6 | 12) => void;
   onRetry: () => void;
+  clinicalSummary: ClinicalBoardSummary | null;
+  onOpenClinical: (filters: Partial<ClinicalBoardFilters>) => void;
 }) {
   const t = useT();
   const [growthMode, setGrowthMode] = useState<"area" | "bars">("area");
@@ -331,6 +344,105 @@ export function PatientSummaryView({
           context={t("Requieren asignación")}
         />
       </div>
+
+      {/* Estado clínico real del alcance: cada tarjeta abre el tablero filtrado. */}
+      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:p-5">
+        <div className="flex items-center gap-2">
+          <ShieldAlert aria-hidden className="size-4 shrink-0 text-primary" />
+          <h3 className="text-sm font-bold tracking-tight text-foreground">
+            {t("Estado clínico")}
+          </h3>
+          <p className="truncate text-xs text-muted-foreground">
+            {t("Riesgo, alertas y seguimiento del alcance")}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {[
+            {
+              key: "riskHigh",
+              label: t("Riesgo alto"),
+              icon: ShieldAlert,
+              tone: "text-destructive",
+              value: clinicalSummary?.riskHigh ?? null,
+              filters: { risk: "high" } as Partial<ClinicalBoardFilters>,
+            },
+            {
+              key: "riskModerate",
+              label: t("Riesgo moderado"),
+              icon: TriangleAlert,
+              tone: "text-warning",
+              value: clinicalSummary?.riskModerate ?? null,
+              filters: { risk: "moderate" } as Partial<ClinicalBoardFilters>,
+            },
+            {
+              key: "riskLow",
+              label: t("Riesgo bajo"),
+              icon: ShieldCheck,
+              tone: "text-success-foreground",
+              value: clinicalSummary?.riskLow ?? null,
+              filters: { risk: "low" } as Partial<ClinicalBoardFilters>,
+            },
+            {
+              key: "withoutEvaluation",
+              label: t("Sin evaluaciones"),
+              icon: ShieldQuestion,
+              tone: "text-muted-foreground",
+              value: clinicalSummary?.withoutEvaluation ?? null,
+              filters: null,
+            },
+            {
+              key: "withActiveAlerts",
+              label: t("Con alertas activas"),
+              icon: BellRing,
+              tone: "text-warning",
+              value: clinicalSummary?.withActiveAlerts ?? null,
+              filters: { alerts: "with" } as Partial<ClinicalBoardFilters>,
+            },
+            {
+              key: "followUpOverdue",
+              label: t("Seguimiento vencido"),
+              icon: CalendarClock,
+              tone: "text-destructive",
+              value: clinicalSummary?.followUpOverdue ?? null,
+              filters: {
+                followUp: "vencido",
+              } as Partial<ClinicalBoardFilters>,
+            },
+          ].map((tile) => {
+            const Icon = tile.icon;
+            const className =
+              "flex flex-col gap-1 rounded-xl border border-border bg-background p-3 text-left transition-colors";
+            const content = (
+              <>
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Icon
+                    className={`size-3.5 shrink-0 ${tile.tone}`}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{tile.label}</span>
+                </span>
+                <span className="text-xl font-bold tabular-nums">
+                  {tile.value ?? "—"}
+                </span>
+              </>
+            );
+            return tile.filters ? (
+              <button
+                key={tile.key}
+                type="button"
+                onClick={() => onOpenClinical(tile.filters)}
+                className={`${className} hover:border-primary/60`}
+              >
+                {content}
+              </button>
+            ) : (
+              <div key={tile.key} className={className}>
+                {content}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">

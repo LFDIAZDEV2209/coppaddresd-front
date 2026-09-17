@@ -39,7 +39,7 @@ export function PatientStatusToggle({
   patient,
   onChanged,
 }: {
-  patient: PatientListItem;
+  patient: Pick<PatientListItem, "id" | "firstName" | "lastName" | "status">;
   onChanged: () => Promise<boolean>;
 }) {
   const t = useT();
