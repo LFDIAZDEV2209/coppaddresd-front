@@ -3554,5 +3554,15 @@
   "En espera": "En espera",
   "Fallida": "Fallida",
   "prueba": "prueba",
-  "pruebas": "pruebas"
+  "pruebas": "pruebas",
+  "Activar notificaciones": "Activar notificaciones",
+  "Activando notificaciones…": "Activando notificaciones…",
+  "Activa las notificaciones para recibir avisos de tus citas en este navegador.": "Activa las notificaciones para recibir avisos de tus citas en este navegador.",
+  "Avisos de citas en este navegador.": "Avisos de citas en este navegador.",
+  "Bloqueaste las notificaciones. Habilítalas desde la configuración del navegador.": "Bloqueaste las notificaciones. Habilítalas desde la configuración del navegador.",
+  "El navegador no permite notificaciones push.": "El navegador no permite notificaciones push.",
+  "Las notificaciones push no están configuradas en este entorno.": "Las notificaciones push no están configuradas en este entorno.",
+  "No se pudieron activar las notificaciones. Intenta de nuevo.": "No se pudieron activar las notificaciones. Intenta de nuevo.",
+  "Notificaciones activadas": "Notificaciones activadas",
+  "Recibirás avisos de tus citas en este navegador.": "Recibirás avisos de tus citas en este navegador."
 }

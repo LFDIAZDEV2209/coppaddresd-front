@@ -11,7 +11,6 @@ import {
   Search,
   Sun,
   Moon,
-  Bell,
   ChevronDown,
   ChevronRight,
   Menu,
@@ -30,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { NotificationsMenu } from "@/features/notifications/components/notifications-menu";
 import { useT } from "@/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 
@@ -194,21 +194,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         />
 
         {/* Notifications */}
-        <button
-          className={cn(
-            "relative flex size-9 items-center justify-center rounded-full transition-colors",
-            iconBtn,
-          )}
-          aria-label={t("Notificaciones")}
-        >
-          <Bell className="size-4" />
-          <span
-            className={cn(
-              "absolute right-[9px] top-[9px] size-[6px] rounded-full bg-destructive ring-2",
-              scrolled ? "ring-transparent" : "ring-white",
-            )}
-          />
-        </button>
+        <NotificationsMenu scrolled={scrolled} />
 
         {/* Contexto organizacional (switcher de clínica) */}
         {context && context.clinics.length > 0 && (

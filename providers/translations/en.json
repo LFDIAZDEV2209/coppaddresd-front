@@ -3886,5 +3886,15 @@
   "XP total": "Total XP",
   "y todas sus asignaciones. Esta acción no se puede deshacer.": "and all their assignments. This action cannot be undone.",
   "Ya empezaron sus evaluaciones": "They have started their evaluations",
-  "Ya reposteaste esta publicación": "You already reposted this post"
+  "Ya reposteaste esta publicación": "You already reposted this post",
+  "Activar notificaciones": "Enable notifications",
+  "Activando notificaciones…": "Enabling notifications…",
+  "Activa las notificaciones para recibir avisos de tus citas en este navegador.": "Turn on notifications to receive your appointment alerts in this browser.",
+  "Avisos de citas en este navegador.": "Appointment alerts in this browser.",
+  "Bloqueaste las notificaciones. Habilítalas desde la configuración del navegador.": "You blocked notifications. Enable them in your browser settings.",
+  "El navegador no permite notificaciones push.": "This browser doesn't support push notifications.",
+  "Las notificaciones push no están configuradas en este entorno.": "Push notifications are not configured in this environment.",
+  "No se pudieron activar las notificaciones. Intenta de nuevo.": "Notifications couldn't be enabled. Please try again.",
+  "Notificaciones activadas": "Notifications enabled",
+  "Recibirás avisos de tus citas en este navegador.": "You'll receive your appointment alerts in this browser."
 }

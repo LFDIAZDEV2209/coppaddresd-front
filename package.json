@@ -26,6 +26,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "firebase": "^12.19.0",
     "graphql": "^17.0.2",
     "graphql-ws": "^6.2.1",
     "lucide-react": "^1.31.0",
