@@ -528,13 +528,11 @@ export function VirtualRoom() {
             </div>
           </div>
         )}
-        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 rounded-2xl border border-white/20 bg-foreground/75 px-3 py-2 backdrop-blur-md">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="size-1.5 shrink-0 rounded-full bg-emerald-400" />
-            <span className="truncate text-[11px] font-semibold text-background">
-              {info.name}
-            </span>
-          </div>
+        <div className="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border border-white/20 bg-foreground/75 px-3 py-1.5 backdrop-blur-md">
+          <span className="size-1.5 shrink-0 rounded-full bg-emerald-400" />
+          <span className="truncate text-[11px] font-semibold text-background">
+            {info.name}
+          </span>
           <span className="shrink-0 text-[10.5px] font-medium text-background/75">
             {info.role}
           </span>
