@@ -139,7 +139,10 @@ export function DirectoryTable({
         <DirectoryIcon kind="team" className="directory-3d-icon--small" />
         <div>
           <h2 className="text-sm font-semibold text-foreground">
-            {employees.length} {t("profesionales visibles")}
+            {employees.length}{" "}
+            {employees.length === 1
+              ? t("profesional visible")
+              : t("profesionales visibles")}
           </h2>
           <p className="text-xs text-muted-foreground">{t("Equipo del ERP")}</p>
         </div>
