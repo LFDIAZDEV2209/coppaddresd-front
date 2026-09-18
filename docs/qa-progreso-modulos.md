@@ -62,7 +62,12 @@ Metodología completa en `/PROMPT_TESTING.md`.
   limitado + guards ("Acceso denegado" en /users) ✅. PERO dashboard muestra KPIs
   globales + acciones admin a un profesional de clínica (pendiente: gatear por
   permiso + KPIs por alcance — backlog).
-- Remanente: usuario `qa.enduser` + empleado asociado (limpiar con admin).
+- Remanente: usuario `qa.enduser` ✅ ELIMINADO (53 OK 2026-09-18); empleado huérfano
+  sin usuario (sin borrar-empleados por UI).
+- UUID en detalle (`01a03fcf...` en vez de "Professional" en el trigger): el scope
+  y el catálogo traen el MISMO id (verificado por red), el lookup debería
+  funcionar; fix defensivo en rama (label explícito en SelectValue). Re-verificar
+  visual post-deploy.
 
 ## Deuda cross-módulo (no re-descubrir)
 
