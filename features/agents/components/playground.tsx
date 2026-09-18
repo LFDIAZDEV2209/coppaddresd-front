@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Send,
   LoaderCircle,
@@ -11,6 +11,8 @@ import {
   Sparkles,
   GitBranch,
   ListChecks,
+  CircleAlert,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +23,7 @@ import { streamChat } from "../services/chat-service";
 import { fetchExecution, fetchAgentGraph } from "../services/agents-service";
 import { useAgentFlow } from "../hooks/use-agent-flow";
 import { AgentFlowDiagram, NODE_LABEL_KEYS } from "./agent-flow-diagram";
+import { AgentNodeDrawer } from "./agent-node-drawer";
 import { getAgentIconOption } from "./agent-icon-picker";
 import { Markdown } from "@/components/markdown";
 import { uuid } from "@/lib/uuid";
@@ -31,6 +34,15 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   streaming?: boolean;
+}
+
+/** Paso de la trazabilidad persistida (`output.flow_trace` de la ejecución). */
+interface FlowTraceStep {
+  node: string;
+  phase: "start" | "end";
+  step: number;
+  ts?: number;
+  duration_ms?: number;
 }
 
 interface PlaygroundProps {
@@ -63,7 +75,9 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
   const [graphEntry, setGraphEntry] = useState<{
     agentId: string;
     graph: AgentGraph | null;
+    error: boolean;
   } | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AgentExecutionDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,24 +85,34 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
   const flow = useAgentFlow();
 
   // Descriptor del grafo del agente (nodos/aristas + config efectiva) para el
-  // diagrama de flujos del panel derecho. Sin setState síncrono en el efecto:
-  // el "cargando" se deriva de si la entrada corresponde al agente actual.
-  useEffect(() => {
-    let active = true;
-    fetchAgentGraph(agent.id)
+  // canvas interactivo. El setState ocurre en el callback async (nunca en el
+  // cuerpo del efecto); entradas viejas se descartan por ticket de petición.
+  const graphRequestRef = useRef(0);
+  const requestGraph = useCallback((agentId: string) => {
+    const ticket = ++graphRequestRef.current;
+    fetchAgentGraph(agentId)
       .then((data) => {
-        if (active) setGraphEntry({ agentId: agent.id, graph: data });
+        if (graphRequestRef.current === ticket)
+          setGraphEntry({ agentId, graph: data, error: false });
       })
       .catch(() => {
-        if (active) setGraphEntry({ agentId: agent.id, graph: null });
+        if (graphRequestRef.current === ticket)
+          setGraphEntry({ agentId, graph: null, error: true });
       });
-    return () => {
-      active = false;
-    };
-  }, [agent.id]);
+  }, []);
+
+  useEffect(() => {
+    requestGraph(agent.id);
+  }, [agent.id, requestGraph]);
+
+  const retryGraph = () => {
+    setGraphEntry({ agentId: agent.id, graph: null, error: false });
+    requestGraph(agent.id);
+  };
 
   const graphLoading = graphEntry?.agentId !== agent.id;
   const graph = graphEntry?.agentId === agent.id ? graphEntry.graph : null;
+  const graphError = graphEntry?.agentId === agent.id && graphEntry.error;
   const threadIdRef = useRef<string>(`playground-${agent.id.slice(0, 8)}`);
   // El checkpointer de LangGraph reenvía el historial completo del thread en
   // cada turno; si una ejecución falla a mitad (loop de tools, stream cortado)
@@ -102,6 +126,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
     setMessages([]);
     setDetail(null);
     setError(null);
+    setSelectedNodeId(null);
     flow.reset();
     threadIdRef.current = nextThread();
   };
@@ -200,11 +225,16 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
   const toolsUsed = detail?.output?.tools_used;
   const ragSources = detail?.output?.rag_sources;
   const outputAnswer = detail?.output?.answer;
+  const flowTrace = Array.isArray(detail?.output?.flow_trace)
+    ? (detail?.output?.flow_trace as FlowTraceStep[]).filter(
+        (traceStep) => traceStep.phase === "end",
+      )
+    : [];
 
   return (
-    <div className="grid flex-1 gap-4 xl:grid-cols-[1fr_340px]">
-      {/* --- Chat --- */}
-      <div className="flex min-h-[520px] flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="grid flex-1 gap-4 lg:grid-cols-2 lg:min-h-[640px]">
+      {/* --- Chat (~50% en desktop; apilado en móvil) --- */}
+      <div className="flex min-h-[480px] flex-col overflow-hidden rounded-2xl border border-border bg-card lg:min-h-0">
         <div className="flex items-center justify-between border-b border-border bg-primary-soft px-5 py-3.5">
           <div className="flex items-center gap-3">
             <span
@@ -322,9 +352,9 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as "flow" | "detail")}
-        className="min-w-0"
+        className="flex min-w-0 flex-col lg:h-full"
       >
-        <TabsList className="w-full">
+        <TabsList className="w-full shrink-0">
           <TabsTrigger value="flow" className="gap-1.5">
             <GitBranch className="size-3.5" />
             {t('Flujo en vivo')}
@@ -335,9 +365,9 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="flow" className="flex flex-col gap-3">
-          <div className="rounded-xl border border-border bg-card px-4 py-3.5">
-            <div className="mb-3 flex items-center gap-2">
+        <TabsContent value="flow" className="flex min-h-0 flex-1 flex-col gap-3">
+          <div className="flex min-h-[480px] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card lg:min-h-0">
+            <div className="flex shrink-0 items-center gap-2 px-4 pt-3.5">
               <Sparkles className="size-4 text-primary" />
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {t('Flujo en vivo')}
@@ -349,12 +379,35 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
                 </span>
               )}
             </div>
-            <AgentFlowDiagram
-              graph={graph}
-              loading={graphLoading}
-              status={flow.status}
-              finished={flow.finished}
-            />
+            <div className="flex min-h-[420px] flex-1 flex-col p-2 lg:min-h-0">
+              {graphError ? (
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
+                  <CircleAlert className="size-6 text-destructive" />
+                  <p className="max-w-xs text-[12.5px] text-muted-foreground">
+                    {t('No se pudo cargar el flujo del agente.')}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={retryGraph}
+                  >
+                    <RotateCcw data-icon="inline-start" />
+                    {t('Reintentar')}
+                  </Button>
+                </div>
+              ) : (
+                <AgentFlowDiagram
+                  graph={graph}
+                  loading={graphLoading}
+                  status={flow.status}
+                  finished={flow.finished}
+                  selectedId={selectedNodeId}
+                  onSelectNode={setSelectedNodeId}
+                  agentName={agent.name}
+                  running={sending}
+                />
+              )}
+            </div>
           </div>
 
           {graph && (
@@ -433,7 +486,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="detail" className="flex flex-col gap-3">
+        <TabsContent value="detail" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
         <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3">
           <FileSearch className="size-4 text-emerald-600" />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -528,8 +581,56 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
             </div>
           </div>
         )}
+
+        <div className="rounded-xl border border-border bg-card px-4 py-3">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {t('Trazabilidad del flujo')}
+          </span>
+          {detailLoading ? (
+            <Skeleton className="mt-2 h-4 w-40" />
+          ) : flowTrace.length > 0 ? (
+            <ol className="mt-2 flex flex-col gap-1">
+              {flowTrace.map((traceStep, index) => (
+                  <li
+                    key={`${traceStep.node}-${traceStep.step}-${index}`}
+                    className="flex items-center gap-2 text-[11.5px] text-muted-foreground"
+                  >
+                    <span className="w-5 text-right font-mono text-[10px]">
+                      {index + 1}.
+                    </span>
+                    <span className="font-medium text-foreground">
+                      {t(NODE_LABEL_KEYS[traceStep.node] ?? traceStep.node)}
+                    </span>
+                    {traceStep.duration_ms != null && (
+                      <span className="ml-auto font-mono text-[10.5px]">
+                        {traceStep.duration_ms.toLocaleString("es-ES")} ms
+                      </span>
+                    )}
+                  </li>
+                ))}
+            </ol>
+          ) : (
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              {detail
+                ? t('Sin trazabilidad registrada para esta ejecución.')
+                : t('Enviá un mensaje para ver el detalle.')}
+            </p>
+          )}
+        </div>
         </TabsContent>
       </Tabs>
+
+      <AgentNodeDrawer
+        node={graph?.nodes.find((entry) => entry.id === selectedNodeId) ?? null}
+        graph={graph}
+        open={Boolean(selectedNodeId)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedNodeId(null);
+        }}
+        status={selectedNodeId ? (flow.status[selectedNodeId] ?? null) : null}
+        steps={flow.steps}
+        execution={detail}
+      />
     </div>
   );
 }
