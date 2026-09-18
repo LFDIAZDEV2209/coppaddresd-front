@@ -20,7 +20,9 @@ import type {
 import {
   healthTestsApi,
   healthTestMetrics,
+  subscribeHealthTestsCache,
   withAttempts,
+  type AlertTransition,
   type HealthTestStats,
 } from "../services/health-tests-service";
 import { ApiError } from "@/lib/api/http";
@@ -75,6 +77,11 @@ export function useAsyncData<T>(loader: () => Promise<T>, key?: string) {
 
   const reload = useCallback(() => setReloadNonce((n) => n + 1), []);
 
+  // Refresco «casi en vivo»: cuando una mutación del módulo invalida la cache
+  // (enviar notificaciones, cambiar el estado de una alerta, editar plantillas)
+  // este hook recarga sus datos sin necesidad de recargar la página.
+  useEffect(() => subscribeHealthTestsCache(reload), [reload]);
+
   return {
     data,
     loading: settledKey !== effectiveKey,
@@ -97,6 +104,24 @@ export interface DashboardData {
   coverageTrend: CoverageTrendPoint[];
   stats: HealthTestStats;
 }
+
+/** Errores por sección del tablero (null = esa sección cargó bien). */
+export interface DashboardSectionErrors {
+  masterRows: string | null;
+  tests: string | null;
+  alerts: string | null;
+  coverageTrend: string | null;
+  stats: string | null;
+}
+
+/** Valores neutros para secciones que fallaron (evita romper los derivados). */
+const EMPTY_STATS: HealthTestStats = {
+  totalPatients: 0,
+  withPending: 0,
+  completed: 0,
+  highRisk: 0,
+  activeAlerts: 0,
+};
 
 export function useDashboard(filter?: HealthGeoFilter) {
   const geoKey = [...(filter?.stateCodes ?? [])]
@@ -125,12 +150,26 @@ export function useDashboard(filter?: HealthGeoFilter) {
     alerts.loading ||
     trend.loading ||
     stats.loading;
-  const error =
-    masterRows.error ??
-    tests.error ??
-    alerts.error ??
-    trend.error ??
-    stats.error;
+
+  // Errores por sección: permite degradar una parte sin tumbar todo el tablero.
+  const errors = useMemo<DashboardSectionErrors>(
+    () => ({
+      masterRows: masterRows.error,
+      tests: tests.error,
+      alerts: alerts.error,
+      coverageTrend: trend.error,
+      stats: stats.error,
+    }),
+    [masterRows.error, tests.error, alerts.error, trend.error, stats.error],
+  );
+
+  const failedSections = useMemo(
+    () =>
+      (Object.keys(errors) as (keyof DashboardSectionErrors)[]).filter(
+        (k) => errors[k] !== null,
+      ),
+    [errors],
+  );
 
   const reload = useCallback(() => {
     void masterRows.reload();
@@ -141,27 +180,65 @@ export function useDashboard(filter?: HealthGeoFilter) {
   }, [masterRows, tests, alerts, trend, stats]);
 
   const data = useMemo<DashboardData | null>(() => {
-    if (
-      !masterRows.data ||
-      !tests.data ||
-      !alerts.data ||
-      !trend.data ||
-      !stats.data
-    ) {
-      return null;
+    const hasAny =
+      masterRows.data !== null ||
+      tests.data !== null ||
+      alerts.data !== null ||
+      trend.data !== null ||
+      stats.data !== null;
+    // Mientras carga no se pinta parcial (evita destellos con ceros); una vez
+    // liquidado, cualquier sección disponible basta para renderizar el tablero.
+    if (loading && hasAny) {
+      const allResolved =
+        masterRows.data !== null &&
+        tests.data !== null &&
+        alerts.data !== null &&
+        trend.data !== null &&
+        stats.data !== null;
+      if (!allResolved) return null;
     }
+    if (!hasAny) return null;
+    const master = (masterRows.data as PatientMasterRow[] | null) ?? [];
     return {
-      patients: (masterRows.data as PatientMasterRow[]).map((r) => r.patient),
-      masterRows: masterRows.data as PatientMasterRow[],
-      tests: tests.data,
-      alerts: alerts.data,
+      patients: master.map((r) => r.patient),
+      masterRows: master,
+      tests: (tests.data as HealthTest[] | null) ?? [],
+      alerts: (alerts.data as HealthAlert[] | null) ?? [],
       professionals: [] as HealthProfessional[],
-      coverageTrend: trend.data,
-      stats: stats.data,
+      coverageTrend: (trend.data as CoverageTrendPoint[] | null) ?? [],
+      stats: (stats.data as HealthTestStats | null) ?? EMPTY_STATS,
     };
-  }, [masterRows.data, tests.data, alerts.data, trend.data, stats.data]);
+  }, [
+    loading,
+    masterRows.data,
+    tests.data,
+    alerts.data,
+    trend.data,
+    stats.data,
+  ]);
 
-  return { data, loading, error, reload, metrics: healthTestMetrics };
+  // `error` completo solo cuando NINGUNA sección cargó: en cuanto hay datos
+  // parciales, la UI muestra lo disponible y avisa por sección (`errors`).
+  const error = data
+    ? null
+    : (masterRows.error ??
+      tests.error ??
+      alerts.error ??
+      trend.error ??
+      stats.error);
+
+  const partial = data !== null && failedSections.length > 0;
+
+  return {
+    data,
+    loading,
+    error,
+    errors,
+    failedSections,
+    partial,
+    reload,
+    metrics: healthTestMetrics,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -293,6 +370,7 @@ export function useAlerts() {
   const [statusChanges, setStatusChanges] = useState<
     Record<string, HealthAlert["status"]>
   >({});
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   const loading = alerts.loading || patients.loading || tests.loading;
   const error = alerts.error ?? patients.error ?? tests.error;
@@ -303,10 +381,28 @@ export function useAlerts() {
     void tests.reload();
   }, [alerts, patients, tests]);
 
-  /** Mock: transición de estado local (mañana: PATCH al backend). */
+  /** Transición de estado real contra el backend (permiso HealthTests.Review). */
   const changeStatus = useCallback(
-    (alertId: string, status: HealthAlert["status"]) => {
-      setStatusChanges((prev) => ({ ...prev, [alertId]: status }));
+    async (alertId: string, status: HealthAlert["status"]) => {
+      const action: AlertTransition | null =
+        status === "en-revision"
+          ? "review"
+          : status === "atendida"
+            ? "resolve"
+            : status === "cerrada"
+              ? "close"
+              : status === "activa"
+                ? "reopen"
+                : null;
+      if (!action) return;
+
+      setStatusError(null);
+      try {
+        await healthTestsApi.transitionAlert(alertId, action);
+        setStatusChanges((prev) => ({ ...prev, [alertId]: status }));
+      } catch {
+        setStatusError("No se pudo actualizar el estado de la alerta.");
+      }
     },
     [],
   );
@@ -323,7 +419,7 @@ export function useAlerts() {
     };
   }, [alerts.data, patients.data, tests.data, statusChanges]);
 
-  return { data, loading, error, reload, changeStatus };
+  return { data, loading, error, reload, changeStatus, statusError };
 }
 
 /* ------------------------------------------------------------------ */

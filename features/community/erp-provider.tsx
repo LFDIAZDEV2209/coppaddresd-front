@@ -1265,7 +1265,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
           if (res.error) {
             toast(t("No pudimos enviar el mensaje. Intenta de nuevo."));
           } else {
-            toast(t("Enviado como Equipo ANTARES"));
+            toast(t("Enviado como Equipo Copp Adresd"));
           }
         },
       );

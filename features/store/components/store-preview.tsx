@@ -46,7 +46,7 @@ export function StorePreviewPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t('Previsualización del paciente')}
-        description={t('Así verán los productos los pacientes en la app móvil ANTARES')}
+        description={t('Así verán los productos los pacientes en la app móvil Copp Adresd')}
         icon={Eye}
         actions={
           <Button variant="outline" size="sm" onClick={() => setReload((v) => v + 1)} disabled={loading}>

@@ -23,7 +23,7 @@ const CHANNEL_ICONS: Record<string, string> = {
 const CHANNEL_HANDLES: Record<string, string> = {
   TikTok: "@antaresbiohacking",
   Instagram: "@antares.biohacking",
-  Facebook: "ANTARES Biohacking",
+  Facebook: "Copp Adresd Biohacking",
   YouTube: "SUMMITs · Clases",
   WhatsApp: "Grupo COPP-ADRESD",
 };
@@ -77,8 +77,8 @@ export function NetworksPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
-        title={t("Redes ANTARES")}
-        description={t("Canales externos de ANTARES Comunidad")}
+        title={t("Redes Copp Adresd")}
+        description={t("Canales externos de Copp Adresd Comunidad")}
         icon={Share2}
       />
 
@@ -99,7 +99,7 @@ export function NetworksPage() {
               >
                 <span className="text-2xl">{CHANNEL_ICONS[ch.name] ?? "🌐"}</span>
                 <div className="flex flex-1 flex-col gap-0.5">
-                  <span className="text-[13px] font-bold">{ch.name} ANTARES</span>
+                  <span className="text-[13px] font-bold">{ch.name} Copp Adresd</span>
                   <span className="text-[10px] opacity-60">{CHANNEL_HANDLES[ch.name] ?? ch.name}</span>
                 </div>
                 <div className="text-right">

@@ -1,5 +1,5 @@
-import { CalendarRouter } from "@/features/appointments/components/calendar-router";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <CalendarRouter />;
+  redirect("/appointments/agenda");
 }

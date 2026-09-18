@@ -101,25 +101,8 @@ export function CalendarToolbar({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Fila 1: navegación + vistas + búsqueda + nueva cita */}
+      {/* Fila 1: navegación + fecha + vistas + búsqueda + nueva cita */}
       <div className="flex flex-wrap items-center gap-2">
-        <ToggleGroup
-          value={[viewType]}
-          onValueChange={(values) => {
-            const next = values[0] as CalendarViewType | undefined;
-            if (next) onViewChange(next);
-          }}
-          size="sm"
-          variant="outline"
-          aria-label={t("Cambiar vista del calendario")}
-        >
-          {VIEW_OPTIONS.map((option) => (
-            <ToggleGroupItem key={option.key} value={option.key}>
-              {option.label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-
         <div className="flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5">
           <Button
             size="icon-sm"
@@ -149,9 +132,26 @@ export function CalendarToolbar({
           </Button>
         </div>
 
-        <h2 className="mr-auto text-[15px] font-bold text-foreground">
+        <h2 className="mr-auto text-[16px] font-bold tracking-tight text-foreground">
           {rangeLabel}
         </h2>
+
+        <ToggleGroup
+          value={[viewType]}
+          onValueChange={(values) => {
+            const next = values[0] as CalendarViewType | undefined;
+            if (next) onViewChange(next);
+          }}
+          size="sm"
+          variant="outline"
+          aria-label={t("Cambiar vista del calendario")}
+        >
+          {VIEW_OPTIONS.map((option) => (
+            <ToggleGroupItem key={option.key} value={option.key}>
+              {option.label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
 
         <div className="relative">
           <Search

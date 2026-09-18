@@ -7,6 +7,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -57,6 +58,12 @@ export function AppointmentsTrendChart({
     return aggregate(dailySeries, bucket);
   }, [dailySeries, bucket]);
 
+  const peak = useMemo(() => {
+    let top: { label: string; citas: number } | null = null;
+    for (const d of data) if (!top || d.citas > top.citas) top = d;
+    return top;
+  }, [data]);
+
   if (loading) {
     return <div className="h-56 w-full animate-pulse rounded-xl bg-muted" />;
   }
@@ -64,7 +71,7 @@ export function AppointmentsTrendChart({
   if (data.length === 0) {
     return (
       <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-border text-[12.5px] text-muted-foreground">
-        {t('Sin citas en el período seleccionado')}
+        {t("Sin citas en el período seleccionado")}
       </div>
     );
   }
@@ -100,7 +107,7 @@ export function AppointmentsTrendChart({
           axisLine={false}
         />
         <Tooltip
-          formatter={(value) => [String(value), t('Citas')]}
+          formatter={(value) => [String(value), t("Citas")]}
           labelFormatter={(label) => String(label)}
           contentStyle={{
             borderRadius: 12,
@@ -116,6 +123,16 @@ export function AppointmentsTrendChart({
           strokeWidth={2}
           fill="url(#trendFill)"
         />
+        {bucket === "day" && peak && peak.citas > 0 && (
+          <ReferenceDot
+            x={peak.label}
+            y={peak.citas}
+            r={4}
+            fill="var(--primary)"
+            stroke="var(--card)"
+            strokeWidth={2}
+          />
+        )}
       </AreaChart>
     ) : (
       <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
@@ -137,7 +154,7 @@ export function AppointmentsTrendChart({
           axisLine={false}
         />
         <Tooltip
-          formatter={(value) => [String(value), t('Citas')]}
+          formatter={(value) => [String(value), t("Citas")]}
           labelFormatter={(label) => String(label)}
           cursor={{ fill: "var(--muted)", opacity: 0.4 }}
           contentStyle={{

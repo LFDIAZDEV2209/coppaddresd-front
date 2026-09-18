@@ -50,7 +50,7 @@ export function SectionHeader({
   };
 
   return (
-    <div className={cn("flex items-center gap-3", styles[variant], className)}>
+    <div className={cn("flex flex-wrap items-center gap-3", styles[variant], className)}>
       {Icon && (
         <div
           className={cn(
@@ -70,7 +70,7 @@ export function SectionHeader({
       </div>
 
       {actions && (
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+        <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>
       )}
     </div>
   );

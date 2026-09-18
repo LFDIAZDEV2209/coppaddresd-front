@@ -219,7 +219,7 @@ export function InactivePage() {
           onOpenChange={setBulkOpen}
           title={t("Mensaje masivo")}
           description={t(
-            "Se enviará como Equipo ANTARES a los miembros inactivos",
+            "Se enviará como Equipo Copp Adresd a los miembros inactivos",
           )}
           defaultText={t("¡Hola! Nos gustaría saber de ti 💙")}
           onSend={(text) => sendBulkInactive(text)}

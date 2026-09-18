@@ -33,7 +33,6 @@ import {
   ShieldAlert,
   Video,
   CalendarDays,
-  CalendarClock,
   ClipboardList,
   Inbox,
   Bell,
@@ -196,13 +195,6 @@ export const navModules: NavModule[] = [
         href: "/appointments/agenda",
         icon: CalendarDays,
         color: "#2563EB",
-        permission: "Appointments.AgendaView",
-      },
-      {
-        label: "Calendario",
-        href: "/appointments/calendario",
-        icon: CalendarClock,
-        color: "#0E7490",
         permission: "Appointments.AgendaView",
       },
       {
@@ -595,7 +587,7 @@ export const navModules: NavModule[] = [
         permission: "Community.View",
       },
       {
-        label: "Redes ANTARES",
+        label: "Redes Copp Adresd",
         href: "/community/networks",
         icon: Sparkles,
         hidden: true,

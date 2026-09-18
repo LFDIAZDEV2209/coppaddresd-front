@@ -367,3 +367,152 @@ export interface CoverageTrendPoint {
   coverage: number;
   completed: number;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notificaciones de alertas (SPEC A13)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Canal de entrega de una notificación. */
+export type NotificationChannel = "community" | "sms";
+
+/** Idioma de la notificación (el emisor lo elige al enviar). */
+export type NotificationLanguage = "es" | "en";
+
+/** Estado de entrega de una notificación. */
+export type NotificationStatus = "queued" | "sent" | "failed" | "skipped";
+
+export interface NotificationTemplate {
+  id: string;
+  code: string;
+  nameEs: string;
+  /** Nombre en inglés (null = falta traducción). */
+  nameEn: string | null;
+  channel: NotificationChannel;
+  severity: AlertSeverity | null;
+  testCategory: string | null;
+  indicatorCode: string | null;
+  subjectEs: string | null;
+  subjectEn: string | null;
+  /** Cuerpo en español con placeholders: [paciente], [test], [indicador], [valor]... */
+  bodyTemplateEs: string;
+  /** Cuerpo en inglés (null = falta traducción). */
+  bodyTemplateEn: string | null;
+  isActive: boolean;
+  usageCount: number;
+  versionCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface NotificationTemplateVersion {
+  id: string;
+  templateId: string;
+  version: number;
+  nameEs: string;
+  nameEn: string | null;
+  channel: NotificationChannel;
+  severity: AlertSeverity | null;
+  testCategory: string | null;
+  indicatorCode: string | null;
+  subjectEs: string | null;
+  subjectEn: string | null;
+  bodyTemplateEs: string;
+  bodyTemplateEn: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface HealthNotification {
+  id: string;
+  alertId: string | null;
+  patientId: string | null;
+  patientName: string | null;
+  channel: NotificationChannel;
+  language: NotificationLanguage;
+  templateId: string | null;
+  templateName: string | null;
+  recipient: string;
+  renderedBody: string;
+  status: NotificationStatus;
+  provider: string;
+  providerMessageId: string | null;
+  error: string | null;
+  createdAt: string;
+  sentAt: string | null;
+}
+
+export interface NotifyAlertItemResult {
+  alertId: string | null;
+  patientId: string | null;
+  patientName: string | null;
+  channel: NotificationChannel;
+  language: NotificationLanguage;
+  status: NotificationStatus;
+  reason: string | null;
+  renderedBody: string;
+  recipient: string;
+}
+
+export interface NotifyAlertsResult {
+  requested: number;
+  sent: number;
+  skipped: number;
+  failed: number;
+  preview: boolean;
+  items: NotifyAlertItemResult[];
+}
+
+export interface NotificationChartPoint {
+  label: string;
+  value: number;
+}
+
+export interface NotificationCharts {
+  alertsBySeverity: Record<string, number>;
+  alertsByStatus: Record<string, number>;
+  alertsByIndicator: Record<string, number>;
+  alertsByDay: NotificationChartPoint[];
+  notificationsByChannel: Record<string, number>;
+  notificationsByStatus: Record<string, number>;
+  notificationsByDay: NotificationChartPoint[];
+}
+
+export interface NotificationTemplateInput {
+  nameEs: string;
+  channel: NotificationChannel;
+  bodyTemplateEs: string;
+  nameEn?: string | null;
+  bodyTemplateEn?: string | null;
+  severity?: AlertSeverity | null;
+  testCategory?: string | null;
+  indicatorCode?: string | null;
+  subjectEs?: string | null;
+  subjectEn?: string | null;
+  isActive?: boolean;
+  note?: string | null;
+}
+
+export interface CreateNotificationTemplateInput extends NotificationTemplateInput {
+  code: string;
+}
+
+export interface NotifyAlertsInput {
+  alertIds: string[];
+  channels: NotificationChannel[];
+  templateId?: string | null;
+  bodyOverride?: string | null;
+  language?: NotificationLanguage;
+  preview?: boolean;
+}
+
+export interface NotifyAlertsFilters {
+  alertId?: string;
+  patientId?: string;
+  channel?: NotificationChannel;
+  status?: NotificationStatus;
+  from?: string;
+  to?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}

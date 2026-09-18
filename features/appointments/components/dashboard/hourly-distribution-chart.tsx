@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -39,16 +40,25 @@ export function HourlyDistributionChart({
   if (data.length === 0) {
     return (
       <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-border text-[12.5px] text-muted-foreground">
-        {t('Sin citas en el período')}
+        {t("Sin citas en el período")}
       </div>
     );
   }
 
+  const max = data.reduce((top, d) => Math.max(top, d.citas), 0);
+
   return (
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+        <BarChart
+          data={data}
+          margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="var(--border)"
+            vertical={false}
+          />
           <XAxis
             dataKey="label"
             tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
@@ -64,8 +74,8 @@ export function HourlyDistributionChart({
             axisLine={false}
           />
           <Tooltip
-            formatter={(value) => [String(value), t('Citas')]}
-            labelFormatter={(label) => `${t('Hora')} ${label}`}
+            formatter={(value) => [String(value), t("Citas")]}
+            labelFormatter={(label) => `${t("Hora")} ${label}`}
             cursor={{ fill: "var(--muted)", opacity: 0.4 }}
             contentStyle={{
               borderRadius: 12,
@@ -74,7 +84,14 @@ export function HourlyDistributionChart({
               boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
             }}
           />
-          <Bar dataKey="citas" fill="var(--chart-2)" radius={[5, 5, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="citas" radius={[5, 5, 0, 0]} maxBarSize={36}>
+            {data.map((d) => (
+              <Cell
+                key={d.label}
+                fill={d.citas === max ? "var(--primary)" : "var(--chart-2)"}
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>

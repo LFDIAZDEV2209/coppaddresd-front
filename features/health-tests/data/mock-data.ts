@@ -461,7 +461,7 @@ export const TESTS: HealthTest[] = [
   {
     id: "bateria-completa",
     code: "ANT-09",
-    name: "BaterÃ­a inicial completa ANTARES",
+    name: "BaterÃ­a inicial completa Copp Adresd",
     description:
       "PropÃ³sito personal, mentalidad de salud, perfil integral y prioridades.",
     category: "salud-mental",

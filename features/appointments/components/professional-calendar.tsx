@@ -9,7 +9,10 @@ import { useT } from "@/providers/i18n-provider";
 import { PageHeader } from "@/components/layout/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AgendaCalendarSwitcher } from "./agenda-calendar-switcher";
+import {
+  AgendaCalendarSwitcher,
+  type AgendaCalendarView,
+} from "./agenda-calendar-switcher";
 import {
   type CalendarViewType,
   type VisibleRange,
@@ -44,12 +47,36 @@ const CalendarSurface = dynamic(
  * drag & drop. Con <paramref name="fixedProfessionalId"/> (vista del
  * administrador) usa ese profesional y actúa como Admin.
  */
+const STORED_VIEW_KEY = "copp-cal-view";
+
+/** Vista guardada en la sesión (mismo navegador); Semana por defecto. */
+function readStoredView(): CalendarViewType {
+  if (typeof window === "undefined") return "timeGridWeek";
+  try {
+    const stored = window.localStorage.getItem(STORED_VIEW_KEY);
+    if (
+      stored === "dayGridMonth" ||
+      stored === "timeGridWeek" ||
+      stored === "timeGridDay"
+    ) {
+      return stored;
+    }
+  } catch {
+    /* almacenamiento no disponible: se usa el default */
+  }
+  return "timeGridWeek";
+}
+
 export function ProfessionalCalendar({
   fixedProfessionalId = null,
   fixedProfessionalName = null,
+  agendaView,
+  onAgendaViewChange,
 }: {
   fixedProfessionalId?: string | null;
   fixedProfessionalName?: string | null;
+  agendaView: AgendaCalendarView;
+  onAgendaViewChange: (view: AgendaCalendarView) => void;
 }) {
   const t = useT();
   const router = useRouter();
@@ -62,9 +89,14 @@ export function ProfessionalCalendar({
   const actor = fixedProfessionalId ? "Admin" : "Professional";
 
   const calendarRef = useRef<FullCalendar | null>(null);
-  const [viewType, setViewType] = useState<CalendarViewType>("dayGridMonth");
+  const [viewType, setViewType] = useState<CalendarViewType>(() =>
+    readStoredView(),
+  );
   const [range, setRange] = useState<VisibleRange | null>(null);
   const [dropError, setDropError] = useState<string | null>(null);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    string | null
+  >(null);
   const [eventPopover, setEventPopover] = useState<{
     appointment: AppointmentDto;
     anchor: Element;
@@ -166,6 +198,15 @@ export function ProfessionalCalendar({
     [persistReschedule],
   );
 
+  const handleViewTypeChange = useCallback((next: CalendarViewType) => {
+    setViewType(next);
+    try {
+      window.localStorage.setItem(STORED_VIEW_KEY, next);
+    } catch {
+      /* noop */
+    }
+  }, []);
+
   const handleRangeSelect = useCallback((start: Date, end: Date) => {
     setCreatePreset({ start, end });
   }, []);
@@ -177,6 +218,13 @@ export function ProfessionalCalendar({
       start: next,
       end: new Date(next.getTime() + 30 * 60000),
     });
+  }, []);
+
+  // En móvil angosto la vista Día es la única operable: se aplica al montar.
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      calendarRef.current?.getApi().changeView("timeGridDay");
+    }
   }, []);
 
   const rangeLabel = useMemo(
@@ -207,7 +255,12 @@ export function ProfessionalCalendar({
             : t("Calendario de citas")
         }
         icon={CalendarDays}
-        actions={<AgendaCalendarSwitcher active="calendario" />}
+        actions={
+          <AgendaCalendarSwitcher
+            active={agendaView}
+            onChange={onAgendaViewChange}
+          />
+        }
       />
 
       {!professionalId ? (
@@ -220,7 +273,7 @@ export function ProfessionalCalendar({
           </p>
         </div>
       ) : (
-        <>
+        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
           <CalendarToolbar
             viewType={viewType}
             rangeLabel={rangeLabel}
@@ -256,12 +309,17 @@ export function ProfessionalCalendar({
                 events={filters.filtered}
                 calendarRef={calendarRef}
                 viewType={viewType}
-                onViewTypeChange={setViewType}
+                selectedId={selectedAppointmentId}
+                onViewTypeChange={handleViewTypeChange}
                 onRangeChange={setRange}
-                onEventClick={(appointment, anchor) =>
-                  setEventPopover({ appointment, anchor })
-                }
+                onEventClick={(appointment, anchor) => {
+                  setSelectedAppointmentId(appointment.id);
+                  setEventPopover({ appointment, anchor });
+                }}
                 onRangeSelect={handleRangeSelect}
+                onDateSelectDay={(date) =>
+                  calendarRef.current?.getApi().changeView("timeGridDay", date)
+                }
                 onEventDropped={handleEventDropped}
                 onEventResized={handleEventResized}
                 onDropError={handleDropError}
@@ -276,7 +334,7 @@ export function ProfessionalCalendar({
               )}
             </>
           )}
-        </>
+        </div>
       )}
 
       {/* Popover del evento (desktop) / sheet (móvil) */}
@@ -284,7 +342,10 @@ export function ProfessionalCalendar({
         appointment={eventPopover?.appointment ?? null}
         anchor={eventPopover?.anchor ?? null}
         onOpenChange={(open) => {
-          if (!open) setEventPopover(null);
+          if (!open) {
+            setEventPopover(null);
+            setSelectedAppointmentId(null);
+          }
         }}
         onCancel={actions.openCancel}
         onReschedule={actions.openReschedule}

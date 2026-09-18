@@ -281,6 +281,11 @@ export interface ProfessionalActivityDto {
   uniquePatients: number;
 }
 
+export interface AppointmentStateCountDto {
+  code: string;
+  count: number;
+}
+
 export interface DashboardAnalyticsDto {
   kpis: DashboardKpisDto;
   dailySeries: DailyAppointmentCountDto[];
@@ -288,6 +293,7 @@ export interface DashboardAnalyticsDto {
   hourlyDistribution: HourlyCountDto[];
   professionalActivity: ProfessionalActivityDto[];
   upcomingAppointments: AppointmentDto[];
+  states: AppointmentStateCountDto[];
 }
 
 // --- Catálogos del backend (para crear solicitud y filtros admin) ---

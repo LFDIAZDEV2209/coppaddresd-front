@@ -317,7 +317,7 @@ export function PostsPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Publicaciones")}
-        description={t("Gestión de publicaciones de ANTARES Comunidad ADRED")}
+        description={t("Gestión de publicaciones de Copp Adresd Comunidad ADRED")}
         icon={Send}
         actions={
           canModerate ? (

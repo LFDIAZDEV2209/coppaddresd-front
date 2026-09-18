@@ -21,7 +21,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
-import { AgendaCalendarSwitcher } from "./agenda-calendar-switcher";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import {
+  AgendaCalendarSwitcher,
+  type AgendaCalendarView,
+} from "./agenda-calendar-switcher";
 import { AppointmentActionDialogs } from "./calendar/appointment-action-dialogs";
 import { AppointmentEventPopover } from "./calendar/appointment-event-popover";
 import { useCurrentUser } from "../hooks/use-current-user";
@@ -66,11 +70,15 @@ export function ProfessionalAgenda({
   fixedProfessionalName = null,
   cancelledBy = "Professional",
   initialDate = null,
+  agendaView,
+  onAgendaViewChange,
 }: {
   fixedProfessionalId?: string | null;
   fixedProfessionalName?: string | null;
   cancelledBy?: "Professional" | "Admin";
   initialDate?: string | null;
+  agendaView: AgendaCalendarView;
+  onAgendaViewChange: (view: AgendaCalendarView) => void;
 }) {
   const t = useT();
   const router = useRouter();
@@ -127,7 +135,12 @@ export function ProfessionalAgenda({
             : t("Agenda del profesional")
         }
         icon={CalendarDays}
-        actions={<AgendaCalendarSwitcher active="agenda" />}
+        actions={
+          <AgendaCalendarSwitcher
+            active={agendaView}
+            onChange={onAgendaViewChange}
+          />
+        }
       />
 
       {!professionalId ? (
@@ -262,7 +275,7 @@ export function ProfessionalAgenda({
             </div>
           ) : appointments.length === 0 ? (
             <EmptyState
-              icon={CalendarDays}
+              icon={() => <AnimatedIcon name="medical-kit" size={40} />}
               title={t("Sin citas en el rango")}
               description={t("No hay citas programadas para este período.")}
             />
@@ -279,8 +292,22 @@ export function ProfessionalAgenda({
               {groups.map((group) => (
                 <section key={group.key} className="flex flex-col gap-2">
                   {/* Encabezado sticky del día */}
-                  <header className="sticky top-0 z-10 -mx-1 flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/95 px-3 py-2 backdrop-blur-sm">
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <header
+                    className={cn(
+                      "sticky top-0 z-10 -mx-1 flex items-center gap-2.5 rounded-xl border px-3 py-2 backdrop-blur-sm",
+                      group.isToday
+                        ? "border-primary/30 bg-primary-soft"
+                        : "border-border/60 bg-background/95",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex size-7 shrink-0 items-center justify-center rounded-lg",
+                        group.isToday
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
                       <CalendarCheck className="size-3.5" />
                     </div>
                     <span className="text-[13px] font-semibold text-foreground">
@@ -380,7 +407,7 @@ function AppointmentRow({
   return (
     <div
       className={cn(
-        "group flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:shadow-sm",
+        "group flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-px hover:border-primary/40 hover:shadow-md",
         faded && "opacity-70",
       )}
     >
@@ -401,11 +428,15 @@ function AppointmentRow({
           </span>
         </div>
         <div
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl"
-          style={{ backgroundColor: color.bg }}
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl text-[12px] font-bold"
+          style={{ backgroundColor: color.bg, color: color.dot }}
           aria-hidden="true"
         >
-          <Video className="size-4.5" style={{ color: color.dot }} />
+          {appointment.patientName ? (
+            initialsOf(appointment.patientName)
+          ) : (
+            <Video className="size-4.5" />
+          )}
         </div>
         <div className="flex min-w-0 flex-col gap-px">
           <span
@@ -471,6 +502,7 @@ interface DayGroup {
   key: string;
   date: Date;
   label: string;
+  isToday: boolean;
   items: AppointmentDto[];
 }
 
@@ -484,7 +516,13 @@ function groupByDay(appointments: AppointmentDto[]): DayGroup[] {
     if (existing) {
       existing.items.push(appointment);
     } else {
-      map.set(key, { key, date, label: "", items: [appointment] });
+      map.set(key, {
+        key,
+        date,
+        label: "",
+        isToday: false,
+        items: [appointment],
+      });
     }
   }
   const today = new Date();
@@ -492,6 +530,7 @@ function groupByDay(appointments: AppointmentDto[]): DayGroup[] {
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .map((group) => ({
       ...group,
+      isToday: startOfDay(group.date).getTime() === startOfDay(today).getTime(),
       items: group.items
         .slice()
         .sort(
@@ -501,6 +540,15 @@ function groupByDay(appointments: AppointmentDto[]): DayGroup[] {
         ),
       label: formatDayHeader(group.date, today),
     }));
+}
+
+/** Iniciales del paciente (2 letras) para el avatar de la fila. */
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.charAt(0) ?? "";
+  const second =
+    parts.length > 1 ? (parts[parts.length - 1]?.charAt(0) ?? "") : "";
+  return `${first}${second}`.toUpperCase();
 }
 
 /** Etiqueta del día: Hoy / Mañana / Ayer o "lunes, 25 de agosto". */
