@@ -14,14 +14,15 @@ Metodología completa en `/PROMPT_TESTING.md`.
 
 ## Estado
 
-| Fase | Módulo (ruta)                                                                                 | Estado                                                                         | Rama                                 | Reporte         |
-| ---- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------ | --------------- |
-| 1    | Resumen (`/dashboard`)                                                                        | ⚠️ Validado con observaciones                                                  | — (sin cambios)                      | chat 2026-09-18 |
-| 2    | Usuarios (`/users`, `/people/new`, `/people/importar`)                                        | ✅ Validado y corregido, **pendiente re-validar en desplegado**                | `qa/fase2-usuarios` (3 commits)      | chat 2026-09-18 |
-| 3    | Profesionales (`/employees`)                                                                  | 🔨 En curso (flag clínicas implementado, pendiente deploy+re-test flujo nuevo) | `qa/fase3-profesionales` (2 commits) | ver abajo       |
-| 4    | Pacientes (`/patients`)                                                                       | pendiente                                                                      | —                                    | —               |
-| 5    | Roles y permisos (`/roles`)                                                                   | pendiente                                                                      | —                                    | —               |
-| 6+   | Citas, Tests, Inventario, Tienda, Agentes, Contenido, Bienestar, Programa, Comunidad, Sistema | pendiente (orden sidebar en `lib/config/navigation.ts`)                        | —                                    | —               |
+| Fase | Módulo (ruta)                                                                                 | Estado                                                                                                                        | Rama                            | Reporte         |
+| ---- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | --------------- |
+| 1    | Resumen (`/dashboard`)                                                                        | ⚠️ Validado con observaciones                                                                                                 | — (sin cambios)                 | chat 2026-09-18 |
+| 2    | Usuarios (`/users`, `/people/new`, `/people/importar`)                                        | ✅ Validado y corregido, **pendiente re-validar en desplegado**                                                               | `qa/fase2-usuarios` (3 commits) | chat 2026-09-18 |
+| 3    | Profesionales (`/employees`)                                                                  | ✅ Verificado en prod (rev45): wizard sin clínicas, rol global, directorio limpio, detalle con heredados, Selects, /me scoped | (mergeado)                      | ver abajo       |
+| 4    | Pacientes (`/patients`)                                                                       | ⏳ Siguiente                                                                                                                  | —                               | —               |
+| 4    | Pacientes (`/patients`)                                                                       | pendiente                                                                                                                     | —                               | —               |
+| 5    | Roles y permisos (`/roles`)                                                                   | pendiente                                                                                                                     | —                               | —               |
+| 6+   | Citas, Tests, Inventario, Tienda, Agentes, Contenido, Bienestar, Programa, Comunidad, Sistema | pendiente (orden sidebar en `lib/config/navigation.ts`)                                                                       | —                               | —               |
 
 ## Fase 2 — detalle (para no repetir trabajo)
 
@@ -63,13 +64,12 @@ Metodología completa en `/PROMPT_TESTING.md`.
   globales + acciones admin a un profesional de clínica (pendiente: gatear por
   permiso + KPIs por alcance — backlog).
 - **[ALTO] /me ignoraba roles con scope** (descubierto como QaE2E: `roles:[]`,
-  `permissions:[]` con rol Professional Global asignado): fix en rama backend
-  `qa/auth-me-scoped-permissions` (coppAddresdBack, 1 commit, sin push) —
-  nuevo `GetUserEffectivePermissionCodesAsync` (union laxa SOLO para UI;
-  los claims JWT siguen estrictos para no globalizar permisos de clínica),
-  `/me` une nombres de roles scoped, `CurrentContext` autoriza scope Global.
-  Tests nuevos (2) + 84 Auth en verde. ⚠️ Requiere tu merge+push de backend
-  y re-login del profesional para verificar menús.
+  `permissions:[]` con rol Professional Global asignado): fix en backend
+  (mergeado; deploys front45/auth46/api48 del 2026-09-18). **Verificado en prod**:
+  `/me` → `roles:["Professional"]` + 23 permisos; sidebar muestra Gestión/Citas/
+  Tests; "Mis pacientes" abre sin denegación. Usuario `qa.e2e` eliminado (53 OK).
+  Detalle: nuevo `GetUserEffectivePermissionCodesAsync` (solo UI; JWT estrictos),
+  `/me` une roles scoped, `CurrentContext` autoriza scope Global.
 - Remanente: usuario `qa.enduser` ✅ ELIMINADO (53 OK 2026-09-18); empleado huérfano
   sin usuario (sin borrar-empleados por UI).
 - UUID en detalle (`01a03fcf...` en vez de "Professional" en el trigger): el scope
