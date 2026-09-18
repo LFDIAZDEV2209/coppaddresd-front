@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   PhoneCall,
   PhoneOff,
+  RotateCcw,
   User,
   Stethoscope,
   Clock,
@@ -24,6 +25,7 @@ import {
   fetchRoom,
   startSession,
   endSession,
+  reopenSession,
 } from "../services/appointments-service";
 import { ClinicalEncounterPanel } from "./clinical-encounter-panel";
 import {
@@ -46,6 +48,9 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Ahora" con tick: permite calcular la gracia de reapertura sin leer el
+  // reloj durante el render (regla de pureza de React).
+  const [now, setNow] = useState(() => Date.now());
 
   const refreshRoom = useCallback(async () => {
     try {
@@ -72,8 +77,18 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
     };
   }, [refreshRoom]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const canJoin =
     appointment.status === "Confirmed" || appointment.status === "InProgress";
+
+  const canReopen =
+    appointment.status === "Completed" &&
+    appointment.completedAt != null &&
+    now - new Date(appointment.completedAt).getTime() < 60 * 60 * 1000;
 
   const handleJoin = () => {
     router.push(`/appointments/room/${appointment.id}`);
@@ -102,6 +117,20 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       onSessionChanged();
     } catch {
       setError("No se pudo finalizar la sesión.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleReopen = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await reopenSession(appointment.id);
+      await refreshRoom();
+      onSessionChanged();
+    } catch {
+      setError("No se pudo reabrir la consulta.");
     } finally {
       setBusy(false);
     }
@@ -205,6 +234,23 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
         <p className="text-[12.5px] text-muted-foreground">
           {t("La sala solo se habilita para citas confirmadas o en curso.")}
         </p>
+      )}
+
+      {canReopen && (
+        <div className="flex flex-col gap-1.5">
+          <Button
+            variant="outline"
+            onClick={handleReopen}
+            disabled={busy}
+            className="gap-1.5 self-start"
+          >
+            <RotateCcw className="size-4" />
+            {t("Reabrir consulta")}
+          </Button>
+          <p className="text-[12px] text-muted-foreground">
+            {t("Se puede reabrir hasta 60 minutos después de finalizada.")}
+          </p>
+        </div>
       )}
     </section>
   );

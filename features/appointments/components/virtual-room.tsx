@@ -20,6 +20,7 @@ import {
   ClipboardList,
   ClipboardCheck,
   ArrowLeft,
+  RotateCcw,
   AlertTriangle,
   Activity,
   CircleCheck,
@@ -41,6 +42,7 @@ import {
   fetchRoom,
   startSession,
   endSession,
+  reopenSession,
 } from "../services/appointments-service";
 import {
   ConsultationPanel,
@@ -94,6 +96,8 @@ export function VirtualRoom() {
     useState<ConsultationPanelTab>("participants");
   const [ending, setEnding] = useState(false);
   const [endedReason, setEndedReason] = useState<string | null>(null);
+  const [reopening, setReopening] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
   const [tracksVersion, setTracksVersion] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const [joinedAt, setJoinedAt] = useState<string | null>(null);
@@ -344,6 +348,24 @@ export function VirtualRoom() {
     }
   }, [appointment, router, t]);
 
+  // Reapertura dentro de la gracia (60 min desde la finalización): vuelve la
+  // cita a InProgress con sala nueva y reconecta al usuario en el momento.
+  const reopen = useCallback(async () => {
+    if (!appointment) return;
+    setReopening(true);
+    setReopenError(null);
+    try {
+      await reopenSession(appointment.id);
+      const refreshed = await fetchAppointment(appointment.id);
+      setAppointment(refreshed);
+      await connect(true);
+    } catch {
+      setReopenError(t("No se pudo reabrir la consulta."));
+    } finally {
+      setReopening(false);
+    }
+  }, [appointment, connect, t]);
+
   const toggleAudio = useCallback(() => {
     const room = roomRef.current;
     if (!room) return;
@@ -571,6 +593,13 @@ export function VirtualRoom() {
   }
 
   if (phase === "ended") {
+    const completedAt = appointment?.completedAt ?? null;
+    const canReopen =
+      canManage &&
+      appointment?.status === "Completed" &&
+      completedAt !== null &&
+      now - new Date(completedAt).getTime() < 60 * 60 * 1000;
+
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6">
         <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
@@ -579,6 +608,22 @@ export function VirtualRoom() {
         <p className="max-w-md text-center text-sm text-muted-foreground">
           {endedReason ?? t("La sesión finalizó.")}
         </p>
+        {reopenError && (
+          <p className="text-sm text-destructive" role="alert">
+            {reopenError}
+          </p>
+        )}
+        {canReopen && (
+          <div className="flex flex-col items-center gap-1.5">
+            <Button onClick={reopen} disabled={reopening} className="gap-1.5">
+              <RotateCcw className="size-4" />
+              {reopening ? t("Reabriendo…") : t("Reabrir consulta")}
+            </Button>
+            <p className="text-[12px] text-muted-foreground">
+              {t("Se puede reabrir hasta 60 minutos después de finalizada.")}
+            </p>
+          </div>
+        )}
         <Button
           variant="outline"
           onClick={() => router.push(`/appointments/citas/${appointment.id}`)}

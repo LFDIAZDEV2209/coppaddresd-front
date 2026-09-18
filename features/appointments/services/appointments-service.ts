@@ -243,6 +243,15 @@ export async function endSession(
   );
 }
 
+export async function reopenSession(
+  appointmentId: string,
+): Promise<AppointmentDto> {
+  return apiFetch<AppointmentDto>(
+    `${APPOINTMENTS_PATH}/${appointmentId}/session/reopen`,
+    { method: "POST" },
+  );
+}
+
 // --- Encuentro clínico ---
 
 export async function fetchEncounter(

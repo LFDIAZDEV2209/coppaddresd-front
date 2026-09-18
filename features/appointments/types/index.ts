@@ -89,6 +89,8 @@ export interface AppointmentDto {
   // el ingreso sin esperar la creación lazy de la sala. Las listas no la envían.
   roomOpensAt?: string | null;
   roomClosesAt?: string | null;
+  // Momento de finalización (ancla de la ventana de reapertura, solo detalle).
+  completedAt?: string | null;
 }
 
 export interface PaginatedAdminAppointmentsResult {
