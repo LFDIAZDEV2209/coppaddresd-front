@@ -67,7 +67,11 @@ type Stage = "upload" | "preview" | "confirm" | "processing" | "result";
  * organizationId: org-scoped — se resuelve como en el wizard (fetchOrganizationTree
  * + primera org con clínicas). Se usa solo para el bulk de empleados.
  */
-export function PeopleBulkImport() {
+export function PeopleBulkImport({
+  backHref = "/patients",
+}: {
+  backHref?: string;
+}) {
   const t = useT();
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("upload");
@@ -387,7 +391,7 @@ export function PeopleBulkImport() {
             variant="outline"
             size="sm"
             onClick={() =>
-              stage === "upload" ? router.push("/patients") : reset()
+              stage === "upload" ? router.push(backHref) : reset()
             }
           >
             <ArrowLeft data-icon="inline-start" />
@@ -628,7 +632,9 @@ export function PeopleBulkImport() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">{t("— sin tipo —")}</SelectItem>
+                            <SelectItem value="">
+                              {t("— sin tipo —")}
+                            </SelectItem>
                             <SelectItem value="profesional">
                               {t("Profesional")}
                             </SelectItem>

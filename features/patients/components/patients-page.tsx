@@ -127,7 +127,7 @@ export function PatientsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => router.push("/people/importar")}
+                onClick={() => router.push("/people/importar?from=/patients")}
               >
                 <FileUp data-icon="inline-start" />
                 {t("Importar CSV")}
