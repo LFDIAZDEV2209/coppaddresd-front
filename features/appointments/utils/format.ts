@@ -1,3 +1,4 @@
+import { getDateLocale } from "@/lib/i18n/date-locale";
 import type {
   AppointmentRequestStatus,
   AppointmentStatus,
@@ -7,16 +8,16 @@ import type {
 } from "../types";
 
 /**
- * Formateo y etiquetas en español del módulo de Citas. Los estados vienen
- * del backend como códigos en inglés (valores estables del enum); la UI muestra
- * etiquetas en español, como el resto del ERP.
+ * Formateo y etiquetas del módulo de Citas. Los estados vienen del backend como
+ * códigos en inglés (valores estables del enum); las etiquetas se traducen al
+ * renderizar con t(). Las fechas usan el locale del idioma activo de la UI.
  */
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString("es-ES", {
+  return date.toLocaleString(getDateLocale(), {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -29,7 +30,7 @@ export function formatTime(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleTimeString("es-ES", {
+  return date.toLocaleTimeString(getDateLocale(), {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -39,7 +40,7 @@ export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("es-ES", {
+  return date.toLocaleDateString(getDateLocale(), {
     day: "2-digit",
     month: "short",
     year: "numeric",

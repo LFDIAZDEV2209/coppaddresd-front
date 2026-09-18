@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { getPreferences, updatePreferenceLang } from '@/lib/api/preferences-service';
 import { getAccessToken } from '@/lib/api/http';
+import { setDateLocale } from '@/lib/i18n/date-locale';
 import es from './translations/es.json';
 import en from './translations/en.json';
 
@@ -167,6 +168,10 @@ export function I18nProvider({
       return next;
     });
   }, []);
+
+  // Mantiene el locale de fechas en sync con el idioma antes de renderizar a
+  // los hijos: los formateadores de fechas lo leen sin recibirlo por props.
+  setDateLocale(lang);
 
   const value = useMemo(() => ({ lang, setLang, toggleLang, t }), [lang, setLang, toggleLang, t]);
 

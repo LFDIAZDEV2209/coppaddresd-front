@@ -85,6 +85,10 @@ export interface AppointmentDto {
   rescheduleCount: number;
   cancellationReason: string | null;
   createdAt: string | null;
+  // Ventana efectiva de la sala (solo en el detalle de cita): permite decidir
+  // el ingreso sin esperar la creación lazy de la sala. Las listas no la envían.
+  roomOpensAt?: string | null;
+  roomClosesAt?: string | null;
 }
 
 export interface PaginatedAdminAppointmentsResult {

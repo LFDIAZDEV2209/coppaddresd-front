@@ -596,8 +596,10 @@ export function VirtualRoom() {
   if (phase === "ready" || phase === "connecting") {
     const statusAllowsJoin =
       appointment.status === "Confirmed" || appointment.status === "InProgress";
-    const openAtIso = roomInfo?.scheduledOpenAt ?? null;
-    const closeAtIso = roomInfo?.scheduledCloseAt ?? null;
+    const openAtIso =
+      roomInfo?.scheduledOpenAt ?? appointment?.roomOpensAt ?? null;
+    const closeAtIso =
+      roomInfo?.scheduledCloseAt ?? appointment?.roomClosesAt ?? null;
     const openTime = openAtIso ? new Date(openAtIso).getTime() : null;
     const closeTime = closeAtIso ? new Date(closeAtIso).getTime() : null;
     const roomEnded = roomInfo?.status === "Ended";
