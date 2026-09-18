@@ -638,6 +638,17 @@ export function getBreadcrumbSegments(
     return segments;
   }
 
+  // Rutas anidadas del módulo de medios (creación en página dedicada).
+  if (pathname.startsWith("/media/")) {
+    segments.push({ label: "Medios", href: "/media" });
+    if (pathname === "/media/new") {
+      segments.push({ label: "Nuevo medio" });
+    } else {
+      segments.push({ label: "Detalle" });
+    }
+    return segments;
+  }
+
   // Rutas anidadas del módulo de usuarios (nuevo/importar/detalle/editar).
   if (pathname.startsWith("/users/")) {
     segments.push({ label: "Usuarios", href: "/users" });

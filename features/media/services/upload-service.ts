@@ -1,6 +1,6 @@
 import { apiFetch, getAccessToken } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
-import type { MediaItem } from "../types";
+import type { MediaInput, MediaItem } from "../types";
 
 export interface UploadIntentResponse {
   storageKey: string;
@@ -77,6 +77,47 @@ export async function uploadToPresignedUrl(
     xhr.onerror = () => reject(new Error("Error de red al subir el archivo."));
     xhr.send(file);
   });
+}
+
+/**
+ * Sube archivo de contenido y miniatura (si existen) y devuelve el input con
+ * las claves de storage definitivas. Compartido por la creación (/media/new)
+ * y la edición (modal): misma lógica, sin duplicar.
+ */
+export async function resolveStorageKeys(
+  input: MediaInput,
+  file?: File,
+  thumbnailFile?: File | null,
+  onProgress?: (percent: number) => void,
+): Promise<MediaInput> {
+  let storageKey = input.storageKey;
+  let thumbnailKey = input.thumbnailKey ?? null;
+
+  if (file) {
+    onProgress?.(1);
+    const intent = await requestUploadIntent(
+      file.name,
+      input.contentType ?? "application/octet-stream",
+    );
+    onProgress?.(3);
+    await uploadToPresignedUrl(intent.presignedUrl, file, onProgress);
+    storageKey = intent.storageKey;
+  }
+
+  // Miniatura: si hay archivo nuevo se sube a storage y la metadata apunta
+  // a la clave nueva; si no, se conserva lo que trae el input (null si se
+  // quitó). El objeto viejo lo limpia el back al detectar el cambio de clave.
+  if (thumbnailFile) {
+    const thumbIntent = await requestUploadIntent(
+      thumbnailFile.name,
+      thumbnailFile.type,
+      "thumbnail",
+    );
+    await uploadToPresignedUrl(thumbIntent.presignedUrl, thumbnailFile);
+    thumbnailKey = thumbIntent.storageKey;
+  }
+
+  return { ...input, storageKey, thumbnailKey };
 }
 
 /**
