@@ -5,7 +5,7 @@
  * todas las salas de la sesión.
  */
 
-const SDK_URL = "https://sdk.twilio.com/js/video/releases/2.30.0/twilio-video.min.js";
+const SDK_URL = "https://sdk.twilio.com/js/video/releases/2.36.0/twilio-video.min.js";
 
 let sdkPromise: Promise<TwilioVideo.Video> | null = null;
 
