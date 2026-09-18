@@ -453,6 +453,12 @@ export function ProfessionalDetail({ id }: { id: string }) {
                     </span>
                   )}
                 </div>
+                {employee.clinics.length > 0 && (
+                  <p className="text-[12px] text-muted-foreground">
+                    {t("Clínicas asignadas (heredado)")}:{" "}
+                    {employee.clinics.map((c) => c.clinicName).join(", ")}
+                  </p>
+                )}
                 <Button
                   variant="outline"
                   size="sm"

@@ -457,13 +457,21 @@ export function PeopleWizard({
         "Selecciona el tipo de persona y completa los datos para agregarla al directorio.",
       )
     : mode === "professional"
-      ? t(
-          "Crea el perfil, asigna sus clínicas, permisos y horarios de atención, y envía la invitación por correo.",
-        )
-      : mode === "employee"
+      ? PROFESSIONAL_CLINICS_ENABLED
         ? t(
-            "Crea el perfil, asigna sus clínicas y permisos, y envía la invitación por correo para que complete su acceso.",
+            "Crea el perfil, asigna sus clínicas, permisos y horarios de atención, y envía la invitación por correo.",
           )
+        : t(
+            "Crea el perfil, asigna su horario de atención y envía la invitación por correo.",
+          )
+      : mode === "employee"
+        ? PROFESSIONAL_CLINICS_ENABLED
+          ? t(
+              "Crea el perfil, asigna sus clínicas y permisos, y envía la invitación por correo para que complete su acceso.",
+            )
+          : t(
+              "Crea el perfil del empleado y envía la invitación por correo para que complete su acceso.",
+            )
         : mode === "user"
           ? t(
               "Crea credenciales de acceso con roles y permisos, sin perfil de empleado ni paciente.",
