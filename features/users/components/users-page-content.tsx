@@ -385,7 +385,7 @@ export function UsersPageContent() {
         ) : result && result.data.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-border/50 bg-card">
             <SectionHeader
-              title={`${result.total} ${result.total === 1 ? t("usuario") : t("usuarios")} ${t("encontrados")}`}
+              title={`${result.total} ${result.total === 1 ? t("usuario") : t("usuarios")} ${result.total === 1 ? t("encontrado") : t("encontrados")}`}
               description={t("Administra los usuarios de la plataforma")}
               icon={UsersIcon}
               variant="primary"
