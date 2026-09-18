@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatRange } from "../../utils/format";
+import { formatRange, formatTime, nextBookableStart, toDateTimeLocalValue } from "../../utils/format";
 import type { AppointmentDto } from "../../types";
 
 /**
@@ -131,9 +131,15 @@ export function AppointmentActionDialogs({
             <Input
               id="reschedule-start"
               type="datetime-local"
+              min={toDateTimeLocalValue(nextBookableStart())}
               value={newStart}
               onChange={(e) => onNewStartChange(e.target.value)}
             />
+            <p className="text-[11.5px] text-muted-foreground">
+              {t("Primer horario disponible: {time}", {
+                time: formatTime(nextBookableStart().toISOString()),
+              })}
+            </p>
           </div>
           {actionError && rescheduling && (
             <p

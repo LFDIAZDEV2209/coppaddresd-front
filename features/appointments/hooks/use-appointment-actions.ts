@@ -6,6 +6,7 @@ import {
   cancelAppointment,
   rescheduleAppointment,
 } from "../services/appointments-service";
+import { nextBookableStart, toDateTimeLocalValue } from "../utils/format";
 import type { AppointmentDto } from "../types";
 
 /**
@@ -40,14 +41,12 @@ export function useAppointmentActions({
 
   const openReschedule = useCallback((appointment: AppointmentDto) => {
     setActionError(null);
-    // Prellenado con la hora actual de la cita (input datetime-local local).
+    // Prellenado con la hora actual de la cita; si ya no respeta la
+    // anticipación mínima se propone el primer hueco agendable.
     const current = new Date(appointment.scheduledStart);
-    const pad = (value: number) => String(value).padStart(2, "0");
-    setNewStart(
-      `${current.getFullYear()}-${pad(current.getMonth() + 1)}-${pad(
-        current.getDate(),
-      )}T${pad(current.getHours())}:${pad(current.getMinutes())}`,
-    );
+    const earliest = nextBookableStart();
+    const proposed = current.getTime() < earliest.getTime() ? earliest : current;
+    setNewStart(toDateTimeLocalValue(proposed));
     setRescheduling(appointment);
   }, []);
 
@@ -80,6 +79,15 @@ export function useAppointmentActions({
 
   const confirmReschedule = useCallback(async () => {
     if (!rescheduling || !newStart) return;
+
+    // Guard local: evita el 409 por anticipación mínima con un mensaje claro.
+    if (new Date(newStart).getTime() < nextBookableStart().getTime()) {
+      setActionError(
+        t("La nueva fecha debe respetar la anticipación mínima configurada."),
+      );
+      return;
+    }
+
     setBusy(true);
     setActionError(null);
     try {

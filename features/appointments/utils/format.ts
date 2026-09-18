@@ -209,12 +209,21 @@ export function nextBookableStart(minLeadHours = 2, marginMinutes = 30): Date {
   return start;
 }
 
+/**
+ * Convierte una fecha al formato `YYYY-MM-DDTHH:mm` que espera un input
+ * `datetime-local` (hora local del navegador, sin zona).
+ */
+export function toDateTimeLocalValue(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 /** Muestra el rango [inicio – fin] en una sola línea. */
 export function formatRange(start: string, end: string): string {
   const from = new Date(start);
   const to = new Date(end);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return "—";
-  const date = from.toLocaleDateString("es-ES", {
+  const date = from.toLocaleDateString(getDateLocale(), {
     day: "2-digit",
     month: "short",
     year: "numeric",
