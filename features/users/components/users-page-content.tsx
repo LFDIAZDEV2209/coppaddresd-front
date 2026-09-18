@@ -324,7 +324,7 @@ export function UsersPageContent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push("/people/importar")}
+                  onClick={() => router.push("/people/importar?from=/users")}
                   title={t("Crear usuarios masivamente")}
                 >
                   <Upload data-icon="inline-start" />
@@ -385,7 +385,7 @@ export function UsersPageContent() {
         ) : result && result.data.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-border/50 bg-card">
             <SectionHeader
-              title={`${result.total} ${result.total === 1 ? t("usuario") : t("usuarios")} ${t("encontrados")}`}
+              title={`${result.total} ${result.total === 1 ? t("usuario") : t("usuarios")} ${result.total === 1 ? t("encontrado") : t("encontrados")}`}
               description={t("Administra los usuarios de la plataforma")}
               icon={UsersIcon}
               variant="primary"
@@ -476,6 +476,7 @@ export function UsersPageContent() {
                   <PaginationItem>
                     <PaginationPrevious
                       text={t("Anterior")}
+                      aria-label={t("Página anterior")}
                       aria-disabled={result.page === 1}
                       className={
                         result.page === 1
@@ -491,6 +492,7 @@ export function UsersPageContent() {
                   <PaginationItem>
                     <PaginationNext
                       text={t("Siguiente")}
+                      aria-label={t("Página siguiente")}
                       aria-disabled={result.page === result.totalPages}
                       className={
                         result.page === result.totalPages

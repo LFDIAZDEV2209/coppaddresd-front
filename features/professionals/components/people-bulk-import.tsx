@@ -67,7 +67,11 @@ type Stage = "upload" | "preview" | "confirm" | "processing" | "result";
  * organizationId: org-scoped — se resuelve como en el wizard (fetchOrganizationTree
  * + primera org con clínicas). Se usa solo para el bulk de empleados.
  */
-export function PeopleBulkImport() {
+export function PeopleBulkImport({
+  backHref = "/patients",
+}: {
+  backHref?: string;
+}) {
   const t = useT();
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("upload");
@@ -387,7 +391,7 @@ export function PeopleBulkImport() {
             variant="outline"
             size="sm"
             onClick={() =>
-              stage === "upload" ? router.push("/patients") : reset()
+              stage === "upload" ? router.push(backHref) : reset()
             }
           >
             <ArrowLeft data-icon="inline-start" />
@@ -544,7 +548,7 @@ export function PeopleBulkImport() {
             <SummaryChip
               tone="success"
               icon={CheckCircle2}
-              label={`${preview.valid} ${t("personas válidas")}`}
+              label={`${preview.valid} ${preview.valid === 1 ? t("persona válida") : t("personas válidas")}`}
             />
             {preview.invalid > 0 && (
               <SummaryChip
@@ -628,7 +632,9 @@ export function PeopleBulkImport() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">{t("— sin tipo —")}</SelectItem>
+                            <SelectItem value="">
+                              {t("— sin tipo —")}
+                            </SelectItem>
                             <SelectItem value="profesional">
                               {t("Profesional")}
                             </SelectItem>
@@ -852,9 +858,11 @@ export function PeopleBulkImport() {
             <UsersIcon className="size-6" />
           </span>
           <h2 className="text-lg font-bold text-foreground">
-            {t("¿Importar {count} personas?", {
-              count: String(preview.valid),
-            })}
+            {preview.valid === 1
+              ? t("¿Importar 1 persona?")
+              : t("¿Importar {count} personas?", {
+                  count: String(preview.valid),
+                })}
           </h2>
           <p className="max-w-md text-[13px] text-muted-foreground">
             {t(
@@ -906,9 +914,11 @@ export function PeopleBulkImport() {
               className="bg-brand-gradient shadow-md shadow-brand-navy/25 hover:opacity-95"
             >
               <UsersIcon data-icon="inline-start" />
-              {t("Importar {count} personas", {
-                count: String(preview.valid),
-              })}
+              {preview.valid === 1
+                ? t("Importar 1 persona")
+                : t("Importar {count} personas", {
+                    count: String(preview.valid),
+                  })}
             </Button>
             <Button variant="outline" onClick={() => setStage("preview")}>
               <ArrowLeft data-icon="inline-start" />
@@ -1085,9 +1095,23 @@ export function PeopleBulkImport() {
           )}
 
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-            <Button onClick={() => router.push("/patients")}>
+            <Button
+              onClick={() =>
+                router.push(
+                  backHref === "/users"
+                    ? "/users"
+                    : backHref === "/employees"
+                      ? "/employees"
+                      : "/patients",
+                )
+              }
+            >
               <UsersIcon data-icon="inline-start" />
-              {t("Ir a pacientes")}
+              {backHref === "/users"
+                ? t("Ir a usuarios")
+                : backHref === "/employees"
+                  ? t("Ir a profesionales")
+                  : t("Ir a pacientes")}
             </Button>
             <Button variant="outline" onClick={reset}>
               <FileUp data-icon="inline-start" />
