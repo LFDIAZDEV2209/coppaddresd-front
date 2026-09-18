@@ -297,8 +297,8 @@ export function RequestsInbox({
       <PageHeader
         title={
           scope === "professional"
-            ? "Solicitudes de mis pacientes"
-            : "Solicitudes de los pacientes"
+            ? "Bandeja de solicitudes de mis pacientes"
+            : "Bandeja de solicitudes de los pacientes"
         }
         description={
           scope === "professional"

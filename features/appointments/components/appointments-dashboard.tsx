@@ -70,7 +70,7 @@ function StaffDashboard() {
     hasAppointmentPermission(can, "Appointments.RequestsView") && {
       href: "/appointments/solicitudes",
       icon: Inbox,
-      label: t('Solicitudes'),
+      label: t('Bandeja'),
       description: t('Solicitudes de los pacientes'),
     },
     hasAppointmentPermission(can, "Appointments.AlertsView") && {

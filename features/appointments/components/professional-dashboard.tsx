@@ -114,7 +114,7 @@ export function ProfessionalDashboard() {
     {
       href: "/appointments/solicitudes",
       icon: Inbox,
-      label: t('Solicitudes'),
+      label: t('Bandeja'),
       description: t('Solicitudes de los pacientes'),
     },
     {

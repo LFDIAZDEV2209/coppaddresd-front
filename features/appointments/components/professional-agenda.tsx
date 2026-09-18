@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   CalendarCheck,
   CalendarDays,
+  CalendarPlus,
   CalendarRange,
   ClipboardList,
   Search,
@@ -28,6 +29,7 @@ import {
 } from "./agenda-calendar-switcher";
 import { AppointmentActionDialogs } from "./calendar/appointment-action-dialogs";
 import { AppointmentEventPopover } from "./calendar/appointment-event-popover";
+import { CreateAppointmentDialog } from "./calendar/create-appointment-dialog";
 import { useCurrentUser } from "../hooks/use-current-user";
 import { useAgenda } from "../hooks/use-agenda";
 import { useAppointmentFilters } from "../hooks/use-appointment-filters";
@@ -109,6 +111,20 @@ export function ProfessionalAgenda({
     appointment: AppointmentDto;
     anchor: Element;
   } | null>(null);
+  const [createPreset, setCreatePreset] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
+
+  /** Abre el diálogo de creación con un hueco sugerido (próxima hora, 30 min). */
+  const openCreateDialog = () => {
+    const start = new Date();
+    start.setMinutes(start.getMinutes() + 60, 0, 0);
+    setCreatePreset({
+      start,
+      end: new Date(start.getTime() + 30 * 60 * 1000),
+    });
+  };
 
   // Agrupación por día de las citas FILTRADAS (los KPIs usan el total).
   const groups = useMemo(
@@ -196,6 +212,11 @@ export function ProfessionalAgenda({
                 className="h-8 w-44 pl-8 text-[12.5px]"
               />
             </div>
+
+            <Button size="sm" className="gap-1.5" onClick={openCreateDialog}>
+              <CalendarPlus data-icon="inline-start" />
+              {t("Nueva cita")}
+            </Button>
           </div>
 
           {/* Chips de resumen: clicables, filtran como la toolbar del calendario */}
@@ -369,6 +390,20 @@ export function ProfessionalAgenda({
         onClose={actions.closeAll}
         onConfirmCancel={() => void actions.confirmCancel()}
         onConfirmReschedule={() => void actions.confirmReschedule()}
+      />
+
+      {/* Creación de cita (mismo diálogo que el calendario) */}
+      <CreateAppointmentDialog
+        open={createPreset !== null}
+        onOpenChange={(open) => {
+          if (!open) setCreatePreset(null);
+        }}
+        presetStart={createPreset?.start ?? null}
+        presetEnd={createPreset?.end ?? null}
+        professionalId={professionalId ?? ""}
+        professionalName={professionalName}
+        specialtyIds={context?.professional?.specialtyIds ?? null}
+        onCreated={() => refetch()}
       />
     </div>
   );

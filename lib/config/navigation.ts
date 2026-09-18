@@ -205,7 +205,7 @@ export const navModules: NavModule[] = [
         permission: "Appointments.View",
       },
       {
-        label: "Solicitudes",
+        label: "Bandeja",
         href: "/appointments/solicitudes",
         icon: Inbox,
         color: "#F59E0B",
