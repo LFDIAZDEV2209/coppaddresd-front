@@ -520,7 +520,15 @@ export function ProfessionalDetail({ id }: { id: string }) {
                           aria-label={t("Rol en esta clínica")}
                           className="h-9! w-full sm:w-48"
                         >
-                          <SelectValue />
+                          <SelectValue>
+                            {roles.find(
+                              (r) =>
+                                r.id === roleByClinic[clinic.clinicId] &&
+                                roleByClinic[clinic.clinicId] !== "",
+                            )?.name ??
+                              roleByClinic[clinic.clinicId] ??
+                              ""}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="">{t("Sin acceso")}</SelectItem>
