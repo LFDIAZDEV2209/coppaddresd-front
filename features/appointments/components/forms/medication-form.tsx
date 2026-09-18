@@ -235,10 +235,11 @@ export function MedicationForm({
                     <CatalogSearchSelect
                       search={searchMedications}
                       placeholder={t("Buscar medicamento…")}
+                      selectedName={item.name}
                       accent="amber"
                       icon={Pill}
-                      onSelect={(item) =>
-                        updateItem(item.id, { name: item.name })
+                      onSelect={(medication) =>
+                        updateItem(item.id, { name: medication.name })
                       }
                     />
                   </div>

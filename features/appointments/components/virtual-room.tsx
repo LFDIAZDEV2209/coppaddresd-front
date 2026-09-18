@@ -42,7 +42,11 @@ import {
   startSession,
   endSession,
 } from "../services/appointments-service";
-import { ConsultationPanel, PANEL_HEIGHT } from "./consultation-panel";
+import {
+  ConsultationPanel,
+  clampPanelHeight,
+  defaultPanelHeight,
+} from "./consultation-panel";
 import type { ConsultationPanelTab } from "./consultation-panel";
 import {
   appointmentStatusColor,
@@ -92,6 +96,12 @@ export function VirtualRoom() {
   const [endedReason, setEndedReason] = useState<string | null>(null);
   const [tracksVersion, setTracksVersion] = useState(0);
   const [now, setNow] = useState(() => Date.now());
+  const [joinedAt, setJoinedAt] = useState<string | null>(null);
+  const [panelHeight, setPanelHeight] = useState<number>(() => {
+    if (typeof window === "undefined") return defaultPanelHeight();
+    const stored = Number(window.localStorage.getItem(PANEL_HEIGHT_STORAGE_KEY));
+    return stored > 0 ? clampPanelHeight(stored) : defaultPanelHeight();
+  });
 
   const roomRef = useRef<TwilioVideo.Room | null>(null);
   const localTracksRef = useRef<TwilioVideo.LocalTrack[]>([]);
@@ -164,7 +174,7 @@ export function VirtualRoom() {
     setRemoteTiles((tiles) =>
       tiles.some((t) => t.identity === identity)
         ? tiles
-        : [...tiles, { identity, isLocal: false }],
+        : [...tiles, { identity, isLocal: false, connectedAt: new Date().toISOString() }],
     );
   }, []);
 
@@ -275,6 +285,7 @@ export function VirtualRoom() {
           );
         });
 
+        setJoinedAt(new Date().toISOString());
         setPhase("connected");
         setElapsed(0);
       } catch (error) {
@@ -447,11 +458,16 @@ export function VirtualRoom() {
     return () => window.clearInterval(timer);
   }, [phase]);
 
+  // Persistencia de la altura elegida del panel inferior.
+  useEffect(() => {
+    window.localStorage.setItem(PANEL_HEIGHT_STORAGE_KEY, String(panelHeight));
+  }, [panelHeight]);
+
   // --- Helpers de render ---
 
   const localLabel = useMemo(
-    () => nameFor(myIdentity ?? "", true),
-    [nameFor, myIdentity],
+    () => ({ ...nameFor(myIdentity ?? "", true), connectedAt: joinedAt }),
+    [nameFor, myIdentity, joinedAt],
   );
   const totalTiles = remoteTiles.length + 1;
 
@@ -951,7 +967,11 @@ export function VirtualRoom() {
           <div
             className={`grid min-h-0 w-full flex-1 gap-2 rounded-[30px] border border-border/80 bg-card/80 p-2 shadow-[0_18px_50px_rgba(46,67,97,0.08)] sm:gap-3 sm:p-3 ${totalTiles >= 2 ? "auto-rows-fr grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
           >
-            {renderTile({ identity: LOCAL_IDENTITY, isLocal: true })}
+            {renderTile({
+              identity: LOCAL_IDENTITY,
+              isLocal: true,
+              connectedAt: joinedAt ?? new Date().toISOString(),
+            })}
             {remoteTiles.map((tile) => renderTile(tile))}
           </div>
 
@@ -1023,9 +1043,8 @@ export function VirtualRoom() {
         {/* Spacer: empuja el escenario cuando el panel inferior está abierto. */}
         <div
           aria-hidden="true"
-          className={`shrink-0 transition-all duration-300 ease-out ${
-            sidebarOpen ? PANEL_HEIGHT : "h-0"
-          }`}
+          className="shrink-0 transition-all duration-300 ease-out"
+          style={{ height: sidebarOpen ? panelHeight : 0 }}
         />
       </div>
 
@@ -1039,7 +1058,12 @@ export function VirtualRoom() {
         isProfessional={isProfessionalParticipant}
         canManage={canManage}
         localLabel={localLabel}
-        remoteLabels={remoteTiles.map((tile) => nameFor(tile.identity, false))}
+        remoteLabels={remoteTiles.map((tile) => ({
+          ...nameFor(tile.identity, false),
+          connectedAt: tile.connectedAt,
+        }))}
+        heightPx={panelHeight}
+        onHeightChange={setPanelHeight}
       />
     </div>
   );
@@ -1048,7 +1072,11 @@ export function VirtualRoom() {
 interface RoomTile {
   identity: string;
   isLocal: boolean;
+  connectedAt: string;
 }
+
+/** Clave de localStorage con la altura elegida del panel de consulta. */
+const PANEL_HEIGHT_STORAGE_KEY = "copp_sala_panel_height";
 
 /** Convierte fechas ISO crudas que llegan dentro de mensajes del backend a formato local. */
 function formatBackendMessage(message: string): string {

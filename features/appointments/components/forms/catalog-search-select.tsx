@@ -16,12 +16,15 @@ export function CatalogSearchSelect({
   search,
   placeholder,
   onSelect,
+  selectedName,
   accent = "teal",
   icon: Icon,
 }: {
   search: (query: string, signal?: AbortSignal) => Promise<CatalogSearchItem[]>;
   placeholder: string;
   onSelect: (item: CatalogSearchItem) => void;
+  /** Nombre persistido por el formulario dueño para restaurar la selección. */
+  selectedName?: string;
   accent?: "teal" | "violet" | "amber";
   icon?: React.ComponentType<{ className?: string }>;
 }) {
@@ -131,6 +134,11 @@ export function CatalogSearchSelect({
     }
   };
 
+  // Selección restaurada desde el borrador del formulario dueño (el estado
+  // `selected` es local y se pierde al desmontar el panel).
+  const restoredName =
+    !selected && selectedName?.trim() ? selectedName.trim() : null;
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -157,6 +165,10 @@ export function CatalogSearchSelect({
               </span>
             )}
             {selected.name}
+          </span>
+        ) : restoredName ? (
+          <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
+            {restoredName}
           </span>
         ) : (
           <span className="min-w-0 flex-1 truncate text-[12.5px] text-muted-foreground">
