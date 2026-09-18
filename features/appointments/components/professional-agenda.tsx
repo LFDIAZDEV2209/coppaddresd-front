@@ -359,7 +359,7 @@ export function ProfessionalAgenda({
                         router.push(`/appointments/citas/${appointment.id}`)
                       }
                       onJoin={() =>
-                        router.push(`/appointments/sala/${appointment.id}`)
+                        router.push(`/appointments/room/${appointment.id}`)
                       }
                       onCancel={() => actions.openCancel(appointment)}
                       onReschedule={() => actions.openReschedule(appointment)}
@@ -382,7 +382,7 @@ export function ProfessionalAgenda({
         onCancel={actions.openCancel}
         onReschedule={actions.openReschedule}
         onJoin={(appointment) =>
-          router.push(`/appointments/sala/${appointment.id}`)
+          router.push(`/appointments/room/${appointment.id}`)
         }
       />
 
@@ -462,14 +462,24 @@ function AppointmentRow({
           name: appointment.patientName ?? t("Paciente"),
         })}
       >
-        {/* Riel temporal */}
-        <div className="flex w-16 shrink-0 flex-col items-start border-r border-border pr-3">
-          <span className="text-[14px] font-bold text-foreground">
-            {formatTime(appointment.scheduledStart)}
-          </span>
-          <span className="text-[11px] text-muted-foreground">
-            {formatTime(appointment.scheduledEnd)}
-          </span>
+        {/* Riel temporal: inicio y fin en filas rotuladas (sin cortar AM/PM) */}
+        <div className="flex w-32 shrink-0 flex-col gap-1 border-r border-border pr-3">
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("Inicio")}
+            </span>
+            <span className="text-[13px] font-semibold tabular-nums text-foreground">
+              {formatTime(appointment.scheduledStart)}
+            </span>
+          </div>
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("Fin")}
+            </span>
+            <span className="text-[13px] font-semibold tabular-nums text-foreground">
+              {formatTime(appointment.scheduledEnd)}
+            </span>
+          </div>
         </div>
         <div
           className="flex size-10 shrink-0 items-center justify-center rounded-xl text-[12px] font-bold"
