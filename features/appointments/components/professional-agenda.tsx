@@ -39,6 +39,7 @@ import {
   appointmentStatusDot,
   appointmentStatusLabel,
   formatTime,
+  nextBookableStart,
 } from "../utils/format";
 import type { AppointmentStatus, AppointmentDto } from "../types";
 
@@ -116,10 +117,9 @@ export function ProfessionalAgenda({
     end: Date;
   } | null>(null);
 
-  /** Abre el diálogo de creación con un hueco sugerido (próxima hora, 30 min). */
+  /** Abre el diálogo de creación con el primer hueco válido (bloques de 30 min). */
   const openCreateDialog = () => {
-    const start = new Date();
-    start.setMinutes(start.getMinutes() + 60, 0, 0);
+    const start = nextBookableStart();
     setCreatePreset({
       start,
       end: new Date(start.getTime() + 30 * 60 * 1000),

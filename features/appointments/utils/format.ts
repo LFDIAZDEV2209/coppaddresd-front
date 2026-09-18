@@ -192,6 +192,22 @@ export function timeAgo(value: string | null | undefined): string {
   return formatDate(value);
 }
 
+/**
+ * Primer hueco agendable alineado a bloques de 30 min: redondea hacia arriba
+ * y exige la anticipación mínima del backend más un margen, para que el
+ * formulario no quede vencido mientras se completan los datos del paciente.
+ */
+export function nextBookableStart(minLeadHours = 2, marginMinutes = 30): Date {
+  const start = new Date();
+  start.setSeconds(0, 0);
+  start.setMinutes(start.getMinutes() < 30 ? 30 : 60);
+  const minLeadMs = (minLeadHours * 60 + marginMinutes) * 60_000;
+  while (start.getTime() - Date.now() < minLeadMs) {
+    start.setTime(start.getTime() + 30 * 60_000);
+  }
+  return start;
+}
+
 /** Muestra el rango [inicio – fin] en una sola línea. */
 export function formatRange(start: string, end: string): string {
   const from = new Date(start);

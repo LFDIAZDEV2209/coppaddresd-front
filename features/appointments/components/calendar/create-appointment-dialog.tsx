@@ -27,9 +27,15 @@ import {
   fetchSpecialties,
 } from "../../services/reference-service";
 import { scheduleAppointment } from "../../services/appointments-service";
+import { nextBookableStart } from "../../utils/format";
 import type { AppointmentDto, SpecialtyDto } from "../../types";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
+
+const DURATION_ITEMS = DURATION_OPTIONS.map((minutes) => ({
+  value: String(minutes),
+  label: `${minutes} min`,
+}));
 
 function pad(value: number): string {
   return String(value).padStart(2, "0");
@@ -119,9 +125,9 @@ function CreateAppointmentForm({
 
   const start = useMemo(() => {
     if (presetStart) return presetStart;
-    const next = new Date();
-    next.setHours(next.getHours() + 1, 0, 0, 0);
-    return next;
+    // Sin preset (apertura manual): primer hueco válido según la
+    // anticipación mínima del backend.
+    return nextBookableStart();
   }, [presetStart]);
 
   const [patientQuery, setPatientQuery] = useState("");
@@ -135,6 +141,11 @@ function CreateAppointmentForm({
 
   const [specialties, setSpecialties] = useState<SpecialtyDto[]>([]);
   const [specialtyId, setSpecialtyId] = useState("");
+
+  const specialtyItems = useMemo(
+    () => specialties.map((s) => ({ value: s.id, label: s.name })),
+    [specialties],
+  );
 
   const [dateValue, setDateValue] = useState(() => toDateInput(start));
   const [timeValue, setTimeValue] = useState(() => toTimeInput(start));
@@ -354,6 +365,7 @@ function CreateAppointmentForm({
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="create-specialty">{t("Especialidad")}</Label>
           <Select
+            items={specialtyItems}
             value={specialtyId}
             onValueChange={(value) => setSpecialtyId(value ?? "")}
           >
@@ -394,6 +406,7 @@ function CreateAppointmentForm({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="create-duration">{t("Duración")}</Label>
             <Select
+              items={DURATION_ITEMS}
               value={String(duration)}
               onValueChange={(value) => setDuration(Number(value ?? duration))}
             >

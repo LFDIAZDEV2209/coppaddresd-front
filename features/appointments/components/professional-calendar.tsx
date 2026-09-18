@@ -26,6 +26,7 @@ import { useAgenda } from "../hooks/use-agenda";
 import { useAppointmentFilters } from "../hooks/use-appointment-filters";
 import { useAppointmentActions } from "../hooks/use-appointment-actions";
 import { rescheduleAppointment } from "../services/appointments-service";
+import { nextBookableStart } from "../utils/format";
 import type { AppointmentDto } from "../types";
 
 // FullCalendar (~300 kB) se carga solo en esta vista y solo en cliente:
@@ -212,8 +213,7 @@ export function ProfessionalCalendar({
   }, []);
 
   const handleNewAppointment = useCallback(() => {
-    const next = new Date();
-    next.setHours(next.getHours() + 1, 0, 0, 0);
+    const next = nextBookableStart();
     setCreatePreset({
       start: next,
       end: new Date(next.getTime() + 30 * 60000),
