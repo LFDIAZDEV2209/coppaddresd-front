@@ -1063,14 +1063,76 @@ async function getCoverageTrend(
   return months;
 }
 
+/** Índice nombre -> id para resolver el nombre que expone `/master`. */
+interface ProfessionalNameIndex {
+  exact: Map<string, string>;
+  loose: Map<string, string>;
+}
+
+/** Normaliza un nombre para compararlo entre catálogo y tabla maestra. */
+function normalizePersonName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Clave laxa (primer y último token): `/master` envía nombre + apellido,
+ * mientras el catálogo incluye el segundo nombre del empleado.
+ */
+function professionalNameKey(name: string): string {
+  const tokens = normalizePersonName(name).split(" ").filter(Boolean);
+  if (tokens.length <= 2) return tokens.join(" ");
+  return `${tokens[0]} ${tokens[tokens.length - 1]}`;
+}
+
+/** Mapa doble (exacto y laxo) de los nombres del catálogo de profesionales. */
+function buildProfessionalNameIndex(
+  professionals: HealthProfessional[],
+): ProfessionalNameIndex {
+  const exact = new Map<string, string>();
+  const loose = new Map<string, string>();
+  for (const p of professionals) {
+    const name = `${p.firstName} ${p.lastName}`.trim();
+    const normalized = normalizePersonName(name);
+    if (normalized && !exact.has(normalized)) exact.set(normalized, p.id);
+    const key = professionalNameKey(name);
+    if (key && !loose.has(key)) loose.set(key, p.id);
+  }
+  return { exact, loose };
+}
+
+/** Resuelve el id del profesional a partir del nombre expuesto por `/master`. */
+function resolveProfessionalId(
+  name: string,
+  index?: ProfessionalNameIndex,
+): string {
+  if (!index || name.trim() === "") return "";
+  return (
+    index.exact.get(normalizePersonName(name)) ??
+    index.loose.get(professionalNameKey(name)) ??
+    ""
+  );
+}
+
 async function getMasterRows(
   filter?: HealthGeoFilter,
 ): Promise<PatientMasterRow[]> {
   return cached(`master:${geoFilterKey(filter)}`, TTL_MASTER, async () => {
-    const rows = await apiFetch<MasterRowDto[]>(
-      `${BASE}/master${geoFilterParams(filter)}`,
-    );
-    return rows.map(mapMasterRow);
+    // `/master` sólo expone el nombre del profesional: el catálogo resuelve el
+    // id (filtro y visualización) en el cliente, sin cambios de backend.
+    const [dtos, professionals] = await Promise.all([
+      apiFetch<MasterRowDto[]>(`${BASE}/master${geoFilterParams(filter)}`),
+      listProfessionals().catch(() => [] as HealthProfessional[]),
+    ]);
+    const index =
+      professionals.length > 0
+        ? buildProfessionalNameIndex(professionals)
+        : undefined;
+    return dtos.map((dto) => mapMasterRow(dto, index));
   });
 }
 
@@ -1087,7 +1149,11 @@ async function listTestsRaw(): Promise<HealthTest[]> {
 }
 
 /** Fila maestra desde el DTO del backend (una sola llamada, sin N+1). */
-function mapMasterRow(dto: MasterRowDto): PatientMasterRow {
+function mapMasterRow(
+  dto: MasterRowDto,
+  professionalIndex?: ProfessionalNameIndex,
+): PatientMasterRow {
+  const professionalName = dto.patient.professionalName ?? "";
   const patient: PatientProfile = {
     id: dto.patient.id,
     firstName: dto.patient.firstName,
@@ -1096,8 +1162,8 @@ function mapMasterRow(dto: MasterRowDto): PatientMasterRow {
     gender: dto.patient.gender === "Masculino" ? "Masculino" : "Femenino",
     age: ageFromDateOfBirth(dto.patient.dateOfBirth),
     clinic: dto.patient.clinicName ?? "",
-    professionalId: "",
-    professionalName: dto.patient.professionalName ?? "",
+    professionalId: resolveProfessionalId(professionalName, professionalIndex),
+    professionalName,
     status: dto.patient.status === "Inactivo" ? "inactivo" : "activo",
     insurance: dto.patient.insurerName ?? "",
     assignedAt: "",

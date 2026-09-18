@@ -313,12 +313,13 @@ export function MasterPatientsPage() {
     <div className="flex flex-col gap-4 p-4 sm:p-6">
       {header}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={t("Pacientes en la batería")}
           value={String(totals.total)}
           icon={Users}
           variant="primary"
+          align="center"
           context={
             batteries.length > 0
               ? `${batteries.length} ${batteries.length === 1 ? "batería activa" : "baterías activas"}`
@@ -330,6 +331,7 @@ export function MasterPatientsPage() {
           value={String(totals.evaluated)}
           icon={UserCheck}
           variant="success"
+          align="center"
           context={t("Con al menos un test completado")}
         />
         <StatCard
@@ -337,6 +339,7 @@ export function MasterPatientsPage() {
           value={String(totals.atRisk)}
           icon={HeartPulse}
           variant="destructive"
+          align="center"
           context={t("Requieren intervención")}
         />
         <StatCard
@@ -344,6 +347,7 @@ export function MasterPatientsPage() {
           value={String(totals.withAlerts)}
           icon={BellRing}
           variant="warning"
+          align="center"
           context={t("Activas o en revisión")}
         />
       </div>
@@ -758,9 +762,11 @@ function MasterTable({
   batteries: import("../../types").Battery[];
 }) {
   const t = useT();
-  const nameOf = (id: string) => {
+  const nameOf = (id: string, name?: string) => {
     const p = professionals.find((x) => x.id === id);
-    return p ? `${p.firstName} ${p.lastName}` : "Sin asignar";
+    if (p) return `${p.firstName} ${p.lastName}`;
+    // El backend resuelve el nombre aunque el id no esté en el catálogo.
+    return name?.trim() ? name : t("Sin asignar");
   };
   return (
     <div className="overflow-x-auto">
@@ -840,7 +846,10 @@ function MasterTable({
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <span className="text-[12.5px] text-muted-foreground">
-                      {nameOf(row.patient.professionalId)}
+                      {nameOf(
+                        row.patient.professionalId,
+                        row.patient.professionalName,
+                      )}
                     </span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
@@ -970,9 +979,11 @@ function MasterCards({
   batteries: import("../../types").Battery[];
 }) {
   const t = useT();
-  const nameOf = (id: string) => {
+  const nameOf = (id: string, name?: string) => {
     const p = professionals.find((x) => x.id === id);
-    return p ? `${p.firstName} ${p.lastName}` : "Sin asignar";
+    if (p) return `${p.firstName} ${p.lastName}`;
+    // El backend resuelve el nombre aunque el id no esté en el catálogo.
+    return name?.trim() ? name : t("Sin asignar");
   };
   return (
     <div className="grid grid-cols-1 gap-4 p-5 pt-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -1015,7 +1026,10 @@ function MasterCards({
                     {t("Profesional")}
                   </span>
                   <span className="truncate font-medium">
-                    {nameOf(row.patient.professionalId)}
+                    {nameOf(
+                      row.patient.professionalId,
+                      row.patient.professionalName,
+                    )}
                   </span>
                 </span>
                 <span className="flex flex-col gap-px">

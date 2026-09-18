@@ -23,6 +23,11 @@ interface StatCardProps {
   variant?: CardVariant;
   /** KPI héroe: relleno con el gradiente de marca (jerarquía principal). */
   filled?: boolean;
+  /**
+   * Alineación del contenido. `"left"` (default) mantiene el icono a la
+   * izquierda; `"center"` apila el icono y centra etiqueta/valor/contexto.
+   */
+  align?: "left" | "center";
 }
 
 const variantConfig: Record<
@@ -139,14 +144,17 @@ export function StatCard({
   icon: Icon,
   variant = "default",
   filled = false,
+  align = "left",
 }: StatCardProps) {
   const config = variantConfig[variant];
   const displayValue = useCountUp(value);
+  const centered = align === "center";
 
   return (
     <div
       className={cn(
         "group relative flex items-center gap-4 overflow-hidden rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        centered && "flex-col justify-center gap-3 text-center",
         filled
           ? "border-transparent bg-brand-gradient shadow-lg shadow-brand-navy/25"
           : "border-border/70 bg-card hover:border-border",
@@ -170,7 +178,12 @@ export function StatCard({
         <Icon className="size-5" />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div
+        className={cn(
+          "flex min-w-0 flex-col gap-0.5",
+          centered ? "w-full items-center" : "flex-1",
+        )}
+      >
         <span
           className={cn(
             "line-clamp-2 text-[11px] font-medium uppercase leading-4 tracking-wider",
@@ -179,7 +192,12 @@ export function StatCard({
         >
           {label}
         </span>
-        <div className="flex items-baseline gap-2">
+        <div
+          className={cn(
+            "flex items-baseline gap-2",
+            centered && "justify-center",
+          )}
+        >
           <span
             className={cn(
               "text-2xl leading-none font-bold tracking-tight tabular-nums",
