@@ -60,22 +60,22 @@ export function FormHeader({
 }) {
   const tints = {
     teal: {
-      band: "border-primary/20 bg-gradient-to-r from-primary/10 to-transparent",
+      band: "border-primary/20 bg-primary/5",
       icon: "bg-primary/10 text-primary",
       chip: "bg-primary/10 text-primary",
     },
     violet: {
-      band: "border-violet-200 bg-gradient-to-r from-violet-500/10 to-transparent",
+      band: "border-violet-200 bg-violet-500/5",
       icon: "bg-violet-500/10 text-violet-600",
       chip: "bg-violet-500/10 text-violet-600",
     },
     amber: {
-      band: "border-amber-200 bg-gradient-to-r from-amber-500/10 to-transparent",
+      band: "border-amber-200 bg-amber-500/5",
       icon: "bg-amber-500/10 text-amber-600",
       chip: "bg-amber-500/10 text-amber-600",
     },
     rose: {
-      band: "border-rose-200 bg-gradient-to-r from-rose-500/10 to-transparent",
+      band: "border-rose-200 bg-rose-500/5",
       icon: "bg-rose-500/10 text-rose-600",
       chip: "bg-rose-500/10 text-rose-600",
     },
@@ -83,7 +83,7 @@ export function FormHeader({
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${tints.band}`}
+      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm ${tints.band}`}
     >
       <div
         className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tints.icon}`}
@@ -148,7 +148,7 @@ export function RemoveRowButton({
 
 export function ItemRow({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/40 p-3">
+    <div className="flex flex-col gap-2 rounded-2xl border border-border/80 bg-card p-3 shadow-sm">
       {children}
     </div>
   );
@@ -167,12 +167,12 @@ export function DraftActions({
 }) {
   const t = useT();
   return (
-    <div className="flex flex-col gap-2 border-t border-border pt-3">
+    <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-end">
       <button
         type="button"
         onClick={onSave}
         disabled={busy}
-        className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground outline-none transition-colors hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-primary/40 disabled:opacity-50"
+        className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground outline-none transition-colors hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-primary/40 disabled:opacity-50"
       >
         {busy
           ? t("Guardando…")
@@ -183,7 +183,7 @@ export function DraftActions({
       <button
         type="button"
         onClick={onClear}
-        className="text-center text-[11.5px] font-medium text-muted-foreground outline-none transition-colors hover:text-destructive focus-visible:ring-3 focus-visible:ring-destructive/20"
+        className="h-10 rounded-xl px-3 text-center text-[11.5px] font-medium text-muted-foreground outline-none transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-3 focus-visible:ring-destructive/20"
       >
         {t("Limpiar borrador")}
       </button>

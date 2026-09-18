@@ -1,6 +1,7 @@
 "use client";
 
 import { useT } from "@/providers/i18n-provider";
+import { useAuth } from "@/providers/auth-provider";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -17,6 +18,7 @@ import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "../hooks/use-current-user";
+import { hasAppointmentPermission } from "@/lib/config/appointment-permissions";
 import {
   fetchAppointment,
   fetchRoom,
@@ -74,7 +76,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
     appointment.status === "Confirmed" || appointment.status === "InProgress";
 
   const handleJoin = () => {
-    router.push(`/appointments/sala/${appointment.id}`);
+    router.push(`/appointments/room/${appointment.id}`);
   };
 
   const handleStart = async () => {
@@ -236,6 +238,7 @@ export function AppointmentDetail() {
   const router = useRouter();
   const appointmentId = params.id;
   const { context } = useCurrentUser();
+  const { hasPermission } = useAuth();
 
   const [appointment, setAppointment] = useState<AppointmentDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -267,6 +270,10 @@ export function AppointmentDetail() {
     context?.professional != null &&
     appointment != null &&
     context.professional.id === appointment.professionalId;
+
+  const canManage =
+    hasAppointmentPermission(hasPermission, "Appointments.SessionsManage") ||
+    isProfessional;
 
   if (loading) {
     return (
@@ -304,7 +311,7 @@ export function AppointmentDetail() {
         onClick={() => router.back()}
         className="w-fit gap-1.5"
       >
-        <ArrowLeft className="size-4" /> Volver
+        <ArrowLeft className="size-4" /> {t("Volver")}
       </Button>
 
       <PageHeader
@@ -319,7 +326,7 @@ export function AppointmentDetail() {
         }
       />
 
-      {!isProfessional && (
+      {!canManage && (
         <p
           className="rounded-xl bg-amber-soft px-4 py-3 text-sm text-amber-700"
           role="note"
@@ -330,7 +337,7 @@ export function AppointmentDetail() {
         </p>
       )}
 
-      {isProfessional && (
+      {canManage && (
         <>
           <RoomPanel
             appointment={appointment}

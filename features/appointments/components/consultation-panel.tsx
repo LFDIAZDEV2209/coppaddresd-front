@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ChevronRight,
+  ClipboardCheck,
   ClipboardList,
   ClipboardPenLine,
   FlaskConical,
@@ -169,53 +170,60 @@ export function ConsultationPanel({
       <aside
         aria-label={t("Panel de la consulta")}
         aria-hidden={!open}
-        className={`fixed inset-x-0 bottom-0 z-40 flex ${PANEL_HEIGHT} flex-col rounded-t-2xl border-t border-border bg-card shadow-2xl shadow-black/10 transition-transform duration-300 ease-out ${
+        className={`fixed inset-x-2 bottom-2 z-40 flex ${PANEL_HEIGHT} flex-col rounded-[28px] border border-border/80 bg-card shadow-[0_24px_80px_rgba(46,67,97,0.18)] transition-transform duration-300 ease-out sm:inset-x-4 sm:bottom-4 ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
       >
         <div className="flex justify-center pt-2">
-          <div className="h-1 w-10 rounded-full bg-border" />
+          <div className="h-1 w-12 rounded-full bg-muted-foreground/25" />
         </div>
 
-        <header className="flex h-11 shrink-0 items-center justify-between px-4">
-          <div className="flex min-w-0 items-center gap-2">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border/70 px-4 pb-3 pt-2 sm:px-5">
+          <div className="flex min-w-0 items-center gap-3">
             {selectedForm ? (
-              <>
-                <button
-                  type="button"
-                  onClick={backToForms}
-                  aria-label={t("Volver a los formularios")}
-                  className="flex size-7 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/20"
-                >
-                  <ArrowLeft className="size-4" />
-                </button>
-                <p className="truncate text-[13px] font-semibold text-foreground">
-                  {t(
-                    FORM_CATALOG.find((f) => f.kind === selectedForm)?.title ??
-                      "",
-                  )}
-                </p>
-              </>
+              <button
+                type="button"
+                onClick={backToForms}
+                aria-label={t("Volver a los formularios")}
+                className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/20"
+              >
+                <ArrowLeft className="size-4" />
+              </button>
             ) : (
-              <p className="truncate text-[13px] font-semibold text-foreground">
-                {tab === "participants"
-                  ? t("Participantes")
-                  : t("Formularios médicos")}
-              </p>
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                <ClipboardCheck className="size-4" />
+              </div>
             )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-[13px] font-semibold text-foreground">
+                  {selectedForm
+                    ? t(FORM_CATALOG.find((f) => f.kind === selectedForm)?.title ?? "")
+                    : tab === "participants"
+                      ? t("Participantes")
+                      : t("Formularios médicos")}
+                </p>
+                <span className="hidden rounded-full bg-primary/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.12em] text-primary sm:inline-flex">
+                  {t("Consulta virtual")}
+                </span>
+              </div>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {appointment.patientName ?? t("Paciente")} · {appointment.specialtyName ?? t("Especialidad")}
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label={t("Cerrar panel")}
-            className="flex size-7 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/20"
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/20"
           >
             <X className="size-4" />
           </button>
         </header>
 
         {!selectedForm && (
-          <div className="flex shrink-0 gap-1 px-4 pb-2">
+          <div className="mx-4 flex shrink-0 gap-1 rounded-2xl border border-border/70 bg-muted/50 p-1 sm:mx-5">
             <TabButton
               active={tab === "participants"}
               onClick={() => onTabChange("participants")}
@@ -233,7 +241,7 @@ export function ConsultationPanel({
           </div>
         )}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 pt-3 sm:px-5">
           {selectedForm ? (
             <FormBody
               kind={selectedForm}
@@ -262,7 +270,7 @@ export function ConsultationPanel({
                   />
                 )}
                 {canManage && (
-                  <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3">
+                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3.5 shadow-sm">
                     <p className="flex items-center gap-1.5 text-[12px] font-medium text-primary">
                       <ShieldCheck className="size-3.5" />{" "}
                       {t("Consulta en curso")}
@@ -339,6 +347,25 @@ function ParticipantsBody({
 
   return (
     <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between rounded-2xl border border-primary/15 bg-primary/5 px-3.5 py-3 shadow-sm">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Users className="size-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[12.5px] font-semibold text-foreground">
+              {t("Participantes")}
+            </p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {appointment.patientName ?? t("Paciente")} · {appointment.specialtyName ?? t("Especialidad")}
+            </p>
+          </div>
+        </div>
+        <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
+          <span className={`size-1.5 rounded-full ${patientConnected ? "bg-emerald-500" : "bg-amber-500"}`} />
+          {t(patientConnected ? "Conectado" : "Esperando")}
+        </span>
+      </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <ParticipantRow
           name={localLabel.name}
@@ -376,7 +403,7 @@ function FormsBody({
   const t = useT();
   return (
     <div className="flex flex-col gap-2">
-      <p className="px-1 pb-1 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="rounded-2xl border border-primary/15 bg-primary/5 px-3.5 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
         {t(
           "Documentos de la consulta. Los formularios guardan borradores que sobreviven a recargas.",
         )}
@@ -390,15 +417,15 @@ function FormsBody({
               key={form.kind}
               type="button"
               onClick={() => onSelect(form.kind)}
-              className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left outline-none transition-colors hover:border-primary/30 hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-primary/20"
+              className="group flex items-center gap-3 rounded-[20px] border border-border/80 bg-card p-3.5 text-left shadow-sm outline-none transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:ring-3 focus-visible:ring-primary/20"
             >
               <div
                 className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
                   {
-                    teal: "bg-primary/10 text-primary",
-                    violet: "bg-violet-500/10 text-violet-600",
-                    amber: "bg-amber-500/10 text-amber-600",
-                    rose: "bg-rose-500/10 text-rose-600",
+                    teal: "bg-primary/10 text-primary ring-1 ring-primary/10",
+                    violet: "bg-violet-500/10 text-violet-600 ring-1 ring-violet-500/10",
+                    amber: "bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/10",
+                    rose: "bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/10",
                   }[form.tint]
                 }`}
               >
@@ -493,8 +520,8 @@ function ParticipantRow({
 }) {
   const t = useT();
   return (
-    <div className="flex items-center gap-2.5 rounded-xl bg-muted/40 px-3 py-2">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+    <div className="flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-3 py-2.5 shadow-sm">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10">
         <User className="size-4 text-primary" />
       </div>
       <div className="min-w-0 flex-1">

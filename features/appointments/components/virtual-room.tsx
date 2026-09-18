@@ -18,9 +18,13 @@ import {
   Loader2,
   PanelRight,
   ClipboardList,
+  ClipboardCheck,
   ArrowLeft,
   AlertTriangle,
   Activity,
+  CircleCheck,
+  MapPin,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/feedback/status-badge";
@@ -43,12 +47,13 @@ import type { ConsultationPanelTab } from "./consultation-panel";
 import {
   appointmentStatusColor,
   appointmentStatusLabel,
+  formatDate,
   formatDateTime,
   formatRange,
   formatTime,
   sessionStatusLabel,
 } from "../utils/format";
-import type { AppointmentDto, VirtualRoomDto } from "../types";
+import type { AppointmentDto } from "../types";
 
 type Phase = "loading" | "ready" | "connecting" | "connected" | "ended";
 
@@ -86,7 +91,6 @@ export function VirtualRoom() {
   const [ending, setEnding] = useState(false);
   const [endedReason, setEndedReason] = useState<string | null>(null);
   const [tracksVersion, setTracksVersion] = useState(0);
-  const [roomInfo, setRoomInfo] = useState<VirtualRoomDto | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   const roomRef = useRef<TwilioVideo.Room | null>(null);
@@ -437,25 +441,6 @@ export function VirtualRoom() {
     };
   }, [phase, appointmentId]);
 
-  // --- Ventana de la sala en la pantalla previa ---
-  // El backend crea la sala de forma diferida en el primer join-token; si aún
-  // no existe, el 404 es esperado y la validación queda del lado del servidor.
-  useEffect(() => {
-    if (phase !== "ready" && phase !== "connecting") return;
-    let active = true;
-    (async () => {
-      try {
-        const room = await fetchRoom(appointmentId);
-        if (active) setRoomInfo(room);
-      } catch {
-        // Sin sala todavía o sin red: no bloqueamos el ingreso.
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [phase, appointmentId]);
-
   useEffect(() => {
     if (phase !== "ready" && phase !== "connecting") return;
     const timer = window.setInterval(() => setNow(Date.now()), 30000);
@@ -490,15 +475,21 @@ export function VirtualRoom() {
     return (
       <div
         key={tile.identity}
-        className="relative h-full min-h-0 w-full overflow-hidden rounded-2xl border border-border bg-muted"
+        className="relative h-full min-h-0 w-full overflow-hidden rounded-[26px] border border-border/80 bg-muted p-1.5 shadow-sm"
       >
+        <div
+          ref={(el) => {
+            const map = trackContainersRef.current;
+            if (el) map.set(tile.identity, el);
+            else map.delete(tile.identity);
+          }}
+          className="absolute inset-1.5 overflow-hidden rounded-[21px] bg-muted [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
+        />
         {showPlaceholder && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <div className="flex size-16 items-center justify-center rounded-full bg-background ring-4 ring-border">
+          <div className="absolute inset-1.5 flex flex-col items-center justify-center gap-3 rounded-[21px] bg-muted">
+            <div className="flex size-16 items-center justify-center rounded-full border border-border bg-card shadow-sm">
               {initials ? (
-                <span className="text-lg font-bold text-muted-foreground">
-                  {initials}
-                </span>
+                <span className="text-lg font-bold text-primary">{initials}</span>
               ) : (
                 <User className="size-8 text-muted-foreground" />
               )}
@@ -521,21 +512,15 @@ export function VirtualRoom() {
             </div>
           </div>
         )}
-        <div
-          ref={(el) => {
-            const map = trackContainersRef.current;
-            if (el) map.set(tile.identity, el);
-            else map.delete(tile.identity);
-          }}
-          className="absolute inset-0 [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
-        />
-        <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-foreground/70 px-2.5 py-1 backdrop-blur">
-          <span className="size-1.5 rounded-full bg-emerald-500" />
-          <span className="text-[11px] font-semibold text-background">
-            {info.name}
-          </span>
-          <span className="text-[10.5px] font-medium text-background/80">
-            · {info.role}
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 rounded-2xl border border-white/20 bg-foreground/75 px-3 py-2 backdrop-blur-md">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="size-1.5 shrink-0 rounded-full bg-emerald-400" />
+            <span className="truncate text-[11px] font-semibold text-background">
+              {info.name}
+            </span>
+          </div>
+          <span className="shrink-0 text-[10.5px] font-medium text-background/75">
+            {info.role}
           </span>
         </div>
       </div>
@@ -596,16 +581,14 @@ export function VirtualRoom() {
   if (phase === "ready" || phase === "connecting") {
     const statusAllowsJoin =
       appointment.status === "Confirmed" || appointment.status === "InProgress";
-    const openAtIso =
-      roomInfo?.scheduledOpenAt ?? appointment?.roomOpensAt ?? null;
-    const closeAtIso =
-      roomInfo?.scheduledCloseAt ?? appointment?.roomClosesAt ?? null;
+    // La ventana viene del detalle de la cita (settings efectivas del
+    // backend); la sala diferida no hace falta para decidir el ingreso.
+    const openAtIso = appointment?.roomOpensAt ?? null;
+    const closeAtIso = appointment?.roomClosesAt ?? null;
     const openTime = openAtIso ? new Date(openAtIso).getTime() : null;
     const closeTime = closeAtIso ? new Date(closeAtIso).getTime() : null;
-    const roomEnded = roomInfo?.status === "Ended";
     const windowClosed =
-      roomEnded ||
-      (closeTime != null && !Number.isNaN(closeTime) && now >= closeTime);
+      closeTime != null && !Number.isNaN(closeTime) && now >= closeTime;
     const windowNotOpen =
       !windowClosed &&
       openTime != null &&
@@ -614,125 +597,179 @@ export function VirtualRoom() {
     const canJoin = statusAllowsJoin && !windowClosed && !windowNotOpen;
     const connecting = phase === "connecting";
 
+    const appointmentCode = appointment.id.slice(0, 8).toUpperCase();
+    const appointmentStatus = t(appointmentStatusLabel[appointment.status]);
+
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_55%)]" />
-        <div className="relative flex w-full max-w-xl flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+      <div className="flex min-h-dvh flex-col bg-muted/20">
+        <header className="shrink-0 border-b border-border bg-background/95 px-4 py-3.5 shadow-sm backdrop-blur sm:px-6 lg:px-10">
+          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                 <PhoneCall className="size-5 text-primary" />
               </div>
-              <div>
-                <p className="text-[15px] font-semibold text-foreground">
-                  {t("Sala virtual")}
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                  {t("Consulta virtual")}
                 </p>
-                <p className="text-[12px] text-muted-foreground">
+                <p className="truncate text-[13px] font-medium text-foreground">
                   {t("Citas")} · CoppAddresd
                 </p>
               </div>
             </div>
             <StatusBadge
-              status={t(appointmentStatusLabel[appointment.status])}
+              status={appointmentStatus}
               color={appointmentStatusColor(appointment.status)}
             />
           </div>
+        </header>
 
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
-                  <User className="size-7 text-primary" />
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center gap-6 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(20rem,0.85fr)] lg:gap-8">
+            <main className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+              <div className="border-b border-border bg-primary/[0.04] px-5 py-8 sm:px-10 sm:py-10">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 ring-8 ring-primary/[0.04]">
+                    <User className="size-8 text-primary" />
+                  </div>
+                  <div className="min-w-0 pt-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                      {t("Paciente")}
+                    </p>
+                    <h1 className="mt-1 line-clamp-2 break-words text-2xl font-semibold tracking-[-0.02em] text-foreground sm:text-[28px] xl:text-[32px]">
+                      {appointment.patientName ?? t("Paciente")}
+                    </h1>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Stethoscope className="size-3.5 text-primary" />
+                        {appointment.specialtyName ?? t("Especialidad")}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="size-3.5 text-primary" />
+                        {appointment.locationName ?? t("Sede")}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="line-clamp-2 break-words text-lg font-semibold text-foreground">
-                    {appointment.patientName ?? t("Paciente")}
-                  </p>
-                  <p className="truncate text-[12.5px] text-muted-foreground">
-                    {appointment.specialtyName ?? t("Especialidad")} ·{" "}
-                    {appointment.locationName ?? t("Sede")}
-                  </p>
+
+                <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <InfoChip
+                    icon={CalendarDays}
+                    label={t("Fecha")}
+                    value={formatDate(appointment.scheduledStart)}
+                  />
+                  <InfoChip
+                    icon={Clock}
+                    label={t("Horario")}
+                    value={`${formatTime(appointment.scheduledStart)} – ${formatTime(appointment.scheduledEnd)}`}
+                  />
+                  <InfoChip
+                    icon={Stethoscope}
+                    label={t("Profesional")}
+                    value={appointment.professionalName ?? t("Sin asignar")}
+                  />
+                  <InfoChip
+                    icon={ShieldCheck}
+                    label={t("Código de cita")}
+                    value={appointmentCode}
+                    mono
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <InfoChip
-                  icon={CalendarDays}
-                  label={t("Horario")}
-                  value={`${formatTime(appointment.scheduledStart)} – ${formatTime(appointment.scheduledEnd)}`}
-                />
-                <InfoChip
-                  icon={Stethoscope}
-                  label={t("Código de cita")}
-                  value={appointment.id.slice(0, 8).toUpperCase()}
-                  mono
-                />
+              <div className="px-5 py-5 sm:px-8 sm:py-6">
+                <div className="flex items-center gap-3 rounded-2xl border border-border bg-background px-4 py-3.5">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <CircleCheck className="size-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                      {t("Estado de la cita")}
+                    </p>
+                    <p className="truncate text-[14px] font-semibold text-foreground">
+                      {appointmentStatus}
+                    </p>
+                  </div>
+                  <span className="ml-auto size-2.5 shrink-0 rounded-full bg-primary" />
+                </div>
               </div>
+            </main>
 
-              {connectError && (
-                <p
-                  className="rounded-xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive"
-                  role="alert"
-                >
-                  {connectError}
-                </p>
-              )}
+            <aside className="flex flex-col gap-5">
+              <section className="rounded-[1.75rem] border border-primary/20 bg-primary/[0.04] p-5 shadow-sm sm:p-6">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <ShieldCheck className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                      {t("Atención segura")}
+                    </p>
+                    <h2 className="mt-1 text-lg font-semibold text-foreground">
+                      {t("Acceso a la consulta")}
+                    </h2>
+                  </div>
+                </div>
 
-              {canJoin ? (
-                <div className="flex flex-col gap-2">
-                  <Button
-                    size="lg"
-                    onClick={join}
-                    disabled={connecting}
-                    className="gap-2"
+                {connectError && (
+                  <p
+                    className="mt-5 rounded-xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive"
+                    role="alert"
                   >
-                    {connecting ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <PhoneCall className="size-4" />
-                    )}
-                    {connecting
-                      ? t("Conectando…")
-                      : isOwner && appointment.status === "Confirmed"
-                        ? t("Iniciar consulta y unirme")
-                        : t("Unirme a la consulta")}
-                  </Button>
-                  {connectError && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={joinAudioOnly}
-                      className="text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      {t("Unirme solo con audio")}
-                    </Button>
-                  )}
-                  <p className="text-center text-[11.5px] text-muted-foreground">
-                    {t(
-                      "Necesita cámara y micrófono. La sala abre poco antes del inicio y cierra unos minutos después del fin.",
-                    )}
+                    {connectError}
                   </p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2 rounded-xl bg-muted/50 px-4 py-4 text-center">
-                  <AlertTriangle className="size-5 text-amber-600" />
-                  <p className="text-[13px] font-medium text-foreground">
-                    {roomEnded
-                      ? t("Esta sala ya finalizó")
-                      : windowClosed
+                )}
+
+                {canJoin ? (
+                  <div className="mt-5 flex flex-col gap-2">
+                    <Button
+                      size="lg"
+                      onClick={join}
+                      disabled={connecting}
+                      className="h-12 gap-2 rounded-xl"
+                    >
+                      {connecting ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <PhoneCall className="size-4" />
+                      )}
+                      {connecting
+                        ? t("Conectando…")
+                        : isOwner && appointment.status === "Confirmed"
+                          ? t("Iniciar consulta y unirme")
+                          : t("Unirme a la consulta")}
+                    </Button>
+                    {connectError && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={joinAudioOnly}
+                        className="text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        {t("Unirme solo con audio")}
+                      </Button>
+                    )}
+                    <p className="pt-1 text-center text-[11.5px] leading-5 text-muted-foreground">
+                      {t(
+                        "Necesita cámara y micrófono. La sala abre poco antes del inicio y cierra unos minutos después del fin.",
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-5 flex flex-col items-center gap-2 rounded-2xl border border-amber-200/80 bg-amber-50/70 px-4 py-5 text-center dark:border-amber-900/50 dark:bg-amber-950/20">
+                    <AlertTriangle className="size-5 text-amber-600" />
+                    <p className="text-[13px] font-semibold text-foreground">
+                      {windowClosed
                         ? t("La ventana de acceso a la sala ya terminó")
                         : windowNotOpen
                           ? t("La sala todavía no está abierta")
                           : t(
                               "La sala solo está disponible para citas confirmadas o en curso",
                             )}
-                  </p>
-                  <p className="text-[12px] text-muted-foreground">
-                    {roomEnded
-                      ? t("Estado actual: {status}", {
-                          status: t(appointmentStatusLabel[appointment.status]),
-                        })
-                      : windowClosed && closeAtIso
+                    </p>
+                    <p className="text-[12px] leading-5 text-muted-foreground">
+                      {windowClosed && closeAtIso
                         ? t("Cerró el {date}", {
                             date: formatDateTime(closeAtIso),
                           })
@@ -741,24 +778,62 @@ export function VirtualRoom() {
                               date: formatDateTime(openAtIso),
                             })
                           : t("Estado actual: {status}", {
-                              status: t(
-                                appointmentStatusLabel[appointment.status],
-                              ),
+                              status: appointmentStatus,
                             })}
-                  </p>
+                    </p>
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm sm:p-6">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-primary">
+                    <ClipboardCheck className="size-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-[15px] font-semibold text-foreground">
+                      {t("Preparación para la consulta")}
+                    </h2>
+                    <p className="mt-1 text-[12px] leading-5 text-muted-foreground">
+                      {t("Revisa tu equipo antes de entrar.")}
+                    </p>
+                  </div>
                 </div>
-              )}
-            </div>
+                <div className="mt-5 flex flex-col divide-y divide-border">
+                  <ReadinessItem
+                    icon={Video}
+                    label={t("Cámara y micrófono")}
+                    detail={t("Necesita cámara y micrófono.")}
+                  />
+                  <ReadinessItem
+                    icon={ShieldCheck}
+                    label={t("Consulta privada")}
+                    detail={t(
+                      "Tu información se mantiene protegida durante la consulta.",
+                    )}
+                  />
+                </div>
+              </section>
+            </aside>
           </div>
 
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="mx-auto gap-1.5 px-5 py-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" /> {t("Volver a la cita")}
-          </Button>
         </div>
+
+        <footer className="mt-auto shrink-0 border-t border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-10">
+          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3">
+            <p className="inline-flex items-center gap-2 text-[12px] text-muted-foreground">
+              <ShieldCheck className="size-3.5 text-primary" />
+              {t("Tu información se mantiene protegida durante la consulta.")}
+            </p>
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="gap-1.5 px-4 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <ArrowLeft className="size-4" /> {t("Volver a la cita")}
+            </Button>
+          </div>
+        </footer>
       </div>
     );
   }
@@ -766,44 +841,56 @@ export function VirtualRoom() {
   // --- Sala conectada ---
 
   return (
-    <div className="flex h-dvh flex-col bg-background text-foreground">
-      <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4">
+    <div className="flex h-dvh flex-col bg-muted/20 text-foreground">
+      <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-border/80 bg-card/95 px-3 shadow-sm backdrop-blur sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={leave}
             aria-label={t("Salir de la sala")}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="shrink-0 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <PhoneOff className="size-4" />
           </Button>
+          <div className="hidden size-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary sm:flex">
+            <ClipboardCheck className="size-4" />
+          </div>
           <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+                {t("Consulta virtual")}
+              </span>
+              <span className="hidden size-1 rounded-full bg-border sm:block" />
+              <span className="hidden text-[10.5px] font-medium text-muted-foreground sm:block">
+                {t("Atención segura")}
+              </span>
+            </div>
             <p className="truncate text-[13.5px] font-semibold text-foreground">
-              {appointment.patientName ?? t("Paciente")} ·{" "}
-              {appointment.specialtyName ?? t("Especialidad")}
+              {appointment.patientName ?? t("Paciente")} · {appointment.specialtyName ?? t("Especialidad")}
             </p>
             <p className="truncate text-[11px] text-muted-foreground">
-              {formatRange(
-                appointment.scheduledStart,
-                appointment.scheduledEnd,
-              )}
+              {formatRange(appointment.scheduledStart, appointment.scheduledEnd)}
             </p>
           </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <div className="hidden items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 sm:flex">
+          <div className="hidden items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 sm:flex">
             <Clock className="size-3.5 text-muted-foreground" />
             <span className="font-mono text-[12px] font-semibold text-foreground">
               {formatElapsed(elapsed)}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5">
+          <div className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5">
             <Users className="size-3.5 text-muted-foreground" />
             <span className="text-[12px] font-semibold text-foreground">
               {totalTiles}
             </span>
+          </div>
+          <div className="hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 sm:flex">
+            <CircleCheck className="size-3.5" />
+            {t("En curso")}
           </div>
           {backendRoomStatus && backendRoomStatus !== "Active" && (
             <StatusBadge
@@ -843,7 +930,7 @@ export function VirtualRoom() {
               setSidebarOpen(true);
             }}
             aria-label={t("Abrir panel de participantes y formularios")}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="rounded-xl border border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <PanelRight className="size-4" />
           </Button>
@@ -851,10 +938,10 @@ export function VirtualRoom() {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <main className="flex min-w-0 flex-1 flex-col gap-3 p-4">
+        <main className="flex min-w-0 flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-5">
           {connectError && (
             <p
-              className="rounded-xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive"
+              className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-[13px] text-destructive shadow-sm"
               role="alert"
             >
               {connectError}
@@ -862,16 +949,16 @@ export function VirtualRoom() {
           )}
 
           <div
-            className={`grid min-h-0 w-full flex-1 gap-3 ${totalTiles >= 2 ? "auto-rows-fr grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
+            className={`grid min-h-0 w-full flex-1 gap-2 rounded-[30px] border border-border/80 bg-card/80 p-2 shadow-[0_18px_50px_rgba(46,67,97,0.08)] sm:gap-3 sm:p-3 ${totalTiles >= 2 ? "auto-rows-fr grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
           >
             {renderTile({ identity: LOCAL_IDENTITY, isLocal: true })}
             {remoteTiles.map((tile) => renderTile(tile))}
           </div>
 
           {remoteTiles.length === 0 && (
-            <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-4">
-              <Activity className="size-4 text-muted-foreground" />
-              <p className="text-[12.5px] text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 shadow-sm">
+              <Activity className="size-4 text-primary" />
+              <p className="text-[12.5px] text-primary/80">
                 {isProfessionalParticipant
                   ? t("Esperando que el paciente se conecte a la sala…")
                   : t("Esperando que el profesional se conecte a la sala…")}
@@ -879,7 +966,7 @@ export function VirtualRoom() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-center gap-2 pb-1">
+          <div className="flex flex-wrap items-center justify-center gap-2 rounded-[26px] border border-border/80 bg-card p-2.5 shadow-sm sm:p-3">
             {canManage && (
               <Button
                 variant="ghost"
@@ -888,7 +975,7 @@ export function VirtualRoom() {
                   setSidebarOpen(true);
                 }}
                 aria-label={t("Abrir formularios médicos")}
-                className="gap-1.5 border border-border bg-card text-foreground hover:bg-muted"
+                className="h-11 gap-1.5 rounded-full border border-border bg-background px-4 text-foreground shadow-sm hover:bg-muted"
               >
                 <ClipboardList className="size-4" />
                 <span className="hidden sm:inline">{t("Formularios")}</span>
@@ -920,7 +1007,7 @@ export function VirtualRoom() {
               <Button
                 onClick={finalize}
                 disabled={ending}
-                className="ml-2 gap-1.5 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="h-11 rounded-full bg-destructive px-4 text-destructive-foreground shadow-sm hover:bg-destructive/90"
               >
                 {ending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -1011,6 +1098,30 @@ function InfoChip({
   );
 }
 
+function ReadinessItem({
+  icon: Icon,
+  label,
+  detail,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  detail: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+      <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Icon className="size-4" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[12.5px] font-semibold text-foreground">{label}</p>
+        <p className="mt-0.5 text-[11.5px] leading-5 text-muted-foreground">
+          {detail}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ControlButton({
   label,
   active,
@@ -1029,7 +1140,7 @@ function ControlButton({
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
-      className={`size-11 rounded-full border-2 ${
+      className={`size-11 rounded-full border-2 shadow-sm transition-transform hover:scale-[1.03] ${
         active
           ? "border-border bg-card text-foreground shadow-sm hover:bg-muted"
           : "border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"

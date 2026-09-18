@@ -59,7 +59,8 @@ export function ClinicalEncounterPanel({
         setStatus(result.status);
       } catch {
         if (active) {
-          // No hay encuentro todavía (creación perezosa).
+          // Fallo de red u otro error: el backend ya devuelve 200 con borrador
+          // vacío cuando no hay encuentro; aquí tratamos igual (borrador).
           setStatus("Draft");
         }
       } finally {
@@ -103,7 +104,7 @@ export function ClinicalEncounterPanel({
   const isCompleted = status === "Completed";
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
+    <section className="flex flex-col gap-4 rounded-[24px] border border-border/80 bg-card p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-[15px] font-semibold text-foreground">
           <ClipboardPenLine className="size-4 text-primary" />
@@ -152,7 +153,7 @@ export function ClinicalEncounterPanel({
           disabled={isCompleted}
         />
         <div className="flex flex-col gap-1.5">
-          <Label className="text-[11.5px] font-semibold text-muted-foreground">
+          <Label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
             {t("CIE-10 (búsqueda)")}
           </Label>
           <CatalogSearchSelect
@@ -196,7 +197,7 @@ export function ClinicalEncounterPanel({
         />
       </div>
 
-      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-muted/20 p-3">
         <Label htmlFor="encounter-notes">{t("Notas")}</Label>
         <textarea
           id="encounter-notes"
@@ -204,17 +205,17 @@ export function ClinicalEncounterPanel({
           onChange={(e) => setNotes(e.target.value)}
           placeholder={t("Notas adicionales de la consulta")}
           disabled={isCompleted}
-          className="min-h-20 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          className="min-h-20 w-full resize-y rounded-xl border border-input bg-card px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
         />
       </div>
 
       {!isCompleted && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
           <Button
             variant="outline"
             onClick={() => persist(false)}
             disabled={busy}
-            className="gap-1.5"
+            className="h-10 rounded-xl gap-1.5"
           >
             <Save className="size-4" />
             {t("Guardar borrador")}
@@ -222,7 +223,7 @@ export function ClinicalEncounterPanel({
           <Button
             onClick={() => persist(true)}
             disabled={busy}
-            className="gap-1.5"
+            className="h-10 rounded-xl gap-1.5"
           >
             <CheckCircle2 className="size-4" />
             {t("Completar encuentro")}
@@ -245,14 +246,14 @@ function Field({
   disabled: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label>{label}</Label>
+    <div className="flex flex-col gap-1.5 rounded-2xl border border-border/70 bg-muted/20 p-3">
+      <Label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">{label}</Label>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         rows={2}
-        className="min-h-14 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+        className="min-h-14 w-full resize-y rounded-xl border border-input bg-card px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
       />
     </div>
   );

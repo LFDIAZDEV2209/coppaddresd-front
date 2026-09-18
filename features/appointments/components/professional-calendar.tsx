@@ -350,7 +350,7 @@ export function ProfessionalCalendar({
         onCancel={actions.openCancel}
         onReschedule={actions.openReschedule}
         onJoin={(appointment) =>
-          router.push(`/appointments/sala/${appointment.id}`)
+          router.push(`/appointments/room/${appointment.id}`)
         }
       />
 
