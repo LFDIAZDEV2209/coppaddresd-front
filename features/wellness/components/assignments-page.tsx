@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ClipboardList,
+  CheckCircle2,
   Plus,
   RefreshCw,
   Trash2,
@@ -48,19 +50,27 @@ import {
   ASSIGNMENT_STATUS_COLORS,
   FREQUENCY_LABELS,
 } from "../services/assignments-service";
-import { AssignmentFormDialog } from "./assignment-form";
 import { AssignmentDetailDialog } from "./assignment-detail-dialog";
 import type { UnifiedAssignment } from "../types";
 
 export function AssignmentsPage() {
   const t = useT();
+  const router = useRouter();
   const { can } = useAppContext();
   const { items, loading, actionLoading, error, remove, retry } =
     useUnifiedAssignments();
 
-  const [formOpen, setFormOpen] = useState(false);
   const [details, setDetails] = useState<UnifiedAssignment | undefined>();
   const [deleting, setDeleting] = useState<UnifiedAssignment | undefined>();
+  /** Feedback tras crear en /wellness/assignments/new (query ?creado=1). */
+  const [createdNotice, setCreatedNotice] = useState(false);
+
+  useEffect(() => {
+    if (!window.location.search.includes("creado=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedNotice(true);
+    window.history.replaceState(null, "", "/wellness/assignments");
+  }, []);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "routine" | "nutrition">(
@@ -92,13 +102,30 @@ export function AssignmentsPage() {
         icon={ClipboardList}
         actions={
           can("Wellness.Manage") ? (
-            <Button size="sm" onClick={() => setFormOpen(true)}>
+            <Button size="sm" onClick={() => router.push("/wellness/assignments/new")}>
               <Plus data-icon="inline-start" />
               {t("Nueva asignación")}
             </Button>
           ) : undefined
         }
       />
+
+      {createdNotice && (
+        <div
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{t("Asignación creada correctamente.")}</span>
+          <button
+            type="button"
+            onClick={() => setCreatedNotice(false)}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+          >
+            {t("Cerrar")}
+          </button>
+        </div>
+      )}
 
       {/* Filtros */}
       <section
@@ -271,17 +298,8 @@ export function AssignmentsPage() {
           </div>
         </div>
       ) : (
-        <AssignmentsEmptyState onCreate={() => setFormOpen(true)} />
+        <AssignmentsEmptyState onCreate={() => router.push("/wellness/assignments/new")} />
       )}
-
-      {/* Dialogs */}
-      <AssignmentFormDialog
-        key={formOpen ? "new" : "form-closed"}
-        open={formOpen}
-        saving={actionLoading}
-        onOpenChange={setFormOpen}
-        onCreated={retry}
-      />
 
       {/* Detalle */}
       <AssignmentDetailDialog

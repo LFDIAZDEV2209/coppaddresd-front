@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   BookOpen,
+  CheckCircle2,
   Plus,
   UploadCloud,
   LoaderCircle,
@@ -38,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { KnowledgeBase, AgentDocument, KnowledgeBaseRequest } from "../types";
+import type { KnowledgeBase, AgentDocument } from "../types";
 import { formatFileSize, formatDate } from "../services/agents-service";
 import { uploadDocumentToStorage } from "../services/upload-agent-document";
 import { useAgentKnowledge } from "../hooks/use-agent-knowledge";
@@ -53,13 +55,22 @@ const docStatusVariant: Record<string, "default" | "destructive" | "secondary" |
 
 export function KnowledgePageContent() {
   const t = useT();
+  const router = useRouter();
   const knowledge = useAgentKnowledge(undefined, { includeGlobal: true });
-  const [createOpen, setCreateOpen] = useState(false);
   const [uploadBase, setUploadBase] = useState<KnowledgeBase | null>(null);
   const [docsByBase, setDocsByBase] = useState<Record<string, AgentDocument[]>>({});
   const [docsLoading, setDocsLoading] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
   const [deletingDoc, setDeletingDoc] = useState<AgentDocument | null>(null);
+  /** Feedback tras crear en /agents/knowledge/new (query ?creado=1). */
+  const [createdNotice, setCreatedNotice] = useState(false);
+
+  useEffect(() => {
+    if (!window.location.search.includes("creado=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedNotice(true);
+    window.history.replaceState(null, "", "/agents/knowledge");
+  }, []);
 
   const toggleDocs = async (base: KnowledgeBase) => {
     if (docsByBase[base.id]) {
@@ -110,13 +121,30 @@ export function KnowledgePageContent() {
           <Button
             size="sm"
             className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary-strong"
-            onClick={() => setCreateOpen(true)}
+            onClick={() => router.push("/agents/knowledge/new")}
           >
             <Plus className="size-[15px]" />
             {t('Nueva knowledge base')}
           </Button>
         }
       />
+
+      {createdNotice && (
+        <div
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{t('Knowledge base creada correctamente.')}</span>
+          <button
+            type="button"
+            onClick={() => setCreatedNotice(false)}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+          >
+            {t('Cerrar')}
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-[280px]">
@@ -152,7 +180,7 @@ export function KnowledgePageContent() {
           <p className="text-[12.5px] text-muted-foreground">
             {t('Crea una base para indexar documentos de conocimiento.')}
           </p>
-          <Button variant="outline" size="sm" className="mt-2" onClick={() => setCreateOpen(true)}>
+          <Button variant="outline" size="sm" className="mt-2" onClick={() => router.push("/agents/knowledge/new")}>
             <Plus data-icon="inline-start" />
             {t('Nueva knowledge base')}
           </Button>
@@ -262,16 +290,6 @@ export function KnowledgePageContent() {
         </div>
       )}
 
-      <CreateKnowledgeBaseDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        creating={knowledge.creating}
-        onSubmit={async (input) => {
-          await knowledge.handleCreateBase(input);
-          setCreateOpen(false);
-        }}
-      />
-
       {uploadBase && (
         <UploadDocumentDialog
           base={uploadBase}
@@ -317,96 +335,6 @@ export function KnowledgePageContent() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
-}
-
-function CreateKnowledgeBaseDialog({
-  open,
-  onOpenChange,
-  creating,
-  onSubmit,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  creating: boolean;
-  onSubmit: (input: KnowledgeBaseRequest) => Promise<void>;
-}) {
-  const t = useT();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [validationError, setValidationError] = useState<string | null>(null);
-
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!name.trim()) {
-      setValidationError(t('El nombre es obligatorio.'));
-      return;
-    }
-    setValidationError(null);
-    await onSubmit({
-      name: name.trim(),
-      description: description.trim() || null,
-      scope: "Global",
-      agentTypeId: null,
-      status: "Activo",
-    });
-    setName("");
-    setDescription("");
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-[520px] max-w-md p-0">
-        <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
-          <DialogTitle className="text-base font-semibold">{t('Nueva knowledge base global')}</DialogTitle>
-          <DialogDescription>
-            {t('El conocimiento global queda disponible para todos los agentes.')}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={submit} className="flex flex-col gap-4 px-6 py-5">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="kb-name">{t('Nombre')}</Label>
-            <Input
-              id="kb-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder={t('Ej. Protocolos generales de atención')}
-              disabled={creating}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="kb-desc">{t('Descripción')}</Label>
-            <Input
-              id="kb-desc"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder={t('Describe el contenido de la base')}
-              disabled={creating}
-            />
-          </div>
-          {validationError && (
-            <p className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive" role="alert">
-              {validationError}
-            </p>
-          )}
-          <DialogFooter className="-mx-6 -mb-5 px-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={creating}>
-              {t('Cancelar')}
-            </Button>
-            <Button type="submit" disabled={creating}>
-              {creating ? (
-                <>
-                  <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  {t('Creando...')}
-                </>
-              ) : (
-                t('Crear base')
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
 

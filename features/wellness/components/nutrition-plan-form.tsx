@@ -9,7 +9,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -24,7 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type {
   NutritionPlanListItem,
   NutritionPlanDayInput,
@@ -51,6 +49,18 @@ interface NutritionPlanFormDialogProps {
   plan?: NutritionPlanListItem;
   saving: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (
+    input: CreateNutritionPlanInput | UpdateNutritionPlanInput,
+    id?: string,
+  ) => Promise<void>;
+  /** Se invoca tras crear (no editar) un plan vinculado a un paciente. */
+  onCreated?: (patientName: string) => void;
+}
+
+interface NutritionPlanFormFieldsProps {
+  plan?: NutritionPlanListItem;
+  saving: boolean;
+  onCancel: () => void;
   onSubmit: (
     input: CreateNutritionPlanInput | UpdateNutritionPlanInput,
     id?: string,
@@ -92,14 +102,13 @@ const glassesForDailyWater = (value: string): number => {
   return Math.max(1, Math.round(safeMl / 300));
 };
 
-export function NutritionPlanFormDialog({
-  open,
+export function NutritionPlanFormFields({
   plan,
   saving,
-  onOpenChange,
+  onCancel,
   onSubmit,
   onCreated,
-}: NutritionPlanFormDialogProps) {
+}: NutritionPlanFormFieldsProps) {
   const isEditing = Boolean(plan);
   const t = useT();
 
@@ -457,8 +466,6 @@ const handleSelectPatient = (p: PickerItem) => {
         onCreated?.(selectedPatientLabel);
       }
     }
-
-    onOpenChange(false);
   };
 
   const numDays = parseInt(durationDays, 10) || 1;
@@ -468,24 +475,9 @@ const handleSelectPatient = (p: PickerItem) => {
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl min-w-[700px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing
-              ? t("Editar plan de alimentación")
-              : t("Nuevo plan de alimentación")}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? t("Modifica los datos del plan y sus comidas.")
-              : t("Crea un nuevo plan nutricional con sus días y comidas.")}
-          </DialogDescription>
-        </DialogHeader>
-
-        <ScrollArea className="max-h-[60vh] pr-4">
-          <div className="flex flex-col gap-4 py-2">
-            {/* Paciente (opcional) + generación con IA */}
+    <div className="flex flex-col gap-5 px-6 py-5">
+      <div className="flex flex-col gap-4">
+        {/* Paciente (opcional) + generación con IA */}
             <div className="flex flex-col gap-1.5">
               <Label>
                 {isEditing ? t("Paciente asociado") : t("Paciente (opcional)")}
@@ -940,25 +932,71 @@ const handleSelectPatient = (p: PickerItem) => {
                 </Tabs>
               </div>
             )}
-          </div>
-        </ScrollArea>
+      </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-          >
-            {t("Cancelar")}
-          </Button>
-          <Button onClick={handleSubmit} disabled={saving || !name.trim()}>
-            {saving
-              ? t("Guardando...")
-              : isEditing
-                ? t("Guardar cambios")
-                : t("Crear plan")}
-          </Button>
-        </DialogFooter>
+      <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          {t("Cancelar")}
+        </Button>
+        <Button
+          type="button"
+          onClick={handleSubmit}
+          disabled={saving || !name.trim()}
+        >
+          {saving
+            ? t("Guardando...")
+            : isEditing
+              ? t("Guardar cambios")
+              : t("Crear plan")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Modal de EDICIÓN de planes de alimentación. La creación vive en la página
+ * dedicada /wellness/nutrition-plans/new; el cuerpo es compartido
+ * (NutritionPlanFormFields).
+ */
+export function NutritionPlanFormDialog({
+  open,
+  plan,
+  saving,
+  onOpenChange,
+  onSubmit,
+  onCreated,
+}: NutritionPlanFormDialogProps) {
+  const t = useT();
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-3xl min-w-[700px] overflow-hidden p-0">
+        <DialogHeader className="px-6 pb-1 pt-5">
+          <DialogTitle>
+            {plan
+              ? t("Editar plan de alimentación")
+              : t("Nuevo plan de alimentación")}
+          </DialogTitle>
+          <DialogDescription>
+            {plan
+              ? t("Modifica los datos del plan y sus comidas.")
+              : t("Crea un nuevo plan nutricional con sus días y comidas.")}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[calc(90vh-8rem)] overflow-y-auto">
+          <NutritionPlanFormFields
+            plan={plan}
+            saving={saving}
+            onCancel={() => onOpenChange(false)}
+            onSubmit={onSubmit}
+            onCreated={onCreated}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

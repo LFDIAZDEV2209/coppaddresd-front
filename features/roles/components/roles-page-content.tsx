@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  CheckCircle2,
   Plus,
   RefreshCw,
   Search,
@@ -38,12 +40,12 @@ import {
 } from "../services/roles-service";
 import type { Role, RoleCreateInput, RoleUpdateInput } from "../types";
 import { RoleCard } from "./role-card";
-import { RoleCreateDialog } from "./role-create-dialog";
 import { RoleFormDialog } from "./role-form-dialog";
 import { RolePermissionsPanel } from "./role-permissions-panel";
 
 export function RolesPageContent() {
   const t = useT();
+  const router = useRouter();
   const { hasPermission } = useAuth();
   const canCreate = hasPermission("Roles.Create");
   const canUpdate = hasPermission("Roles.Update");
@@ -68,11 +70,19 @@ export function RolesPageContent() {
   const [pendingRoleId, setPendingRoleId] = useState<string | null>(null);
 
   const [formOpen, setFormOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Role | undefined>();
   const [savingRole, setSavingRole] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Role | undefined>();
+  /** Feedback tras crear en /roles/new (query ?creado=1). */
+  const [createdNotice, setCreatedNotice] = useState(false);
+
+  useEffect(() => {
+    if (!window.location.search.includes("creado=")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedNotice(true);
+    window.history.replaceState(null, "", "/roles");
+  }, []);
 
   /**
    * Aplica la lista de roles conservando el rol seleccionado si sigue
@@ -161,8 +171,7 @@ export function RolesPageContent() {
   };
 
   const openCreate = () => {
-    setEditing(undefined);
-    setCreateDialogOpen(true);
+    router.push("/roles/new");
   };
   const openEdit = (role: Role) => {
     setEditing(role);
@@ -200,16 +209,6 @@ export function RolesPageContent() {
       setSavingRole(false);
     }
   };
-
-  /** Callback tras crear rol personalizado: refresca la lista y selecciona. */
-  const handleCustomRoleCreated = useCallback(
-    (createdRole: Role) => {
-      void refreshRoles().then(() => {
-        setSelectedRoleId(createdRole.id);
-      });
-    },
-    [refreshRoles],
-  );
 
   const confirmDelete = async () => {
     if (!deleting) return;
@@ -274,6 +273,23 @@ export function RolesPageContent() {
           )
         }
       />
+
+      {createdNotice && (
+        <div
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{t("Rol creado correctamente.")}</span>
+          <button
+            type="button"
+            onClick={() => setCreatedNotice(false)}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+          >
+            {t("Cerrar")}
+          </button>
+        </div>
+      )}
 
       {actionError && (
         <div
@@ -408,18 +424,12 @@ export function RolesPageContent() {
       </div>
 
       <RoleFormDialog
-        key={`${editing?.id ?? "new"}-${formOpen}`}
+        key={`${editing?.id ?? "edit"}-${formOpen}`}
         open={formOpen}
         role={editing}
         saving={savingRole}
         onOpenChange={setFormOpen}
         onSubmit={submitRole}
-      />
-
-      <RoleCreateDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSuccess={handleCustomRoleCreated}
       />
 
       {/* Confirmación: cambiar de rol con cambios sin guardar */}

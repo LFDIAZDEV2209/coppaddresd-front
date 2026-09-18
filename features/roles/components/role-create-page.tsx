@@ -1,21 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   LoaderCircle,
   Search,
   ShieldPlus,
 } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,31 +21,20 @@ import {
   fetchPermissions,
 } from "@/features/permissions/services/permissions-service";
 import { createRole, setRolePermissions } from "../services/roles-service";
-import type { Role } from "../types";
 import {
   splitBackendErrors,
   validateRoleForm,
   type RoleFieldErrors,
 } from "@/features/auth-common/utils/validation";
 
-interface RoleCreateDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  /** Callback después de crear el rol exitosamente. */
-  onSuccess: (role: Role) => void;
-}
-
 /**
- * Diálogo embebido (usado por el wizard de usuarios) para crear un rol
- * personalizado con permisos. La creación independiente vive en la página
- * /roles/new; el cuerpo comparte el mismo flujo.
+ * Página dedicada de creación de roles (/roles/new): reemplaza al antiguo
+ * modal "Rol personalizado". Mismo flujo — nombre/descripción + selector de
+ * permisos agrupados — y tras crear regresa a /roles con feedback.
  */
-export function RoleCreateDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: RoleCreateDialogProps) {
+export function RoleCreatePage() {
   const t = useT();
+  const router = useRouter();
 
   // Formulario básico
   const [name, setName] = useState("");
@@ -71,9 +55,8 @@ export function RoleCreateDialog({
   const [submitting, setSubmitting] = useState(false);
   const [submitErrors, setSubmitErrors] = useState<string[] | null>(null);
 
-  // Cargar catálogo al abrir
+  // Cargar catálogo al montar (la página es una entrada directa).
   useEffect(() => {
-    if (!open) return;
     let cancelled = false;
     const timer = setTimeout(async () => {
       setCatalogLoading(true);
@@ -81,7 +64,8 @@ export function RoleCreateDialog({
         const data = await fetchPermissions();
         if (!cancelled) setCatalog(data);
       } catch {
-        // El catálogo es esencial: si falla, el usuario puede reintentar.
+        // El catálogo es esencial: si falla, el usuario puede reintentar
+        // volviendo a entrar a la página.
       } finally {
         if (!cancelled) setCatalogLoading(false);
       }
@@ -90,24 +74,7 @@ export function RoleCreateDialog({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [open]);
-
-  // Reset al cerrar
-  const handleOpenChange = useCallback(
-    (nextOpen: boolean) => {
-      if (!nextOpen) {
-        setName("");
-        setDescription("");
-        setFieldErrors({ name: "", description: "" });
-        setTouched(new Set());
-        setSelectedIds(new Set());
-        setQuery("");
-        setSubmitErrors(null);
-      }
-      onOpenChange(nextOpen);
-    },
-    [onOpenChange],
-  );
+  }, []);
 
   const validateAll = () =>
     validateRoleForm({ name, description });
@@ -187,9 +154,8 @@ export function RoleCreateDialog({
       if (selectedIds.size > 0) {
         await setRolePermissions(created.id, [...selectedIds]);
       }
-      // 3) Cerrar y notificar
-      handleOpenChange(false);
-      onSuccess(created);
+      // 3) Volver al listado con feedback (la lista se recarga al montar).
+      router.push(`/roles?creado=${created.id}`);
     } catch (err) {
       setSubmitErrors(
         splitBackendErrors(
@@ -204,28 +170,30 @@ export function RoleCreateDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <ShieldPlus className="size-5" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <DialogTitle>{t("Rol personalizado")}</DialogTitle>
-              <DialogDescription>
-                {t(
-                  "Creá un rol con nombre, descripción y los permisos que necesite.",
-                )}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+    <div className="flex flex-col gap-6 p-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-fit text-muted-foreground"
+        onClick={() => router.push("/roles")}
+      >
+        <ArrowLeft data-icon="inline-start" />
+        {t("Volver a roles")}
+      </Button>
 
+      <PageHeader
+        title={t("Rol personalizado")}
+        description={t(
+          "Creá un rol con nombre, descripción y los permisos que necesite.",
+        )}
+        icon={ShieldPlus}
+      />
+
+      <div className="w-full overflow-hidden rounded-2xl border border-border bg-card">
         {/* Errores del backend */}
         {submitErrors && submitErrors.length > 0 && (
           <div
-            className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive"
+            className="rounded-none bg-destructive-soft px-6 py-3 text-sm text-destructive"
             role="alert"
           >
             {submitErrors.length === 1 ? (
@@ -240,137 +208,139 @@ export function RoleCreateDialog({
           </div>
         )}
 
-        {/* Campos nombre + descripción */}
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label>
-              {t("Nombre")}
-              <span className="ml-1 text-destructive" aria-hidden="true">*</span>
-            </Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={handleBlur("name")}
-              placeholder={t("Ej. Analista")}
-              disabled={submitting}
-              aria-invalid={Boolean(fieldErrors.name)}
-            />
-            {touched.has("name") && fieldErrors.name && (
-              <p
-                className="text-xs leading-snug whitespace-pre-line text-destructive"
-                role="alert"
-              >
-                {fieldErrors.name}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>{t("Descripción (opcional)")}</Label>
-            <textarea
-              className="min-h-16 w-full resize-y rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onBlur={handleBlur("description")}
-              placeholder={t("Describí el propósito del rol")}
-              disabled={submitting}
-            />
-          </div>
-        </div>
-
-        {/* Selector de permisos */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <div className="flex flex-col gap-5 px-6 py-5">
+          {/* Campos nombre + descripción */}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>
+                {t("Nombre")}
+                <span className="ml-1 text-destructive" aria-hidden="true">*</span>
+              </Label>
               <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("Buscar permisos")}
-                aria-label={t("Buscar permisos")}
-                className="h-9 pl-8 text-[12.5px]"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={handleBlur("name")}
+                placeholder={t("Ej. Analista")}
+                disabled={submitting}
+                aria-invalid={Boolean(fieldErrors.name)}
+              />
+              {touched.has("name") && fieldErrors.name && (
+                <p
+                  className="text-xs leading-snug whitespace-pre-line text-destructive"
+                  role="alert"
+                >
+                  {fieldErrors.name}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>{t("Descripción (opcional)")}</Label>
+              <textarea
+                className="min-h-16 w-full resize-y rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                onBlur={handleBlur("description")}
+                placeholder={t("Describí el propósito del rol")}
                 disabled={submitting}
               />
             </div>
-            <span className="rounded-lg bg-primary/10 px-2.5 py-1.5 text-[11.5px] font-semibold text-primary">
-              {selectedIds.size}{" "}
-              {selectedIds.size === 1
-                ? t("permiso seleccionado")
-                : t("permisos seleccionados")}
-            </span>
           </div>
 
-          {catalogLoading ? (
-            <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <Skeleton className="size-4 rounded" />
-                  <Skeleton className="h-3.5 w-40" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto rounded-xl border border-border/70 bg-card/60 p-2 max-h-[35vh]">
-              {filteredGroups.length === 0 ? (
-                <p className="py-8 text-center text-[13px] text-muted-foreground">
-                  {t("Sin permisos que coincidan con la búsqueda.")}
-                </p>
-              ) : (
-                filteredGroups.map((group) => {
-                  const allInModuleSelected = group.permissions.every((p) =>
-                    selectedIds.has(p.id),
-                  );
-                  const moduleSelectedCount = group.permissions.filter((p) =>
-                    selectedIds.has(p.id),
-                  ).length;
-
-                  return (
-                    <CreatePermissionGroup
-                      key={group.module}
-                      module={group.module}
-                      permissions={group.permissions}
-                      selectedIds={selectedIds}
-                      allSelected={allInModuleSelected}
-                      moduleSelectedCount={moduleSelectedCount}
-                      onToggleModule={toggleModule}
-                      onTogglePermission={togglePermission}
-                      disabled={submitting}
-                    />
-                  );
-                })
-              )}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleOpenChange(false)}
-            disabled={submitting}
-          >
-            {t("Cancelar")}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => void handleSubmit()}
-            disabled={submitting || !name.trim()}
-          >
-            {submitting ? (
-              <>
-                <LoaderCircle
-                  className="animate-spin"
-                  data-icon="inline-start"
+          {/* Selector de permisos */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("Buscar permisos")}
+                  aria-label={t("Buscar permisos")}
+                  className="h-9 pl-8 text-[12.5px]"
+                  disabled={submitting}
                 />
-                {t("Creando...")}
-              </>
+              </div>
+              <span className="rounded-lg bg-primary/10 px-2.5 py-1.5 text-[11.5px] font-semibold text-primary">
+                {selectedIds.size}{" "}
+                {selectedIds.size === 1
+                  ? t("permiso seleccionado")
+                  : t("permisos seleccionados")}
+              </span>
+            </div>
+
+            {catalogLoading ? (
+              <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="size-4 rounded" />
+                    <Skeleton className="h-3.5 w-40" />
+                  </div>
+                ))}
+              </div>
             ) : (
-              t("Crear rol con permisos")
+              <div className="rounded-xl border border-border/70 bg-card/60 p-2">
+                {filteredGroups.length === 0 ? (
+                  <p className="py-8 text-center text-[13px] text-muted-foreground">
+                    {t("Sin permisos que coincidan con la búsqueda.")}
+                  </p>
+                ) : (
+                  filteredGroups.map((group) => {
+                    const allInModuleSelected = group.permissions.every((p) =>
+                      selectedIds.has(p.id),
+                    );
+                    const moduleSelectedCount = group.permissions.filter((p) =>
+                      selectedIds.has(p.id),
+                    ).length;
+
+                    return (
+                      <CreatePermissionGroup
+                        key={group.module}
+                        module={group.module}
+                        permissions={group.permissions}
+                        selectedIds={selectedIds}
+                        allSelected={allInModuleSelected}
+                        moduleSelectedCount={moduleSelectedCount}
+                        onToggleModule={toggleModule}
+                        onTogglePermission={togglePermission}
+                        disabled={submitting}
+                      />
+                    );
+                  })
+                )}
+              </div>
             )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/roles")}
+              disabled={submitting}
+            >
+              {t("Cancelar")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleSubmit()}
+              disabled={submitting || !name.trim()}
+            >
+              {submitting ? (
+                <>
+                  <LoaderCircle
+                    className="animate-spin"
+                    data-icon="inline-start"
+                  />
+                  {t("Creando...")}
+                </>
+              ) : (
+                t("Crear rol con permisos")
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

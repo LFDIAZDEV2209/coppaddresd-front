@@ -9,7 +9,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -23,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import type {
   ExerciseRoutineListItem,
@@ -55,6 +53,18 @@ interface ExerciseRoutineFormDialogProps {
   routine?: ExerciseRoutineListItem;
   saving: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (
+    input: CreateExerciseRoutineInput | UpdateExerciseRoutineInput,
+    id?: string,
+  ) => Promise<void>;
+  /** Se invoca tras crear (no editar) una rutina vinculada a un paciente. */
+  onCreated?: (patientName: string) => void;
+}
+
+interface ExerciseRoutineFormFieldsProps {
+  routine?: ExerciseRoutineListItem;
+  saving: boolean;
+  onCancel: () => void;
   onSubmit: (
     input: CreateExerciseRoutineInput | UpdateExerciseRoutineInput,
     id?: string,
@@ -101,14 +111,13 @@ const EMPTY_EXERCISE: ExerciseFormData = {
   notes: "",
 };
 
-export function ExerciseRoutineFormDialog({
-  open,
+export function ExerciseRoutineFormFields({
   routine,
   saving,
-  onOpenChange,
+  onCancel,
   onSubmit,
   onCreated,
-}: ExerciseRoutineFormDialogProps) {
+}: ExerciseRoutineFormFieldsProps) {
   const isEditing = Boolean(routine);
   const t = useT();
 
@@ -339,28 +348,14 @@ export function ExerciseRoutineFormDialog({
     if (!routine && selectedPatientId) {
       onCreated?.(selectedPatientLabel);
     }
-
-    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing
-              ? t("Editar rutina de ejercicio")
-              : t("Nueva rutina de ejercicio")}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? t("Modifica los datos de la rutina y sus ejercicios.")
-              : t("Crea una nueva rutina con sus ejercicios.")}
-          </DialogDescription>
-        </DialogHeader>
-
-        <ScrollArea className="max-h-[60vh] pr-4">
-          <div className="flex flex-col gap-4 py-2">
+    <div className="flex flex-col gap-5 px-6 py-5">
+      <div className="flex flex-col gap-4">
+        {/* Paciente (opcional) + generación con IA — solo en creación.
+            Al guardar con paciente, la rutina nace activa y se asigna
+            automáticamente (creación atómica en el backend). */}
             {/* Paciente (opcional) + generación con IA — solo en creación.
                 Al guardar con paciente, la rutina nace activa y se asigna
                 automáticamente (creación atómica en el backend). */}
@@ -754,29 +749,75 @@ export function ExerciseRoutineFormDialog({
                       }
                       className="h-8 text-sm sm:col-span-2"
                     />
-                  </div>
-                </div>
-              ))}
+                   </div>
+                 </div>
+               ))}
             </div>
-          </div>
-        </ScrollArea>
+      </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-          >
-            {t("Cancelar")}
-          </Button>
-          <Button onClick={handleSubmit} disabled={saving || !name.trim()}>
-            {saving
-              ? t("Guardando...")
-              : isEditing
-                ? t("Guardar cambios")
-                : t("Crear rutina")}
-          </Button>
-        </DialogFooter>
+      <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          {t("Cancelar")}
+        </Button>
+        <Button
+          type="button"
+          onClick={handleSubmit}
+          disabled={saving || !name.trim()}
+        >
+          {saving
+            ? t("Guardando...")
+            : isEditing
+              ? t("Guardar cambios")
+              : t("Crear rutina")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Modal de EDICIÓN de rutinas de ejercicio. La creación vive en la página
+ * dedicada /wellness/exercise-routines/new; el cuerpo es compartido
+ * (ExerciseRoutineFormFields).
+ */
+export function ExerciseRoutineFormDialog({
+  open,
+  routine,
+  saving,
+  onOpenChange,
+  onSubmit,
+  onCreated,
+}: ExerciseRoutineFormDialogProps) {
+  const t = useT();
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden p-0">
+        <DialogHeader className="px-6 pb-1 pt-5">
+          <DialogTitle>
+            {routine
+              ? t("Editar rutina de ejercicio")
+              : t("Nueva rutina de ejercicio")}
+          </DialogTitle>
+          <DialogDescription>
+            {routine
+              ? t("Modifica los datos de la rutina y sus ejercicios.")
+              : t("Crea una nueva rutina con sus ejercicios.")}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[calc(90vh-8rem)] overflow-y-auto">
+          <ExerciseRoutineFormFields
+            routine={routine}
+            saving={saving}
+            onCancel={() => onOpenChange(false)}
+            onSubmit={onSubmit}
+            onCreated={onCreated}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

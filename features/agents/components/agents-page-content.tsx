@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Bot, Plus, Search, Pencil, Trash2, Layers, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bot, CheckCircle2, Plus, Search, Pencil, Trash2, Layers, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ import { useRouter } from "next/navigation";
 import { useAgents } from "../hooks/use-agents";
 import { AgentFormDialog } from "./agent-form-dialog";
 import { getAgentIcon, formatDate } from "../services/agents-service";
-import type { AgentType } from "../types";
+import type { AgentType, AgentTypeRequest } from "../types";
 
 const statusVariant: Record<string, "default" | "destructive" | "secondary"> = {
   Activo: "default",
@@ -51,35 +51,40 @@ export function AgentsPageContent() {
     search,
     setSearch,
     setPage,
-    handleCreate,
     handleUpdate,
     handleDelete,
   } = useAgents();
 
-  const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AgentType | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<AgentType | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
+  /** Feedback tras crear en /agents/new (query ?creado=1). */
+  const [createdNotice, setCreatedNotice] = useState(false);
+
+  useEffect(() => {
+    if (!window.location.search.includes("creado=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedNotice(true);
+    window.history.replaceState(null, "", "/agents");
+  }, []);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const openCreate = () => {
-    setEditing(null);
-    setFormOpen(true);
+    router.push("/agents/new");
   };
 
   const openEdit = (agent: AgentType) => {
     setEditing(agent);
-    setFormOpen(true);
   };
 
-  const submit = async (input: Parameters<typeof handleCreate>[0]) => {
+  const submit = async (input: AgentTypeRequest) => {
+    if (!editing) return;
     setSaving(true);
     try {
-      if (editing) await handleUpdate(editing.id, input);
-      else await handleCreate(input);
-      setFormOpen(false);
+      await handleUpdate(editing.id, input);
+      setEditing(null);
     } finally {
       setSaving(false);
     }
@@ -109,6 +114,23 @@ export function AgentsPageContent() {
           </Button>
         }
       />
+
+      {createdNotice && (
+        <div
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{t('Agente creado correctamente.')}</span>
+          <button
+            type="button"
+            onClick={() => setCreatedNotice(false)}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+          >
+            {t('Cerrar')}
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-[280px]">
@@ -225,10 +247,11 @@ export function AgentsPageContent() {
       )}
 
       <AgentFormDialog
-        open={formOpen}
+        key={editing?.id ?? "edit"}
+        open={Boolean(editing)}
         agent={editing ?? undefined}
         saving={saving}
-        onOpenChange={setFormOpen}
+        onOpenChange={(open) => !open && setEditing(null)}
         onSubmit={submit}
       />
 
