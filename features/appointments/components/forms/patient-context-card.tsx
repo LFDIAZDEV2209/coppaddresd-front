@@ -7,6 +7,7 @@ import {
   ShieldAlert,
   User,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import type { Patient } from "@/features/patients/types";
 
 /**
@@ -21,6 +22,7 @@ export function PatientContextCard({
   patient: Patient;
   age: number | null;
 }) {
+  const t = useT();
   const fullName = [patient.firstName, patient.middleName, patient.lastName]
     .filter(Boolean)
     .join(" ");
@@ -59,10 +61,10 @@ export function PatientContextCard({
             {age !== null && (
               <span className="flex items-center gap-1">
                 <CalendarDays className="size-3" />
-                {age} años
+                {age} {t("años")}
               </span>
             )}
-            {patient.gender && <span>{patient.gender}</span>}
+            {patient.gender && <span>{t(patient.gender)}</span>}
           </p>
         </div>
       </div>
@@ -72,11 +74,11 @@ export function PatientContextCard({
           <ShieldAlert className="mt-0.5 size-3.5 shrink-0 text-destructive" />
           <div className="min-w-0 flex-1">
             <p className="text-[10.5px] font-semibold uppercase tracking-wide text-destructive">
-              Alergias registradas
+              {t("Alergias registradas")}
             </p>
             {allergies.length === 0 ? (
               <p className="text-[12px] text-muted-foreground">
-                Sin alergias registradas
+                {t("Sin alergias registradas")}
               </p>
             ) : (
               <div className="mt-1 flex flex-wrap gap-1.5">
@@ -99,7 +101,7 @@ export function PatientContextCard({
             <Pill className="mt-0.5 size-3.5 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
               <p className="text-[10.5px] font-semibold uppercase tracking-wide text-primary">
-                Medicación actual
+                {t("Medicación actual")}
               </p>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {medications.slice(0, 6).map((m) => (

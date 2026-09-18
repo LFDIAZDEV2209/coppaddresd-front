@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown, Loader2, Search } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import type { CatalogSearchItem } from "@/features/patients/types";
 
 /**
@@ -24,6 +25,7 @@ export function CatalogSearchSelect({
   accent?: "teal" | "violet" | "amber";
   icon?: React.ComponentType<{ className?: string }>;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CatalogSearchItem[]>([]);
@@ -182,7 +184,7 @@ export function CatalogSearchSelect({
               aria-expanded="true"
               aria-controls={`${inputId}-list`}
               aria-autocomplete="list"
-              placeholder="Escribí para buscar…"
+              placeholder={t("Escribí para buscar…")}
               className={`h-9 w-full bg-transparent pl-9 pr-8 text-[13px] text-foreground outline-none placeholder:text-muted-foreground ${accentRing}`}
             />
             {loading && (
@@ -196,11 +198,11 @@ export function CatalogSearchSelect({
           >
             {!query.trim() ? (
               <li className="px-3 py-2 text-[12px] text-muted-foreground">
-                Escribí al menos un carácter para buscar
+                {t("Escribí al menos un carácter para buscar")}
               </li>
             ) : results.length === 0 && !loading ? (
               <li className="px-3 py-2 text-[12px] text-muted-foreground">
-                Sin resultados
+                {t("Sin resultados")}
               </li>
             ) : (
               results.map((item, index) => (

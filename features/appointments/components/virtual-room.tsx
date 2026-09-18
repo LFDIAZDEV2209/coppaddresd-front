@@ -48,7 +48,7 @@ import {
   formatTime,
   sessionStatusLabel,
 } from "../utils/format";
-import type { AppointmentDto } from "../types";
+import type { AppointmentDto, VirtualRoomDto } from "../types";
 
 type Phase = "loading" | "ready" | "connecting" | "connected" | "ended";
 
@@ -86,6 +86,8 @@ export function VirtualRoom() {
   const [ending, setEnding] = useState(false);
   const [endedReason, setEndedReason] = useState<string | null>(null);
   const [tracksVersion, setTracksVersion] = useState(0);
+  const [roomInfo, setRoomInfo] = useState<VirtualRoomDto | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const roomRef = useRef<TwilioVideo.Room | null>(null);
   const localTracksRef = useRef<TwilioVideo.LocalTrack[]>([]);
@@ -109,22 +111,22 @@ export function VirtualRoom() {
     (identity: string, isLocal: boolean): { name: string; role: string } => {
       if (isLocal || identity === myIdentity) {
         if (isProfessionalParticipant)
-          return { name: "Tú", role: "Profesional" };
-        if (context?.patient) return { name: "Tú", role: "Paciente" };
-        return { name: "Tú", role: "Supervisor" };
+          return { name: t("Tú"), role: t("Profesional") };
+        if (context?.patient) return { name: t("Tú"), role: t("Paciente") };
+        return { name: t("Tú"), role: t("Supervisor") };
       }
       if (isProfessionalParticipant) {
         return {
-          name: appointment?.patientName ?? "Paciente",
-          role: "Paciente",
+          name: appointment?.patientName ?? t("Paciente"),
+          role: t("Paciente"),
         };
       }
       return {
-        name: appointment?.professionalName ?? "Profesional",
-        role: "Profesional",
+        name: appointment?.professionalName ?? t("Profesional"),
+        role: t("Profesional"),
       };
     },
-    [appointment, context, isProfessionalParticipant, myIdentity],
+    [appointment, context, isProfessionalParticipant, myIdentity, t],
   );
 
   // --- Carga inicial de la cita ---
@@ -142,7 +144,7 @@ export function VirtualRoom() {
       } catch {
         if (!active) return;
         setLoadError(
-          "No se pudo cargar la cita. Verificá que el enlace sea válido.",
+          t("No se pudo cargar la cita. Verificá que el enlace sea válido."),
         );
         setPhase("ended");
       }
@@ -150,7 +152,7 @@ export function VirtualRoom() {
     return () => {
       active = false;
     };
-  }, [appointmentId]);
+  }, [appointmentId, t]);
 
   // --- Participantes remotos ---
 
@@ -235,7 +237,9 @@ export function VirtualRoom() {
             video: withVideo,
           }),
           30000,
-          "La conexión con la sala tardó demasiado. Revisá que la cámara y el micrófono estén disponibles e intentá de nuevo.",
+          t(
+            "La conexión con la sala tardó demasiado. Revisá que la cámara y el micrófono estén disponibles e intentá de nuevo.",
+          ),
         );
         roomRef.current = room;
         setVideoOn(withVideo);
@@ -263,7 +267,7 @@ export function VirtualRoom() {
           if (roomRef.current !== disconnectedRoom) return;
           setPhase("ended");
           setEndedReason(
-            "Te desconectaste de la sala o la conexión se interrumpió.",
+            t("Te desconectaste de la sala o la conexión se interrumpió."),
           );
         });
 
@@ -274,11 +278,11 @@ export function VirtualRoom() {
         setConnectError(
           error instanceof Error
             ? formatBackendMessage(error.message)
-            : "No se pudo conectar con la sala de video.",
+            : t("No se pudo conectar con la sala de video."),
         );
       }
     },
-    [addRemoteTile, appointmentId, removeRemoteTile, watchParticipant],
+    [addRemoteTile, appointmentId, removeRemoteTile, t, watchParticipant],
   );
 
   const join = useCallback(async () => {
@@ -320,10 +324,10 @@ export function VirtualRoom() {
       roomRef.current = null;
       router.push(`/appointments/citas/${appointment.id}`);
     } catch {
-      setConnectError("No se pudo finalizar la sesión. Intentá nuevamente.");
+      setConnectError(t("No se pudo finalizar la sesión. Intentá nuevamente."));
       setEnding(false);
     }
-  }, [appointment, router]);
+  }, [appointment, router, t]);
 
   const toggleAudio = useCallback(() => {
     const room = roomRef.current;
@@ -433,6 +437,31 @@ export function VirtualRoom() {
     };
   }, [phase, appointmentId]);
 
+  // --- Ventana de la sala en la pantalla previa ---
+  // El backend crea la sala de forma diferida en el primer join-token; si aún
+  // no existe, el 404 es esperado y la validación queda del lado del servidor.
+  useEffect(() => {
+    if (phase !== "ready" && phase !== "connecting") return;
+    let active = true;
+    (async () => {
+      try {
+        const room = await fetchRoom(appointmentId);
+        if (active) setRoomInfo(room);
+      } catch {
+        // Sin sala todavía o sin red: no bloqueamos el ingreso.
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [phase, appointmentId]);
+
+  useEffect(() => {
+    if (phase !== "ready" && phase !== "connecting") return;
+    const timer = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(timer);
+  }, [phase]);
+
   // --- Helpers de render ---
 
   const localLabel = useMemo(
@@ -481,11 +510,11 @@ export function VirtualRoom() {
               <p className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
                 {tile.isLocal ? (
                   <>
-                    <VideoOff className="size-3.5" /> Cámara apagada
+                    <VideoOff className="size-3.5" /> {t("Cámara apagada")}
                   </>
                 ) : (
                   <>
-                    <Clock className="size-3.5" /> Esperando conexión…
+                    <Clock className="size-3.5" /> {t("Esperando conexión…")}
                   </>
                 )}
               </p>
@@ -529,14 +558,14 @@ export function VirtualRoom() {
           <AlertTriangle className="size-7 text-destructive" />
         </div>
         <p className="max-w-md text-center text-sm text-muted-foreground">
-          {loadError ?? "Cita no encontrada."}
+          {loadError ?? t("Cita no encontrada.")}
         </p>
         <Button
           variant="outline"
           onClick={() => router.back()}
           className="gap-1.5"
         >
-          <ArrowLeft className="size-4" /> Volver
+          <ArrowLeft className="size-4" /> {t("Volver")}
         </Button>
       </div>
     );
@@ -549,14 +578,14 @@ export function VirtualRoom() {
           <PhoneOff className="size-7 text-muted-foreground" />
         </div>
         <p className="max-w-md text-center text-sm text-muted-foreground">
-          {endedReason ?? "La sesión finalizó."}
+          {endedReason ?? t("La sesión finalizó.")}
         </p>
         <Button
           variant="outline"
           onClick={() => router.push(`/appointments/citas/${appointment.id}`)}
           className="gap-1.5"
         >
-          Volver a la cita
+          {t("Volver a la cita")}
         </Button>
       </div>
     );
@@ -565,8 +594,22 @@ export function VirtualRoom() {
   // --- Pantalla previa / conexión ---
 
   if (phase === "ready" || phase === "connecting") {
-    const canJoin =
+    const statusAllowsJoin =
       appointment.status === "Confirmed" || appointment.status === "InProgress";
+    const openAtIso = roomInfo?.scheduledOpenAt ?? null;
+    const closeAtIso = roomInfo?.scheduledCloseAt ?? null;
+    const openTime = openAtIso ? new Date(openAtIso).getTime() : null;
+    const closeTime = closeAtIso ? new Date(closeAtIso).getTime() : null;
+    const roomEnded = roomInfo?.status === "Ended";
+    const windowClosed =
+      roomEnded ||
+      (closeTime != null && !Number.isNaN(closeTime) && now >= closeTime);
+    const windowNotOpen =
+      !windowClosed &&
+      openTime != null &&
+      !Number.isNaN(openTime) &&
+      now < openTime;
+    const canJoin = statusAllowsJoin && !windowClosed && !windowNotOpen;
     const connecting = phase === "connecting";
 
     return (
@@ -580,15 +623,15 @@ export function VirtualRoom() {
               </div>
               <div>
                 <p className="text-[15px] font-semibold text-foreground">
-                  Sala virtual
+                  {t("Sala virtual")}
                 </p>
                 <p className="text-[12px] text-muted-foreground">
-                  Citas · CoppAddresd
+                  {t("Citas")} · CoppAddresd
                 </p>
               </div>
             </div>
             <StatusBadge
-              status={appointmentStatusLabel[appointment.status]}
+              status={t(appointmentStatusLabel[appointment.status])}
               color={appointmentStatusColor(appointment.status)}
             />
           </div>
@@ -601,11 +644,11 @@ export function VirtualRoom() {
                 </div>
                 <div className="min-w-0">
                   <p className="line-clamp-2 break-words text-lg font-semibold text-foreground">
-                    {appointment.patientName ?? "Paciente"}
+                    {appointment.patientName ?? t("Paciente")}
                   </p>
                   <p className="truncate text-[12.5px] text-muted-foreground">
-                    {appointment.specialtyName ?? "Especialidad"} ·{" "}
-                    {appointment.locationName ?? "Sede"}
+                    {appointment.specialtyName ?? t("Especialidad")} ·{" "}
+                    {appointment.locationName ?? t("Sede")}
                   </p>
                 </div>
               </div>
@@ -647,10 +690,10 @@ export function VirtualRoom() {
                       <PhoneCall className="size-4" />
                     )}
                     {connecting
-                      ? "Conectando…"
+                      ? t("Conectando…")
                       : isOwner && appointment.status === "Confirmed"
-                        ? "Iniciar consulta y unirme"
-                        : "Unirme a la consulta"}
+                        ? t("Iniciar consulta y unirme")
+                        : t("Unirme a la consulta")}
                   </Button>
                   {connectError && (
                     <Button
@@ -659,23 +702,47 @@ export function VirtualRoom() {
                       onClick={joinAudioOnly}
                       className="text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
-                      Unirme solo con audio
+                      {t("Unirme solo con audio")}
                     </Button>
                   )}
                   <p className="text-center text-[11.5px] text-muted-foreground">
-                    Necesita cámara y micrófono. La sala abre 15 minutos antes
-                    de la cita.
+                    {t(
+                      "Necesita cámara y micrófono. La sala abre poco antes del inicio y cierra unos minutos después del fin.",
+                    )}
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2 rounded-xl bg-muted/50 px-4 py-4 text-center">
                   <AlertTriangle className="size-5 text-amber-600" />
                   <p className="text-[13px] font-medium text-foreground">
-                    La sala solo está disponible para citas confirmadas o en
-                    curso
+                    {roomEnded
+                      ? t("Esta sala ya finalizó")
+                      : windowClosed
+                        ? t("La ventana de acceso a la sala ya terminó")
+                        : windowNotOpen
+                          ? t("La sala todavía no está abierta")
+                          : t(
+                              "La sala solo está disponible para citas confirmadas o en curso",
+                            )}
                   </p>
                   <p className="text-[12px] text-muted-foreground">
-                    Estado actual: {appointmentStatusLabel[appointment.status]}
+                    {roomEnded
+                      ? t("Estado actual: {status}", {
+                          status: t(appointmentStatusLabel[appointment.status]),
+                        })
+                      : windowClosed && closeAtIso
+                        ? t("Cerró el {date}", {
+                            date: formatDateTime(closeAtIso),
+                          })
+                        : windowNotOpen && openAtIso
+                          ? t("Abre el {date}", {
+                              date: formatDateTime(openAtIso),
+                            })
+                          : t("Estado actual: {status}", {
+                              status: t(
+                                appointmentStatusLabel[appointment.status],
+                              ),
+                            })}
                   </p>
                 </div>
               )}
@@ -687,7 +754,7 @@ export function VirtualRoom() {
             onClick={() => router.back()}
             className="mx-auto gap-1.5 px-5 py-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <ArrowLeft className="size-4" /> Volver a la cita
+            <ArrowLeft className="size-4" /> {t("Volver a la cita")}
           </Button>
         </div>
       </div>
@@ -711,8 +778,8 @@ export function VirtualRoom() {
           </Button>
           <div className="min-w-0">
             <p className="truncate text-[13.5px] font-semibold text-foreground">
-              {appointment.patientName ?? "Paciente"} ·{" "}
-              {appointment.specialtyName ?? "Especialidad"}
+              {appointment.patientName ?? t("Paciente")} ·{" "}
+              {appointment.specialtyName ?? t("Especialidad")}
             </p>
             <p className="truncate text-[11px] text-muted-foreground">
               {formatRange(
@@ -741,7 +808,13 @@ export function VirtualRoom() {
               status={
                 sessionStatusLabel[
                   backendRoomStatus as keyof typeof sessionStatusLabel
-                ] ?? backendRoomStatus
+                ]
+                  ? t(
+                      sessionStatusLabel[
+                        backendRoomStatus as keyof typeof sessionStatusLabel
+                      ],
+                    )
+                  : backendRoomStatus
               }
               color={
                 backendRoomStatus === "Ended"
@@ -798,8 +871,8 @@ export function VirtualRoom() {
               <Activity className="size-4 text-muted-foreground" />
               <p className="text-[12.5px] text-muted-foreground">
                 {isProfessionalParticipant
-                  ? "Esperando que el paciente se conecte a la sala…"
-                  : "Esperando que el profesional se conecte a la sala…"}
+                  ? t("Esperando que el paciente se conecte a la sala…")
+                  : t("Esperando que el profesional se conecte a la sala…")}
               </p>
             </div>
           )}
@@ -820,7 +893,7 @@ export function VirtualRoom() {
               </Button>
             )}
             <ControlButton
-              label={audioOn ? "Silenciar" : "Activar micrófono"}
+              label={audioOn ? t("Silenciar") : t("Activar micrófono")}
               active={audioOn}
               onClick={toggleAudio}
             >
@@ -831,7 +904,7 @@ export function VirtualRoom() {
               )}
             </ControlButton>
             <ControlButton
-              label={videoOn ? "Apagar cámara" : "Encender cámara"}
+              label={videoOn ? t("Apagar cámara") : t("Encender cámara")}
               active={videoOn}
               onClick={toggleVideo}
             >
@@ -852,7 +925,7 @@ export function VirtualRoom() {
                 ) : (
                   <PhoneOff className="size-4" />
                 )}
-                Finalizar consulta
+                {t("Finalizar consulta")}
               </Button>
             )}
           </div>

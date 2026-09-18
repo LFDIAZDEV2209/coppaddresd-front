@@ -107,14 +107,14 @@ export function ClinicalEncounterPanel({
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-[15px] font-semibold text-foreground">
           <ClipboardPenLine className="size-4 text-primary" />
-          Historia clínica
+          {t("Historia clínica")}
         </h2>
         <StatusBadge
-          status={
+          status={t(
             encounterStatusLabel[
               (status as "Draft" | "Completed" | "Cancelled") ?? "Draft"
-            ] ?? "Borrador"
-          }
+            ] ?? "Borrador",
+          )}
           color={
             isCompleted
               ? { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" }
@@ -128,7 +128,7 @@ export function ClinicalEncounterPanel({
           className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
           role="alert"
         >
-          {error}
+          {t(error)}
         </p>
       )}
 
@@ -153,7 +153,7 @@ export function ClinicalEncounterPanel({
         />
         <div className="flex flex-col gap-1.5">
           <Label className="text-[11.5px] font-semibold text-muted-foreground">
-            CIE-10 (búsqueda)
+            {t("CIE-10 (búsqueda)")}
           </Label>
           <CatalogSearchSelect
             search={searchIcd10Codes}
@@ -167,7 +167,7 @@ export function ClinicalEncounterPanel({
             }}
           />
           <p className="text-[11px] text-muted-foreground">
-            Seleccioná un código para agregarlo al diagnóstico
+            {t("Seleccioná un código para agregarlo al diagnóstico")}
           </p>
         </div>
         <Field
@@ -197,9 +197,7 @@ export function ClinicalEncounterPanel({
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="encounter-notes">
-          Notas
-        </Label>
+        <Label htmlFor="encounter-notes">{t("Notas")}</Label>
         <textarea
           id="encounter-notes"
           value={notes}
@@ -219,7 +217,7 @@ export function ClinicalEncounterPanel({
             className="gap-1.5"
           >
             <Save className="size-4" />
-            Guardar borrador
+            {t("Guardar borrador")}
           </Button>
           <Button
             onClick={() => persist(true)}
@@ -227,7 +225,7 @@ export function ClinicalEncounterPanel({
             className="gap-1.5"
           >
             <CheckCircle2 className="size-4" />
-            Completar encuentro
+            {t("Completar encuentro")}
           </Button>
         </div>
       )}

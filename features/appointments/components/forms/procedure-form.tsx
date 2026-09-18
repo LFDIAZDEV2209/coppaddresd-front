@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { MapPin, MessageSquareText, Syringe } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import type { ProcedureDraft } from "../../hooks/use-form-drafts";
 import { newItemId } from "../../hooks/use-form-drafts";
 import {
@@ -28,6 +29,7 @@ export function ProcedureForm({
   onUpdate: (patch: Partial<ProcedureDraft>) => void;
   onClear: () => void;
 }) {
+  const t = useT();
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -73,22 +75,25 @@ export function ProcedureForm({
         <Syringe className="size-4 text-rose-600" />
         <p className="text-[12px] text-rose-700">
           <span className="font-mono font-semibold">{itemCount}</span>{" "}
-          {itemCount === 1 ? "procedimiento" : "procedimientos"} en la orden
+          {t("{label} en la orden", {
+            label: itemCount === 1 ? t("procedimiento") : t("procedimientos"),
+          })}
         </p>
       </div>
 
       <div className="flex flex-col gap-2">
         {draft.items.length === 0 && (
           <p className="rounded-xl border border-dashed border-border px-3 py-3 text-[12px] text-muted-foreground">
-            Agregá los procedimientos a programar (curaciones, infiltraciones,
-            exámenes, etc.).
+            {t(
+              "Agregá los procedimientos a programar (curaciones, infiltraciones, exámenes, etc.).",
+            )}
           </p>
         )}
         {draft.items.map((item) => (
           <ItemRow key={item.id}>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_140px]">
               <FormField
-                label="Procedimiento"
+                label={t("Procedimiento")}
                 htmlFor={`proc-name-${item.id}`}
                 icon={Syringe}
               >
@@ -98,12 +103,12 @@ export function ProcedureForm({
                   onChange={(e) =>
                     updateItem(item.id, { name: e.target.value })
                   }
-                  placeholder="Ej. Curación de herida"
+                  placeholder={t("Ej. Curación de herida")}
                   className={formInput}
                 />
               </FormField>
               <FormField
-                label="Sitio"
+                label={t("Sitio")}
                 htmlFor={`proc-site-${item.id}`}
                 icon={MapPin}
               >
@@ -113,7 +118,7 @@ export function ProcedureForm({
                   onChange={(e) =>
                     updateItem(item.id, { site: e.target.value })
                   }
-                  placeholder="Ej. Miembro inferior derecho"
+                  placeholder={t("Ej. Miembro inferior derecho")}
                   className={formInput}
                 />
               </FormField>
@@ -121,7 +126,7 @@ export function ProcedureForm({
             <div className="flex items-end gap-2">
               <div className="flex-1">
                 <FormField
-                  label="Indicaciones"
+                  label={t("Indicaciones")}
                   htmlFor={`proc-notes-${item.id}`}
                   icon={MessageSquareText}
                 >
@@ -131,7 +136,7 @@ export function ProcedureForm({
                     onChange={(e) =>
                       updateItem(item.id, { notes: e.target.value })
                     }
-                    placeholder="Preparación, asepsia, materiales…"
+                    placeholder={t("Preparación, asepsia, materiales…")}
                     rows={2}
                     className={formTextarea}
                   />
@@ -139,12 +144,17 @@ export function ProcedureForm({
               </div>
               <RemoveRowButton
                 onClick={() => removeItem(item.id)}
-                label={`Eliminar ${item.name || "procedimiento"}`}
+                label={t("Eliminar {name}", {
+                  name: item.name || t("procedimiento"),
+                })}
               />
             </div>
           </ItemRow>
         ))}
-        <AddRowButton onClick={addItem} label="Agregar procedimiento" />
+        <AddRowButton
+          onClick={addItem}
+          label={t("Agregar procedimiento")}
+        />
       </div>
 
       <DraftActions

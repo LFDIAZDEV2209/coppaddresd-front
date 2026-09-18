@@ -8,6 +8,7 @@ import {
   TestTube,
   MessageSquareText,
 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import type { LabOrderDraft } from "../../hooks/use-form-drafts";
 import { newItemId } from "../../hooks/use-form-drafts";
 import {
@@ -49,13 +50,16 @@ export function LabOrderForm({
   onUpdate: (patch: Partial<LabOrderDraft>) => void;
   onClear: () => void;
 }) {
+  const t = useT();
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const updateTest = useCallback(
     (id: string, patch: Partial<LabOrderDraft["tests"][number]>) => {
       onUpdate({
-        tests: draft.tests.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        tests: draft.tests.map((row) =>
+          row.id === id ? { ...row, ...patch } : row,
+        ),
       });
     },
     [draft.tests, onUpdate],
@@ -72,7 +76,7 @@ export function LabOrderForm({
 
   const removeTest = useCallback(
     (id: string) => {
-      onUpdate({ tests: draft.tests.filter((t) => t.id !== id) });
+      onUpdate({ tests: draft.tests.filter((row) => row.id !== id) });
     },
     [draft.tests, onUpdate],
   );
@@ -88,12 +92,12 @@ export function LabOrderForm({
     }, 350);
   };
 
-  const testCount = draft.tests.filter((t) => t.test.trim()).length;
+  const testCount = draft.tests.filter((row) => row.test.trim()).length;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <FormField label="Tipo de muestra" icon={TestTube}>
+        <FormField label={t("Tipo de muestra")} icon={TestTube}>
           <div className="flex flex-wrap gap-1.5">
             {SAMPLE_TYPES.map((type) => (
               <button
@@ -107,7 +111,7 @@ export function LabOrderForm({
                     : "border border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {type}
+                {t(type)}
               </button>
             ))}
           </div>
@@ -115,14 +119,14 @@ export function LabOrderForm({
         <div className="flex flex-col justify-end gap-1.5">
           <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-foreground">
             <FlaskConical className="size-3.5 text-muted-foreground" />
-            Pruebas solicitadas
+            {t("Pruebas solicitadas")}
           </p>
           <p className="rounded-lg bg-muted/50 px-3 py-2 text-[12.5px] text-muted-foreground">
             <span className="font-mono font-semibold text-primary">
               {testCount}
             </span>{" "}
-            {testCount === 1 ? "prueba" : "pruebas"} ·{" "}
-            {draft.sampleType.toLowerCase()}
+            {t(testCount === 1 ? "prueba" : "pruebas")} ·{" "}
+            {t(draft.sampleType).toLowerCase()}
           </p>
         </div>
       </div>
@@ -130,11 +134,11 @@ export function LabOrderForm({
       <div className="flex flex-col gap-2">
         <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-foreground">
           <Microscope className="size-3.5 text-muted-foreground" />
-          Pruebas sugeridas
+          {t("Pruebas sugeridas")}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {SUGGESTED_TESTS.filter(
-            (s) => !draft.tests.some((t) => t.test === s),
+            (s) => !draft.tests.some((row) => row.test === s),
           ).map((s) => (
             <button
               key={s}
@@ -149,7 +153,7 @@ export function LabOrderForm({
               }
               className="h-7 rounded-full border border-border bg-background px-3 text-[11.5px] text-muted-foreground outline-none transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:ring-3 focus-visible:ring-primary/20"
             >
-              + {s}
+              + {t(s)}
             </button>
           ))}
         </div>
@@ -159,14 +163,14 @@ export function LabOrderForm({
         {draft.tests.length === 0 && (
           <p className="flex items-center gap-2 rounded-xl border border-dashed border-border px-3 py-3 text-[12px] text-muted-foreground">
             <Microscope className="size-4 text-muted-foreground" />
-            Agregá las pruebas que querés solicitar al laboratorio.
+            {t("Agregá las pruebas que querés solicitar al laboratorio.")}
           </p>
         )}
         {draft.tests.map((test) => (
           <ItemRow key={test.id}>
             <div className="flex items-center gap-2">
               <FormField
-                label="Prueba"
+                label={t("Prueba")}
                 htmlFor={`lab-test-${test.id}`}
                 icon={Microscope}
               >
@@ -176,14 +180,14 @@ export function LabOrderForm({
                   onChange={(e) =>
                     updateTest(test.id, { test: e.target.value })
                   }
-                  placeholder="Ej. Hemograma completo"
+                  placeholder={t("Ej. Hemograma completo")}
                   className={formInput}
                 />
               </FormField>
               <div className="flex min-w-32 flex-col gap-1.5">
                 <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-foreground">
                   <Flag className="size-3.5 text-muted-foreground" />
-                  Prioridad
+                  {t("Prioridad")}
                 </span>
                 <select
                   value={test.priority}
@@ -196,30 +200,32 @@ export function LabOrderForm({
                 >
                   {PRIORITIES.map((p) => (
                     <option key={p} value={p}>
-                      {p}
+                      {t(p)}
                     </option>
                   ))}
                 </select>
               </div>
               <RemoveRowButton
                 onClick={() => removeTest(test.id)}
-                label={`Eliminar prueba ${test.test || "sin nombre"}`}
+                label={t("Eliminar prueba {name}", {
+                  name: test.test || t("sin nombre"),
+                })}
               />
             </div>
           </ItemRow>
         ))}
-        <AddRowButton onClick={addTest} label="Agregar prueba" />
+        <AddRowButton onClick={addTest} label={t("Agregar prueba")} />
       </div>
 
       <FormField
-        label="Observaciones"
-        hint="Indicaciones para el laboratorio o el paciente"
+        label={t("Observaciones")}
+        hint={t("Indicaciones para el laboratorio o el paciente")}
         icon={MessageSquareText}
       >
         <textarea
           value={draft.notes}
           onChange={(e) => onUpdate({ notes: e.target.value })}
-          placeholder="Ej. Paciente en ayuno de 8 horas"
+          placeholder={t("Ej. Paciente en ayuno de 8 horas")}
           className={formTextarea}
         />
       </FormField>

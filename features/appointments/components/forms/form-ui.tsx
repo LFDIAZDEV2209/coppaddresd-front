@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 
 /**
  * Primitivas de formulario del panel de la consulta: usan los tokens del
@@ -164,6 +165,7 @@ export function DraftActions({
   busy: boolean;
   saved: boolean;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-3">
       <button
@@ -173,17 +175,17 @@ export function DraftActions({
         className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground outline-none transition-colors hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-primary/40 disabled:opacity-50"
       >
         {busy
-          ? "Guardando…"
+          ? t("Guardando…")
           : saved
-            ? "Borrador guardado ✓"
-            : "Guardar borrador"}
+            ? t("Borrador guardado ✓")
+            : t("Guardar borrador")}
       </button>
       <button
         type="button"
         onClick={onClear}
         className="text-center text-[11.5px] font-medium text-muted-foreground outline-none transition-colors hover:text-destructive focus-visible:ring-3 focus-visible:ring-destructive/20"
       >
-        Limpiar borrador
+        {t("Limpiar borrador")}
       </button>
     </div>
   );

@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useFormDrafts } from "../hooks/use-form-drafts";
+import { useT } from "@/providers/i18n-provider";
 import { getPatient } from "@/features/patients/services/patients-service";
 import type { Patient } from "@/features/patients/types";
 import { ClinicalEncounterPanel } from "./clinical-encounter-panel";
@@ -102,6 +103,7 @@ export function ConsultationPanel({
   localLabel: { name: string; role: string };
   remoteLabels: { name: string; role: string }[];
 }) {
+  const t = useT();
   const [selectedForm, setSelectedForm] = useState<FormKind | null>(null);
   const drafts = useFormDrafts(appointment.id);
   const [patient, setPatient] = useState<{
@@ -165,7 +167,7 @@ export function ConsultationPanel({
   return (
     <>
       <aside
-        aria-label="Panel de la consulta"
+        aria-label={t("Panel de la consulta")}
         aria-hidden={!open}
         className={`fixed inset-x-0 bottom-0 z-40 flex ${PANEL_HEIGHT} flex-col rounded-t-2xl border-t border-border bg-card shadow-2xl shadow-black/10 transition-transform duration-300 ease-out ${
           open ? "translate-y-0" : "translate-y-full"
@@ -182,27 +184,30 @@ export function ConsultationPanel({
                 <button
                   type="button"
                   onClick={backToForms}
-                  aria-label="Volver a los formularios"
+                  aria-label={t("Volver a los formularios")}
                   className="flex size-7 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/20"
                 >
                   <ArrowLeft className="size-4" />
                 </button>
                 <p className="truncate text-[13px] font-semibold text-foreground">
-                  {FORM_CATALOG.find((f) => f.kind === selectedForm)?.title}
+                  {t(
+                    FORM_CATALOG.find((f) => f.kind === selectedForm)?.title ??
+                      "",
+                  )}
                 </p>
               </>
             ) : (
               <p className="truncate text-[13px] font-semibold text-foreground">
                 {tab === "participants"
-                  ? "Participantes"
-                  : "Formularios médicos"}
+                  ? t("Participantes")
+                  : t("Formularios médicos")}
               </p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Cerrar panel"
+            aria-label={t("Cerrar panel")}
             className="flex size-7 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/20"
           >
             <X className="size-4" />
@@ -214,14 +219,14 @@ export function ConsultationPanel({
             <TabButton
               active={tab === "participants"}
               onClick={() => onTabChange("participants")}
-              label="Participantes"
+              label={t("Participantes")}
               icon={Users}
             />
             {canManage && (
               <TabButton
                 active={tab === "forms"}
                 onClick={() => onTabChange("forms")}
-                label="Formularios médicos"
+                label={t("Formularios médicos")}
                 icon={ClipboardList}
               />
             )}
@@ -259,10 +264,11 @@ export function ConsultationPanel({
                 {canManage && (
                   <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3">
                     <p className="flex items-center gap-1.5 text-[12px] font-medium text-primary">
-                      <ShieldCheck className="size-3.5" /> Consulta en curso
+                      <ShieldCheck className="size-3.5" />{" "}
+                      {t("Consulta en curso")}
                     </p>
                     <p className="mt-1 text-[11.5px] leading-relaxed text-primary/80">
-                      Los formularios guardan borradores automáticos por cita.
+                      {t("Los formularios guardan borradores automáticos por cita.")}
                     </p>
                   </div>
                 )}
@@ -275,7 +281,7 @@ export function ConsultationPanel({
 
       {open && (
         <button
-          aria-label="Cerrar panel"
+          aria-label={t("Cerrar panel")}
           className="fixed inset-0 z-30 bg-foreground/20 lg:bg-foreground/10"
           onClick={onClose}
         />
@@ -325,10 +331,11 @@ function ParticipantsBody({
   isProfessional: boolean;
   appointment: AppointmentDto;
 }) {
+  const t = useT();
   const waitingName = isProfessional
-    ? (appointment.patientName ?? "Paciente")
-    : (appointment.professionalName ?? "Profesional");
-  const waitingRole = isProfessional ? "Paciente" : "Profesional";
+    ? (appointment.patientName ?? t("Paciente"))
+    : (appointment.professionalName ?? t("Profesional"));
+  const waitingRole = isProfessional ? t("Paciente") : t("Profesional");
 
   return (
     <div className="flex flex-col gap-3">
@@ -366,11 +373,13 @@ function FormsBody({
   draftCounts: Record<FormKind, number>;
   onSelect: (kind: FormKind) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-2">
       <p className="px-1 pb-1 text-[11.5px] leading-relaxed text-muted-foreground">
-        Documentos de la consulta. Los formularios guardan borradores que
-        sobreviven a recargas.
+        {t(
+          "Documentos de la consulta. Los formularios guardan borradores que sobreviven a recargas.",
+        )}
       </p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {FORM_CATALOG.map((form) => {
@@ -397,16 +406,16 @@ function FormsBody({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
-                  {form.title}
+                  {t(form.title)}
                   {count > 0 && (
                     <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-primary">
-                      {count} borrador
-                      {count === 1 ? "" : "es"}
+                      {count}{" "}
+                      {t(count === 1 ? "borrador" : "borradores")}
                     </span>
                   )}
                 </p>
                 <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">
-                  {form.description}
+                  {t(form.description)}
                 </p>
               </div>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
@@ -431,13 +440,14 @@ function FormBody({
   allergies: string[];
   draftCounts: Record<FormKind, number>;
 }) {
+  const t = useT();
   const meta = FORM_CATALOG.find((f) => f.kind === kind)!;
   return (
     <div className="flex flex-col gap-4">
       <FormHeader
         icon={meta.icon}
-        title={meta.title}
-        subtitle={meta.description}
+        title={t(meta.title)}
+        subtitle={t(meta.description)}
         tint={meta.tint}
         count={draftCounts[kind]}
       />
@@ -481,6 +491,7 @@ function ParticipantRow({
   connected: boolean;
   isLocal?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="flex items-center gap-2.5 rounded-xl bg-muted/40 px-3 py-2">
       <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -489,7 +500,7 @@ function ParticipantRow({
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12.5px] font-semibold text-foreground">
           {name}
-          {isLocal ? " (tú)" : ""}
+          {isLocal ? ` ${t("(tú)")}` : ""}
         </p>
         <p className="text-[10.5px] text-muted-foreground">{role}</p>
       </div>
@@ -501,7 +512,7 @@ function ParticipantRow({
         <span
           className={`size-1.5 rounded-full ${connected ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
         />
-        {connected ? "Conectado" : "Esperando"}
+        {t(connected ? "Conectado" : "Esperando")}
       </span>
     </div>
   );

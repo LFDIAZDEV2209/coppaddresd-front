@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { AlertTriangle, FlaskConical, Pill, Timer, Zap } from "lucide-react";
+import { useT } from "@/providers/i18n-provider";
 import type { MedicationDraft } from "../../hooks/use-form-drafts";
 import { newItemId } from "../../hooks/use-form-drafts";
 import { searchMedications } from "@/features/patients/services/catalogs-service";
@@ -66,6 +67,7 @@ export function MedicationForm({
   onClear: () => void;
   allergies?: string[];
 }) {
+  const t = useT();
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -118,15 +120,18 @@ export function MedicationForm({
         <Pill className="size-4 text-amber-600" />
         <p className="text-[12px] text-amber-700">
           <span className="font-mono font-semibold">{itemCount}</span>{" "}
-          {itemCount === 1 ? "medicamento" : "medicamentos"} en la orden
+          {t("{label} en la orden", {
+            label: itemCount === 1 ? t("medicamento") : t("medicamentos"),
+          })}
         </p>
       </div>
 
       <div className="flex flex-col gap-2">
         {draft.items.length === 0 && (
           <p className="rounded-xl border border-dashed border-border px-3 py-3 text-[12px] text-muted-foreground">
-            Agregá los medicamentos que querés formular en esta consulta. Buscá
-            por nombre en el catálogo del sistema.
+            {t(
+              "Agregá los medicamentos que querés formular en esta consulta. Buscá por nombre en el catálogo del sistema.",
+            )}
           </p>
         )}
         {draft.items.map((item) => {
@@ -141,12 +146,12 @@ export function MedicationForm({
                 {warning && (
                   <p className="mb-2 flex items-center gap-1.5 rounded-lg bg-destructive/15 px-2.5 py-1.5 text-[11.5px] font-medium text-destructive">
                     <AlertTriangle className="size-3.5 shrink-0" />
-                    Alergia registrada: {warning}
+                    {t("Alergia registrada: {name}", { name: warning })}
                   </p>
                 )}
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
                   <FormField
-                    label="Medicamento"
+                    label={t("Medicamento")}
                     htmlFor={`med-name-${item.id}`}
                     icon={Pill}
                   >
@@ -156,12 +161,12 @@ export function MedicationForm({
                       onChange={(e) =>
                         updateItem(item.id, { name: e.target.value })
                       }
-                      placeholder="Ej. Metformina 850 mg"
+                      placeholder={t("Ej. Metformina 850 mg")}
                       className={formInput}
                     />
                   </FormField>
                   <FormField
-                    label="Dosis"
+                    label={t("Dosis")}
                     htmlFor={`med-dose-${item.id}`}
                     icon={Zap}
                   >
@@ -171,11 +176,11 @@ export function MedicationForm({
                       onChange={(e) =>
                         updateItem(item.id, { dose: e.target.value })
                       }
-                      placeholder="Ej. 1 tableta"
+                      placeholder={t("Ej. 1 tableta")}
                       className={formInput}
                     />
                   </FormField>
-                  <FormField label="Vía">
+                  <FormField label={t("Vía")}>
                     <select
                       value={item.route}
                       onChange={(e) =>
@@ -185,12 +190,12 @@ export function MedicationForm({
                     >
                       {ROUTES.map((r) => (
                         <option key={r} value={r}>
-                          {r}
+                          {t(r)}
                         </option>
                       ))}
                     </select>
                   </FormField>
-                  <FormField label="Frecuencia">
+                  <FormField label={t("Frecuencia")}>
                     <select
                       value={item.frequency}
                       onChange={(e) =>
@@ -200,7 +205,7 @@ export function MedicationForm({
                     >
                       {FREQUENCIES.map((f) => (
                         <option key={f} value={f}>
-                          {f}
+                          {t(f)}
                         </option>
                       ))}
                     </select>
@@ -208,7 +213,7 @@ export function MedicationForm({
                 </div>
                 <div className="mt-2 grid grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_2fr_auto]">
                   <FormField
-                    label="Duración"
+                    label={t("Duración")}
                     htmlFor={`med-duration-${item.id}`}
                     icon={Timer}
                   >
@@ -218,18 +223,18 @@ export function MedicationForm({
                       onChange={(e) =>
                         updateItem(item.id, { duration: e.target.value })
                       }
-                      placeholder="Ej. 10 días"
+                      placeholder={t("Ej. 10 días")}
                       className={formInput}
                     />
                   </FormField>
                   <div className="flex flex-col gap-1.5">
                     <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-foreground">
                       <FlaskConical className="size-3.5 text-muted-foreground" />
-                      Catálogo del sistema
+                      {t("Catálogo del sistema")}
                     </span>
                     <CatalogSearchSelect
                       search={searchMedications}
-                      placeholder="Buscar medicamento…"
+                      placeholder={t("Buscar medicamento…")}
                       accent="amber"
                       icon={Pill}
                       onSelect={(item) =>
@@ -239,24 +244,26 @@ export function MedicationForm({
                   </div>
                   <RemoveRowButton
                     onClick={() => removeItem(item.id)}
-                    label={`Eliminar ${item.name || "medicamento"}`}
+                    label={t("Eliminar {name}", {
+                      name: item.name || t("medicamento"),
+                    })}
                   />
                 </div>
               </div>
             </ItemRow>
           );
         })}
-        <AddRowButton onClick={addItem} label="Agregar medicamento" />
+        <AddRowButton onClick={addItem} label={t("Agregar medicamento")} />
       </div>
 
       <FormField
-        label="Notas"
-        hint="Instrucciones para el paciente (ej. con alimentos)"
+        label={t("Notas")}
+        hint={t("Instrucciones para el paciente (ej. con alimentos)")}
       >
         <textarea
           value={draft.notes}
           onChange={(e) => onUpdate({ notes: e.target.value })}
-          placeholder="Ej. Tomar con las comidas"
+          placeholder={t("Ej. Tomar con las comidas")}
           className={formTextarea}
         />
       </FormField>
