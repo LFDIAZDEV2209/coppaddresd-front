@@ -12,6 +12,7 @@ import type {
   EventDropArg,
 } from "@fullcalendar/core";
 import "./calendar-theme.css";
+import { useT } from "@/providers/i18n-provider";
 import { appointmentStatusLabel, formatTime } from "../../utils/format";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import type { AppointmentDto, AppointmentStatus } from "../../types";
@@ -77,6 +78,8 @@ export function AppointmentsCalendar({
   ) => void;
   onDropError: (message: string) => void;
 }) {
+  const t = useT();
+
   // Guarda anti-loop: datesSet dispara en cada render de vista; solo
   // propagamos cuando los límites o la vista realmente cambiaron.
   const lastRangeKey = useRef("");
@@ -119,9 +122,9 @@ export function AppointmentsCalendar({
       if (!RESCHEDULABLE.includes(appointment.status)) {
         info.revert();
         onDropError(
-          `La cita en estado "${
-            appointmentStatusLabel[appointment.status]
-          }" no puede reprogramarse.`,
+          t('La cita en estado "{status}" no puede reprogramarse.', {
+            status: t(appointmentStatusLabel[appointment.status]),
+          }),
         );
         return;
       }
@@ -132,7 +135,7 @@ export function AppointmentsCalendar({
         info.revert,
       );
     },
-    [onEventDropped, onDropError],
+    [onEventDropped, onDropError, t],
   );
 
   const handleEventResize = useCallback(
@@ -153,9 +156,9 @@ export function AppointmentsCalendar({
       if (!RESCHEDULABLE.includes(appointment.status)) {
         info.revert();
         onDropError(
-          `La cita en estado "${
-            appointmentStatusLabel[appointment.status]
-          }" no puede redimensionarse.`,
+          t('La cita en estado "{status}" no puede redimensionarse.', {
+            status: t(appointmentStatusLabel[appointment.status]),
+          }),
         );
         return;
       }
@@ -166,7 +169,7 @@ export function AppointmentsCalendar({
         info.revert,
       );
     },
-    [onEventResized, onDropError],
+    [onEventResized, onDropError, t],
   );
 
   // Click en un día del Mes → vista Día de esa fecha. En Semana/Día no
@@ -201,7 +204,10 @@ export function AppointmentsCalendar({
           {level > 0 && (
             <span
               className={`cal-occupancy is-level-${level}`}
-              title={`${count} cita${count === 1 ? "" : "s"}`}
+              title={t("{n} cita{plural}", {
+                n: String(count),
+                plural: count === 1 ? "" : "s",
+              })}
               aria-hidden="true"
             >
               {Array.from({ length: level }).map((_, i) => (
@@ -212,14 +218,14 @@ export function AppointmentsCalendar({
         </span>
       );
     },
-    [countsByDay],
+    [countsByDay, t],
   );
 
   const calendarEvents = useMemo(
     () =>
       events.map((appointment) => ({
         id: appointment.id,
-        title: appointment.patientName ?? "Paciente",
+        title: appointment.patientName ?? t("Paciente"),
         start: appointment.scheduledStart,
         end: appointment.scheduledEnd,
         extendedProps: { appointment },
@@ -231,7 +237,12 @@ export function AppointmentsCalendar({
         startEditable: RESCHEDULABLE.includes(appointment.status),
         durationEditable: RESCHEDULABLE.includes(appointment.status),
       })),
-    [events, selectedId],
+    [events, selectedId, t],
+  );
+
+  const renderEvent = useCallback(
+    (arg: EventContentArgShape) => renderEventContent(arg, t),
+    [t],
   );
 
   return (
@@ -277,7 +288,7 @@ export function AppointmentsCalendar({
         unselectAuto
         allDaySlot={false}
         events={calendarEvents}
-        eventContent={renderEventContent}
+        eventContent={renderEvent}
         eventClick={handleEventClick}
         eventDrop={handleEventDrop}
         eventResize={handleEventResize}
@@ -354,7 +365,10 @@ interface EventContentArgShape {
  * fila compacta con punto para la vista mes. La distinción de estado no
  * depende solo del color: las canceladas van tachadas y con opacidad.
  */
-function renderEventContent(arg: EventContentArgShape) {
+function renderEventContent(
+  arg: EventContentArgShape,
+  t: ReturnType<typeof useT>,
+) {
   const appointment = arg.event.extendedProps?.appointment as
     AppointmentDto | undefined;
   if (!appointment || !arg.event.start) return null;
@@ -373,7 +387,7 @@ function renderEventContent(arg: EventContentArgShape) {
           color: color.text,
           opacity: faded ? 0.62 : 1,
         }}
-        title={eventTitle(appointment)}
+        title={eventTitle(appointment, t)}
       >
         <span
           className="size-1.5 shrink-0 rounded-full"
@@ -384,7 +398,7 @@ function renderEventContent(arg: EventContentArgShape) {
           className="cal-event-title truncate font-semibold"
           style={cancelled ? { textDecoration: "line-through" } : undefined}
         >
-          {appointment.patientName ?? "Paciente"}
+          {appointment.patientName ?? t("Paciente")}
         </span>
       </div>
     );
@@ -406,10 +420,10 @@ function renderEventContent(arg: EventContentArgShape) {
         boxShadow: `inset 0 0 0 1px ${color.dot}2E`,
         opacity: faded ? 0.66 : 1,
       }}
-      title={eventTitle(appointment)}
+      title={eventTitle(appointment, t)}
       role="button"
       tabIndex={-1}
-      aria-label={eventTitle(appointment)}
+      aria-label={eventTitle(appointment, t)}
     >
       {compact ? (
         <span
@@ -431,7 +445,7 @@ function renderEventContent(arg: EventContentArgShape) {
         className="cal-event-title"
         style={cancelled ? { textDecoration: "line-through" } : undefined}
       >
-        {appointment.patientName ?? "Paciente"}
+        {appointment.patientName ?? t("Paciente")}
       </span>
       {!compact && (
         <span className="cal-event-meta">
@@ -445,11 +459,14 @@ function renderEventContent(arg: EventContentArgShape) {
   );
 }
 
-function eventTitle(appointment: AppointmentDto): string {
+function eventTitle(
+  appointment: AppointmentDto,
+  t: ReturnType<typeof useT>,
+): string {
   const time = `${formatTime(appointment.scheduledStart)} – ${formatTime(
     appointment.scheduledEnd,
   )}`;
-  return `${time} · ${appointment.patientName ?? "Paciente"} · ${
-    appointmentStatusLabel[appointment.status]
-  }`;
+  return `${time} · ${appointment.patientName ?? t("Paciente")} · ${t(
+    appointmentStatusLabel[appointment.status],
+  )}`;
 }

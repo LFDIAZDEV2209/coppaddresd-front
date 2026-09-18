@@ -51,6 +51,9 @@ const rangeOptions: Array<{ key: Range; label: string; icon: LucideIcon }> = [
   { key: "month", label: "Mes", icon: CalendarDays },
 ];
 
+/** Claves relativas del encabezado de día (las fechas se muestran ya formateadas). */
+const RELATIVE_DAY_LABELS = new Set(["Hoy", "Mañana", "Ayer"]);
+
 /** Estados que aparecen en el resumen, en orden de prioridad. */
 const summaryStatuses: AppointmentStatus[] = [
   "Confirmed",
@@ -188,14 +191,16 @@ export function ProfessionalAgenda({
                 return (
                   <ToggleGroupItem key={option.key} value={option.key}>
                     <Icon data-icon="inline-start" />
-                    {option.label}
+                    {t(option.label)}
                   </ToggleGroupItem>
                 );
               })}
             </ToggleGroup>
             <span className="text-[12px] text-muted-foreground">
-              {appointments.length} cita
-              {appointments.length === 1 ? "" : "s"} {t("en el rango")}
+              {t("{n} cita{plural} en el rango", {
+                n: String(appointments.length),
+                plural: appointments.length === 1 ? "" : "s",
+              })}
             </span>
 
             <div className="relative ml-auto">
@@ -250,7 +255,7 @@ export function ProfessionalAgenda({
                     aria-hidden="true"
                   />
                   <span className="text-[12px] font-medium">
-                    {appointmentStatusLabel[status]}
+                    {t(appointmentStatusLabel[status])}
                   </span>
                   <span
                     className={cn(
@@ -332,11 +337,15 @@ export function ProfessionalAgenda({
                       <CalendarCheck className="size-3.5" />
                     </div>
                     <span className="text-[13px] font-semibold text-foreground">
-                      {group.label}
+                      {RELATIVE_DAY_LABELS.has(group.label)
+                        ? t(group.label)
+                        : group.label}
                     </span>
                     <span className="ml-auto text-[11.5px] font-medium text-muted-foreground">
-                      {group.items.length} cita
-                      {group.items.length === 1 ? "" : "s"}
+                      {t("{n} cita{plural}", {
+                        n: String(group.items.length),
+                        plural: group.items.length === 1 ? "" : "s",
+                      })}
                     </span>
                   </header>
                   {group.items.map((appointment) => (
@@ -496,7 +505,7 @@ function AppointmentRow({
 
       <div className="flex shrink-0 items-center gap-2">
         <StatusBadge
-          status={appointmentStatusLabel[appointment.status]}
+          status={t(appointmentStatusLabel[appointment.status])}
           color={color}
         />
         <Button size="sm" variant="outline" onClick={onDetail}>

@@ -117,11 +117,11 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-[15px] font-semibold text-foreground">
           <Video className="size-4 text-primary" />
-          Sala virtual
+          {t("Sala virtual")}
         </h2>
         {room && (
           <StatusBadge
-            status={sessionStatusLabel[room.status]}
+            status={t(sessionStatusLabel[room.status])}
             color={
               room.status === "Active"
                 ? { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" }
@@ -153,7 +153,9 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
         <InfoChip
           icon={Video}
           label={t("Participantes")}
-          value={`${participantsConnected} conectados`}
+          value={t("{count} conectados", {
+            count: String(participantsConnected),
+          })}
         />
       </div>
 
@@ -162,7 +164,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
           className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
           role="alert"
         >
-          {error}
+          {t(error)}
         </p>
       )}
 
@@ -170,7 +172,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={handleJoin} className="gap-1.5">
             <PhoneCall className="size-4" />
-            Unirme a la consulta
+            {t("Unirme a la consulta")}
           </Button>
           {appointment.status === "Confirmed" && (
             <Button
@@ -180,7 +182,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
               className="gap-1.5"
             >
               <Video className="size-4" />
-              Iniciar sesión
+              {t("Iniciar sesión")}
             </Button>
           )}
           {appointment.status === "InProgress" && (
@@ -191,7 +193,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
               className="gap-1.5"
             >
               <PhoneOff className="size-4" />
-              Finalizar sesión
+              {t("Finalizar sesión")}
             </Button>
           )}
         </div>
@@ -199,7 +201,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
 
       {!canJoin && (
         <p className="text-[12.5px] text-muted-foreground">
-          La sala solo se habilita para citas confirmadas o en curso.
+          {t("La sala solo se habilita para citas confirmadas o en curso.")}
         </p>
       )}
     </section>
@@ -229,6 +231,7 @@ function InfoChip({
 }
 
 export function AppointmentDetail() {
+  const t = useT();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const appointmentId = params.id;
@@ -282,13 +285,13 @@ export function AppointmentDetail() {
           onClick={() => router.back()}
           className="w-fit gap-1.5"
         >
-          <ArrowLeft className="size-4" /> Volver
+          <ArrowLeft className="size-4" /> {t("Volver")}
         </Button>
         <p
           className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
           role="alert"
         >
-          {error ?? "Cita no encontrada."}
+          {t(error ?? "Cita no encontrada.")}
         </p>
       </div>
     );
@@ -305,12 +308,12 @@ export function AppointmentDetail() {
       </Button>
 
       <PageHeader
-        title={appointment.patientName ?? "Cita"}
-        description={`${appointment.specialtyName ?? "Especialidad"} · ${formatRange(appointment.scheduledStart, appointment.scheduledEnd)}`}
+        title={appointment.patientName ?? t("Cita")}
+        description={`${appointment.specialtyName ?? t("Especialidad")} · ${formatRange(appointment.scheduledStart, appointment.scheduledEnd)}`}
         icon={Video}
         actions={
           <StatusBadge
-            status={appointmentStatusLabel[appointment.status]}
+            status={t(appointmentStatusLabel[appointment.status])}
             color={appointmentStatusColor(appointment.status)}
           />
         }
@@ -321,8 +324,9 @@ export function AppointmentDetail() {
           className="rounded-xl bg-amber-soft px-4 py-3 text-sm text-amber-700"
           role="note"
         >
-          Solo el profesional asignado puede gestionar la sala y el encuentro
-          clínico.
+          {t(
+            "Solo el profesional asignado puede gestionar la sala y el encuentro clínico.",
+          )}
         </p>
       )}
 

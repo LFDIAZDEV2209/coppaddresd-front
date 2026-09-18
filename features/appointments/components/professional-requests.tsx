@@ -2,6 +2,7 @@
 
 import { Stethoscope } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useT } from "@/providers/i18n-provider";
 import { useCurrentUser } from "../hooks/use-current-user";
 import { useMySummary } from "../hooks/use-admin";
 import { RequestsInbox } from "./requests-inbox";
@@ -12,6 +13,7 @@ import { RequestsInbox } from "./requests-inbox";
  * confirmarlas → se convierten en cita.
  */
 export function ProfessionalRequests() {
+  const t = useT();
   const { context, loading: userLoading } = useCurrentUser();
   const summary = useMySummary();
 
@@ -33,11 +35,12 @@ export function ProfessionalRequests() {
           <Stethoscope className="size-6 text-muted-foreground" aria-hidden />
         </div>
         <p className="text-sm font-medium text-foreground">
-          El usuario no es un profesional clínico
+          {t("El usuario no es un profesional clínico")}
         </p>
         <p className="max-w-sm text-[12.5px] text-muted-foreground">
-          Solo los profesionales con perfil clínico reciben solicitudes de
-          telemedicina.
+          {t(
+            "Solo los profesionales con perfil clínico reciben solicitudes de telemedicina.",
+          )}
         </p>
       </div>
     );

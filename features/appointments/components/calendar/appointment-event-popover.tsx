@@ -172,7 +172,7 @@ function EventBody({
               aria-hidden="true"
             />
             <span className="truncate min-w-0">
-              {appointmentStatusLabel[appointment.status]}
+              {t(appointmentStatusLabel[appointment.status])}
             </span>
           </span>
         </div>
@@ -181,8 +181,7 @@ function EventBody({
           style={{ color: color.text, opacity: 0.8 }}
         >
           {formatDate(appointment.scheduledStart)} ·{" "}
-          {appointment.durationMinutes}
-          {" min"}
+          {t("{n} min", { n: String(appointment.durationMinutes) })}
         </span>
       </div>
 

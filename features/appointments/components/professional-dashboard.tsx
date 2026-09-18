@@ -215,7 +215,7 @@ export function ProfessionalDashboard() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <DashboardChartCard
           title={t('Mi actividad')}
-          description={`${t('Mis citas en el rango seleccionado')} (${rangeOptions.find((o) => o.key === range)!.label})`}
+          description={`${t('Mis citas en el rango seleccionado')} (${t(rangeOptions.find((o) => o.key === range)!.label)})`}
           icon={Activity}
           className="xl:col-span-2"
         >

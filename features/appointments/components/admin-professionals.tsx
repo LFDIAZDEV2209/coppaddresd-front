@@ -79,13 +79,16 @@ export function AdminProfessionals() {
           />
         </div>
         <span className="text-[12px] text-muted-foreground">
-          {t('{total} profesional', { total: String(total) })}{total === 1 ? "" : "es"}
+          {t('{total} profesional{plural}', {
+            total: String(total),
+            plural: total === 1 ? "" : "es",
+          })}
         </span>
       </div>
 
       {error && (
         <p className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
 

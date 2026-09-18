@@ -81,7 +81,7 @@ export function UpcomingAppointments({
                 </span>
               </div>
               <StatusBadge
-                status={appointmentStatusLabel[appointment.status]}
+                status={t(appointmentStatusLabel[appointment.status])}
                 color={appointmentStatusColor(appointment.status)}
               />
               <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />

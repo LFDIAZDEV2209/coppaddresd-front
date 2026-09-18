@@ -212,7 +212,7 @@ export function AdminDashboard() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <DashboardChartCard
           title={t("Actividad de citas")}
-          description={`${t("Serie temporal en el rango seleccionado")} (${rangeOptions.find((o) => o.key === range)!.label})`}
+          description={`${t("Serie temporal en el rango seleccionado")} (${t(rangeOptions.find((o) => o.key === range)!.label)})`}
           icon={Activity}
           className="xl:col-span-2"
         >

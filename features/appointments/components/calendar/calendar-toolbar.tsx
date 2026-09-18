@@ -81,7 +81,7 @@ export function CalendarToolbar({
   const t = useT();
 
   const kpis: { label: string; value: number; dot: string }[] = [
-    { label: t("Total"), value: totalCount, dot: "var(--primary)" },
+    { label: "Total", value: totalCount, dot: "var(--primary)" },
     {
       label: appointmentStatusLabel.Confirmed,
       value: countsByStatus.get("Confirmed") ?? 0,
@@ -148,7 +148,7 @@ export function CalendarToolbar({
         >
           {VIEW_OPTIONS.map((option) => (
             <ToggleGroupItem key={option.key} value={option.key}>
-              {option.label}
+              {t(option.label)}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
@@ -187,7 +187,7 @@ export function CalendarToolbar({
                 aria-hidden="true"
               />
               <span className="text-[11.5px] font-medium text-muted-foreground">
-                {kpi.label}
+                {t(kpi.label)}
               </span>
               <span className="text-[13px] font-bold text-foreground">
                 {kpi.value}
@@ -228,7 +228,7 @@ export function CalendarToolbar({
                   style={{ backgroundColor: appointmentStatusDot(status) }}
                   aria-hidden="true"
                 />
-                {appointmentStatusLabel[status]}
+                {t(appointmentStatusLabel[status])}
                 {count > 0 && (
                   <span
                     className={cn(

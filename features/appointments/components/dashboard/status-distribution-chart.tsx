@@ -88,7 +88,7 @@ export function StatusDistributionChart({
               className="size-2 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="font-medium text-foreground">{entry.name}</span>
+            <span className="font-medium text-foreground">{t(entry.name)}</span>
             <span className="text-muted-foreground">({entry.value})</span>
           </li>
         ))}

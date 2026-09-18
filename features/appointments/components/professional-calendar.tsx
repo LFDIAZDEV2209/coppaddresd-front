@@ -228,8 +228,8 @@ export function ProfessionalCalendar({
   }, []);
 
   const rangeLabel = useMemo(
-    () => formatRangeLabel(viewType, from),
-    [viewType, from],
+    () => formatRangeLabel(viewType, from, t),
+    [viewType, from, t],
   );
   const isTodayRange = useMemo(
     () => isTodayInView(viewType, from),
@@ -397,8 +397,12 @@ export function ProfessionalCalendar({
   );
 }
 
-/** Etiqueta del rango visible según la vista (en español, i18n-ready). */
-function formatRangeLabel(viewType: CalendarViewType, from: Date): string {
+/** Etiqueta del rango visible según la vista. */
+function formatRangeLabel(
+  viewType: CalendarViewType,
+  from: Date,
+  t: ReturnType<typeof useT>,
+): string {
   if (viewType === "dayGridMonth") {
     return capitalize(
       from.toLocaleDateString("es-ES", { month: "long", year: "numeric" }),
@@ -426,7 +430,7 @@ function formatRangeLabel(viewType: CalendarViewType, from: Date): string {
     year: "numeric",
   });
   return from.toDateString() === today.toDateString()
-    ? `Hoy · ${capitalize(label)}`
+    ? t("Hoy · {date}", { date: capitalize(label) })
     : capitalize(label);
 }
 

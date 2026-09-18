@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { createElement, useMemo, useState } from "react";
 import {
   Apple,
@@ -124,6 +125,7 @@ export function RequestsInbox({
   canConfirm = false,
   summary,
 }: RequestsInboxProps) {
+  const t = useT();
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [detail, setDetail] = useState<AppointmentRequestDto | null>(null);
@@ -210,8 +212,10 @@ export function RequestsInbox({
     } catch (err) {
       setActionError(
         err instanceof ApiError && err.status === 409
-          ? "Esta solicitud ya no puede aprobarse (fue confirmada o cerrada). Actualiza la lista para ver el estado actual."
-          : "No se pudo aprobar la solicitud. Verifica que siga pendiente.",
+          ? t(
+              "Esta solicitud ya no puede aprobarse (fue confirmada o cerrada). Actualiza la lista para ver el estado actual.",
+            )
+          : t("No se pudo aprobar la solicitud. Verifica que siga pendiente."),
       );
     } finally {
       setBusy(false);
@@ -232,8 +236,12 @@ export function RequestsInbox({
     } catch (err) {
       setActionError(
         err instanceof ApiError && err.status === 409
-          ? "Esta solicitud ya no puede rechazarse (fue confirmada o cerrada). Actualiza la lista para ver el estado actual."
-          : "No se pudo rechazar la solicitud. Verifica que siga pendiente o aprobada.",
+          ? t(
+              "Esta solicitud ya no puede rechazarse (fue confirmada o cerrada). Actualiza la lista para ver el estado actual.",
+            )
+          : t(
+              "No se pudo rechazar la solicitud. Verifica que siga pendiente o aprobada.",
+            ),
       );
     } finally {
       setBusy(false);
@@ -265,8 +273,12 @@ export function RequestsInbox({
     } catch (err) {
       setActionError(
         err instanceof ApiError && err.status === 409
-          ? "No se pudo confirmar: el horario se solapa con otra cita de la agenda o la solicitud ya fue confirmada. Actualiza la lista para ver el estado actual."
-          : "No se pudo confirmar la solicitud. Verifica el horario (anticipación mínima) y que no se solape con otra cita.",
+          ? t(
+              "No se pudo confirmar: el horario se solapa con otra cita de la agenda o la solicitud ya fue confirmada. Actualiza la lista para ver el estado actual.",
+            )
+          : t(
+              "No se pudo confirmar la solicitud. Verifica el horario (anticipación mínima) y que no se solape con otra cita.",
+            ),
       );
     } finally {
       setBusy(false);
@@ -297,15 +309,23 @@ export function RequestsInbox({
       <PageHeader
         title={
           scope === "professional"
-            ? "Bandeja de solicitudes de mis pacientes"
-            : "Bandeja de solicitudes de los pacientes"
+            ? t("Bandeja de solicitudes de mis pacientes")
+            : t("Bandeja de solicitudes de los pacientes")
         }
         description={
           scope === "professional"
             ? professionalName
-              ? `${pending} pendientes por revisar · asignadas a ${professionalName}`
-              : "Solicitudes de telemedicina"
-            : `${pending} pendientes por revisar en la plataforma`
+              ? t(
+                  "{pending} pendientes por revisar · asignadas a {professionalName}",
+                  {
+                    pending: String(pending),
+                    professionalName,
+                  },
+                )
+              : t("Solicitudes de telemedicina")
+            : t("{pending} pendientes por revisar en la plataforma", {
+                pending: String(pending),
+              })
         }
         icon={Inbox}
         actions={
@@ -314,13 +334,13 @@ export function RequestsInbox({
             className="gap-1.5 border-transparent bg-white text-[var(--sidebar)] shadow-sm hover:bg-white/90 hover:text-[var(--sidebar)]"
             onClick={handleRefresh}
             disabled={loading}
-            aria-label="Actualizar solicitudes"
+            aria-label={t("Actualizar solicitudes")}
           >
             <RefreshCw
               className={cn("size-4", loading && "animate-spin")}
               aria-hidden
             />
-            Actualizar
+            {t("Actualizar")}
           </Button>
         }
       />
@@ -336,32 +356,32 @@ export function RequestsInbox({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Pendientes"
+          label={t("Pendientes")}
           value={data ? String(pending) : "—"}
           icon={Clock}
           variant="warning"
-          context="requieren revisión"
+          context={t("requieren revisión")}
         />
         <StatCard
-          label="Aprobadas"
+          label={t("Aprobadas")}
           value={String(counts.approved)}
           icon={CheckCheck}
           variant="primary"
-          context="listas para agendar"
+          context={t("listas para agendar")}
         />
         <StatCard
-          label="Convertidas"
+          label={t("Convertidas")}
           value={String(counts.converted)}
           icon={CalendarCheck}
           variant="success"
-          context="se convirtieron en cita"
+          context={t("se convirtieron en cita")}
         />
         <StatCard
-          label="Cerradas"
+          label={t("Cerradas")}
           value={String(counts.rejected + counts.cancelled)}
           icon={XCircle}
           variant="destructive"
-          context="rechazadas o canceladas"
+          context={t("rechazadas o canceladas")}
         />
       </div>
 
@@ -375,16 +395,16 @@ export function RequestsInbox({
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar paciente, especialidad…"
+              placeholder={t("Buscar paciente, especialidad…")}
               className="pl-9 pr-9"
-              aria-label="Buscar solicitudes"
+              aria-label={t("Buscar solicitudes")}
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label="Limpiar búsqueda"
+                aria-label={t("Limpiar búsqueda")}
               >
                 <X className="size-3.5" aria-hidden />
               </button>
@@ -393,9 +413,9 @@ export function RequestsInbox({
 
           <div className="flex items-center gap-2">
             <span className="text-[12px] text-muted-foreground">
-              {total} solicitudes
+              {t("{total} solicitudes", { total: String(total) })}
               {status
-                ? ` · ${requestStatusLabel[status as AppointmentRequestStatus]}`
+                ? ` · ${t(requestStatusLabel[status as AppointmentRequestStatus])}`
                 : ""}
             </span>
             <Button
@@ -406,7 +426,7 @@ export function RequestsInbox({
               disabled={!hasActiveFilters}
             >
               <X className="size-3.5" aria-hidden />
-              Limpiar
+              {t("Limpiar")}
             </Button>
           </div>
         </div>
@@ -414,7 +434,7 @@ export function RequestsInbox({
         <div
           className="flex items-center gap-2 overflow-x-auto pb-1"
           role="group"
-          aria-label="Filtrar por estado"
+          aria-label={t("Filtrar por estado")}
         >
           {statusOptions.map((option) => {
             const active = (status || ALL) === option.value;
@@ -435,7 +455,7 @@ export function RequestsInbox({
                 aria-pressed={active}
               >
                 <Icon className="size-3.5" aria-hidden />
-                {option.label}
+                {t(option.label)}
                 <span
                   className={cn(
                     "rounded-full px-1.5 text-[10.5px] font-semibold",
@@ -473,14 +493,18 @@ export function RequestsInbox({
             )}
           </div>
           <p className="text-sm font-medium text-foreground">
-            {hasActiveFilters ? "Sin resultados" : "Sin solicitudes"}
+            {hasActiveFilters ? t("Sin resultados") : t("Sin solicitudes")}
           </p>
           <p className="max-w-sm text-[12.5px] text-muted-foreground">
             {hasActiveFilters
-              ? "No hay solicitudes que coincidan con los filtros actuales."
+              ? t("No hay solicitudes que coincidan con los filtros actuales.")
               : scope === "professional"
-                ? "Cuando tus pacientes pidan una cita de telemedicina, aparecerá aquí."
-                : "Cuando los pacientes pidan citas de telemedicina, aparecerán aquí."}
+                ? t(
+                    "Cuando tus pacientes pidan una cita de telemedicina, aparecerá aquí.",
+                  )
+                : t(
+                    "Cuando los pacientes pidan citas de telemedicina, aparecerán aquí.",
+                  )}
           </p>
           {hasActiveFilters && (
             <Button
@@ -490,40 +514,45 @@ export function RequestsInbox({
               onClick={resetFilters}
             >
               <X className="size-3.5" aria-hidden />
-              Limpiar filtros
+              {t("Limpiar filtros")}
             </Button>
           )}
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {groups.map((group) => (
-            <section
-              key={group.label}
-              aria-label={`Solicitudes de ${group.label.toLowerCase()}`}
-              className="flex flex-col gap-2"
-            >
-              <h2 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                <span
-                  className="size-1.5 rounded-full bg-[var(--sidebar)]"
-                  aria-hidden
-                />
-                {group.label}
-              </h2>
-              <ul className="flex flex-col gap-2">
-                {group.requests.map((request) => (
-                  <RequestItem
-                    key={request.id}
-                    request={request}
-                    canConfirm={canConfirm || scope === "admin"}
-                    onApprove={setApproving}
-                    onReject={setRejecting}
-                    onConfirm={setConfirming}
-                    onDetail={setDetail}
+          {groups.map((group) => {
+            const label = translateDayLabel(group.label, t);
+            return (
+              <section
+                key={group.label}
+                aria-label={t("Solicitudes de {label}", {
+                  label: label.toLowerCase(),
+                })}
+                className="flex flex-col gap-2"
+              >
+                <h2 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span
+                    className="size-1.5 rounded-full bg-[var(--sidebar)]"
+                    aria-hidden
                   />
-                ))}
-              </ul>
-            </section>
-          ))}
+                  {label}
+                </h2>
+                <ul className="flex flex-col gap-2">
+                  {group.requests.map((request) => (
+                    <RequestItem
+                      key={request.id}
+                      request={request}
+                      canConfirm={canConfirm || scope === "admin"}
+                      onApprove={setApproving}
+                      onReject={setRejecting}
+                      onConfirm={setConfirming}
+                      onDetail={setDetail}
+                    />
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
 
           {totalPages > 1 && !loading && (
             <div className="flex items-center justify-center gap-2">
@@ -535,10 +564,13 @@ export function RequestsInbox({
                 onClick={() => setPage(page - 1)}
               >
                 <ChevronLeft className="size-4" aria-hidden />
-                Anterior
+                {t("Anterior")}
               </Button>
               <span className="text-[12px] text-muted-foreground">
-                Página {page} de {totalPages}
+                {t("Página {page} de {totalPages}", {
+                  page: String(page),
+                  totalPages: String(totalPages),
+                })}
               </span>
               <Button
                 variant="outline"
@@ -547,7 +579,7 @@ export function RequestsInbox({
                 disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
               >
-                Siguiente
+                {t("Siguiente")}
                 <ChevronRight className="size-4" aria-hidden />
               </Button>
             </div>
@@ -593,10 +625,14 @@ export function RequestsInbox({
           <ModalHeader
             icon={CheckCheck}
             tone="approve"
-            title="Aprobar solicitud"
-            description={`La solicitud de ${
-              approving?.specialtyName ?? "telemedicina"
-            } de ${approving?.patientName ?? "el paciente"} quedará lista para agendar.`}
+            title={t("Aprobar solicitud")}
+            description={t(
+              "La solicitud de {specialty} de {patient} quedará lista para agendar.",
+              {
+                specialty: approving?.specialtyName ?? t("telemedicina"),
+                patient: approving?.patientName ?? t("el paciente"),
+              },
+            )}
           />
           {actionError && (
             <p
@@ -612,7 +648,7 @@ export function RequestsInbox({
               onClick={() => closeReviewDialogs()}
               disabled={busy}
             >
-              Cancelar
+              {t("Cancelar")}
             </Button>
             <Button
               onClick={doApprove}
@@ -620,7 +656,7 @@ export function RequestsInbox({
               className="gap-1.5 bg-[var(--sidebar)] text-white hover:bg-[var(--sidebar)]/90"
             >
               <Check className="size-4" aria-hidden />
-              {busy ? "Aprobando…" : "Aprobar solicitud"}
+              {busy ? t("Aprobando…") : t("Aprobar solicitud")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -641,10 +677,14 @@ export function RequestsInbox({
           <ModalHeader
             icon={XCircle}
             tone="reject"
-            title="Rechazar solicitud"
-            description={`La solicitud de ${
-              rejecting?.specialtyName ?? "telemedicina"
-            } de ${rejecting?.patientName ?? "el paciente"} quedará cerrada.`}
+            title={t("Rechazar solicitud")}
+            description={t(
+              "La solicitud de {specialty} de {patient} quedará cerrada.",
+              {
+                specialty: rejecting?.specialtyName ?? t("telemedicina"),
+                patient: rejecting?.patientName ?? t("el paciente"),
+              },
+            )}
           />
           <div className="flex flex-col gap-2">
             <Label
@@ -655,7 +695,7 @@ export function RequestsInbox({
                 className="size-3.5 text-destructive"
                 aria-hidden
               />
-              Motivo del rechazo
+              {t("Motivo del rechazo")}
             </Label>
             <textarea
               id="reject-reason"
@@ -663,14 +703,17 @@ export function RequestsInbox({
               onChange={(event) => setRejectionReason(event.target.value)}
               maxLength={500}
               rows={3}
-              placeholder="Ej.: sin cupos en el horario solicitado"
+              placeholder={t("Ej.: sin cupos en el horario solicitado")}
               className="min-h-20 w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-              aria-label="Motivo del rechazo"
+              aria-label={t("Motivo del rechazo")}
             />
             <p className="text-[11.5px] text-muted-foreground">
-              Máximo 500 caracteres
+              {t("Máximo 500 caracteres")}
               {rejectionReason.trim() === "" && (
-                <span className="text-destructive"> · obligatorio</span>
+                <span className="text-destructive">
+                  {" "}
+                  · {t("obligatorio")}
+                </span>
               )}
             </p>
             {actionError && (
@@ -692,7 +735,7 @@ export function RequestsInbox({
               }}
               disabled={busy}
             >
-              Cancelar
+              {t("Cancelar")}
             </Button>
             <Button
               variant="destructive"
@@ -701,7 +744,7 @@ export function RequestsInbox({
               className="gap-1.5"
             >
               <XCircle className="size-4" aria-hidden />
-              {busy ? "Rechazando…" : "Rechazar solicitud"}
+              {busy ? t("Rechazando…") : t("Rechazar solicitud")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -723,22 +766,24 @@ export function RequestsInbox({
           <ModalHeader
             icon={CalendarCheck}
             tone="confirm"
-            title="Confirmar solicitud"
-            description={`Agenda la cita de ${
-              confirming?.specialtyName ?? "telemedicina"
-            } para ${confirming?.patientName ?? "el paciente"}.`}
+            title={t("Confirmar solicitud")}
+            description={t("Agenda la cita de {specialty} para {patient}.", {
+              specialty: confirming?.specialtyName ?? t("telemedicina"),
+              patient: confirming?.patientName ?? t("el paciente"),
+            })}
           />
           <div className="flex flex-col gap-3">
             {scope === "admin" && !confirming?.professionalId && (
               <div className="flex flex-col gap-1.5">
-                <Label>Profesional asignado</Label>
+                <Label>{t("Profesional asignado")}</Label>
                 <ProfessionalSelector
                   value={confirmProfessionalId}
                   onChange={setConfirmProfessionalId}
                 />
                 <p className="text-[11.5px] text-muted-foreground">
-                  La solicitud no tiene profesional asignado; elige quién
-                  atenderá la cita.
+                  {t(
+                    "La solicitud no tiene profesional asignado; elige quién atenderá la cita.",
+                  )}
                 </p>
               </div>
             )}
@@ -751,7 +796,7 @@ export function RequestsInbox({
                   className="size-3.5 text-[var(--sidebar)]"
                   aria-hidden
                 />
-                Inicio de la cita
+                {t("Inicio de la cita")}
               </Label>
               <Input
                 id="confirm-start"
@@ -760,8 +805,9 @@ export function RequestsInbox({
                 onChange={(event) => setScheduledStart(event.target.value)}
               />
               <p className="text-[11.5px] text-muted-foreground">
-                La fecha debe respetar la anticipación mínima configurada y no
-                superponerse con otras citas de la agenda.
+                {t(
+                  "La fecha debe respetar la anticipación mínima configurada y no superponerse con otras citas de la agenda.",
+                )}
               </p>
             </div>
             {actionError && (
@@ -784,7 +830,7 @@ export function RequestsInbox({
               }}
               disabled={busy}
             >
-              Cancelar
+              {t("Cancelar")}
             </Button>
             <Button
               onClick={doConfirm}
@@ -798,7 +844,7 @@ export function RequestsInbox({
               className="gap-1.5 bg-[var(--sidebar)] text-white hover:bg-[var(--sidebar)]/90"
             >
               <CalendarClock className="size-4" aria-hidden />
-              {busy ? "Confirmando…" : "Confirmar cita"}
+              {busy ? t("Confirmando…") : t("Confirmar cita")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -862,6 +908,7 @@ function RequestDetail({
   onReject: () => void;
   onConfirm: () => void;
 }) {
+  const t = useT();
   if (!request) return null;
 
   const pending = request.status === "Pending";
@@ -876,10 +923,12 @@ function RequestDetail({
         </div>
         <div className="flex min-w-0 flex-col gap-0.5">
           <DialogTitle className="text-[14px] font-semibold text-white">
-            {request.patientName ?? "Paciente"}
+            {request.patientName ?? t("Paciente")}
           </DialogTitle>
           <DialogDescription className="text-[11.5px] leading-snug text-white/75">
-            Solicitud de {request.specialtyName ?? "telemedicina"}
+            {t("Solicitud de {specialty}", {
+              specialty: request.specialtyName ?? t("telemedicina"),
+            })}
           </DialogDescription>
         </div>
       </div>
@@ -887,12 +936,12 @@ function RequestDetail({
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
         <DetailItem
           icon={Stethoscope}
-          label="Especialidad"
+          label={t("Especialidad")}
           value={request.specialtyName ?? "—"}
         />
         <DetailItem
           icon={statusIcon(request.status)}
-          label="Estado"
+          label={t("Estado")}
           value={
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
@@ -902,42 +951,44 @@ function RequestDetail({
                 className: "size-3",
                 "aria-hidden": true,
               })}
-              {requestStatusLabel[request.status]}
+              {t(requestStatusLabel[request.status])}
             </span>
           }
         />
         <DetailItem
           icon={CalendarClock}
-          label="Solicitada"
+          label={t("Solicitada")}
           value={formatDateTime(request.createdAt)}
         />
         <DetailItem
           icon={CalendarCheck}
-          label="Fecha preferida"
+          label={t("Fecha preferida")}
           value={
             request.preferredStart
               ? formatDateTime(request.preferredStart)
-              : "Sin preferencia"
+              : t("Sin preferencia")
           }
         />
         <DetailItem
           icon={MapPin}
-          label="Ubicación"
+          label={t("Ubicación")}
           value={
-            request.locationId ? "Sede registrada en la solicitud" : "A definir"
+            request.locationId
+              ? t("Sede registrada en la solicitud")
+              : t("A definir")
           }
           secondary
         />
         <DetailItem
           icon={FileText}
-          label="Motivo de la consulta"
+          label={t("Motivo de la consulta")}
           value={request.reason ?? "—"}
         />
         {request.status === "Rejected" && request.rejectionReason && (
           <div className="col-span-2">
             <DetailItem
               icon={MessageSquareX}
-              label="Motivo del rechazo"
+              label={t("Motivo del rechazo")}
               value={
                 <span className="font-medium text-destructive">
                   {request.rejectionReason}
@@ -956,7 +1007,7 @@ function RequestDetail({
             className="gap-1.5 bg-[var(--sidebar)] text-white hover:bg-[var(--sidebar)]/90"
           >
             <CalendarClock className="size-4" aria-hidden />
-            Confirmar cita
+            {t("Confirmar cita")}
           </Button>
           {pending && (
             <Button
@@ -965,7 +1016,7 @@ function RequestDetail({
               className="gap-1.5 border-success/60 text-success hover:bg-success-soft hover:text-success"
             >
               <Check className="size-4" aria-hidden />
-              Aprobar
+              {t("Aprobar")}
             </Button>
           )}
           <Button
@@ -974,7 +1025,7 @@ function RequestDetail({
             className="gap-1.5 border-destructive/70 text-destructive hover:bg-destructive-soft hover:text-destructive"
           >
             <XCircle className="size-4" aria-hidden />
-            Rechazar
+            {t("Rechazar")}
           </Button>
         </DialogFooter>
       )}
@@ -1022,6 +1073,7 @@ function RequestItem({
   onConfirm: (request: AppointmentRequestDto) => void;
   onDetail: (request: AppointmentRequestDto) => void;
 }) {
+  const t = useT();
   const pending = request.status === "Pending";
   const approved = request.status === "Approved";
   // El backend permite confirmar solicitudes Pending o Approved (derivan en cita).
@@ -1064,11 +1116,11 @@ function RequestItem({
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[13.5px] font-semibold text-foreground">
-            {request.patientName ?? "Paciente"}
+            {request.patientName ?? t("Paciente")}
           </span>
           <Badge variant="secondary" className="gap-1">
             <Stethoscope className="size-3" aria-hidden />
-            {request.specialtyName ?? "Especialidad"}
+            {request.specialtyName ?? t("Especialidad")}
           </Badge>
         </div>
 
@@ -1082,7 +1134,8 @@ function RequestItem({
           <p className="flex items-start gap-1 text-[12px] text-destructive">
             <MessageSquareX className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             <span>
-              Motivo del rechazo: <strong>{request.rejectionReason}</strong>
+              {t("Motivo del rechazo")}:{" "}
+              <strong>{request.rejectionReason}</strong>
             </span>
           </p>
         )}
@@ -1095,10 +1148,10 @@ function RequestItem({
           {request.preferredStart ? (
             <span className="inline-flex items-center gap-1">
               <CalendarClock className="size-3" aria-hidden />
-              Preferida: {formatDateTime(request.preferredStart)}
+              {t("Preferida:")} {formatDateTime(request.preferredStart)}
             </span>
           ) : (
-            <span>Sin fecha preferida</span>
+            <span>{t("Sin fecha preferida")}</span>
           )}
         </div>
       </div>
@@ -1115,7 +1168,7 @@ function RequestItem({
             className: "size-3",
             "aria-hidden": true,
           })}
-          {requestStatusLabel[request.status]}
+          {t(requestStatusLabel[request.status])}
         </span>
         <div className="flex flex-wrap items-center gap-1.5">
           <Button
@@ -1123,10 +1176,12 @@ function RequestItem({
             variant="ghost"
             className="gap-1.5 text-muted-foreground hover:text-[var(--sidebar)]"
             onClick={() => onDetail(request)}
-            aria-label={`Ver detalle de ${request.patientName ?? "la solicitud"}`}
+            aria-label={t("Ver detalle de {name}", {
+              name: request.patientName ?? t("la solicitud"),
+            })}
           >
             <Eye className="size-3.5" aria-hidden />
-            Detalles
+            {t("Detalles")}
           </Button>
           {reviewable && canConfirm && (
             <>
@@ -1138,7 +1193,7 @@ function RequestItem({
                   onClick={() => onApprove(request)}
                 >
                   <Check className="size-3.5" aria-hidden />
-                  Aprobar
+                  {t("Aprobar")}
                 </Button>
               )}
               <Button
@@ -1148,7 +1203,7 @@ function RequestItem({
                 onClick={() => onReject(request)}
               >
                 <XCircle className="size-3.5" aria-hidden />
-                Rechazar
+                {t("Rechazar")}
               </Button>
               <Button
                 size="sm"
@@ -1156,7 +1211,7 @@ function RequestItem({
                 onClick={() => onConfirm(request)}
               >
                 <CalendarClock className="size-3.5" aria-hidden />
-                Confirmar
+                {t("Confirmar")}
               </Button>
             </>
           )}
@@ -1179,4 +1234,14 @@ function dayLabel(iso: string): string {
   if (diffDays <= 0) return "Hoy";
   if (diffDays === 1) return "Ayer";
   return formatDate(iso);
+}
+
+function translateDayLabel(
+  label: string,
+  t: ReturnType<typeof useT>,
+): string {
+  if (label === "Hoy") return t("Hoy");
+  if (label === "Ayer") return t("Ayer");
+  if (label === "Anteriores") return t("Anteriores");
+  return label;
 }

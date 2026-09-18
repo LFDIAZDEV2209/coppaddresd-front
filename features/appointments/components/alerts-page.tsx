@@ -207,8 +207,11 @@ export function AlertsPage() {
         title={t("Alertas")}
         description={
           unread > 0
-            ? `${unread} alertas sin leer · ${total} en total`
-            : `${total} alertas · todas leídas`
+            ? t("{unread} alertas sin leer · {total} en total", {
+                unread: String(unread),
+                total: String(total),
+              })
+            : t("{total} alertas · todas leídas", { total: String(total) })
         }
         icon={Bell}
         actions={
@@ -224,7 +227,7 @@ export function AlertsPage() {
                 className={cn("size-4", loading && "animate-spin")}
                 aria-hidden
               />
-              Actualizar
+              {t("Actualizar")}
             </Button>
             {unread > 0 && (
               <Button
@@ -234,7 +237,7 @@ export function AlertsPage() {
                 disabled={busy}
               >
                 <CheckCheck className="size-4" aria-hidden />
-                {busy ? "Marcando…" : "Marcar todas"}
+                {busy ? t("Marcando…") : t("Marcar todas")}
               </Button>
             )}
           </>
@@ -248,7 +251,7 @@ export function AlertsPage() {
         >
           <p className="flex items-center gap-2">
             <AlertOctagon className="size-4" aria-hidden />
-            {error}
+            {t(error)}
           </p>
           <Button
             size="sm"
@@ -257,7 +260,7 @@ export function AlertsPage() {
             className="shrink-0 gap-1.5"
           >
             <RefreshCw className="size-3.5" aria-hidden />
-            Reintentar
+            {t("Reintentar")}
           </Button>
         </div>
       )}
@@ -289,7 +292,10 @@ export function AlertsPage() {
           value={String(alerts.length)}
           icon={LayoutList}
           variant="navy"
-          context={`página ${page} · ${total} en total`}
+          context={t("página {page} · {total} en total", {
+            page: String(page),
+            total: String(total),
+          })}
         />
       </div>
 
@@ -325,7 +331,7 @@ export function AlertsPage() {
               className="flex items-center gap-1.5 text-[12px] text-muted-foreground"
             >
               <ArrowDownUp className="size-3.5" aria-hidden />
-              Orden
+              {t("Orden")}
             </label>
             <select
               id="order-by"
@@ -346,7 +352,7 @@ export function AlertsPage() {
               disabled={!hasFilters}
             >
               <X className="size-3.5" aria-hidden />
-              Limpiar
+              {t("Limpiar")}
             </Button>
           </div>
         </div>
@@ -394,7 +400,7 @@ export function AlertsPage() {
                     className: "size-3.5",
                     "aria-hidden": true,
                   })}
-                  {chip.label}
+                  {t(chip.label)}
                   <span
                     className={cn(
                       "rounded-full px-1.5 text-[10.5px] font-semibold",
@@ -425,7 +431,7 @@ export function AlertsPage() {
               className: "size-3.5",
               "aria-hidden": true,
             })}
-            Solo sin leer
+            {t("Solo sin leer")}
             <span
               className={cn(
                 "rounded-full px-1.5 text-[10.5px] font-semibold",
@@ -460,12 +466,12 @@ export function AlertsPage() {
             )}
           </div>
           <p className="text-sm font-medium text-foreground">
-            {hasFilters ? "Sin alertas que coincidan" : "No hay alertas"}
+            {hasFilters ? t("Sin alertas que coincidan") : t("No hay alertas")}
           </p>
           <p className="max-w-sm text-[12.5px] text-muted-foreground">
             {hasFilters
-              ? "Prueba con otros filtros o limpia la búsqueda."
-              : "Los eventos de tus citas y solicitudes aparecerán aquí."}
+              ? t("Prueba con otros filtros o limpia la búsqueda.")
+              : t("Los eventos de tus citas y solicitudes aparecerán aquí.")}
           </p>
           {hasFilters && (
             <Button
@@ -475,7 +481,7 @@ export function AlertsPage() {
               onClick={resetFilters}
             >
               <X className="size-3.5" aria-hidden />
-              Limpiar filtros
+              {t("Limpiar filtros")}
             </Button>
           )}
         </div>
@@ -508,10 +514,13 @@ export function AlertsPage() {
             onClick={() => setPage(page - 1)}
           >
             <ChevronLeft className="size-4" aria-hidden />
-            Anterior
+            {t("Anterior")}
           </Button>
           <span className="text-[12px] text-muted-foreground">
-            Página {page} de {totalPages}
+            {t("Página {page} de {totalPages}", {
+              page: String(page),
+              totalPages: String(totalPages),
+            })}
           </span>
           <Button
             variant="outline"
@@ -520,7 +529,7 @@ export function AlertsPage() {
             disabled={page >= totalPages}
             onClick={() => setPage(page + 1)}
           >
-            Siguiente
+            {t("Siguiente")}
             <ChevronRight className="size-4" aria-hidden />
           </Button>
         </div>
@@ -588,7 +597,11 @@ function AlertCard({
           onClick={onToggle}
           className="flex min-w-0 flex-1 flex-col gap-1 text-left"
           aria-expanded={expanded}
-          aria-label={`${unreadAlert ? "Alerta sin leer: " : "Alerta: "}${alert.title}`}
+          aria-label={
+            unreadAlert
+              ? t("Alerta sin leer: {title}", { title: alert.title })
+              : t("Alerta: {title}", { title: alert.title })
+          }
         >
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[13.5px] font-semibold text-foreground">
@@ -604,7 +617,7 @@ function AlertCard({
                 color: severity.textColor,
               }}
             >
-              {severity.label}
+              {t(severity.label)}
             </span>
           </div>
 
@@ -614,7 +627,7 @@ function AlertCard({
               !expanded && "line-clamp-2",
             )}
           >
-            {alert.body ?? "Sin detalle adicional."}
+            {alert.body ?? t("Sin detalle adicional.")}
           </p>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground/70">
@@ -623,7 +636,7 @@ function AlertCard({
                 className: "size-3",
                 "aria-hidden": true,
               })}
-              {type.label}
+              {t(type.label)}
             </span>
             <span
               className="inline-flex items-center gap-1"
@@ -657,7 +670,7 @@ function AlertCard({
                     aria-label={t("Abrir cita relacionada")}
                   >
                     <Eye className="size-3.5" aria-hidden />
-                    Ver cita relacionada
+                    {t("Ver cita relacionada")}
                   </Link>
                 )}
               </div>
@@ -672,17 +685,21 @@ function AlertCard({
               variant="ghost"
               className="gap-1.5 text-muted-foreground hover:text-[var(--sidebar)]"
               onClick={onRead}
-              aria-label={`Marcar como leída: ${alert.title}`}
+              aria-label={t("Marcar como leída: {title}", {
+                title: alert.title,
+              })}
             >
               <CheckCheck className="size-3.5" aria-hidden />
-              Leída
+              {t("Leída")}
             </Button>
           )}
           <Button
             size="icon-sm"
             variant="ghost"
             onClick={onToggle}
-            aria-label={expanded ? "Contraer detalle" : "Expandir detalle"}
+            aria-label={
+              expanded ? t("Contraer detalle") : t("Expandir detalle")
+            }
             className="text-muted-foreground hover:text-[var(--sidebar)]"
           >
             <ChevronDown

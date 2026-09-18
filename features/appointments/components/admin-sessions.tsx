@@ -36,7 +36,7 @@ export function AdminSessions() {
 
       {error && (
         <p className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
 
@@ -79,12 +79,16 @@ export function AdminSessions() {
                   <TableCell>{session.endedAt ? formatDateTime(session.endedAt) : "—"}</TableCell>
                   <TableCell>
                     {session.durationSeconds != null
-                      ? `${Math.round(session.durationSeconds / 60)} min`
+                      ? t("{minutes} min", {
+                          minutes: String(
+                            Math.round(session.durationSeconds / 60),
+                          ),
+                        })
                       : "—"}
                   </TableCell>
                   <TableCell>
                     <StatusBadge
-                      status={sessionStatusLabel[session.status]}
+                      status={t(sessionStatusLabel[session.status])}
                       color={sessionStatusColor(session.status)}
                     />
                   </TableCell>

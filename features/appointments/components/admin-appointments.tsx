@@ -220,6 +220,7 @@ function SortableHeader({
   onSort: (key: SortKey) => void;
   className?: string;
 }) {
+  const t = useT();
   const active = activeKey === sortKey;
   const SortIcon = active ? (dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
   return (
@@ -227,7 +228,7 @@ function SortableHeader({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        aria-label={`Ordenar por ${label}`}
+        aria-label={t("Ordenar por {label}", { label })}
         className={cn(
           "inline-flex items-center gap-1 text-[11.5px] font-semibold uppercase tracking-wider transition-colors",
           active ? "text-white" : "text-white/80 hover:text-white",
@@ -406,7 +407,9 @@ export function AdminAppointments({
           variant="primary"
           context={
             summary && summary.activeSessions > 0
-              ? `${summary.activeSessions} sesiones activas`
+              ? t("{count} sesiones activas", {
+                  count: String(summary.activeSessions),
+                })
               : undefined
           }
         />
@@ -462,8 +465,9 @@ export function AdminAppointments({
           </div>
           {activeFilterCount > 0 && (
             <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-primary-strong">
-              {activeFilterCount} activo
-              {activeFilterCount !== 1 ? "s" : ""}
+              {activeFilterCount === 1
+                ? t("1 activo")
+                : t("{count} activos", { count: String(activeFilterCount) })}
             </span>
           )}
           <div className="ml-auto">
@@ -480,7 +484,7 @@ export function AdminAppointments({
               )}
             >
               <RotateCcw className="size-3.5" data-icon="inline-start" />
-              Limpiar
+              {t("Limpiar")}
             </Button>
           </div>
         </div>
@@ -832,7 +836,7 @@ export function AdminAppointments({
                   </TableCell>
                   <TableCell>
                     <StatusBadge
-                      status={appointmentStatusLabel[appointment.status]}
+                      status={t(appointmentStatusLabel[appointment.status])}
                       color={appointmentStatusColor(appointment.status)}
                     />
                   </TableCell>
@@ -888,7 +892,7 @@ export function AdminAppointments({
                     </div>
                   </div>
                   <StatusBadge
-                    status={appointmentStatusLabel[appointment.status]}
+                    status={t(appointmentStatusLabel[appointment.status])}
                     color={color}
                   />
                 </div>

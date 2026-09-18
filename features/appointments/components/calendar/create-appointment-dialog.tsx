@@ -32,11 +32,6 @@ import type { AppointmentDto, SpecialtyDto } from "../../types";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
-const DURATION_ITEMS = DURATION_OPTIONS.map((minutes) => ({
-  value: String(minutes),
-  label: `${minutes} min`,
-}));
-
 function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
@@ -145,6 +140,15 @@ function CreateAppointmentForm({
   const specialtyItems = useMemo(
     () => specialties.map((s) => ({ value: s.id, label: s.name })),
     [specialties],
+  );
+
+  const durationItems = useMemo(
+    () =>
+      DURATION_OPTIONS.map((minutes) => ({
+        value: String(minutes),
+        label: t("{minutes} min", { minutes: String(minutes) }),
+      })),
+    [t],
   );
 
   const [dateValue, setDateValue] = useState(() => toDateInput(start));
@@ -406,7 +410,7 @@ function CreateAppointmentForm({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="create-duration">{t("Duración")}</Label>
             <Select
-              items={DURATION_ITEMS}
+              items={durationItems}
               value={String(duration)}
               onValueChange={(value) => setDuration(Number(value ?? duration))}
             >
@@ -416,7 +420,7 @@ function CreateAppointmentForm({
               <SelectContent>
                 {DURATION_OPTIONS.map((minutes) => (
                   <SelectItem key={minutes} value={String(minutes)}>
-                    {minutes} min
+                    {t("{minutes} min", { minutes: String(minutes) })}
                   </SelectItem>
                 ))}
               </SelectContent>
