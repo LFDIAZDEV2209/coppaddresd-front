@@ -103,7 +103,7 @@ export function KnowledgePageContent() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
-        title={t('Conocimiento')}
+        title={t('Agente Global')}
         description={t('Knowledge bases globales y por agente con documentos indexados para RAG')}
         icon={BookOpen}
         actions={

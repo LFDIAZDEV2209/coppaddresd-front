@@ -379,14 +379,14 @@ export const navModules: NavModule[] = [
     permission: "Agents.View",
     items: [
       {
-        label: "Agentes",
+        label: "Agentes especializados",
         href: "/agents",
         icon: Bot,
         color: "#7C3AED",
         permission: "Agents.View",
       },
       {
-        label: "Conocimiento",
+        label: "Agente Global",
         href: "/agents/knowledge",
         icon: BrainCircuit,
         color: "#6D28D9",

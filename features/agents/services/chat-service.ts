@@ -24,9 +24,14 @@ export async function sendChat(payload: ChatRequestPayload): Promise<ChatResult>
 }
 
 export interface StreamEvent {
-  type: "start" | "token" | "node" | "done" | "error";
+  type: "start" | "token" | "node" | "flow" | "done" | "error";
   token?: string;
   node?: string;
+  /** Eventos `flow` (visibilidad del grafo): fase del nodo y duración. */
+  phase?: "start" | "end";
+  step?: number;
+  ts?: number;
+  durationMs?: number;
   threadId?: string;
   executionId?: string;
   error?: string;
@@ -84,15 +89,28 @@ export async function streamChat(
         token?: string;
         content?: string;
         node?: string;
+        phase?: string;
+        step?: number;
+        ts?: number;
+        duration_ms?: number;
         thread_id?: string;
         execution_id?: string;
         error?: string;
       };
       // El AI Service emite {"type":"token","content":"..."} — `content` es el texto.
       if (parsed.type === "token" && (parsed.content || parsed.token)) {
-        onEvent({ type: "token", token: parsed.content ?? parsed.token });
+        onEvent({ type: "token", token: parsed.content ?? parsed.token, node: parsed.node });
       } else if (parsed.type === "node" && parsed.node) {
         onEvent({ type: "node", node: parsed.node });
+      } else if (parsed.type === "flow" && parsed.node && (parsed.phase === "start" || parsed.phase === "end")) {
+        onEvent({
+          type: "flow",
+          node: parsed.node,
+          phase: parsed.phase,
+          step: parsed.step,
+          ts: parsed.ts,
+          durationMs: parsed.duration_ms,
+        });
       } else if (parsed.type === "error" && parsed.error) {
         onEvent({ type: "error", error: parsed.error });
       } else if (parsed.thread_id || parsed.execution_id) {

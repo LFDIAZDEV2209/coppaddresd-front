@@ -27,6 +27,7 @@ import type {
   AgentExecutionsList,
   AgentExecutionsFilters,
   AgentExecutionDetail,
+  AgentGraph,
 } from "../types";
 
 const PATH = `${env.apiUrl}/api/v1/agents`;
@@ -164,6 +165,12 @@ export async function fetchExecutions(
 
 export async function fetchExecution(id: string): Promise<AgentExecutionDetail> {
   return apiFetch<AgentExecutionDetail>(`${PATH}/executions/${id}`);
+}
+
+// --- Grafo del agente (flujos en vivo del playground) ---
+
+export async function fetchAgentGraph(agentTypeId: string): Promise<AgentGraph> {
+  return apiFetch<AgentGraph>(`${PATH}/${agentTypeId}/graph`);
 }
 
 // --- Utilidades de presentación ---

@@ -126,6 +126,58 @@ export interface AgentExecutionsList {
   items: AgentExecutionSummary[];
 }
 
+// --- Grafo del agente (visualización de flujos) ---
+
+export type AgentGraphNodeKind = "start" | "guard" | "llm" | "tools" | "memory" | "end";
+
+export interface AgentGraphNode {
+  id: string;
+  label: string;
+  kind: AgentGraphNodeKind;
+  description: string | null;
+  meta: Record<string, unknown> | null;
+}
+
+export interface AgentGraphEdge {
+  source: string;
+  target: string;
+  kind: "flow" | "conditional";
+  label: string | null;
+}
+
+export interface AgentGraphRagConfig {
+  enabled: boolean;
+  knowledgeBaseCount: number;
+  topK: number;
+}
+
+export interface AgentGraphMemoryConfig {
+  enabled: boolean;
+  categories: string[];
+}
+
+export interface AgentGraphConfig {
+  provider: string | null;
+  model: string | null;
+  temperature: number | null;
+  maxTokens: number | null;
+  tools: string[];
+  rag: AgentGraphRagConfig;
+  memory: AgentGraphMemoryConfig;
+  maxToolCalls: number;
+  recursionLimit: number;
+}
+
+/** Descriptor del grafo del agente (proxy del backend → AI Service). */
+export interface AgentGraph {
+  agentTypeId: string;
+  source: "runtime" | "base";
+  versionId: string | null;
+  nodes: AgentGraphNode[];
+  edges: AgentGraphEdge[];
+  config: AgentGraphConfig;
+}
+
 // --- Payloads ---
 
 export interface AgentTypeRequest {
