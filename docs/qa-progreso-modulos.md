@@ -48,11 +48,21 @@ Metodología completa en `/PROMPT_TESTING.md`.
   roles por clínica (cambio+reversión), directorio, filtros, búsqueda, detalle.
 - Remanente dev: empleado `QaProf Borrar` (qa.prof@) Invitado sin usuario
   (sin borrar-empleados por UI; expira invitación 72h). Usuario qa.prof eliminado (53 OK).
-- Hallazgos nuevos: invitation link con `http://localhost:3000` en prod (revisar
-  config backend Frontend:BaseUrl); org muestra UUID (dato seed); Base UI Select
-  no cierra con Escape/outside-click (solo seleccionando) — global, tarea aparte;
-  fila "01a03..." UUID visible en detalle (revisar); "1 profesionales visibles"
-  corregido; placeholders EN→ES en wizard identidad.
+- Hallazgos nuevos: invitation link con `http://localhost:3000` en prod ✅ CORREGIDO
+  en AWS (causa: `Auth__Email__FrontendUrl` nunca bindeaba — la sección es `Email`
+  raíz; rev45 con `Email__FrontendUrl=https://erp.coppadresd.com`, verificado E2E);
+  org muestra UUID (dato seed); Base UI Select no cerraba ✅ CORREGIDO en
+  `components/ui/select.tsx` (causa: `data-[align-trigger=true]:animate-none`
+  mataba exit-animation→unmount + `modal=true` por defecto bloqueaba todo;
+  fix: sin animate-none + `modal={false}`, wrapper genérico preserva tipos);
+  fila "01a03..." UUID visible en detalle (pendiente verificar visual);
+  "1 profesionales visibles" corregido; placeholders EN→ES en wizard identidad.
+- Flujo end-user verificado: invitación → aceptar → password → login como
+  profesional → onboarding (profesión+especialidad+perfil) → dashboard con menú
+  limitado + guards ("Acceso denegado" en /users) ✅. PERO dashboard muestra KPIs
+  globales + acciones admin a un profesional de clínica (pendiente: gatear por
+  permiso + KPIs por alcance — backlog).
+- Remanente: usuario `qa.enduser` + empleado asociado (limpiar con admin).
 
 ## Deuda cross-módulo (no re-descubrir)
 
