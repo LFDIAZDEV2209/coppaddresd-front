@@ -62,6 +62,14 @@ Metodología completa en `/PROMPT_TESTING.md`.
   limitado + guards ("Acceso denegado" en /users) ✅. PERO dashboard muestra KPIs
   globales + acciones admin a un profesional de clínica (pendiente: gatear por
   permiso + KPIs por alcance — backlog).
+- **[ALTO] /me ignoraba roles con scope** (descubierto como QaE2E: `roles:[]`,
+  `permissions:[]` con rol Professional Global asignado): fix en rama backend
+  `qa/auth-me-scoped-permissions` (coppAddresdBack, 1 commit, sin push) —
+  nuevo `GetUserEffectivePermissionCodesAsync` (union laxa SOLO para UI;
+  los claims JWT siguen estrictos para no globalizar permisos de clínica),
+  `/me` une nombres de roles scoped, `CurrentContext` autoriza scope Global.
+  Tests nuevos (2) + 84 Auth en verde. ⚠️ Requiere tu merge+push de backend
+  y re-login del profesional para verificar menús.
 - Remanente: usuario `qa.enduser` ✅ ELIMINADO (53 OK 2026-09-18); empleado huérfano
   sin usuario (sin borrar-empleados por UI).
 - UUID en detalle (`01a03fcf...` en vez de "Professional" en el trigger): el scope
