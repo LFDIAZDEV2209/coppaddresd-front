@@ -5,6 +5,7 @@
  */
 
 import type { ProfessionalClinicAssignment } from "@/features/professionals/services/employees-service";
+import { PROFESSIONAL_CLINICS_ENABLED } from "@/features/professionals/config";
 
 // --- Modo del wizard ---
 
@@ -12,7 +13,12 @@ export type Mode = "professional" | "employee" | "patient" | "user";
 
 /** Parsea el parámetro de query ?mode= y valida que sea un modo conocido. */
 export function parseMode(raw: string | undefined | null): Mode | null {
-  if (raw === "professional" || raw === "employee" || raw === "patient" || raw === "user")
+  if (
+    raw === "professional" ||
+    raw === "employee" ||
+    raw === "patient" ||
+    raw === "user"
+  )
     return raw;
   return null;
 }
@@ -53,7 +59,9 @@ export function getAvailableModes(
     { mode: "user", permission: "Users.Create" },
   ];
 
-  const candidates = context ? CONTEXT_MODES[context] : allModes.map((m) => m.mode);
+  const candidates = context
+    ? CONTEXT_MODES[context]
+    : allModes.map((m) => m.mode);
 
   return allModes
     .filter((m) => candidates.includes(m.mode))
@@ -283,9 +291,13 @@ export const USER_STEPS: StepDef[] = [
 export function getSteps(mode: Mode): StepDef[] {
   switch (mode) {
     case "professional":
-      return PROFESSIONAL_STEPS;
+      return PROFESSIONAL_CLINICS_ENABLED
+        ? PROFESSIONAL_STEPS
+        : PROFESSIONAL_STEPS.filter((s) => s.key !== "clinics");
     case "employee":
-      return EMPLOYEE_STEPS;
+      return PROFESSIONAL_CLINICS_ENABLED
+        ? EMPLOYEE_STEPS
+        : EMPLOYEE_STEPS.filter((s) => s.key !== "clinics");
     case "patient":
       return PATIENT_STEPS;
     case "user":

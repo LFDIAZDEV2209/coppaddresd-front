@@ -23,6 +23,7 @@ import { DirectoryIcon } from "./directory-icon";
 import { fullName, ProfessionalAvatar } from "../professional-visuals";
 import { ActionsMenu } from "./actions-menu";
 import { ProfessionalAccess } from "./professional-access";
+import { PROFESSIONAL_CLINICS_ENABLED } from "@/features/professionals/config";
 import type { EmployeeListItem } from "../../services/employees-service";
 
 // --- Tabla ---
@@ -138,7 +139,10 @@ export function DirectoryTable({
         <DirectoryIcon kind="team" className="directory-3d-icon--small" />
         <div>
           <h2 className="text-sm font-semibold text-foreground">
-            {employees.length} {t("profesionales visibles")}
+            {employees.length}{" "}
+            {employees.length === 1
+              ? t("profesional visible")
+              : t("profesionales visibles")}
           </h2>
           <p className="text-xs text-muted-foreground">{t("Equipo del ERP")}</p>
         </div>
@@ -169,9 +173,11 @@ export function DirectoryTable({
             <TableHead className="hidden lg:table-cell">
               {t("Especialidades")}
             </TableHead>
-            <TableHead className="hidden xl:table-cell">
-              {t("Clínicas")}
-            </TableHead>
+            {PROFESSIONAL_CLINICS_ENABLED && (
+              <TableHead className="hidden xl:table-cell">
+                {t("Clínicas")}
+              </TableHead>
+            )}
             <SortableHead
               label={t("Estado")}
               field="status"
@@ -255,28 +261,30 @@ export function DirectoryTable({
                   )}
                 </div>
               </TableCell>
-              <TableCell className="hidden xl:table-cell">
-                <div className="flex max-w-52 flex-wrap gap-1">
-                  {employee.clinicNames.length ? (
-                    employee.clinicNames.slice(0, 2).map((name) => (
-                      <span
-                        key={name}
-                        className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
-                      >
-                        <Building2 className="size-3" />
-                        {name}
+              {PROFESSIONAL_CLINICS_ENABLED && (
+                <TableCell className="hidden xl:table-cell">
+                  <div className="flex max-w-52 flex-wrap gap-1">
+                    {employee.clinicNames.length ? (
+                      employee.clinicNames.slice(0, 2).map((name) => (
+                        <span
+                          key={name}
+                          className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          <Building2 className="size-3" />
+                          {name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                    {employee.clinicNames.length > 2 && (
+                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10.5px] font-medium text-muted-foreground">
+                        +{employee.clinicNames.length - 2}
                       </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                  {employee.clinicNames.length > 2 && (
-                    <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10.5px] font-medium text-muted-foreground">
-                      +{employee.clinicNames.length - 2}
-                    </span>
-                  )}
-                </div>
-              </TableCell>
+                    )}
+                  </div>
+                </TableCell>
+              )}
               <TableCell>
                 <ProfessionalAccess employee={employee} />
               </TableCell>
