@@ -20,9 +20,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DirectoryIcon } from "./directory-icon";
-import { fullName, ProfessionalAvatar } from "../professional-visuals";
+import {
+  fullName,
+  ProfessionalAvatar,
+  ProfessionalStatusBadge,
+} from "../professional-visuals";
 import { ActionsMenu } from "./actions-menu";
-import { ProfessionalAccess } from "./professional-access";
 import type { EmployeeListItem } from "../../services/employees-service";
 
 // --- Tabla ---
@@ -278,7 +281,7 @@ export function DirectoryTable({
                 </div>
               </TableCell>
               <TableCell>
-                <ProfessionalAccess employee={employee} />
+                <ProfessionalStatusBadge status={employee.status} />
               </TableCell>
               <TableCell>
                 <ActionsMenu

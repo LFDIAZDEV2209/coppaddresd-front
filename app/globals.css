@@ -625,6 +625,10 @@
 .professional-directory .professional-access-switch[data-checked] {
   background: #087d43;
 }
+.professional-directory .professional-access-switch[data-unchecked] {
+  /* El estado inactivo se atenúa; el toggle vive en el menú de acciones. */
+  opacity: 0.6;
+}
 .professional-directory .professional-access-switch [data-slot="switch-thumb"] {
   position: absolute;
   top: 3px;

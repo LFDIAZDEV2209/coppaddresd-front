@@ -20,7 +20,7 @@ import {
   changeProfessionalAccess,
   type EmployeeListItem,
 } from "../../services/employees-service";
-import { fullName, ProfessionalStatusBadge } from "../professional-visuals";
+import { fullName } from "../professional-visuals";
 
 type AccessChange = {
   operationId: string;
@@ -135,15 +135,14 @@ export function ProfessionalAccessProvider({
   return <AccessContext value={{ changes, change }}>{children}</AccessContext>;
 }
 
-export function ProfessionalAccess({
-  employee,
-}: {
-  employee: EmployeeListItem;
-}) {
+/**
+ * Estado del cambio de acceso de un empleado. Compartido entre el switch del
+ * menú de acciones y el ítem que lo contiene (permite alternar con teclado).
+ */
+export function useProfessionalAccessState(employee: EmployeeListItem) {
   const context = use(AccessContext);
   const { can } = useAppContext();
   const { user } = useAuth();
-  const t = useT();
   const descriptionId = useId();
   if (!context)
     throw new Error("ProfessionalAccess necesita ProfessionalAccessProvider");
@@ -158,34 +157,51 @@ export function ProfessionalAccess({
       : (employee.pendingStatus ?? employee.status);
   const ownAccess = user?.id === employee.userId;
   const readOnly = !can("Employees.Update") || ownAccess || !employee.userId;
+  return {
+    context,
+    change,
+    saving,
+    pending,
+    uncertain,
+    state,
+    ownAccess,
+    readOnly,
+    disabled: readOnly || saving || pending || uncertain,
+    descriptionId,
+    toggle: () => void context.change(employee),
+  };
+}
 
-  if (employee.status === "Invited" || !employee.isProfessional)
-    return <ProfessionalStatusBadge status={employee.status} />;
+export function ProfessionalAccess({
+  employee,
+}: {
+  employee: EmployeeListItem;
+}) {
+  const t = useT();
+  const {
+    context,
+    change,
+    saving,
+    pending,
+    uncertain,
+    state,
+    ownAccess,
+    readOnly,
+    disabled,
+    descriptionId,
+    toggle,
+  } = useProfessionalAccessState(employee);
+
+  if (employee.status === "Invited" || !employee.isProfessional) return null;
 
   return (
     <div
-      className="professional-access flex min-w-32 flex-col items-start gap-1"
+      className="professional-access flex w-full flex-col gap-1"
       onClick={(event) => event.stopPropagation()}
     >
-      <div className="flex min-h-11 items-center gap-3">
-        <SwitchPrimitive.Root
-          checked={state === "Active"}
-          disabled={readOnly || saving || pending || uncertain}
-          aria-label={t("Acceso al ERP de {name}", {
-            name: fullName(employee),
-          })}
-          aria-describedby={descriptionId}
-          aria-busy={saving || pending}
-          onCheckedChange={() => void context.change(employee)}
-          className="professional-access-switch relative inline-flex shrink-0 rounded-full"
-        >
-          <SwitchPrimitive.Thumb
-            data-slot="switch-thumb"
-            className="block rounded-full"
-          />
-        </SwitchPrimitive.Root>
+      <div className="flex items-center gap-2">
         <span
-          className="text-sm font-medium text-foreground"
+          className="min-w-0 flex-1 truncate text-sm font-medium text-foreground"
           aria-live="polite"
         >
           {saving
@@ -194,29 +210,43 @@ export function ProfessionalAccess({
               ? t("Sincronizando…")
               : uncertain
                 ? t("Por confirmar")
-                : state === "Active"
-                  ? t("Activo")
-                  : t("Inactivo")}
+                : t("Acceso al ERP")}
         </span>
         {saving || pending ? (
           <LoaderCircle
             aria-hidden
-            className="size-3.5 animate-spin text-primary motion-reduce:animate-none"
+            className="size-3.5 shrink-0 animate-spin text-primary motion-reduce:animate-none"
           />
         ) : ownAccess ? (
-          <LockKeyhole aria-hidden className="size-3.5 text-muted-foreground" />
+          <LockKeyhole
+            aria-hidden
+            className="size-3.5 shrink-0 text-muted-foreground"
+          />
         ) : null}
+        <SwitchPrimitive.Root
+          checked={state === "Active"}
+          disabled={disabled}
+          aria-label={t("Acceso al ERP de {name}", {
+            name: fullName(employee),
+          })}
+          aria-describedby={descriptionId}
+          aria-busy={saving || pending}
+          onCheckedChange={toggle}
+          className="professional-access-switch relative inline-flex shrink-0 rounded-full"
+        >
+          <SwitchPrimitive.Thumb
+            data-slot="switch-thumb"
+            className="block rounded-full"
+          />
+        </SwitchPrimitive.Root>
+        <span id={descriptionId} className="sr-only">
+          {ownAccess
+            ? t("Tu acceso está protegido")
+            : readOnly
+              ? t("Sin permiso para cambiar el acceso")
+              : t("Solo afecta al ERP; conserva el acceso como paciente.")}
+        </span>
       </div>
-      <span
-        id={descriptionId}
-        className={ownAccess ? "text-xs text-muted-foreground" : "sr-only"}
-      >
-        {ownAccess
-          ? t("Tu acceso está protegido")
-          : readOnly
-            ? t("Sin permiso para cambiar el acceso")
-            : t("Solo afecta al ERP; conserva el acceso como paciente.")}
-      </span>
       {change?.message ? (
         <div
           className="flex max-w-56 flex-col items-start gap-1 whitespace-normal text-xs text-destructive"

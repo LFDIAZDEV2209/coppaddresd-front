@@ -7,9 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   fullName,
   ProfessionalAvatar,
+  ProfessionalStatusBadge,
 } from "../professional-visuals";
 import { ActionsMenu } from "./actions-menu";
-import { ProfessionalAccess } from "./professional-access";
 import type { EmployeeListItem } from "../../services/employees-service";
 
 // --- Vista de tarjetas ---
@@ -110,7 +110,7 @@ export function DirectoryCards({
           )}
 
           <div className="mt-auto border-t border-border pt-3">
-            <ProfessionalAccess employee={employee} />
+            <ProfessionalStatusBadge status={employee.status} />
           </div>
         </div>
       ))}

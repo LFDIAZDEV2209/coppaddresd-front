@@ -7,9 +7,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { fullName } from "../professional-visuals";
+import {
+  ProfessionalAccess,
+  useProfessionalAccessState,
+} from "./professional-access";
 import type { EmployeeListItem } from "../../services/employees-service";
 
 // --- Menú de acciones de fila ---
@@ -30,6 +35,7 @@ export function ActionsMenu({
   onInvite: (employee: EmployeeListItem) => void;
 }) {
   const t = useT();
+  const access = useProfessionalAccessState(employee);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -43,7 +49,7 @@ export function ActionsMenu({
       >
         <MoreHorizontal />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="min-w-44">
         <DropdownMenuItem onClick={() => onOpen(employee)}>
           <Eye />
           {t("Ver detalles")}
@@ -62,6 +68,20 @@ export function ActionsMenu({
             <Check />
             {t("Enlace copiado")}
           </DropdownMenuItem>
+        )}
+        {employee.isProfessional && employee.status !== "Invited" && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              closeOnClick={false}
+              className="py-2"
+              onClick={() => {
+                if (!access.disabled) access.toggle();
+              }}
+            >
+              <ProfessionalAccess employee={employee} />
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
