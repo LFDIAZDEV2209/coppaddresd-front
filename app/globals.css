@@ -610,7 +610,7 @@
     flex-wrap: wrap;
   }
 }
-.professional-directory .professional-access-switch {
+.professional-access-switch {
   width: 46px;
   height: 26px;
   padding: 0;
@@ -622,14 +622,14 @@
     background-color 160ms ease-out,
     border-color 160ms ease-out;
 }
-.professional-directory .professional-access-switch[data-checked] {
+.professional-access-switch[data-checked] {
   background: #087d43;
 }
-.professional-directory .professional-access-switch[data-unchecked] {
+.professional-access-switch[data-unchecked] {
   /* El estado inactivo se atenúa; el toggle vive en el menú de acciones. */
   opacity: 0.6;
 }
-.professional-directory .professional-access-switch [data-slot="switch-thumb"] {
+.professional-access-switch [data-slot="switch-thumb"] {
   position: absolute;
   top: 3px;
   left: 3px;
@@ -642,18 +642,17 @@
   box-shadow: 0 1px 3px #06351c;
   transition: left 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.professional-directory
-  .professional-access-switch
+.professional-access-switch
   [data-slot="switch-thumb"][data-checked] {
   left: 23px;
   translate: none !important;
   transform: none !important;
 }
-.professional-directory .professional-access-switch:focus-visible {
+.professional-access-switch:focus-visible {
   outline: 3px solid var(--primary);
   outline-offset: 4px;
 }
-.professional-directory .professional-access-switch:disabled {
+.professional-access-switch:disabled {
   cursor: not-allowed;
 }
 .directory-3d-icon {
