@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { ViewToggle, type DataView } from "@/components/feedback/view-toggle";
 import { statusLabel } from "../professional-visuals";
+import { PROFESSIONAL_CLINICS_ENABLED } from "@/features/professionals/config";
 
 // --- Toolbar con chips de filtros ---
 
@@ -146,33 +147,35 @@ export function DirectoryToolbar({
           </SelectContent>
         </Select>
 
-        <Select
-          value={filters.clinicId}
-          onValueChange={(value) =>
-            onFilterChange({ clinicId: value ?? "all" })
-          }
-        >
-          <SelectTrigger
-            className="h-9 w-[150px] bg-card"
-            aria-label={t("Filtrar por clínica")}
+        {PROFESSIONAL_CLINICS_ENABLED && (
+          <Select
+            value={filters.clinicId}
+            onValueChange={(value) =>
+              onFilterChange({ clinicId: value ?? "all" })
+            }
           >
-            <Building2 className="mr-2 size-3.5 text-muted-foreground" />
-            <SelectValue>
-              {filters.clinicId === "all"
-                ? t("Clínicas")
-                : (clinics.find((c) => c.id === filters.clinicId)?.name ??
-                  t("Clínicas"))}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("Todas las clínicas")}</SelectItem>
-            {clinics.map((clinic) => (
-              <SelectItem key={clinic.id} value={clinic.id}>
-                {clinic.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <SelectTrigger
+              className="h-9 w-[150px] bg-card"
+              aria-label={t("Filtrar por clínica")}
+            >
+              <Building2 className="mr-2 size-3.5 text-muted-foreground" />
+              <SelectValue>
+                {filters.clinicId === "all"
+                  ? t("Clínicas")
+                  : (clinics.find((c) => c.id === filters.clinicId)?.name ??
+                    t("Clínicas"))}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("Todas las clínicas")}</SelectItem>
+              {clinics.map((clinic) => (
+                <SelectItem key={clinic.id} value={clinic.id}>
+                  {clinic.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <div className="ml-auto flex items-center gap-1.5">
           <Button

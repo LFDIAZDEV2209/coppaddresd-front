@@ -23,6 +23,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PROFESSIONAL_CLINICS_ENABLED } from "@/features/professionals/config";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -230,20 +231,23 @@ export function PeopleBulkImport({
     const patientLineMap = patients.map((r) => r.line);
     const userLineMap = users.map((r) => r.line);
 
-    // Construir payloads por tipo
+    // Construir payloads por tipo.
+    // Sin clínicas (flag): se ignoran las columnas de clínicas del CSV para
+    // staff (empleados/usuarios); pacientes conservan su clínica.
     const employeePayload = employees.map((row) => ({
       firstName: row.nombre.trim(),
       lastName: row.apellido.trim(),
       email: row.email.trim(),
       professionalTypeName: row.profesion || null,
       status: (row.estado || "invitado").trim().toLowerCase(),
-      clinicas:
-        row.parsedClinics.length > 0
+      clinicas: PROFESSIONAL_CLINICS_ENABLED
+        ? row.parsedClinics.length > 0
           ? row.parsedClinics.map((c) => ({
               code: c.code,
               roleName: c.roleName ?? "",
             }))
-          : undefined,
+          : undefined
+        : undefined,
     }));
 
     const patientPayload = patients.map((row) => ({
@@ -263,11 +267,11 @@ export function PeopleBulkImport({
       lastName: row.apellido.trim(),
       email: row.email.trim(),
       roleName:
-        row.parsedClinics.length > 0
+        PROFESSIONAL_CLINICS_ENABLED && row.parsedClinics.length > 0
           ? (row.parsedClinics[0]?.roleName ?? null)
           : null,
       clinicCode:
-        row.parsedClinics.length > 0
+        PROFESSIONAL_CLINICS_ENABLED && row.parsedClinics.length > 0
           ? (row.parsedClinics[0]?.code ?? null)
           : null,
       status: (row.estado || "invitado").trim().toLowerCase(),
@@ -537,6 +541,14 @@ export function PeopleBulkImport({
                 "Excel: guardá tu hoja como 'CSV (delimitado por punto y coma)'.",
               )}
             </p>
+            {!PROFESSIONAL_CLINICS_ENABLED && (
+              <p className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                <Info className="size-3.5 shrink-0" />
+                {t(
+                  "La columna clínicas se ignora para el equipo: los profesionales se crean con acceso global.",
+                )}
+              </p>
+            )}
           </div>
         </div>
       )}

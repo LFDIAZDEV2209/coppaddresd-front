@@ -37,6 +37,7 @@ import {
   type EmployeeDetail,
   type ProfessionalScopes,
 } from "@/features/professionals/services/employees-service";
+import { PROFESSIONAL_CLINICS_ENABLED } from "@/features/professionals/config";
 import { fetchRoles } from "@/features/roles/services/roles-service";
 import type { Role } from "@/features/roles/types";
 import { ApiError } from "@/lib/api/http";
@@ -74,20 +75,17 @@ export function ProfessionalDetail({ id }: { id: string }) {
   const [copiedUserId, setCopiedUserId] = useState(false);
 
   // Construir el mapa clinicId → roleId desde los roles scoped actuales.
-  const mapScopedRoles = useCallback(
-    (sc: ProfessionalScopes | null) => {
-      const map: Record<string, string> = {};
-      if (sc && !sc.requiresInvitation) {
-        for (const role of sc.roles) {
-          if (role.scopeType === "Clinic" && role.scopeId) {
-            map[role.scopeId] = role.roleId;
-          }
+  const mapScopedRoles = useCallback((sc: ProfessionalScopes | null) => {
+    const map: Record<string, string> = {};
+    if (sc && !sc.requiresInvitation) {
+      for (const role of sc.roles) {
+        if (role.scopeType === "Clinic" && role.scopeId) {
+          map[role.scopeId] = role.roleId;
         }
       }
-      return map;
-    },
-    [],
-  );
+    }
+    return map;
+  }, []);
 
   const load = useCallback(
     async (showSpinner = false) => {
@@ -417,15 +415,53 @@ export function ProfessionalDetail({ id }: { id: string }) {
         <div className="space-y-5 lg:col-span-2">
           <section className="overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
-              title={t("Acceso por clínica")}
-              description={t(
-                "El acceso se otorga por clínica; podés elegir un rol distinto en cada una.",
-              )}
+              title={
+                PROFESSIONAL_CLINICS_ENABLED
+                  ? t("Acceso por clínica")
+                  : t("Acceso")
+              }
+              description={
+                PROFESSIONAL_CLINICS_ENABLED
+                  ? t(
+                      "El acceso se otorga por clínica; podés elegir un rol distinto en cada una.",
+                    )
+                  : t(
+                      "Acceso global a la plataforma. Los permisos finos se gestionan desde Usuarios.",
+                    )
+              }
               icon={ShieldCheck}
               variant="primary"
             />
 
-            {!employee.userId ? (
+            {!PROFESSIONAL_CLINICS_ENABLED ? (
+              <div className="flex flex-col items-start gap-3 p-5">
+                <div className="flex flex-wrap gap-1.5">
+                  {(scopes?.roles ?? [])
+                    .filter((r) => r.scopeType !== "Clinic")
+                    .map((r) => (
+                      <span
+                        key={`${r.scopeType}-${r.roleId}`}
+                        className="rounded-full bg-primary-soft px-2.5 py-1 text-[11.5px] font-medium text-primary"
+                      >
+                        {r.roleName}
+                      </span>
+                    ))}
+                  {(scopes?.roles ?? []).filter((r) => r.scopeType !== "Clinic")
+                    .length === 0 && (
+                    <span className="text-[13px] text-muted-foreground">
+                      {t("Sin roles asignados.")}
+                    </span>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push("/users")}
+                >
+                  {t("Gestionar en Usuarios")}
+                </Button>
+              </div>
+            ) : !employee.userId ? (
               <div className="flex flex-col items-start gap-3 p-5">
                 <p className="text-[13px] text-muted-foreground">
                   {t(
@@ -633,4 +669,3 @@ export function ProfessionalDetail({ id }: { id: string }) {
     </div>
   );
 }
-
