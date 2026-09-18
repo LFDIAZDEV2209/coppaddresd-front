@@ -3613,9 +3613,8 @@
   "Riesgo, alertas y seguimiento del alcance": "Risk, alerts and follow-up across the scope",
   "Se eliminará el registro de {name}. Esta acción no se puede deshacer.": "The record of {name} will be deleted. This action cannot be undone.",
   "Seguimiento vencido": "Overdue follow-up",
-  "Ver ficha": "View record"
+  "Ver ficha": "View record",
   "Mis citas de telemedicina": "My telemedicine appointments",
-  "Filtros": "Filters",
   "Revisar centro de alertas": "Check the alert center",
   "Cuando existan citas de telemedicina aparecerán aquí.": "Telemedicine appointments will appear here.",
   "Mostrando {from}–{to} de {total} citas": "Showing {from}–{to} of {total} appointments",
