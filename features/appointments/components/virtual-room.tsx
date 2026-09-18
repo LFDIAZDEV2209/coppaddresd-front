@@ -461,24 +461,24 @@ export function VirtualRoom() {
     return (
       <div
         key={tile.identity}
-        className="relative h-full min-h-0 w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+        className="relative h-full min-h-0 w-full overflow-hidden rounded-2xl border border-border bg-muted"
       >
         {showPlaceholder && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <div className="flex size-16 items-center justify-center rounded-full bg-slate-700/60 ring-4 ring-white/5">
+            <div className="flex size-16 items-center justify-center rounded-full bg-background ring-4 ring-border">
               {initials ? (
-                <span className="text-lg font-bold text-slate-200">
+                <span className="text-lg font-bold text-muted-foreground">
                   {initials}
                 </span>
               ) : (
-                <User className="size-8 text-slate-300" />
+                <User className="size-8 text-muted-foreground" />
               )}
             </div>
             <div className="flex flex-col items-center gap-1 px-4 text-center">
-              <p className="text-[13.5px] font-semibold text-slate-100">
+              <p className="text-[13.5px] font-semibold text-foreground">
                 {info.name}
               </p>
-              <p className="flex items-center gap-1.5 text-[11.5px] text-slate-400">
+              <p className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
                 {tile.isLocal ? (
                   <>
                     <VideoOff className="size-3.5" /> Cámara apagada
@@ -500,12 +500,12 @@ export function VirtualRoom() {
           }}
           className="absolute inset-0 [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
         />
-        <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-slate-950/70 px-2.5 py-1 backdrop-blur">
-          <span className="size-1.5 rounded-full bg-emerald-400" />
-          <span className="text-[11px] font-semibold text-white">
+        <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-foreground/70 px-2.5 py-1 backdrop-blur">
+          <span className="size-1.5 rounded-full bg-emerald-500" />
+          <span className="text-[11px] font-semibold text-background">
             {info.name}
           </span>
-          <span className="text-[10.5px] font-medium text-slate-300">
+          <span className="text-[10.5px] font-medium text-background/80">
             · {info.role}
           </span>
         </div>
@@ -515,20 +515,20 @@ export function VirtualRoom() {
 
   if (userLoading || phase === "loading") {
     return (
-      <div className="flex min-h-screen flex-col gap-4 bg-slate-950 p-6">
-        <Skeleton className="h-14 w-full rounded-2xl bg-white/10" />
-        <Skeleton className="aspect-video w-full rounded-2xl bg-white/10" />
+      <div className="flex min-h-screen flex-col gap-4 bg-background p-6">
+        <Skeleton className="h-14 w-full rounded-2xl bg-muted" />
+        <Skeleton className="aspect-video w-full rounded-2xl bg-muted" />
       </div>
     );
   }
 
   if (loadError || !appointment) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-950 p-6">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-white/5">
-          <AlertTriangle className="size-7 text-rose-400" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+          <AlertTriangle className="size-7 text-destructive" />
         </div>
-        <p className="max-w-md text-center text-sm text-slate-300">
+        <p className="max-w-md text-center text-sm text-muted-foreground">
           {loadError ?? "Cita no encontrada."}
         </p>
         <Button
@@ -544,11 +544,11 @@ export function VirtualRoom() {
 
   if (phase === "ended") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-950 p-6">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-white/5">
-          <PhoneOff className="size-7 text-slate-400" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+          <PhoneOff className="size-7 text-muted-foreground" />
         </div>
-        <p className="max-w-md text-center text-sm text-slate-300">
+        <p className="max-w-md text-center text-sm text-muted-foreground">
           {endedReason ?? "La sesión finalizó."}
         </p>
         <Button
@@ -570,19 +570,19 @@ export function VirtualRoom() {
     const connecting = phase === "connecting";
 
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-slate-950 p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_55%)]" />
         <div className="relative flex w-full max-w-xl flex-col gap-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-teal-500/15">
-                <PhoneCall className="size-5 text-teal-300" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+                <PhoneCall className="size-5 text-primary" />
               </div>
               <div>
-                <p className="text-[15px] font-semibold text-white">
+                <p className="text-[15px] font-semibold text-foreground">
                   Sala virtual
                 </p>
-                <p className="text-[12px] text-slate-400">
+                <p className="text-[12px] text-muted-foreground">
                   Citas · CoppAddresd
                 </p>
               </div>
@@ -593,17 +593,17 @@ export function VirtualRoom() {
             />
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-4">
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-teal-500/15">
-                  <User className="size-7 text-teal-300" />
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+                  <User className="size-7 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="line-clamp-2 break-words text-lg font-semibold text-white">
+                  <p className="line-clamp-2 break-words text-lg font-semibold text-foreground">
                     {appointment.patientName ?? "Paciente"}
                   </p>
-                  <p className="truncate text-[12.5px] text-slate-300">
+                  <p className="truncate text-[12.5px] text-muted-foreground">
                     {appointment.specialtyName ?? "Especialidad"} ·{" "}
                     {appointment.locationName ?? "Sede"}
                   </p>
@@ -626,7 +626,7 @@ export function VirtualRoom() {
 
               {connectError && (
                 <p
-                  className="rounded-xl bg-rose-500/10 px-4 py-3 text-[13px] text-rose-300"
+                  className="rounded-xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive"
                   role="alert"
                 >
                   {connectError}
@@ -639,7 +639,7 @@ export function VirtualRoom() {
                     size="lg"
                     onClick={join}
                     disabled={connecting}
-                    className="gap-2 bg-teal-500 text-slate-950 hover:bg-teal-400"
+                    className="gap-2"
                   >
                     {connecting ? (
                       <Loader2 className="size-4 animate-spin" />
@@ -657,24 +657,24 @@ export function VirtualRoom() {
                       variant="ghost"
                       size="sm"
                       onClick={joinAudioOnly}
-                      className="text-slate-300 hover:bg-white/5"
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
                       Unirme solo con audio
                     </Button>
                   )}
-                  <p className="text-center text-[11.5px] text-slate-300">
+                  <p className="text-center text-[11.5px] text-muted-foreground">
                     Necesita cámara y micrófono. La sala abre 15 minutos antes
                     de la cita.
                   </p>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-2 rounded-xl bg-white/5 px-4 py-4 text-center">
-                  <AlertTriangle className="size-5 text-amber-300" />
-                  <p className="text-[13px] font-medium text-slate-200">
+                <div className="flex flex-col items-center gap-2 rounded-xl bg-muted/50 px-4 py-4 text-center">
+                  <AlertTriangle className="size-5 text-amber-600" />
+                  <p className="text-[13px] font-medium text-foreground">
                     La sala solo está disponible para citas confirmadas o en
                     curso
                   </p>
-                  <p className="text-[12px] text-slate-400">
+                  <p className="text-[12px] text-muted-foreground">
                     Estado actual: {appointmentStatusLabel[appointment.status]}
                   </p>
                 </div>
@@ -685,7 +685,7 @@ export function VirtualRoom() {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="mx-auto gap-1.5 px-5 py-2.5 text-slate-400 hover:bg-white/5 hover:text-slate-200"
+            className="mx-auto gap-1.5 px-5 py-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <ArrowLeft className="size-4" /> Volver a la cita
           </Button>
@@ -697,24 +697,24 @@ export function VirtualRoom() {
   // --- Sala conectada ---
 
   return (
-    <div className="flex h-dvh flex-col bg-slate-950 text-slate-100">
-      <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-white/10 px-4">
+    <div className="flex h-dvh flex-col bg-background text-foreground">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={leave}
             aria-label={t("Salir de la sala")}
-            className="text-slate-300 hover:bg-white/10 hover:text-white"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <PhoneOff className="size-4" />
           </Button>
           <div className="min-w-0">
-            <p className="truncate text-[13.5px] font-semibold text-white">
+            <p className="truncate text-[13.5px] font-semibold text-foreground">
               {appointment.patientName ?? "Paciente"} ·{" "}
               {appointment.specialtyName ?? "Especialidad"}
             </p>
-            <p className="truncate text-[11px] text-slate-400">
+            <p className="truncate text-[11px] text-muted-foreground">
               {formatRange(
                 appointment.scheduledStart,
                 appointment.scheduledEnd,
@@ -724,15 +724,15 @@ export function VirtualRoom() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <div className="hidden items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 sm:flex">
-            <Clock className="size-3.5 text-slate-300" />
-            <span className="font-mono text-[12px] font-semibold text-white">
+          <div className="hidden items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 sm:flex">
+            <Clock className="size-3.5 text-muted-foreground" />
+            <span className="font-mono text-[12px] font-semibold text-foreground">
               {formatElapsed(elapsed)}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
-            <Users className="size-3.5 text-slate-300" />
-            <span className="text-[12px] font-semibold text-white">
+          <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5">
+            <Users className="size-3.5 text-muted-foreground" />
+            <span className="text-[12px] font-semibold text-foreground">
               {totalTiles}
             </span>
           </div>
@@ -745,7 +745,7 @@ export function VirtualRoom() {
               }
               color={
                 backendRoomStatus === "Ended"
-                  ? { bg: "#3F1D24", text: "#FCA5A5", dot: "#EF4444" }
+                  ? { bg: "#FCEBEC", text: "#B42318", dot: "#EF4444" }
                   : {
                       bg: readCssVar("--sidebar") || DEFAULT_ACCENT,
                       text: lightenHex(
@@ -768,7 +768,7 @@ export function VirtualRoom() {
               setSidebarOpen(true);
             }}
             aria-label={t("Abrir panel de participantes y formularios")}
-            className="text-slate-300 hover:bg-white/10 hover:text-white"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <PanelRight className="size-4" />
           </Button>
@@ -779,7 +779,7 @@ export function VirtualRoom() {
         <main className="flex min-w-0 flex-1 flex-col gap-3 p-4">
           {connectError && (
             <p
-              className="rounded-xl bg-rose-500/10 px-4 py-3 text-[13px] text-rose-300"
+              className="rounded-xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive"
               role="alert"
             >
               {connectError}
@@ -794,9 +794,9 @@ export function VirtualRoom() {
           </div>
 
           {remoteTiles.length === 0 && (
-            <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 py-4">
-              <Activity className="size-4 text-slate-500" />
-              <p className="text-[12.5px] text-slate-400">
+            <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-4">
+              <Activity className="size-4 text-muted-foreground" />
+              <p className="text-[12.5px] text-muted-foreground">
                 {isProfessionalParticipant
                   ? "Esperando que el paciente se conecte a la sala…"
                   : "Esperando que el profesional se conecte a la sala…"}
@@ -813,7 +813,7 @@ export function VirtualRoom() {
                   setSidebarOpen(true);
                 }}
                 aria-label={t("Abrir formularios médicos")}
-                className="gap-1.5 border border-white/10 bg-white/[0.06] text-slate-200 hover:bg-white/10 hover:text-white"
+                className="gap-1.5 border border-border bg-card text-foreground hover:bg-muted"
               >
                 <ClipboardList className="size-4" />
                 <span className="hidden sm:inline">{t("Formularios")}</span>
@@ -845,7 +845,7 @@ export function VirtualRoom() {
               <Button
                 onClick={finalize}
                 disabled={ending}
-                className="ml-2 gap-1.5 bg-rose-600 text-white hover:bg-rose-500"
+                className="ml-2 gap-1.5 bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {ending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -922,13 +922,13 @@ function InfoChip({
   mono?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl bg-white/5 p-3">
-      <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-300">
+    <div className="flex flex-col gap-1 rounded-xl bg-muted/50 p-3">
+      <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         <Icon className="size-3.5" />
         {label}
       </span>
       <span
-        className={`truncate text-[12.5px] font-semibold text-white ${mono ? "font-mono" : ""}`}
+        className={`truncate text-[12.5px] font-semibold text-foreground ${mono ? "font-mono" : ""}`}
       >
         {value}
       </span>
@@ -956,8 +956,8 @@ function ControlButton({
       aria-pressed={active}
       className={`size-11 rounded-full border-2 ${
         active
-          ? "border-white/30 bg-white/15 text-white shadow-lg shadow-black/30 hover:bg-white/25"
-          : "border-rose-400/50 bg-rose-500/25 text-rose-200 hover:bg-rose-500/35"
+          ? "border-border bg-card text-foreground shadow-sm hover:bg-muted"
+          : "border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
       }`}
     >
       {children}

@@ -8,10 +8,10 @@ import { searchMedications } from "@/features/patients/services/catalogs-service
 import { CatalogSearchSelect } from "./catalog-search-select";
 import {
   AddRowButton,
-  darkInput,
-  darkTextarea,
   DraftActions,
   FormField,
+  formInput,
+  formTextarea,
   ItemRow,
   RemoveRowButton,
 } from "./form-ui";
@@ -114,9 +114,9 @@ export function MedicationForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2 rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2.5">
-        <Pill className="size-4 text-amber-300" />
-        <p className="text-[12px] text-amber-200">
+      <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-500/10 px-3 py-2.5">
+        <Pill className="size-4 text-amber-600" />
+        <p className="text-[12px] text-amber-700">
           <span className="font-mono font-semibold">{itemCount}</span>{" "}
           {itemCount === 1 ? "medicamento" : "medicamentos"} en la orden
         </p>
@@ -124,7 +124,7 @@ export function MedicationForm({
 
       <div className="flex flex-col gap-2">
         {draft.items.length === 0 && (
-          <p className="rounded-xl border border-dashed border-white/15 px-3 py-3 text-[12px] text-slate-400">
+          <p className="rounded-xl border border-dashed border-border px-3 py-3 text-[12px] text-muted-foreground">
             Agregá los medicamentos que querés formular en esta consulta. Buscá
             por nombre en el catálogo del sistema.
           </p>
@@ -135,11 +135,11 @@ export function MedicationForm({
             <ItemRow key={item.id}>
               <div
                 className={`rounded-xl p-2.5 ${
-                  warning ? "border border-rose-400/40 bg-rose-500/10" : ""
+                  warning ? "border border-destructive/30 bg-destructive/10" : ""
                 }`}
               >
                 {warning && (
-                  <p className="mb-2 flex items-center gap-1.5 rounded-lg bg-rose-500/15 px-2.5 py-1.5 text-[11.5px] font-medium text-rose-200">
+                  <p className="mb-2 flex items-center gap-1.5 rounded-lg bg-destructive/15 px-2.5 py-1.5 text-[11.5px] font-medium text-destructive">
                     <AlertTriangle className="size-3.5 shrink-0" />
                     Alergia registrada: {warning}
                   </p>
@@ -157,7 +157,7 @@ export function MedicationForm({
                         updateItem(item.id, { name: e.target.value })
                       }
                       placeholder="Ej. Metformina 850 mg"
-                      className={darkInput}
+                      className={formInput}
                     />
                   </FormField>
                   <FormField
@@ -172,7 +172,7 @@ export function MedicationForm({
                         updateItem(item.id, { dose: e.target.value })
                       }
                       placeholder="Ej. 1 tableta"
-                      className={darkInput}
+                      className={formInput}
                     />
                   </FormField>
                   <FormField label="Vía">
@@ -181,10 +181,10 @@ export function MedicationForm({
                       onChange={(e) =>
                         updateItem(item.id, { route: e.target.value })
                       }
-                      className={darkInput}
+                      className={formInput}
                     >
                       {ROUTES.map((r) => (
-                        <option key={r} value={r} className="bg-slate-900">
+                        <option key={r} value={r}>
                           {r}
                         </option>
                       ))}
@@ -196,10 +196,10 @@ export function MedicationForm({
                       onChange={(e) =>
                         updateItem(item.id, { frequency: e.target.value })
                       }
-                      className={darkInput}
+                      className={formInput}
                     >
                       {FREQUENCIES.map((f) => (
-                        <option key={f} value={f} className="bg-slate-900">
+                        <option key={f} value={f}>
                           {f}
                         </option>
                       ))}
@@ -219,12 +219,12 @@ export function MedicationForm({
                         updateItem(item.id, { duration: e.target.value })
                       }
                       placeholder="Ej. 10 días"
-                      className={darkInput}
+                      className={formInput}
                     />
                   </FormField>
                   <div className="flex flex-col gap-1.5">
-                    <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-300">
-                      <FlaskConical className="size-3.5 text-slate-500" />
+                    <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-foreground">
+                      <FlaskConical className="size-3.5 text-muted-foreground" />
                       Catálogo del sistema
                     </span>
                     <CatalogSearchSelect
@@ -257,7 +257,7 @@ export function MedicationForm({
           value={draft.notes}
           onChange={(e) => onUpdate({ notes: e.target.value })}
           placeholder="Ej. Tomar con las comidas"
-          className={darkTextarea}
+          className={formTextarea}
         />
       </FormField>
 

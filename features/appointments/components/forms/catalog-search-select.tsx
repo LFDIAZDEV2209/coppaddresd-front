@@ -6,7 +6,7 @@ import type { CatalogSearchItem } from "@/features/patients/types";
 
 /**
  * Select searchable de catálogos del backend (CIE-10, medicamentos,
- * alergenos) para el tema oscuro de la sala: un botón abre el buscador con
+ * alergenos) del panel de la consulta: un botón abre el buscador con
  * debounce + abort de fetch y navegación por teclado (flechas/Enter/Escape).
  * El panel de resultados se expande en el flujo (sin overlays) para que el
  * scroll del bottom sheet nunca lo recorte.
@@ -35,17 +35,17 @@ export function CatalogSearchSelect({
 
   const accentRing =
     accent === "violet"
-      ? "focus-visible:border-violet-400/60 focus-visible:ring-violet-400/20"
+      ? "focus-visible:border-violet-500/50 focus-visible:ring-violet-500/20"
       : accent === "amber"
-        ? "focus-visible:border-amber-400/60 focus-visible:ring-amber-400/20"
-        : "focus-visible:border-teal-400/60 focus-visible:ring-teal-400/20";
+        ? "focus-visible:border-amber-500/50 focus-visible:ring-amber-500/20"
+        : "focus-visible:border-ring focus-visible:ring-primary/20";
 
   const accentIcon =
     accent === "violet"
-      ? "text-violet-300"
+      ? "text-violet-600"
       : accent === "amber"
-        ? "text-amber-300"
-        : "text-teal-300";
+        ? "text-amber-600"
+        : "text-primary";
 
   const runSearch = useCallback(
     async (value: string, signal?: AbortSignal) => {
@@ -138,41 +138,41 @@ export function CatalogSearchSelect({
         aria-controls={inputId}
         className={`flex h-9 w-full items-center gap-2 rounded-lg border px-3 text-left outline-none transition-colors ${
           open
-            ? `border-white/25 bg-slate-800 ${accentRing}`
-            : "border-slate-600/60 bg-slate-800/80 hover:border-slate-500/70"
+            ? `border-ring bg-background ${accentRing}`
+            : "border-input bg-background hover:border-ring/50"
         }`}
       >
         {Icon ? (
           <Icon className={`size-4 shrink-0 ${accentIcon}`} />
         ) : (
-          <Search className="size-4 shrink-0 text-slate-500" />
+          <Search className="size-4 shrink-0 text-muted-foreground" />
         )}
         {selected ? (
-          <span className="min-w-0 flex-1 truncate text-[12.5px] text-white">
+          <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
             {selected.code && (
-              <span className="mr-1.5 rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-teal-300">
+              <span className="mr-1.5 rounded bg-muted px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-primary">
                 {selected.code}
               </span>
             )}
             {selected.name}
           </span>
         ) : (
-          <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-400">
+          <span className="min-w-0 flex-1 truncate text-[12.5px] text-muted-foreground">
             {placeholder}
           </span>
         )}
         <ChevronDown
-          className={`size-4 shrink-0 text-slate-500 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
 
       {open && (
         <div
           id={inputId}
-          className="mt-1.5 overflow-hidden rounded-xl border border-white/10 bg-slate-800 shadow-2xl shadow-black/50"
+          className="mt-1.5 overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg"
         >
-          <div className="relative border-b border-white/10">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-500" />
+          <div className="relative border-b border-border">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
               autoFocus
               value={query}
@@ -183,10 +183,10 @@ export function CatalogSearchSelect({
               aria-controls={`${inputId}-list`}
               aria-autocomplete="list"
               placeholder="Escribí para buscar…"
-              className={`h-9 w-full bg-transparent pl-9 pr-8 text-[13px] text-white outline-none placeholder:text-slate-500 ${accentRing}`}
+              className={`h-9 w-full bg-transparent pl-9 pr-8 text-[13px] text-foreground outline-none placeholder:text-muted-foreground ${accentRing}`}
             />
             {loading && (
-              <Loader2 className="absolute right-3 top-1/2 size-3.5 -translate-y-1/2 animate-spin text-slate-500" />
+              <Loader2 className="absolute right-3 top-1/2 size-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
             )}
           </div>
           <ul
@@ -195,11 +195,11 @@ export function CatalogSearchSelect({
             className="max-h-56 overflow-y-auto py-1"
           >
             {!query.trim() ? (
-              <li className="px-3 py-2 text-[12px] text-slate-500">
+              <li className="px-3 py-2 text-[12px] text-muted-foreground">
                 Escribí al menos un carácter para buscar
               </li>
             ) : results.length === 0 && !loading ? (
-              <li className="px-3 py-2 text-[12px] text-slate-500">
+              <li className="px-3 py-2 text-[12px] text-muted-foreground">
                 Sin resultados
               </li>
             ) : (
@@ -212,19 +212,19 @@ export function CatalogSearchSelect({
                     onMouseEnter={() => setHighlight(index)}
                     onClick={() => select(item)}
                     className={`flex w-full items-center gap-2 px-3 py-2 text-left outline-none ${
-                      index === highlight ? "bg-white/10" : ""
+                      index === highlight ? "bg-muted" : ""
                     }`}
                   >
                     {item.code && (
-                      <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-teal-300">
+                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-primary">
                         {item.code}
                       </span>
                     )}
-                    <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-100">
+                    <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
                       {item.name}
                     </span>
                     {selected?.id === item.id && (
-                      <Check className="size-3.5 shrink-0 text-teal-300" />
+                      <Check className="size-3.5 shrink-0 text-primary" />
                     )}
                   </button>
                 </li>
