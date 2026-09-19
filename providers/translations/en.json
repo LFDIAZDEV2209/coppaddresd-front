@@ -3936,5 +3936,19 @@
   "Volver a verificar": "Check again",
   "La sala alcanzó el máximo de participantes.": "The room reached its maximum number of participants.",
   "El acceso a la sala venció. Volvé a intentar la conexión.": "Room access expired. Try connecting again.",
-  "Hubo un problema de red o de cámara/micrófono. Revisá tu conexión e intentá de nuevo.": "There was a network or camera/microphone problem. Check your connection and try again."
+  "Hubo un problema de red o de cámara/micrófono. Revisá tu conexión e intentá de nuevo.": "There was a network or camera/microphone problem. Check your connection and try again.",
+  "Reportado por el paciente": "Reported by the patient",
+  "El paciente no completó la pre-consulta": "The patient did not complete the pre-visit intake",
+  "No se pudo cargar la pre-consulta.": "The pre-visit intake could not be loaded.",
+  "Síntomas": "Symptoms",
+  "Medicación": "Medication",
+  "No indicado": "Not provided",
+  "Actualizado el {date}": "Updated on {date}",
+  "Adendas": "Addenda",
+  "El registro original no se modifica. Cada adenda queda firmada con autor y fecha.": "The original record is not modified. Each addendum is signed with its author and date.",
+  "Sin adendas": "No addenda",
+  "No se pudieron cargar las adendas.": "Addenda could not be loaded.",
+  "Agregar adenda": "Add addendum",
+  "Escribí la corrección o aclaración…": "Write the correction or clarification…",
+  "No se pudo guardar la adenda.": "The addendum could not be saved."
 }

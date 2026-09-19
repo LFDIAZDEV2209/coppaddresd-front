@@ -3604,5 +3604,19 @@
   "Volver a verificar": "Volver a verificar",
   "La sala alcanzó el máximo de participantes.": "La sala alcanzó el máximo de participantes.",
   "El acceso a la sala venció. Volvé a intentar la conexión.": "El acceso a la sala venció. Volvé a intentar la conexión.",
-  "Hubo un problema de red o de cámara/micrófono. Revisá tu conexión e intentá de nuevo.": "Hubo un problema de red o de cámara/micrófono. Revisá tu conexión e intentá de nuevo."
+  "Hubo un problema de red o de cámara/micrófono. Revisá tu conexión e intentá de nuevo.": "Hubo un problema de red o de cámara/micrófono. Revisá tu conexión e intentá de nuevo.",
+  "Reportado por el paciente": "Reportado por el paciente",
+  "El paciente no completó la pre-consulta": "El paciente no completó la pre-consulta",
+  "No se pudo cargar la pre-consulta.": "No se pudo cargar la pre-consulta.",
+  "Síntomas": "Síntomas",
+  "Medicación": "Medicación",
+  "No indicado": "No indicado",
+  "Actualizado el {date}": "Actualizado el {date}",
+  "Adendas": "Adendas",
+  "El registro original no se modifica. Cada adenda queda firmada con autor y fecha.": "El registro original no se modifica. Cada adenda queda firmada con autor y fecha.",
+  "Sin adendas": "Sin adendas",
+  "No se pudieron cargar las adendas.": "No se pudieron cargar las adendas.",
+  "Agregar adenda": "Agregar adenda",
+  "Escribí la corrección o aclaración…": "Escribí la corrección o aclaración…",
+  "No se pudo guardar la adenda.": "No se pudo guardar la adenda."
 }

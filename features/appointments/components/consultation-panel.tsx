@@ -27,6 +27,7 @@ import { useT } from "@/providers/i18n-provider";
 import { useAuth } from "@/providers/auth-provider";
 import { getPatient } from "@/features/patients/services/patients-service";
 import type { Patient } from "@/features/patients/types";
+import { fetchPreVisitIntake } from "../services/appointments-service";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +42,7 @@ import { MedicationForm } from "./forms/medication-form";
 import { ProcedureForm } from "./forms/procedure-form";
 import { FormHeader } from "./forms/form-ui";
 import { PatientContextCard } from "./forms/patient-context-card";
-import type { AppointmentDto } from "../types";
+import type { AppointmentDto, PreVisitIntakeDto } from "../types";
 
 export type ConsultationPanelTab = "participants" | "forms" | "chat";
 
@@ -146,6 +147,12 @@ export function ConsultationPanel({
     patient: Patient;
     age: number | null;
   } | null>(null);
+  const [intake, setIntake] = useState<PreVisitIntakeDto | null>(null);
+  const [intakeError, setIntakeError] = useState(false);
+  const [intakeLoadedFor, setIntakeLoadedFor] = useState<string | null>(null);
+  // Derivado (sin setState en efectos): cargando mientras no llegó la respuesta
+  // de la cita actual.
+  const intakeLoading = intakeLoadedFor !== appointment.id;
 
   // El chat se habilita con la cita confirmada, en curso o finalizada (el
   // paciente puede esperar en la sala con la cita aún Confirmed); el polling
@@ -191,6 +198,29 @@ export function ConsultationPanel({
       active = false;
     };
   }, [appointment.patientId]);
+
+  // Pre-consulta reportada por el paciente: se carga junto al contexto y se
+  // muestra en solo lectura en la tarjeta (null cuando no la completó).
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const result = await fetchPreVisitIntake(appointment.id);
+        if (!active) return;
+        setIntake(result);
+        setIntakeError(false);
+      } catch {
+        if (!active) return;
+        setIntake(null);
+        setIntakeError(true);
+      } finally {
+        if (active) setIntakeLoadedFor(appointment.id);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [appointment.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -404,6 +434,9 @@ export function ConsultationPanel({
                   <PatientContextCard
                     patient={patient.patient}
                     age={patient.age}
+                    intake={intake}
+                    intakeLoading={intakeLoading}
+                    intakeError={intakeError}
                   />
                 )}
                 {canManage && (

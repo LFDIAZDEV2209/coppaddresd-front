@@ -200,6 +200,31 @@ export interface ClinicalEncounterDto {
   updatedAt: string | null;
 }
 
+// --- Pre-consulta del paciente (reportada antes de la consulta) ---
+
+export interface PreVisitIntakeDto {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  reason: string;
+  symptoms: string | null;
+  allergies: string | null;
+  medications: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+// --- Addenda del encuentro (append-only, solo tras Completed) ---
+
+export interface EncounterAddendumDto {
+  id: string;
+  encounterId: string;
+  authorUserId: string;
+  authorName: string | null;
+  body: string;
+  createdAt: string;
+}
+
 // --- Alertas ---
 
 export interface AppointmentAlertDto {

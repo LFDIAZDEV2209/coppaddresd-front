@@ -8,7 +8,7 @@
  * consumen del backend en el service de referencia.
  */
 
-import { apiFetch } from "@/lib/api/http";
+import { ApiError, apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type {
   AdminSummaryDto,
@@ -21,11 +21,13 @@ import type {
   ClinicalEncounterDto,
   CurrentUserContextDto,
   DashboardAnalyticsDto,
+  EncounterAddendumDto,
   JoinSessionResultDto,
   PaginatedAdminAppointmentsResult,
   PaginatedAdminRequestsResult,
   PaginatedAdminSessionsResult,
   PaginatedAlertsResult,
+  PreVisitIntakeDto,
   VirtualRoomDto,
 } from "../types";
 
@@ -288,6 +290,26 @@ export async function sendChatMessage(
   );
 }
 
+// --- Pre-consulta del paciente ---
+
+/**
+ * Pre-consulta que el paciente reporta antes de la consulta. El backend
+ * responde 200 con null (o 404) cuando aún no la completó: se normaliza a null
+ * para que la UI del profesional muestre el estado vacío.
+ */
+export async function fetchPreVisitIntake(
+  appointmentId: string,
+): Promise<PreVisitIntakeDto | null> {
+  try {
+    return await apiFetch<PreVisitIntakeDto | null>(
+      `${APPOINTMENTS_PATH}/${appointmentId}/pre-visit-intake`,
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
 // --- Encuentro clínico ---
 
 export async function fetchEncounter(
@@ -320,6 +342,26 @@ export async function completeEncounter(
   return apiFetch<ClinicalEncounterDto>(
     `${APPOINTMENTS_PATH}/${appointmentId}/encounter/complete`,
     { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+// --- Adendas del encuentro (append-only, solo con el encuentro Completed) ---
+
+export async function fetchEncounterAddenda(
+  appointmentId: string,
+): Promise<EncounterAddendumDto[]> {
+  return apiFetch<EncounterAddendumDto[]>(
+    `${APPOINTMENTS_PATH}/${appointmentId}/encounter/addenda`,
+  );
+}
+
+export async function addEncounterAddendum(
+  appointmentId: string,
+  body: string,
+): Promise<EncounterAddendumDto> {
+  return apiFetch<EncounterAddendumDto>(
+    `${APPOINTMENTS_PATH}/${appointmentId}/encounter/addenda`,
+    { method: "POST", body: JSON.stringify({ body }) },
   );
 }
 

@@ -2,20 +2,35 @@
 
 import { useT } from "@/providers/i18n-provider";
 import { useEffect, useState } from "react";
-import { ClipboardPenLine, Save, CheckCircle2 } from "lucide-react";
+import {
+  CheckCircle2,
+  ClipboardPenLine,
+  FileClock,
+  Loader2,
+  Plus,
+  Save,
+} from "lucide-react";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-  fetchEncounter,
-  saveEncounter,
+  addEncounterAddendum,
   completeEncounter,
+  fetchEncounter,
+  fetchEncounterAddenda,
+  saveEncounter,
 } from "../services/appointments-service";
-import { encounterStatusLabel } from "../utils/format";
+import { encounterStatusLabel, formatDateTime } from "../utils/format";
 import { searchIcd10Codes } from "@/features/patients/services/catalogs-service";
 import { CatalogSearchSelect } from "./forms/catalog-search-select";
-import type { ClinicalDataDto } from "../types";
+import type { ClinicalDataDto, EncounterAddendumDto } from "../types";
+
+/**
+ * Límite de la adenda en la UI. El backend valida 1–4000; el ERP es más
+ * conservador (1–2000) por tratarse de una corrección puntual del registro.
+ */
+const ADDENDUM_MAX_LENGTH = 2000;
 
 const EMPTY_CLINICAL_DATA: ClinicalDataDto = {
   motivoConsulta: "",
@@ -47,6 +62,17 @@ export function ClinicalEncounterPanel({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addenda, setAddenda] = useState<EncounterAddendumDto[]>([]);
+  const [addendaError, setAddendaError] = useState(false);
+  const [addendaLoadedFor, setAddendaLoadedFor] = useState<string | null>(null);
+  const [addendumBody, setAddendumBody] = useState("");
+  const [addendumBusy, setAddendumBusy] = useState(false);
+  const [addendumError, setAddendumError] = useState<string | null>(null);
+
+  const isCompleted = status === "Completed";
+  // Derivado (sin setState en efectos): hay carga pendiente solo con el
+  // encuentro completado y la lista de la cita actual aún sin resolver.
+  const addendaLoading = isCompleted && addendaLoadedFor !== appointmentId;
 
   useEffect(() => {
     let active = true;
@@ -71,6 +97,28 @@ export function ClinicalEncounterPanel({
       active = false;
     };
   }, [appointmentId]);
+
+  // Las adendas solo existen sobre un encuentro completado y son append-only:
+  // el registro original queda intacto y no se ofrecen acciones de edición.
+  useEffect(() => {
+    if (!isCompleted) return;
+    let active = true;
+    (async () => {
+      try {
+        const result = await fetchEncounterAddenda(appointmentId);
+        if (!active) return;
+        setAddenda(result);
+        setAddendaError(false);
+      } catch {
+        if (active) setAddendaError(true);
+      } finally {
+        if (active) setAddendaLoadedFor(appointmentId);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [appointmentId, isCompleted]);
 
   const update = (field: keyof ClinicalDataDto, value: string) => {
     setEncounter((prev) => ({ ...prev, [field]: value }));
@@ -97,11 +145,26 @@ export function ClinicalEncounterPanel({
     }
   };
 
+  // Append-only: el POST devuelve la adenda creada y se agrega al final.
+  const submitAddendum = async () => {
+    const body = addendumBody.trim();
+    if (!body || addendumBusy) return;
+    setAddendumBusy(true);
+    setAddendumError(null);
+    try {
+      const created = await addEncounterAddendum(appointmentId, body);
+      setAddenda((prev) => [...prev, created]);
+      setAddendumBody("");
+    } catch {
+      setAddendumError("No se pudo guardar la adenda.");
+    } finally {
+      setAddendumBusy(false);
+    }
+  };
+
   if (loading) {
     return <Skeleton className="h-64 w-full rounded-2xl" />;
   }
-
-  const isCompleted = status === "Completed";
 
   return (
     <section className="flex flex-col gap-4 rounded-[24px] border border-border/80 bg-card p-5 shadow-sm">
@@ -228,6 +291,99 @@ export function ClinicalEncounterPanel({
             <CheckCircle2 className="size-4" />
             {t("Completar encuentro")}
           </Button>
+        </div>
+      )}
+
+      {isCompleted && (
+        <div className="flex flex-col gap-3 border-t border-border pt-4">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
+              <FileClock className="size-4 text-primary" />
+              {t("Adendas")}
+            </h3>
+            {addenda.length > 0 && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
+                {addenda.length}
+              </span>
+            )}
+          </div>
+          <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+            {t(
+              "El registro original no se modifica. Cada adenda queda firmada con autor y fecha.",
+            )}
+          </p>
+
+          {addendaLoading ? (
+            <Skeleton className="h-16 w-full rounded-2xl" />
+          ) : addendaError ? (
+            <p
+              className="rounded-xl bg-destructive-soft px-4 py-3 text-[12px] text-destructive"
+              role="alert"
+            >
+              {t("No se pudieron cargar las adendas.")}
+            </p>
+          ) : addenda.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-3 py-4 text-center text-[12px] text-muted-foreground">
+              {t("Sin adendas")}
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {addenda.map((addendum) => (
+                <li
+                  key={addendum.id}
+                  className="rounded-2xl border border-border/70 bg-muted/20 p-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                    <span className="text-[12px] font-semibold text-foreground">
+                      {addendum.authorName ?? t("Profesional")}
+                    </span>
+                    <span className="text-[10.5px] text-muted-foreground">
+                      {formatDateTime(addendum.createdAt)}
+                    </span>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-relaxed text-foreground">
+                    {addendum.body}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-muted/20 p-3">
+            <Label htmlFor="encounter-addendum">{t("Agregar adenda")}</Label>
+            <textarea
+              id="encounter-addendum"
+              value={addendumBody}
+              onChange={(event) => setAddendumBody(event.target.value)}
+              placeholder={t("Escribí la corrección o aclaración…")}
+              maxLength={ADDENDUM_MAX_LENGTH}
+              rows={3}
+              disabled={addendumBusy}
+              className="min-h-20 w-full resize-y rounded-xl border border-input bg-card px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[10.5px] tabular-nums text-muted-foreground">
+                {addendumBody.trim().length}/{ADDENDUM_MAX_LENGTH}
+              </span>
+              <Button
+                onClick={() => void submitAddendum()}
+                disabled={addendumBusy || addendumBody.trim().length === 0}
+                className="h-9 rounded-xl gap-1.5"
+              >
+                {addendumBusy ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Plus className="size-4" />
+                )}
+                {t("Agregar adenda")}
+              </Button>
+            </div>
+            {addendumError && (
+              <p className="text-[11.5px] text-destructive" role="alert">
+                {t(addendumError)}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </section>

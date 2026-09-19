@@ -3,24 +3,36 @@
 import {
   AlertTriangle,
   CalendarDays,
+  MessageSquareText,
   Pill,
   ShieldAlert,
   User,
 } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Patient } from "@/features/patients/types";
+import { formatDateTime } from "../../utils/format";
+import type { PreVisitIntakeDto } from "../../types";
 
 /**
  * Resumen clínico del paciente durante la teleconsulta: datos demográficos,
- * alergias registradas y medicación actual (solo lectura durante la consulta).
- * La edad se calcula en la carga (fuera del render) y llega como prop.
+ * alergias registradas, medicación actual y pre-consulta reportada por el
+ * paciente (todo solo lectura durante la consulta). La edad se calcula en la
+ * carga (fuera del render) y llega como prop.
  */
 export function PatientContextCard({
   patient,
   age,
+  intake = null,
+  intakeLoading = false,
+  intakeError = false,
 }: {
   patient: Patient;
   age: number | null;
+  /** Pre-consulta del paciente (null cuando aún no la completó). */
+  intake?: PreVisitIntakeDto | null;
+  intakeLoading?: boolean;
+  intakeError?: boolean;
 }) {
   const t = useT();
   const fullName = [patient.firstName, patient.middleName, patient.lastName]
@@ -122,6 +134,67 @@ export function PatientContextCard({
           </div>
         )}
       </div>
+
+      <div className="mt-3 border-t border-border/70 pt-3">
+        <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-primary">
+          <MessageSquareText className="size-3.5" />
+          {t("Reportado por el paciente")}
+        </p>
+        {intakeLoading ? (
+          <div className="mt-2 flex flex-col gap-1.5" aria-busy="true">
+            <Skeleton className="h-3.5 w-3/4 rounded-full" />
+            <Skeleton className="h-3.5 w-1/2 rounded-full" />
+          </div>
+        ) : intakeError ? (
+          <p className="mt-1.5 text-[12px] text-muted-foreground">
+            {t("No se pudo cargar la pre-consulta.")}
+          </p>
+        ) : !intake ? (
+          <p className="mt-1.5 text-[12px] text-muted-foreground">
+            {t("El paciente no completó la pre-consulta")}
+          </p>
+        ) : (
+          <div className="mt-2 flex flex-col gap-2">
+            <IntakeRow label={t("Motivo de la consulta")} value={intake.reason} />
+            <IntakeRow label={t("Síntomas")} value={intake.symptoms} />
+            <IntakeRow label={t("Alergias")} value={intake.allergies} />
+            <IntakeRow label={t("Medicación")} value={intake.medications} />
+            {intake.updatedAt && (
+              <p className="text-[10.5px] text-muted-foreground">
+                {t("Actualizado el {date}", {
+                  date: formatDateTime(intake.updatedAt),
+                })}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function IntakeRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null;
+}) {
+  const t = useT();
+  return (
+    <div className="min-w-0">
+      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      {value && value.trim() ? (
+        <p className="mt-0.5 whitespace-pre-wrap break-words text-[12px] leading-snug text-foreground">
+          {value}
+        </p>
+      ) : (
+        <p className="mt-0.5 text-[12px] text-muted-foreground">
+          {t("No indicado")}
+        </p>
+      )}
     </div>
   );
 }
