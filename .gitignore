@@ -13,6 +13,13 @@
 # testing
 /coverage
 
+# playwright (suite E2E F5)
+/test-results/
+/playwright-report/
+/e2e/.fixtures.json
+__pycache__/
+*.pyc
+
 # next.js
 /.next/
 /out/

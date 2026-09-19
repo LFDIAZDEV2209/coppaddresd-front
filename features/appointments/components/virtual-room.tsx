@@ -69,6 +69,7 @@ import {
 import type { RoomEndCause } from "../utils/call-experience";
 import { useMediaPreflight } from "../hooks/use-media-preflight";
 import type { MediaDeviceStatus } from "../hooks/use-media-preflight";
+import { canReopenWithinGrace } from "../utils/reopen";
 import type { AppointmentDto } from "../types";
 
 type Phase = "loading" | "ready" | "connecting" | "connected" | "ended";
@@ -921,12 +922,9 @@ export function VirtualRoom() {
   }
 
   if (phase === "ended") {
-    const completedAt = appointment?.completedAt ?? null;
-    const canReopen =
-      canManage &&
-      appointment?.status === "Completed" &&
-      completedAt !== null &&
-      now - new Date(completedAt).getTime() < 60 * 60 * 1000;
+    // Gracia de reapertura configurable: el valor efectivo llega en el DTO
+    // (`reopenGraceMinutes`); sin el campo el botón no se muestra (fail-closed).
+    const canReopen = canManage && canReopenWithinGrace(appointment, now);
 
     const closeAtIso = appointment?.roomClosesAt ?? null;
     const closeTime = closeAtIso ? new Date(closeAtIso).getTime() : null;
@@ -989,7 +987,9 @@ export function VirtualRoom() {
               {reopening ? t("Reabriendo…") : t("Reabrir consulta")}
             </Button>
             <p className="text-[12px] text-muted-foreground">
-              {t("Se puede reabrir hasta 60 minutos después de finalizada.")}
+              {t("Se puede reabrir hasta {minutes} minutos después de finalizada.", {
+                minutes: String(appointment.reopenGraceMinutes),
+              })}
             </p>
           </div>
         )}

@@ -91,6 +91,10 @@ export interface AppointmentDto {
   roomClosesAt?: string | null;
   // Momento de finalización (ancla de la ventana de reapertura, solo detalle).
   completedAt?: string | null;
+  // Gracia de reapertura efectiva en minutos (settings de la clínica/organización,
+  // solo detalle). Null en listados que no resuelven settings; el ERP hace
+  // fail-closed cuando falta.
+  reopenGraceMinutes?: number | null;
 }
 
 export interface PaginatedAdminAppointmentsResult {

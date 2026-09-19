@@ -1982,7 +1982,7 @@
   "La sesión finalizó.": "The session has ended.",
   "Reabrir consulta": "Reopen consultation",
   "Reabriendo…": "Reopening…",
-  "Se puede reabrir hasta 60 minutos después de finalizada.": "It can be reopened up to 60 minutes after it ends.",
+  "Se puede reabrir hasta {minutes} minutos después de finalizada.": "It can be reopened up to {minutes} minutes after it ends.",
   "No se pudo reabrir la consulta.": "Could not reopen the consultation.",
   "la solicitud": "the request",
   "La solicitud de {specialty} de {patient} quedará cerrada.": "The request for {specialty} from {patient} will be closed.",

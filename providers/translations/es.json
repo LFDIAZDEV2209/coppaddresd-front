@@ -1635,7 +1635,7 @@
   "La sesión finalizó.": "La sesión finalizó.",
   "Reabrir consulta": "Reabrir consulta",
   "Reabriendo…": "Reabriendo…",
-  "Se puede reabrir hasta 60 minutos después de finalizada.": "Se puede reabrir hasta 60 minutos después de finalizada.",
+  "Se puede reabrir hasta {minutes} minutos después de finalizada.": "Se puede reabrir hasta {minutes} minutos después de finalizada.",
   "No se pudo reabrir la consulta.": "No se pudo reabrir la consulta.",
   "Laboratorio": "Laboratorio",
   "Las acciones de edición son simuladas en esta versión; la estructura queda lista para conectar el CRUD real.": "Las acciones de edición son simuladas en esta versión; la estructura queda lista para conectar el CRUD real.",

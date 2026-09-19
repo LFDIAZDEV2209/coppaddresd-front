@@ -34,6 +34,7 @@ import {
   formatRange,
   sessionStatusLabel,
 } from "../utils/format";
+import { canReopenWithinGrace } from "../utils/reopen";
 import type { AppointmentDto, VirtualRoomDto } from "../types";
 
 interface RoomPanelProps {
@@ -85,10 +86,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
   const canJoin =
     appointment.status === "Confirmed" || appointment.status === "InProgress";
 
-  const canReopen =
-    appointment.status === "Completed" &&
-    appointment.completedAt != null &&
-    now - new Date(appointment.completedAt).getTime() < 60 * 60 * 1000;
+  const canReopen = canReopenWithinGrace(appointment, now);
 
   const handleJoin = () => {
     router.push(`/appointments/room/${appointment.id}`);
@@ -248,7 +246,9 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
             {t("Reabrir consulta")}
           </Button>
           <p className="text-[12px] text-muted-foreground">
-            {t("Se puede reabrir hasta 60 minutos después de finalizada.")}
+            {t("Se puede reabrir hasta {minutes} minutos después de finalizada.", {
+              minutes: String(appointment.reopenGraceMinutes),
+            })}
           </p>
         </div>
       )}

@@ -1,0 +1,161 @@
+name: E2E Frontend (Playwright)
+
+# Suite E2E del ERP (F5). No bloquea PRs (v1): corre nightly y a demanda.
+# Requiere runner ubuntu-latest con Docker (dev-up.sh levanta Postgres con
+# docker compose), Node 22 + corepack (Yarn 4) y .NET 10.
+#
+# Fuera de CI (documentado también en e2e/README.md): media real de Twilio,
+# webhooks entrantes, reapertura exitosa (crea sala en el proveedor),
+# cámara/micrófono en WKWebView y screen share real → QA manual.
+on:
+  workflow_dispatch:
+    inputs:
+      backend_ref:
+        description: "Rama/tag de coppAddresdBack"
+        required: false
+        default: main
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-frontend-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Stack Dev: el endpoint interno seed-demo-password solo vive en Development.
+  ASPNETCORE_ENVIRONMENT: Development
+  ConnectionStrings__DefaultConnection: "Host=127.0.0.1;Port=5432;Database=coppaddresd;Username=app_user;Password=CoppAddresdDev!2026;MaxPoolSize=50;Timeout=30;CommandTimeout=60"
+  CACHE__PROVIDER: Memory
+  JWT__SECRET: coppaddresd-e2e-secret-key-at-least-32-characters
+  JWT__ISSUER: CoppAddresd.Auth
+  JWT__VALIDAUDIENCES__0: erp
+  JWT__VALIDAUDIENCES__1: app
+  JWT__ACCESSTOKENEXPIRATIONMINUTES: "15"
+  JWT__REFRESHTOKENEXPIRATIONDAYS: "7"
+  AUTH__ADMINEMAIL: admin@coppaddresd.com
+  AUTH__ADMINPASSWORD: Test@1234
+  AUTH__INTERNALAPIKEY: coppaddresd-internal-e2e-key
+  AUTH_INTERNAL_KEY: coppaddresd-internal-e2e-key
+  AUTHSERVICE__BASEURL: http://localhost:5123
+  AUTHSERVICE__INTERNALAPIKEY: coppaddresd-internal-e2e-key
+  BACKEND__BASEURL: http://localhost:5122
+  BACKEND__INTERNALAPIKEY: coppaddresd-internal-e2e-key
+  CORS__ORIGINS__0: http://localhost:3000
+  CORS__ORIGINS__1: http://localhost:5080
+  INTERNALKEY__KEY: coppaddresd-internal-e2e-key
+  STORAGE__PROVIDER: Local
+  STORAGE__SIGNATUREKEY: coppaddresd-e2e-storage-signature-key
+  # Credenciales Twilio FALSAS: alcanzan para firmar el join-token local
+  # (Token.ToJwt). Las salas de las citas están pre-creadas por el seed, así
+  # que el backend no llama a CreateRoom. Sin media real (SDK stubbeado).
+  TWILIO__ACCOUNTSID: AC00000000000000000000000000000000
+  TWILIO__APIKEYSID: SK00000000000000000000000000000000
+  TWILIO__APIKEYSECRET: "00000000000000000000000000000000"
+  TWILIO__ISENABLED: "false"
+  NEXT_PUBLIC_GATEWAY_URL: http://localhost:5080
+  NEXT_PUBLIC_APPLICATION_CODE: erp
+  NEXT_PUBLIC_SESSION_IDLE_MINUTES: "30"
+  E2E_DB_DSN: "host=localhost port=5432 dbname=coppaddresd user=app_user password=CoppAddresdDev!2026"
+  E2E_AUTH_URL: http://localhost:5123
+  E2E_GATEWAY_URL: http://localhost:5080
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout ERP
+        uses: actions/checkout@v7
+
+      - name: Checkout backend (coppAddresdBack)
+        uses: actions/checkout@v7
+        with:
+          repository: LFDIAZDEV2209/coppAddresdBack
+          ref: ${{ github.event.inputs.backend_ref || 'main' }}
+          path: coppAddresdBack
+          # Repo privado: configurar CROSS_REPO_TOKEN (PAT con repo:read).
+          token: ${{ secrets.CROSS_REPO_TOKEN || github.token }}
+
+      - name: Corepack (Yarn 4)
+        run: |
+          corepack enable
+          corepack prepare yarn@4.18.0 --activate
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "yarn"
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Dependencias ERP
+        run: yarn install --immutable
+
+      - name: Instalar Chromium (Playwright)
+        run: yarn playwright install --with-deps chromium
+
+      - name: appsettings mínimos (gitignoreados)
+        run: |
+          cd coppAddresdBack
+          for svc in \
+            src/CoppAddresd.Api \
+            src/Services/CoppAddresd.Auth \
+            src/Services/CoppAddresd.Telemedicine \
+            src/Services/CoppAddresd.Gateway; do
+            if [[ -f "$svc/appsettings.Example.json" && ! -f "$svc/appsettings.json" ]]; then
+              cp "$svc/appsettings.Example.json" "$svc/appsettings.json"
+            fi
+          done
+          # Community no versiona Example: mínimo viable (env vars completan).
+          if [[ ! -f src/Services/CoppAddresd.Community/appsettings.json ]]; then
+            cat > src/Services/CoppAddresd.Community/appsettings.json <<'JSON'
+          {
+            "Logging": { "LogLevel": { "Default": "Information" } },
+            "AllowedHosts": "*",
+            "Cache": { "Provider": "Memory", "KeyPrefix": "community" }
+          }
+          JSON
+          fi
+
+      - name: Levantar stack (Postgres docker + 5 servicios)
+        run: |
+          cd coppAddresdBack
+          ./scripts/dev-up.sh
+
+      - name: Migrar Telemedicina (dev-up.sh solo migra la API principal)
+        run: |
+          cd coppAddresdBack
+          dotnet run --no-build --project src/Services/CoppAddresd.Telemedicine -- --migrate
+
+      - name: Seeds de fixtures E2E
+        run: |
+          python3 -m pip install --quiet "psycopg[binary]"
+          cd coppAddresdBack/scripts && python3 seed_unified_credentials.py || true
+          cd "$GITHUB_WORKSPACE" && yarn e2e:seed
+
+      - name: Suite Playwright
+        run: yarn e2e
+
+      - name: Logs del backend en fallo
+        if: failure()
+        run: |
+          for log in coppAddresdBack/scripts/logs/*.log coppAddresdBack/scripts/logs/*.err; do
+            [[ -f "$log" ]] && { echo "===== $log ====="; tail -n 80 "$log"; }
+          done
+
+      - name: Publicar artifacts (trace/video/reporte)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-frontend-${{ github.run_id }}
+          path: |
+            test-results/
+            playwright-report/
+            coppAddresdBack/scripts/logs/
+          if-no-files-found: ignore
+          retention-days: 14

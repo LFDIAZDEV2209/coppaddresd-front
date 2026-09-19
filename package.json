@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "i18n:apply": "node scripts/i18n-review.mjs",
-    "i18n:check": "node scripts/i18n-scan.mjs"
+    "i18n:check": "node scripts/i18n-scan.mjs",
+    "e2e": "playwright test",
+    "test:e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:seed": "python3 e2e/seed/seed-e2e.py"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -46,6 +50,7 @@
     "urql": "^5.0.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
