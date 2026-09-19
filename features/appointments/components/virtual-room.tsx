@@ -26,6 +26,9 @@ import {
   CircleCheck,
   MapPin,
   ShieldCheck,
+  ScreenShare,
+  ScreenShareOff,
+  WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/feedback/status-badge";
@@ -59,11 +62,31 @@ import {
   formatTime,
   sessionStatusLabel,
 } from "../utils/format";
+import {
+  classifyRoomEnd,
+  mapTwilioErrorKey,
+} from "../utils/call-experience";
+import type { RoomEndCause } from "../utils/call-experience";
+import { useMediaPreflight } from "../hooks/use-media-preflight";
+import type { MediaDeviceStatus } from "../hooks/use-media-preflight";
 import type { AppointmentDto } from "../types";
 
 type Phase = "loading" | "ready" | "connecting" | "connected" | "ended";
 
+interface RemoteScreenTile {
+  identity: string;
+  track: TwilioVideo.RemoteTrack;
+}
+
 const LOCAL_IDENTITY = "__local__";
+
+/** Identifica publicaciones de pantalla compartida (trackName "screen"). */
+function isScreenPublication(
+  publication: TwilioVideo.TrackPublication | undefined,
+  track: TwilioVideo.RemoteTrack,
+): boolean {
+  return publication?.trackName === "screen" || track.name === "screen";
+}
 
 /**
  * Sala virtual de citas: pantalla completa con video en vivo (SDK de
@@ -96,9 +119,14 @@ export function VirtualRoom() {
     useState<ConsultationPanelTab>("participants");
   const [ending, setEnding] = useState(false);
   const [endedReason, setEndedReason] = useState<string | null>(null);
+  const [endCause, setEndCause] = useState<RoomEndCause | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
   const [reopening, setReopening] = useState(false);
   const [reopenError, setReopenError] = useState<string | null>(null);
   const [tracksVersion, setTracksVersion] = useState(0);
+  const [remoteScreens, setRemoteScreens] = useState<RemoteScreenTile[]>([]);
+  const [sharingScreen, setSharingScreen] = useState(false);
+  const [screenError, setScreenError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [joinedAt, setJoinedAt] = useState<string | null>(null);
   const [panelHeight, setPanelHeight] = useState<number>(() => {
@@ -112,6 +140,20 @@ export function VirtualRoom() {
   const remoteTracksRef = useRef(new Map<string, TwilioVideo.RemoteTrack[]>());
   const attachedTracksRef = useRef(new Set<string>());
   const trackContainersRef = useRef(new Map<string, HTMLDivElement>());
+  const screenContainersRef = useRef(new Map<string, HTMLDivElement>());
+  const remoteScreensRef = useRef<RemoteScreenTile[]>([]);
+  /** Salida voluntaria: no dispara auto-retry ni pantalla de fin. */
+  const intentionalRef = useRef(false);
+  /** Presupuesto de un auto-retry por conexión (se rearma al reintentar a mano). */
+  const retryUsedRef = useRef(false);
+  const lastVideoRef = useRef(true);
+  const handleDisconnectRef = useRef<() => void>(() => {});
+  const screenTrackRef = useRef<TwilioVideo.LocalVideoTrack | null>(null);
+  const sdkRef = useRef<TwilioVideo.Video | null>(null);
+  /** Evita conectar/reintentar después de desmontar (sin salas huérfanas). */
+  const disposedRef = useRef(false);
+
+  const preflight = useMediaPreflight();
 
   const isOwner =
     context?.professional != null &&
@@ -182,14 +224,62 @@ export function VirtualRoom() {
     );
   }, []);
 
-  const removeRemoteTile = useCallback((identity: string) => {
-    setRemoteTiles((tiles) => tiles.filter((t) => t.identity !== identity));
-    remoteTracksRef.current.delete(identity);
-    attachedTracksRef.current.forEach((id) => {
-      if (id.startsWith(`${identity}:`)) attachedTracksRef.current.delete(id);
-    });
-    setTracksVersion((v) => v + 1);
+  const syncRemoteScreens = useCallback((next: RemoteScreenTile[]) => {
+    remoteScreensRef.current = next;
+    setRemoteScreens(next);
   }, []);
+
+  const addRemoteScreen = useCallback(
+    (identity: string, track: TwilioVideo.RemoteTrack) => {
+      const current = remoteScreensRef.current;
+      if (current.some((tile) => tile.track === track)) return;
+      syncRemoteScreens([...current, { identity, track }]);
+    },
+    [syncRemoteScreens],
+  );
+
+  const removeRemoteScreen = useCallback(
+    (track: TwilioVideo.RemoteTrack) => {
+      const tile = remoteScreensRef.current.find((item) => item.track === track);
+      if (!tile) return;
+      track.detach().forEach((el) => el.remove());
+      attachedTracksRef.current.delete(`screen:${tile.identity}:${track.id}`);
+      syncRemoteScreens(
+        remoteScreensRef.current.filter((item) => item.track !== track),
+      );
+    },
+    [syncRemoteScreens],
+  );
+
+  const removeScreensForIdentity = useCallback(
+    (identity: string) => {
+      const leaving = remoteScreensRef.current.filter(
+        (tile) => tile.identity === identity,
+      );
+      if (leaving.length === 0) return;
+      leaving.forEach(({ track }) => {
+        track.detach().forEach((el) => el.remove());
+        attachedTracksRef.current.delete(`screen:${identity}:${track.id}`);
+      });
+      syncRemoteScreens(
+        remoteScreensRef.current.filter((tile) => tile.identity !== identity),
+      );
+    },
+    [syncRemoteScreens],
+  );
+
+  const removeRemoteTile = useCallback(
+    (identity: string) => {
+      removeScreensForIdentity(identity);
+      setRemoteTiles((tiles) => tiles.filter((t) => t.identity !== identity));
+      remoteTracksRef.current.delete(identity);
+      attachedTracksRef.current.forEach((id) => {
+        if (id.startsWith(`${identity}:`)) attachedTracksRef.current.delete(id);
+      });
+      setTracksVersion((v) => v + 1);
+    },
+    [removeScreensForIdentity],
+  );
 
   const attachRemoteTrack = useCallback(
     (identity: string, track: TwilioVideo.RemoteTrack) => {
@@ -219,35 +309,130 @@ export function VirtualRoom() {
     (participant: TwilioVideo.Participant) => {
       participant.tracks.forEach((publication) => {
         if (publication.track && publication.isTrackEnabled) {
-          attachRemoteTrack(
-            participant.identity,
-            publication.track as TwilioVideo.RemoteTrack,
-          );
+          const track = publication.track as TwilioVideo.RemoteTrack;
+          if (isScreenPublication(publication, track)) {
+            addRemoteScreen(participant.identity, track);
+          } else {
+            attachRemoteTrack(participant.identity, track);
+          }
         }
       });
-      participant.on("trackSubscribed", (track) =>
-        attachRemoteTrack(participant.identity, track),
-      );
-      participant.on("trackUnsubscribed", (track) =>
-        detachRemoteTrack(participant.identity, track),
-      );
+      participant.on("trackSubscribed", (track, publication) => {
+        if (isScreenPublication(publication, track)) {
+          addRemoteScreen(participant.identity, track);
+        } else {
+          attachRemoteTrack(participant.identity, track);
+        }
+      });
+      participant.on("trackUnsubscribed", (track, publication) => {
+        if (isScreenPublication(publication, track)) {
+          removeRemoteScreen(track);
+        } else {
+          detachRemoteTrack(participant.identity, track);
+        }
+      });
     },
-    [attachRemoteTrack, detachRemoteTrack],
+    [
+      addRemoteScreen,
+      attachRemoteTrack,
+      detachRemoteTrack,
+      removeRemoteScreen,
+    ],
   );
+
+  // --- Pantalla compartida (solo escritorio: getDisplayMedia) ---
+
+  /** Despublica, detiene y limpia el track local de pantalla. */
+  const stopScreenShare = useCallback(async () => {
+    const track = screenTrackRef.current;
+    const room = roomRef.current;
+    screenTrackRef.current = null;
+    setSharingScreen(false);
+    if (!track) return;
+    try {
+      if (room) await room.localParticipant.unpublishTrack(track);
+    } catch {
+      // Best-effort: la sala pudo desconectarse mientras se detenía.
+    }
+    track.detach().forEach((el) => el.remove());
+    track.stop();
+  }, []);
+
+  const startScreenShare = useCallback(async () => {
+    const room = roomRef.current;
+    const sdk = sdkRef.current;
+    if (!room || !sdk || screenTrackRef.current) return;
+    setScreenError(null);
+    try {
+      const tracks = await sdk.createLocalScreenTracks();
+      const track = tracks[0];
+      if (!track) return;
+      if (roomRef.current !== room) {
+        track.stop();
+        return;
+      }
+      await room.localParticipant.publishTrack(track, { priority: "high" });
+      if (roomRef.current !== room) {
+        track.stop();
+        return;
+      }
+      screenTrackRef.current = track;
+      setSharingScreen(true);
+      // El usuario puede detener la compartición desde el picker del navegador.
+      track.once("stopped", () => {
+        if (screenTrackRef.current !== track) return;
+        screenTrackRef.current = null;
+        setSharingScreen(false);
+        const activeRoom = roomRef.current;
+        if (activeRoom) {
+          void activeRoom.localParticipant
+            .unpublishTrack(track)
+            .catch(() => {});
+        }
+        track.detach().forEach((el) => el.remove());
+      });
+    } catch (error) {
+      const name =
+        typeof error === "object" && error !== null && "name" in error
+          ? String((error as { name?: unknown }).name ?? "")
+          : "";
+      setScreenError(
+        name === "NotAllowedError" || name === "AbortError"
+          ? t("Permiso de captura denegado o cancelado.")
+          : t("No se pudo compartir la pantalla."),
+      );
+    }
+  }, [t]);
 
   // --- Conexión a la sala ---
 
   const connect = useCallback(
-    async (withVideo: boolean) => {
-      if (!appointmentId) return;
-      setPhase("connecting");
+    async (
+      withVideo: boolean,
+      options: { onFailure?: "ready" | "ended"; silent?: boolean } = {},
+    ): Promise<boolean> => {
+      if (!appointmentId) return false;
+      // En el auto-retry (`silent`) se conserva la fase conectada para mostrar
+      // el banner «Reconectando…» en lugar de volver al prejoin.
+      if (!options.silent) {
+        setPhase("connecting");
+        setReconnecting(false);
+      }
       setConnectError(null);
+      setScreenError(null);
+      intentionalRef.current = false;
+      lastVideoRef.current = withVideo;
+      void stopScreenShare();
       localTracksRef.current = [];
       remoteTracksRef.current = new Map();
       attachedTracksRef.current = new Set();
+      syncRemoteScreens([]);
+      setRemoteTiles([]);
       try {
         const result = await fetchJoinToken(appointmentId);
+        if (disposedRef.current) return false;
         const sdk = await loadTwilioVideo();
+        sdkRef.current = sdk;
         const room = await withTimeout(
           sdk.connect(result.token, {
             name: null,
@@ -259,6 +444,10 @@ export function VirtualRoom() {
             "La conexión con la sala tardó demasiado. Revisá que la cámara y el micrófono estén disponibles e intentá de nuevo.",
           ),
         );
+        if (disposedRef.current) {
+          room.disconnect();
+          return false;
+        }
         roomRef.current = room;
         setVideoOn(withVideo);
 
@@ -281,30 +470,113 @@ export function VirtualRoom() {
         room.on("participantDisconnected", (participant) => {
           removeRemoteTile(participant.identity);
         });
+        room.on("reconnecting", () => setReconnecting(true));
+        room.on("reconnected", () => setReconnecting(false));
         room.on("disconnected", (disconnectedRoom) => {
           if (roomRef.current !== disconnectedRoom) return;
-          setPhase("ended");
-          setEndedReason(
-            t("Te desconectaste de la sala o la conexión se interrumpió."),
-          );
+          roomRef.current = null;
+          // Salida voluntaria (leave/finalize/reopen): no hay retry.
+          if (intentionalRef.current) return;
+          setReconnecting(true);
+          handleDisconnectRef.current();
         });
 
         setJoinedAt(new Date().toISOString());
         setPhase("connected");
         setElapsed(0);
+        setEndCause(null);
+        setEndedReason(null);
+        setReconnecting(false);
+        return true;
       } catch (error) {
-        setPhase("ready");
-        setConnectError(
-          error instanceof Error
+        const mappedKey = mapTwilioErrorKey(error);
+        const message = mappedKey
+          ? t(mappedKey)
+          : error instanceof Error
             ? formatBackendMessage(error.message)
-            : t("No se pudo conectar con la sala de video."),
-        );
+            : t("No se pudo conectar con la sala de video.");
+        if (options.onFailure === "ended") {
+          setEndCause("network");
+          setEndedReason(message);
+          setReconnecting(false);
+          setPhase("ended");
+        } else {
+          setPhase("ready");
+          setConnectError(message);
+        }
+        return false;
       }
     },
-    [addRemoteTile, appointmentId, removeRemoteTile, t, watchParticipant],
+    [
+      addRemoteTile,
+      appointmentId,
+      removeRemoteTile,
+      stopScreenShare,
+      syncRemoteScreens,
+      t,
+      watchParticipant,
+    ],
   );
 
+  /**
+   * Caída inesperada de la conexión: clasifica la causa con GET /room + la
+   * cita y, si es red, reintenta una única vez con join-token fresco.
+   */
+  const handleUnexpectedDisconnect = useCallback(async () => {
+    if (!appointmentId || disposedRef.current) return;
+    try {
+      const [roomInfo, appointmentInfo] = await Promise.all([
+        fetchRoom(appointmentId).catch(() => null),
+        fetchAppointment(appointmentId).catch(() => null),
+      ]);
+      if (appointmentInfo) setAppointment(appointmentInfo);
+      const cause = classifyRoomEnd({
+        appointmentStatus:
+          appointmentInfo?.status ?? appointment?.status ?? null,
+        sessionStatus: roomInfo?.activeSessionStatus ?? null,
+        roomStatus: roomInfo?.status ?? null,
+        roomOpensAt: appointmentInfo?.roomOpensAt ?? appointment?.roomOpensAt,
+        roomClosesAt:
+          appointmentInfo?.roomClosesAt ?? appointment?.roomClosesAt,
+        now: Date.now(),
+      });
+
+      if (cause !== "network" || retryUsedRef.current) {
+        setEndCause(cause);
+        setEndedReason(null);
+        setReconnecting(false);
+        setPhase("ended");
+        return;
+      }
+
+      if (disposedRef.current) return;
+      retryUsedRef.current = true;
+      await connect(lastVideoRef.current, { onFailure: "ended", silent: true });
+    } catch {
+      setEndCause("network");
+      setEndedReason(null);
+      setReconnecting(false);
+      setPhase("ended");
+    }
+  }, [appointment, appointmentId, connect]);
+
+  useEffect(() => {
+    handleDisconnectRef.current = () => {
+      void handleUnexpectedDisconnect();
+    };
+  }, [handleUnexpectedDisconnect]);
+
+  /** Reintento manual desde la pantalla de fin (rearma el auto-retry). */
+  const retryConnection = useCallback(async () => {
+    if (disposedRef.current) return;
+    retryUsedRef.current = false;
+    setEndCause(null);
+    setEndedReason(null);
+    await connect(lastVideoRef.current, { onFailure: "ended" });
+  }, [connect]);
+
   const join = useCallback(async () => {
+    retryUsedRef.current = false;
     if (!appointment || !isOwner) {
       await connect(true);
       return;
@@ -328,10 +600,13 @@ export function VirtualRoom() {
   }, [connect]);
 
   const leave = useCallback(() => {
-    roomRef.current?.disconnect();
+    intentionalRef.current = true;
+    void stopScreenShare();
+    const room = roomRef.current;
     roomRef.current = null;
+    room?.disconnect();
     router.back();
-  }, [router]);
+  }, [router, stopScreenShare]);
 
   const finalize = useCallback(async () => {
     if (!appointment) return;
@@ -339,14 +614,17 @@ export function VirtualRoom() {
     setConnectError(null);
     try {
       await endSession(appointment.id, "Finalizada por el profesional");
-      roomRef.current?.disconnect();
+      intentionalRef.current = true;
+      void stopScreenShare();
+      const room = roomRef.current;
       roomRef.current = null;
+      room?.disconnect();
       router.push(`/appointments/citas/${appointment.id}`);
     } catch {
       setConnectError(t("No se pudo finalizar la sesión. Intentá nuevamente."));
       setEnding(false);
     }
-  }, [appointment, router, t]);
+  }, [appointment, router, stopScreenShare, t]);
 
   // Reapertura dentro de la gracia (60 min desde la finalización): vuelve la
   // cita a InProgress con sala nueva y reconecta al usuario en el momento.
@@ -358,6 +636,7 @@ export function VirtualRoom() {
       await reopenSession(appointment.id);
       const refreshed = await fetchAppointment(appointment.id);
       setAppointment(refreshed);
+      retryUsedRef.current = false;
       await connect(true);
     } catch {
       setReopenError(t("No se pudo reabrir la consulta."));
@@ -386,8 +665,16 @@ export function VirtualRoom() {
     const room = roomRef.current;
     if (!room) return;
     const publications = Array.from(room.localParticipant.tracks.values());
-    const track = publications.find((p) => p.track?.kind === "video")?.track as
-      TwilioVideo.LocalTrack | undefined;
+    // Excluye el track de pantalla compartida: apagar la cámara no debe
+    // detener la compartición.
+    const track = publications.find((p) => {
+      const candidate = p.track as TwilioVideo.LocalVideoTrack | undefined;
+      return (
+        candidate?.kind === "video" &&
+        candidate.name !== "screen" &&
+        p.trackName !== "screen"
+      );
+    })?.track as TwilioVideo.LocalTrack | undefined;
     if (!track) return;
     if (track.isEnabled) {
       track.disable();
@@ -401,9 +688,16 @@ export function VirtualRoom() {
   // --- Limpieza al desmontar ---
 
   useEffect(() => {
+    disposedRef.current = false;
     return () => {
+      disposedRef.current = true;
+      intentionalRef.current = true;
       roomRef.current?.disconnect();
       roomRef.current = null;
+      const screenTrack = screenTrackRef.current;
+      screenTrackRef.current = null;
+      screenTrack?.detach().forEach((el) => el.remove());
+      screenTrack?.stop();
       localTracksRef.current.forEach((track) => {
         track.detach().forEach((el) => el.remove());
         track.stop();
@@ -412,6 +706,10 @@ export function VirtualRoom() {
       remoteTracksRef.current.forEach((tracks) => {
         tracks.forEach((track) => track.detach().forEach((el) => el.remove()));
       });
+      remoteScreensRef.current.forEach(({ track }) =>
+        track.detach().forEach((el) => el.remove()),
+      );
+      remoteScreensRef.current = [];
     };
   }, []);
 
@@ -442,7 +740,15 @@ export function VirtualRoom() {
         container.appendChild(track.attach());
       });
     });
-  }, [phase, tracksVersion]);
+
+    remoteScreens.forEach(({ identity, track }) => {
+      const key = `screen:${identity}:${track.id}`;
+      const container = screenContainersRef.current.get(`${identity}:${track.id}`);
+      if (!container || attachedTracksRef.current.has(key)) return;
+      attachedTracksRef.current.add(key);
+      container.appendChild(track.attach());
+    });
+  }, [phase, remoteScreens, tracksVersion]);
 
   // --- Reloj de la sesión ---
 
@@ -462,6 +768,18 @@ export function VirtualRoom() {
         const room = await fetchRoom(appointmentId);
         if (!active) return;
         setBackendRoomStatus(room.activeSessionStatus ?? room.status);
+        // El profesional finalizó la consulta (session/end o webhook): cerrar
+        // la llamada con el copy de consulta finalizada, sin CTA de reintento.
+        if (room.activeSessionStatus === "Ended" || room.status === "Ended") {
+          void stopScreenShare();
+          const current = roomRef.current;
+          roomRef.current = null;
+          current?.disconnect();
+          setEndCause("session-ended");
+          setEndedReason(null);
+          setReconnecting(false);
+          setPhase("ended");
+        }
       } catch {
         // Polling best-effort: la sala puede no existir aún o caer la red.
       }
@@ -472,13 +790,23 @@ export function VirtualRoom() {
       active = false;
       window.clearInterval(timer);
     };
-  }, [phase, appointmentId]);
+  }, [phase, appointmentId, stopScreenShare]);
 
   useEffect(() => {
-    if (phase !== "ready" && phase !== "connecting") return;
+    if (phase !== "ready" && phase !== "connecting" && phase !== "ended") {
+      return;
+    }
     const timer = window.setInterval(() => setNow(Date.now()), 30000);
     return () => window.clearInterval(timer);
   }, [phase]);
+
+  // --- Detección de soporte de pantalla compartida (escritorio) ---
+
+  // La sala conectada solo se renderiza en el cliente, así que la detección
+  // directa no rompe la hidratación (el SSR siempre renderiza "loading").
+  const screenShareSupported =
+    typeof navigator !== "undefined" &&
+    typeof navigator.mediaDevices?.getDisplayMedia === "function";
 
   // Persistencia de la altura elegida del panel inferior.
   useEffect(() => {
@@ -600,14 +928,55 @@ export function VirtualRoom() {
       completedAt !== null &&
       now - new Date(completedAt).getTime() < 60 * 60 * 1000;
 
+    const closeAtIso = appointment?.roomClosesAt ?? null;
+    const closeTime = closeAtIso ? new Date(closeAtIso).getTime() : null;
+    const windowStillOpen =
+      (appointment?.status === "Confirmed" ||
+        appointment?.status === "InProgress") &&
+      (closeTime == null || Number.isNaN(closeTime) || now < closeTime);
+    const canRetry = endCause === "network" && windowStillOpen;
+
+    const title =
+      endCause === "network"
+        ? t("Se perdió la conexión con la sala.")
+        : endCause === "window-closed"
+          ? t("La ventana de acceso a la sala ya terminó")
+          : endCause === "session-ended"
+            ? t("La consulta finalizó.")
+            : (endedReason ?? t("La sesión finalizó."));
+    const description =
+      endCause === "network"
+        ? (endedReason ?? t("Revisá tu conexión e intentá de nuevo."))
+        : endCause === "window-closed"
+          ? t("Volvé a la cita para ver los detalles de la consulta.")
+          : endCause === "session-ended"
+            ? t("El profesional finalizó la consulta.")
+            : null;
+
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6">
         <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
-          <PhoneOff className="size-7 text-muted-foreground" />
+          {endCause === "network" ? (
+            <WifiOff className="size-7 text-muted-foreground" />
+          ) : (
+            <PhoneOff className="size-7 text-muted-foreground" />
+          )}
         </div>
-        <p className="max-w-md text-center text-sm text-muted-foreground">
-          {endedReason ?? t("La sesión finalizó.")}
-        </p>
+        <div className="flex max-w-md flex-col items-center gap-1.5 text-center">
+          <p className="text-[15px] font-semibold text-foreground">{title}</p>
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
+          )}
+        </div>
+        {canRetry && (
+          <Button
+            onClick={() => void retryConnection()}
+            className="gap-1.5"
+          >
+            <RotateCcw className="size-4" />
+            {t("Reintentar conexión")}
+          </Button>
+        )}
         {reopenError && (
           <p className="text-sm text-destructive" role="alert">
             {reopenError}
@@ -658,6 +1027,42 @@ export function VirtualRoom() {
 
     const appointmentCode = appointment.id.slice(0, 8).toUpperCase();
     const appointmentStatus = t(appointmentStatusLabel[appointment.status]);
+
+    const mediaDetail = (
+      kind: "camera" | "microphone",
+      status: MediaDeviceStatus,
+    ): string => {
+      switch (status) {
+        case "ready":
+          return kind === "camera"
+            ? t("Cámara lista.")
+            : t("Micrófono listo.");
+        case "checking":
+          return t("Verificando…");
+        case "absent":
+          return kind === "camera"
+            ? t("No se detectó ninguna cámara.")
+            : t("No se detectó ningún micrófono.");
+        case "denied":
+          return kind === "camera"
+            ? t(
+                "Permiso de cámara denegado. Habilitalo en el navegador para este sitio.",
+              )
+            : t(
+                "Permiso de micrófono denegado. Habilitalo en el navegador para este sitio.",
+              );
+        case "in-use":
+          return kind === "camera"
+            ? t("La cámara está siendo usada por otra aplicación.")
+            : t("El micrófono está siendo usado por otra aplicación.");
+        case "unsupported":
+          return t("Tu navegador no permite usar la cámara ni el micrófono.");
+        case "insecure":
+          return t(
+            "Necesitás una conexión segura (HTTPS) para usar la cámara y el micrófono.",
+          );
+      }
+    };
 
     return (
       <div className="flex min-h-dvh flex-col bg-muted/20">
@@ -799,7 +1204,7 @@ export function VirtualRoom() {
                           ? t("Iniciar consulta y unirme")
                           : t("Unirme a la consulta")}
                     </Button>
-                    {connectError && (
+                    {(connectError || preflight.canJoinAudioOnly) && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -859,10 +1264,17 @@ export function VirtualRoom() {
                   </div>
                 </div>
                 <div className="mt-5 flex flex-col divide-y divide-border">
-                  <ReadinessItem
+                  <MediaChecklistItem
                     icon={Video}
-                    label={t("Cámara y micrófono")}
-                    detail={t("Necesita cámara y micrófono.")}
+                    label={t("Cámara")}
+                    status={preflight.camera}
+                    detail={mediaDetail("camera", preflight.camera)}
+                  />
+                  <MediaChecklistItem
+                    icon={Mic}
+                    label={t("Micrófono")}
+                    status={preflight.microphone}
+                    detail={mediaDetail("microphone", preflight.microphone)}
                   />
                   <ReadinessItem
                     icon={ShieldCheck}
@@ -872,6 +1284,20 @@ export function VirtualRoom() {
                     )}
                   />
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={preflight.retry}
+                  disabled={preflight.checking}
+                  className="mt-2 gap-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  {preflight.checking ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="size-3.5" />
+                  )}
+                  {t("Volver a verificar")}
+                </Button>
               </section>
             </aside>
           </div>
@@ -996,6 +1422,16 @@ export function VirtualRoom() {
         </div>
       </header>
 
+      {reconnecting && (
+        <div
+          className="flex shrink-0 items-center justify-center gap-2 border-b border-amber-200/70 bg-amber-50 px-4 py-2 text-[12px] font-semibold text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300"
+          role="status"
+        >
+          <Loader2 className="size-3.5 animate-spin" />
+          {t("Reconectando…")}
+        </div>
+      )}
+
       <div className="flex min-h-0 flex-1">
         <main className="flex min-w-0 flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-5">
           {connectError && (
@@ -1005,6 +1441,44 @@ export function VirtualRoom() {
             >
               {connectError}
             </p>
+          )}
+
+          {screenError && (
+            <p
+              className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-[13px] text-destructive shadow-sm"
+              role="alert"
+            >
+              {screenError}
+            </p>
+          )}
+
+          {remoteScreens.length > 0 && (
+            <div className="flex min-h-0 flex-col gap-2">
+              {remoteScreens.map(({ identity, track }) => (
+                <div
+                  key={`${identity}:${track.id}`}
+                  className="overflow-hidden rounded-[26px] border border-primary/30 bg-foreground shadow-sm"
+                >
+                  <div className="flex items-center gap-2 border-b border-white/10 px-3.5 py-2">
+                    <ScreenShare className="size-4 text-primary" />
+                    <span className="truncate text-[12px] font-semibold text-background">
+                      {t("Pantalla compartida de {name}", {
+                        name: nameFor(identity, false).name,
+                      })}
+                    </span>
+                  </div>
+                  <div
+                    ref={(el) => {
+                      const map = screenContainersRef.current;
+                      const key = `${identity}:${track.id}`;
+                      if (el) map.set(key, el);
+                      else map.delete(key);
+                    }}
+                    className="aspect-video w-full bg-black [&_video]:h-full [&_video]:w-full [&_video]:object-contain"
+                  />
+                </div>
+              ))}
+            </div>
           )}
 
           <div
@@ -1066,6 +1540,37 @@ export function VirtualRoom() {
                 <VideoOff className="size-5" />
               )}
             </ControlButton>
+            {screenShareSupported && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (sharingScreen) void stopScreenShare();
+                  else void startScreenShare();
+                }}
+                aria-label={
+                  sharingScreen
+                    ? t("Dejar de compartir")
+                    : t("Compartir pantalla")
+                }
+                aria-pressed={sharingScreen}
+                className={`h-11 gap-1.5 rounded-full border px-4 shadow-sm ${
+                  sharingScreen
+                    ? "border-primary/30 bg-primary/10 text-primary hover:bg-primary/15"
+                    : "border-border bg-background text-foreground hover:bg-muted"
+                }`}
+              >
+                {sharingScreen ? (
+                  <ScreenShareOff className="size-4" />
+                ) : (
+                  <ScreenShare className="size-4" />
+                )}
+                <span className="hidden sm:inline">
+                  {sharingScreen
+                    ? t("Dejar de compartir")
+                    : t("Compartir pantalla")}
+                </span>
+              </Button>
+            )}
             {canManage && (
               <Button
                 onClick={finalize}
@@ -1092,6 +1597,7 @@ export function VirtualRoom() {
       </div>
 
       <ConsultationPanel
+        key={appointment.id}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         tab={sidebarTab}
@@ -1165,6 +1671,49 @@ function InfoChip({
       >
         {value}
       </span>
+    </div>
+  );
+}
+
+function MediaChecklistItem({
+  icon: Icon,
+  label,
+  detail,
+  status,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  detail: string;
+  status: MediaDeviceStatus;
+}) {
+  const tone =
+    status === "ready"
+      ? "bg-emerald-500/10 text-emerald-600"
+      : status === "checking"
+        ? "bg-muted text-muted-foreground"
+        : "bg-amber-500/10 text-amber-600";
+  return (
+    <div className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+      <div
+        className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${tone}`}
+      >
+        <Icon className="size-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <p className="text-[12.5px] font-semibold text-foreground">{label}</p>
+          {status === "checking" ? (
+            <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+          ) : status === "ready" ? (
+            <CircleCheck className="size-3.5 text-emerald-600" />
+          ) : (
+            <AlertTriangle className="size-3.5 text-amber-600" />
+          )}
+        </div>
+        <p className="mt-0.5 text-[11.5px] leading-5 text-muted-foreground">
+          {detail}
+        </p>
+      </div>
     </div>
   );
 }

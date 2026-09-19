@@ -2,20 +2,29 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  AlertTriangle,
   ArrowLeft,
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
   ClipboardPenLine,
   FlaskConical,
+  Loader2,
+  MessageSquare,
   Pill,
+  RotateCcw,
+  Send,
   ShieldCheck,
   Syringe,
   Users,
   X,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useFormDrafts } from "../hooks/use-form-drafts";
+import { useRoomChat } from "../hooks/use-room-chat";
+import type { RoomChatMessage } from "../hooks/use-room-chat";
 import { useT } from "@/providers/i18n-provider";
+import { useAuth } from "@/providers/auth-provider";
 import { getPatient } from "@/features/patients/services/patients-service";
 import type { Patient } from "@/features/patients/types";
 import {
@@ -34,7 +43,7 @@ import { FormHeader } from "./forms/form-ui";
 import { PatientContextCard } from "./forms/patient-context-card";
 import type { AppointmentDto } from "../types";
 
-export type ConsultationPanelTab = "participants" | "forms";
+export type ConsultationPanelTab = "participants" | "forms" | "chat";
 
 type FormKind = "history" | "lab" | "medications" | "procedures";
 
@@ -137,6 +146,21 @@ export function ConsultationPanel({
     patient: Patient;
     age: number | null;
   } | null>(null);
+
+  // El chat se habilita con la cita confirmada, en curso o finalizada (el
+  // paciente puede esperar en la sala con la cita aún Confirmed); el polling
+  // corre mientras el panel está abierto (el badge cuenta lo no visto con la
+  // pestaña de chat oculta).
+  const canChat =
+    appointment.status === "Confirmed" ||
+    appointment.status === "InProgress" ||
+    appointment.status === "Completed";
+  const chat = useRoomChat({
+    appointmentId: appointment.id,
+    polling: open,
+    visible: open && tab === "chat" && selectedForm === null,
+    canSend: canChat,
+  });
 
   // Ajuste de estado durante el render (patrón recomendado por React): al
   // cerrar el panel se vuelve a la lista de formularios.
@@ -294,7 +318,9 @@ export function ConsultationPanel({
                     ? t(FORM_CATALOG.find((f) => f.kind === selectedForm)?.title ?? "")
                     : tab === "participants"
                       ? t("Participantes")
-                      : t("Formularios médicos")}
+                      : tab === "chat"
+                        ? t("Chat de la consulta")
+                        : t("Formularios médicos")}
                 </p>
                 <span className="hidden rounded-full bg-primary/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.12em] text-primary sm:inline-flex">
                   {t("Consulta virtual")}
@@ -331,6 +357,13 @@ export function ConsultationPanel({
                 icon={ClipboardList}
               />
             )}
+            <TabButton
+              active={tab === "chat"}
+              onClick={() => onTabChange("chat")}
+              label={t("Chat")}
+              icon={MessageSquare}
+              badge={chat.unread}
+            />
           </div>
         )}
 
@@ -344,6 +377,17 @@ export function ConsultationPanel({
                 patient?.patient.allergies.map((a) => a.allergen) ?? []
               }
               draftCounts={draftCounts}
+            />
+          ) : tab === "chat" ? (
+            <ChatBody
+              messages={chat.messages}
+              loading={chat.loading}
+              error={chat.error}
+              sending={chat.sending}
+              canSend={canChat}
+              onSend={chat.send}
+              onRetryMessage={chat.retryMessage}
+              onRetryLoad={chat.retryLoad}
             />
           ) : tab === "participants" ? (
             <ParticipantsBody
@@ -396,12 +440,15 @@ function TabButton({
   onClick,
   label,
   icon: Icon,
+  badge = 0,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  badge?: number;
 }) {
+  const t = useT();
   return (
     <button
       type="button"
@@ -415,7 +462,219 @@ function TabButton({
     >
       <Icon className="size-3.5" />
       {label}
+      {badge > 0 && (
+        <span
+          aria-label={t("Nuevos mensajes")}
+          className="flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9.5px] font-bold leading-4 text-primary-foreground"
+        >
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
     </button>
+  );
+}
+
+function ChatBody({
+  messages,
+  loading,
+  error,
+  sending,
+  canSend,
+  onSend,
+  onRetryMessage,
+  onRetryLoad,
+}: {
+  messages: RoomChatMessage[];
+  loading: boolean;
+  error: string | null;
+  sending: boolean;
+  canSend: boolean;
+  onSend: (body: string) => Promise<void>;
+  onRetryMessage: (clientId: string) => Promise<void>;
+  onRetryLoad: () => void;
+}) {
+  const t = useT();
+  const { user } = useAuth();
+  const [text, setText] = useState("");
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
+  const initialScrollRef = useRef(false);
+
+  const myId = user?.id ?? null;
+  const isLocal = (message: RoomChatMessage) =>
+    message.senderUserId === "" || message.senderUserId === myId;
+
+  const roleLabel: Record<string, string> = {
+    Professional: "Profesional",
+    Patient: "Paciente",
+    Supervisor: "Supervisor",
+  };
+
+  // Auto-scroll al último mensaje (sin arrastrar la vista si el usuario está
+  // leyendo mensajes anteriores).
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const nearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      160;
+    const firstScroll = !initialScrollRef.current;
+    if (firstScroll || nearBottom) {
+      initialScrollRef.current = true;
+      endRef.current?.scrollIntoView({
+        block: "end",
+        behavior: firstScroll ? "auto" : "smooth",
+      });
+    }
+  }, [messages]);
+
+  const submit = () => {
+    const value = text.trim();
+    if (!value || !canSend) return;
+    setText("");
+    void onSend(value);
+  };
+
+  const showFullError = error !== null && messages.length === 0;
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      {error && messages.length > 0 && (
+        <p
+          className="shrink-0 rounded-xl border border-amber-300/60 bg-amber-50/80 px-3.5 py-2 text-[11.5px] text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-300"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
+
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-2xl border border-border/70 bg-muted/20 p-3"
+      >
+        {loading && messages.length === 0 ? (
+          <div className="flex h-full min-h-32 flex-col items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="size-5 animate-spin" />
+            <p className="text-[12px]">{t("Cargando mensajes…")}</p>
+          </div>
+        ) : showFullError ? (
+          <div className="flex h-full min-h-32 flex-col items-center justify-center gap-3 px-6 text-center">
+            <AlertTriangle className="size-6 text-amber-600" />
+            <p className="text-[12.5px] text-muted-foreground">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRetryLoad}
+              className="gap-1.5"
+            >
+              <RotateCcw className="size-3.5" /> {t("Reintentar")}
+            </Button>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex h-full min-h-32 flex-col items-center justify-center gap-2 text-muted-foreground">
+            <MessageSquare className="size-6" />
+            <p className="text-[12.5px]">{t("Sin mensajes todavía.")}</p>
+            <p className="text-[11px]">
+              {t("Los mensajes quedan guardados con la consulta.")}
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2.5">
+            {messages.map((message) => {
+              const local = isLocal(message);
+              return (
+                <div
+                  key={message.clientId}
+                  className={`flex flex-col ${local ? "items-end" : "items-start"}`}
+                >
+                  {!local && (
+                    <span className="mb-0.5 pl-1 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                      {t(roleLabel[message.senderRole] ?? "Participante")}
+                    </span>
+                  )}
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[12.5px] leading-relaxed shadow-sm ${
+                      local
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border/70 bg-card text-foreground"
+                    } ${message.status === "sending" ? "opacity-70" : ""}`}
+                  >
+                    <p className="whitespace-pre-wrap break-words">
+                      {message.body}
+                    </p>
+                  </div>
+                  <span className="mt-0.5 flex items-center gap-1.5 px-1 text-[10.5px] text-muted-foreground">
+                    {formatTime(message.createdAt)}
+                    {message.status === "sending" && (
+                      <>
+                        <Loader2 className="size-3 animate-spin" />
+                        {t("Enviando…")}
+                      </>
+                    )}
+                    {message.status === "failed" && (
+                      <>
+                        <AlertTriangle className="size-3 text-destructive" />
+                        {t("No enviado")}
+                        <button
+                          type="button"
+                          onClick={() => void onRetryMessage(message.clientId)}
+                          aria-label={t("Reintentar envío")}
+                          className="font-semibold text-primary underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary/30"
+                        >
+                          {t("Reintentar")}
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+            <div ref={endRef} />
+          </div>
+        )}
+      </div>
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+        className="flex shrink-0 items-end gap-2"
+      >
+        <textarea
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              submit();
+            }
+          }}
+          placeholder={
+            canSend
+              ? t("Escribe un mensaje…")
+              : t("El chat estará disponible cuando la consulta esté en curso.")
+          }
+          maxLength={2000}
+          rows={2}
+          disabled={!canSend}
+          aria-label={t("Escribe un mensaje…")}
+          className="min-h-11 flex-1 resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-[12.5px] text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:ring-3 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+        />
+        <Button
+          type="submit"
+          disabled={!canSend || text.trim().length === 0 || sending}
+          aria-label={t("Enviar")}
+          className="size-11 shrink-0 rounded-xl"
+        >
+          {sending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Send className="size-4" />
+          )}
+        </Button>
+      </form>
+    </div>
   );
 }
 

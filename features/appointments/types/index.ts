@@ -137,6 +137,20 @@ export interface JoinSessionResultDto {
   room: VirtualRoomDto;
 }
 
+// --- Chat de la consulta ---
+
+/** Rol del emisor derivado server-side del JWT (nunca del body). */
+export type ChatSenderRole = "Professional" | "Patient" | "Supervisor";
+
+export interface ChatMessageDto {
+  id: string;
+  appointmentId: string;
+  senderUserId: string;
+  senderRole: ChatSenderRole;
+  body: string;
+  createdAt: string;
+}
+
 export interface TelemedicineSessionDto {
   id: string;
   appointmentId: string;

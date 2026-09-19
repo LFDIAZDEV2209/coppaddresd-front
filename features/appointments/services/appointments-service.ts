@@ -16,6 +16,7 @@ import type {
   AppointmentAlertDto,
   AppointmentDto,
   AppointmentRequestDto,
+  ChatMessageDto,
   ClinicalDataDto,
   ClinicalEncounterDto,
   CurrentUserContextDto,
@@ -249,6 +250,41 @@ export async function reopenSession(
   return apiFetch<AppointmentDto>(
     `${APPOINTMENTS_PATH}/${appointmentId}/session/reopen`,
     { method: "POST" },
+  );
+}
+
+// --- Chat de la consulta (REST + polling incremental) ---
+
+export interface ChatMessagesQuery {
+  /** Cursor ISO: devuelve mensajes con createdAt > after. */
+  after?: string | null;
+  /** Desempate del cursor cuando varios mensajes comparten createdAt. */
+  afterId?: string | null;
+  /** Límite de mensajes (1–100, default del backend). */
+  limit?: number;
+}
+
+export async function fetchChatMessages(
+  appointmentId: string,
+  query: ChatMessagesQuery = {},
+): Promise<ChatMessageDto[]> {
+  const params = new URLSearchParams();
+  if (query.after) params.set("after", query.after);
+  if (query.afterId) params.set("afterId", query.afterId);
+  if (query.limit != null) params.set("limit", String(query.limit));
+  const qs = params.toString();
+  return apiFetch<ChatMessageDto[]>(
+    `${APPOINTMENTS_PATH}/${appointmentId}/chat/messages${qs ? `?${qs}` : ""}`,
+  );
+}
+
+export async function sendChatMessage(
+  appointmentId: string,
+  body: string,
+): Promise<ChatMessageDto> {
+  return apiFetch<ChatMessageDto>(
+    `${APPOINTMENTS_PATH}/${appointmentId}/chat/messages`,
+    { method: "POST", body: JSON.stringify({ body }) },
   );
 }
 
