@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Bot,
   ArrowLeft,
@@ -24,11 +23,9 @@ import { useAgentDetail } from "../hooks/use-agent-detail";
 import { useAgentKnowledge } from "../hooks/use-agent-knowledge";
 import { useAgentMonitoring } from "../hooks/use-agent-monitoring";
 import { getAgentIcon, formatDate } from "../services/agents-service";
-import { uploadInstructionsDocument } from "../services/upload-agent-document";
 import { VersionsTab } from "./versions-tab";
 import { KnowledgeTab } from "./knowledge-tab";
 import { MonitoringTab } from "./monitoring-tab";
-import { VersionFormDialog } from "./version-form-dialog";
 
 const statusVariant: Record<string, "default" | "destructive" | "secondary"> = {
   Activo: "default",
@@ -42,8 +39,6 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
   const detail = useAgentDetail(agentTypeId);
   const knowledge = useAgentKnowledge(agentTypeId, { includeGlobal: true });
   const monitoring = useAgentMonitoring(agentTypeId, 20);
-
-  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
 
   if (detail.loading) {
     return (
@@ -110,7 +105,7 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
               size="sm"
               variant="secondary"
               className="gap-1.5"
-              onClick={() => setVersionDialogOpen(true)}
+              onClick={() => router.push(`/agents/${agent.id}/versions/new`)}
             >
               <Plus className="size-[15px]" />
               {t('Nueva versión')}
@@ -167,25 +162,12 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
 
           <TabsContent value="versions">
             <VersionsTab
+              agentTypeId={agent.id}
               versions={detail.versions}
               activeVersionId={agent.activeVersionId}
               creating={detail.creatingVersion}
               activatingId={detail.activatingVersionId}
-              knowledgeBases={knowledge.bases}
               onActivate={detail.handleActivateVersion}
-              onCreate={detail.handleCreateVersion}
-              onUploadInstructions={(file) =>
-                uploadInstructionsDocument(file, {
-                  agentId: agent.id,
-                  agentName: agent.name,
-                  findAgentBase: () =>
-                    knowledge.bases.find(
-                      (base) => base.scope !== "Global" && base.agentTypeId === agent.id,
-                    ) ?? null,
-                  createAgentBase: knowledge.handleCreateBase,
-                  registerDocument: knowledge.handleRegisterDocument,
-                })
-              }
             />
           </TabsContent>
 
@@ -201,29 +183,6 @@ export function AgentDetailPage({ agentTypeId }: { agentTypeId: string }) {
           </TabsContent>
         </Tabs>
       </div>
-
-      <VersionFormDialog
-        open={versionDialogOpen}
-        onOpenChange={setVersionDialogOpen}
-        saving={detail.creatingVersion}
-        knowledgeBases={knowledge.bases}
-        onCreate={async (config, notes) => {
-          await detail.handleCreateVersion(config, notes);
-          setVersionDialogOpen(false);
-        }}
-        onUploadInstructions={(file) =>
-          uploadInstructionsDocument(file, {
-            agentId: agent.id,
-            agentName: agent.name,
-            findAgentBase: () =>
-              knowledge.bases.find(
-                (base) => base.scope !== "Global" && base.agentTypeId === agent.id,
-              ) ?? null,
-            createAgentBase: knowledge.handleCreateBase,
-            registerDocument: knowledge.handleRegisterDocument,
-          })
-        }
-      />
     </div>
   );
 }

@@ -34,6 +34,10 @@ import {
 } from "@/features/professionals/services/professional-catalogs-service";
 import { fetchRoles } from "@/features/roles/services/roles-service";
 import type { Role } from "@/features/roles/types";
+import {
+  PROFESSIONAL_CLINICS_ENABLED,
+  GENERAL_SCHEDULE_KEY,
+} from "@/features/professionals/config";
 import { createPatient } from "@/features/patients/services/patients-service";
 import type { PatientInput } from "@/features/patients/types";
 import { ApiError } from "@/lib/api/http";
@@ -86,7 +90,10 @@ interface PeopleWizardProps {
   initialContext?: string | null;
 }
 
-export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps) {
+export function PeopleWizard({
+  initialMode,
+  initialContext,
+}: PeopleWizardProps) {
   const t = useT();
   const router = useRouter();
   const { hasPermission } = useAuth();
@@ -100,8 +107,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
 
   // Calcular modos disponibles para decidir si el selector es necesario
   const availableModes = getAvailableModes(parsedContext, hasPermission);
-  const skipSelector =
-    effectiveMode !== null || availableModes.length <= 1;
+  const skipSelector = effectiveMode !== null || availableModes.length <= 1;
 
   // Estado del wizard
   const [step, setStep] = useState(skipSelector ? 0 : -1); // -1 = selector de modo
@@ -157,9 +163,12 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
           const entry = sessionCache.organizations;
           if (entry && Date.now() < entry.expiry) {
             setOrganizations(entry.data);
-            const withClinics = entry.data.find((o) => o.clinics.length > 0);
-            if (withClinics) {
-              setForm((f) => ({ ...f, organizationId: withClinics.id }));
+            const autoOrg =
+              entry.data.find((o) => o.clinics.length > 0) ??
+              entry.data[0] ??
+              null;
+            if (autoOrg) {
+              setForm((f) => ({ ...f, organizationId: autoOrg.id }));
             }
           } else {
             tasks.push(
@@ -170,9 +179,10 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                   data: orgs,
                   expiry: Date.now() + CACHE_TTL_MS,
                 };
-                const withClinics = orgs.find((o) => o.clinics.length > 0);
-                if (withClinics) {
-                  setForm((f) => ({ ...f, organizationId: withClinics.id }));
+                const autoOrg =
+                  orgs.find((o) => o.clinics.length > 0) ?? orgs[0] ?? null;
+                if (autoOrg) {
+                  setForm((f) => ({ ...f, organizationId: autoOrg.id }));
                 }
               }),
             );
@@ -284,12 +294,13 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
   // Mapeo de schedules del form a payload del backend (weekday 1..7)
   const buildSchedulePayload = useCallback(() => {
     if (!mode || mode !== "professional") return [];
-    // Usar la clínica primaria (o la primera asignada)
-    const primaryAssignment = form.clinicAssignments.find(
-      (c) => c.isPrimary,
-    ) ?? form.clinicAssignments[0];
-    if (!primaryAssignment) return [];
-    const schedule = form.schedules[primaryAssignment.clinicId];
+    // Con clínicas: la primaria (o la primera asignada). Sin clínicas
+    // (flag): el horario único general.
+    const primaryAssignment =
+      form.clinicAssignments.find((c) => c.isPrimary) ??
+      form.clinicAssignments[0];
+    const key = primaryAssignment?.clinicId ?? GENERAL_SCHEDULE_KEY;
+    const schedule = form.schedules[key];
     if (!schedule?.enabled) return [];
     return DAY_ORDER.filter((d) => schedule.days[d].enabled).map((d) => ({
       weekday: DAY_TO_WEEKDAY[d],
@@ -304,6 +315,14 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
     setError(null);
     try {
       if (mode === "professional" || mode === "employee") {
+        // Sin clínicas (flag): sin asignaciones; el profesional recibe el rol
+        // global Professional (solo con invitación: el backend exige usuario
+        // para aplicar scopes). Con clínicas: flujo original por clínica.
+        const clinicsOff = !PROFESSIONAL_CLINICS_ENABLED;
+        const professionalRoleId = clinicsOff
+          ? (roles.find((r) => r.name.toLowerCase() === "professional")?.id ??
+            null)
+          : null;
         const result = await createProfessional({
           organizationId: form.organizationId,
           firstName: form.firstName.trim(),
@@ -316,10 +335,16 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
             mode === "professional" ? form.professionalTypeId || null : null,
           // El rol por clínica se elige en el paso de clínicas (modo
           // profesional); en empleado no se envía rol.
-          clinics: form.clinicAssignments.map((c) => ({
-            ...c,
-            roleId: mode === "professional" ? (c.roleId ?? null) : null,
-          })),
+          clinics: clinicsOff
+            ? []
+            : form.clinicAssignments.map((c) => ({
+                ...c,
+                roleId: mode === "professional" ? (c.roleId ?? null) : null,
+              })),
+          globalRoleId:
+            clinicsOff && mode === "professional" && form.sendInvitation
+              ? professionalRoleId
+              : null,
           specialtyIds: mode === "professional" ? form.specialtyIds : [],
           jobTitle: form.jobTitle.trim() || null,
           sendInvitation: form.sendInvitation,
@@ -402,7 +427,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
             : "No se pudo crear el profesional. Intenta nuevamente.",
       );
     }
-  }, [mode, form, buildSchedulePayload]);
+  }, [mode, form, buildSchedulePayload, roles]);
 
   const copyInvitationLink = async () => {
     if (!created?.invitationLink) return;
@@ -432,13 +457,21 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
         "Selecciona el tipo de persona y completa los datos para agregarla al directorio.",
       )
     : mode === "professional"
-      ? t(
-          "Crea el perfil, asigna sus clínicas, permisos y horarios de atención, y envía la invitación por correo.",
-        )
-      : mode === "employee"
+      ? PROFESSIONAL_CLINICS_ENABLED
         ? t(
-            "Crea el perfil, asigna sus clínicas y permisos, y envía la invitación por correo para que complete su acceso.",
+            "Crea el perfil, asigna sus clínicas, permisos y horarios de atención, y envía la invitación por correo.",
           )
+        : t(
+            "Crea el perfil, asigna su horario de atención y envía la invitación por correo.",
+          )
+      : mode === "employee"
+        ? PROFESSIONAL_CLINICS_ENABLED
+          ? t(
+              "Crea el perfil, asigna sus clínicas y permisos, y envía la invitación por correo para que complete su acceso.",
+            )
+          : t(
+              "Crea el perfil del empleado y envía la invitación por correo para que complete su acceso.",
+            )
         : mode === "user"
           ? t(
               "Crea credenciales de acceso con roles y permisos, sin perfil de empleado ni paciente.",
@@ -521,9 +554,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() =>
-                    router.push(`/employees/${created.id}`)
-                  }
+                  onClick={() => router.push(`/employees/${created.id}`)}
                 >
                   {t("Ver perfil")}
                 </Button>
@@ -532,9 +563,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                   variant="ghost"
                   onClick={() =>
                     router.push(
-                      created.mode === "patient"
-                        ? "/patients"
-                        : "/employees",
+                      created.mode === "patient" ? "/patients" : "/employees",
                     )
                   }
                 >
@@ -565,9 +594,7 @@ export function PeopleWizard({ initialMode, initialContext }: PeopleWizardProps)
                 variant="ghost"
                 onClick={() =>
                   router.push(
-                    created.mode === "patient"
-                      ? "/patients"
-                      : "/employees",
+                    created.mode === "patient" ? "/patients" : "/employees",
                   )
                 }
               >

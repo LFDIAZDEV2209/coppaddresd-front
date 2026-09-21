@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { FileAudio, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, FileAudio, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -32,6 +33,7 @@ import type { MediaItem, MediaInput } from "../types";
 
 export function MediaPage() {
   const t = useT();
+  const router = useRouter();
   const {
     result,
     loading,
@@ -47,19 +49,27 @@ export function MediaPage() {
   } = useMedia();
 
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [formOpen, setFormOpen] = useState(false);
+  /** Medio en edición: el modal ya solo abre para editar; crear → /media/new. */
   const [editing, setEditing] = useState<MediaItem | undefined>();
   const [details, setDetails] = useState<MediaItem | undefined>();
   const [deleting, setDeleting] = useState<MediaItem | undefined>();
   const [pageSize, setPageSizeLocal] = useState(8);
+  /** Feedback tras crear en /media/new (query ?creado=1). */
+  const [createdNotice, setCreatedNotice] = useState(false);
+
+  useEffect(() => {
+    if (!window.location.search.includes("creado=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedNotice(true);
+    // Limpia el query sin recargar para que recargar la página no repita el banner.
+    window.history.replaceState(null, "", "/media");
+  }, []);
 
   const openCreate = () => {
-    setEditing(undefined);
-    setFormOpen(true);
+    router.push("/media/new");
   };
   const openEdit = (media: MediaItem) => {
     setEditing(media);
-    setFormOpen(true);
   };
   const submit = async (
     input: MediaInput,
@@ -95,7 +105,7 @@ export function MediaPage() {
     }
 
     await save({ ...input, storageKey, thumbnailKey }, editing?.id);
-    setFormOpen(false);
+    setEditing(undefined);
   };
 
   return (
@@ -143,6 +153,23 @@ export function MediaPage() {
           onViewModeChange={setViewMode}
         />
       </section>
+
+      {createdNotice && (
+        <div
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{t('Medio creado correctamente.')}</span>
+          <button
+            type="button"
+            onClick={() => setCreatedNotice(false)}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+          >
+            {t('Cerrar')}
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <MediaSkeleton viewMode={viewMode} />
@@ -227,11 +254,11 @@ export function MediaPage() {
       )}
 
       <MediaFormDialog
-        key={`${editing?.id ?? "new"}-${formOpen}`}
-        open={formOpen}
+        key={editing?.id ?? "edit"}
+        open={Boolean(editing)}
         media={editing}
         saving={actionLoading}
-        onOpenChange={setFormOpen}
+        onOpenChange={(open) => !open && setEditing(undefined)}
         onSubmit={submit}
       />
       <MediaDetailDialog

@@ -21,14 +21,16 @@ import {
 } from "lucide-react";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
-import {
-  type OrganizationTree,
-} from "@/features/professionals/services/employees-service";
+import { type OrganizationTree } from "@/features/professionals/services/employees-service";
 import {
   type ProfessionalTypeDto,
   type SpecialtyDto,
 } from "@/features/professionals/services/professional-catalogs-service";
 import type { Role } from "@/features/roles/types";
+import {
+  PROFESSIONAL_CLINICS_ENABLED,
+  GENERAL_SCHEDULE_KEY,
+} from "@/features/professionals/config";
 import { ReviewEditButton } from "../shared";
 import {
   type FormState,
@@ -116,9 +118,7 @@ export function ReviewStep({
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("Correo")}
               </p>
-              <p className="mt-0.5 truncate font-medium">
-                {form.email || "—"}
-              </p>
+              <p className="mt-0.5 truncate font-medium">{form.email || "—"}</p>
             </div>
             {!isPatient && (
               <div className="min-w-0">
@@ -150,6 +150,24 @@ export function ReviewStep({
             )}
           </div>
 
+          {/* Rol global (solo profesional, sin clínicas) */}
+          {isProfessional && !PROFESSIONAL_CLINICS_ENABLED && (
+            <div className="border-t border-border p-4">
+              <p className="text-[12px] font-semibold text-muted-foreground">
+                {t("Acceso")}
+              </p>
+              <p className="mt-1 text-[12.5px]">
+                {form.sendInvitation
+                  ? t(
+                      "Se asignará el rol Professional con acceso global a la plataforma.",
+                    )
+                  : t(
+                      "Sin invitación no se asignan roles: podrás hacerlo después desde Usuarios.",
+                    )}
+              </p>
+            </div>
+          )}
+
           {/* Clínica del paciente */}
           {isPatient && summaryClinics.length > 0 && (
             <div className="border-t border-border p-4">
@@ -175,10 +193,7 @@ export function ReviewStep({
                 {selectedType?.name}
                 {form.specialtyIds.length > 0 &&
                   ` · ${form.specialtyIds
-                    .map(
-                      (id) =>
-                        specialties.find((s) => s.id === id)?.name,
-                    )
+                    .map((id) => specialties.find((s) => s.id === id)?.name)
                     .filter(Boolean)
                     .join(", ")}`}
               </p>
@@ -186,43 +201,45 @@ export function ReviewStep({
           )}
 
           {/* Clínicas (profesional/empleado) — después de profesión en modo profesional */}
-          {!isPatient && summaryClinics.length > 0 && (
-            <div className="border-t border-border p-4">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[12px] font-semibold text-muted-foreground">
-                  {t("Clínicas")}
-                </p>
-                <ReviewEditButton onClick={onBack} />
+          {!isPatient &&
+            PROFESSIONAL_CLINICS_ENABLED &&
+            summaryClinics.length > 0 && (
+              <div className="border-t border-border p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[12px] font-semibold text-muted-foreground">
+                    {t("Clínicas")}
+                  </p>
+                  <ReviewEditButton onClick={onBack} />
+                </div>
+                <div className="mt-2 flex flex-col gap-2">
+                  {summaryClinics.map(({ clinic, locations, roleName }) => (
+                    <div
+                      key={clinic!.id}
+                      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-muted/40 px-3 py-2 text-[12.5px]"
+                    >
+                      <span className="font-semibold">{clinic!.name}</span>
+                      {locations.length > 0 && (
+                        <>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="min-w-0 truncate text-muted-foreground">
+                            {t("Sedes")}:{" "}
+                            {locations.map((l) => l.name).join(", ")}
+                          </span>
+                        </>
+                      )}
+                      {isProfessional && roleName && (
+                        <>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-muted-foreground">
+                            {roleName}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="mt-2 flex flex-col gap-2">
-                {summaryClinics.map(({ clinic, locations, roleName }) => (
-                  <div
-                    key={clinic!.id}
-                    className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-muted/40 px-3 py-2 text-[12.5px]"
-                  >
-                    <span className="font-semibold">{clinic!.name}</span>
-                    {locations.length > 0 && (
-                      <>
-                        <span className="text-muted-foreground">·</span>
-                        <span className="min-w-0 truncate text-muted-foreground">
-                          {t("Sedes")}:{" "}
-                          {locations.map((l) => l.name).join(", ")}
-                        </span>
-                      </>
-                    )}
-                    {isProfessional && roleName && (
-                      <>
-                        <span className="text-muted-foreground">·</span>
-                        <span className="text-muted-foreground">
-                          {roleName}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
           {/* Puesto (solo empleado) */}
           {isEmployee && (
@@ -255,29 +272,30 @@ export function ReviewStep({
                 </p>
               </div>
               <div className="mt-2 flex flex-col gap-2">
-                {summaryClinics.map(({ clinic }) => {
-                  const schedule =
-                    form.schedules[clinic!.id] ?? defaultSchedule();
+                {(PROFESSIONAL_CLINICS_ENABLED
+                  ? summaryClinics.map(({ clinic }) => ({
+                      key: clinic!.id,
+                      label: clinic!.name,
+                    }))
+                  : [{ key: GENERAL_SCHEDULE_KEY, label: t("Horario general") }]
+                ).map(({ key, label }) => {
+                  const schedule = form.schedules[key] ?? defaultSchedule();
                   const enabledDays = DAY_ORDER.filter(
                     (d) => schedule.days[d].enabled,
                   );
                   return (
                     <div
-                      key={clinic!.id}
+                      key={key}
                       className="rounded-lg bg-muted/40 px-3 py-2 text-[12.5px]"
                     >
-                      <span className="font-semibold">
-                        {clinic!.name}:{" "}
-                      </span>
+                      <span className="font-semibold">{label}: </span>
                       {!schedule.enabled ? (
                         <span className="text-muted-foreground">
                           {t("Horario estándar (lun–vie 8:00–17:00)")}
                         </span>
                       ) : enabledDays.length === 0 ? (
                         <span className="text-warning-foreground">
-                          {t(
-                            "Sin días de atención configurados",
-                          )}
+                          {t("Sin días de atención configurados")}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">
@@ -329,10 +347,7 @@ export function ReviewStep({
           </Button>
           <Button onClick={onNext} disabled={saving}>
             {saving ? (
-              <Loader2
-                data-icon="inline-start"
-                className="animate-spin"
-              />
+              <Loader2 data-icon="inline-start" className="animate-spin" />
             ) : (
               <GraduationCap data-icon="inline-start" />
             )}

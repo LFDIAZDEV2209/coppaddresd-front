@@ -214,6 +214,13 @@ export interface CreateProfessionalInput {
   professionalTypeId?: string | null;
   bio?: string | null;
   clinics: ProfessionalClinicAssignment[];
+  /**
+   * Rol global a asignar cuando las clínicas están ocultas
+   * (PROFESSIONAL_CLINICS_ENABLED=false). Se envía como scoped role
+   * { scopeType: "Global", scopeId: null }; el backend lo aplica igual
+   * que los de clínica. null = sin rol global.
+   */
+  globalRoleId?: string | null;
   specialtyIds: string[];
   licenses?: unknown[];
   sendInvitation: boolean;
@@ -248,13 +255,24 @@ export async function createProfessional(
     })),
     specialtyIds: input.specialtyIds,
     licenses: [],
-    scopedRoles: input.clinics
-      .filter((c) => c.roleId)
-      .map((c) => ({
-        roleId: c.roleId,
-        scopeType: "Clinic",
-        scopeId: c.clinicId,
-      })),
+    scopedRoles: [
+      ...input.clinics
+        .filter((c) => c.roleId)
+        .map((c) => ({
+          roleId: c.roleId!,
+          scopeType: "Clinic",
+          scopeId: c.clinicId,
+        })),
+      ...(input.globalRoleId
+        ? [
+            {
+              roleId: input.globalRoleId,
+              scopeType: "Global",
+              scopeId: null,
+            },
+          ]
+        : []),
+    ],
     scopedPermissions: [],
     sendInvitation: input.sendInvitation,
   };

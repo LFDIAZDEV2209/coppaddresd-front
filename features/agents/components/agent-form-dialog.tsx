@@ -1,21 +1,16 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { Bot, LoaderCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Bot } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useT } from "@/providers/i18n-provider";
 import type { AgentType, AgentTypeRequest } from "../types";
-import { AgentIconPicker } from "./agent-icon-picker";
+import { AgentFormFields } from "./agent-form-fields";
+import { useT } from "@/providers/i18n-provider";
 
 interface AgentFormDialogProps {
   open: boolean;
@@ -25,6 +20,10 @@ interface AgentFormDialogProps {
   onSubmit: (input: AgentTypeRequest) => Promise<void>;
 }
 
+/**
+ * Modal de EDICIÓN de tipos de agente. La creación vive en la página dedicada
+ * /agents/new; el cuerpo del formulario es compartido (AgentFormFields).
+ */
 export function AgentFormDialog({
   open,
   agent,
@@ -33,30 +32,6 @@ export function AgentFormDialog({
   onSubmit,
 }: AgentFormDialogProps) {
   const t = useT();
-  const [name, setName] = useState(agent?.name ?? "");
-  const [description, setDescription] = useState(agent?.description ?? "");
-  const [specialty, setSpecialty] = useState(agent?.specialty ?? "");
-  const [iconKey, setIconKey] = useState(agent?.iconKey ?? "Bot");
-  const [status, setStatus] = useState(agent?.status ?? "Borrador");
-  const [validationError, setValidationError] = useState<string | null>(null);
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!name.trim()) {
-      setValidationError(t('El nombre del agente es obligatorio.'));
-      return;
-    }
-    setValidationError(null);
-    await onSubmit({
-      name: name.trim(),
-      description: description.trim() || null,
-      specialty: specialty.trim() || null,
-      iconKey: iconKey.trim() || null,
-      status,
-      metadata: agent?.metadata ?? null,
-    });
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] min-w-[560px] max-w-xl overflow-y-auto p-0">
@@ -77,115 +52,13 @@ export function AgentFormDialog({
             </div>
           </div>
         </DialogHeader>
-        <form onSubmit={submit} className="flex flex-col gap-4 px-6 py-5">
-          <Field label={t('Nombre')} required>
-            <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder={t('Ej. Asistente de Nutrición')}
-              disabled={saving}
-            />
-          </Field>
-
-          <Field label={t('Especialidad')}>
-            <Input
-              value={specialty}
-              onChange={(event) => setSpecialty(event.target.value)}
-              placeholder={t('Ej. Nutrición, Salud mental, Citas')}
-              disabled={saving}
-            />
-          </Field>
-
-          <Field label={t('Icono')}>
-            <AgentIconPicker
-              value={iconKey}
-              onChange={setIconKey}
-              disabled={saving}
-            />
-          </Field>
-
-          <Field label={t('Estado')}>
-            <select
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-              value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as AgentType["status"])
-              }
-              disabled={saving}
-            >
-              <option value="Borrador">{t('Borrador')}</option>
-              <option value="Activo">{t('Activo')}</option>
-              <option value="Inactivo">{t('Inactivo')}</option>
-            </select>
-          </Field>
-
-          <Field label={t('Descripción')}>
-            <textarea
-              className="min-h-20 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder={t('Describe el propósito del agente')}
-              disabled={saving}
-            />
-          </Field>
-
-          {validationError && (
-            <p
-              className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive"
-              role="alert"
-            >
-              {validationError}
-            </p>
-          )}
-
-          <DialogFooter className="-mx-6 -mb-5 px-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={saving}
-            >
-              {t('Cancelar')}
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? (
-                <>
-                  <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  {t('Guardando...')}
-                </>
-              ) : agent ? (
-                t('Guardar cambios')
-              ) : (
-                t('Crear agente')
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+        <AgentFormFields
+          agent={agent}
+          saving={saving}
+          onCancel={() => onOpenChange(false)}
+          onSubmit={onSubmit}
+        />
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Field({
-  label,
-  required,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label>
-        {label}
-        {required && (
-          <span className="ml-1 text-destructive" aria-hidden="true">
-            *
-          </span>
-        )}
-      </Label>
-      {children}
-    </div>
   );
 }

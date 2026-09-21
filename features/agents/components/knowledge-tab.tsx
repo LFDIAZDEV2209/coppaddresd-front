@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   BookOpen,
+  CheckCircle2,
   Plus,
   UploadCloud,
   LoaderCircle,
@@ -16,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { uuid } from "@/lib/uuid";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -76,11 +77,19 @@ const docStatusVariant: Record<string, "default" | "destructive" | "secondary" |
 
 export function KnowledgeTab({ knowledge, agentTypeId }: KnowledgeTabProps) {
   const t = useT();
-  const [createOpen, setCreateOpen] = useState(false);
+  const router = useRouter();
   const [uploadBase, setUploadBase] = useState<KnowledgeBase | null>(null);
   const [docsByBase, setDocsByBase] = useState<Record<string, AgentDocument[]>>({});
   const [docsLoading, setDocsLoading] = useState<Record<string, boolean>>({});
   const [deletingDoc, setDeletingDoc] = useState<AgentDocument | null>(null);
+  /** Feedback tras crear en /agents/[id]/knowledge/new (query ?creado=1). */
+  const [createdNotice, setCreatedNotice] = useState(false);
+
+  useEffect(() => {
+    if (!window.location.search.includes("creado=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedNotice(true);
+  }, []);
 
   const toggleDocs = async (base: KnowledgeBase) => {
     if (docsByBase[base.id]) {
@@ -126,7 +135,7 @@ export function KnowledgeTab({ knowledge, agentTypeId }: KnowledgeTabProps) {
             </p>
           </div>
         </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
+        <Button size="sm" onClick={() => router.push(`/agents/${agentTypeId}/knowledge/new`)}>
           <Plus data-icon="inline-start" />
           {t('Nueva knowledge base')}
         </Button>
@@ -253,16 +262,22 @@ export function KnowledgeTab({ knowledge, agentTypeId }: KnowledgeTabProps) {
         </div>
       )}
 
-      <CreateKnowledgeBaseDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        agentTypeId={agentTypeId}
-        creating={knowledge.creating}
-        onSubmit={async (input) => {
-          await knowledge.handleCreateBase(input);
-          setCreateOpen(false);
-        }}
-      />
+      {createdNotice && (
+        <div
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{t('Knowledge base creada correctamente.')}</span>
+          <button
+            type="button"
+            onClick={() => setCreatedNotice(false)}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+          >
+            {t('Cerrar')}
+          </button>
+        </div>
+      )}
 
       {uploadBase && (
         <UploadDocumentDialog
@@ -312,134 +327,6 @@ export function KnowledgeTab({ knowledge, agentTypeId }: KnowledgeTabProps) {
   );
 }
 
-function CreateKnowledgeBaseDialog({
-  open,
-  onOpenChange,
-  agentTypeId,
-  creating,
-  onSubmit,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  agentTypeId: string;
-  creating: boolean;
-  onSubmit: (input: KnowledgeBaseRequest) => Promise<void>;
-}) {
-  const t = useT();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [scope, setScope] = useState<"Global" | "Agent">("Agent");
-  const [validationError, setValidationError] = useState<string | null>(null);
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!name.trim()) {
-      setValidationError(t('El nombre es obligatorio.'));
-      return;
-    }
-    setValidationError(null);
-    await onSubmit({
-      name: name.trim(),
-      description: description.trim() || null,
-      scope,
-      agentTypeId: scope === "Agent" ? agentTypeId : null,
-      status: "Activo",
-    });
-    setName("");
-    setDescription("");
-    setScope("Agent");
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-[520px] max-w-md p-0">
-        <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
-          <DialogTitle className="text-base font-semibold">{t('Nueva knowledge base')}</DialogTitle>
-          <DialogDescription>
-            {t('Define el alcance: global (todos los agentes) o específico del agente.')}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={submit} className="flex flex-col gap-4 px-6 py-5">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="kb-name">
-              {t('Nombre')}{" "}
-              <span className="ml-1 text-destructive" aria-hidden="true">
-                *
-              </span>
-            </Label>
-            <Input
-              id="kb-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder={t('Ej. Protocolos de nutrición')}
-              disabled={creating}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="kb-desc">{t('Descripción')}</Label>
-            <Input
-              id="kb-desc"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder={t('Describe el contenido de la base')}
-              disabled={creating}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>{t('Alcance')}</Label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setScope("Agent")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
-                  scope === "Agent"
-                    ? "border-primary bg-primary-soft text-primary"
-                    : "border-border text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <Bot className="size-4" />
-                {t('Este agente')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setScope("Global")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
-                  scope === "Global"
-                    ? "border-primary bg-primary-soft text-primary"
-                    : "border-border text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <Globe className="size-4" />
-                Global
-              </button>
-            </div>
-          </div>
-          {validationError && (
-            <p className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive" role="alert">
-              {validationError}
-            </p>
-          )}
-          <DialogFooter className="-mx-6 -mb-5 px-6">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={creating}>
-              {t('Cancelar')}
-            </Button>
-            <Button type="submit" disabled={creating}>
-              {creating ? (
-                <>
-                  <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                  {t('Creando...')}
-                </>
-              ) : (
-                t('Crear base')
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function UploadDocumentDialog({
   base,
   open,
@@ -459,7 +346,7 @@ function UploadDocumentDialog({
   const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!file) {
       setValidationError(t('Seleccioná un archivo para subir.'));

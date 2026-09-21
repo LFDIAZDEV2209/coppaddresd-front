@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Apple,
   Plus,
@@ -55,6 +56,7 @@ import type { NutritionPlanListItem } from "../types";
 
 export function NutritionPlansPage() {
   const t = useT();
+  const router = useRouter();
   const { can } = useAppContext();
   const {
     result,
@@ -78,6 +80,15 @@ export function NutritionPlansPage() {
   const [cloning, setCloning] = useState<NutritionPlanListItem | undefined>();
   const [createdMessage, setCreatedMessage] = useState<string | null>(null);
 
+  // Feedback tras crear en /wellness/nutrition-plans/new (query ?creado=1)
+  useEffect(() => {
+    if (!window.location.search.includes("creado=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedMessage(t("Plan creado correctamente."));
+    window.history.replaceState(null, "", "/wellness/nutrition-plans");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-ocultar la confirmación tras unos segundos
   useEffect(() => {
     if (!createdMessage) return;
@@ -86,8 +97,7 @@ export function NutritionPlansPage() {
   }, [createdMessage]);
 
   const openCreate = () => {
-    setEditing(undefined);
-    setFormOpen(true);
+    router.push("/wellness/nutrition-plans/new");
   };
 
   const openEdit = async (plan: NutritionPlanListItem) => {

@@ -638,6 +638,82 @@ export function getBreadcrumbSegments(
     return segments;
   }
 
+  // Rutas anidadas del módulo de inventario (creación en página dedicada).
+  if (pathname === "/inventory/new") {
+    segments.push({ label: "Productos", href: "/inventory" });
+    segments.push({ label: "Nuevo producto" });
+    return segments;
+  }
+
+  // Rutas anidadas del módulo de tests de salud (creación en página dedicada).
+  if (pathname === "/health-tests/baterias/new") {
+    segments.push({ label: "Tests de salud", href: "/health-tests/baterias" });
+    segments.push({ label: "Nueva batería" });
+    return segments;
+  }
+
+  // Rutas anidadas del módulo de bienestar (creación en página dedicada).
+  if (pathname.startsWith("/wellness/")) {
+    const listHref = "/wellness/" + (pathname.split("/")[2] ?? "");
+    segments.push({ label: "Bienestar", href: listHref });
+    if (pathname.endsWith("/new")) {
+      if (pathname === "/wellness/nutrition-plans/new") {
+        segments.push({ label: "Nuevo plan de alimentación" });
+      } else if (pathname === "/wellness/exercise-routines/new") {
+        segments.push({ label: "Nueva rutina de ejercicio" });
+      } else {
+        segments.push({ label: "Nueva asignación" });
+      }
+    } else {
+      segments.push({ label: "Detalle" });
+    }
+    return segments;
+  }
+
+  // Rutas anidadas del módulo de agentes (creación en página dedicada).
+  if (pathname === "/agents/new") {
+    segments.push({ label: "Agentes especializados", href: "/agents" });
+    segments.push({ label: "Nuevo agente" });
+    return segments;
+  }
+  if (pathname.startsWith("/agents/knowledge/new")) {
+    segments.push({ label: "Agente Global", href: "/agents/knowledge" });
+    segments.push({ label: "Nueva knowledge base" });
+    return segments;
+  }
+  if (/^\/agents\/[^/]+\/versions\/new$/.test(pathname)) {
+    segments.push({ label: "Agentes especializados", href: "/agents" });
+    segments.push({ label: "Nueva versión" });
+    return segments;
+  }
+  if (/^\/agents\/[^/]+\/knowledge\/new$/.test(pathname)) {
+    segments.push({ label: "Agentes especializados", href: "/agents" });
+    segments.push({ label: "Nueva knowledge base" });
+    return segments;
+  }
+
+  // Rutas anidadas del módulo de roles (creación en página dedicada).
+  if (pathname.startsWith("/roles/")) {
+    segments.push({ label: "Roles y permisos", href: "/roles" });
+    if (pathname === "/roles/new") {
+      segments.push({ label: "Rol personalizado" });
+    } else {
+      segments.push({ label: "Detalle" });
+    }
+    return segments;
+  }
+
+  // Rutas anidadas del módulo de medios (creación en página dedicada).
+  if (pathname.startsWith("/media/")) {
+    segments.push({ label: "Medios", href: "/media" });
+    if (pathname === "/media/new") {
+      segments.push({ label: "Nuevo medio" });
+    } else {
+      segments.push({ label: "Detalle" });
+    }
+    return segments;
+  }
+
   // Rutas anidadas del módulo de usuarios (nuevo/importar/detalle/editar).
   if (pathname.startsWith("/users/")) {
     segments.push({ label: "Usuarios", href: "/users" });

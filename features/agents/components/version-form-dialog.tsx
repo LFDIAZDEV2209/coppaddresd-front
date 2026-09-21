@@ -19,14 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import type { AgentRuntimeConfigForm, KnowledgeBase } from "../types";
 import { useT } from "@/providers/i18n-provider";
 import {
@@ -38,9 +30,7 @@ import {
   MEMORY_CATEGORIES,
 } from "../services/version-config-utils";
 
-interface VersionFormDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface VersionFormFieldsProps {
   saving: boolean;
   /** Versión existente en edición (o null para crear). */
   initialConfig?: string | null;
@@ -51,17 +41,17 @@ interface VersionFormDialogProps {
   onUploadInstructions: (
     file: File,
   ) => Promise<{ knowledgeBaseId: string; storageKey: string; fileName: string }>;
+  onCancel: () => void;
 }
 
-export function VersionFormDialog({
-  open,
-  onOpenChange,
+export function VersionFormFields({
   saving,
   initialConfig,
   knowledgeBases,
   onCreate,
   onUploadInstructions,
-}: VersionFormDialogProps) {
+  onCancel,
+}: VersionFormFieldsProps) {
   const t = useT();
   const [form, setForm] = useState<AgentRuntimeConfigForm>(() =>
     initialConfig ? parseRuntimeConfig(initialConfig) : emptyRuntimeConfig(),
@@ -173,24 +163,8 @@ export function VersionFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] min-w-[760px] max-w-3xl overflow-y-auto p-0">
-        <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Sparkles className="size-5" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <DialogTitle>{t('Nueva versión del agente')}</DialogTitle>
-              <DialogDescription>
-                {t('Configurá el comportamiento sin tocar código: instrucciones, modelo y herramientas.')}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-
-        <form onSubmit={submit} className="flex flex-col gap-5 px-6 py-5">
-          {/* --- Instrucciones (system prompt) --- */}
+    <form onSubmit={submit} className="flex flex-col gap-5 px-6 py-5">
+      {/* --- Instrucciones (system prompt) --- */}
           <Section
             icon={BrainCircuit}
             title={t('Instrucciones del agente')}
@@ -515,8 +489,8 @@ export function VersionFormDialog({
             </p>
           )}
 
-          <DialogFooter className="-mx-6 -mb-5 px-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving || uploadingInstructions}>
+          <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={saving || uploadingInstructions}>
               {t('Cancelar')}
             </Button>
             <Button type="submit" disabled={saving || uploadingInstructions}>
@@ -534,10 +508,8 @@ export function VersionFormDialog({
                 t('Crear versión')
               )}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
   );
 }
 

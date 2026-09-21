@@ -10,6 +10,7 @@ import {
   ProfessionalStatusBadge,
 } from "../professional-visuals";
 import { ActionsMenu } from "./actions-menu";
+import { PROFESSIONAL_CLINICS_ENABLED } from "@/features/professionals/config";
 import type { EmployeeListItem } from "../../services/employees-service";
 
 // --- Vista de tarjetas ---
@@ -102,7 +103,7 @@ export function DirectoryCards({
             </div>
           ) : null}
 
-          {employee.clinicNames.length > 0 && (
+          {PROFESSIONAL_CLINICS_ENABLED && employee.clinicNames.length > 0 && (
             <p className="flex items-center gap-1.5 truncate text-[11.5px] text-muted-foreground">
               <Building2 className="size-3.5 shrink-0" />
               {employee.clinicNames.join(", ")}

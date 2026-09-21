@@ -20,10 +20,12 @@ import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import type {
-  OrganizationTree,
-} from "@/features/professionals/services/employees-service";
+import type { OrganizationTree } from "@/features/professionals/services/employees-service";
 import { cn } from "@/lib/utils";
+import {
+  PROFESSIONAL_CLINICS_ENABLED,
+  GENERAL_SCHEDULE_KEY,
+} from "@/features/professionals/config";
 import {
   type FormState,
   DAY_ORDER,
@@ -53,13 +55,17 @@ export function ScheduleStep({
     [organizations, form.organizationId],
   );
 
-  const assignedClinics = useMemo(
-    () =>
+  const assignedClinics = useMemo(() => {
+    // Sin clínicas (flag): un único horario general, sin pestañas por clínica.
+    if (!PROFESSIONAL_CLINICS_ENABLED) {
+      return [{ id: GENERAL_SCHEDULE_KEY, name: t("Horario general") }];
+    }
+    return (
       activeOrg?.clinics.filter((c) =>
         form.clinicAssignments.some((a) => a.clinicId === c.id),
-      ) ?? [],
-    [activeOrg, form.clinicAssignments],
-  );
+      ) ?? []
+    );
+  }, [activeOrg, form.clinicAssignments, t]);
 
   const updateSchedule = useCallback(
     (clinicId: string, patch: Record<string, unknown>) => {
@@ -148,9 +154,13 @@ export function ScheduleStep({
     <div className="animate-slide-up flex flex-col gap-0">
       <SectionHeader
         title={t("Horarios de atención")}
-        description={t(
-          "Disponibilidad del profesional para agendar citas, por clínica",
-        )}
+        description={
+          PROFESSIONAL_CLINICS_ENABLED
+            ? t(
+                "Disponibilidad del profesional para agendar citas, por clínica",
+              )
+            : t("Disponibilidad semanal del profesional para agendar citas")
+        }
         icon={CalendarClock}
         variant="primary"
       />
@@ -178,17 +188,20 @@ export function ScheduleStep({
         ) : (
           <>
             <p className="text-[12.5px] text-muted-foreground">
-              {t(
-                "Define cuándo puede recibir citas el profesional en cada clínica. El horario estándar de la plataforma es de",
-              )}{" "}
+              {PROFESSIONAL_CLINICS_ENABLED
+                ? t(
+                    "Define cuándo puede recibir citas el profesional en cada clínica. El horario estándar de la plataforma es de",
+                  )
+                : t(
+                    "Define cuándo puede recibir citas el profesional. El horario estándar de la plataforma es de",
+                  )}{" "}
               <strong className="text-foreground">8:00 a 17:00</strong>,{" "}
               {t("lunes a viernes")}.
             </p>
 
             <div className="flex flex-col gap-4">
               {assignedClinics.map((clinic) => {
-                const schedule =
-                  form.schedules[clinic.id] ?? defaultSchedule();
+                const schedule = form.schedules[clinic.id] ?? defaultSchedule();
                 const enabledDays = DAY_ORDER.filter(
                   (d) => schedule.days[d].enabled,
                 );
@@ -255,9 +268,7 @@ export function ScheduleStep({
                                 <button
                                   key={day}
                                   type="button"
-                                  onClick={() =>
-                                    toggleDay(clinic.id, day)
-                                  }
+                                  onClick={() => toggleDay(clinic.id, day)}
                                   aria-pressed={on}
                                   title={DAY_LABELS[day].full}
                                   className={cn(
@@ -279,10 +290,7 @@ export function ScheduleStep({
                                     )}
                                   >
                                     {on
-                                      ? schedule.days[day].start.slice(
-                                          0,
-                                          5,
-                                        )
+                                      ? schedule.days[day].start.slice(0, 5)
                                       : "—"}
                                   </span>
                                 </button>
@@ -322,16 +330,13 @@ export function ScheduleStep({
                                 <Input
                                   type="time"
                                   value={
-                                    schedule.days[firstEnabled ?? "mon"]
-                                      .start
+                                    schedule.days[firstEnabled ?? "mon"].start
                                   }
                                   onChange={(e) =>
                                     applySameTimeToAll(
                                       clinic.id,
                                       e.target.value,
-                                      schedule.days[
-                                        firstEnabled ?? "mon"
-                                      ].end,
+                                      schedule.days[firstEnabled ?? "mon"].end,
                                     )
                                   }
                                 />
@@ -343,15 +348,13 @@ export function ScheduleStep({
                                 <Input
                                   type="time"
                                   value={
-                                    schedule.days[firstEnabled ?? "mon"]
-                                      .end
+                                    schedule.days[firstEnabled ?? "mon"].end
                                   }
                                   onChange={(e) =>
                                     applySameTimeToAll(
                                       clinic.id,
-                                      schedule.days[
-                                        firstEnabled ?? "mon"
-                                      ].start,
+                                      schedule.days[firstEnabled ?? "mon"]
+                                        .start,
                                       e.target.value,
                                     )
                                   }

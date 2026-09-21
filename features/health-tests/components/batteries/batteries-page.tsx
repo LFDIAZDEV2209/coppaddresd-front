@@ -28,13 +28,9 @@ import {
 } from "../../hooks/use-health-tests";
 import type { Battery, HealthTest } from "../../types";
 import { formatDate } from "../../lib/format";
-import {
-  healthTestsApi,
-  type CreateBatteryInput,
-} from "../../services/health-tests-service";
+import { healthTestsApi } from "../../services/health-tests-service";
 import { StatSkeleton } from "../shared/module-chart-card";
 import { ModuleErrorState } from "../shared/module-states";
-import { CreateBatteryDialog } from "./create-battery-dialog";
 import {
   AssignPatientsDialog,
   type AssignPatientOption,
@@ -53,8 +49,6 @@ export function BatteriesPage() {
   const { data, loading, error, reload } = useCatalog();
   const coverage = useCoverage();
   const master = useMasterPatients();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
   const [assignTarget, setAssignTarget] = useState<Battery | null>(null);
 
   if (loading && !data) {
@@ -175,17 +169,8 @@ export function BatteriesPage() {
     },
   ];
 
-  const handleCreate = async (input: CreateBatteryInput) => {
-    setCreating(true);
-    try {
-      const created = await healthTestsApi.createBattery(input);
-      setCreateOpen(false);
-      await Promise.all([reload(), coverage.reload(), master.reload()]);
-      router.push(`/health-tests/baterias/${created.id}`);
-    } finally {
-      setCreating(false);
-    }
-  };
+  /** La creación vive en la página dedicada /health-tests/baterias/new. */
+  const openCreate = () => router.push("/health-tests/baterias/new");
 
   const handleAssign = async (patientIds: string[]) => {
     if (!assignTarget) return 0;
@@ -208,7 +193,7 @@ export function BatteriesPage() {
               size="sm"
               variant="outline"
               className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
-              onClick={() => setCreateOpen(true)}
+              onClick={openCreate}
             >
               <Plus data-icon="inline-start" />
               {t("Nueva batería")}
@@ -336,14 +321,6 @@ export function BatteriesPage() {
           "Las baterías permiten que nuevos momentos de evaluación (seguimiento, nutricional, psicológica) se configuren sin cambios estructurales.",
         )}
       </p>
-
-      <CreateBatteryDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        tests={data.tests}
-        saving={creating}
-        onCreate={handleCreate}
-      />
 
       <AssignPatientsDialog
         open={assignTarget !== null}

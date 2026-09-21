@@ -14,14 +14,15 @@ Metodología completa en `/PROMPT_TESTING.md`.
 
 ## Estado
 
-| Fase | Módulo (ruta)                                                                                 | Estado                                                          | Rama                            | Reporte         |
-| ---- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------- | --------------- |
-| 1    | Resumen (`/dashboard`)                                                                        | ⚠️ Validado con observaciones                                   | — (sin cambios)                 | chat 2026-09-18 |
-| 2    | Usuarios (`/users`, `/people/new`, `/people/importar`)                                        | ✅ Validado y corregido, **pendiente re-validar en desplegado** | `qa/fase2-usuarios` (3 commits) | chat 2026-09-18 |
-| 3    | Profesionales (`/employees`)                                                                  | ⏳ Siguiente                                                    | —                               | —               |
-| 4    | Pacientes (`/patients`)                                                                       | pendiente                                                       | —                               | —               |
-| 5    | Roles y permisos (`/roles`)                                                                   | pendiente                                                       | —                               | —               |
-| 6+   | Citas, Tests, Inventario, Tienda, Agentes, Contenido, Bienestar, Programa, Comunidad, Sistema | pendiente (orden sidebar en `lib/config/navigation.ts`)         | —                               | —               |
+| Fase | Módulo (ruta)                                                                                 | Estado                                                                                                                        | Rama                            | Reporte         |
+| ---- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | --------------- |
+| 1    | Resumen (`/dashboard`)                                                                        | ⚠️ Validado con observaciones                                                                                                 | — (sin cambios)                 | chat 2026-09-18 |
+| 2    | Usuarios (`/users`, `/people/new`, `/people/importar`)                                        | ✅ Validado y corregido, **pendiente re-validar en desplegado**                                                               | `qa/fase2-usuarios` (3 commits) | chat 2026-09-18 |
+| 3    | Profesionales (`/employees`)                                                                  | ✅ Verificado en prod (rev45): wizard sin clínicas, rol global, directorio limpio, detalle con heredados, Selects, /me scoped | (mergeado)                      | ver abajo       |
+| 4    | Pacientes (`/patients`)                                                                       | ⏳ Siguiente                                                                                                                  | —                               | —               |
+| 4    | Pacientes (`/patients`)                                                                       | pendiente                                                                                                                     | —                               | —               |
+| 5    | Roles y permisos (`/roles`)                                                                   | pendiente                                                                                                                     | —                               | —               |
+| 6+   | Citas, Tests, Inventario, Tienda, Agentes, Contenido, Bienestar, Programa, Comunidad, Sistema | pendiente (orden sidebar en `lib/config/navigation.ts`)                                                                       | —                               | —               |
 
 ## Fase 2 — detalle (para no repetir trabajo)
 
@@ -37,6 +38,44 @@ Metodología completa en `/PROMPT_TESTING.md`.
 - **Re-validar post-deploy**: `?action=create`, Volver desde Users, "1 usuario
   encontrado", "Importar 1 persona", "Ir a usuarios", aria-labels ES.
 - Deploy verificado AUSENTE el 2026-09-18 16:07 UTC (`/users?action=create` no redirige).
+
+## Fase 3 — detalle
+
+- Decisión usuario: ocultar clínicas (profesional+empleado; pacientes igual),
+  rol global Professional automático, horario único semanal.
+- Flag `features/professionals/config.ts` (`PROFESSIONAL_CLINICS_ENABLED=false`).
+  Revertir = `true`. Backend intacto (acepta `clinics: []`, scope `Global` soportado).
+- Flujo anterior probado E2E (pre-flag): crear profesional + invitación,
+  roles por clínica (cambio+reversión), directorio, filtros, búsqueda, detalle.
+- Remanente dev: empleado `QaProf Borrar` (qa.prof@) Invitado sin usuario
+  (sin borrar-empleados por UI; expira invitación 72h). Usuario qa.prof eliminado (53 OK).
+- Hallazgos nuevos: invitation link con `http://localhost:3000` en prod ✅ CORREGIDO
+  en AWS (causa: `Auth__Email__FrontendUrl` nunca bindeaba — la sección es `Email`
+  raíz; rev45 con `Email__FrontendUrl=https://erp.coppadresd.com`, verificado E2E);
+  org muestra UUID (dato seed); Base UI Select no cerraba ✅ CORREGIDO en
+  `components/ui/select.tsx` (causa: `data-[align-trigger=true]:animate-none`
+  mataba exit-animation→unmount + `modal=true` por defecto bloqueaba todo;
+  fix: sin animate-none + `modal={false}`, wrapper genérico preserva tipos);
+  fila "01a03..." UUID visible en detalle (pendiente verificar visual);
+  "1 profesionales visibles" corregido; placeholders EN→ES en wizard identidad.
+- Flujo end-user verificado: invitación → aceptar → password → login como
+  profesional → onboarding (profesión+especialidad+perfil) → dashboard con menú
+  limitado + guards ("Acceso denegado" en /users) ✅. PERO dashboard muestra KPIs
+  globales + acciones admin a un profesional de clínica (pendiente: gatear por
+  permiso + KPIs por alcance — backlog).
+- **[ALTO] /me ignoraba roles con scope** (descubierto como QaE2E: `roles:[]`,
+  `permissions:[]` con rol Professional Global asignado): fix en backend
+  (mergeado; deploys front45/auth46/api48 del 2026-09-18). **Verificado en prod**:
+  `/me` → `roles:["Professional"]` + 23 permisos; sidebar muestra Gestión/Citas/
+  Tests; "Mis pacientes" abre sin denegación. Usuario `qa.e2e` eliminado (53 OK).
+  Detalle: nuevo `GetUserEffectivePermissionCodesAsync` (solo UI; JWT estrictos),
+  `/me` une roles scoped, `CurrentContext` autoriza scope Global.
+- Remanente: usuario `qa.enduser` ✅ ELIMINADO (53 OK 2026-09-18); empleado huérfano
+  sin usuario (sin borrar-empleados por UI).
+- UUID en detalle (`01a03fcf...` en vez de "Professional" en el trigger): el scope
+  y el catálogo traen el MISMO id (verificado por red), el lookup debería
+  funcionar; fix defensivo en rama (label explícito en SelectValue). Re-verificar
+  visual post-deploy.
 
 ## Deuda cross-módulo (no re-descubrir)
 

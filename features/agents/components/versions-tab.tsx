@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Layers, CheckCircle2, LoaderCircle, Plus, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,37 +21,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { AgentTypeVersion, KnowledgeBase } from "../types";
+import type { AgentTypeVersion } from "../types";
 import { formatDate } from "../services/agents-service";
 import { useT } from "@/providers/i18n-provider";
-import { VersionFormDialog } from "./version-form-dialog";
 
 interface VersionsTabProps {
+  agentTypeId: string;
   versions: AgentTypeVersion[];
   activeVersionId: string | null;
   creating: boolean;
   activatingId: string | null;
-  knowledgeBases: KnowledgeBase[];
   onActivate: (versionId: string) => Promise<void>;
-  onCreate: (config: string, notes?: string | null) => Promise<void>;
-  onUploadInstructions: (
-    file: File,
-  ) => Promise<{ knowledgeBaseId: string; storageKey: string; fileName: string }>;
 }
 
 export function VersionsTab({
+  agentTypeId,
   versions,
   activeVersionId,
   creating,
   activatingId,
-  knowledgeBases,
   onActivate,
-  onCreate,
-  onUploadInstructions,
 }: VersionsTabProps) {
   const t = useT();
+  const router = useRouter();
   const [viewing, setViewing] = useState<AgentTypeVersion | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
+  /** Feedback tras crear en /agents/[id]/versions/new (query ?creado=1). */
+  const [createdNotice, setCreatedNotice] = useState(false);
+
+  useEffect(() => {
+    if (!window.location.search.includes("creado=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedNotice(true);
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -66,7 +68,7 @@ export function VersionsTab({
             </p>
           </div>
         </div>
-        <Button size="sm" onClick={() => setShowCreate(true)}>
+        <Button size="sm" onClick={() => router.push(`/agents/${agentTypeId}/versions/new`)}>
           <Plus data-icon="inline-start" />
           {t('Nueva versión')}
         </Button>
@@ -161,17 +163,22 @@ export function VersionsTab({
         </div>
       )}
 
-      <VersionFormDialog
-        open={showCreate}
-        onOpenChange={setShowCreate}
-        saving={creating}
-        knowledgeBases={knowledgeBases}
-        onCreate={async (config, notes) => {
-          await onCreate(config, notes);
-          setShowCreate(false);
-        }}
-        onUploadInstructions={onUploadInstructions}
-      />
+      {createdNotice && (
+        <div
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{t('Versión creada correctamente.')}</span>
+          <button
+            type="button"
+            onClick={() => setCreatedNotice(false)}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+          >
+            {t('Cerrar')}
+          </button>
+        </div>
+      )}
 
       <Dialog open={viewing !== null} onOpenChange={(open) => !open && setViewing(null)}>
         <DialogContent className="max-h-[92vh] min-w-[640px] max-w-2xl overflow-y-auto p-0">

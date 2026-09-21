@@ -27,7 +27,12 @@ interface IdentityStepProps extends Omit<StepProps, "onBack"> {
   onBack?: () => void;
 }
 
-export function IdentityStep({ form, setForm, onNext, onBack }: IdentityStepProps) {
+export function IdentityStep({
+  form,
+  setForm,
+  onNext,
+  onBack,
+}: IdentityStepProps) {
   const t = useT();
   const isPatient = form.mode === "patient";
 
@@ -90,9 +95,7 @@ export function IdentityStep({ form, setForm, onNext, onBack }: IdentityStepProp
             <Field
               label={t("Nombre")}
               required
-              error={
-                touched.has("firstName") ? fieldErrors.firstName : ""
-              }
+              error={touched.has("firstName") ? fieldErrors.firstName : ""}
             >
               <Input
                 value={form.firstName}
@@ -100,7 +103,7 @@ export function IdentityStep({ form, setForm, onNext, onBack }: IdentityStepProp
                   setForm({ ...form, firstName: e.target.value })
                 }
                 onBlur={handleBlur("firstName")}
-                placeholder={t("Jane")}
+                placeholder={t("Ej. María")}
                 disabled={false}
                 aria-invalid={Boolean(fieldErrors.firstName)}
               />
@@ -108,17 +111,13 @@ export function IdentityStep({ form, setForm, onNext, onBack }: IdentityStepProp
             <Field
               label={t("Apellido")}
               required
-              error={
-                touched.has("lastName") ? fieldErrors.lastName : ""
-              }
+              error={touched.has("lastName") ? fieldErrors.lastName : ""}
             >
               <Input
                 value={form.lastName}
-                onChange={(e) =>
-                  setForm({ ...form, lastName: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                 onBlur={handleBlur("lastName")}
-                placeholder={t("Doe")}
+                placeholder={t("Ej. González")}
                 disabled={false}
                 aria-invalid={Boolean(fieldErrors.lastName)}
               />
@@ -131,20 +130,16 @@ export function IdentityStep({ form, setForm, onNext, onBack }: IdentityStepProp
               error={touched.has("email") ? fieldErrors.email : ""}
               hint={
                 !isPatient
-                  ? t(
-                      "El profesional usará este correo para acceder al ERP.",
-                    )
+                  ? t("El profesional usará este correo para acceder al ERP.")
                   : undefined
               }
             >
               <Input
                 type="email"
                 value={form.email}
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
                 onBlur={handleBlur("email")}
-                placeholder={t("jane.doe@mediquer.com")}
+                placeholder={t("ej. usuario@coppaddresd.com")}
                 disabled={false}
                 aria-invalid={Boolean(fieldErrors.email)}
                 autoComplete="off"
@@ -154,9 +149,7 @@ export function IdentityStep({ form, setForm, onNext, onBack }: IdentityStepProp
             <Field label={t("Teléfono (opcional)")}>
               <Input
                 value={form.phone}
-                onChange={(e) =>
-                  setForm({ ...form, phone: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 placeholder={t("555-010-2244")}
                 disabled={false}
                 autoComplete="off"

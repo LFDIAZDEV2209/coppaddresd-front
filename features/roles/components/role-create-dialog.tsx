@@ -41,11 +41,9 @@ interface RoleCreateDialogProps {
 }
 
 /**
- * Diálogo para crear un rol personalizado con permisos:
- * - Nombre + descripción opcional.
- * - Selector de permisos agrupados por módulo (checkboxes).
- * - Búsqueda, select-all por módulo, chip de conteo.
- * - Crea el rol y asigna los permisos en secuencia.
+ * Diálogo embebido (usado por el wizard de usuarios) para crear un rol
+ * personalizado con permisos. La creación independiente vive en la página
+ * /roles/new; el cuerpo comparte el mismo flujo.
  */
 export function RoleCreateDialog({
   open,

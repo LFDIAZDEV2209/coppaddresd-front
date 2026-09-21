@@ -5,14 +5,6 @@ import { ChevronDown, ChevronUp, LoaderCircle, Search, X } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -30,21 +22,20 @@ const fieldClassName =
   "w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50";
 
 /**
- * Diálogo de creación de batería: código, nombre, descripción, auto-asignación
- * y picker de tests con orden, obligatoriedad y frecuencia.
+ * Formulario de creación de batería (usado por la página /health-tests/baterias/new):
+ * código, nombre, descripción, auto-asignación y picker de tests con orden,
+ * obligatoriedad y frecuencia.
  */
-export function CreateBatteryDialog({
-  open,
-  onOpenChange,
+export function CreateBatteryFields({
   tests,
   saving,
   onCreate,
+  onCancel,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   tests: HealthTest[];
   saving: boolean;
   onCreate: (input: CreateBatteryInput) => Promise<void>;
+  onCancel: () => void;
 }) {
   const t = useT();
   const [code, setCode] = useState("");
@@ -64,21 +55,6 @@ export function CreateBatteryDialog({
       test.name.toLowerCase().includes(normalized) ||
       test.code.toLowerCase().includes(normalized),
   );
-
-  const reset = () => {
-    setCode("");
-    setName("");
-    setDescription("");
-    setAutoAssign(false);
-    setItems([]);
-    setSearch("");
-    setValidationError(null);
-  };
-
-  const handleOpenChange = (next: boolean) => {
-    if (!next) reset();
-    onOpenChange(next);
-  };
 
   const toggleTest = (test: HealthTest) => {
     setItems((prev) =>
@@ -145,19 +121,8 @@ export function CreateBatteryDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-x-hidden overflow-y-auto p-0 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent sm:max-w-2xl">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
-            <DialogTitle>{t("Nueva batería")}</DialogTitle>
-            <DialogDescription>
-              {t(
-                "Define el código, el nombre y los tests que componen la batería.",
-              )}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-6 px-6 py-5">
+    <form onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-6 px-6 py-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="battery-code">{t("Código")}</Label>
@@ -359,24 +324,22 @@ export function CreateBatteryDialog({
                 {validationError}
               </p>
             )}
-          </div>
+      </div>
 
-          <DialogFooter className="m-0 shrink-0 px-6 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={saving}
-            >
-              {t("Cancelar")}
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving && <LoaderCircle className="animate-spin" />}
-              {saving ? t("Guardando…") : t("Crear batería")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          {t("Cancelar")}
+        </Button>
+        <Button type="submit" disabled={saving}>
+          {saving && <LoaderCircle className="animate-spin" />}
+          {saving ? t("Guardando…") : t("Crear batería")}
+        </Button>
+      </div>
+    </form>
   );
 }

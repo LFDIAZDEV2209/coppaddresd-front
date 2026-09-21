@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowDownToLine,
@@ -9,6 +10,7 @@ import {
   Barcode,
   Box,
   CalendarDays,
+  CheckCircle2,
   CircleDollarSign,
   Eye,
   Factory,
@@ -38,7 +40,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -66,7 +67,6 @@ import {
   getProductState,
   fetchProducts,
   fetchAnalytics,
-  createProduct,
   updateProduct,
 } from "../services/inventory-service";
 import type {
@@ -122,6 +122,7 @@ function toProductInput(product: ProductListItem): ProductInput {
 
 export function ProductsPage() {
   const t = useT();
+  const router = useRouter();
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [analytics, setAnalytics] = useState<InventoryAnalytics | null>(null);
@@ -132,11 +133,19 @@ export function ProductsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ProductListItem>();
   const [details, setDetails] = useState<ProductListItem>();
   const [saving, setSaving] = useState(false);
   const [reload, setReload] = useState(0);
+  /** Feedback tras crear en /inventory/new (query ?creado=1). */
+  const [createdNotice, setCreatedNotice] = useState(false);
+
+  useEffect(() => {
+    if (!window.location.search.includes("creado=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedNotice(true);
+    window.history.replaceState(null, "", "/inventory");
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -185,17 +194,19 @@ export function ProductsPage() {
     setError(null);
   };
   const submit = async (input: ProductInput) => {
+    if (!editing) return;
     setSaving(true);
     try {
-      if (editing) await updateProduct(editing.id, input);
-      else await createProduct(input);
-      setFormOpen(false);
+      await updateProduct(editing.id, input);
+      setEditing(undefined);
       setLoading(true);
       setReload((value) => value + 1);
     } finally {
       setSaving(false);
     }
   };
+  /** La creación vive en la página dedicada /inventory/new. */
+  const openCreate = () => router.push("/inventory/new");
   const alerts = products.filter((product) =>
     ["Stock bajo", "Sin stock", "Próximo a vencer", "Vencido"].includes(
       getProductState(product),
@@ -211,16 +222,29 @@ export function ProductsPage() {
         actions={
           <Button
             size="sm"
-            onClick={() => {
-              setEditing(undefined);
-              setFormOpen(true);
-            }}
+            onClick={openCreate}
           >
             <Plus data-icon="inline-start" />
             {t("Nuevo producto")}
           </Button>
         }
       />
+      {createdNotice && (
+        <div
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          role="status"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <span className="flex-1">{t("Producto creado correctamente.")}</span>
+          <button
+            type="button"
+            onClick={() => setCreatedNotice(false)}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+          >
+            {t("Cerrar")}
+          </button>
+        </div>
+      )}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
           label={t("Productos activos")}
@@ -353,18 +377,17 @@ export function ProductsPage() {
           onDetails={setDetails}
           onEdit={(product) => {
             setEditing(product);
-            setFormOpen(true);
           }}
         />
       ) : (
         <EmptyState />
       )}
       <ProductFormDialog
-        key={`${editing?.id ?? "new"}-${formOpen}`}
-        open={formOpen}
+        key={editing?.id ?? "edit"}
+        open={Boolean(editing)}
         product={editing}
         saving={saving}
-        onOpenChange={setFormOpen}
+        onOpenChange={(open) => !open && setEditing(undefined)}
         onSubmit={submit}
       />
       <ProductDetails product={details} onClose={() => setDetails(undefined)} />
@@ -501,17 +524,16 @@ function ProductTable({
   );
 }
 
-function ProductFormDialog({
-  open,
+/** Cuerpo del form de producto — compartido por /inventory/new y el modal de edición. */
+export function ProductFormFields({
   product,
   saving,
-  onOpenChange,
+  onCancel,
   onSubmit,
 }: {
-  open: boolean;
   product?: ProductListItem;
   saving: boolean;
-  onOpenChange: (open: boolean) => void;
+  onCancel: () => void;
   onSubmit: (input: ProductInput) => Promise<void>;
 }) {
   const t = useT();
@@ -538,17 +560,7 @@ function ProductFormDialog({
     await onSubmit(form);
   };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1rem)] !max-w-none overflow-x-hidden overflow-y-auto sm:w-[calc(100vw-2rem)] sm:!max-w-3xl lg:!max-w-4xl xl:!max-w-5xl">
-        <DialogHeader>
-          <DialogTitle>
-            {product ? t("Editar producto") : t("Nuevo producto")}
-          </DialogTitle>
-          <DialogDescription>
-            {t("El producto queda preparado para medicamentos y futuras categorías.")}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={submit} className="flex flex-col gap-5">
+    <form onSubmit={submit} className="flex flex-col gap-5 px-6 py-5">
           <fieldset className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <legend className="col-span-full mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <Tags className="size-4 text-primary" />
@@ -753,11 +765,11 @@ function ProductFormDialog({
               {error}
             </p>
           )}
-          <DialogFooter>
+          <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={onCancel}
             >
               {t("Cancelar")}
             </Button>
@@ -768,8 +780,46 @@ function ProductFormDialog({
                   ? t("Guardar cambios")
                   : t("Crear producto")}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
+  );
+}
+
+/**
+ * Modal de EDICIÓN de productos. La creación vive en la página dedicada
+ * /inventory/new; el cuerpo del formulario es compartido (ProductFormFields).
+ */
+function ProductFormDialog({
+  open,
+  product,
+  saving,
+  onOpenChange,
+  onSubmit,
+}: {
+  open: boolean;
+  product?: ProductListItem;
+  saving: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (input: ProductInput) => Promise<void>;
+}) {
+  const t = useT();
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1rem)] !max-w-none overflow-x-hidden overflow-y-auto sm:w-[calc(100vw-2rem)] sm:!max-w-3xl lg:!max-w-4xl xl:!max-w-5xl">
+        <DialogHeader>
+          <DialogTitle>
+            {product ? t("Editar producto") : t("Nuevo producto")}
+          </DialogTitle>
+          <DialogDescription>
+            {t("El producto queda preparado para medicamentos y futuras categorías.")}
+          </DialogDescription>
+        </DialogHeader>
+        <ProductFormFields
+          product={product}
+          saving={saving}
+          onCancel={() => onOpenChange(false)}
+          onSubmit={onSubmit}
+        />
       </DialogContent>
     </Dialog>
   );

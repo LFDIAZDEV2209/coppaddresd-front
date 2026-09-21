@@ -4,14 +4,6 @@ import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type {
   RoutineAssignment,
   CreateRoutineAssignmentInput,
@@ -38,11 +29,10 @@ import {
   createNutritionPlanAssignment,
 } from "../services/assignments-service";
 
-interface AssignmentFormDialogProps {
-  open: boolean;
+interface AssignmentFormFieldsProps {
   assignment?: RoutineAssignment;
   saving?: boolean;
-  onOpenChange: (open: boolean) => void;
+  onCancel: () => void;
   onSubmit?: (
     input: CreateRoutineAssignmentInput | UpdateRoutineAssignmentInput,
     id?: string,
@@ -56,14 +46,13 @@ interface PickerItem {
   sublabel?: string;
 }
 
-export function AssignmentFormDialog({
-  open,
+export function AssignmentFormFields({
   assignment,
   saving: savingProp,
-  onOpenChange,
+  onCancel,
   onSubmit,
   onCreated,
-}: AssignmentFormDialogProps) {
+}: AssignmentFormFieldsProps) {
   const isEditing = Boolean(assignment);
   const t = useT();
   const [saving, setSaving] = useState(false);
@@ -217,28 +206,13 @@ export function AssignmentFormDialog({
     } finally {
       setSaving(false);
     }
-
-    onOpenChange(false);
   };
 
   const canSubmit = patientId && routineId && startDate && !isSaving;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? t("Editar asignación") : t("Nueva asignación")}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? t("Modifica los datos de la asignación.")
-              : t("Asigna una rutina de ejercicio a un paciente.")}
-          </DialogDescription>
-        </DialogHeader>
-
-        <ScrollArea className="max-h-[60vh] pr-4">
-          <div className="flex flex-col gap-4 py-2">
+    <div className="flex flex-col gap-5 px-6 py-5">
+      <div className="flex flex-col gap-4">
             {/* Picker de paciente */}
             <div className="flex flex-col gap-1.5">
               <Label>{t("Paciente")} *</Label>
@@ -496,26 +470,29 @@ export function AssignmentFormDialog({
                 rows={2}
               />
             </div>
-          </div>
-        </ScrollArea>
+      </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-          >
-            {t("Cancelar")}
-          </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit}>
-            {saving
-              ? t("Guardando...")
-              : isEditing
-                ? t("Guardar cambios")
-                : t("Crear asignación")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          {t("Cancelar")}
+        </Button>
+        <Button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+        >
+          {saving
+            ? t("Guardando...")
+            : isEditing
+              ? t("Guardar cambios")
+              : t("Crear asignación")}
+        </Button>
+      </div>
+    </div>
   );
 }

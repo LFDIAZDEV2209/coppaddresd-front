@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Dumbbell, Plus, RefreshCw, Trash2, Eye, Pencil } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import { useAppContext } from "@/providers/context-provider";
@@ -49,6 +50,7 @@ import type { ExerciseRoutineListItem } from "../types";
 
 export function ExerciseRoutinesPage() {
   const t = useT();
+  const router = useRouter();
   const { can } = useAppContext();
   const {
     result,
@@ -73,6 +75,15 @@ export function ExerciseRoutinesPage() {
   >();
   const [createdMessage, setCreatedMessage] = useState<string | null>(null);
 
+  // Feedback tras crear en /wellness/exercise-routines/new (query ?creado=1)
+  useEffect(() => {
+    if (!window.location.search.includes("creado=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feedback post-creación (flag de URL), intencional
+    setCreatedMessage(t("Rutina creada correctamente."));
+    window.history.replaceState(null, "", "/wellness/exercise-routines");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-ocultar la confirmación tras unos segundos
   useEffect(() => {
     if (!createdMessage) return;
@@ -81,8 +92,7 @@ export function ExerciseRoutinesPage() {
   }, [createdMessage]);
 
   const openCreate = () => {
-    setEditing(undefined);
-    setFormOpen(true);
+    router.push("/wellness/exercise-routines/new");
   };
 
   const openEdit = (routine: ExerciseRoutineListItem) => {
