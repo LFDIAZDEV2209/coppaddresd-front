@@ -7,65 +7,57 @@
     "../LEARNINGS.md",
     "../.agents/rules/*.md",
   ],
-  "skills": {
-    "paths": ["./.agents/skills", "../.agents/skills"],
-  },
-  "permission": {
-    "skill": {
-      "*": "allow",
-    },
-    "bash": {
-      "yarn lint*": "allow",
-      "yarn build*": "allow",
-      "yarn dev*": "allow",
-      "yarn i18n:check": "allow",
-      "yarn i18n:apply": "ask",
-      "npx tsc*": "allow",
-    },
-    "lsp": "allow",
-  },
-  "agent": {
+  "skills": ["./.agents/skills", "../.agents/skills"],
+  "permissions": [
+    { "action": "skill", "resource": "*", "effect": "allow" },
+    { "action": "shell", "resource": "yarn lint*", "effect": "allow" },
+    { "action": "shell", "resource": "yarn build*", "effect": "allow" },
+    { "action": "shell", "resource": "yarn dev*", "effect": "allow" },
+    { "action": "shell", "resource": "yarn i18n:check", "effect": "allow" },
+    { "action": "shell", "resource": "yarn i18n:apply", "effect": "ask" },
+    { "action": "shell", "resource": "npx tsc*", "effect": "allow" },
+  ],
+  "agents": {
     "coppaddresd": {
       "description": "Agente principal frontend: Next.js 16, diseño experto, skills-first",
       "mode": "primary",
-      "prompt": "Eres el agente principal del frontend CoppAddresd (Next.js 16 + React 19 + Tailwind 4 + shadcn/Base UI). Aplica .agents/rules/*.md: ante UI carga design-taste-frontend + impeccable + frontend-design + react-best-practices + next-best-practices ANTES de codificar; Next.js 16 difiere de training data: lee node_modules/next/dist/docs/ para APIs nuevas; shadcn sobre Base UI (no Radix); Server Components por defecto; t() + yarn i18n:check; skeletons > spinners; verifica con yarn lint && npx tsc --noEmit y Playwright MCP visual. Responde en el idioma del usuario; docs en español.",
-      "permission": {
-        "skill": {
-          "*": "allow",
-        },
-      },
+      "system": "Eres el agente principal del frontend CoppAddresd (Next.js 16 + React 19 + Tailwind 4 + shadcn/Base UI). Aplica .agents/rules/*.md: ante UI carga design-taste-frontend + impeccable + frontend-design + react-best-practices + next-best-practices ANTES de codificar; Next.js 16 difiere de training data: lee node_modules/next/dist/docs/ para APIs nuevas; shadcn sobre Base UI (no Radix); Server Components por defecto; t() + yarn i18n:check; skeletons > spinners; verifica con yarn lint && npx tsc --noEmit y Playwright MCP visual. Responde en el idioma del usuario; docs en español.",
+      "permissions": [
+        { "action": "skill", "resource": "*", "effect": "allow" },
+      ],
     },
     "design-expert": {
       "description": "Diseñador UX/UI senior web: design systems, anti-slop, pre-flight",
       "mode": "subagent",
-      "prompt": "Diseñador UX/UI senior web. Carga design-taste-frontend + impeccable + frontend-design + tailwind-css-patterns + shadcn + composition-patterns + accessibility + seo según aplique. Brief inference, locks, bans anti-slop, hero discipline, pre-flight impeccable detect. Verifica con Playwright MCP (desktop + mobile).",
+      "system": "Diseñador UX/UI senior web. Carga design-taste-frontend + impeccable + frontend-design + tailwind-css-patterns + shadcn + composition-patterns + accessibility + seo según aplique. Brief inference, locks, bans anti-slop, hero discipline, pre-flight impeccable detect. Verifica con Playwright MCP (desktop + mobile).",
     },
     "reviewer": {
       "description": "Revisor Next.js/React sin editar",
       "mode": "subagent",
-      "prompt": "Revisor Next.js/React senior. Analiza sin editar: límites RSC, composición vs prop drilling, caché Next 16, accesibilidad, i18n, rendimiento. Cita archivo:línea.",
-      "permission": {
-        "edit": "deny",
-      },
+      "system": "Revisor Next.js/React senior. Analiza sin editar: límites RSC, composición vs prop drilling, caché Next 16, accesibilidad, i18n, rendimiento. Cita archivo:línea.",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+      ],
     },
   },
-  "subagent_depth": 2,
+  "experimental": {
+    "subagent_depth": 2,
+  },
   "compaction": {
     "auto": true,
-    "prune": true,
-    "reserved": 15000,
+    "buffer": 15000,
   },
   "lsp": true,
   "mcp": {
-    "codegraph": {
-      "type": "local",
-      "command": ["codegraph", "serve", "--mcp"],
-      "enabled": true,
-    },
-    "playwright": {
-      "type": "local",
-      "command": ["npx", "@playwright/mcp@latest"],
-      "enabled": true,
+    "servers": {
+      "codegraph": {
+        "type": "local",
+        "command": ["codegraph", "serve", "--mcp"],
+      },
+      "playwright": {
+        "type": "local",
+        "command": ["npx", "@playwright/mcp@latest"],
+      },
     },
   },
   "formatter": {
