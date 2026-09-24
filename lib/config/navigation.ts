@@ -48,6 +48,8 @@ import {
   TrendingUp,
   PieChart,
   Trophy,
+  ClipboardPlus,
+  FileCheck2,
 } from "lucide-react";
 
 export interface NavItem {
@@ -205,7 +207,7 @@ export const navModules: NavModule[] = [
         permission: "Appointments.View",
       },
       {
-        label: "Solicitudes",
+        label: "Bandeja",
         href: "/appointments/solicitudes",
         icon: Inbox,
         color: "#F59E0B",
@@ -592,6 +594,25 @@ export const navModules: NavModule[] = [
         icon: Sparkles,
         hidden: true,
         permission: "Community.Manage",
+      },
+    ],
+  },
+  {
+    label: "Redes",
+    icon: ClipboardPlus,
+    color: "#0E7490",
+    items: [
+      {
+        label: "Radicaciones",
+        href: "/redes/radicaciones",
+        icon: ClipboardPlus,
+        color: "#0E7490",
+      },
+      {
+        label: "RIPS y facturación",
+        href: "/redes/facturacion",
+        icon: FileCheck2,
+        color: "#1D9E75",
       },
     ],
   },
