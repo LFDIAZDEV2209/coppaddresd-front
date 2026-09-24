@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CalendarRange,
   ClipboardList,
+  Plus,
   Search,
   Stethoscope,
   Video,
@@ -28,6 +29,7 @@ import {
 } from "./agenda-calendar-switcher";
 import { AppointmentActionDialogs } from "./calendar/appointment-action-dialogs";
 import { AppointmentEventPopover } from "./calendar/appointment-event-popover";
+import { CreateAppointmentDialog } from "./calendar/create-appointment-dialog";
 import { useCurrentUser } from "../hooks/use-current-user";
 import { useAgenda } from "../hooks/use-agenda";
 import { useAppointmentFilters } from "../hooks/use-appointment-filters";
@@ -110,6 +112,21 @@ export function ProfessionalAgenda({
     anchor: Element;
   } | null>(null);
 
+  // Agendar desde la agenda (fase 4.4): mismo diálogo del calendario.
+  const [createPreset, setCreatePreset] = useState<{
+    start: Date;
+    end: Date | null;
+  } | null>(null);
+
+  function handleNewAppointment() {
+    const next = new Date();
+    next.setHours(next.getHours() + 1, 0, 0, 0);
+    setCreatePreset({
+      start: next,
+      end: new Date(next.getTime() + 30 * 60000),
+    });
+  }
+
   // Agrupación por día de las citas FILTRADAS (los KPIs usan el total).
   const groups = useMemo(
     () => groupByDay(filters.filtered),
@@ -136,10 +153,18 @@ export function ProfessionalAgenda({
         }
         icon={CalendarDays}
         actions={
-          <AgendaCalendarSwitcher
-            active={agendaView}
-            onChange={onAgendaViewChange}
-          />
+          <>
+            <AgendaCalendarSwitcher
+              active={agendaView}
+              onChange={onAgendaViewChange}
+            />
+            {professionalId && (
+              <Button size="sm" onClick={handleNewAppointment}>
+                <Plus data-icon="inline-start" />
+                {t("Nueva cita")}
+              </Button>
+            )}
+          </>
         }
       />
 
@@ -369,6 +394,20 @@ export function ProfessionalAgenda({
         onClose={actions.closeAll}
         onConfirmCancel={() => void actions.confirmCancel()}
         onConfirmReschedule={() => void actions.confirmReschedule()}
+      />
+
+      {/* Agendar desde la agenda (mismo diálogo que el calendario) */}
+      <CreateAppointmentDialog
+        open={createPreset !== null}
+        onOpenChange={(open) => {
+          if (!open) setCreatePreset(null);
+        }}
+        presetStart={createPreset?.start ?? null}
+        presetEnd={createPreset?.end ?? null}
+        professionalId={professionalId ?? ""}
+        professionalName={professionalName}
+        specialtyIds={context?.professional?.specialtyIds ?? null}
+        onCreated={() => refetch()}
       />
     </div>
   );
