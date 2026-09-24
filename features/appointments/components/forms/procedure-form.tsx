@@ -6,8 +6,8 @@ import type { ProcedureDraft } from "../../hooks/use-form-drafts";
 import { newItemId } from "../../hooks/use-form-drafts";
 import {
   AddRowButton,
-  darkInput,
-  darkTextarea,
+  formInput,
+  formTextarea,
   DraftActions,
   FormField,
   ItemRow,
@@ -69,9 +69,9 @@ export function ProcedureForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2 rounded-xl border border-rose-400/20 bg-rose-400/10 px-3 py-2.5">
-        <Syringe className="size-4 text-rose-300" />
-        <p className="text-[12px] text-rose-200">
+      <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive-soft px-3 py-2.5">
+        <Syringe className="size-4 text-destructive" />
+        <p className="text-[12px] text-destructive">
           <span className="font-mono font-semibold">{itemCount}</span>{" "}
           {itemCount === 1 ? "procedimiento" : "procedimientos"} en la orden
         </p>
@@ -79,7 +79,7 @@ export function ProcedureForm({
 
       <div className="flex flex-col gap-2">
         {draft.items.length === 0 && (
-          <p className="rounded-xl border border-dashed border-white/15 px-3 py-3 text-[12px] text-slate-400">
+          <p className="rounded-xl border border-dashed border-border px-3 py-3 text-[12px] text-muted-foreground">
             Agregá los procedimientos a programar (curaciones, infiltraciones,
             exámenes, etc.).
           </p>
@@ -99,7 +99,7 @@ export function ProcedureForm({
                     updateItem(item.id, { name: e.target.value })
                   }
                   placeholder="Ej. Curación de herida"
-                  className={darkInput}
+                  className={formInput}
                 />
               </FormField>
               <FormField
@@ -114,7 +114,7 @@ export function ProcedureForm({
                     updateItem(item.id, { site: e.target.value })
                   }
                   placeholder="Ej. Miembro inferior derecho"
-                  className={darkInput}
+                  className={formInput}
                 />
               </FormField>
             </div>
@@ -133,7 +133,7 @@ export function ProcedureForm({
                     }
                     placeholder="Preparación, asepsia, materiales…"
                     rows={2}
-                    className={darkTextarea}
+                    className={formTextarea}
                   />
                 </FormField>
               </div>

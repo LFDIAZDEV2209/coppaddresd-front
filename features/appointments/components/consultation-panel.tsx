@@ -167,12 +167,12 @@ export function ConsultationPanel({
       <aside
         aria-label="Panel de la consulta"
         aria-hidden={!open}
-        className={`fixed inset-x-0 bottom-0 z-40 flex ${PANEL_HEIGHT} flex-col rounded-t-2xl border-t border-white/10 bg-slate-900 shadow-2xl shadow-black/60 transition-transform duration-300 ease-out ${
+        className={`fixed inset-x-0 bottom-0 z-40 flex ${PANEL_HEIGHT} flex-col rounded-t-2xl border-t border-border bg-card shadow-2xl transition-transform duration-300 ease-out ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
       >
         <div className="flex justify-center pt-2">
-          <div className="h-1 w-10 rounded-full bg-white/15" />
+          <div className="h-1 w-10 rounded-full bg-muted" />
         </div>
 
         <header className="flex h-11 shrink-0 items-center justify-between px-4">
@@ -183,16 +183,16 @@ export function ConsultationPanel({
                   type="button"
                   onClick={backToForms}
                   aria-label="Volver a los formularios"
-                  className="flex size-7 items-center justify-center rounded-lg text-slate-300 outline-none transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-3 focus-visible:ring-teal-400/30"
+                  className="flex size-7 items-center justify-center rounded-lg text-foreground/70 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/30"
                 >
                   <ArrowLeft className="size-4" />
                 </button>
-                <p className="truncate text-[13px] font-semibold text-white">
+                <p className="truncate text-[13px] font-semibold text-foreground">
                   {FORM_CATALOG.find((f) => f.kind === selectedForm)?.title}
                 </p>
               </>
             ) : (
-              <p className="truncate text-[13px] font-semibold text-white">
+              <p className="truncate text-[13px] font-semibold text-foreground">
                 {tab === "participants"
                   ? "Participantes"
                   : "Formularios médicos"}
@@ -203,7 +203,7 @@ export function ConsultationPanel({
             type="button"
             onClick={onClose}
             aria-label="Cerrar panel"
-            className="flex size-7 items-center justify-center rounded-lg text-slate-300 outline-none transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-3 focus-visible:ring-teal-400/30"
+            className="flex size-7 items-center justify-center rounded-lg text-foreground/70 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/30"
           >
             <X className="size-4" />
           </button>
@@ -257,11 +257,11 @@ export function ConsultationPanel({
                   />
                 )}
                 {canManage && (
-                  <div className="rounded-2xl border border-teal-400/20 bg-teal-400/10 p-3">
-                    <p className="flex items-center gap-1.5 text-[12px] font-medium text-teal-200">
+                  <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3">
+                    <p className="flex items-center gap-1.5 text-[12px] font-medium text-primary">
                       <ShieldCheck className="size-3.5" /> Consulta en curso
                     </p>
-                    <p className="mt-1 text-[11.5px] leading-relaxed text-teal-200/70">
+                    <p className="mt-1 text-[11.5px] leading-relaxed text-primary/70">
                       Los formularios guardan borradores automáticos por cita.
                     </p>
                   </div>
@@ -276,7 +276,7 @@ export function ConsultationPanel({
       {open && (
         <button
           aria-label="Cerrar panel"
-          className="fixed inset-0 z-30 bg-slate-950/60 lg:bg-slate-950/30"
+          className="fixed inset-0 z-30 bg-foreground/40 lg:bg-foreground/20"
           onClick={onClose}
         />
       )}
@@ -300,10 +300,10 @@ function TabButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-[12px] font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-teal-400/30 ${
+      className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-[12px] font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/30 ${
         active
-          ? "bg-white/10 text-white"
-          : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+          ? "bg-muted text-foreground"
+          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground/85"
       }`}
     >
       <Icon className="size-3.5" />
@@ -368,7 +368,7 @@ function FormsBody({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="px-1 pb-1 text-[11.5px] leading-relaxed text-slate-400">
+      <p className="px-1 pb-1 text-[11.5px] leading-relaxed text-muted-foreground">
         Documentos de la consulta. Los formularios guardan borradores que
         sobreviven a recargas.
       </p>
@@ -381,35 +381,35 @@ function FormsBody({
               key={form.kind}
               type="button"
               onClick={() => onSelect(form.kind)}
-              className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-left outline-none transition-colors hover:border-white/20 hover:bg-white/[0.08] focus-visible:ring-3 focus-visible:ring-teal-400/30"
+              className="group flex items-center gap-3 rounded-2xl border border-border bg-muted/40 p-3 text-left outline-none transition-colors hover:border-border hover:bg-white/[0.08] focus-visible:ring-3 focus-visible:ring-ring/30"
             >
               <div
                 className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
                   {
-                    teal: "bg-teal-500/15 text-teal-300",
+                    teal: "bg-primary/10 text-primary",
                     violet: "bg-violet-500/15 text-violet-300",
                     amber: "bg-amber-500/15 text-amber-300",
-                    rose: "bg-rose-500/15 text-rose-300",
+                    rose: "bg-rose-500/15 text-destructive",
                   }[form.tint]
                 }`}
               >
                 <Icon className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-2 text-[13px] font-semibold text-white">
+                <p className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
                   {form.title}
                   {count > 0 && (
-                    <span className="rounded-full bg-teal-500/20 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-teal-300">
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10.5px] font-semibold text-primary">
                       {count} borrador
                       {count === 1 ? "" : "es"}
                     </span>
                   )}
                 </p>
-                <p className="mt-0.5 text-[11.5px] leading-snug text-slate-400">
+                <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">
                   {form.description}
                 </p>
               </div>
-              <ChevronRight className="size-4 shrink-0 text-slate-500 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-300" />
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground/80 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground/70" />
             </button>
           );
         })}
@@ -442,7 +442,7 @@ function FormBody({
         count={draftCounts[kind]}
       />
       {kind === "history" && (
-        <ClinicalEncounterPanel appointmentId={appointment.id} variant="dark" />
+        <ClinicalEncounterPanel appointmentId={appointment.id} />
       )}
       {kind === "lab" && (
         <LabOrderForm
@@ -482,20 +482,20 @@ function ParticipantRow({
   isLocal?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-xl bg-white/5 px-3 py-2">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-500/20">
-        <User className="size-4 text-teal-300" />
+    <div className="flex items-center gap-2.5 rounded-xl bg-muted/40 px-3 py-2">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+        <User className="size-4 text-primary" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-semibold text-white">
+        <p className="truncate text-[12.5px] font-semibold text-foreground">
           {name}
           {isLocal ? " (tú)" : ""}
         </p>
-        <p className="text-[10.5px] text-slate-400">{role}</p>
+        <p className="text-[10.5px] text-muted-foreground">{role}</p>
       </div>
       <span
         className={`flex shrink-0 items-center gap-1 text-[10.5px] font-medium ${
-          connected ? "text-emerald-400" : "text-slate-500"
+          connected ? "text-emerald-400" : "text-muted-foreground/80"
         }`}
       >
         <span

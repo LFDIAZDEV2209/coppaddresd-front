@@ -35,24 +35,24 @@ export function PatientContextCard({
   const medications = patient.medications ?? [];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+    <div className="rounded-2xl border border-border bg-muted/40 p-4">
       <div className="flex items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-teal-500/20">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
           {initials ? (
-            <span className="text-[13px] font-bold text-teal-200">
+            <span className="text-[13px] font-bold text-primary">
               {initials}
             </span>
           ) : (
-            <User className="size-5 text-teal-300" />
+            <User className="size-5 text-primary" />
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13.5px] font-semibold text-white">
+          <p className="truncate text-[13.5px] font-semibold text-foreground">
             {fullName}
           </p>
-          <p className="flex items-center gap-2 text-[11.5px] text-slate-400">
+          <p className="flex items-center gap-2 text-[11.5px] text-muted-foreground">
             {patient.medicalRecordNumber && (
-              <span className="font-mono text-teal-300/80">
+              <span className="font-mono text-primary/80">
                 {patient.medicalRecordNumber}
               </span>
             )}
@@ -75,7 +75,7 @@ export function PatientContextCard({
               Alergias registradas
             </p>
             {allergies.length === 0 ? (
-              <p className="text-[12px] text-slate-500">
+              <p className="text-[12px] text-muted-foreground/80">
                 Sin alergias registradas
               </p>
             ) : (
@@ -96,22 +96,22 @@ export function PatientContextCard({
 
         {medications.length > 0 && (
           <div className="flex items-start gap-2">
-            <Pill className="mt-0.5 size-3.5 shrink-0 text-teal-300" />
+            <Pill className="mt-0.5 size-3.5 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
-              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-teal-200/80">
+              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-primary/80">
                 Medicación actual
               </p>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {medications.slice(0, 6).map((m) => (
                   <span
                     key={m.id}
-                    className="rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 text-[11px] text-slate-300"
+                    className="rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[11px] text-foreground/70"
                   >
                     {m.name}
                   </span>
                 ))}
                 {medications.length > 6 && (
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-slate-400">
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                     +{medications.length - 6}
                   </span>
                 )}

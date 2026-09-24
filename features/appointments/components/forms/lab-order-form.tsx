@@ -12,8 +12,8 @@ import type { LabOrderDraft } from "../../hooks/use-form-drafts";
 import { newItemId } from "../../hooks/use-form-drafts";
 import {
   AddRowButton,
-  darkInput,
-  darkTextarea,
+  formInput,
+  formTextarea,
   DraftActions,
   FormField,
   ItemRow,
@@ -101,10 +101,10 @@ export function LabOrderForm({
                 type="button"
                 onClick={() => onUpdate({ sampleType: type })}
                 aria-pressed={draft.sampleType === type}
-                className={`h-7 rounded-full px-3 text-[12px] font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-teal-400/30 ${
+                className={`h-7 rounded-full px-3 text-[12px] font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/30 ${
                   draft.sampleType === type
-                    ? "bg-teal-500 text-slate-950"
-                    : "border border-white/10 bg-white/[0.06] text-slate-300 hover:bg-white/10"
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-border bg-muted/60 text-foreground/70 hover:bg-muted"
                 }`}
               >
                 {type}
@@ -113,12 +113,12 @@ export function LabOrderForm({
           </div>
         </FormField>
         <div className="flex flex-col justify-end gap-1.5">
-          <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-300">
-            <FlaskConical className="size-3.5 text-slate-500" />
+          <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-foreground/70">
+            <FlaskConical className="size-3.5 text-muted-foreground/80" />
             Pruebas solicitadas
           </p>
-          <p className="rounded-lg bg-white/[0.04] px-3 py-2 text-[12.5px] text-slate-300">
-            <span className="font-mono font-semibold text-teal-300">
+          <p className="rounded-lg bg-muted/40 px-3 py-2 text-[12.5px] text-foreground/70">
+            <span className="font-mono font-semibold text-primary">
               {testCount}
             </span>{" "}
             {testCount === 1 ? "prueba" : "pruebas"} ·{" "}
@@ -128,8 +128,8 @@ export function LabOrderForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-300">
-          <Microscope className="size-3.5 text-slate-500" />
+        <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-foreground/70">
+          <Microscope className="size-3.5 text-muted-foreground/80" />
           Pruebas sugeridas
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -147,7 +147,7 @@ export function LabOrderForm({
                   ],
                 })
               }
-              className="h-7 rounded-full border border-white/10 bg-white/[0.06] px-3 text-[11.5px] text-slate-300 outline-none transition-colors hover:border-teal-400/40 hover:bg-teal-400/10 hover:text-teal-200 focus-visible:ring-3 focus-visible:ring-teal-400/30"
+              className="h-7 rounded-full border border-border bg-muted/60 px-3 text-[11.5px] text-foreground/70 outline-none transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/30"
             >
               + {s}
             </button>
@@ -157,8 +157,8 @@ export function LabOrderForm({
 
       <div className="flex flex-col gap-2">
         {draft.tests.length === 0 && (
-          <p className="flex items-center gap-2 rounded-xl border border-dashed border-white/15 px-3 py-3 text-[12px] text-slate-400">
-            <Microscope className="size-4 text-slate-500" />
+          <p className="flex items-center gap-2 rounded-xl border border-dashed border-border px-3 py-3 text-[12px] text-muted-foreground">
+            <Microscope className="size-4 text-muted-foreground/80" />
             Agregá las pruebas que querés solicitar al laboratorio.
           </p>
         )}
@@ -177,12 +177,12 @@ export function LabOrderForm({
                     updateTest(test.id, { test: e.target.value })
                   }
                   placeholder="Ej. Hemograma completo"
-                  className={darkInput}
+                  className={formInput}
                 />
               </FormField>
               <div className="flex min-w-32 flex-col gap-1.5">
-                <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-300">
-                  <Flag className="size-3.5 text-slate-500" />
+                <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-foreground/70">
+                  <Flag className="size-3.5 text-muted-foreground/80" />
                   Prioridad
                 </span>
                 <select
@@ -192,10 +192,10 @@ export function LabOrderForm({
                       priority: e.target.value as (typeof PRIORITIES)[number],
                     })
                   }
-                  className={darkInput}
+                  className={formInput}
                 >
                   {PRIORITIES.map((p) => (
-                    <option key={p} value={p} className="bg-slate-900">
+                    <option key={p} value={p} className="bg-card">
                       {p}
                     </option>
                   ))}
@@ -220,7 +220,7 @@ export function LabOrderForm({
           value={draft.notes}
           onChange={(e) => onUpdate({ notes: e.target.value })}
           placeholder="Ej. Paciente en ayuno de 8 horas"
-          className={darkTextarea}
+          className={formTextarea}
         />
       </FormField>
 
