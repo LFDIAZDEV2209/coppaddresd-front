@@ -189,12 +189,14 @@ export function riskHex(risk: RiskLevel): string {
   return riskTone(risk).solid;
 }
 
-/** Paleta del mapa de calor geográfico (riesgo alto por estado). */
+/** Paleta del mapa de calor geográfico (riesgo alto por estado).
+ * Tintes pastel solicitados por producto: legibles sobre la tarjeta blanca
+ * y sin saturar la vista junto a las gráficas. */
 export const mapRiskPalette = {
-  low: tones.emerald.solid,
-  medium: tones.amber.solid,
-  high: tones.red.solid,
-  none: "#C6C6C6",
+  low: "#A7F3D0",
+  medium: "#FDE68A",
+  high: "#FCA5A5",
+  none: "#E2E8F0",
 } as const;
 
 /** Color de un estado según el % de pacientes de riesgo alto. */

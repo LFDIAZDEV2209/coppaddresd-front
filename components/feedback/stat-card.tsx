@@ -23,6 +23,8 @@ interface StatCardProps {
   variant?: CardVariant;
   /** KPI héroe: relleno con el gradiente de marca (jerarquía principal). */
   filled?: boolean;
+  /** Layout vertical con título/valor/contexto centrados (fila de KPIs). */
+  centered?: boolean;
 }
 
 const variantConfig: Record<
@@ -139,9 +141,86 @@ export function StatCard({
   icon: Icon,
   variant = "default",
   filled = false,
+  centered = false,
 }: StatCardProps) {
   const config = variantConfig[variant];
   const displayValue = useCountUp(value);
+
+  if (centered) {
+    return (
+      <div
+        className={cn(
+          "group relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl border p-5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+          filled
+            ? "border-transparent bg-brand-gradient shadow-lg shadow-brand-navy/25"
+            : "border-border/70 bg-card hover:border-border",
+        )}
+      >
+        {!filled && (
+          <span
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-1"
+            style={{ backgroundColor: config.accent }}
+          />
+        )}
+        <div
+          className={cn(
+            "flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105",
+            filled
+              ? "bg-white/15 text-white"
+              : cn(config.iconBg, config.iconColor),
+          )}
+        >
+          <Icon className="size-5" />
+        </div>
+        <div className="flex min-w-0 flex-col items-center gap-1">
+          <span
+            className={cn(
+              "line-clamp-2 text-[11px] font-medium uppercase leading-4 tracking-wider",
+              filled ? "text-white/70" : "text-muted-foreground",
+            )}
+          >
+            {label}
+          </span>
+          <div className="flex items-baseline gap-2">
+            <span
+              className={cn(
+                "text-2xl leading-none font-bold tracking-tight tabular-nums",
+                filled ? "text-white" : "text-foreground",
+              )}
+            >
+              {displayValue}
+            </span>
+            {trend && (
+              <span
+                className={cn(
+                  "flex items-center gap-0.5 text-[11px] font-semibold",
+                  filled ? "text-teal-200" : config.trendColor,
+                )}
+              >
+                {trend.direction === "up" ? (
+                  <TrendingUp className="size-3" />
+                ) : (
+                  <TrendingDown className="size-3" />
+                )}
+                {trend.value}
+              </span>
+            )}
+          </div>
+          {context && (
+            <span
+              className={cn(
+                "text-[11px]",
+                filled ? "text-white/70" : "text-muted-foreground",
+              )}
+            >
+              {context}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

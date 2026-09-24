@@ -14,13 +14,13 @@ import { mapRiskColor, mapRiskPalette } from "../shared/colors";
 /** Hover y selección comparten el mismo anillo doble (halo + contorno
  * primary): el hover es apenas más fino y tenue, casi idéntico. */
 const RING_STROKE = "var(--primary)";
-const HOVER_RING_WIDTH = 2.25;
-const HOVER_HALO_OPACITY = 0.1;
+const HOVER_RING_WIDTH = 2.75;
+const HOVER_HALO_OPACITY = 0.22;
 const SELECTED_RING_WIDTH = 2.5;
 const SELECTED_HALO_OPACITY = 0.12;
 
-/** Rellenos sólidos: el mapa base queda intenso y la selección
- * mantiene el color pleno para no lavar el tono. */
+/** Rellenos sólidos (los tintes pastel viven en mapRiskPalette): la
+ * selección mantiene el color pleno para no lavar el tono. */
 const BASE_FILL_OPACITY = 1;
 const HOVER_FILL_OPACITY = 1;
 const SELECTED_FILL_OPACITY = 1;
@@ -185,7 +185,7 @@ export function HealthTestsUsaMap({
                 ? SELECTED_FILL_OPACITY
                 : BASE_FILL_OPACITY;
           const filter = isHovered
-            ? "brightness(1.04) drop-shadow(0 2px 5px rgb(15 23 42 / 0.22))"
+            ? "brightness(1.05) drop-shadow(0 8px 16px rgb(15 23 42 / 0.28))"
             : isSelected
               ? "brightness(1.02)"
               : undefined;
@@ -210,10 +210,10 @@ export function HealthTestsUsaMap({
               }`}
               style={{
                 filter,
-                // "Pop" sutil del estado bajo el cursor (origen en su propio centro).
+                // "Pop" del estado bajo el cursor (origen en su propio centro).
                 transformBox: isHovered ? "fill-box" : undefined,
                 transformOrigin: isHovered ? "center" : undefined,
-                transform: isHovered ? "scale(1.015)" : undefined,
+                transform: isHovered ? "scale(1.022)" : undefined,
               }}
               onMouseEnter={() => setHovered(abbr)}
               onMouseLeave={() => setHovered(null)}

@@ -313,15 +313,17 @@ export function MasterPatientsPage() {
     <div className="flex flex-col gap-4 p-4 sm:p-6">
       {header}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Fila única de KPIs en escritorio, títulos centrados (pedido de Angel). */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={t("Pacientes en la batería")}
           value={String(totals.total)}
           icon={Users}
           variant="primary"
+          centered
           context={
             batteries.length > 0
-              ? `${batteries.length} ${batteries.length === 1 ? "batería activa" : "baterías activas"}`
+              ? `${batteries.length} ${batteries.length === 1 ? t("batería activa") : t("baterías activas")}`
               : t("Con evaluación asignada")
           }
         />
@@ -330,6 +332,7 @@ export function MasterPatientsPage() {
           value={String(totals.evaluated)}
           icon={UserCheck}
           variant="success"
+          centered
           context={t("Con al menos un test completado")}
         />
         <StatCard
@@ -337,6 +340,7 @@ export function MasterPatientsPage() {
           value={String(totals.atRisk)}
           icon={HeartPulse}
           variant="destructive"
+          centered
           context={t("Requieren intervención")}
         />
         <StatCard
@@ -344,6 +348,7 @@ export function MasterPatientsPage() {
           value={String(totals.withAlerts)}
           icon={BellRing}
           variant="warning"
+          centered
           context={t("Activas o en revisión")}
         />
       </div>

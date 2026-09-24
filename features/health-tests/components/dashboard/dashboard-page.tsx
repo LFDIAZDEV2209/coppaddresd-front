@@ -325,7 +325,86 @@ export function HealthTestsDashboard() {
         zonePatientIds={zonePatientIds}
       />
 
+      {/* Redistribución: evolución comparte fila con la cobertura global;
+          riesgo y categorías pasan a una fila de dos para variar el ritmo. */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <ChartCard
+          title={t("Evolución de la cobertura")}
+          description={t(
+            "Porcentaje de tests completados · últimos 12 meses",
+          )}
+          icon={TrendingUp}
+          className="xl:col-span-2"
+          actions={
+            <Link
+              href="/health-tests/cobertura"
+              className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-white/85 transition-colors hover:text-white"
+            >
+              {t("Ver detalle")}
+              <ArrowRight className="size-3.5" />
+            </Link>
+          }
+        >
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={data.coverageTrend}
+                margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="covFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="0%"
+                      stopColor="var(--sidebar)"
+                      stopOpacity={0.35}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor="var(--sidebar)"
+                      stopOpacity={0.02}
+                    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--border)"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  minTickGap={24}
+                />
+                <YAxis
+                  tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={[0, 100]}
+                />
+                <Tooltip
+                  formatter={(value) => [`${value}%`, t("Cobertura")]}
+                  labelFormatter={(label) => String(label)}
+                  contentStyle={{
+                    borderRadius: 12,
+                    border: "1px solid var(--border)",
+                    fontSize: 12,
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="coverage"
+                  stroke="var(--sidebar)"
+                  strokeWidth={2}
+                  fill="url(#covFill)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
         <ChartCard
           title={t("Cobertura de la batería")}
           description={t("Estado de las evaluaciones")}
@@ -413,7 +492,9 @@ export function HealthTestsDashboard() {
             </div>
           )}
         </ChartCard>
+      </div>
 
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <ChartCard
           title={t("Distribución por nivel de riesgo")}
           description={t(
@@ -498,80 +579,6 @@ export function HealthTestsDashboard() {
           />
         </ChartCard>
       </div>
-
-      <ChartCard
-        title={t("Evolución de la cobertura")}
-        description={t("Porcentaje de tests completados · últimos 12 meses")}
-        icon={TrendingUp}
-        actions={
-          <Link
-            href="/health-tests/cobertura"
-            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-white/85 transition-colors hover:text-white"
-          >
-            {t("Ver detalle")}
-            <ArrowRight className="size-3.5" />
-          </Link>
-        }
-      >
-        <div className="h-60 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={data.coverageTrend}
-              margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="covFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="0%"
-                    stopColor="var(--sidebar)"
-                    stopOpacity={0.35}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor="var(--sidebar)"
-                    stopOpacity={0.02}
-                  />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--border)"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                minTickGap={24}
-              />
-              <YAxis
-                tick={{ fontSize: 10.5, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                domain={[0, 100]}
-              />
-              <Tooltip
-                formatter={(value) => [`${value}%`, t("Cobertura")]}
-                labelFormatter={(label) => String(label)}
-                contentStyle={{
-                  borderRadius: 12,
-                  border: "1px solid var(--border)",
-                  fontSize: 12,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="coverage"
-                stroke="var(--sidebar)"
-                strokeWidth={2}
-                fill="url(#covFill)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </ChartCard>
 
       <ChartCard
         title={t("Alertas recientes")}
