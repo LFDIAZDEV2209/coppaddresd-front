@@ -121,6 +121,16 @@ export async function searchIcd10Codes(
   );
 }
 
+export async function searchCptCodes(
+  search: string,
+  signal?: AbortSignal,
+): Promise<CatalogSearchItem[]> {
+  return apiFetch<CatalogSearchItem[]>(
+    `${PATH}/cpt-codes?search=${encodeURIComponent(search)}`,
+    { signal },
+  );
+}
+
 export async function searchMedications(
   search: string,
   signal?: AbortSignal,

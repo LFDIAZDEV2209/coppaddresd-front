@@ -139,7 +139,7 @@ export function CatalogSearchSelect({
         className={`flex h-9 w-full items-center gap-2 rounded-lg border px-3 text-left outline-none transition-colors ${
           open
             ? `border-border bg-card ${accentRing}`
-            : "border-input bg-card hover:border-slate-500/70"
+            : "border-input bg-card hover:border-primary/40"
         }`}
       >
         {Icon ? (

@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { MapPin, MessageSquareText, Syringe } from "lucide-react";
+import { Barcode, MapPin, MessageSquareText, Syringe } from "lucide-react";
 import type { ProcedureDraft } from "../../hooks/use-form-drafts";
 import { newItemId } from "../../hooks/use-form-drafts";
+import { searchCptCodes } from "@/features/patients/services/catalogs-service";
+import type { CatalogSearchItem } from "@/features/patients/types";
 import {
   AddRowButton,
   formInput,
@@ -13,6 +15,7 @@ import {
   ItemRow,
   RemoveRowButton,
 } from "./form-ui";
+import { CatalogSearchSelect } from "./catalog-search-select";
 
 /**
  * Órdenes de procedimientos de la teleconsulta: filas dinámicas
@@ -54,6 +57,20 @@ export function ProcedureForm({
       onUpdate({ items: draft.items.filter((p) => p.id !== id) });
     },
     [draft.items, onUpdate],
+  );
+
+  /** Adjunta el código CPT del catálogo al nombre del procedimiento. */
+  const appendCpt = useCallback(
+    (id: string, item: CatalogSearchItem) => {
+      const code = (item.code ?? "").trim();
+      if (!code) return;
+      const current = draft.items.find((p) => p.id === id)?.name ?? "";
+      if (current.includes(code)) return;
+      updateItem(id, {
+        name: current.trim() ? `${current.trim()} (${code})` : code,
+      });
+    },
+    [draft.items, updateItem],
   );
 
   const handleSave = () => {
@@ -117,6 +134,18 @@ export function ProcedureForm({
                   className={formInput}
                 />
               </FormField>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="flex items-center gap-1.5 text-[11.5px] font-semibold text-foreground/70">
+                <Barcode className="size-3.5 text-muted-foreground/80" />
+                CPT (búsqueda del catálogo)
+              </label>
+              <CatalogSearchSelect
+                search={searchCptCodes}
+                placeholder="Buscar código CPT en EE. UU.…"
+                icon={Barcode}
+                onSelect={(cpt) => appendCpt(item.id, cpt)}
+              />
             </div>
             <div className="flex items-end gap-2">
               <div className="flex-1">
