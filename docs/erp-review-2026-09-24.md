@@ -62,9 +62,38 @@ Fecha: 2026-09-24. Rama: `carlos`. Sin tocar OpenSpec (flujo directo autorizado 
 - `yarn tsc --noEmit` ✓ · `yarn lint` ✓ · `yarn build` ✓ (90/90 rutas, incl.
   `/redes/radicaciones` y `/redes/facturacion`) · `yarn i18n:check` missing = 0.
 
+## Fase 6 — Catálogo CPT (EE. UU.)
+
+- Backend (rama `carlos` de `coppAddresdBack`, commit `344f2a1`): tabla
+  `app.cpt_codes` con code único + GIN trigram, seed curado idempotente
+  (~50 códigos comunes), `GET /api/v1/catalogs/cpt-codes?search=` y migración
+  `AddCptCatalog` con GRANT a `app_user`. 766 unit tests ✓.
+- Frontend (commit `0653bc6`): `searchCptCodes` en `catalogs-service` +
+  buscador CPT por fila en las órdenes de procedimientos de la sala.
+- Nota de licenciamiento: CPT® es propiedad de la AMA; el seed es un subset
+  informativo común, ampliable por script sin tocar la tabla.
+
+## Fases cerradas por otro flujo (verificadas, sin cambios)
+
+- Fase 1: toggle visible de profesionales (decisión de Luis, no three-dots).
+- Fase 2: dashboard general de pacientes con tabs `Vista general / Mapa
+  geográfico / Estado clínico` enlazables por `?tab=` y `?state=` compartido.
+- Fase 10/10b, Fase 9, Fase 11.x: ya implementadas.
+- 4.5: alertas de citas ya integran eventos de sesión y `NoShow` con
+  notificaciones.
+
+## Bloqueadas (requieren definición de producto)
+
+- **Fase 5 (stream → community)**: el plan exige identificar proveedor,
+  credenciales y contrato del «Stream service» antes de integrar. La comunidad
+  hoy tiene transmisiones mock («Transmisión estilo broadcast»). Pendiente de
+  definición de Lucho/Luis: proveedor (Twilio Live/LiveKit/Mux?) y credenciales.
+- **Iconos 3D transversales**: esperar assets de Byron.
+- **Radicaciones/RIPS backend**: los mocks del módulo Redes definen el contrato
+  esperado; falta exponerlo en `coppAddresdBack`.
+
 ## Pendiente
 
-- Backend real para Redes (los mocks definen el contrato esperado).
-- Fase 4.2/4.5 fino (calendario ya filtra/muestra todo por defecto; alertas de
-  citas ya integradas con notificaciones y eventos).
-- Fases fuera del frontend: stream→community (5), CPT US (6), 3D icons.
+- Backend real para Redes (mock expone los contratos esperados).
+- Fase 4.2/4.5 fino (calendario ya muestra todas las citas por defecto).
+
