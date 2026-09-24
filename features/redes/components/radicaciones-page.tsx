@@ -463,10 +463,12 @@ function NuevaRadicacion({
   const consultarRed = async () => {
     setLooking(true);
     setNitTouched(true);
-    // Latencia simulada de la búsqueda por NIT ("traen los datos").
-    await new Promise((r) => setTimeout(r, 700));
-    setRed(lookupRedByNit(nit));
-    setLooking(false);
+    try {
+      const red = await lookupRedByNit(nit);
+      setRed(red);
+    } finally {
+      setLooking(false);
+    }
   };
 
   const onCie10Blur = () => {
