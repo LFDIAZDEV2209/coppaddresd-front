@@ -71,7 +71,8 @@ FIXTURES_PATH = Path(
 
 def main() -> None:
     with psycopg.connect(DB_DSN) as conn:
-        professional = load_professional(conn)
+        wipe_seed(conn)
+        professional = load_professional(conn, datetime.now(timezone.utc))
         patient = load_patient(conn)
         context = load_clinical_context(conn, professional["id"])
 
@@ -95,7 +96,6 @@ def main() -> None:
             best_effort=True,
         )
 
-        wipe_seed(conn)
         appointments = create_appointments(conn, professional, patient, context)
         create_rooms(conn, appointments)
         conn.commit()
@@ -127,28 +127,44 @@ def main() -> None:
 # ---------------------------------------------------------------------------
 
 
-def load_professional(conn: psycopg.Connection) -> dict:
-    """Profesional con usuario de Auth; preferido por email, fallback determinista."""
+def load_professional(conn: psycopg.Connection, now: datetime) -> dict:
+    """Elige un profesional autenticable sin citas activas en la ventana E2E.
+
+    La exclusión GiST se mantiene intacta: el seed solo limpia sus propias
+    citas y escoge un profesional libre para no colisionar con datos ajenos.
+    """
     query = """
         SELECT p.id, u."UserName" AS email, e.first_name, e.last_name
         FROM erp.professionals p
         JOIN erp.employees e ON e.id = p.employee_id
         JOIN auth."Users" u ON u."Id" = e.user_id
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM tele.appointments a
+            WHERE a.professional_id = p.id
+              AND a.status IN ('Requested', 'Confirmed', 'InProgress')
+              AND a.scheduled_start < %s
+              AND a.scheduled_end > %s
+        )
+        ORDER BY (u."UserName" = %s) DESC, u."UserName"
+        LIMIT 1
     """
-    row = conn.execute(
-        query + " WHERE u.\"UserName\" = %s LIMIT 1", (PREFERRED_EMAIL,)
-    ).fetchone()
+    window_start = now - timedelta(minutes=95)
+    window_end = now + timedelta(minutes=215)
+    row = conn.execute(query, (window_end, window_start, PREFERRED_EMAIL)).fetchone()
     if row is None:
         print(
-            f"  aviso: {PREFERRED_EMAIL} no es un profesional con usuario; "
-            "se elige el primero determinista."
+            "  aviso: no hay profesionales autenticables libres en la ventana "
+            f"E2E [{window_start.isoformat()}, {window_end.isoformat()}]."
         )
-        row = conn.execute(query + ' ORDER BY u."UserName" LIMIT 1').fetchone()
-    if row is None:
         raise SystemExit(
-            "No hay profesionales con usuario de Auth en erp.professionals. "
-            "Corré los seeds de profesionales del backend (seed_professional_credentials.py) "
-            "y volvé a intentar."
+            "No se puede sembrar sin reutilizar una ventana ocupada. "
+            "Liberá un profesional de prueba o agrega otro profesional dedicado."
+        )
+    if row[1] != PREFERRED_EMAIL:
+        print(
+            f"  aviso: {PREFERRED_EMAIL} está ocupado; se usa profesional dedicado "
+            f"libre {row[1]}."
         )
     print(f"Profesional: {row[1]} ({row[2]}, {row[3]})")
     return {"id": row[0], "email": row[1]}
