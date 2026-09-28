@@ -99,3 +99,26 @@ de las citas del seed están pre-creadas, así que el backend no llama a
   el comentario del componente afirma que Enter funciona, pero no hay default
   button que lo dispare.
 
+### Contrato de disponibilidad (QA)
+
+`citas-availability-contract.spec.ts` queda preparado para validar 1.1/1.1a
+contra el Gateway real cuando exec-backend publique `/availability`. La spec
+es opt-in y se omite explícitamente mientras el contrato o los fixtures no
+estén publicados:
+
+```powershell
+$env:E2E_AVAILABILITY_READY = "1"
+$env:E2E_ACCESS_TOKEN = "<token de prueba>"
+$env:E2E_AVAILABILITY_DATE = "2026-10-05"
+$env:E2E_AVAILABILITY_PROFESSIONAL_ID = "<uuid>"
+$env:E2E_AVAILABILITY_SPECIALTY_ID = "<uuid>"
+$env:E2E_AVAILABILITY_ORGANIZATION_ID = "<uuid>"
+$env:E2E_AVAILABILITY_NO_SCHEDULE_PROFESSIONAL_ID = "<uuid>"
+corepack yarn e2e --grep "contrato de disponibilidad"
+```
+
+La prueba de especialidad verifica el veredicto D1: consulta agregada sin
+asignar profesional ni reservar un slot. El contrato requiere `organizationId`
+en este modo. Los UUID y el token se inyectan por entorno y no se almacenan en
+el repositorio.
+
