@@ -29,10 +29,12 @@ export function ProfessionalSelector({
   value,
   onChange,
   specialtyId,
+  ariaLabel,
 }: {
   value: string;
   onChange: (professionalId: string) => void;
   specialtyId?: string | null;
+  ariaLabel?: string;
 }) {
   const t = useT();
   const [professionals, setProfessionals] = useState<ProfessionalOption[]>([]);
@@ -51,12 +53,6 @@ export function ProfessionalSelector({
             )
           : result.data;
         setProfessionals(filtered);
-        if (
-          !filtered.some((p) => p.id === value) &&
-          filtered.length > 0
-        ) {
-          onChange(filtered[0].id);
-        }
       })
       .catch(() => {
         if (active) setProfessionals([]);
@@ -67,7 +63,7 @@ export function ProfessionalSelector({
     return () => {
       active = false;
     };
-  }, [onChange, specialtyId, value]);
+  }, [specialtyId]);
 
   const selected = professionals.find((p) => p.id === value) ?? null;
   const disabled = loading || professionals.length === 0;
@@ -80,6 +76,7 @@ export function ProfessionalSelector({
       getLabel={professionalLabel}
       placeholder={loading ? t('Cargando profesionales…') : t('Buscar profesional…')}
       searchPlaceholder={t('Buscar por nombre…')}
+      ariaLabel={ariaLabel ?? t("Profesional")}
       emptyText={
         specialtyId
           ? t("Sin profesionales activos para esta especialidad.")

@@ -26,6 +26,7 @@ interface CatalogComboboxProps<T extends { id?: string }> {
   placeholder?: string;
   searchPlaceholder?: string;
   emptyText?: string;
+  ariaLabel?: string;
   disabled?: boolean;
   allowClear?: boolean;
   className?: string;
@@ -52,6 +53,7 @@ function CatalogComboboxInner<T extends { id?: string }>({
   placeholder = "Seleccionar…",
   searchPlaceholder = "Buscar…",
   emptyText = "Sin resultados.",
+  ariaLabel,
   disabled = false,
   allowClear = false,
   className,
@@ -189,6 +191,7 @@ function CatalogComboboxInner<T extends { id?: string }>({
     >
       <Combobox.Trigger
         data-slot="catalog-combobox-trigger"
+        aria-label={ariaLabel}
         className={cn(
           "flex h-9 w-full items-center justify-between gap-1.5 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors select-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-muted-foreground",
           className,

@@ -16,6 +16,7 @@ import type {
   AppointmentAlertDto,
   AppointmentDto,
   AppointmentRequestDto,
+  AvailabilityResponseDto,
   ChatMessageDto,
   ClinicalDataDto,
   ClinicalEncounterDto,
@@ -39,6 +40,36 @@ const APPOINTMENTS_PATH = `${env.apiUrl}/api/v1/appointments`;
 // sirven en /api/v1/telemedicine (controllers no renombrados en esta fase de
 // transición); el gateway mantiene el alias /api/v1/telemedicine/appointments/*.
 const TELEMEDICINE_LEGACY_PATH = `${env.apiUrl}/api/v1/telemedicine`;
+
+export interface AvailabilityQuery {
+  professionalId?: string | null;
+  specialtyId?: string | null;
+  organizationId?: string | null;
+  clinicId?: string | null;
+  locationId?: string | null;
+  date: string;
+  signal?: AbortSignal;
+}
+
+export async function fetchAvailabilitySlots(
+  query: AvailabilityQuery,
+): Promise<AvailabilityResponseDto> {
+  const params = new URLSearchParams({ date: query.date });
+  for (const key of [
+    "professionalId",
+    "specialtyId",
+    "organizationId",
+    "clinicId",
+    "locationId",
+  ] as const) {
+    const value = query[key];
+    if (value) params.set(key, value);
+  }
+  return apiFetch<AvailabilityResponseDto>(
+    `${APPOINTMENTS_PATH}/availability?${params.toString()}`,
+    { signal: query.signal },
+  );
+}
 
 // --- Contexto del usuario (resuelve profesional/paciente del JWT) ---
 

@@ -53,6 +53,7 @@ import {
   rejectRequest,
 } from "../services/appointments-service";
 import { ProfessionalSelector } from "./professional-selector";
+import { AvailabilitySlotPicker } from "./availability-slot-picker";
 import {
   formatDate,
   formatDateTime,
@@ -140,6 +141,9 @@ export function RequestsInbox({
   );
   const [rejectionReason, setRejectionReason] = useState("");
   const [scheduledStart, setScheduledStart] = useState("");
+  const [confirmDate, setConfirmDate] = useState("");
+  const [selectedAvailabilityStart, setSelectedAvailabilityStart] =
+    useState("");
   const [confirmProfessionalId, setConfirmProfessionalId] = useState("");
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -249,7 +253,7 @@ export function RequestsInbox({
   };
 
   const doConfirm = async () => {
-    if (!confirming || !scheduledStart) return;
+    if (!confirming || !scheduledStart || !selectedAvailabilityStart) return;
     const targetProfessionalId =
       confirmProfessionalId ||
       professionalId ||
@@ -299,12 +303,16 @@ export function RequestsInbox({
     setApproving(null);
     setRejecting(null);
     setConfirming(null);
+    setConfirmDate("");
+    setSelectedAvailabilityStart("");
     setActionError(null);
   };
 
   const openConfirming = (request: AppointmentRequestDto) => {
     setConfirming(request);
     setScheduledStart(toDateTimeLocalInput(request.preferredStart));
+    setConfirmDate(toDateInput(request.preferredStart));
+    setSelectedAvailabilityStart("");
     setConfirmProfessionalId("");
     setActionError(null);
   };
@@ -766,6 +774,8 @@ export function RequestsInbox({
             setConfirming(null);
             setScheduledStart("");
             setConfirmProfessionalId("");
+            setConfirmDate("");
+            setSelectedAvailabilityStart("");
             setActionError(null);
           }
         }}
@@ -788,6 +798,7 @@ export function RequestsInbox({
                   value={confirmProfessionalId}
                   onChange={setConfirmProfessionalId}
                   specialtyId={confirming?.specialtyId}
+                  ariaLabel={t("Profesional asignado")}
                 />
                 <p className="text-[11.5px] text-muted-foreground">
                   {t(
@@ -798,24 +809,46 @@ export function RequestsInbox({
             )}
             <div className="flex flex-col gap-2">
               <Label
-                htmlFor="confirm-start"
+                htmlFor="confirm-date"
                 className="flex items-center gap-1.5"
               >
                 <CalendarClock
                   className="size-3.5 text-[var(--sidebar)]"
                   aria-hidden
                 />
-                {t("Inicio de la cita")}
+                {t("Fecha de la cita")}
               </Label>
               <Input
-                id="confirm-start"
-                type="datetime-local"
-                value={scheduledStart}
-                onChange={(event) => setScheduledStart(event.target.value)}
+                id="confirm-date"
+                type="date"
+                value={confirmDate}
+                onChange={(event) => {
+                  setConfirmDate(event.target.value);
+                  setScheduledStart("");
+                  setSelectedAvailabilityStart("");
+                }}
+              />
+              <AvailabilitySlotPicker
+                professionalId={
+                  confirmProfessionalId ||
+                  confirming?.professionalId ||
+                  professionalId
+                }
+                organizationId={confirming?.organizationId}
+                locationId={confirming?.locationId}
+                date={confirmDate}
+                selectedStart={
+                  selectedAvailabilityStart || null
+                }
+                onSelect={(slot) => {
+                  setScheduledStart(slot.start);
+                  setSelectedAvailabilityStart(slot.start);
+                  setConfirmDate(toDateInput(slot.start));
+                }}
               />
               <p className="text-[11.5px] text-muted-foreground">
                 {t(
-                  "La fecha debe respetar la anticipación mínima configurada y no superponerse con otras citas de la agenda.",
+                  "Selecciona un horario disponible; la fecha respeta la anticipación mínima y evita solapamientos.",
                 )}
               </p>
             </div>
@@ -835,6 +868,8 @@ export function RequestsInbox({
                 setConfirming(null);
                 setScheduledStart("");
                 setConfirmProfessionalId("");
+                setConfirmDate("");
+                setSelectedAvailabilityStart("");
                 setActionError(null);
               }}
               disabled={busy}
@@ -846,6 +881,7 @@ export function RequestsInbox({
               disabled={
                 busy ||
                 !scheduledStart ||
+                !selectedAvailabilityStart ||
                 (scope === "admin" &&
                   !confirming?.professionalId &&
                   !confirmProfessionalId)
@@ -1236,6 +1272,14 @@ function toDateTimeLocalInput(value: string | null): string {
   if (Number.isNaN(date.getTime())) return "";
   const pad = (part: number) => String(part).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function toDateInput(value: string | null): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 /** Etiqueta de agrupación por día para la bandeja tipo notificaciones. */

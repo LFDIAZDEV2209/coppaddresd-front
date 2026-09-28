@@ -65,6 +65,23 @@ export interface AppointmentRequestDto {
   rejectionReason?: string | null;
 }
 
+export interface AvailabilitySlotDto {
+  start: string;
+  end: string;
+  durationMinutes: number;
+  isAvailable: boolean;
+  conflictReason: string | null;
+  availableProfessionalCount?: number | null;
+}
+
+export interface AvailabilityResponseDto {
+  professionalId: string | null;
+  specialtyId: string | null;
+  date: string;
+  timezoneOffset: string;
+  slots: AvailabilitySlotDto[];
+}
+
 export interface AppointmentDto {
   id: string;
   requestId: string | null;

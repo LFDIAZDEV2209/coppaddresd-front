@@ -28,6 +28,7 @@ import {
 } from "../../services/reference-service";
 import { scheduleAppointment } from "../../services/appointments-service";
 import { nextBookableStart } from "../../utils/format";
+import { AvailabilitySlotPicker } from "../availability-slot-picker";
 import type { AppointmentDto, SpecialtyDto } from "../../types";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
@@ -153,6 +154,10 @@ function CreateAppointmentForm({
 
   const [dateValue, setDateValue] = useState(() => toDateInput(start));
   const [timeValue, setTimeValue] = useState(() => toTimeInput(start));
+  const [selectedSlot, setSelectedSlot] = useState<{
+    start: string;
+    durationMinutes: number;
+  } | null>(null);
   const [duration, setDuration] = useState(() => {
     const minutes = presetEnd
       ? Math.round((presetEnd.getTime() - start.getTime()) / 60000)
@@ -239,7 +244,11 @@ function CreateAppointmentForm({
   const showPatientResults = patientOpen && Boolean(patientQuery.trim());
 
   const canSubmit =
-    Boolean(patientId) && Boolean(specialtyId) && scheduledStart !== null;
+    Boolean(patientId) &&
+    Boolean(specialtyId) &&
+    scheduledStart !== null &&
+    selectedSlot !== null &&
+    new Date(selectedSlot.start).getTime() === scheduledStart.getTime();
 
   const submit = async () => {
     if (!canSubmit || !organizationId || !scheduledStart) return;
@@ -387,24 +396,17 @@ function CreateAppointmentForm({
         </div>
 
         {/* Fecha, hora y duración (prellenadas desde el rango) */}
-        <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+        <div className="grid grid-cols-[1fr_auto] items-end gap-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="create-date">{t("Fecha")}</Label>
             <Input
               id="create-date"
               type="date"
               value={dateValue}
-              onChange={(e) => setDateValue(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="create-time">{t("Hora")}</Label>
-            <Input
-              id="create-time"
-              type="time"
-              step={900}
-              value={timeValue}
-              onChange={(e) => setTimeValue(e.target.value)}
+              onChange={(e) => {
+                setDateValue(e.target.value);
+                setSelectedSlot(null);
+              }}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -426,6 +428,24 @@ function CreateAppointmentForm({
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label>{t("Horarios disponibles")}</Label>
+          <AvailabilitySlotPicker
+            professionalId={professionalId}
+            specialtyId={specialtyId}
+            organizationId={organizationId}
+            date={dateValue}
+            selectedStart={selectedSlot?.start}
+            onSelect={(slot) => {
+              const slotStart = new Date(slot.start);
+              setSelectedSlot(slot);
+              setDateValue(toDateInput(slotStart));
+              setTimeValue(toTimeInput(slotStart));
+              setDuration(slot.durationMinutes);
+            }}
+          />
         </div>
 
         {!organizationId && !error && (
