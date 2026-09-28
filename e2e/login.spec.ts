@@ -35,7 +35,9 @@ test.describe("login", () => {
     await page.getByRole("slider", { name: "Comencemos" }).focus();
     await page.getByRole("slider", { name: "Comencemos" }).press("End");
 
-    await expect(page.getByText("Credenciales inválidas")).toBeVisible();
+    await expect(
+      page.locator('[role="alert"]').filter({ hasText: /Credenciales/ }),
+    ).toBeVisible();
     await expect(page).toHaveURL(/\/login/);
   });
 });

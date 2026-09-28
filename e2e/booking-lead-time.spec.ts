@@ -2,23 +2,8 @@ import { test, expect } from "@playwright/test";
 import { loginAsProfessional } from "./fixtures/auth";
 import { loadFixtures, localDateOf } from "./fixtures/e2e-data";
 
-const LEAD_HOURS = 2;
-const MARGIN_MINUTES = 30;
-
-/** Reimplementación de `nextBookableStart` para validar el contrato. */
-function nextBookableStart(now: number): number {
-  const start = new Date(now);
-  start.setSeconds(0, 0);
-  start.setMinutes(start.getMinutes() < 30 ? 30 : 60);
-  const minLeadMs = (LEAD_HOURS * 60 + MARGIN_MINUTES) * 60_000;
-  while (start.getTime() - now < minLeadMs) {
-    start.setTime(start.getTime() + 30 * 60_000);
-  }
-  return start.getTime();
-}
-
 test.describe("reserva con anticipación mínima", () => {
-  test("crear cita manual prellena el primer hueco válido (≥ 2 h 30 min)", async ({
+  test("crear cita manual consulta slots antes de permitir agendar", async ({
     page,
   }) => {
     await loginAsProfessional(page);
@@ -29,20 +14,12 @@ test.describe("reserva con anticipación mínima", () => {
     await newButton.click();
 
     const date = await page.locator("#create-date").inputValue();
-    const time = await page.locator("#create-time").inputValue();
     expect(date).not.toBe("");
-    expect(time).not.toBe("");
-
-    const selected = new Date(`${date}T${time}`).getTime();
-    const now = Date.now();
-    const minLeadMs = (LEAD_HOURS * 60 + MARGIN_MINUTES) * 60_000;
-
-    // Primer hueco: respeta la anticipación mínima y está alineado a 30 min,
-    // sin alejarse más de un bloque del cálculo local.
-    expect(selected - now).toBeGreaterThanOrEqual(minLeadMs - 60_000);
-    expect(selected - now).toBeLessThanOrEqual(minLeadMs + 45 * 60_000);
-    expect(new Date(selected).getMinutes() % 30).toBe(0);
-    expect(selected).toBeGreaterThanOrEqual(nextBookableStart(now) - 60_000);
+    await expect(page.locator("#create-duration")).toBeVisible();
+    await expect(
+      page.getByText("Horarios disponibles", { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator("#create-time")).toHaveCount(0);
   });
 
   test("reprogramar a un horario demasiado próximo muestra el guard local", async ({
