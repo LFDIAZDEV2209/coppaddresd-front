@@ -14,7 +14,6 @@ import {
   FolderKanban,
   Cpu,
   Server,
-  CalendarPlus,
   ClipboardPenLine,
   UserRound,
   Users,
@@ -147,14 +146,6 @@ export const navModules: NavModule[] = [
         icon: UserRound,
         color: "#0E7490",
         permission: ["Patients.View", "Patients.ViewOwn"],
-      },
-      {
-        label: "Agendar cita",
-        href: "/patients/appointments",
-        icon: CalendarPlus,
-        color: "#10B981",
-        hidden: true,
-        permission: "Patients.View",
       },
       {
         label: "Recetario",

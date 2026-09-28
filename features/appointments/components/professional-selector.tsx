@@ -9,6 +9,7 @@ export interface ProfessionalOption {
   id: string;
   fullName: string;
   professionalTypeName: string | null;
+  specialties: Array<{ id: string; name: string }>;
 }
 
 /** Etiqueta de cada opción: "Nombre · Tipo de profesional". Estable para el memo del combobox. */
@@ -27,9 +28,11 @@ function professionalLabel(professional: ProfessionalOption): string {
 export function ProfessionalSelector({
   value,
   onChange,
+  specialtyId,
 }: {
   value: string;
   onChange: (professionalId: string) => void;
+  specialtyId?: string | null;
 }) {
   const t = useT();
   const [professionals, setProfessionals] = useState<ProfessionalOption[]>([]);
@@ -40,12 +43,19 @@ export function ProfessionalSelector({
     void fetchProfessionalsCatalog({ pageSize: 100, status: "Active" })
       .then((result) => {
         if (!active) return;
-        setProfessionals(result.data);
+        const filtered = specialtyId
+          ? result.data.filter((professional) =>
+              professional.specialties.some(
+                (specialty) => specialty.id === specialtyId,
+              ),
+            )
+          : result.data;
+        setProfessionals(filtered);
         if (
-          !result.data.some((p) => p.id === value) &&
-          result.data.length > 0
+          !filtered.some((p) => p.id === value) &&
+          filtered.length > 0
         ) {
-          onChange(result.data[0].id);
+          onChange(filtered[0].id);
         }
       })
       .catch(() => {
@@ -57,8 +67,7 @@ export function ProfessionalSelector({
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onChange, specialtyId, value]);
 
   const selected = professionals.find((p) => p.id === value) ?? null;
   const disabled = loading || professionals.length === 0;
@@ -71,7 +80,11 @@ export function ProfessionalSelector({
       getLabel={professionalLabel}
       placeholder={loading ? t('Cargando profesionales…') : t('Buscar profesional…')}
       searchPlaceholder={t('Buscar por nombre…')}
-      emptyText={t('Sin profesionales activos.')}
+      emptyText={
+        specialtyId
+          ? t("Sin profesionales activos para esta especialidad.")
+          : t("Sin profesionales activos.")
+      }
       disabled={disabled}
       className="min-w-56"
     />

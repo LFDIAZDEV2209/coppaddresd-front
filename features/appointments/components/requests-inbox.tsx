@@ -302,6 +302,13 @@ export function RequestsInbox({
     setActionError(null);
   };
 
+  const openConfirming = (request: AppointmentRequestDto) => {
+    setConfirming(request);
+    setScheduledStart(toDateTimeLocalInput(request.preferredStart));
+    setConfirmProfessionalId("");
+    setActionError(null);
+  };
+
   const pageError = error;
 
   return (
@@ -545,7 +552,7 @@ export function RequestsInbox({
                       canConfirm={canConfirm || scope === "admin"}
                       onApprove={setApproving}
                       onReject={setRejecting}
-                      onConfirm={setConfirming}
+                      onConfirm={openConfirming}
                       onDetail={setDetail}
                     />
                   ))}
@@ -607,8 +614,9 @@ export function RequestsInbox({
               setRejecting(detail);
             }}
             onConfirm={() => {
+              if (!detail) return;
               setDetail(null);
-              setConfirming(detail);
+              openConfirming(detail);
             }}
           />
         </DialogContent>
@@ -625,7 +633,7 @@ export function RequestsInbox({
           <ModalHeader
             icon={CheckCheck}
             tone="approve"
-            title={t("Aprobar solicitud")}
+            title={t("Aprobar preliminarmente")}
             description={t(
               "La solicitud de {specialty} de {patient} quedará lista para agendar.",
               {
@@ -656,7 +664,7 @@ export function RequestsInbox({
               className="gap-1.5 bg-[var(--sidebar)] text-white hover:bg-[var(--sidebar)]/90"
             >
               <Check className="size-4" aria-hidden />
-              {busy ? t("Aprobando…") : t("Aprobar solicitud")}
+              {busy ? t("Aprobando preliminarmente…") : t("Aprobar preliminarmente")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -766,7 +774,7 @@ export function RequestsInbox({
           <ModalHeader
             icon={CalendarCheck}
             tone="confirm"
-            title={t("Confirmar solicitud")}
+            title={t("Confirmar y agendar cita")}
             description={t("Agenda la cita de {specialty} para {patient}.", {
               specialty: confirming?.specialtyName ?? t("telemedicina"),
               patient: confirming?.patientName ?? t("el paciente"),
@@ -779,6 +787,7 @@ export function RequestsInbox({
                 <ProfessionalSelector
                   value={confirmProfessionalId}
                   onChange={setConfirmProfessionalId}
+                  specialtyId={confirming?.specialtyId}
                 />
                 <p className="text-[11.5px] text-muted-foreground">
                   {t(
@@ -844,7 +853,7 @@ export function RequestsInbox({
               className="gap-1.5 bg-[var(--sidebar)] text-white hover:bg-[var(--sidebar)]/90"
             >
               <CalendarClock className="size-4" aria-hidden />
-              {busy ? t("Confirmando…") : t("Confirmar cita")}
+              {busy ? t("Confirmando y agendando…") : t("Confirmar y agendar cita")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1007,7 +1016,7 @@ function RequestDetail({
             className="gap-1.5 bg-[var(--sidebar)] text-white hover:bg-[var(--sidebar)]/90"
           >
             <CalendarClock className="size-4" aria-hidden />
-            {t("Confirmar cita")}
+            {t("Confirmar y agendar cita")}
           </Button>
           {pending && (
             <Button
@@ -1016,7 +1025,7 @@ function RequestDetail({
               className="gap-1.5 border-success/60 text-success hover:bg-success-soft hover:text-success"
             >
               <Check className="size-4" aria-hidden />
-              {t("Aprobar")}
+              {t("Aprobar preliminarmente")}
             </Button>
           )}
           <Button
@@ -1193,7 +1202,7 @@ function RequestItem({
                   onClick={() => onApprove(request)}
                 >
                   <Check className="size-3.5" aria-hidden />
-                  {t("Aprobar")}
+                  {t("Aprobar preliminarmente")}
                 </Button>
               )}
               <Button
@@ -1211,7 +1220,7 @@ function RequestItem({
                 onClick={() => onConfirm(request)}
               >
                 <CalendarClock className="size-3.5" aria-hidden />
-                {t("Confirmar")}
+                {t("Confirmar y agendar")}
               </Button>
             </>
           )}
@@ -1219,6 +1228,14 @@ function RequestItem({
       </div>
     </li>
   );
+}
+
+function toDateTimeLocalInput(value: string | null): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 /** Etiqueta de agrupación por día para la bandeja tipo notificaciones. */

@@ -1,5 +1,5 @@
-import { AppointmentsPage } from "@/features/patients/components/appointments-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <AppointmentsPage />;
+  redirect("/appointments/agenda");
 }

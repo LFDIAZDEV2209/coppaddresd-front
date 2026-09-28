@@ -5,7 +5,7 @@ import { RequestsInbox } from "./requests-inbox";
 
 /**
  * Solicitudes globales (vista admin, requiere Telemedicine.AdminView): la
- * bandeja compartida en modo monitoreo, sin acción de confirmación.
+ * bandeja compartida con acciones de revisión y agendamiento.
  */
 export function AdminRequests() {
   const summary = useAdminSummary();
