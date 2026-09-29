@@ -52,7 +52,9 @@ DB_DSN = os.environ.get(
 AUTH_URL = os.environ.get("E2E_AUTH_URL", "http://localhost:5123")
 AUTH_SEED_URL = f"{AUTH_URL}/api/auth/internal/seed-demo-password"
 PASSWORD = os.environ.get("E2E_PASSWORD", "Demo1234!")
-PREFERRED_EMAIL = os.environ.get("E2E_PROFESSIONAL_EMAIL", "lucia.mendez@coppaddresd.com")
+PREFERRED_EMAIL = os.environ.get(
+    "E2E_PROFESSIONAL_EMAIL", "lucia.mendez@coppaddresd.com"
+)
 # La gracia de reapertura NO se configura desde el E2E: se usa el default del
 # backend (tele.telemedicine_settings.reopen_grace_minutes = 60). Evita la
 # carrera con la caché de settings (TTL 5 min) y la configurabilidad ya está
@@ -62,6 +64,11 @@ DEFAULT_REOPEN_GRACE_MINUTES = 60
 # Marca de origen: todo lo que crea este seed la usa para limpiarse sin tocar
 # datos ajenos (mismo patrón que SEED_USER_ID de seed_telemedicine.py).
 E2E_SEED_USER_ID = uuid.UUID("b5e2e000-0000-4000-8000-000000000001")
+
+# Solicitud dedicada al flujo repetible bandeja -> confirmar y agendar ->
+# agenda -> verificación (Misión 3.4). Motivo determinista para localizarla
+# en la bandeja sin depender de datos demo preexistentes.
+E2E_REQUEST_REASON = "E2E flujo citas bandeja agenda"
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURES_PATH = Path(
@@ -87,6 +94,10 @@ def main() -> None:
             (professional["id"],),
         )
 
+        # Disponibilidad garantizada L-V 08:00-17:00 para el profesional E2E
+        # (el endpoint /availability cruza erp.professional_schedules).
+        ensure_professional_schedules(conn, professional["id"])
+
         settings = upsert_settings(conn, context)
         reset_password(professional["email"])
         ensure_spanish_preference(professional["email"])
@@ -98,6 +109,9 @@ def main() -> None:
 
         appointments = create_appointments(conn, professional, patient, context)
         create_rooms(conn, appointments)
+        pending_request_id = create_pending_request(
+            conn, professional, patient, context
+        )
         conn.commit()
 
     fixtures = {
@@ -110,6 +124,13 @@ def main() -> None:
         "patient": {"id": str(patient["id"]), "name": patient["name"]},
         "settings": {"reopenGraceMinutes": settings},
         "appointments": {key: str(value) for key, value in appointments.items()},
+        "context": {
+            "organizationId": str(context["organization_id"]),
+            "clinicId": str(context["clinic_id"]),
+            "locationId": str(context["location_id"]),
+            "specialtyId": str(context["specialty_id"]),
+        },
+        "requests": {"inboxPending": str(pending_request_id)},
     }
     FIXTURES_PATH.parent.mkdir(parents=True, exist_ok=True)
     FIXTURES_PATH.write_text(
@@ -173,7 +194,7 @@ def load_professional(conn: psycopg.Connection, now: datetime) -> dict:
 def load_patient(conn: psycopg.Connection) -> dict:
     row = conn.execute(
         """
-        SELECT id, first_name, last_name
+        SELECT id, first_name, COALESCE(middle_name, ''), last_name
         FROM app.patient_profiles
         ORDER BY md5(id::text)
         LIMIT 1
@@ -183,7 +204,10 @@ def load_patient(conn: psycopg.Connection) -> dict:
         raise SystemExit(
             "No hay pacientes en app.patient_profiles. Corré los seeds de pacientes."
         )
-    return {"id": row[0], "name": f"{row[1]} {row[2]}".strip()}
+    # Nombre completo igual que el backend (first + middle + last): la agenda
+    # lista citas con el FullName del ERP y el spec busca por este nombre.
+    full_name = " ".join(part for part in (row[1], row[2], row[3]) if part)
+    return {"id": row[0], "name": full_name}
 
 
 def load_clinical_context(conn: psycopg.Connection, professional_id: uuid.UUID) -> dict:
@@ -307,7 +331,12 @@ def ensure_spanish_preference(
         token = auth_request(
             "POST",
             "/api/auth/login",
-            {"email": email, "password": password, "application": "erp", "rememberMe": False},
+            {
+                "email": email,
+                "password": password,
+                "application": "erp",
+                "rememberMe": False,
+            },
         )["accessToken"]
         auth_request(
             "PUT",
@@ -375,11 +404,92 @@ def locate_internal_key() -> str:
 
 
 def wipe_seed(conn: psycopg.Connection) -> None:
-    """Borra solo las citas del seed (salas/sesiones caen por cascada)."""
+    """Borra solo lo creado por el seed (citas y solicitudes E2E).
+
+    Las salas/sesiones de las citas caen por cascada. Los horarios
+    profesionales (erp.*) no se tocan: son catálogo compartido.
+    """
+    deleted_requests = conn.execute(
+        "DELETE FROM tele.telemedicine_requests WHERE created_by = %s",
+        (E2E_SEED_USER_ID,),
+    ).rowcount
     deleted = conn.execute(
         "DELETE FROM tele.appointments WHERE created_by = %s", (E2E_SEED_USER_ID,)
     ).rowcount
-    print(f"  limpieza previa: {deleted} citas del seed")
+    print(
+        f"  limpieza previa: {deleted} citas y {deleted_requests} solicitudes del seed"
+    )
+
+
+def ensure_professional_schedules(
+    conn: psycopg.Connection, professional_id: uuid.UUID
+) -> None:
+    """Garantiza franja L-V 08:00-17:00 para el profesional E2E (idempotente).
+
+    Sin horario semanal, /availability retorna vacío y el diálogo
+    "Confirmar y agendar cita" no ofrece slots (evidencia qa-citas-3_1).
+    """
+    for weekday in (1, 2, 3, 4, 5):
+        conn.execute(
+            "INSERT INTO erp.professional_schedules "
+            "(professional_id, weekday, start_time, end_time) "
+            "VALUES (%s, %s, %s::time, %s::time) "
+            "ON CONFLICT (professional_id, weekday) DO NOTHING",
+            (professional_id, weekday, "08:00", "17:00"),
+        )
+
+
+def next_preferred_start(now: datetime) -> datetime:
+    """Fecha preferida del request E2E: +3 días hábiles a las 15:00 UTC.
+
+    Respeta la anticipación mínima (2 h) y cae en día con horario L-V.
+    """
+    candidate = now + timedelta(days=3)
+    candidate = candidate.replace(hour=15, minute=0, second=0, microsecond=0)
+    while candidate.weekday() >= 5:
+        candidate += timedelta(days=1)
+    return candidate
+
+
+def create_pending_request(
+    conn: psycopg.Connection,
+    professional: dict,
+    patient: dict,
+    context: dict,
+) -> uuid.UUID:
+    """Solicitud Pending dedicada al flujo bandeja -> agenda (repetible).
+
+    Se recrea en cada seed (wipe previo por created_by), así la suite puede
+    confirmarla sin depender de datos demo preexistentes.
+    """
+    now = datetime.now(timezone.utc)
+    request_id = uuid.uuid4()
+    conn.execute(
+        """
+        INSERT INTO tele.telemedicine_requests
+            (id, patient_id, professional_id, specialty_id, organization_id,
+             clinic_id, location_id, preferred_start, reason, status, notes,
+             created_by, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            request_id,
+            patient["id"],
+            professional["id"],
+            context["specialty_id"],
+            context["organization_id"],
+            context["clinic_id"],
+            context["location_id"],
+            next_preferred_start(now),
+            E2E_REQUEST_REASON,
+            "Pending",
+            "Solicitud E2E del flujo bandeja -> confirmar y agendar -> agenda",
+            E2E_SEED_USER_ID,
+            now - timedelta(hours=1),
+        ),
+    )
+    print(f"  solicitud pendiente E2E: {request_id}")
+    return request_id
 
 
 def create_appointments(
@@ -436,12 +546,27 @@ def create_appointments(
         )
 
     # Ventana de sala abierta (start - 10 min .. end + 15 min): en curso y a futuro.
-    insert(ids["roomOpen"], now - timedelta(minutes=5), now + timedelta(minutes=25), "Confirmed")
+    insert(
+        ids["roomOpen"],
+        now - timedelta(minutes=5),
+        now + timedelta(minutes=25),
+        "Confirmed",
+    )
     # `metrics` también con la ventana abierta al terminar el seed (duración 45):
     # /session/start debe funcionar de inmediato. Termina justo cuando empieza
     # `roomOpen` para no violar la exclusión GiST de solapamiento del backend.
-    insert(ids["metrics"], now - timedelta(minutes=50), now - timedelta(minutes=5), "Confirmed")
-    insert(ids["roomClosed"], now + timedelta(minutes=185), now + timedelta(minutes=215), "Confirmed")
+    insert(
+        ids["metrics"],
+        now - timedelta(minutes=50),
+        now - timedelta(minutes=5),
+        "Confirmed",
+    )
+    insert(
+        ids["roomClosed"],
+        now + timedelta(minutes=185),
+        now + timedelta(minutes=215),
+        "Confirmed",
+    )
 
     # Completadas: ancla de la ventana de reapertura dentro y fuera de la gracia.
     insert(

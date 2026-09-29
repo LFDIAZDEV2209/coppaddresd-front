@@ -19,6 +19,17 @@ export interface E2EFixtures {
     /** Completada hace más de la gracia: sin botón de reapertura. */
     reopenOld: string;
   };
+  /** Contexto clínico del profesional E2E (para crear/verificar requests). */
+  context: {
+    organizationId: string;
+    clinicId: string;
+    locationId: string;
+    specialtyId: string;
+  };
+  /** Solicitud Pending dedicada al flujo bandeja -> agenda (Misión 3.4). */
+  requests: {
+    inboxPending: string;
+  };
 }
 
 const FIXTURES_PATH =

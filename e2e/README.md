@@ -15,6 +15,7 @@ credenciales ni media real.
 | `room-call.spec.ts` | Prejoin → «Conectando…» → conectado (SDK stub), toggles de mic/cámara y finalización real (`session/end`). |
 | `reopen-grace.spec.ts` | Dentro de la gracia: botón visible con el copy «hasta {minutes} minutos» con el default del backend (60, el seed no configura la gracia); fuera: sin botón. La reapertura exitosa requiere Twilio real (ver límites). |
 | `dashboard-metrics.spec.ts` | `calls` en `/me/analytics` y `expect.poll` (≤ 10 s) del incremento de `sessionsStarted` vía API. |
+| `citas-flujo.spec.ts` | Flujo repetible Misión 3.4: bandeja → «Confirmar y agendar» (`AvailabilitySlotPicker` real de `/availability`) → cita en la agenda del día → detalle «Confirmada»/«Sala virtual» → verificación API (request `Converted`, cita `Confirmed`, 201 Created). |
 
 ## Requisitos y comandos
 
