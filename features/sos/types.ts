@@ -1,55 +1,71 @@
 /**
- * Tipos del módulo SOS (borrador de bandeja ERP — Misión SOS Panic).
+ * Tipos del módulo SOS (bandeja ERP — Misión SOS Panic).
  *
- * Basado en `openspec/changes/sos-panic-real` (spec REQ-SOS-05 y design D5/D8).
- * El backend está en implementación: los nombres de campos del listado son
- * ASUNCIÓN para revisión con los agentes principales (D8 solo define
- * `POST /api/v1/sos/alerts/{id}/attend` y `GET /api/v1/sos/alerts/{id}`; el
- * listado `GET /api/v1/sos/alerts` para staff con `Sos.Alerts.Manage` es la
- * extensión natural que este borrador consume).
- *
- * Estados y canales siguen el vocabulario del spec (español, como el resto
- * del dominio: `Activa` → `Atendida` | `Cancelada`, transiciones terminales).
+ * Contrato REAL del backend (`coppAddresdBack`):
+ * - `SosDtos.cs` — `SosAlertsPage { data, total, page, pageSize, totalPages }`
+ *   con filas `SosAlertListItemDto` (convención de paginación offset del repo;
+ *   camelCase tal cual serializa ASP.NET).
+ * - `GET /api/v1/sos/alerts` (staff, `Sos.Alerts.Manage` + scope D5): la fila
+ *   NO incluye teléfono ni coordenadas (viven solo en el detalle `GET /{id}`,
+ *   sujeto al mismo scope).
+ * - `POST /api/v1/sos/alerts/{id}/attend` y `GET /{id}` responden el detalle
+ *   `SosAlertDto` completo (200) con teléfono enmascarado.
+ * - Estados (`Domain/Enums/SosEnums.cs`): `Activa → Atendida | Cancelada`
+ *   (terminales) y canal `Pendiente | Enviado | Fallido | Timeout |
+ *   NoConfigurado` — vocabulario del dominio, sin PII en canal.
  */
 
-/** Estados del ciclo de vida de la alerta (spec REQ-SOS-05). */
+/** Estados del ciclo de vida de la alerta (REQ-SOS-05, terminal ambos). */
 export type SosAlertStatus = "Activa" | "Atendida" | "Cancelada";
 
-/** Canales de notificación que el backend registra por alerta. */
-export type SosAlertChannel = "Sms" | "Push";
-
-/** Estados por canal (spec REQ-SOS-03/04): sin PII, solo resultado de canal. */
+/** Estado de un canal de notificación (SosChannelStatus del dominio). */
 export type SosChannelStatus =
-  "Enviado" | "Fallido" | "Timeout" | "NoConfigurado" | "EnEspera";
+  "Pendiente" | "Enviado" | "Fallido" | "Timeout" | "NoConfigurado";
 
-export interface SosChannelDto {
-  channel: SosAlertChannel;
-  status: SosChannelStatus;
-  at: string | null;
-}
-
-export interface SosAlertDto {
+/** Fila del listado staff (SosAlertListItemDto): dato operacional mínimo. */
+export interface SosAlertListItemDto {
   id: string;
   patientId: string;
   patientName: string | null;
   status: SosAlertStatus;
   /** Momento de activación (UTC ISO). */
-  triggeredAt: string;
-  /** Coordenadas validadas por el backend; null si el paciente no compartió GPS. */
-  latitude: number | null;
-  longitude: number | null;
-  channels: SosChannelDto[];
-  /** Actor y marca de tiempo de las transiciones terminales (REQ-SOS-05). */
-  attendedByName: string | null;
+  createdAt: string;
+  /** Usuario del ERP que atendió (Guid; el nombre lo resuelve la UI/DTO futuro). */
+  attendedBy: string | null;
   attendedAt: string | null;
+  cancelledBy: string | null;
   cancelledAt: string | null;
+  smsChannelStatus: SosChannelStatus;
+  pushChannelStatus: SosChannelStatus;
 }
 
-/** Resultado paginado del listado staff (mismo shape que el resto del ERP). */
-export interface PaginatedSosAlertsResult {
-  items: SosAlertDto[];
+/** Página del listado staff: `{ data, ... }` (SosAlertsPage del backend). */
+export interface SosAlertsPage {
+  data: SosAlertListItemDto[];
   total: number;
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+/** Detalle completo (GET /{id} y respuesta del attend): SosAlertDto. */
+export interface SosAlertDto {
+  id: string;
+  patientId: string;
+  status: SosAlertStatus;
+  /** Coordenadas validadas por el backend; null si el paciente no compartió GPS. */
+  latitude: number | null;
+  longitude: number | null;
+  accuracyMeters: number | null;
+  locationCapturedAt: string | null;
+  /** Teléfono de destino SIEMPRE enmascarado ("+****1234"). */
+  maskedDestinationPhone: string;
+  smsChannelStatus: SosChannelStatus;
+  pushChannelStatus: SosChannelStatus;
+  pushRecipients: number | null;
+  createdAt: string;
+  attendedBy: string | null;
+  attendedAt: string | null;
+  cancelledBy: string | null;
+  cancelledAt: string | null;
 }

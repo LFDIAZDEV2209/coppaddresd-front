@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type {
-  PaginatedSosAlertsResult,
-  SosAlertDto,
+  SosAlertListItemDto,
   SosAlertStatus,
+  SosAlertsPage,
 } from "../types";
 import { attendSosAlert, fetchSosAlerts } from "../services/sos-service";
 
 interface UseSosAlertsReturn {
-  alerts: SosAlertDto[];
+  alerts: SosAlertListItemDto[];
   total: number;
   totalPages: number;
   loading: boolean;
@@ -40,7 +40,7 @@ export function useSosAlerts(options: {
   status: SosAlertStatus | null;
 }): UseSosAlertsReturn {
   const { status } = options;
-  const [alerts, setAlerts] = useState<SosAlertDto[]>([]);
+  const [alerts, setAlerts] = useState<SosAlertListItemDto[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -59,13 +59,13 @@ export function useSosAlerts(options: {
     let active = true;
     (async () => {
       try {
-        const result: PaginatedSosAlertsResult = await fetchSosAlerts({
+        const result: SosAlertsPage = await fetchSosAlerts({
           status,
           page,
           pageSize: PAGE_SIZE,
         });
         if (!active) return;
-        setAlerts(result.items);
+        setAlerts(result.data);
         setTotal(result.total);
         setTotalPages(Math.max(1, result.totalPages));
         setError(null);

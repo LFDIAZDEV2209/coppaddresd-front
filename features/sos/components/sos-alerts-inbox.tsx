@@ -7,7 +7,6 @@ import {
   CheckCheck,
   ChevronLeft,
   ChevronRight,
-  MapPin,
   MessageSquare,
   RefreshCw,
   Search,
@@ -31,11 +30,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSosAlerts } from "../hooks/use-sos-alerts";
-import { formatCoordinates, formatDateTime, timeAgo } from "../utils/format";
+import { formatDateTime, timeAgo } from "../utils/format";
 import type {
-  SosAlertDto,
+  SosAlertListItemDto,
   SosAlertStatus,
-  SosChannelDto,
   SosChannelStatus,
 } from "../types";
 
@@ -84,6 +82,7 @@ const channelStatusVisual: Record<
   SosChannelStatus,
   { label: string; color: string; background: string }
 > = {
+  Pendiente: { label: "Pendiente", color: "#4B5563", background: "#F1F3F5" },
   Enviado: { label: "Enviado", color: "#0E7A4D", background: "#E6F7EF" },
   Fallido: { label: "Fallido", color: "#B42318", background: "#FCEBEC" },
   Timeout: { label: "Timeout", color: "#92400E", background: "#FDF2E3" },
@@ -92,7 +91,6 @@ const channelStatusVisual: Record<
     color: "#4B5563",
     background: "#F1F3F5",
   },
-  EnEspera: { label: "En espera", color: "#4B5563", background: "#F1F3F5" },
 };
 
 const statusChips: Array<{ value: SosAlertStatus | null; label: string }> = [
@@ -107,7 +105,7 @@ export function SosAlertsInbox() {
   const { hasPermission } = useAuth();
   const [status, setStatus] = useState<SosAlertStatus | null>(null);
   const [search, setSearch] = useState("");
-  const [attending, setAttending] = useState<SosAlertDto | null>(null);
+  const [attending, setAttending] = useState<SosAlertListItemDto | null>(null);
 
   const authorized = hasPermission(SOS_MANAGE_PERMISSION);
 
@@ -472,14 +470,13 @@ function SosAlertCard({
   busy,
   onAttend,
 }: {
-  alert: SosAlertDto;
+  alert: SosAlertListItemDto;
   busy: boolean;
   onAttend: () => void;
 }) {
   const t = useT();
   const visual = statusVisual[alert.status];
   const isActive = alert.status === "Activa";
-  const coordinates = formatCoordinates(alert.latitude, alert.longitude);
 
   return (
     <li
@@ -517,34 +514,21 @@ function SosAlertCard({
           </div>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
+            <span
+              className="inline-flex items-center gap-1"
+              title={formatDateTime(alert.createdAt)}
+            >
               <CalendarClock className="size-3" aria-hidden />
-              {t("Activada")} {timeAgo(alert.triggeredAt)}
+              {t("Activada")} {timeAgo(alert.createdAt)}
             </span>
-            {coordinates && isActive && (
-              <span
-                className="inline-flex items-center gap-1"
-                title={coordinates}
-              >
-                <MapPin className="size-3" aria-hidden />
-                {coordinates}
-              </span>
-            )}
-            {alert.attendedByName && (
-              <span className="inline-flex items-center gap-1 truncate">
-                <CheckCheck className="size-3" aria-hidden />
-                {t("Atendida por {name}", { name: alert.attendedByName })}
-              </span>
-            )}
           </div>
 
           <div
             className="flex flex-wrap items-center gap-1.5"
             aria-label={t("Canales de notificación")}
           >
-            {alert.channels.map((channel) => (
-              <ChannelChip key={channel.channel} channel={channel} />
-            ))}
+            <ChannelChip label="SMS" status={alert.smsChannelStatus} />
+            <ChannelChip label={t("Push")} status={alert.pushChannelStatus} />
           </div>
         </div>
 
@@ -565,9 +549,9 @@ function SosAlertCard({
           )}
           <span
             className="text-[11px] text-muted-foreground/70"
-            title={formatDateTime(alert.triggeredAt)}
+            title={formatDateTime(alert.createdAt)}
           >
-            {formatDateTime(alert.triggeredAt)}
+            {formatDateTime(alert.createdAt)}
           </span>
         </div>
       </div>
@@ -575,19 +559,24 @@ function SosAlertCard({
   );
 }
 
-function ChannelChip({ channel }: { channel: SosChannelDto }) {
+function ChannelChip({
+  label,
+  status,
+}: {
+  label: string;
+  status: SosChannelStatus;
+}) {
   const t = useT();
-  const visual = channelStatusVisual[channel.status];
-  const Icon: LucideIcon = channel.channel === "Sms" ? MessageSquare : Bell;
-  const channelLabel = channel.channel === "Sms" ? "SMS" : t("Push");
+  const visual = channelStatusVisual[status];
+  const Icon: LucideIcon = label === "SMS" ? MessageSquare : Bell;
   return (
     <span
       className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
       style={{ backgroundColor: visual.background, color: visual.color }}
-      title={`${channelLabel} · ${formatDateTime(channel.at)}`}
+      title={`${label} · ${t(visual.label)}`}
     >
       {createElement(Icon, { className: "size-3", "aria-hidden": true })}
-      {channelLabel}: {t(visual.label)}
+      {label}: {t(visual.label)}
     </span>
   );
 }

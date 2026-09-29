@@ -47,12 +47,3 @@ export function timeAgo(value: string | null | undefined): string {
   if (days < 30) return `hace ${days} d`;
   return formatDate(value);
 }
-
-/** Coordenadas formateadas para el staff (sin enlace de mapa ni PII extra). */
-export function formatCoordinates(
-  latitude: number | null,
-  longitude: number | null,
-): string | null {
-  if (latitude === null || longitude === null) return null;
-  return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-}
