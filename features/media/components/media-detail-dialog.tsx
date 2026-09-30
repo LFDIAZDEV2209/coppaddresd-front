@@ -1,6 +1,18 @@
 "use client";
 
-import { Clock, HardDrive, Hash, FileAudio, User, Tag, CalendarDays } from "lucide-react";
+import {
+  Archive,
+  Clock,
+  HardDrive,
+  Hash,
+  FileAudio,
+  User,
+  Tag,
+  CalendarDays,
+  Link2,
+  Send,
+  Undo2,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,41 +20,82 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import type { MediaItem } from "../types";
-import { mediaTypeMeta, mediaStatusMeta, getMediaCategoryMeta } from "./media-meta";
-import { formatDuration, formatFileSize } from "../services/media-service";
+import {
+  mediaTypeMeta,
+  mediaStatusMeta,
+  getMediaCategoryMeta,
+} from "./media-meta";
+import {
+  formatDuration,
+  formatFileSize,
+  hasPublishableMetadata,
+} from "../services/media-service";
 import { MediaPlayer } from "./media-player";
 import { MediaThumb } from "./media-thumb";
 import { useT } from "@/providers/i18n-provider";
 
+export type MediaDetailAction = "publish" | "unpublish" | "archive";
+
 interface MediaDetailDialogProps {
   media?: MediaItem;
   onClose: () => void;
+  /** Acciones semánticas (presentes solo con permiso); confirman en el padre. */
+  onAction?: (action: MediaDetailAction) => void;
+  /** Bloqueado mientras corre otra acción. */
+  actionLoading?: boolean;
+  /** Abre el diálogo "Dónde se usa" en el padre. */
+  onShowReferences?: () => void;
 }
 
-export function MediaDetailDialog({ media, onClose }: MediaDetailDialogProps) {
+export function MediaDetailDialog({
+  media,
+  onClose,
+  onAction,
+  actionLoading = false,
+  onShowReferences,
+}: MediaDetailDialogProps) {
   const t = useT();
   return (
     <Dialog open={Boolean(media)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t('Detalle del medio')}</DialogTitle>
+          <DialogTitle>{t("Detalle del medio")}</DialogTitle>
           <DialogDescription>
-            {t('Metadata registrada para la lección.')}
+            {t("Metadata registrada para la lección.")}
           </DialogDescription>
         </DialogHeader>
-        {media && <MediaDetailContent media={media} />}
+        {media && (
+          <MediaDetailContent
+            media={media}
+            onAction={onAction}
+            actionLoading={actionLoading}
+            onShowReferences={onShowReferences}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
-function MediaDetailContent({ media }: { media: MediaItem }) {
+function MediaDetailContent({
+  media,
+  onAction,
+  actionLoading,
+  onShowReferences,
+}: {
+  media: MediaItem;
+  onAction?: (action: MediaDetailAction) => void;
+  actionLoading?: boolean;
+  onShowReferences?: () => void;
+}) {
   const t = useT();
   const type = mediaTypeMeta[media.mediaType];
   const status = mediaStatusMeta[media.status];
   const category = getMediaCategoryMeta(media.category);
   const TypeIcon = type.icon;
+  const publishable = hasPublishableMetadata(media);
 
   return (
     <div className="flex flex-col gap-5">
@@ -63,7 +116,7 @@ function MediaDetailContent({ media }: { media: MediaItem }) {
       {media.thumbnailKey && (
         <MediaThumb
           storageKey={media.thumbnailKey}
-          alt={t('Miniatura de {title}', { title: media.title })}
+          alt={t("Miniatura de {title}", { title: media.title })}
           className="max-h-72 w-full rounded-xl object-cover"
         />
       )}
@@ -75,44 +128,101 @@ function MediaDetailContent({ media }: { media: MediaItem }) {
         />
       </div>
 
+      {/* Acciones semánticas + "dónde se usa" (REQ-PCA-03/07) */}
+      {onAction && (
+        <div className="flex flex-wrap items-center gap-2">
+          {media.status === "Draft" && (
+            <Button
+              size="sm"
+              disabled={actionLoading || !publishable}
+              title={
+                !publishable
+                  ? t(
+                      "Faltan metadatos para publicar (duración o Content-Type).",
+                    )
+                  : undefined
+              }
+              onClick={() => onAction("publish")}
+            >
+              <Send data-icon="inline-start" />
+              {t("Publicar")}
+            </Button>
+          )}
+          {media.status === "Published" && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actionLoading}
+              onClick={() => onAction("unpublish")}
+            >
+              <Undo2 data-icon="inline-start" />
+              {t("Despublicar")}
+            </Button>
+          )}
+          {media.status !== "Archived" && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actionLoading}
+              onClick={() => onAction("archive")}
+            >
+              <Archive data-icon="inline-start" />
+              {t("Archivar")}
+            </Button>
+          )}
+          {onShowReferences && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={actionLoading}
+              onClick={onShowReferences}
+              className="ml-auto"
+            >
+              <Link2 data-icon="inline-start" />
+              {t("¿Dónde se usa?")}
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
         <Detail
-          label={t('Tipo de medio')}
+          label={t("Tipo de medio")}
           value={type.label}
           icon={<TypeIcon className="size-3.5" />}
         />
         <Detail
-          label={t('Autor')}
+          label={t("Autor")}
           value={media.author}
           icon={<User className="size-3.5" />}
         />
         <Detail
-          label={t('Categoría')}
+          label={t("Categoría")}
           value={category.label}
           icon={<Tag className="size-3.5" />}
         />
         <Detail
-          label={t('Día / Mes')}
+          label={t("Día / Mes")}
           value={`${media.day} / ${media.month}`}
           icon={<CalendarDays className="size-3.5" />}
         />
         <Detail
-          label={t('Estado')}
+          label={t("Estado")}
           value={status.label}
           icon={<Hash className="size-3.5" />}
         />
         <Detail
-          label={t('Duración')}
+          label={t("Duración")}
           value={formatDuration(media.durationSecs)}
           icon={<Clock className="size-3.5" />}
         />
         <Detail
-          label={t('Tamaño')}
+          label={t("Tamaño")}
           value={formatFileSize(media.fileSizeBytes)}
           icon={<HardDrive className="size-3.5" />}
         />
         <Detail
-          label={t('Orden de lección')}
+          label={t("Orden de lección")}
           value={`#${media.sortOrder}`}
           icon={<Hash className="size-3.5" />}
         />
@@ -125,24 +235,22 @@ function MediaDetailContent({ media }: { media: MediaItem }) {
 
       <div className="rounded-lg border border-border p-3">
         <p className="mb-1 text-xs font-semibold text-muted-foreground">
-          {t('Descripción')}
+          {t("Descripción")}
         </p>
-        <p className="text-sm">{media.description || t('Sin descripción.')}</p>
+        <p className="text-sm">{media.description || t("Sin descripción.")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
         <div>
-          <p>{t('Creado')}</p>
+          <p>{t("Creado")}</p>
           <p className="mt-0.5 font-medium text-foreground">
             {new Date(media.createdAt).toLocaleString()}
           </p>
         </div>
         <div>
-          <p>{t('Actualizado')}</p>
+          <p>{t("Actualizado")}</p>
           <p className="mt-0.5 font-medium text-foreground">
-            {media.updatedAt
-              ? new Date(media.updatedAt).toLocaleString()
-              : "—"}
+            {media.updatedAt ? new Date(media.updatedAt).toLocaleString() : "—"}
           </p>
         </div>
       </div>

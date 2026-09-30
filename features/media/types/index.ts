@@ -44,6 +44,11 @@ export interface MediaItem {
   createdBy: string | null;
   chapters?: MediaChapter[];
   takeaways?: string[];
+  /**
+   * Número de referencias activas (plantillas/semanas) que el listado
+   * server-side resuelve por fila (REQ-PCA-06). Ausente en el detalle.
+   */
+  usageCount?: number;
 }
 
 export interface MediaInput {

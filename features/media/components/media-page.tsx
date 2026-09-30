@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, FileAudio, Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  Archive as ArchiveGlyph,
+  BrushCleaning,
+  CheckCircle2,
+  FileAudio,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
@@ -18,8 +26,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/providers/auth-provider";
 import { useT } from "@/providers/i18n-provider";
+import { ApiError } from "@/lib/api/http";
 import { useMedia } from "../hooks/use-media";
+import {
+  archiveMediaItem,
+  publishMediaItem,
+  unpublishMediaItem,
+} from "../services/media-service";
 import {
   requestUploadIntent,
   uploadToPresignedUrl,
@@ -28,12 +43,31 @@ import { MediaToolbar } from "./media-toolbar";
 import { MediaCardGrid, MediaGridEmpty } from "./media-card-grid";
 import { MediaTable } from "./media-table";
 import { MediaFormDialog } from "./media-form-dialog";
-import { MediaDetailDialog } from "./media-detail-dialog";
+import {
+  MediaDetailDialog,
+  type MediaDetailAction,
+} from "./media-detail-dialog";
+import { MediaReferencesDialog } from "./media-references-dialog";
+import { MediaDeleteBlockedDialog } from "./media-delete-blocked-dialog";
+import { MediaCleanupAdminDialog } from "./media-cleanup-admin-dialog";
 import type { MediaItem, MediaInput } from "../types";
+
+/** Aviso efímero de la biblioteca (resultados de acciones semánticas). */
+interface MediaToast {
+  id: number;
+  message: string;
+  type: "success" | "info" | "error";
+}
 
 export function MediaPage() {
   const t = useT();
   const router = useRouter();
+  const { hasPermission } = useAuth();
+  // Permisos de la matriz Media.*: las acciones semánticas y el panel de
+  // mantenimiento solo se exponen si el actor tiene el permiso del backend.
+  const canPublish = hasPermission("Media.Publish");
+  const canArchive = hasPermission("Media.Archive");
+  const canSystem = hasPermission("System.AdminSettings");
   const {
     result,
     loading,
@@ -56,6 +90,30 @@ export function MediaPage() {
   const [pageSize, setPageSizeLocal] = useState(10);
   /** Feedback tras crear en /media/new (query ?creado=1). */
   const [createdNotice, setCreatedNotice] = useState(false);
+
+  // Acción semántica pendiente de confirmar (publicar/despublicar/archivar).
+  const [pendingAction, setPendingAction] = useState<{
+    action: MediaDetailAction;
+    item: MediaItem;
+  } | null>(null);
+  // Referencias ("dónde se usa") y eliminación bloqueada por 409.
+  const [referencesFor, setReferencesFor] = useState<MediaItem | undefined>();
+  const [blockedFor, setBlockedFor] = useState<MediaItem | undefined>();
+  const [cleanupOpen, setCleanupOpen] = useState(false);
+  /** Toasts efímeros de la biblioteca. */
+  const [toasts, setToasts] = useState<MediaToast[]>([]);
+
+  const toast = useCallback(
+    (message: string, type: MediaToast["type"] = "success") => {
+      const id = Date.now() + Math.random();
+      setToasts((prev) => [...prev, { id, message, type }]);
+      setTimeout(
+        () => setToasts((prev) => prev.filter((x) => x.id !== id)),
+        4000,
+      );
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!window.location.search.includes("creado=1")) return;
@@ -108,6 +166,80 @@ export function MediaPage() {
     setEditing(undefined);
   };
 
+  /**
+   * Acción semántica confirmada (REQ-PCA-03): llama al endpoint dedicado,
+   * refleja el nuevo estado en la fila y en el detalle abierto, y avisa con
+   * toast. Un 422 de validación técnica muestra el ProblemDetails del back.
+   */
+  const runSemanticAction = async (action: MediaDetailAction) => {
+    const target = pendingAction?.item ?? details;
+    if (!target) return;
+    setPendingAction(null);
+    try {
+      let updated: MediaItem;
+      if (action === "publish") {
+        const res = await publishMediaItem(target.id);
+        updated = {
+          ...target,
+          status: res.status,
+          publishedAt: res.publishedAt,
+        };
+      } else if (action === "unpublish") {
+        updated = await unpublishMediaItem(target.id);
+      } else {
+        updated = await archiveMediaItem(target.id);
+      }
+      toast(
+        action === "publish"
+          ? t("Medio publicado: los pacientes ya pueden verlo.")
+          : action === "unpublish"
+            ? t("Medio devuelto a borrador.")
+            : t("Medio archivado: sale de las nuevas asignaciones."),
+        "success",
+      );
+      // Reflejar el nuevo estado en el detalle abierto y refrescar la lista.
+      setDetails((prev) => (prev?.id === updated.id ? updated : prev));
+      retry();
+    } catch (err) {
+      toast(
+        err instanceof Error
+          ? err.message
+          : t("No se pudo completar la acción."),
+        "error",
+      );
+    }
+  };
+
+  /**
+   * Eliminación con salvaguarda (REQ-PCA-07): si el back responde 409
+   * Conflict por referencias activas, abre el diálogo que explica las
+   * dependencias y sugiere archivar en lugar de eliminar.
+   */
+  const confirmDelete = async () => {
+    const target = deleting;
+    if (!target) return;
+    try {
+      await remove(target.id);
+      toast(
+        t('Medio "{title}" eliminado.', { title: target.title }),
+        "success",
+      );
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setBlockedFor(target);
+      } else {
+        toast(
+          err instanceof Error
+            ? err.message
+            : t("No se pudo eliminar el medio."),
+          "error",
+        );
+      }
+    } finally {
+      setDeleting(undefined);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
@@ -117,10 +249,23 @@ export function MediaPage() {
         )}
         icon={FileAudio}
         actions={
-          <Button size="sm" onClick={openCreate}>
-            <Plus data-icon="inline-start" />
-            {t("Nuevo medio")}
-          </Button>
+          <>
+            {canSystem && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCleanupOpen(true)}
+                title={t("Limpieza de blobs huérfanos (solo administradores)")}
+              >
+                <BrushCleaning data-icon="inline-start" />
+                {t("Mantenimiento")}
+              </Button>
+            )}
+            <Button size="sm" onClick={openCreate}>
+              <Plus data-icon="inline-start" />
+              {t("Nuevo medio")}
+            </Button>
+          </>
         }
       />
 
@@ -210,6 +355,21 @@ export function MediaPage() {
               onDetails={setDetails}
               onEdit={openEdit}
               onDelete={setDeleting}
+              onPublish={
+                canPublish
+                  ? (item) => setPendingAction({ action: "publish", item })
+                  : undefined
+              }
+              onUnpublish={
+                canPublish
+                  ? (item) => setPendingAction({ action: "unpublish", item })
+                  : undefined
+              }
+              onArchive={
+                canArchive
+                  ? (item) => setPendingAction({ action: "archive", item })
+                  : undefined
+              }
             />
           )}
         </div>
@@ -273,7 +433,140 @@ export function MediaPage() {
       <MediaDetailDialog
         media={details}
         onClose={() => setDetails(undefined)}
+        actionLoading={actionLoading}
+        onAction={(action) => {
+          if (!details) return;
+          setPendingAction({ action, item: details });
+        }}
+        onShowReferences={() => setReferencesFor(details)}
       />
+
+      {/* Confirmación de acción semántica (REQ-PCA-03) */}
+      <AlertDialog
+        open={Boolean(pendingAction)}
+        onOpenChange={(open) => !open && setPendingAction(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogMedia
+            className={
+              pendingAction?.action === "archive"
+                ? "bg-muted text-muted-foreground"
+                : "bg-success-soft text-success"
+            }
+          >
+            {pendingAction?.action === "publish" && <CheckCircle2 />}
+            {pendingAction?.action === "unpublish" && <RefreshCw />}
+            {pendingAction?.action === "archive" && <ArchiveGlyph />}
+          </AlertDialogMedia>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingAction?.action === "publish" && t("¿Publicar medio?")}
+              {pendingAction?.action === "unpublish" &&
+                t("¿Despublicar medio?")}
+              {pendingAction?.action === "archive" && t("¿Archivar medio?")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingAction?.action === "publish" &&
+                t(
+                  'Se validará el archivo en storage y "{title}" pasará a estado Publicado: los pacientes podrán verlo.',
+                  { title: pendingAction?.item.title ?? "" },
+                )}
+              {pendingAction?.action === "unpublish" &&
+                t(
+                  '"{title}" volverá a borrador y dejará de estar disponible para los pacientes.',
+                  { title: pendingAction?.item.title ?? "" },
+                )}
+              {pendingAction?.action === "archive" &&
+                t(
+                  '"{title}" saldrá de los selectores de nuevas asignaciones, pero conservará su reproducción en las semanas ya programadas.',
+                  { title: pendingAction?.item.title ?? "" },
+                )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
+            <AlertDialogAction
+              className={
+                pendingAction?.action === "archive"
+                  ? "bg-muted-foreground hover:bg-muted-foreground/90"
+                  : "bg-success hover:bg-success/90"
+              }
+              disabled={actionLoading}
+              onClick={() =>
+                void runSemanticAction(pendingAction?.action ?? "publish")
+              }
+            >
+              {pendingAction?.action === "publish" && t("Publicar")}
+              {pendingAction?.action === "unpublish" && t("Despublicar")}
+              {pendingAction?.action === "archive" && t("Archivar")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Eliminación bloqueada: 409 → dependencias + archivar (REQ-PCA-07) */}
+      <MediaDeleteBlockedDialog
+        media={blockedFor}
+        onClose={() => setBlockedFor(undefined)}
+        onArchived={(updated) => {
+          toast(t("Medio archivado: sale de las nuevas asignaciones."));
+          setDetails((prev) => (prev?.id === updated.id ? updated : prev));
+          retry();
+        }}
+      />
+
+      {/* Dónde se usa (GET /media/{id}/references, REQ-PCA-07) */}
+      <MediaReferencesDialog
+        media={referencesFor}
+        onClose={() => setReferencesFor(undefined)}
+      />
+
+      {/* Mantenimiento de huérfanos (solo System.AdminSettings, REQ-PCA-08) */}
+      <MediaCleanupAdminDialog
+        open={cleanupOpen}
+        onOpenChange={setCleanupOpen}
+        onPurged={(report) => {
+          toast(
+            t("Purga completada: {count} objetos eliminados.", {
+              count: String(report.purgedObjects),
+            }),
+            "success",
+          );
+          retry();
+        }}
+      />
+
+      {/* Toasts de la biblioteca */}
+      {toasts.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+          {toasts.map((toastItem) => (
+            <div
+              key={toastItem.id}
+              className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg ${
+                toastItem.type === "success"
+                  ? "border-success/20 bg-success-soft text-success-foreground"
+                  : toastItem.type === "error"
+                    ? "border-destructive/20 bg-destructive-soft text-destructive"
+                    : "border-info/20 bg-info-soft text-info-foreground"
+              }`}
+              role="status"
+            >
+              <span className="flex-1">{toastItem.message}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  setToasts((prev) => prev.filter((x) => x.id !== toastItem.id))
+                }
+                className="shrink-0 rounded p-0.5 opacity-60 hover:opacity-100"
+                aria-label={t("Cerrar aviso")}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <AlertDialog
         open={Boolean(deleting)}
         onOpenChange={(open) => !open && setDeleting(undefined)}
@@ -296,10 +589,7 @@ export function MediaPage() {
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
               disabled={actionLoading}
-              onClick={async () => {
-                if (deleting) await remove(deleting.id);
-                setDeleting(undefined);
-              }}
+              onClick={() => void confirmDelete()}
             >
               {t("Eliminar")}
             </AlertDialogAction>
