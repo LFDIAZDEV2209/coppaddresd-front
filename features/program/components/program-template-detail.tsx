@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X, CalendarRange } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProgramEditorialAgenda } from "./editorial-agenda/program-editorial-agenda";
+import { ProgramBulkAssignDialog } from "./editorial-agenda/program-bulk-assign-dialog";
 import type {
   ProgramTemplate,
   WeeklyDayTask,
@@ -38,6 +40,7 @@ import {
   WEEKDAY_LABELS,
 } from "../services/program-templates-service";
 import { useAuth } from "@/providers/auth-provider";
+import { useT } from "@/providers/i18n-provider";
 
 interface ProgramTemplateDetailDialogProps {
   templateId: string | null;
@@ -53,6 +56,7 @@ export function ProgramTemplateDetailDialog({
   saveWeekdayTasks,
 }: ProgramTemplateDetailDialogProps) {
   const { hasPermission } = useAuth();
+  const t = useT();
   const canEdit = hasPermission("Program.Edit");
 
   const [template, setTemplate] = useState<ProgramTemplate | null>(null);
@@ -61,6 +65,7 @@ export function ProgramTemplateDetailDialog({
   const [editDays, setEditDays] = useState<WeeklyDayTask[]>([]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [bulkPodcastOpen, setBulkPodcastOpen] = useState(false);
 
   useEffect(() => {
     if (!templateId) return;
@@ -120,6 +125,40 @@ export function ProgramTemplateDetailDialog({
     }
   };
 
+  /**
+   * Cambia el podcast de un día desde la Agenda Editorial (modo edición):
+   * si el día ya tiene fila de podcast actualiza su mediaId; si no existe,
+   * crea la fila de podcast con puntos y orden por defecto; con mediaId
+   * null elimina la fila (quitar la lección del horario).
+   */
+  const handleAgendaChange = (weekday: number, mediaId: string | null) => {
+    setEditDays((prev) => {
+      const podcastRow = prev.find(
+        (d) => d.taskCode === "podcast" && d.weekday === weekday,
+      );
+      if (mediaId === null) {
+        return podcastRow ? prev.filter((d) => d !== podcastRow) : prev;
+      }
+      if (podcastRow) {
+        return prev.map((d) => (d === podcastRow ? { ...d, mediaId } : d));
+      }
+      // Fila nueva de podcast para ese día (el back asigna id real al guardar).
+      const maxSort = Math.max(0, ...prev.map((d) => d.sortOrder));
+      return [
+        ...prev,
+        {
+          id: `new-podcast-${weekday}`,
+          weekday,
+          taskCode: "podcast",
+          points: 80,
+          sortOrder: maxSort + 1,
+          mediaId,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+    });
+  };
+
   const updateDay = (
     index: number,
     field: keyof WeeklyDayTask,
@@ -156,195 +195,259 @@ export function ProgramTemplateDetailDialog({
   const open = Boolean(templateId);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Detalle de plantilla</DialogTitle>
-          <DialogDescription>
-            Vista de la plantilla y su horario semanal de tareas.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Detalle de plantilla</DialogTitle>
+            <DialogDescription>
+              Vista de la plantilla y su horario semanal de tareas.
+            </DialogDescription>
+          </DialogHeader>
 
-        {loading ? (
-          <div className="flex flex-col gap-3 py-4">
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-40 w-full" />
-          </div>
-        ) : template ? (
-          <div className="flex flex-col gap-4">
-            {/* Encabezado */}
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold">{template.name}</span>
-                <Badge className={statusColor(template.status)}>
-                  {TEMPLATE_STATUS_LABELS[template.status] ?? template.status}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Código: <span className="font-mono">{template.code}</span> ·{" "}
-                {template.totalWeeks} {template.totalWeeks === 1 ? "semana" : "semanas"} ({template.totalWeeks * 7} días) · v{template.version}
-              </p>
-              {template.description && (
-                <p className="text-sm text-muted-foreground">
-                  {template.description}
-                </p>
-              )}
+          {loading ? (
+            <div className="flex flex-col gap-3 py-4">
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-40 w-full" />
             </div>
-
-            {/* Horario semanal */}
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Horario semanal</h3>
-              {canEdit && template.status === "Draft" && !editing && (
-                <Button variant="outline" size="sm" onClick={startEditing}>
-                  <Pencil data-icon="inline-start" />
-                  Editar horario
-                </Button>
-              )}
-              {editing && (
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={cancelEditing}
-                      disabled={saving}
-                    >
-                      <X data-icon="inline-start" />
-                      Cancelar
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={persistWeekdayTasks}
-                      disabled={saving}
-                    >
-                      <Save data-icon="inline-start" />
-                      {saving ? "Guardando…" : "Guardar"}
-                    </Button>
-                  </div>
-                  {saveError && (
-                    <p className="text-xs text-destructive">{saveError}</p>
-                  )}
+          ) : template ? (
+            <div className="flex flex-col gap-4">
+              {/* Encabezado */}
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold">{template.name}</span>
+                  <Badge className={statusColor(template.status)}>
+                    {TEMPLATE_STATUS_LABELS[template.status] ?? template.status}
+                  </Badge>
                 </div>
-              )}
-            </div>
+                <p className="text-xs text-muted-foreground">
+                  Código: <span className="font-mono">{template.code}</span> ·{" "}
+                  {template.totalWeeks}{" "}
+                  {template.totalWeeks === 1 ? "semana" : "semanas"} (
+                  {template.totalWeeks * 7} días) · v{template.version}
+                </p>
+                {template.description && (
+                  <p className="text-sm text-muted-foreground">
+                    {template.description}
+                  </p>
+                )}
+              </div>
 
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-28">Día</TableHead>
-                    <TableHead>Tarea</TableHead>
-                    <TableHead className="w-24 text-right">Puntos</TableHead>
-                    <TableHead className="w-20 text-right">Orden</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {editing
-                    ? editDays.map((day, idx) => (
-                        <TableRow key={`${day.id}-${idx}`}>
-                          <TableCell className="font-medium">
-                            {WEEKDAY_LABELS[day.weekday] ?? `Día ${day.weekday}`}
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={day.taskCode}
-                              onValueChange={(v) =>
-                                updateDay(idx, "taskCode", v ?? day.taskCode)
-                              }
-                            >
-                              <SelectTrigger className="h-8 w-full">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {TASK_CODE_OPTIONS.map((opt) => (
-                                  <SelectItem
-                                    key={opt.value}
-                                    value={opt.value}
-                                  >
-                                    {opt.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <input
-                              type="number"
-                              min={0}
-                              className="h-8 w-16 rounded border border-input bg-background px-2 text-right text-sm"
-                              value={day.points}
-                              onChange={(e) =>
-                                updateDay(
-                                  idx,
-                                  "points",
-                                  Number(e.target.value),
-                                )
-                              }
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <input
-                              type="number"
-                              min={0}
-                              className="h-8 w-14 rounded border border-input bg-background px-2 text-right text-sm"
-                              value={day.sortOrder}
-                              onChange={(e) =>
-                                updateDay(
-                                  idx,
-                                  "sortOrder",
-                                  Number(e.target.value),
-                                )
-                              }
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    : Object.entries(groupedByDay(template.days)).map(
-                        ([weekday, days]) => (
-                          <TableRow key={weekday}>
+              {/* Horario semanal */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Horario semanal</h3>
+                {canEdit && template.status === "Draft" && !editing && (
+                  <Button variant="outline" size="sm" onClick={startEditing}>
+                    <Pencil data-icon="inline-start" />
+                    Editar horario
+                  </Button>
+                )}
+                {editing && (
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={cancelEditing}
+                        disabled={saving}
+                      >
+                        <X data-icon="inline-start" />
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={persistWeekdayTasks}
+                        disabled={saving}
+                      >
+                        <Save data-icon="inline-start" />
+                        {saving ? "Guardando…" : "Guardar"}
+                      </Button>
+                    </div>
+                    {saveError && (
+                      <p className="text-xs text-destructive">{saveError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-28">Día</TableHead>
+                      <TableHead>Tarea</TableHead>
+                      <TableHead className="w-24 text-right">Puntos</TableHead>
+                      <TableHead className="w-20 text-right">Orden</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {editing
+                      ? editDays.map((day, idx) => (
+                          <TableRow key={`${day.id}-${idx}`}>
                             <TableCell className="font-medium">
-                              {WEEKDAY_LABELS[Number(weekday)] ??
-                                `Día ${weekday}`}
+                              {WEEKDAY_LABELS[day.weekday] ??
+                                `Día ${day.weekday}`}
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col gap-1">
-                                {days.map((d) => (
-                                  <span key={d.id} className="text-sm">
-                                    {TASK_CODE_OPTIONS.find(
-                                      (o) => o.value === d.taskCode,
-                                    )?.label ?? d.taskCode}
-                                  </span>
-                                ))}
-                              </div>
+                              <Select
+                                value={day.taskCode}
+                                onValueChange={(v) =>
+                                  updateDay(idx, "taskCode", v ?? day.taskCode)
+                                }
+                              >
+                                <SelectTrigger className="h-8 w-full">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {TASK_CODE_OPTIONS.map((opt) => (
+                                    <SelectItem
+                                      key={opt.value}
+                                      value={opt.value}
+                                    >
+                                      {opt.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex flex-col gap-1 text-sm">
-                                {days.map((d) => (
-                                  <span key={d.id}>{d.points}</span>
-                                ))}
-                              </div>
+                              <input
+                                type="number"
+                                min={0}
+                                className="h-8 w-16 rounded border border-input bg-background px-2 text-right text-sm"
+                                value={day.points}
+                                onChange={(e) =>
+                                  updateDay(
+                                    idx,
+                                    "points",
+                                    Number(e.target.value),
+                                  )
+                                }
+                              />
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                                {days.map((d) => (
-                                  <span key={d.id}>{d.sortOrder}</span>
-                                ))}
-                              </div>
+                              <input
+                                type="number"
+                                min={0}
+                                className="h-8 w-14 rounded border border-input bg-background px-2 text-right text-sm"
+                                value={day.sortOrder}
+                                onChange={(e) =>
+                                  updateDay(
+                                    idx,
+                                    "sortOrder",
+                                    Number(e.target.value),
+                                  )
+                                }
+                              />
                             </TableCell>
                           </TableRow>
-                        ),
-                      )}
-                </TableBody>
-              </Table>
+                        ))
+                      : Object.entries(groupedByDay(template.days)).map(
+                          ([weekday, days]) => (
+                            <TableRow key={weekday}>
+                              <TableCell className="font-medium">
+                                {WEEKDAY_LABELS[Number(weekday)] ??
+                                  `Día ${weekday}`}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  {days.map((d) => (
+                                    <span key={d.id} className="text-sm">
+                                      {TASK_CODE_OPTIONS.find(
+                                        (o) => o.value === d.taskCode,
+                                      )?.label ?? d.taskCode}
+                                    </span>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex flex-col gap-1 text-sm">
+                                  {days.map((d) => (
+                                    <span key={d.id}>{d.points}</span>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                                  {days.map((d) => (
+                                    <span key={d.id}>{d.sortOrder}</span>
+                                  ))}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ),
+                        )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Agenda editorial (REQ-PCA-05): parrilla 12 semanas × 7 días */}
+              <ProgramEditorialAgenda
+                days={editing ? editDays : (template.days ?? [])}
+                totalWeeks={template.totalWeeks}
+                editable={editing}
+                onChange={handleAgendaChange}
+                actions={
+                  <>
+                    {canEdit && template.status === "Draft" && !editing && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={startEditing}
+                        className="h-8 text-xs"
+                      >
+                        <Pencil data-icon="inline-start" />
+                        {t("Editar horario")}
+                      </Button>
+                    )}
+                    {canEdit && editing && (
+                      <span className="text-[11px] text-muted-foreground">
+                        {t("Se guarda con el horario al presionar Guardar")}
+                      </span>
+                    )}
+                    {canEdit && !editing && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBulkPodcastOpen(true)}
+                        className="h-8 text-xs"
+                      >
+                        <CalendarRange data-icon="inline-start" />
+                        {t("Asignación masiva")}
+                      </Button>
+                    )}
+                  </>
+                }
+              />
             </div>
-          </div>
-        ) : (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No se pudo cargar la plantilla.
-          </p>
-        )}
-      </DialogContent>
-    </Dialog>
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No se pudo cargar la plantilla.
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Asignación masiva de podcasts sobre la plantilla (REQ-PCA-04) */}
+      {template && (
+        <ProgramBulkAssignDialog
+          key={bulkPodcastOpen ? `bulk-${template.id}` : "closed"}
+          open={bulkPodcastOpen}
+          onOpenChange={setBulkPodcastOpen}
+          targetType="Template"
+          targetId={template.id}
+          targetLabel={template.name}
+          totalWeeks={template.totalWeeks}
+          onAssigned={() => {
+            // El backend ya aplicó el cambio: recargar la plantilla para
+            // reflejar los mediaId nuevos en la agenda.
+            void getTemplate(template.id).then((refreshed) => {
+              if (refreshed) setTemplate(refreshed);
+            });
+          }}
+        />
+      )}
+    </>
   );
 }

@@ -4,7 +4,7 @@
 // Extraídos de program-content-page.tsx para reutilizarse en el panel del
 // paciente (EnrollmentContentTab) y en la página de contenido original.
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   CalendarDays,
   Check,
@@ -12,6 +12,7 @@ import {
   Salad,
   Dumbbell,
   Layers,
+  Mic,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,11 +35,138 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WeekTasksDialog } from "./program-week-tasks-dialog";
+import { PodcastPickerDialog } from "./podcast-picker-dialog";
+import { useT } from "@/providers/i18n-provider";
+import {
+  fetchEnrollmentWeek,
+  replaceEnrollmentWeekTasks,
+} from "../services/program-content-service";
 import type { ProgramContentWeek, SetWeekContentInput } from "../types";
 import type {
   ExerciseRoutineListItem,
   NutritionPlanListItem,
 } from "@/features/wellness/types";
+
+// --- Podcast por semana (columna "Podcast del día", REQ-PCA-05) ---
+
+/** Podcast programado de una semana (desde el detalle de la semana). */
+interface WeekPodcastInfo {
+  /** MediaId del podcast asignado (null = seguir secuencia por defecto). */
+  mediaId: string | null;
+  /** Título resuelto por el backend (contentName). */
+  title: string | null;
+  /** Días ISO de la semana con tarea de podcast. */
+  weekdays: number[];
+}
+
+/**
+ * Resuelve el podcast de cada semana visible a partir del detalle de la
+ * semana (GET /enrollments/{id}/week/{n}): filas de tarea `podcast` con su
+ * contentRefId/contentName. Cachea por inscripción+semana para no repetir
+ * peticiones al paginar, con recarga puntual tras un cambio.
+ */
+function useWeekPodcasts(
+  enrollmentId: string,
+  weekNumbers: number[],
+  refreshKey: number,
+) {
+  const [podcastByWeek, setPodcastByWeek] = useState<
+    Record<number, WeekPodcastInfo | null>
+  >({});
+  const [loadingWeeks, setLoadingWeeks] = useState<Record<number, boolean>>({});
+  const cacheRef = useRef<Set<string>>(new Set());
+
+  const weeksKey = weekNumbers.join(",");
+
+  const loadWeek = useCallback(
+    async (weekNumber: number, enrollment: string) => {
+      const detail = await fetchEnrollmentWeek(enrollment, weekNumber);
+      const weekdays: number[] = [];
+      let mediaId: string | null = null;
+      let title: string | null = null;
+      for (const day of detail.days) {
+        const podcastTask = day.tasks.find(
+          (task) => task.taskCode === "podcast",
+        );
+        if (!podcastTask) continue;
+        weekdays.push(day.weekday);
+        if (!mediaId && podcastTask.contentRefId) {
+          mediaId = podcastTask.contentRefId;
+          title = podcastTask.contentName ?? null;
+        }
+      }
+      // Sin filas de podcast → null (la semana no programa podcast).
+      return weekdays.length > 0 ? { mediaId, title, weekdays } : null;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const pending = weekNumbers.filter((week) => {
+      const key = `${enrollmentId}:${week}:${refreshKey}`;
+      return !cacheRef.current.has(key);
+    });
+    if (pending.length === 0) return;
+    let cancelled = false;
+    void (async () => {
+      setLoadingWeeks((prev) => {
+        const next = { ...prev };
+        pending.forEach((week) => {
+          next[week] = true;
+        });
+        return next;
+      });
+      const results = await Promise.allSettled(
+        pending.map((week) => loadWeek(week, enrollmentId)),
+      );
+      if (cancelled) return;
+      pending.forEach((week) => {
+        cacheRef.current.add(`${enrollmentId}:${week}:${refreshKey}`);
+      });
+      setPodcastByWeek((prev) => {
+        const next = { ...prev };
+        pending.forEach((week, index) => {
+          const outcome = results[index];
+          next[week] = outcome.status === "fulfilled" ? outcome.value : null;
+        });
+        return next;
+      });
+      setLoadingWeeks((prev) => {
+        const next = { ...prev };
+        pending.forEach((week) => {
+          delete next[week];
+        });
+        return next;
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- weekNumbers se consume vía weeksKey
+  }, [enrollmentId, weeksKey, refreshKey, loadWeek]);
+
+  /** Refresca una semana puntual (tras cambiar su podcast). */
+  const reloadWeek = useCallback(
+    async (weekNumber: number) => {
+      setLoadingWeeks((prev) => ({ ...prev, [weekNumber]: true }));
+      try {
+        const info = await loadWeek(weekNumber, enrollmentId);
+        setPodcastByWeek((prev) => ({ ...prev, [weekNumber]: info }));
+      } catch {
+        setPodcastByWeek((prev) => ({ ...prev, [weekNumber]: null }));
+      } finally {
+        setLoadingWeeks((prev) => {
+          const next = { ...prev };
+          delete next[weekNumber];
+          return next;
+        });
+      }
+    },
+    [enrollmentId, loadWeek],
+  );
+
+  return { podcastByWeek, loadingWeeks, reloadWeek };
+}
 
 // --- Tabla de semanas ---
 
@@ -50,6 +178,8 @@ export function ContentTable({
   availableRoutines,
   availablePlans,
   loadingCatalog,
+  podcastRefreshKey = 0,
+  onPodcastUpdated,
 }: {
   content: { weeks: ProgramContentWeek[]; totalWeeks: number };
   canEdit: boolean;
@@ -58,15 +188,57 @@ export function ContentTable({
   availableRoutines: ExerciseRoutineListItem[];
   availablePlans: NutritionPlanListItem[];
   loadingCatalog: boolean;
+  /** Bump para recargar el podcast de todas las semanas (tras asignación masiva). */
+  podcastRefreshKey?: number;
+  /** Notificación externa tras cambiar el podcast de una semana (toast). */
+  onPodcastUpdated?: (weekNumber: number, mediaId: string | null) => void;
 }) {
+  const t = useT();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
   const totalPages = Math.max(1, Math.ceil(content.weeks.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pagedWeeks = useMemo(
-    () => content.weeks.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    () =>
+      content.weeks.slice((currentPage - 1) * pageSize, currentPage * pageSize),
     [content.weeks, currentPage, pageSize],
+  );
+
+  // Podcast por semana (columna "Podcast del día") para las semanas de la
+  // página visible: se resuelve con el detalle de cada semana y se cachea.
+  const { podcastByWeek, loadingWeeks, reloadWeek } = useWeekPodcasts(
+    enrollmentId,
+    pagedWeeks.map((w) => w.weekNumber),
+    podcastRefreshKey,
+  );
+
+  /**
+   * Cambia el podcast de una semana completa: reemplaza el mediaId de las
+   * filas de tarea `podcast` (PUT /enrollments/{id}/week/{n}/tasks) y
+   * refresca la columna con el detalle actualizado.
+   */
+  const handleChangeWeekPodcast = useCallback(
+    async (weekNumber: number, mediaId: string | null) => {
+      const detail = await fetchEnrollmentWeek(enrollmentId, weekNumber);
+      const payload = detail.days.flatMap((day) =>
+        day.tasks.map((task, idx) => ({
+          weekday: day.weekday,
+          taskCode: task.taskCode,
+          points: task.scheduledPoints,
+          sortOrder: idx + 1,
+          routineId:
+            task.taskCode === "ejercicio"
+              ? (task.routineId ?? task.contentRefId ?? null)
+              : null,
+          mediaId: task.taskCode === "podcast" ? mediaId : null,
+        })),
+      );
+      await replaceEnrollmentWeekTasks(enrollmentId, weekNumber, payload);
+      onPodcastUpdated?.(weekNumber, mediaId);
+      await reloadWeek(weekNumber);
+    },
+    [enrollmentId, onPodcastUpdated, reloadWeek],
   );
 
   useEffect(() => {
@@ -108,6 +280,9 @@ export function ContentTable({
               <TableHead className="min-w-[260px] text-white">
                 Rutina de ejercicio
               </TableHead>
+              <TableHead className="min-w-[200px] text-white">
+                {t("Podcast del día")}
+              </TableHead>
               {canEdit && (
                 <TableHead className="text-right text-white">
                   Acciones
@@ -125,6 +300,9 @@ export function ContentTable({
                 enrollmentId={enrollmentId}
                 availableRoutines={availableRoutines}
                 availablePlans={availablePlans}
+                podcast={podcastByWeek[week.weekNumber]}
+                podcastLoading={Boolean(loadingWeeks[week.weekNumber])}
+                onPodcastChange={canEdit ? handleChangeWeekPodcast : undefined}
               />
             ))}
           </TableBody>
@@ -158,6 +336,9 @@ export function WeekRow({
   enrollmentId,
   availableRoutines,
   availablePlans,
+  podcast,
+  podcastLoading = false,
+  onPodcastChange,
 }: {
   week: ProgramContentWeek;
   canEdit: boolean;
@@ -165,10 +346,23 @@ export function WeekRow({
   enrollmentId: string;
   availableRoutines: ExerciseRoutineListItem[];
   availablePlans: NutritionPlanListItem[];
+  /** Podcast resuelto de la semana (null = la semana no programa podcast). */
+  podcast?: WeekPodcastInfo | null;
+  /** Carga del detalle de la semana para resolver el podcast. */
+  podcastLoading?: boolean;
+  /** Cambiar el podcast de la semana (solo con Program.Edit). */
+  onPodcastChange?: (
+    weekNumber: number,
+    mediaId: string | null,
+  ) => Promise<void>;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [tasksDialogOpen, setTasksDialogOpen] = useState(false);
+  const [podcastPickerOpen, setPodcastPickerOpen] = useState(false);
+  const [changingPodcast, setChangingPodcast] = useState(false);
+  const [podcastError, setPodcastError] = useState<string | null>(null);
 
   const [nutritionPlanId, setNutritionPlanId] = useState<string | null>(
     week.nutritionPlan?.id ?? null,
@@ -195,6 +389,28 @@ export function WeekRow({
     setExerciseRoutineId(week.exerciseRoutine?.id ?? null);
     setEditing(true);
   }, [week]);
+
+  /** Aplica el podcast elegido a todas las filas de la semana. */
+  const handlePodcastSelect = useCallback(
+    async (mediaId: string | null) => {
+      if (!onPodcastChange) return;
+      setChangingPodcast(true);
+      setPodcastError(null);
+      try {
+        await onPodcastChange(week.weekNumber, mediaId);
+        setPodcastPickerOpen(false);
+      } catch (err) {
+        setPodcastError(
+          err instanceof Error
+            ? err.message
+            : t("No se pudo cambiar el podcast de la semana."),
+        );
+      } finally {
+        setChangingPodcast(false);
+      }
+    },
+    [onPodcastChange, week.weekNumber, t],
+  );
 
   // Asegurar que el plan nutricional asignado esté en las opciones del desplegable
   const allPlans = [...availablePlans];
@@ -329,6 +545,15 @@ export function WeekRow({
           </Select>
         </TableCell>
 
+        {/* Podcast del día (solo lectura en edición; el cambio va por el picker) */}
+        <TableCell>
+          <WeekPodcastCell
+            podcast={podcast}
+            loading={podcastLoading}
+            error={podcastError}
+          />
+        </TableCell>
+
         {/* Acciones de guardado */}
         <TableCell className="text-right">
           <div className="flex items-center justify-end gap-1.5">
@@ -398,6 +623,19 @@ export function WeekRow({
           </Badge>
         )}
       </TableCell>
+      <TableCell>
+        <WeekPodcastCell
+          podcast={podcast}
+          loading={podcastLoading}
+          error={podcastError}
+          canEdit={canEdit && Boolean(onPodcastChange) && !changingPodcast}
+          onChangePodcast={
+            canEdit && onPodcastChange
+              ? () => setPodcastPickerOpen(true)
+              : undefined
+          }
+        />
+      </TableCell>
       {canEdit && (
         <TableCell className="text-right">
           <div className="flex items-center justify-end gap-1.5">
@@ -428,7 +666,112 @@ export function WeekRow({
         week={week}
         enrollmentId={enrollmentId}
       />
+
+      {/* Selector directo del podcast de la semana (REQ-PCA-05) */}
+      {podcastPickerOpen && (
+        <PodcastPickerDialog
+          open
+          onOpenChange={setPodcastPickerOpen}
+          currentMediaId={podcast?.mediaId ?? null}
+          dayLabel={t("Semana {week}", { week: String(week.weekNumber) })}
+          onSelect={(mediaId) => {
+            void handlePodcastSelect(mediaId);
+          }}
+        />
+      )}
     </TableRow>
+  );
+}
+
+// --- Celda de podcast por semana ---
+
+/**
+ * Celda "Podcast del día": badge con el título del medio programado, estado
+ * de carga (skeleton), empty (sin podcast) y acción directa de cambio con
+ * permiso Program.Edit.
+ */
+function WeekPodcastCell({
+  podcast,
+  loading,
+  error,
+  canEdit = false,
+  onChangePodcast,
+}: {
+  podcast?: WeekPodcastInfo | null;
+  loading?: boolean;
+  error?: string | null;
+  canEdit?: boolean;
+  onChangePodcast?: () => void;
+}) {
+  const t = useT();
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-1">
+        <Skeleton className="h-4 w-28 rounded-full" />
+        <Skeleton className="h-3 w-16" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-destructive">
+        <Loader2 className="size-3" />
+        {t("No disponible")}
+      </span>
+    );
+  }
+
+  // La semana no tiene filas de podcast programadas.
+  if (!podcast || podcast.weekdays.length === 0) {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <Badge
+          variant="outline"
+          className="text-muted-foreground border-dashed"
+        >
+          {t("Sin podcast")}
+        </Badge>
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      {podcast.mediaId ? (
+        <Badge className="bg-violet-100 text-violet-800 border-violet-200">
+          <Mic className="mr-1 size-3" />
+          <span className="max-w-[180px] truncate" title={podcast.title ?? ""}>
+            {podcast.title ?? podcast.mediaId.substring(0, 8)}
+          </span>
+        </Badge>
+      ) : (
+        <Badge
+          variant="outline"
+          className="text-muted-foreground"
+          title={t("La semana sigue la secuencia por defecto del programa")}
+        >
+          <Mic className="mr-1 size-3" />
+          {t("Secuencia por defecto")}
+        </Badge>
+      )}
+      <div className="flex items-center gap-1.5">
+        <span className="text-[10px] text-muted-foreground">
+          {podcast.weekdays.length}{" "}
+          {podcast.weekdays.length === 1 ? t("día") : t("días")}
+        </span>
+        {canEdit && onChangePodcast && (
+          <button
+            type="button"
+            onClick={onChangePodcast}
+            className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
+          >
+            {t("Cambiar")}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
