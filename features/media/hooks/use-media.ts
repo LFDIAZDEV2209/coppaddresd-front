@@ -30,7 +30,7 @@ interface UseMediaReturn {
 
 export function useMedia(
   initialPage = 1,
-  initialPageSize = 8,
+  initialPageSize = 10,
 ): UseMediaReturn {
   const [result, setResult] = useState<PaginatedResult<MediaItem> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,11 @@ export function useMedia(
   const [filters, setFiltersState] = useState<MediaFilters>({
     search: "",
     mediaType: "all",
+    category: "all",
     status: "all",
+    usage: "all",
+    sortBy: "createdAt",
+    sortDirection: "desc",
   });
   const [reloadKey, setReloadKey] = useState(0);
 

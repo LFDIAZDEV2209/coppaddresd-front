@@ -4,7 +4,11 @@ import type {
   MediaItem,
   MediaFilters,
   MediaInput,
+  MediaPagedEnvelope,
   PaginatedResult,
+  MediaPublishResult,
+  MediaReferences,
+  CleanupOrphanedBlobsResult,
 } from "../types";
 
 const PATH = `${env.apiUrl}/api/v1/media`;
@@ -23,38 +27,120 @@ export async function getMediaStreamUrl(storageKey: string): Promise<string> {
   return data.url;
 }
 
+/**
+ * Listado paginado server-side (REQ-PCA-06): búsqueda, filtros combinados y
+ * orden viajan como query parameters; el back responde el envelope estándar
+ * { items, totalCount, page, pageSize, totalPages } que se mapea a la forma
+ * <c>PaginatedResult</c> usada por las vistas. Los filtros son parciales:
+ * los campos ausentes se envían como "todos".
+ */
 export async function fetchMediaItems(
   page: number,
   pageSize: number,
-  filters: MediaFilters,
+  filters: Partial<MediaFilters> = {},
+  signal?: AbortSignal,
 ): Promise<PaginatedResult<MediaItem>> {
-  const params = new URLSearchParams();
-  if (filters.mediaType !== "all") params.set("mediaType", filters.mediaType);
-  if (filters.status !== "all") params.set("status", filters.status);
-
-  const query = params.toString();
-  const items = await apiFetch<MediaItem[]>(query ? `${PATH}?${query}` : PATH);
-
-  const queryLower = filters.search.trim().toLowerCase();
-  const filtered = items.filter((item) => {
-    if (!queryLower) return true;
-    const searchable =
-      `${item.title} ${item.description ?? ""} ${item.author} ${item.category} ${item.mediaType}`.toLowerCase();
-    return searchable.includes(queryLower);
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
   });
+  const search = filters.search?.trim();
+  if (search) params.set("search", search);
+  if (filters.mediaType && filters.mediaType !== "all") {
+    params.set("mediaType", filters.mediaType);
+  }
+  if (filters.category && filters.category !== "all") {
+    params.set("category", filters.category);
+  }
+  if (filters.status && filters.status !== "all") {
+    params.set("status", filters.status);
+  }
+  if (filters.usage && filters.usage !== "all") {
+    params.set("usage", filters.usage);
+  }
+  if (filters.sortBy) {
+    params.set("sortBy", filters.sortBy);
+    params.set("sortDirection", filters.sortDirection ?? "asc");
+  }
 
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * pageSize;
-
+  const envelope = await apiFetch<MediaPagedEnvelope>(
+    `${PATH}?${params.toString()}`,
+    { signal },
+  );
   return {
-    data: filtered.slice(start, start + pageSize),
-    total,
-    page: safePage,
-    pageSize,
-    totalPages,
+    data: envelope.items,
+    total: envelope.totalCount,
+    page: envelope.page,
+    pageSize: envelope.pageSize,
+    totalPages: envelope.totalPages,
   };
+}
+
+/** Detalle de un medio por id (GET /api/v1/media/{id}). */
+export async function getMediaItemById(id: string): Promise<MediaItem> {
+  return apiFetch<MediaItem>(`${PATH}/${id}`);
+}
+
+/**
+ * Publica un medio (Draft → Published) con validación técnica del blob en
+ * el back (REQ-PCA-02): inconsistencia → 422 ProblemDetails (ApiError).
+ */
+export async function publishMediaItem(
+  id: string,
+): Promise<MediaPublishResult> {
+  return apiFetch<MediaPublishResult>(`${PATH}/${id}/publish`, {
+    method: "POST",
+  });
+}
+
+/** Despublica un medio (Published → Draft); un Archived responde 422. */
+export async function unpublishMediaItem(id: string): Promise<MediaItem> {
+  return apiFetch<MediaItem>(`${PATH}/${id}/unpublish`, { method: "POST" });
+}
+
+/**
+ * Archiva un medio (cualquier estado → Archived): sale de los selectores de
+ * nuevas asignaciones pero conserva su reproducción histórica (design D5).
+ */
+export async function archiveMediaItem(id: string): Promise<MediaItem> {
+  return apiFetch<MediaItem>(`${PATH}/${id}/archive`, { method: "POST" });
+}
+
+/**
+ * "Dónde se usa" (REQ-PCA-07): plantillas y semanas de pacientes que
+ * referencian al medio. Consume GET /api/v1/media/{id}/references.
+ */
+export async function fetchMediaReferences(
+  id: string,
+): Promise<MediaReferences> {
+  return apiFetch<MediaReferences>(`${PATH}/${id}/references`);
+}
+
+/**
+ * Limpieza de blobs huérfanos del storage (REQ-PCA-08): requiere el permiso
+ * System.AdminSettings. Con dryRun=true solo reporta, sin eliminar.
+ */
+export async function cleanupOrphanedBlobs(input: {
+  dryRun: boolean;
+  retentionDays: number;
+}): Promise<CleanupOrphanedBlobsResult> {
+  return apiFetch<CleanupOrphanedBlobsResult>(
+    `${PATH}/maintenance/cleanup-orphaned-blobs`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+/**
+ * Metadatos mínimos que el back exige para publicar (REQ-PCA-02): duración
+ * > 0 y Content-Type registrado. Se usa para deshabilitar el botón
+ * "Publicar" con un motivo visible en la UI.
+ */
+export function hasPublishableMetadata(item: MediaItem): boolean {
+  return (
+    item.durationSecs !== null &&
+    item.durationSecs > 0 &&
+    Boolean(item.contentType)
+  );
 }
 
 export async function createMediaItem(input: MediaInput): Promise<MediaItem> {
