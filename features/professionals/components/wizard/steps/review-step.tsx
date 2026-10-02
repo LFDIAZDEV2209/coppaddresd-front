@@ -150,6 +150,27 @@ export function ReviewStep({
             )}
           </div>
 
+          {/* Contacto de emergencia (solo paciente, si se registró) */}
+          {isPatient &&
+            (form.emergencyContactName.trim() ||
+              form.emergencyContactPhone.trim()) && (
+              <div className="border-t border-border p-4">
+                <p className="text-[12px] font-semibold text-muted-foreground">
+                  {t("Contacto de emergencia")}
+                </p>
+                <p className="mt-1 text-[12.5px]">
+                  {[
+                    form.emergencyContactName.trim(),
+                    form.emergencyContactRelationship.trim(),
+                    form.emergencyContactPhone.trim(),
+                    form.emergencyContactEmail.trim(),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </div>
+            )}
+
           {/* Rol global (solo profesional, sin clínicas) */}
           {isProfessional && !PROFESSIONAL_CLINICS_ENABLED && (
             <div className="border-t border-border p-4">

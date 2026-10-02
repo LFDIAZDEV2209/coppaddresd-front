@@ -99,6 +99,19 @@ export interface PatientVitalSign {
   weightKg: number | null;
 }
 
+/**
+ * Contacto de emergencia estructurado (espejo del DTO del backend).
+ * Todos los campos son nullables; el backend lo devuelve null cuando ni el
+ * nombre ni el teléfono tienen contenido. Por compatibilidad, una respuesta
+ * legacy puede traerlo como texto libre (string).
+ */
+export interface EmergencyContact {
+  name: string | null;
+  relationship: string | null;
+  phone: string | null;
+  email: string | null;
+}
+
 /** Representación completa de un paciente (agregado). */
 export interface Patient {
   id: string;
@@ -126,7 +139,7 @@ export interface Patient {
   countryId: string | null;
   countryName: string | null;
   postalCode: string | null;
-  emergencyContact: string | null;
+  emergencyContact: EmergencyContact | null;
   insurerId: string | null;
   insurerName: string | null;
   memberId: string | null;
@@ -171,7 +184,7 @@ export interface PatientInput {
   stateId: string | null;
   countryId: string | null;
   postalCode: string | null;
-  emergencyContact: string | null;
+  emergencyContact: EmergencyContact | null;
   insurerId: string | null;
   memberId: string | null;
   maritalStatus: string | null;

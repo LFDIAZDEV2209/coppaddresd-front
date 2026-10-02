@@ -26,6 +26,7 @@ import {
   Ruler,
   Scissors,
   Shield,
+  Siren,
   Stethoscope,
   Thermometer,
   UserRound,
@@ -46,7 +47,7 @@ import { cn } from "@/lib/utils";
 import { getPatient } from "../services/patients-service";
 import { PatientProfessionalsSection } from "./patient-professionals-section";
 import { ClinicalMeasurementsSection } from "./clinical-measurements-section";
-import type { Patient } from "../types";
+import type { EmergencyContact, Patient } from "../types";
 
 /** Estilos de la caja de icono por tono semántico (colores representativos). */
 const TONES = {
@@ -138,6 +139,9 @@ export function PatientDetailPage({ id }: { id: string }) {
   const safeTab = tabs.some((tab) => tab.key === activeTab)
     ? activeTab
     : "general";
+
+  // Contacto de emergencia normalizado (objeto estructurado o texto legacy).
+  const emergencyContact = normalizeEmergencyContact(patient.emergencyContact);
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -315,6 +319,36 @@ export function PatientDetailPage({ id }: { id: string }) {
               ]}
             />
           </div>
+
+          {emergencyContact && (
+            <DetailCard
+              title={t("Contacto de emergencia")}
+              icon={Siren}
+              tone="destructive"
+              items={[
+                {
+                  icon: UserRound,
+                  label: t("Nombre"),
+                  value: emergencyContact.name ?? "No registrado",
+                },
+                {
+                  icon: Heart,
+                  label: t("Parentesco"),
+                  value: emergencyContact.relationship ?? "No registrado",
+                },
+                {
+                  icon: Phone,
+                  label: t("Teléfono"),
+                  value: emergencyContact.phone ?? "No registrado",
+                },
+                {
+                  icon: Mail,
+                  label: t("Correo"),
+                  value: emergencyContact.email ?? "No registrado",
+                },
+              ]}
+            />
+          )}
 
           <div className="grid gap-6 lg:grid-cols-2">
             <DetailCard
@@ -761,6 +795,25 @@ function formatPhone(patient: Patient): string | null {
   return patient.phoneCountryCode
     ? `+${patient.phoneCountryCode} ${patient.phoneNumber}`
     : patient.phoneNumber;
+}
+
+/**
+ * Normaliza el contacto de emergencia: soporta el objeto estructurado y el
+ * texto libre legacy (string). Devuelve null si no hay datos útiles.
+ */
+function normalizeEmergencyContact(value: unknown): EmergencyContact | null {
+  if (typeof value === "string") {
+    const name = value.trim();
+    return name ? { name, relationship: null, phone: null, email: null } : null;
+  }
+  if (!value || typeof value !== "object") return null;
+  const contact = value as Partial<EmergencyContact>;
+  const name = contact.name?.trim() || null;
+  const relationship = contact.relationship?.trim() || null;
+  const phone = contact.phone?.trim() || null;
+  const email = contact.email?.trim() || null;
+  if (!name && !relationship && !phone && !email) return null;
+  return { name, relationship, phone, email };
 }
 
 function statusColor(status: Patient["status"]) {

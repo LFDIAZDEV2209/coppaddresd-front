@@ -1,7 +1,7 @@
 "use client";
 
 import { useT } from "@/providers/i18n-provider";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -222,7 +222,10 @@ interface PatientFormState {
   cityId: string;
   cityName: string;
   postalCode: string;
-  emergencyContact: string;
+  emergencyContactName: string;
+  emergencyContactRelationship: string;
+  emergencyContactPhone: string;
+  emergencyContactEmail: string;
   insurerId: string;
   memberId: string;
   maritalStatus: string;
@@ -317,7 +320,10 @@ const SERVER_FIELD_MAP: Record<string, string> = {
   Email: "email",
   Address: "address",
   PostalCode: "postalCode",
-  EmergencyContact: "emergencyContact",
+  "EmergencyContact.Name": "emergencyContactName",
+  "EmergencyContact.Relationship": "emergencyContactRelationship",
+  "EmergencyContact.Phone": "emergencyContactPhone",
+  "EmergencyContact.Email": "emergencyContactEmail",
   MemberId: "memberId",
   MaritalStatus: "maritalStatus",
   SmokingStatus: "smokingStatus",
@@ -362,6 +368,23 @@ function mapServerFieldErrors(
   return mapped;
 }
 
+/**
+ * Indica si una ruta local de error tiene un campo que el formulario pinta.
+ * Las claves desconocidas se muestran en el banner superior en lugar de
+ * perderse silenciosamente.
+ */
+function isKnownFieldPath(key: string): boolean {
+  if (
+    key.startsWith("vitals.") ||
+    key.startsWith("diagnoses.") ||
+    key.startsWith("medications.") ||
+    key.startsWith("allergies.")
+  ) {
+    return true;
+  }
+  return Object.values(SERVER_FIELD_MAP).includes(key);
+}
+
 function emptyVitalRow(
   measuredAt = new Date().toISOString().slice(0, 10),
 ): VitalRow {
@@ -400,7 +423,10 @@ function createEmptyForm(): PatientFormState {
     cityId: "",
     cityName: "",
     postalCode: "",
-    emergencyContact: "",
+    emergencyContactName: "",
+    emergencyContactRelationship: "",
+    emergencyContactPhone: "",
+    emergencyContactEmail: "",
     insurerId: "",
     memberId: "",
     maritalStatus: "",
@@ -416,6 +442,43 @@ function createEmptyForm(): PatientFormState {
     medications: [],
     allergies: [],
     vitals: [emptyVitalRow()],
+  };
+}
+
+/**
+ * Convierte el contacto de emergencia del backend a los campos del formulario.
+ * Soporta el objeto estructurado y el texto libre legacy (string).
+ */
+function toEmergencyContactFields(
+  value: Patient["emergencyContact"],
+): Pick<
+  PatientFormState,
+  | "emergencyContactName"
+  | "emergencyContactRelationship"
+  | "emergencyContactPhone"
+  | "emergencyContactEmail"
+> {
+  if (!value) {
+    return {
+      emergencyContactName: "",
+      emergencyContactRelationship: "",
+      emergencyContactPhone: "",
+      emergencyContactEmail: "",
+    };
+  }
+  if (typeof value === "string") {
+    return {
+      emergencyContactName: value,
+      emergencyContactRelationship: "",
+      emergencyContactPhone: "",
+      emergencyContactEmail: "",
+    };
+  }
+  return {
+    emergencyContactName: value.name ?? "",
+    emergencyContactRelationship: value.relationship ?? "",
+    emergencyContactPhone: value.phone ?? "",
+    emergencyContactEmail: value.email ?? "",
   };
 }
 
@@ -440,7 +503,7 @@ function fromPatient(patient: Patient): PatientFormState {
     cityId: patient.cityId ?? "",
     cityName: patient.cityName ?? "",
     postalCode: patient.postalCode ?? "",
-    emergencyContact: patient.emergencyContact ?? "",
+    ...toEmergencyContactFields(patient.emergencyContact),
     insurerId: patient.insurerId ?? "",
     memberId: patient.memberId ?? "",
     maritalStatus: patient.maritalStatus ?? "",
@@ -488,6 +551,8 @@ function fromPatient(patient: Patient): PatientFormState {
 
 function toInput(form: PatientFormState): PatientInput {
   const text = (value: string): string | null => value.trim() || null;
+  const emergencyContactName = form.emergencyContactName.trim();
+  const emergencyContactPhone = form.emergencyContactPhone.trim();
   return {
     medicalRecordNumber: text(form.medicalRecordNumber),
     firstName: form.firstName.trim(),
@@ -507,7 +572,15 @@ function toInput(form: PatientFormState): PatientInput {
     stateId: form.stateId || null,
     cityId: form.cityId || null,
     postalCode: text(form.postalCode),
-    emergencyContact: text(form.emergencyContact),
+    emergencyContact:
+      emergencyContactName || emergencyContactPhone
+        ? {
+            name: emergencyContactName || null,
+            relationship: text(form.emergencyContactRelationship),
+            phone: emergencyContactPhone || null,
+            email: text(form.emergencyContactEmail),
+          }
+        : null,
     insurerId: form.insurerId || null,
     memberId: text(form.memberId),
     maritalStatus: text(form.maritalStatus),
@@ -790,6 +863,38 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
     if (!form.lastName.trim()) {
       clientErrors.lastName = ["Los apellidos son requeridos."];
     }
+    // Campos exigidos por el backend en la creación (también al editar).
+    if (!form.documentNumber.trim()) {
+      clientErrors.documentNumber = [t("El documento es obligatorio.")];
+    }
+    if (!form.dateOfBirth) {
+      clientErrors.dateOfBirth = [
+        t("La fecha de nacimiento es obligatoria."),
+      ];
+    }
+    if (!form.gender.trim()) {
+      clientErrors.gender = [t("El género es obligatorio.")];
+    }
+    if (!form.phoneNumber.trim()) {
+      clientErrors.phoneNumber = [t("El teléfono es obligatorio.")];
+    }
+    // Contacto de emergencia: opcional, pero si hay nombre exige teléfono.
+    if (
+      form.emergencyContactName.trim() &&
+      !form.emergencyContactPhone.trim()
+    ) {
+      clientErrors.emergencyContactPhone = [
+        t("El contacto de emergencia requiere teléfono."),
+      ];
+    }
+    if (
+      form.emergencyContactEmail.trim() &&
+      !/\S+@\S+\.\S+/.test(form.emergencyContactEmail)
+    ) {
+      clientErrors.emergencyContactEmail = [
+        t("Ingresa un correo válido (ej. nombre@clinica.com)."),
+      ];
+    }
     Object.assign(clientErrors, validateVitals(form.vitals));
 
     if (Object.keys(clientErrors).length > 0) {
@@ -810,7 +915,20 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
       if (cause instanceof ApiError) {
         if (cause.code === "validation" && cause.errors) {
           // 400/422 con errores por campo: se muestran bajo cada campo.
-          setFieldErrors(mapServerFieldErrors(cause.errors));
+          const mappedErrors = mapServerFieldErrors(cause.errors);
+          setFieldErrors(mappedErrors);
+          // Las claves sin campo local se muestran en el banner superior
+          // para que el detalle específico del backend no se pierda.
+          const unmappedDetails = Object.entries(mappedErrors)
+            .filter(([key]) => !isKnownFieldPath(key))
+            .flatMap(([key, messages]) =>
+              messages.map((message) => (key ? `${key}: ${message}` : message)),
+            );
+          setError(
+            unmappedDetails.length > 0
+              ? [cause.message, ...unmappedDetails].join(" ")
+              : null,
+          );
           return;
         }
         setError(cause.message);
@@ -939,6 +1057,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             <Field
               label={t("Número de documento")}
               icon={Fingerprint}
+              required
               error={fieldError("documentNumber")}
             >
               <Input
@@ -952,6 +1071,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             <Field
               label={t("Fecha de nacimiento")}
               icon={CalendarDays}
+              required
               error={fieldError("dateOfBirth")}
             >
               <Input
@@ -960,7 +1080,12 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 onChange={(event) => update("dateOfBirth", event.target.value)}
               />
             </Field>
-            <Field label={t("Género")} icon={Users}>
+            <Field
+              label={t("Género")}
+              icon={Users}
+              required
+              error={fieldError("gender")}
+            >
               <Select
                 value={form.gender}
                 onChange={(value) => update("gender", value)}
@@ -1011,15 +1136,82 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            <Field label={t("Contacto de emergencia")} icon={Siren}>
-              <Input
-                value={form.emergencyContact}
-                onChange={(event) =>
-                  update("emergencyContact", event.target.value)
-                }
-                placeholder={t("Nombre de contacto de emergencia")}
-              />
-            </Field>
+            {/* Contacto de emergencia (estructurado): opcional, pero el
+                teléfono es obligatorio si se registra un nombre. */}
+            <div className="flex flex-col gap-4 sm:col-span-2 lg:col-span-3">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                  <Siren
+                    className="size-4 text-primary/70"
+                    aria-hidden="true"
+                  />
+                  {t("Contacto de emergencia")}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t("Si registras el nombre, el teléfono es obligatorio.")}
+                </span>
+              </div>
+              <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+                <Field
+                  label={t("Nombre")}
+                  error={fieldError("emergencyContactName")}
+                >
+                  <Input
+                    value={form.emergencyContactName}
+                    onChange={(event) =>
+                      update("emergencyContactName", event.target.value)
+                    }
+                    placeholder={t("Nombre de contacto de emergencia")}
+                    autoComplete="off"
+                  />
+                </Field>
+                <Field
+                  label={t("Parentesco")}
+                  error={fieldError("emergencyContactRelationship")}
+                >
+                  <Input
+                    value={form.emergencyContactRelationship}
+                    onChange={(event) =>
+                      update(
+                        "emergencyContactRelationship",
+                        event.target.value,
+                      )
+                    }
+                    placeholder={t("Ej. Madre, cónyuge, hermano")}
+                    autoComplete="off"
+                  />
+                </Field>
+                <Field
+                  label={t("Teléfono")}
+                  required={form.emergencyContactName.trim() !== ""}
+                  error={fieldError("emergencyContactPhone")}
+                >
+                  <Input
+                    type="tel"
+                    value={form.emergencyContactPhone}
+                    onChange={(event) =>
+                      update("emergencyContactPhone", event.target.value)
+                    }
+                    placeholder={t("300 000 0000")}
+                    autoComplete="off"
+                  />
+                </Field>
+                <Field
+                  label={t("Correo")}
+                  error={fieldError("emergencyContactEmail")}
+                >
+                  <Input
+                    type="email"
+                    value={form.emergencyContactEmail}
+                    onChange={(event) =>
+                      update("emergencyContactEmail", event.target.value)
+                    }
+                    placeholder={t("correo@ejemplo.com")}
+                    autoComplete="off"
+                  />
+                </Field>
+              </div>
+            </div>
           </FormSection>
 
           {/* ── Contacto y ubicación ── */}
@@ -1040,6 +1232,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
             <Field
               label={t("Teléfono")}
               icon={Phone}
+              required
               error={fieldError("phoneNumber")}
             >
               <Input
@@ -1964,9 +2157,8 @@ function Field({
   error?: string;
   children: React.ReactNode;
 }) {
-  const errorId = error
-    ? `field-error-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
-    : undefined;
+  // Id único: hay labels repetidos (p. ej. "Teléfono" en contacto y emergencia).
+  const errorId = useId();
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <Label>

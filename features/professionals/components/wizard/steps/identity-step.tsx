@@ -1,14 +1,16 @@
 /**
  * Paso de identidad compartido entre los 3 modos.
  * - Profesional / Empleado: firstName*, lastName*, email*, phone
- * - Paciente: firstName*, lastName*, documentNumber?, email?, phone?, birthDate?, gender?
+ * - Paciente: firstName*, lastName*, documentNumber*, birthDate*, gender*,
+ *   phone* (el backend los exige), email opcional y contacto de emergencia
+ *   opcional (teléfono obligatorio si se registra un nombre).
  */
 
 "use client";
 
 import { useT } from "@/providers/i18n-provider";
 import { useCallback, useState, useMemo } from "react";
-import { ArrowLeft, ArrowRight, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Siren, UserRound } from "lucide-react";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,8 +53,47 @@ export function IdentityStep({
       else if (!/\S+@\S+\.\S+/.test(form.email))
         errors.email = t("Ingresa un correo válido (ej. nombre@clinica.com).");
     }
+    if (isPatient) {
+      // El backend exige documento, fecha de nacimiento, género y teléfono.
+      if (form.documentNumber.trim() === "")
+        errors.documentNumber = t("El documento es obligatorio.");
+      if (form.birthDate === "")
+        errors.birthDate = t("La fecha de nacimiento es obligatoria.");
+      if (form.gender.trim() === "")
+        errors.gender = t("El género es obligatorio.");
+      if (form.phone.trim() === "")
+        errors.phone = t("El teléfono es obligatorio.");
+      // Contacto de emergencia: opcional, con teléfono si hay nombre.
+      if (
+        form.emergencyContactName.trim() !== "" &&
+        form.emergencyContactPhone.trim() === ""
+      )
+        errors.emergencyContactPhone = t(
+          "El contacto de emergencia requiere teléfono.",
+        );
+      if (
+        form.emergencyContactEmail.trim() !== "" &&
+        !/\S+@\S+\.\S+/.test(form.emergencyContactEmail)
+      )
+        errors.emergencyContactEmail = t(
+          "Ingresa un correo válido (ej. nombre@clinica.com).",
+        );
+    }
     return errors;
-  }, [form.firstName, form.lastName, form.email, isPatient, t]);
+  }, [
+    form.firstName,
+    form.lastName,
+    form.email,
+    form.documentNumber,
+    form.birthDate,
+    form.gender,
+    form.phone,
+    form.emergencyContactName,
+    form.emergencyContactPhone,
+    form.emergencyContactEmail,
+    isPatient,
+    t,
+  ]);
 
   const handleBlur = useCallback(
     (field: string) => () =>
@@ -60,10 +101,23 @@ export function IdentityStep({
     [],
   );
 
+  const emergencyContactInvalid =
+    isPatient &&
+    ((form.emergencyContactName.trim() !== "" &&
+      form.emergencyContactPhone.trim() === "") ||
+      (form.emergencyContactEmail.trim() !== "" &&
+        !/\S+@\S+\.\S+/.test(form.emergencyContactEmail)));
+
   const canContinue =
     form.firstName.trim() !== "" &&
     form.lastName.trim() !== "" &&
-    (isPatient || /\S+@\S+\.\S+/.test(form.email));
+    (isPatient || /\S+@\S+\.\S+/.test(form.email)) &&
+    (!isPatient ||
+      (form.documentNumber.trim() !== "" &&
+        form.birthDate !== "" &&
+        form.gender.trim() !== "" &&
+        form.phone.trim() !== "")) &&
+    !emergencyContactInvalid;
 
   return (
     <div className="animate-slide-up flex flex-col gap-0">
@@ -146,20 +200,35 @@ export function IdentityStep({
               />
             </Field>
 
-            <Field label={t("Teléfono (opcional)")}>
+            <Field
+              label={isPatient ? t("Teléfono") : t("Teléfono (opcional)")}
+              required={isPatient}
+              error={touched.has("phone") ? fieldErrors.phone : ""}
+            >
               <Input
+                type="tel"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                onBlur={handleBlur("phone")}
                 placeholder={t("555-010-2244")}
                 disabled={false}
                 autoComplete="off"
+                aria-invalid={Boolean(fieldErrors.phone)}
               />
             </Field>
 
             {/* Campos exclusivos del paciente */}
             {isPatient && (
               <>
-                <Field label={t("Número de documento (opcional)")}>
+                <Field
+                  label={t("Número de documento")}
+                  required
+                  error={
+                    touched.has("documentNumber")
+                      ? fieldErrors.documentNumber
+                      : ""
+                  }
+                >
                   <Input
                     value={form.documentNumber}
                     onChange={(e) =>
@@ -168,31 +237,45 @@ export function IdentityStep({
                         documentNumber: e.target.value,
                       })
                     }
+                    onBlur={handleBlur("documentNumber")}
                     placeholder={t("1234567890")}
                     disabled={false}
                     autoComplete="off"
+                    aria-invalid={Boolean(fieldErrors.documentNumber)}
                   />
                 </Field>
-                <Field label={t("Fecha de nacimiento (opcional)")}>
+                <Field
+                  label={t("Fecha de nacimiento")}
+                  required
+                  error={touched.has("birthDate") ? fieldErrors.birthDate : ""}
+                >
                   <Input
                     type="date"
                     value={form.birthDate}
                     onChange={(e) =>
                       setForm({ ...form, birthDate: e.target.value })
                     }
+                    onBlur={handleBlur("birthDate")}
                     disabled={false}
+                    aria-invalid={Boolean(fieldErrors.birthDate)}
                   />
                 </Field>
-                <Field label={t("Género (opcional)")}>
+                <Field
+                  label={t("Género")}
+                  required
+                  error={touched.has("gender") ? fieldErrors.gender : ""}
+                >
                   <Select
                     value={form.gender}
-                    onValueChange={(value) =>
-                      setForm({ ...form, gender: value ?? "" })
-                    }
+                    onValueChange={(value) => {
+                      setForm({ ...form, gender: value ?? "" });
+                      setTouched((current) => new Set(current).add("gender"));
+                    }}
                   >
                     <SelectTrigger
                       aria-label={t("Género")}
                       className="h-9! w-full"
+                      aria-invalid={Boolean(fieldErrors.gender)}
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -208,6 +291,128 @@ export function IdentityStep({
                     </SelectContent>
                   </Select>
                 </Field>
+
+                {/* Contacto de emergencia (opcional): el teléfono es
+                    obligatorio si se registra un nombre. */}
+                <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/20 p-4 sm:col-span-2">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="flex items-center gap-1.5 text-sm font-semibold">
+                      <Siren
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      {t("Contacto de emergencia")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {t("Si registras el nombre, el teléfono es obligatorio.")}
+                    </span>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field
+                      label={t("Nombre")}
+                      error={
+                        touched.has("emergencyContactName")
+                          ? fieldErrors.emergencyContactName
+                          : ""
+                      }
+                    >
+                      <Input
+                        value={form.emergencyContactName}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            emergencyContactName: e.target.value,
+                          })
+                        }
+                        onBlur={handleBlur("emergencyContactName")}
+                        placeholder={t("Nombre de contacto de emergencia")}
+                        disabled={false}
+                        autoComplete="off"
+                        aria-invalid={Boolean(
+                          fieldErrors.emergencyContactName,
+                        )}
+                      />
+                    </Field>
+                    <Field
+                      label={t("Parentesco")}
+                      error={
+                        touched.has("emergencyContactRelationship")
+                          ? fieldErrors.emergencyContactRelationship
+                          : ""
+                      }
+                    >
+                      <Input
+                        value={form.emergencyContactRelationship}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            emergencyContactRelationship: e.target.value,
+                          })
+                        }
+                        onBlur={handleBlur("emergencyContactRelationship")}
+                        placeholder={t("Ej. Madre, cónyuge, hermano")}
+                        disabled={false}
+                        autoComplete="off"
+                        aria-invalid={Boolean(
+                          fieldErrors.emergencyContactRelationship,
+                        )}
+                      />
+                    </Field>
+                    <Field
+                      label={t("Teléfono")}
+                      required={form.emergencyContactName.trim() !== ""}
+                      error={
+                        touched.has("emergencyContactPhone")
+                          ? fieldErrors.emergencyContactPhone
+                          : ""
+                      }
+                    >
+                      <Input
+                        type="tel"
+                        value={form.emergencyContactPhone}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            emergencyContactPhone: e.target.value,
+                          })
+                        }
+                        onBlur={handleBlur("emergencyContactPhone")}
+                        placeholder={t("555-010-2244")}
+                        disabled={false}
+                        autoComplete="off"
+                        aria-invalid={Boolean(
+                          fieldErrors.emergencyContactPhone,
+                        )}
+                      />
+                    </Field>
+                    <Field
+                      label={t("Correo")}
+                      error={
+                        touched.has("emergencyContactEmail")
+                          ? fieldErrors.emergencyContactEmail
+                          : ""
+                      }
+                    >
+                      <Input
+                        type="email"
+                        value={form.emergencyContactEmail}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            emergencyContactEmail: e.target.value,
+                          })
+                        }
+                        onBlur={handleBlur("emergencyContactEmail")}
+                        placeholder={t("ej. usuario@coppaddresd.com")}
+                        disabled={false}
+                        autoComplete="off"
+                        aria-invalid={Boolean(
+                          fieldErrors.emergencyContactEmail,
+                        )}
+                      />
+                    </Field>
+                  </div>
+                </div>
               </>
             )}
           </div>

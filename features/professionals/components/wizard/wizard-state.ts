@@ -195,6 +195,11 @@ export interface FormState {
   documentNumber: string;
   birthDate: string;
   gender: string;
+  /** Contacto de emergencia (opcional; el teléfono es obligatorio si hay nombre). */
+  emergencyContactName: string;
+  emergencyContactRelationship: string;
+  emergencyContactPhone: string;
+  emergencyContactEmail: string;
 
   // Compartido
   sendInvitation: boolean;
@@ -216,6 +221,10 @@ export const EMPTY_FORM: FormState = {
   documentNumber: "",
   birthDate: "",
   gender: "",
+  emergencyContactName: "",
+  emergencyContactRelationship: "",
+  emergencyContactPhone: "",
+  emergencyContactEmail: "",
   sendInvitation: true,
   mode: null,
 };

@@ -377,6 +377,8 @@ export function PeopleWizard({
         });
       } else if (mode === "patient") {
         // Paciente: payload mínimo — el resto se completa en el perfil
+        const emergencyContactName = form.emergencyContactName.trim();
+        const emergencyContactPhone = form.emergencyContactPhone.trim();
         const patientInput: PatientInput = {
           medicalRecordNumber: null,
           firstName: form.firstName.trim(),
@@ -396,7 +398,16 @@ export function PeopleWizard({
           stateId: null,
           countryId: null,
           postalCode: null,
-          emergencyContact: null,
+          emergencyContact:
+            emergencyContactName || emergencyContactPhone
+              ? {
+                  name: emergencyContactName || null,
+                  relationship:
+                    form.emergencyContactRelationship.trim() || null,
+                  phone: emergencyContactPhone || null,
+                  email: form.emergencyContactEmail.trim() || null,
+                }
+              : null,
           insurerId: null,
           memberId: null,
           maritalStatus: null,
@@ -423,12 +434,22 @@ export function PeopleWizard({
       }
     } catch (err) {
       setSaving(false);
+      if (err instanceof ApiError) {
+        // El backend devuelve errores por campo (PascalCase): se muestran
+        // juntos en el banner para no perder el detalle específico.
+        const details = [
+          ...new Set([
+            err.message,
+            ...Object.values(err.errors ?? {}).flat(),
+          ]),
+        ].filter(Boolean);
+        setError(details.join(" "));
+        return;
+      }
       setError(
-        err instanceof ApiError
-          ? err.message
-          : mode === "patient"
-            ? "No se pudo crear el paciente. Intenta nuevamente."
-            : "No se pudo crear el profesional. Intenta nuevamente.",
+        mode === "patient"
+          ? "No se pudo crear el paciente. Intenta nuevamente."
+          : "No se pudo crear el profesional. Intenta nuevamente.",
       );
     }
   }, [mode, form, buildSchedulePayload, roles]);
