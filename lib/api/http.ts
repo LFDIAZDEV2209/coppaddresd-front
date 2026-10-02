@@ -238,7 +238,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 /**
  * Revierte el doble-encoding UTF-8→Latin-1→UTF-8 que a veces viaja en los
- * mensajes de error del backend (QA 02-10: "Credenciales invÃ¡lidas").
+ * mensajes de error del backend (QA 02-10: "Credenciales inválidas").
  * LA CAUSA RAÍZ está en literales del backend (gap documentado); aquí se
  * compensa de forma reversible y conservadora: SOLO se corrige si la cadena
  * es 100 % una re-interpretación Latin-1 decodable como UTF-8 (sin

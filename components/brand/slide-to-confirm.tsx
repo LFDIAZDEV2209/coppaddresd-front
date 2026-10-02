@@ -5,13 +5,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * CTA de deslizar-para-confirmar (lÃ­nea visual COPP-ADRESD): pill navy con
+ * CTA de deslizar-para-confirmar (línea visual COPP-ADRESD): pill navy con
  * thumb teal arrastrable. Al llegar el thumb al extremo derecho dispara
- * `onConfirm` (iniciar sesiÃ³n). Alternativa de teclado: el thumb es
+ * `onConfirm` (iniciar sesión). Alternativa de teclado: el thumb es
  * enfocable (role="slider", flechas para avanzar, Home/End), y el
  * formulario entra con Enter desde los inputs.
  *
- * InteracciÃ³n vÃ­a Pointer Events + refs (sin re-renders por movimiento);
+ * Interacción vía Pointer Events + refs (sin re-renders por movimiento);
  * respeta prefers-reduced-motion en las transiciones de snap.
  */
 interface SlideToConfirmProps {
@@ -26,9 +26,9 @@ interface SlideToConfirmProps {
   className?: string;
 }
 
-const THUMB = 44; // px â€” diÃ¡metro del thumb
-const INSET = 4; // px â€” margen interno del track
-/** Progreso mÃ­nimo (0-1) para aceptar la confirmaciÃ³n al soltar. */
+const THUMB = 44; // px — diámetro del thumb
+const INSET = 4; // px — margen interno del track
+/** Progreso mínimo (0-1) para aceptar la confirmación al soltar. */
 const CONFIRM_AT = 0.94;
 
 export function SlideToConfirm({
@@ -60,7 +60,7 @@ export function SlideToConfirm({
 
   const locked = disabled || busy;
 
-  // Distancia mÃ¡xima de desplazamiento del thumb.
+  // Distancia máxima de desplazamiento del thumb.
   const maxTravel = Math.max(trackWidth - THUMB - INSET * 2, 0);
 
   const confirm = useCallback(() => {
@@ -69,7 +69,7 @@ export function SlideToConfirm({
     setProgress(1);
     setDone(true);
     onConfirm();
-    // Si el padre nunca entra en busy (ej. validaciÃ³n fallida), devolvemos
+    // Si el padre nunca entra en busy (ej. validación fallida), devolvemos
     // el thumb tras un instante para poder reintentar.
     window.setTimeout(() => {
       confirmedRef.current = false;
@@ -140,7 +140,7 @@ export function SlideToConfirm({
         className,
       )}
     >
-      {/* Relleno de progreso (glass sutil detrÃ¡s del thumb) */}
+      {/* Relleno de progreso (glass sutil detrás del thumb) */}
       <div
         aria-hidden="true"
         className="absolute top-1 bottom-1 left-1 rounded-full bg-white/8"

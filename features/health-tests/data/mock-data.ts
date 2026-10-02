@@ -12,29 +12,29 @@ import type {
 import { interpretScore } from "../lib/domain";
 
 /**
- * Mock data del mÃ³dulo de Tests de Salud.
+ * Mock data del módulo de Tests de Salud.
  *
- * REPLICA FIEL de la BaterÃ­a de evaluaciÃ³n inicial de la aplicaciÃ³n de
+ * REPLICA FIEL de la Batería de evaluación inicial de la aplicación de
  * pacientes (antares-paciente/src/data/tests.ts). Los datos son coherentes
- * entre sÃ­: un resultado alarmante genera su alerta; un test pendiente no
- * tiene score; las mÃ©tricas del dashboard se DERIVAN de estos datos (no se
+ * entre sí: un resultado alarmante genera su alerta; un test pendiente no
+ * tiene score; las métricas del dashboard se DERIVAN de estos datos (no se
  * hardcodean cifras sueltas).
  */
 
 const D = "2026-08-10";
 
 /* ------------------------------------------------------------------ */
-/* Indicadores clÃ­nicos                                                */
+/* Indicadores clínicos                                                */
 /* ------------------------------------------------------------------ */
 
 export const INDICATORS: ClinicalIndicator[] = [
   {
     id: "adherencia",
-    name: "Ãndice de adherencia IAC-ADRESD",
+    name: "Índice de adherencia IAC-ADRESD",
     category: "adherencia",
-    icon: "ðŸ¤",
+    icon: "🤝",
     description:
-      "MotivaciÃ³n, autoeficacia y compromiso para sostener hÃ¡bitos.",
+      "Motivación, autoeficacia y compromiso para sostener hábitos.",
     higherIsBetter: true,
     unit: "pts",
     ranges: [
@@ -46,43 +46,43 @@ export const INDICATORS: ClinicalIndicator[] = [
   },
   {
     id: "riesgo-cardiometabolico",
-    name: "Riesgo cardiometabÃ³lico ORP",
+    name: "Riesgo cardiometabólico ORP",
     category: "cardiometabolico",
-    icon: "â¤ï¸",
+    icon: "❤️",
     description:
-      "Comorbilidades, complicaciones y riesgo segÃºn criterios OMS.",
+      "Comorbilidades, complicaciones y riesgo según criterios OMS.",
     higherIsBetter: false,
     unit: "pts",
     ranges: [
       { min: 0, max: 24, label: "Riesgo bajo", risk: "bajo" },
       { min: 25, max: 49, label: "Riesgo moderado", risk: "moderado" },
       { min: 50, max: 74, label: "Riesgo alto", risk: "alto" },
-      { min: 75, max: 100, label: "Riesgo crÃ­tico", risk: "critico" },
+      { min: 75, max: 100, label: "Riesgo crítico", risk: "critico" },
     ],
   },
   {
     id: "calidad-alimentaria",
-    name: "Calidad alimentaria y hÃ¡bitos",
+    name: "Calidad alimentaria y hábitos",
     category: "nutricion",
-    icon: "ðŸ¥—",
+    icon: "🥗",
     description:
-      "Calidad de la alimentaciÃ³n, organizaciÃ³n y conductas de riesgo.",
+      "Calidad de la alimentación, organización y conductas de riesgo.",
     higherIsBetter: true,
     unit: "pts",
     ranges: [
-      { min: 0, max: 39, label: "AlimentaciÃ³n deficiente", risk: "alto" },
-      { min: 40, max: 59, label: "AlimentaciÃ³n regular", risk: "moderado" },
-      { min: 60, max: 79, label: "AlimentaciÃ³n buena", risk: "bajo" },
-      { min: 80, max: 100, label: "AlimentaciÃ³n excelente", risk: "bajo" },
+      { min: 0, max: 39, label: "Alimentación deficiente", risk: "alto" },
+      { min: 40, max: 59, label: "Alimentación regular", risk: "moderado" },
+      { min: 60, max: 79, label: "Alimentación buena", risk: "bajo" },
+      { min: 80, max: 100, label: "Alimentación excelente", risk: "bajo" },
     ],
   },
   {
     id: "nivel-movimiento",
     name: "Nivel de movimiento y capacidad funcional",
     category: "movimiento",
-    icon: "ðŸƒ",
+    icon: "🏃",
     description:
-      "Movilidad, marcha y capacidad funcional para la actividad fÃ­sica.",
+      "Movilidad, marcha y capacidad funcional para la actividad física.",
     higherIsBetter: true,
     unit: "pts",
     ranges: [
@@ -94,57 +94,57 @@ export const INDICATORS: ClinicalIndicator[] = [
   },
   {
     id: "calidad-sueno",
-    name: "Calidad del sueÃ±o",
+    name: "Calidad del sueño",
     category: "sueno",
-    icon: "ðŸŒ™",
-    description: "Regularidad, duraciÃ³n y funcionamiento diurno.",
+    icon: "🌙",
+    description: "Regularidad, duración y funcionamiento diurno.",
     higherIsBetter: true,
     unit: "pts",
     ranges: [
-      { min: 0, max: 39, label: "SueÃ±o deficiente", risk: "alto" },
-      { min: 40, max: 59, label: "SueÃ±o regular", risk: "moderado" },
-      { min: 60, max: 79, label: "SueÃ±o bueno", risk: "bajo" },
-      { min: 80, max: 100, label: "SueÃ±o Ã³ptimo", risk: "bajo" },
+      { min: 0, max: 39, label: "Sueño deficiente", risk: "alto" },
+      { min: 40, max: 59, label: "Sueño regular", risk: "moderado" },
+      { min: 60, max: 79, label: "Sueño bueno", risk: "bajo" },
+      { min: 80, max: 100, label: "Sueño óptimo", risk: "bajo" },
     ],
   },
   {
     id: "riesgo-apnea",
-    name: "SeÃ±ales de riesgo de apnea",
+    name: "Señales de riesgo de apnea",
     category: "sueno",
-    icon: "ðŸ˜´",
+    icon: "😴",
     description: "Ronquido intenso, pausas respiratorias y somnolencia diurna.",
     higherIsBetter: false,
-    unit: "seÃ±ales",
+    unit: "señales",
     ranges: [
-      { min: 0, max: 19, label: "Sin seÃ±ales de apnea", risk: "bajo" },
-      { min: 20, max: 39, label: "SeÃ±al aislada", risk: "moderado" },
+      { min: 0, max: 19, label: "Sin señales de apnea", risk: "bajo" },
+      { min: 20, max: 39, label: "Señal aislada", risk: "moderado" },
       { min: 40, max: 59, label: "Sospecha de apnea", risk: "alto" },
       { min: 60, max: 100, label: "Alta sospecha de apnea", risk: "critico" },
     ],
   },
   {
     id: "estres-relacional",
-    name: "EstrÃ©s relacional ERS",
+    name: "Estrés relacional ERS",
     category: "salud-mental",
-    icon: "âš¡",
+    icon: "⚡",
     description:
-      "EstrÃ©s originado en familia, pareja, trabajo y entorno social.",
+      "Estrés originado en familia, pareja, trabajo y entorno social.",
     higherIsBetter: false,
     unit: "pts",
     ranges: [
-      { min: 0, max: 24, label: "EstrÃ©s bajo", risk: "bajo" },
-      { min: 25, max: 49, label: "EstrÃ©s moderado", risk: "moderado" },
-      { min: 50, max: 74, label: "EstrÃ©s alto", risk: "alto" },
-      { min: 75, max: 100, label: "EstrÃ©s crÃ­tico", risk: "critico" },
+      { min: 0, max: 24, label: "Estrés bajo", risk: "bajo" },
+      { min: 25, max: 49, label: "Estrés moderado", risk: "moderado" },
+      { min: 50, max: 74, label: "Estrés alto", risk: "alto" },
+      { min: 75, max: 100, label: "Estrés crítico", risk: "critico" },
     ],
   },
   {
     id: "temperamento",
     name: "Temperamento dominante",
     category: "salud-mental",
-    icon: "ðŸ§ ",
+    icon: "🧠",
     description:
-      "Perfil de temperamento: sanguÃ­neo, colÃ©rico, melancÃ³lico o flemÃ¡tico.",
+      "Perfil de temperamento: sanguíneo, colérico, melancólico o flemático.",
     higherIsBetter: true,
     unit: "pts",
     ranges: [
@@ -154,31 +154,31 @@ export const INDICATORS: ClinicalIndicator[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Tests de la BaterÃ­a de evaluaciÃ³n inicial (fiel a antares)          */
+/* Tests de la Batería de evaluación inicial (fiel a antares)          */
 /* ------------------------------------------------------------------ */
 
 export const TESTS: HealthTest[] = [
   {
     id: "historia-clinica",
     code: "HC-01",
-    name: "Historia clÃ­nica biolÃ³gica",
+    name: "Historia clínica biológica",
     description:
-      "Antecedentes patolÃ³gicos, revisiÃ³n por sistemas y antecedentes familiares.",
+      "Antecedentes patológicos, revisión por sistemas y antecedentes familiares.",
     category: "historia-clinica",
-    icon: "ðŸ©º",
+    icon: "🩺",
     maxScore: 100,
     order: 1,
     required: true,
     state: "activo",
     applicationMoment: "inicial",
-    frequency: "Ãšnica",
+    frequency: "Única",
     priority: "alta",
     version: "1.0",
     timeMinutes: 15,
     questionsCount: 30,
     sections: [
-      "Antecedentes patolÃ³gicos",
-      "RevisiÃ³n por sistemas",
+      "Antecedentes patológicos",
+      "Revisión por sistemas",
       "Antecedentes familiares",
     ],
     indicators: [],
@@ -189,31 +189,31 @@ export const TESTS: HealthTest[] = [
     code: "TMP-02",
     name: "Test de temperamento",
     description:
-      "Perfil de temperamento: sanguÃ­neo, colÃ©rico, melancÃ³lico y flemÃ¡tico.",
+      "Perfil de temperamento: sanguíneo, colérico, melancólico y flemático.",
     category: "salud-mental",
-    icon: "ðŸ§ ",
+    icon: "🧠",
     maxScore: 100,
     order: 2,
     required: true,
     state: "activo",
     applicationMoment: "inicial",
-    frequency: "Ãšnica",
+    frequency: "Única",
     priority: "media",
     version: "1.0",
     timeMinutes: 10,
     questionsCount: 32,
-    sections: ["SanguÃ­neo", "ColÃ©rico", "MelancÃ³lico", "FlemÃ¡tico"],
+    sections: ["Sanguíneo", "Colérico", "Melancólico", "Flemático"],
     indicators: ["temperamento"],
     alertRules: [],
   },
   {
     id: "nutricional",
     code: "NUT-03",
-    name: "Test nutricional y hÃ¡bitos",
+    name: "Test nutricional y hábitos",
     description:
-      "Calidad alimentaria, organizaciÃ³n de comidas, conductas de riesgo, hidrataciÃ³n y motivaciÃ³n.",
+      "Calidad alimentaria, organización de comidas, conductas de riesgo, hidratación y motivación.",
     category: "nutricion",
-    icon: "ðŸ¥—",
+    icon: "🥗",
     maxScore: 100,
     order: 3,
     required: true,
@@ -226,11 +226,11 @@ export const TESTS: HealthTest[] = [
     questionsCount: 17,
     sections: [
       "Calidad alimentaria",
-      "OrganizaciÃ³n",
+      "Organización",
       "Conductas de riesgo",
-      "HidrataciÃ³n",
+      "Hidratación",
       "Entorno",
-      "MotivaciÃ³n",
+      "Motivación",
     ],
     indicators: ["calidad-alimentaria"],
     alertRules: [
@@ -240,20 +240,20 @@ export const TESTS: HealthTest[] = [
         threshold: 39,
         severity: "media",
         message:
-          "AlimentaciÃ³n deficiente detectada en la evaluaciÃ³n nutricional.",
+          "Alimentación deficiente detectada en la evaluación nutricional.",
         recommendedAction:
-          "Programar valoraciÃ³n con nutriciÃ³n y plan de ajuste de hÃ¡bitos.",
+          "Programar valoración con nutrición y plan de ajuste de hábitos.",
       },
     ],
   },
   {
     id: "movimiento",
     code: "MOV-04",
-    name: "Movimiento y actividad fÃ­sica",
+    name: "Movimiento y actividad física",
     description:
-      "Movilidad, sedestaciÃ³n, bipedestaciÃ³n, marcha y capacidad funcional.",
+      "Movilidad, sedestación, bipedestación, marcha y capacidad funcional.",
     category: "movimiento",
-    icon: "ðŸƒ",
+    icon: "🏃",
     maxScore: 100,
     order: 4,
     required: true,
@@ -266,11 +266,11 @@ export const TESTS: HealthTest[] = [
     questionsCount: 12,
     sections: [
       "Movilidad",
-      "SedestaciÃ³n",
-      "BipedestaciÃ³n",
+      "Sedestación",
+      "Bipedestación",
       "Marcha",
       "Capacidad funcional",
-      "AutopercepciÃ³n",
+      "Autopercepción",
     ],
     indicators: ["nivel-movimiento"],
     alertRules: [
@@ -279,7 +279,7 @@ export const TESTS: HealthTest[] = [
         operator: "lte",
         threshold: 39,
         severity: "media",
-        message: "Nivel de movimiento limitado en la evaluaciÃ³n funcional.",
+        message: "Nivel de movimiento limitado en la evaluación funcional.",
         recommendedAction:
           "Valorar con fisioterapia y prescribir rutina progresiva.",
       },
@@ -288,11 +288,11 @@ export const TESTS: HealthTest[] = [
   {
     id: "sueno",
     code: "SUE-05",
-    name: "CaracterizaciÃ³n del sueÃ±o",
+    name: "Caracterización del sueño",
     description:
-      "Regularidad, duraciÃ³n, funcionamiento diurno, hÃ¡bitos y seÃ±ales de alerta.",
+      "Regularidad, duración, funcionamiento diurno, hábitos y señales de alerta.",
     category: "sueno",
-    icon: "ðŸŒ™",
+    icon: "🌙",
     maxScore: 100,
     order: 5,
     required: true,
@@ -305,11 +305,11 @@ export const TESTS: HealthTest[] = [
     questionsCount: 14,
     sections: [
       "Regularidad",
-      "DuraciÃ³n",
+      "Duración",
       "Funcionamiento diurno",
-      "HÃ¡bitos",
-      "DesconexiÃ³n",
-      "SeÃ±ales de alerta",
+      "Hábitos",
+      "Desconexión",
+      "Señales de alerta",
     ],
     indicators: ["calidad-sueno", "riesgo-apnea"],
     alertRules: [
@@ -318,8 +318,8 @@ export const TESTS: HealthTest[] = [
         operator: "lte",
         threshold: 39,
         severity: "media",
-        message: "Calidad del sueÃ±o deficiente reportada por el paciente.",
-        recommendedAction: "IntervenciÃ³n de higiene del sueÃ±o y seguimiento.",
+        message: "Calidad del sueño deficiente reportada por el paciente.",
+        recommendedAction: "Intervención de higiene del sueño y seguimiento.",
       },
       {
         indicatorId: "riesgo-apnea",
@@ -327,19 +327,19 @@ export const TESTS: HealthTest[] = [
         threshold: 40,
         severity: "alta",
         message:
-          "Dos o mÃ¡s seÃ±ales de apnea del sueÃ±o (ronquido, pausas, ahogo).",
-        recommendedAction: "Derivar a valoraciÃ³n respiratoria del sueÃ±o.",
+          "Dos o más señales de apnea del sueño (ronquido, pausas, ahogo).",
+        recommendedAction: "Derivar a valoración respiratoria del sueño.",
       },
     ],
   },
   {
     id: "iac-adresd",
     code: "IAC-06",
-    name: "Ãndice de adherencia IAC-ADRESD",
+    name: "Índice de adherencia IAC-ADRESD",
     description:
-      "MotivaciÃ³n, autoeficacia, organizaciÃ³n, hÃ¡bitos, apoyo, resiliencia y compromiso.",
+      "Motivación, autoeficacia, organización, hábitos, apoyo, resiliencia y compromiso.",
     category: "adherencia",
-    icon: "ðŸ¤",
+    icon: "🤝",
     maxScore: 100,
     order: 6,
     required: true,
@@ -351,10 +351,10 @@ export const TESTS: HealthTest[] = [
     timeMinutes: 6,
     questionsCount: 10,
     sections: [
-      "MotivaciÃ³n",
+      "Motivación",
       "Autoeficacia",
-      "OrganizaciÃ³n",
-      "HÃ¡bitos",
+      "Organización",
+      "Hábitos",
       "Apoyo",
       "Resiliencia",
       "Compromiso",
@@ -366,7 +366,7 @@ export const TESTS: HealthTest[] = [
         operator: "lte",
         threshold: 39,
         severity: "media",
-        message: "Ãndice de adherencia bajo en el programa.",
+        message: "Índice de adherencia bajo en el programa.",
         recommendedAction: "Entrevista motivacional y refuerzo de compromisos.",
       },
     ],
@@ -374,11 +374,11 @@ export const TESTS: HealthTest[] = [
   {
     id: "orp",
     code: "ORP-07",
-    name: "Riesgo cardiometabÃ³lico ORP",
+    name: "Riesgo cardiometabólico ORP",
     description:
-      "Criterios OMS: cardiometabÃ³lico, sueÃ±o, mÃºsculo-esquelÃ©tico y conductual.",
+      "Criterios OMS: cardiometabólico, sueño, músculo-esquelético y conductual.",
     category: "cardiometabolico",
-    icon: "â¤ï¸",
+    icon: "❤️",
     maxScore: 100,
     order: 7,
     required: true,
@@ -390,9 +390,9 @@ export const TESTS: HealthTest[] = [
     timeMinutes: 6,
     questionsCount: 10,
     sections: [
-      "CardiometabÃ³lico",
-      "SueÃ±o",
-      "MÃºsculo-esquelÃ©tico",
+      "Cardiometabólico",
+      "Sueño",
+      "Músculo-esquelético",
       "Conductual",
     ],
     indicators: ["riesgo-cardiometabolico"],
@@ -402,9 +402,9 @@ export const TESTS: HealthTest[] = [
         operator: "gte",
         threshold: 50,
         severity: "alta",
-        message: "Riesgo cardiometabÃ³lico alto segÃºn criterios ORP/OMS.",
+        message: "Riesgo cardiometabólico alto según criterios ORP/OMS.",
         recommendedAction:
-          "ValoraciÃ³n mÃ©dica prioritaria y seguimiento estrecho.",
+          "Valoración médica prioritaria y seguimiento estrecho.",
       },
       {
         indicatorId: "riesgo-cardiometabolico",
@@ -412,20 +412,20 @@ export const TESTS: HealthTest[] = [
         threshold: 75,
         severity: "critica",
         message:
-          "Riesgo cardiometabÃ³lico crÃ­tico con complicaciones asociadas.",
+          "Riesgo cardiometabólico crítico con complicaciones asociadas.",
         recommendedAction:
-          "Contacto inmediato, valoraciÃ³n mÃ©dica y plan de manejo.",
+          "Contacto inmediato, valoración médica y plan de manejo.",
       },
     ],
   },
   {
     id: "ers",
     code: "ERS-08",
-    name: "Test de estrÃ©s relacional ERS",
+    name: "Test de estrés relacional ERS",
     description:
-      "EstrÃ©s originado en familia, pareja, trabajo y entorno social.",
+      "Estrés originado en familia, pareja, trabajo y entorno social.",
     category: "salud-mental",
-    icon: "âš¡",
+    icon: "⚡",
     maxScore: 100,
     order: 8,
     required: true,
@@ -444,8 +444,8 @@ export const TESTS: HealthTest[] = [
         operator: "gte",
         threshold: 50,
         severity: "alta",
-        message: "EstrÃ©s relacional alto con impacto en calidad de vida.",
-        recommendedAction: "ValoraciÃ³n psicolÃ³gica y manejo del estrÃ©s.",
+        message: "Estrés relacional alto con impacto en calidad de vida.",
+        recommendedAction: "Valoración psicológica y manejo del estrés.",
       },
       {
         indicatorId: "estres-relacional",
@@ -453,7 +453,7 @@ export const TESTS: HealthTest[] = [
         threshold: 75,
         severity: "critica",
         message:
-          "EstrÃ©s relacional crÃ­tico que afecta sueÃ±o, alimentaciÃ³n y bienestar.",
+          "Estrés relacional crítico que afecta sueño, alimentación y bienestar.",
         recommendedAction: "Contacto prioritario con salud mental.",
       },
     ],
@@ -461,22 +461,22 @@ export const TESTS: HealthTest[] = [
   {
     id: "bateria-completa",
     code: "ANT-09",
-    name: "BaterÃ­a inicial completa Copp Adresd",
+    name: "Batería inicial completa Copp Adresd",
     description:
-      "PropÃ³sito personal, mentalidad de salud, perfil integral y prioridades.",
+      "Propósito personal, mentalidad de salud, perfil integral y prioridades.",
     category: "salud-mental",
-    icon: "ðŸ§¬",
+    icon: "🧬",
     maxScore: 100,
     order: 9,
     required: true,
     state: "activo",
     applicationMoment: "inicial",
-    frequency: "Ãšnica",
+    frequency: "Única",
     priority: "media",
     version: "1.0",
     timeMinutes: 12,
     questionsCount: 10,
-    sections: ["PropÃ³sito", "Mentalidad de salud", "Prioridades"],
+    sections: ["Propósito", "Mentalidad de salud", "Prioridades"],
     indicators: [],
     alertRules: [],
   },
@@ -491,23 +491,23 @@ export const PROFESSIONALS: HealthProfessional[] = [
     id: "p1",
     firstName: "Carolina",
     lastName: "Ruiz",
-    specialty: "NutriciÃ³n",
+    specialty: "Nutrición",
     clinic: "MediQuer Central",
     patientCount: 4,
   },
   {
     id: "p2",
-    firstName: "Jorge AndrÃ©s",
-    lastName: "RamÃ­rez",
+    firstName: "Jorge Andrés",
+    lastName: "Ramírez",
     specialty: "Medicina general",
     clinic: "MediQuer Central",
     patientCount: 3,
   },
   {
     id: "p3",
-    firstName: "MarÃ­a Fernanda",
-    lastName: "LÃ³pez",
-    specialty: "PsicologÃ­a",
+    firstName: "María Fernanda",
+    lastName: "López",
+    specialty: "Psicología",
     clinic: "Vitalis Norte",
     patientCount: 3,
   },
@@ -522,14 +522,14 @@ export const PROFESSIONALS: HealthProfessional[] = [
   {
     id: "p5",
     firstName: "Laura",
-    lastName: "GÃ³mez",
-    specialty: "NutriciÃ³n",
+    lastName: "Gómez",
+    specialty: "Nutrición",
     clinic: "Sanar Sur",
     patientCount: 2,
   },
   {
     id: "p6",
-    firstName: "AndrÃ©s",
+    firstName: "Andrés",
     lastName: "Moreno",
     specialty: "Medicina general",
     clinic: "Sanar Sur",
@@ -538,15 +538,15 @@ export const PROFESSIONALS: HealthProfessional[] = [
   {
     id: "p7",
     firstName: "Paula",
-    lastName: "CÃ¡rdenas",
-    specialty: "PsicologÃ­a",
+    lastName: "Cárdenas",
+    specialty: "Psicología",
     clinic: "MediQuer Central",
     patientCount: 1,
   },
   {
     id: "p8",
     firstName: "Ricardo",
-    lastName: "PeÃ±a",
+    lastName: "Peña",
     specialty: "Fisioterapia",
     clinic: "Vitalis Norte",
     patientCount: 0,
@@ -554,7 +554,7 @@ export const PROFESSIONALS: HealthProfessional[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* FÃ¡brica de resultados de paciente                                   */
+/* Fábrica de resultados de paciente                                   */
 /* ------------------------------------------------------------------ */
 
 const DAY = 86_400_000;
@@ -570,11 +570,11 @@ interface ResultSpec {
   details?: Record<string, string | number | boolean>;
 }
 
-/** Construye un resultado con interpretaciÃ³n derivada del indicador principal. */
+/** Construye un resultado con interpretación derivada del indicador principal. */
 function result(test: HealthTest, spec: ResultSpec): PatientTestResult {
   const indicator = INDICATORS.find((i) => i.id === test.indicators[0]);
   let risk: RiskLevel = "sin-evaluar";
-  let interpretation = "Sin evaluaciÃ³n";
+  let interpretation = "Sin evaluación";
   if (spec.score !== null && spec.score !== undefined && indicator) {
     const parsed = interpretScore(spec.score, indicator);
     risk = parsed.risk;
@@ -582,7 +582,7 @@ function result(test: HealthTest, spec: ResultSpec): PatientTestResult {
   } else if (spec.score !== null && spec.score !== undefined) {
     risk = spec.score >= 60 ? "bajo" : spec.score >= 40 ? "moderado" : "alto";
     interpretation =
-      risk === "bajo" ? "Sin hallazgos relevantes" : "Requiere revisiÃ³n";
+      risk === "bajo" ? "Sin hallazgos relevantes" : "Requiere revisión";
   }
 
   const history = (spec.history ?? []).map((h) => ({
@@ -607,7 +607,7 @@ function result(test: HealthTest, spec: ResultSpec): PatientTestResult {
     state: spec.state,
     score: spec.state === "completado" ? (spec.score ?? null) : null,
     interpretation:
-      spec.state === "completado" ? interpretation : "Pendiente de aplicaciÃ³n",
+      spec.state === "completado" ? interpretation : "Pendiente de aplicación",
     risk: spec.state === "completado" ? risk : "sin-evaluar",
     updatedAt: date(spec.history?.[0]?.daysAgo ?? 20),
     completedAt,
@@ -647,7 +647,7 @@ export const PATIENTS: PatientProfile[] = [
         score: 100,
         history: [{ daysAgo: 42, score: 100 }],
         details: {
-          antecedentes: "HTA Â· Colesterol alto",
+          antecedentes: "HTA · Colesterol alto",
           familiares: "Diabetes",
         },
       }),
@@ -655,7 +655,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 40, score: 100 }],
-        details: { dominante: "FlemÃ¡tico" },
+        details: { dominante: "Flemático" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -703,7 +703,7 @@ export const PATIENTS: PatientProfile[] = [
   },
   {
     id: "pat2",
-    firstName: "Ana MarÃ­a",
+    firstName: "Ana María",
     lastName: "Torres",
     documentNumber: "1054987623",
     gender: "Femenino",
@@ -722,7 +722,7 @@ export const PATIENTS: PatientProfile[] = [
         score: 100,
         history: [{ daysAgo: 38, score: 100 }],
         details: {
-          antecedentes: "DepresiÃ³n / Ansiedad",
+          antecedentes: "Depresión / Ansiedad",
           familiares: "Ninguno conocido",
         },
       }),
@@ -730,7 +730,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 36, score: 100 }],
-        details: { dominante: "MelancÃ³lico" },
+        details: { dominante: "Melancólico" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -778,7 +778,7 @@ export const PATIENTS: PatientProfile[] = [
   },
   {
     id: "pat3",
-    firstName: "JuliÃ¡n",
+    firstName: "Julián",
     lastName: "Restrepo",
     documentNumber: "79845123",
     gender: "Masculino",
@@ -797,15 +797,15 @@ export const PATIENTS: PatientProfile[] = [
         score: 100,
         history: [{ daysAgo: 33, score: 100 }],
         details: {
-          antecedentes: "Diabetes tipo 2 Â· HTA",
-          familiares: "Diabetes Â· HTA",
+          antecedentes: "Diabetes tipo 2 · HTA",
+          familiares: "Diabetes · HTA",
         },
       }),
       result(T["temperamento"], {
         state: "completado",
         score: 100,
         history: [{ daysAgo: 31, score: 100 }],
-        details: { dominante: "SanguÃ­neo" },
+        details: { dominante: "Sanguíneo" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -877,7 +877,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 26, score: 100 }],
-        details: { dominante: "ColÃ©rico" },
+        details: { dominante: "Colérico" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -919,7 +919,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 12, score: 100 }],
-        details: { prioridad: "NutriciÃ³n" },
+        details: { prioridad: "Nutrición" },
       }),
     ],
   },
@@ -949,7 +949,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 24, score: 100 }],
-        details: { dominante: "ColÃ©rico" },
+        details: { dominante: "Colérico" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -990,7 +990,7 @@ export const PATIENTS: PatientProfile[] = [
       result(T["bateria-completa"], {
         state: "en-progreso",
         score: null,
-        details: { progreso: "2 de 3 preguntas de propÃ³sito" },
+        details: { progreso: "2 de 3 preguntas de propósito" },
       }),
     ],
   },
@@ -1015,7 +1015,7 @@ export const PATIENTS: PatientProfile[] = [
         score: 100,
         history: [{ daysAgo: 23, score: 100 }],
         details: {
-          antecedentes: "HTA Â· TriglicÃ©ridos altos",
+          antecedentes: "HTA · Triglicéridos altos",
           familiares: "HTA",
         },
       }),
@@ -1023,7 +1023,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 21, score: 100 }],
-        details: { dominante: "FlemÃ¡tico" },
+        details: { dominante: "Flemático" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -1066,7 +1066,7 @@ export const PATIENTS: PatientProfile[] = [
   },
   {
     id: "pat7",
-    firstName: "AndrÃ©s Felipe",
+    firstName: "Andrés Felipe",
     lastName: "Osorio",
     documentNumber: "1045896321",
     gender: "Masculino",
@@ -1090,7 +1090,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 18, score: 100 }],
-        details: { dominante: "SanguÃ­neo" },
+        details: { dominante: "Sanguíneo" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -1152,7 +1152,7 @@ export const PATIENTS: PatientProfile[] = [
         score: 100,
         history: [{ daysAgo: 18, score: 100 }],
         details: {
-          antecedentes: "Diabetes tipo 2 Â· HTA Â· HÃ­gado graso",
+          antecedentes: "Diabetes tipo 2 · HTA · Hígado graso",
           familiares: "Diabetes",
         },
       }),
@@ -1160,7 +1160,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 16, score: 100 }],
-        details: { dominante: "MelancÃ³lico" },
+        details: { dominante: "Melancólico" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -1204,7 +1204,7 @@ export const PATIENTS: PatientProfile[] = [
   {
     id: "pat9",
     firstName: "Santiago",
-    lastName: "BermÃºdez",
+    lastName: "Bermúdez",
     documentNumber: "1067895423",
     gender: "Masculino",
     age: 38,
@@ -1230,7 +1230,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 14, score: 100 }],
-        details: { dominante: "ColÃ©rico" },
+        details: { dominante: "Colérico" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -1285,13 +1285,13 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 13, score: 100 }],
-        details: { antecedentes: "Tiroides", familiares: "CÃ¡ncer" },
+        details: { antecedentes: "Tiroides", familiares: "Cáncer" },
       }),
       result(T["temperamento"], {
         state: "completado",
         score: 100,
         history: [{ daysAgo: 11, score: 100 }],
-        details: { dominante: "MelancÃ³lico" },
+        details: { dominante: "Melancólico" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -1318,8 +1318,8 @@ export const PATIENTS: PatientProfile[] = [
   },
   {
     id: "pat11",
-    firstName: "Ã“scar",
-    lastName: "DÃ­az",
+    firstName: "Óscar",
+    lastName: "Díaz",
     documentNumber: "1098765432",
     gender: "Masculino",
     age: 51,
@@ -1337,7 +1337,7 @@ export const PATIENTS: PatientProfile[] = [
         score: 100,
         history: [{ daysAgo: 10, score: 100 }],
         details: {
-          antecedentes: "Prediabetes Â· HÃ­gado graso",
+          antecedentes: "Prediabetes · Hígado graso",
           familiares: "Diabetes",
         },
       }),
@@ -1345,7 +1345,7 @@ export const PATIENTS: PatientProfile[] = [
         state: "completado",
         score: 100,
         history: [{ daysAgo: 8, score: 100 }],
-        details: { dominante: "SanguÃ­neo" },
+        details: { dominante: "Sanguíneo" },
       }),
       result(T["nutricional"], {
         state: "completado",
@@ -1400,7 +1400,7 @@ export const PATIENTS: PatientProfile[] = [
   {
     id: "pat13",
     firstName: "Rafael",
-    lastName: "SuÃ¡rez",
+    lastName: "Suárez",
     documentNumber: "1123456789",
     gender: "Masculino",
     age: 57,
@@ -1431,7 +1431,7 @@ export const PATIENTS: PatientProfile[] = [
   {
     id: "pat14",
     firstName: "Carmenza",
-    lastName: "BeltrÃ¡n",
+    lastName: "Beltrán",
     documentNumber: "1145678923",
     gender: "Femenino",
     age: 35,
@@ -1521,191 +1521,191 @@ export const ALERTS: HealthAlert[] = [
     patientId: "pat3",
     testId: "orp",
     indicatorId: "riesgo-cardiometabolico",
-    indicatorName: "Riesgo cardiometabÃ³lico ORP",
+    indicatorName: "Riesgo cardiometabólico ORP",
     resultValue: 78,
     threshold: 75,
     severity: "critica",
     status: "activa",
     createdAt: date(18),
-    message: "Riesgo cardiometabÃ³lico crÃ­tico con complicaciones asociadas.",
+    message: "Riesgo cardiometabólico crítico con complicaciones asociadas.",
     recommendedAction:
-      "Contacto inmediato, valoraciÃ³n mÃ©dica y plan de manejo.",
+      "Contacto inmediato, valoración médica y plan de manejo.",
   },
   {
     id: "al2",
     patientId: "pat8",
     testId: "orp",
     indicatorId: "riesgo-cardiometabolico",
-    indicatorName: "Riesgo cardiometabÃ³lico ORP",
+    indicatorName: "Riesgo cardiometabólico ORP",
     resultValue: 88,
     threshold: 75,
     severity: "critica",
     status: "activa",
     createdAt: date(6),
-    message: "Riesgo cardiometabÃ³lico crÃ­tico con complicaciones asociadas.",
+    message: "Riesgo cardiometabólico crítico con complicaciones asociadas.",
     recommendedAction:
-      "Contacto inmediato, valoraciÃ³n mÃ©dica y plan de manejo.",
+      "Contacto inmediato, valoración médica y plan de manejo.",
   },
   {
     id: "al3",
     patientId: "pat6",
     testId: "orp",
     indicatorId: "riesgo-cardiometabolico",
-    indicatorName: "Riesgo cardiometabÃ³lico ORP",
+    indicatorName: "Riesgo cardiometabólico ORP",
     resultValue: 82,
     threshold: 75,
     severity: "critica",
     status: "en-revision",
     createdAt: date(11),
-    message: "Riesgo cardiometabÃ³lico crÃ­tico con complicaciones asociadas.",
+    message: "Riesgo cardiometabólico crítico con complicaciones asociadas.",
     recommendedAction:
-      "Contacto inmediato, valoraciÃ³n mÃ©dica y plan de manejo.",
+      "Contacto inmediato, valoración médica y plan de manejo.",
   },
   {
     id: "al4",
     patientId: "pat1",
     testId: "orp",
     indicatorId: "riesgo-cardiometabolico",
-    indicatorName: "Riesgo cardiometabÃ³lico ORP",
+    indicatorName: "Riesgo cardiometabólico ORP",
     resultValue: 62,
     threshold: 50,
     severity: "alta",
     status: "activa",
     createdAt: date(28),
-    message: "Riesgo cardiometabÃ³lico alto segÃºn criterios ORP/OMS.",
+    message: "Riesgo cardiometabólico alto según criterios ORP/OMS.",
     recommendedAction:
-      "ValoraciÃ³n mÃ©dica prioritaria y seguimiento estrecho.",
+      "Valoración médica prioritaria y seguimiento estrecho.",
   },
   {
     id: "al5",
     patientId: "pat6",
     testId: "sueno",
     indicatorId: "riesgo-apnea",
-    indicatorName: "SeÃ±ales de riesgo de apnea",
+    indicatorName: "Señales de riesgo de apnea",
     resultValue: 60,
     threshold: 40,
     severity: "alta",
     status: "activa",
     createdAt: date(15),
     message:
-      "Tres seÃ±ales de apnea del sueÃ±o (ronquido, pausas, somnolencia diurna).",
-    recommendedAction: "Derivar a valoraciÃ³n respiratoria del sueÃ±o.",
+      "Tres señales de apnea del sueño (ronquido, pausas, somnolencia diurna).",
+    recommendedAction: "Derivar a valoración respiratoria del sueño.",
   },
   {
     id: "al6",
     patientId: "pat8",
     testId: "sueno",
     indicatorId: "riesgo-apnea",
-    indicatorName: "SeÃ±ales de riesgo de apnea",
+    indicatorName: "Señales de riesgo de apnea",
     resultValue: 60,
     threshold: 40,
     severity: "alta",
     status: "en-revision",
     createdAt: date(10),
-    message: "Tres seÃ±ales de apnea del sueÃ±o (ronquido, pausas, ahogo).",
-    recommendedAction: "Derivar a valoraciÃ³n respiratoria del sueÃ±o.",
+    message: "Tres señales de apnea del sueño (ronquido, pausas, ahogo).",
+    recommendedAction: "Derivar a valoración respiratoria del sueño.",
   },
   {
     id: "al7",
     patientId: "pat3",
     testId: "sueno",
     indicatorId: "riesgo-apnea",
-    indicatorName: "SeÃ±ales de riesgo de apnea",
+    indicatorName: "Señales de riesgo de apnea",
     resultValue: 40,
     threshold: 40,
     severity: "alta",
     status: "atendida",
     createdAt: date(24),
-    message: "Dos seÃ±ales de apnea del sueÃ±o detectadas.",
-    recommendedAction: "ValoraciÃ³n respiratoria del sueÃ±o.",
+    message: "Dos señales de apnea del sueño detectadas.",
+    recommendedAction: "Valoración respiratoria del sueño.",
   },
   {
     id: "al8",
     patientId: "pat2",
     testId: "ers",
     indicatorId: "estres-relacional",
-    indicatorName: "EstrÃ©s relacional ERS",
+    indicatorName: "Estrés relacional ERS",
     resultValue: 72,
     threshold: 50,
     severity: "alta",
     status: "activa",
     createdAt: date(20),
-    message: "EstrÃ©s relacional alto con impacto en calidad de vida.",
-    recommendedAction: "ValoraciÃ³n psicolÃ³gica y manejo del estrÃ©s.",
+    message: "Estrés relacional alto con impacto en calidad de vida.",
+    recommendedAction: "Valoración psicológica y manejo del estrés.",
   },
   {
     id: "al9",
     patientId: "pat5",
     testId: "ers",
     indicatorId: "estres-relacional",
-    indicatorName: "EstrÃ©s relacional ERS",
+    indicatorName: "Estrés relacional ERS",
     resultValue: 66,
     threshold: 50,
     severity: "alta",
     status: "en-revision",
     createdAt: date(12),
-    message: "EstrÃ©s relacional alto con impacto en calidad de vida.",
-    recommendedAction: "ValoraciÃ³n psicolÃ³gica y manejo del estrÃ©s.",
+    message: "Estrés relacional alto con impacto en calidad de vida.",
+    recommendedAction: "Valoración psicológica y manejo del estrés.",
   },
   {
     id: "al10",
     patientId: "pat8",
     testId: "nutricional",
     indicatorId: "calidad-alimentaria",
-    indicatorName: "Calidad alimentaria y hÃ¡bitos",
+    indicatorName: "Calidad alimentaria y hábitos",
     resultValue: 29,
     threshold: 39,
     severity: "media",
     status: "activa",
     createdAt: date(14),
     message:
-      "AlimentaciÃ³n deficiente detectada en la evaluaciÃ³n nutricional.",
+      "Alimentación deficiente detectada en la evaluación nutricional.",
     recommendedAction:
-      "Programar valoraciÃ³n con nutriciÃ³n y plan de ajuste de hÃ¡bitos.",
+      "Programar valoración con nutrición y plan de ajuste de hábitos.",
   },
   {
     id: "al11",
     patientId: "pat6",
     testId: "nutricional",
     indicatorId: "calidad-alimentaria",
-    indicatorName: "Calidad alimentaria y hÃ¡bitos",
+    indicatorName: "Calidad alimentaria y hábitos",
     resultValue: 36,
     threshold: 39,
     severity: "media",
     status: "activa",
     createdAt: date(19),
     message:
-      "AlimentaciÃ³n deficiente detectada en la evaluaciÃ³n nutricional.",
+      "Alimentación deficiente detectada en la evaluación nutricional.",
     recommendedAction:
-      "Programar valoraciÃ³n con nutriciÃ³n y plan de ajuste de hÃ¡bitos.",
+      "Programar valoración con nutrición y plan de ajuste de hábitos.",
   },
   {
     id: "al12",
     patientId: "pat3",
     testId: "nutricional",
     indicatorId: "calidad-alimentaria",
-    indicatorName: "Calidad alimentaria y hÃ¡bitos",
+    indicatorName: "Calidad alimentaria y hábitos",
     resultValue: 32,
     threshold: 39,
     severity: "media",
     status: "cerrada",
     createdAt: date(29),
     message:
-      "AlimentaciÃ³n deficiente detectada en la evaluaciÃ³n nutricional.",
-    recommendedAction: "ValoraciÃ³n nutricional programada.",
+      "Alimentación deficiente detectada en la evaluación nutricional.",
+    recommendedAction: "Valoración nutricional programada.",
   },
   {
     id: "al13",
     patientId: "pat8",
     testId: "iac-adresd",
     indicatorId: "adherencia",
-    indicatorName: "Ãndice de adherencia IAC-ADRESD",
+    indicatorName: "Índice de adherencia IAC-ADRESD",
     resultValue: 33,
     threshold: 39,
     severity: "media",
     status: "activa",
     createdAt: date(8),
-    message: "Ãndice de adherencia bajo en el programa.",
+    message: "Índice de adherencia bajo en el programa.",
     recommendedAction: "Entrevista motivacional y refuerzo de compromisos.",
   },
   {
@@ -1713,13 +1713,13 @@ export const ALERTS: HealthAlert[] = [
     patientId: "pat6",
     testId: "iac-adresd",
     indicatorId: "adherencia",
-    indicatorName: "Ãndice de adherencia IAC-ADRESD",
+    indicatorName: "Índice de adherencia IAC-ADRESD",
     resultValue: 38,
     threshold: 39,
     severity: "media",
     status: "cerrada",
     createdAt: date(13),
-    message: "Ãndice de adherencia bajo en el programa.",
+    message: "Índice de adherencia bajo en el programa.",
     recommendedAction: "Entrevista motivacional programada.",
   },
   {
@@ -1727,42 +1727,42 @@ export const ALERTS: HealthAlert[] = [
     patientId: "pat8",
     testId: "sueno",
     indicatorId: "calidad-sueno",
-    indicatorName: "Calidad del sueÃ±o",
+    indicatorName: "Calidad del sueño",
     resultValue: 26,
     threshold: 39,
     severity: "media",
     status: "en-revision",
     createdAt: date(9),
-    message: "Calidad del sueÃ±o deficiente reportada por el paciente.",
-    recommendedAction: "IntervenciÃ³n de higiene del sueÃ±o y seguimiento.",
+    message: "Calidad del sueño deficiente reportada por el paciente.",
+    recommendedAction: "Intervención de higiene del sueño y seguimiento.",
   },
   {
     id: "al16",
     patientId: "pat6",
     testId: "sueno",
     indicatorId: "calidad-sueno",
-    indicatorName: "Calidad del sueÃ±o",
+    indicatorName: "Calidad del sueño",
     resultValue: 33,
     threshold: 39,
     severity: "media",
     status: "activa",
     createdAt: date(15),
-    message: "Calidad del sueÃ±o deficiente reportada por el paciente.",
-    recommendedAction: "IntervenciÃ³n de higiene del sueÃ±o y seguimiento.",
+    message: "Calidad del sueño deficiente reportada por el paciente.",
+    recommendedAction: "Intervención de higiene del sueño y seguimiento.",
   },
   {
     id: "al17",
     patientId: "pat1",
     testId: "sueno",
     indicatorId: "calidad-sueno",
-    indicatorName: "Calidad del sueÃ±o",
+    indicatorName: "Calidad del sueño",
     resultValue: 38,
     threshold: 39,
     severity: "media",
     status: "atendida",
     createdAt: date(33),
-    message: "Calidad del sueÃ±o deficiente reportada por el paciente.",
-    recommendedAction: "Higiene del sueÃ±o aplicada.",
+    message: "Calidad del sueño deficiente reportada por el paciente.",
+    recommendedAction: "Higiene del sueño aplicada.",
   },
   {
     id: "al18",
@@ -1775,7 +1775,7 @@ export const ALERTS: HealthAlert[] = [
     severity: "media",
     status: "activa",
     createdAt: date(25),
-    message: "Nivel de movimiento limitado en la evaluaciÃ³n funcional.",
+    message: "Nivel de movimiento limitado en la evaluación funcional.",
     recommendedAction:
       "Valorar con fisioterapia y prescribir rutina progresiva.",
   },
@@ -1790,22 +1790,22 @@ export const ALERTS: HealthAlert[] = [
     severity: "media",
     status: "activa",
     createdAt: date(12),
-    message: "Nivel de movimiento limitado en la evaluaciÃ³n funcional.",
+    message: "Nivel de movimiento limitado en la evaluación funcional.",
     recommendedAction:
       "Valorar con fisioterapia y prescribir rutina progresiva.",
   },
 ];
 
 /* ------------------------------------------------------------------ */
-/* BaterÃ­as de evaluaciÃ³n                                              */
+/* Baterías de evaluación                                              */
 /* ------------------------------------------------------------------ */
 
 export const BATTERIES: Battery[] = [
   {
     id: "bat-inicial",
-    name: "BaterÃ­a de evaluaciÃ³n inicial",
+    name: "Batería de evaluación inicial",
     description:
-      "EvaluaciÃ³n integral del ingreso: historia, temperamento, nutriciÃ³n, movimiento, sueÃ±o, adherencia, riesgo cardiometabÃ³lico, estrÃ©s y perfil de propÃ³sito.",
+      "Evaluación integral del ingreso: historia, temperamento, nutrición, movimiento, sueño, adherencia, riesgo cardiometabólico, estrés y perfil de propósito.",
     testIds: TESTS.map((t) => t.id),
     requiredCount: 9,
     optionalCount: 0,
@@ -1816,9 +1816,9 @@ export const BATTERIES: Battery[] = [
   },
   {
     id: "bat-seguimiento",
-    name: "BaterÃ­a de seguimiento",
+    name: "Batería de seguimiento",
     description:
-      "ReevaluaciÃ³n periÃ³dica de nutriciÃ³n, movimiento, sueÃ±o, adherencia y estrÃ©s para monitorear la evoluciÃ³n del programa.",
+      "Reevaluación periódica de nutrición, movimiento, sueño, adherencia y estrés para monitorear la evolución del programa.",
     testIds: ["nutricional", "movimiento", "sueno", "iac-adresd", "ers"],
     requiredCount: 4,
     optionalCount: 1,
@@ -1829,9 +1829,9 @@ export const BATTERIES: Battery[] = [
   },
   {
     id: "bat-nutricional",
-    name: "BaterÃ­a nutricional",
+    name: "Batería nutricional",
     description:
-      "EvaluaciÃ³n profunda del componente nutricional y de hÃ¡bitos alimentarios.",
+      "Evaluación profunda del componente nutricional y de hábitos alimentarios.",
     testIds: ["nutricional", "iac-adresd"],
     requiredCount: 2,
     optionalCount: 0,
@@ -1842,9 +1842,9 @@ export const BATTERIES: Battery[] = [
   },
   {
     id: "bat-psicologica",
-    name: "BaterÃ­a psicolÃ³gica",
+    name: "Batería psicológica",
     description:
-      "EvaluaciÃ³n de salud mental: temperamento, estrÃ©s relacional y propÃ³sito.",
+      "Evaluación de salud mental: temperamento, estrés relacional y propósito.",
     testIds: ["temperamento", "ers", "bateria-completa"],
     requiredCount: 3,
     optionalCount: 0,
