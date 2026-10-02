@@ -38,6 +38,7 @@ import {
   type ProfessionalScopes,
 } from "@/features/professionals/services/employees-service";
 import { PROFESSIONAL_CLINICS_ENABLED } from "@/features/professionals/config";
+import { ProfessionalSchedulesSection } from "./detail/professional-schedules-section";
 import { fetchRoles } from "@/features/roles/services/roles-service";
 import type { Role } from "@/features/roles/types";
 import { ApiError } from "@/lib/api/http";
@@ -678,6 +679,14 @@ export function ProfessionalDetail({ id }: { id: string }) {
               )}
             </div>
           </section>
+
+          {/* Horarios semanales (debajo de Profesión, spec del change).
+              Solo aplica a empleados con extensión profesional. */}
+          {employee.professional && (
+            <ProfessionalSchedulesSection
+              professionalId={employee.professional.id}
+            />
+          )}
         </div>
       </div>
     </div>
