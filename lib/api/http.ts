@@ -101,7 +101,9 @@ export function getActiveClinicId(): string | null {
  * forma definitiva (cookie inválida/expirada/revocada): limpia la sesión y
  * redirige al login.
  */
-export function setSessionInvalidatedHandler(handler: (() => void) | null): void {
+export function setSessionInvalidatedHandler(
+  handler: (() => void) | null,
+): void {
   onSessionInvalidated = handler;
 }
 
@@ -136,11 +138,9 @@ export async function apiFetch<T>(
     if (externalSignal.aborted) {
       controller.abort();
     } else {
-      externalSignal.addEventListener(
-        "abort",
-        () => controller.abort(),
-        { once: true },
-      );
+      externalSignal.addEventListener("abort", () => controller.abort(), {
+        once: true,
+      });
     }
   }
 
@@ -163,12 +163,7 @@ export async function apiFetch<T>(
       credentials: "include",
     });
 
-    if (
-      response.status === 401 &&
-      auth &&
-      retry &&
-      !isRefreshEndpoint(path)
-    ) {
+    if (response.status === 401 && auth && retry && !isRefreshEndpoint(path)) {
       const outcome = await refreshAccessToken();
 
       if (outcome.ok && outcome.token) {
@@ -241,31 +236,70 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+/**
+ * Revierte el doble-encoding UTF-8→Latin-1→UTF-8 que a veces viaja en los
+ * mensajes de error del backend (QA 02-10: "Credenciales invÃ¡lidas").
+ * LA CAUSA RAÍZ está en literales del backend (gap documentado); aquí se
+ * compensa de forma reversible y conservadora: SOLO se corrige si la cadena
+ * es 100 % una re-interpretación Latin-1 decodable como UTF-8 (sin
+ * caracteres sospechosos de falso positivo); si algo no casa, se conserva
+ * la original.
+ */
+const MOJIBAKE_SUSPECT = /[\u00C2\u00C3\u00C4\u00C5][\u0080-\u00BF]/;
+
+function deMojibake(text: string): string {
+  if (!text || !MOJIBAKE_SUSPECT.test(text)) return text;
+  // Cada codepoint debe estar en Latin-1 (si no, NO es un artefacto de
+  // double-encoding: devolver la original sin tocar).
+  const bytes = new Uint8Array(text.length);
+  for (let i = 0; i < text.length; i += 1) {
+    const code = text.codePointAt(i) ?? 0;
+    if (code > 0xff) return text;
+    bytes[i] = code;
+  }
+  let decoded: string;
+  try {
+    decoded = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    // Secuencia no representable en UTF-8: mantenemos la original.
+    return text;
+  }
+  return decoded.includes("\uFFFD") ? text : decoded;
+}
+
 async function toApiError(response: Response): Promise<ApiError> {
   // Problema RFC 7807 (ProblemDetails) del backend o fallback `message`.
+  // La lectura es UTF-8 EXPLÍCITa sobre arrayBuffer: response.json() queda
+  // a merced del Content-Type, y con fuentes corruptas el fallback TextDecoder
+  // (tarea 1.1 del change erp-ux-pulido-testflight) define el comportamiento.
   let detail: string | undefined;
   let errors: Record<string, string[]> | undefined;
   let correlationId: string | undefined;
   try {
-    const body: unknown = await response.json();
+    const raw = new TextDecoder("utf-8").decode(await response.arrayBuffer());
+    const body: unknown = raw ? JSON.parse(raw) : null;
     if (typeof body === "object" && body !== null) {
       const record = body as Record<string, unknown>;
       if (typeof record.detail === "string") {
-        detail = record.detail;
+        detail = deMojibake(record.detail);
       } else if (typeof record.message === "string") {
-        detail = record.message;
+        detail = deMojibake(record.message);
       }
       if (typeof record.correlationId === "string") {
         correlationId = record.correlationId;
       }
       const rawErrors = record.errors;
-      if (rawErrors && typeof rawErrors === "object" && !Array.isArray(rawErrors)) {
+      if (
+        rawErrors &&
+        typeof rawErrors === "object" &&
+        !Array.isArray(rawErrors)
+      ) {
         errors = Object.fromEntries(
           Object.entries(rawErrors).map(([key, value]) => [
             key,
             Array.isArray(value)
-              ? value.map(String)
-              : [String(value ?? "")],
+              ? value.map(String).map(deMojibake)
+              : [deMojibake(String(value ?? ""))],
           ]),
         );
       }
@@ -278,7 +312,12 @@ async function toApiError(response: Response): Promise<ApiError> {
 
   switch (response.status) {
     case 401:
-      return new ApiError(401, "unauthorized", detail ?? "No autorizado.", common);
+      return new ApiError(
+        401,
+        "unauthorized",
+        detail ?? "No autorizado.",
+        common,
+      );
     case 403:
       return new ApiError(
         403,
@@ -287,9 +326,19 @@ async function toApiError(response: Response): Promise<ApiError> {
         common,
       );
     case 404:
-      return new ApiError(404, "not-found", detail ?? "El recurso no existe.", common);
+      return new ApiError(
+        404,
+        "not-found",
+        detail ?? "El recurso no existe.",
+        common,
+      );
     case 409:
-      return new ApiError(409, "conflict", detail ?? "Conflicto con el estado actual del recurso.", common);
+      return new ApiError(
+        409,
+        "conflict",
+        detail ?? "Conflicto con el estado actual del recurso.",
+        common,
+      );
     case 429:
       return new ApiError(
         429,
@@ -300,15 +349,30 @@ async function toApiError(response: Response): Promise<ApiError> {
     case 400:
     case 422:
       if (errors) {
-        return new ApiError(response.status, "validation", detail ?? "La solicitud no es válida.", common);
+        return new ApiError(
+          response.status,
+          "validation",
+          detail ?? "La solicitud no es válida.",
+          common,
+        );
       }
-      return new ApiError(response.status, "bad-request", detail ?? "La solicitud no es válida.", common);
+      return new ApiError(
+        response.status,
+        "bad-request",
+        detail ?? "La solicitud no es válida.",
+        common,
+      );
     default:
-      if (response.status === 502 || response.status === 503 || response.status === 504) {
+      if (
+        response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504
+      ) {
         return new ApiError(
           response.status,
           "unavailable",
-          detail ?? "El servicio no está disponible en este momento. Intenta más tarde.",
+          detail ??
+            "El servicio no está disponible en este momento. Intenta más tarde.",
           common,
         );
       }
