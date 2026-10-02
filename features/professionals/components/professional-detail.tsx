@@ -413,7 +413,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
         {/* Columna principal: asignaciones por clínica */}
-        <div className="space-y-5 lg:col-span-2">
+        <div className="min-w-0 space-y-5 lg:col-span-2">
           <section className="overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
               title={
@@ -583,7 +583,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         </div>
 
         {/* Columna lateral: invitación + profesión */}
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <section className="overflow-hidden rounded-2xl border border-border bg-card">
             <SectionHeader
               title={t("Invitación y acceso")}
