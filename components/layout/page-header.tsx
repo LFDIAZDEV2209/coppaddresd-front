@@ -47,7 +47,8 @@ export function PageHeader({
         <h1 className="text-lg font-bold text-white tracking-tight truncate">
           {title}
         </h1>
-        <p className="text-[12px] text-white/80 truncate">{description}</p>
+        {/* Copy fijo: wrap en vez de truncate (F4). */}
+        <p className="text-[12px] text-white/80 line-clamp-2">{description}</p>
       </div>
 
       {actions && (

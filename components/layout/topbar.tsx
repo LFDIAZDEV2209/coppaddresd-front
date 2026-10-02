@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { getBreadcrumbSegments } from "@/lib/config/navigation";
 import { useTheme } from "@/providers/theme-provider";
 import { useAuth } from "@/providers/auth-provider";
@@ -31,6 +37,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { NotificationsMenu } from "@/features/notifications/components/notifications-menu";
 import { useT } from "@/providers/i18n-provider";
+import { useBreadcrumbOverride } from "@/components/layout/breadcrumb-provider";
 import { cn } from "@/lib/utils";
 
 interface TopbarProps {
@@ -47,7 +54,28 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const { user, logout } = useAuth();
   const { context, activeClinic, setActiveClinic } = useAppContext();
   const t = useT();
+  const breadcrumbOverride = useBreadcrumbOverride();
+  // F8: detección de plataforma hydration-safe (useSyncExternalStore evalúa
+  // post-hidratación; el servidor responde vacía → "Ctrl+K" por defecto).
+  // F8: macOS muestra ⌘K; Windows/Linux Ctrl+K.
+  const noopSubscribe = useCallback(() => () => {}, []);
+  const isApple = useSyncExternalStore(
+    noopSubscribe,
+    () => /Mac|iPhone|iPad|iPod/.test(window.navigator.userAgent),
+    () => false,
+  );
+  const kbdLabel = isApple ? t("⌘K") : t("Ctrl+K");
+
+  // Breadcrumb: la hoja genérica la sustituye el título dinámico registrado
+  // por la page de detalle (F9: "Profesionales > {nombre}").
   const segments = getBreadcrumbSegments(pathname);
+  const resolvedSegments =
+    breadcrumbOverride && segments.length > 1
+      ? segments.slice(0, -1).concat({
+          ...segments[segments.length - 1],
+          label: breadcrumbOverride,
+        })
+      : segments;
   const [scrolled, setScrolled] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
@@ -100,8 +128,11 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           className="hidden items-center gap-1.5 text-[13px] sm:flex min-w-0"
           aria-label="Breadcrumb"
         >
-          {segments.map((segment, i) => (
-            <span key={i} className="flex items-center gap-1.5 shrink-0">
+          {resolvedSegments.map((segment, i) => (
+            <span
+              key={`${segment.label}-${i}`}
+              className="flex items-center gap-1.5 shrink-0"
+            >
               {i > 0 && (
                 <ChevronRight
                   className={cn(
@@ -159,13 +190,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           />
           <kbd
             className={cn(
-              "absolute right-3 top-1/2 -translate-y-1/2 rounded-md border px-1.5 py-0.5 text-[10px]",
+              "absolute right-3 top-1/2 -translate-y-1/2 rounded-md border px-1.5 py-0.5 text-xs",
               scrolled
                 ? "border-white/20 bg-white/10 text-white/60"
                 : "border-border bg-white text-slate-400",
             )}
           >
-            ⌘K
+            {kbdLabel}
           </kbd>
         </div>
 

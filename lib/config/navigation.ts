@@ -705,6 +705,15 @@ export function getBreadcrumbSegments(
     return segments;
   }
 
+  // Rutas anidadas del módulo de empleados/profesionales (detalle).
+  // La hoja final la reemplaza el Topbar con el nombre real cuando la page
+  // registra el override (useBreadcrumbTitle).
+  if (/^\/employees\/[^/]+$/.test(pathname)) {
+    segments.push({ label: "Profesionales", href: "/employees" });
+    segments.push({ label: "Detalle de profesional" });
+    return segments;
+  }
+
   // Rutas anidadas del módulo de usuarios (nuevo/importar/detalle/editar).
   if (pathname.startsWith("/users/")) {
     segments.push({ label: "Usuarios", href: "/users" });

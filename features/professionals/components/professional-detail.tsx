@@ -39,6 +39,7 @@ import {
 } from "@/features/professionals/services/employees-service";
 import { PROFESSIONAL_CLINICS_ENABLED } from "@/features/professionals/config";
 import { ProfessionalSchedulesSection } from "./detail/professional-schedules-section";
+import { useBreadcrumbTitle } from "@/components/layout/breadcrumb-provider";
 import { fetchRoles } from "@/features/roles/services/roles-service";
 import type { Role } from "@/features/roles/types";
 import { ApiError } from "@/lib/api/http";
@@ -51,8 +52,9 @@ import {
 /**
  * Vista de detalle del profesional con el patrón del módulo Usuarios:
  * card de identidad blanca, secciones con barra de gradiente, grid de
- * datos con iconos y selects nativos estilizados. Toda la lógica
- * (invitar, scopes por clínica) se conserva intacta.
+ * datos con iconos y selects nativos estilizados. Registra el nombre en
+ * el breadcrumb (F9) y toda la lógica (invitar, scopes por clínica) se
+ * conserva intacta.
  */
 export function ProfessionalDetail({ id }: { id: string }) {
   const t = useT();
@@ -87,6 +89,10 @@ export function ProfessionalDetail({ id }: { id: string }) {
     }
     return map;
   }, []);
+
+  // F9: la hoja del breadcrumb muestra el nombre completo del profesional
+  // (se limpia al desmontar para no filtrarlo a otra ruta).
+  useBreadcrumbTitle(employee ? fullName(employee) : null);
 
   const load = useCallback(
     async (showSpinner = false) => {
@@ -305,16 +311,19 @@ export function ProfessionalDetail({ id }: { id: string }) {
               <h1 className="truncate text-lg leading-tight font-bold text-foreground">
                 {fullName(employee)}
               </h1>
-              <p className="flex items-center gap-1.5 truncate text-[13px] text-muted-foreground">
+              <p
+                className="flex items-center gap-1.5 truncate text-[13px] text-muted-foreground"
+                title={employee.email}
+              >
                 <Mail className="size-3.5 shrink-0" />
-                {employee.email}
+                <span className="truncate">{employee.email}</span>
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <ProfessionalStatusBadge status={employee.status} />
                 {employee.professionalTypeName && (
                   <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-foreground/80">
                     <Stethoscope className="size-3 text-primary" />
-                    {employee.professionalTypeName}
+                    {t(employee.professionalTypeName)}
                   </span>
                 )}
               </div>
@@ -344,12 +353,9 @@ export function ProfessionalDetail({ id }: { id: string }) {
           </div>
         </div>
 
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border/60 pt-4 sm:grid-cols-3 lg:grid-cols-4">
-          <InfoItem
-            label={t("Correo electrónico")}
-            value={employee.email}
-            icon={Mail}
-          />
+        {/* Grid de metadata (F10): 3 columnas y sin email duplicado — el
+            correo vive en la card de identidad con tooltip (F4). */}
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border/60 pt-4 sm:grid-cols-3">
           <InfoItem
             label={t("Teléfono")}
             value={

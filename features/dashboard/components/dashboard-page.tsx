@@ -114,32 +114,33 @@ export function DashboardPage() {
         </p>
       )}
 
-      {/* KPI Cards — valores reales del endpoint de KPIs (el 1ro es héroe con filled) */}
+      {/* KPI Cards — StatCard unificado, estilo idéntico sin relleno héroe
+          (F5: se elimina el relleno y el borde-como-selección). El contexto
+          contextual de cada card se localiza con t(). */}
       <section
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 stagger-children"
         aria-label={t("Indicadores clave")}
       >
         <StatCard
-          label="Total de pacientes"
+          label={t("Total de pacientes")}
           value={kpis ? formatCount(kpis.totalPatients) : "—"}
           icon={Users}
-          filled={true}
           variant="info"
         />
         <StatCard
-          label="Pacientes nuevos (30 días)"
+          label={t("Pacientes nuevos (30 días)")}
           value={kpis ? formatCount(kpis.newPatients30d) : "—"}
           icon={UserPlus}
           variant="success"
         />
         <StatCard
-          label="Tests de salud (30 días)"
+          label={t("Tests de salud (30 días)")}
           value={kpis ? formatCount(kpis.healthTests30d) : "—"}
           icon={Activity}
           variant="primary"
         />
         <StatCard
-          label="Movimientos de inventario (30 días)"
+          label={t("Movimientos de inventario (30 días)")}
           value={
             kpis
               ? formatCount(kpis.inventoryEntries30d + kpis.inventoryExits30d)
@@ -149,7 +150,10 @@ export function DashboardPage() {
           variant="warning"
           context={
             kpis
-              ? `${formatCount(kpis.inventoryEntries30d)} entradas · ${formatCount(kpis.inventoryExits30d)} salidas`
+              ? t("{entradas} entradas · {salidas} salidas", {
+                  entradas: formatCount(kpis.inventoryEntries30d),
+                  salidas: formatCount(kpis.inventoryExits30d),
+                })
               : undefined
           }
         />

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Activity, Bot, FileSearch, ShieldCheck } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import type { ActivityEvent } from "../types";
-
 interface RecentActivityCardProps {
   data: ActivityEvent[];
 }
@@ -20,51 +19,68 @@ function inferIcon(action: string) {
 
 /**
  * Feed de actividad reciente: timeline con línea vertical, avatar que la
- * enmascara, icono de tipo de evento y hover suave por fila.
+ * enmascara, icono de tipo de evento y hover suave por fila. Sin eventos
+ * muestra un estado vacío amigable (t. 2.4) en lugar de timeline vacía.
  */
 export function RecentActivityCard({ data }: RecentActivityCardProps) {
   const t = useT();
   return (
     <div className="flex flex-col">
-      <div className="relative flex flex-col">
-        {/* Línea de la timeline */}
-        <div
-          aria-hidden="true"
-          className="absolute top-4 bottom-4 left-[15px] w-px bg-border"
-        />
-        {data.map((event) => {
-          const EventIcon = inferIcon(event.action);
-          return (
-            <div
-              key={event.id}
-              className="group relative z-10 -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-200 hover:bg-muted/50"
-            >
-              <div className="relative shrink-0">
-                <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--sidebar)] to-brand-teal text-[10px] font-bold text-white shadow-sm ring-2 ring-card">
-                  {event.initials}
+      {data.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border py-10 text-center">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <Activity className="size-5" aria-hidden="true" />
+          </span>
+          <p className="text-sm font-medium text-foreground">
+            {t("Sin actividad reciente")}
+          </p>
+          <p className="max-w-xs text-xs text-muted-foreground">
+            {t(
+              "Los movimientos del equipo aparecerán aquí a medida que ocurran",
+            )}
+          </p>
+        </div>
+      ) : (
+        <div className="relative flex flex-col">
+          {/* Línea de la timeline */}
+          <div
+            aria-hidden="true"
+            className="absolute top-4 bottom-4 left-[15px] w-px bg-border"
+          />
+          {data.map((event) => {
+            const EventIcon = inferIcon(event.action);
+            return (
+              <div
+                key={event.id}
+                className="group relative z-10 -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-200 hover:bg-muted/50"
+              >
+                <div className="relative shrink-0">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--sidebar)] to-brand-teal text-[10px] font-bold text-white shadow-sm ring-2 ring-card">
+                    {event.initials}
+                  </div>
+                  <span className="absolute -right-0.5 -bottom-0.5 flex size-3.5 items-center justify-center rounded-full border border-border bg-card">
+                    <EventIcon
+                      className="size-2 text-brand-teal"
+                      aria-hidden="true"
+                    />
+                  </span>
                 </div>
-                <span className="absolute -right-0.5 -bottom-0.5 flex size-3.5 items-center justify-center rounded-full border border-border bg-card">
-                  <EventIcon
-                    className="size-2 text-brand-teal"
-                    aria-hidden="true"
-                  />
+                <div className="flex min-w-0 flex-1 flex-col gap-px overflow-hidden">
+                  <span className="truncate text-[12.5px] font-medium text-foreground">
+                    {event.user}
+                  </span>
+                  <span className="truncate text-[11px] text-muted-foreground">
+                    {event.action}
+                  </span>
+                </div>
+                <span className="shrink-0 text-[10px] whitespace-nowrap text-muted-foreground transition-colors group-hover:text-foreground/70">
+                  {event.time}
                 </span>
               </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-px overflow-hidden">
-                <span className="truncate text-[12.5px] font-medium text-foreground">
-                  {event.user}
-                </span>
-                <span className="truncate text-[11px] text-muted-foreground">
-                  {event.action}
-                </span>
-              </div>
-              <span className="shrink-0 text-[10px] whitespace-nowrap text-muted-foreground transition-colors group-hover:text-foreground/70">
-                {event.time}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       <Link
         href="/settings/audit"

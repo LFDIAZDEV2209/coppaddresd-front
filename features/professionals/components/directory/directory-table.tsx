@@ -230,7 +230,7 @@ export function DirectoryTable({
                 {employee.professionalTypeName ? (
                   <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
                     <Stethoscope className="size-3 text-primary" />
-                    {employee.professionalTypeName}
+                    {t(employee.professionalTypeName)}
                   </span>
                 ) : (
                   <span className="text-xs text-muted-foreground">
@@ -251,7 +251,7 @@ export function DirectoryTable({
                         key={name}
                         className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary"
                       >
-                        {name}
+                        {t(name)}
                       </span>
                     ))
                   ) : (
