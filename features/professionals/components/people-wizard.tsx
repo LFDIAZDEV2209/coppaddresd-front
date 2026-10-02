@@ -21,11 +21,12 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
+  fetchEmployee,
   fetchOrganizationTree,
   createProfessional,
-  saveProfessionalSchedules,
   type OrganizationTree,
 } from "@/features/professionals/services/employees-service";
+import { updateSchedules } from "@/features/professionals/services/schedules-service";
 import {
   fetchProfessionalTypes,
   fetchSpecialties,
@@ -350,15 +351,18 @@ export function PeopleWizard({
           sendInvitation: form.sendInvitation,
         });
 
-        // Horarios: best-effort PUT tras crear el profesional (solo modo profesional)
+        // Horarios: best-effort PUT tras crear el profesional (solo modo
+        // profesional). El endpoint espera el id de la extensión profesional
+        // (erp.professionals), que se resuelve leyendo el detalle del
+        // empleado recién creado; si falla, no bloquea (se edita en detalle).
         if (mode === "professional") {
           const schedulePayload = buildSchedulePayload();
           if (schedulePayload.length > 0) {
             try {
-              await saveProfessionalSchedules(
-                result.employeeId,
-                schedulePayload,
-              );
+              const detail = await fetchEmployee(result.employeeId);
+              if (detail.professional) {
+                await updateSchedules(detail.professional.id, schedulePayload);
+              }
             } catch {
               // No bloquear: el horario se edita en el detalle
             }
