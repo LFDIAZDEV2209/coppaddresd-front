@@ -52,6 +52,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select as UiSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CatalogCombobox } from "./catalog-combobox";
 import { ApiError } from "@/lib/api/http";
@@ -670,6 +677,31 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
   const [form, setForm] = useState<PatientFormState>(createEmptyForm);
   const [insurers, setInsurers] = useState<Insurer[]>([]);
   const [countries, setCountries] = useState<CountryOption[]>([]);
+  // Catálogo deduplicado por código telefónico (varios países comparten el
+  // +1). El trigger muestra solo el prefijo; el nombre aparece en el modal.
+  const emergencyCountryOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const options: { value: string; label: string }[] = [];
+    for (const country of countries) {
+      if (!country.phoneCode || seen.has(country.phoneCode)) continue;
+      seen.add(country.phoneCode);
+      options.push({
+        value: country.phoneCode,
+        label: `+${country.phoneCode} · ${country.name}`,
+      });
+    }
+    return options;
+  }, [countries]);
+  const emergencyCountryItems = useMemo(
+    () =>
+      Object.fromEntries(
+        emergencyCountryOptions.map((option) => [
+          option.value,
+          `+${option.value}`,
+        ]),
+      ),
+    [emergencyCountryOptions],
+  );
   const [states, setStates] = useState<StateOption[]>([]);
   const [bloodTypes, setBloodTypes] = useState<CatalogOption[]>([]);
   const [documentTypes, setDocumentTypes] = useState<CatalogOption[]>([]);
@@ -1212,18 +1244,30 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 >
                   <div className="flex gap-2">
                     <div className="w-36 shrink-0">
-                      <Select
+                      <UiSelect
+                        items={emergencyCountryItems}
                         value={form.emergencyContactPhoneCountryCode}
-                        onChange={(value) =>
-                          update("emergencyContactPhoneCountryCode", value)
+                        onValueChange={(value) =>
+                          update(
+                            "emergencyContactPhoneCountryCode",
+                            value ?? "",
+                          )
                         }
                       >
-                        {countries.map((country) => (
-                          <option key={country.id} value={country.phoneCode}>
-                            +{country.phoneCode} · {country.name}
-                          </option>
-                        ))}
-                      </Select>
+                        <SelectTrigger
+                          aria-label={t("País del teléfono")}
+                          className="h-9! w-full"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {emergencyCountryOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </UiSelect>
                     </div>
                     <Input
                       className="min-w-0 flex-1"

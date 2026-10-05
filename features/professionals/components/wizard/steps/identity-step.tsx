@@ -42,8 +42,8 @@ export function IdentityStep({
   const isPatient = form.mode === "patient";
 
   // Catálogo deduplicado por código telefónico (varios países comparten el
-  // +1); se pasa a los Select como `items` para que el trigger muestre el
-  // nombre y no el valor crudo.
+  // +1). El trigger muestra solo el prefijo; el nombre completo aparece en
+  // las opciones del modal.
   const countryOptions = useMemo(() => {
     const seen = new Set<string>();
     const options: { value: string; label: string }[] = [];
@@ -57,6 +57,15 @@ export function IdentityStep({
     }
     return options;
   }, [countries]);
+
+  // Valor visible en el trigger: solo el prefijo (ej. "+57").
+  const countryItems = useMemo(
+    () =>
+      Object.fromEntries(
+        countryOptions.map((option) => [option.value, `+${option.value}`]),
+      ),
+    [countryOptions],
+  );
 
   // Errores por campo (se muestran al salir del campo — patrón Usuarios).
   const [touched, setTouched] = useState<Set<string>>(new Set());
@@ -227,7 +236,7 @@ export function IdentityStep({
             >
               <div className="flex gap-2">
                 <Select
-                  items={countryOptions}
+                  items={countryItems}
                   value={form.phoneCountryCode}
                   onValueChange={(value) =>
                     setForm({ ...form, phoneCountryCode: value ?? "" })
@@ -413,7 +422,7 @@ export function IdentityStep({
                     >
                       <div className="flex gap-2">
                         <Select
-                          items={countryOptions}
+                          items={countryItems}
                           value={form.emergencyContactPhoneCountryCode}
                           onValueChange={(value) =>
                             setForm({
