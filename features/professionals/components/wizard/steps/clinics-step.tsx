@@ -70,6 +70,21 @@ export function ClinicsStep({
     [roles],
   );
 
+  // Mapas valor→etiqueta para que el trigger del Select muestre el nombre
+  // aunque la selección sea programática (sin abrir el popup).
+  const organizationItems = useMemo(() => {
+    const items: Record<string, string> = Object.fromEntries(
+      organizations.map((o) => [o.id, o.name]),
+    );
+    if (loading) items[""] = t("Cargando...");
+    return items;
+  }, [organizations, loading, t]);
+
+  const roleItems = useMemo(() => {
+    if (activeRoles.length === 0) return { "": t("Cargando...") };
+    return Object.fromEntries(activeRoles.map((r) => [r.id, r.name]));
+  }, [activeRoles, t]);
+
   // Las clínicas son opcionales: el backend acepta empleados sin asignaciones
   // (scoped assignments quedan vacíos y la invitación no lleva scopes).
   const canContinue = form.organizationId !== "";
@@ -148,6 +163,7 @@ export function ClinicsStep({
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium">{t("Organización")}</label>
           <Select
+            items={organizationItems}
             value={loading ? "" : form.organizationId}
             onValueChange={(value) =>
               setForm({
@@ -281,6 +297,7 @@ export function ClinicsStep({
                             {t("Rol en esta clínica")}
                           </p>
                           <Select
+                            items={roleItems}
                             value={assignment.roleId ?? ""}
                             onValueChange={(value) =>
                               setClinicRole(clinic.id, value ?? "")

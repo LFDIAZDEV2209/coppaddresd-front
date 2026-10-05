@@ -55,6 +55,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { CatalogCombobox } from "./catalog-combobox";
 import { ApiError } from "@/lib/api/http";
+import { composeE164, splitE164 } from "@/lib/phone";
 import {
   fetchBloodTypes,
   fetchCountries,
@@ -225,6 +226,7 @@ interface PatientFormState {
   emergencyContactName: string;
   emergencyContactRelationship: string;
   emergencyContactPhone: string;
+  emergencyContactPhoneCountryCode: string;
   emergencyContactEmail: string;
   insurerId: string;
   memberId: string;
@@ -426,6 +428,7 @@ function createEmptyForm(): PatientFormState {
     emergencyContactName: "",
     emergencyContactRelationship: "",
     emergencyContactPhone: "",
+    emergencyContactPhoneCountryCode: "57",
     emergencyContactEmail: "",
     insurerId: "",
     memberId: "",
@@ -482,7 +485,19 @@ function toEmergencyContactFields(
   };
 }
 
-function fromPatient(patient: Patient): PatientFormState {
+function fromPatient(
+  patient: Patient,
+  countries: CountryOption[] = [],
+): PatientFormState {
+  // El teléfono del contacto se guarda en E.164; se separa para mostrar el
+  // país y la parte nacional en campos independientes.
+  const emergencyPhone =
+    typeof patient.emergencyContact === "object" &&
+    patient.emergencyContact !== null
+      ? (patient.emergencyContact.phone ?? "")
+      : "";
+  const emergencyPhoneSplit = splitE164(emergencyPhone, countries, "57");
+
   return {
     medicalRecordNumber: patient.medicalRecordNumber ?? "",
     firstName: patient.firstName,
@@ -504,6 +519,8 @@ function fromPatient(patient: Patient): PatientFormState {
     cityName: patient.cityName ?? "",
     postalCode: patient.postalCode ?? "",
     ...toEmergencyContactFields(patient.emergencyContact),
+    emergencyContactPhone: emergencyPhoneSplit.national,
+    emergencyContactPhoneCountryCode: emergencyPhoneSplit.phoneCode,
     insurerId: patient.insurerId ?? "",
     memberId: patient.memberId ?? "",
     maritalStatus: patient.maritalStatus ?? "",
@@ -552,7 +569,10 @@ function fromPatient(patient: Patient): PatientFormState {
 function toInput(form: PatientFormState): PatientInput {
   const text = (value: string): string | null => value.trim() || null;
   const emergencyContactName = form.emergencyContactName.trim();
-  const emergencyContactPhone = form.emergencyContactPhone.trim();
+  const emergencyContactPhone = composeE164(
+    form.emergencyContactPhoneCountryCode,
+    form.emergencyContactPhone,
+  );
   return {
     medicalRecordNumber: text(form.medicalRecordNumber),
     firstName: form.firstName.trim(),
@@ -683,11 +703,12 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
         setEthnicities(ethItems);
         setForm((current) => {
           if (current.countryId) return current;
+          const co = countryItems.find((c) => c.code === "CO");
           const us = countryItems.find((c) => c.code === "US");
           return {
             ...current,
-            countryId: us?.id ?? "",
-            phoneCountryCode: us?.phoneCode ?? "1",
+            countryId: co?.id ?? us?.id ?? "",
+            phoneCountryCode: co?.phoneCode ?? us?.phoneCode ?? "57",
           };
         });
       })
@@ -702,10 +723,13 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
   useEffect(() => {
     if (!patientId) return;
     let cancelled = false;
-    void getPatient(patientId)
-      .then((patient) => {
+    void Promise.all([
+      getPatient(patientId),
+      fetchCountries().catch(() => [] as CountryOption[]),
+    ])
+      .then(([patient, countryItems]) => {
         if (cancelled) return;
-        setForm(fromPatient(patient));
+        setForm(fromPatient(patient, countryItems));
       })
       .catch(() => {
         if (!cancelled) setNotFound(true);
@@ -1186,15 +1210,32 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                   required={form.emergencyContactName.trim() !== ""}
                   error={fieldError("emergencyContactPhone")}
                 >
-                  <Input
-                    type="tel"
-                    value={form.emergencyContactPhone}
-                    onChange={(event) =>
-                      update("emergencyContactPhone", event.target.value)
-                    }
-                    placeholder={t("300 000 0000")}
-                    autoComplete="off"
-                  />
+                  <div className="flex gap-2">
+                    <div className="w-36 shrink-0">
+                      <Select
+                        value={form.emergencyContactPhoneCountryCode}
+                        onChange={(value) =>
+                          update("emergencyContactPhoneCountryCode", value)
+                        }
+                      >
+                        {countries.map((country) => (
+                          <option key={country.id} value={country.phoneCode}>
+                            +{country.phoneCode} · {country.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <Input
+                      className="min-w-0 flex-1"
+                      type="tel"
+                      value={form.emergencyContactPhone}
+                      onChange={(event) =>
+                        update("emergencyContactPhone", event.target.value)
+                      }
+                      placeholder={t("300 000 0000")}
+                      autoComplete="off"
+                    />
+                  </div>
                 </Field>
                 <Field
                   label={t("Correo")}

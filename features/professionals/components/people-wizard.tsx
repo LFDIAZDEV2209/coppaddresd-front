@@ -40,8 +40,10 @@ import {
   GENERAL_SCHEDULE_KEY,
 } from "@/features/professionals/config";
 import { createPatient } from "@/features/patients/services/patients-service";
-import type { PatientInput } from "@/features/patients/types";
+import { fetchCountries } from "@/features/patients/services/catalogs-service";
+import type { CountryOption, PatientInput } from "@/features/patients/types";
 import { ApiError } from "@/lib/api/http";
+import { composeE164 } from "@/lib/phone";
 
 import {
   type Mode,
@@ -120,6 +122,7 @@ export function PeopleWizard({
   const [types, setTypes] = useState<ProfessionalTypeDto[]>([]);
   const [specialties, setSpecialties] = useState<SpecialtyDto[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [countries, setCountries] = useState<CountryOption[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +140,7 @@ export function PeopleWizard({
     professionalTypes: false,
     specialties: false,
     roles: false,
+    countries: false,
   });
 
   // Cargar catálogos de forma condicional según el modo SELECCIONADO (no al montar).
@@ -188,6 +192,17 @@ export function PeopleWizard({
               }),
             );
           }
+        }
+
+        // Países (selector de código telefónico en todos los modos)
+        if (!loadedRef.current.countries) {
+          loadedRef.current.countries = true;
+          tasks.push(
+            fetchCountries().then((cs) => {
+              if (cancelled) return;
+              setCountries(cs);
+            }),
+          );
         }
 
         // Tipos profesionales (solo modo professional)
@@ -263,6 +278,7 @@ export function PeopleWizard({
             professionalTypes: false,
             specialties: false,
             roles: false,
+            countries: false,
           };
         }
       } finally {
@@ -330,7 +346,7 @@ export function PeopleWizard({
           lastName: form.lastName.trim(),
           email: form.email.trim(),
           phoneNumber: form.phone.trim() || null,
-          phoneCountryCode: form.phone.startsWith("+") ? null : "1",
+          phoneCountryCode: form.phone.startsWith("+") ? null : form.phoneCountryCode || null,
           // Empleado: payload clínico vacío (sin tipo ni especialidades)
           professionalTypeId:
             mode === "professional" ? form.professionalTypeId || null : null,
@@ -390,7 +406,7 @@ export function PeopleWizard({
           gender: form.gender || null,
           ethnicityId: null,
           bloodTypeId: null,
-          phoneCountryCode: form.phone.startsWith("+") ? null : "1",
+          phoneCountryCode: form.phone.startsWith("+") ? null : form.phoneCountryCode || null,
           phoneNumber: form.phone.trim() || null,
           email: form.email.trim() || null,
           address: null,
@@ -404,7 +420,11 @@ export function PeopleWizard({
                   name: emergencyContactName || null,
                   relationship:
                     form.emergencyContactRelationship.trim() || null,
-                  phone: emergencyContactPhone || null,
+                  phone:
+                    composeE164(
+                      form.emergencyContactPhoneCountryCode,
+                      emergencyContactPhone,
+                    ) || null,
                   email: form.emergencyContactEmail.trim() || null,
                 }
               : null,
@@ -673,6 +693,7 @@ export function PeopleWizard({
                 setForm={setForm}
                 onNext={goNext}
                 onBack={availableModes.length > 1 ? backToSelector : undefined}
+                countries={countries}
               />
             )}
 

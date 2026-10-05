@@ -24,9 +24,11 @@ import {
 import { ProfessionalAvatar } from "../../professional-visuals";
 import { Field } from "../shared";
 import type { StepProps } from "../wizard-state";
+import type { CountryOption } from "@/features/patients/types";
 
 interface IdentityStepProps extends Omit<StepProps, "onBack"> {
   onBack?: () => void;
+  countries?: CountryOption[];
 }
 
 export function IdentityStep({
@@ -34,9 +36,27 @@ export function IdentityStep({
   setForm,
   onNext,
   onBack,
+  countries = [],
 }: IdentityStepProps) {
   const t = useT();
   const isPatient = form.mode === "patient";
+
+  // Catálogo deduplicado por código telefónico (varios países comparten el
+  // +1); se pasa a los Select como `items` para que el trigger muestre el
+  // nombre y no el valor crudo.
+  const countryOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const options: { value: string; label: string }[] = [];
+    for (const country of countries) {
+      if (!country.phoneCode || seen.has(country.phoneCode)) continue;
+      seen.add(country.phoneCode);
+      options.push({
+        value: country.phoneCode,
+        label: `+${country.phoneCode} · ${country.name}`,
+      });
+    }
+    return options;
+  }, [countries]);
 
   // Errores por campo (se muestran al salir del campo — patrón Usuarios).
   const [touched, setTouched] = useState<Set<string>>(new Set());
@@ -205,16 +225,40 @@ export function IdentityStep({
               required={isPatient}
               error={touched.has("phone") ? fieldErrors.phone : ""}
             >
-              <Input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                onBlur={handleBlur("phone")}
-                placeholder={t("555-010-2244")}
-                disabled={false}
-                autoComplete="off"
-                aria-invalid={Boolean(fieldErrors.phone)}
-              />
+              <div className="flex gap-2">
+                <Select
+                  items={countryOptions}
+                  value={form.phoneCountryCode}
+                  onValueChange={(value) =>
+                    setForm({ ...form, phoneCountryCode: value ?? "" })
+                  }
+                >
+                  <SelectTrigger
+                    aria-label={t("País del teléfono")}
+                    className="h-9! w-28 shrink-0"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countryOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  className="min-w-0 flex-1"
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  onBlur={handleBlur("phone")}
+                  placeholder={t("300 000 0000")}
+                  disabled={false}
+                  autoComplete="off"
+                  aria-invalid={Boolean(fieldErrors.phone)}
+                />
+              </div>
             </Field>
 
             {/* Campos exclusivos del paciente */}
@@ -367,23 +411,50 @@ export function IdentityStep({
                           : ""
                       }
                     >
-                      <Input
-                        type="tel"
-                        value={form.emergencyContactPhone}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            emergencyContactPhone: e.target.value,
-                          })
-                        }
-                        onBlur={handleBlur("emergencyContactPhone")}
-                        placeholder={t("555-010-2244")}
-                        disabled={false}
-                        autoComplete="off"
-                        aria-invalid={Boolean(
-                          fieldErrors.emergencyContactPhone,
-                        )}
-                      />
+                      <div className="flex gap-2">
+                        <Select
+                          items={countryOptions}
+                          value={form.emergencyContactPhoneCountryCode}
+                          onValueChange={(value) =>
+                            setForm({
+                              ...form,
+                              emergencyContactPhoneCountryCode: value ?? "",
+                            })
+                          }
+                        >
+                          <SelectTrigger
+                            aria-label={t("País del teléfono")}
+                            className="h-9! w-28 shrink-0"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countryOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          className="min-w-0 flex-1"
+                          type="tel"
+                          value={form.emergencyContactPhone}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              emergencyContactPhone: e.target.value,
+                            })
+                          }
+                          onBlur={handleBlur("emergencyContactPhone")}
+                          placeholder={t("300 000 0000")}
+                          disabled={false}
+                          autoComplete="off"
+                          aria-invalid={Boolean(
+                            fieldErrors.emergencyContactPhone,
+                          )}
+                        />
+                      </div>
                     </Field>
                     <Field
                       label={t("Correo")}

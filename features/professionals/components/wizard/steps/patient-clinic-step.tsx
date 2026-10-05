@@ -48,6 +48,24 @@ export function PatientClinicStep({
   // Si solo hay una organización, seleccionarla automáticamente
   const singleOrg = organizations.length === 1 ? organizations[0] : null;
 
+  // Mapas valor→etiqueta para que el trigger del Select muestre el nombre
+  // aunque la selección sea programática (sin abrir el popup).
+  const organizationItems = useMemo(() => {
+    const items: Record<string, string> = Object.fromEntries(
+      organizations.map((o) => [o.id, o.name]),
+    );
+    if (loading) items[""] = t("Cargando...");
+    return items;
+  }, [organizations, loading, t]);
+
+  const clinicItems = useMemo(() => {
+    const items: Record<string, string> = { "": t("— Sin clínica —") };
+    for (const clinic of activeOrg?.clinics ?? []) {
+      items[clinic.id] = clinic.name;
+    }
+    return items;
+  }, [activeOrg, t]);
+
   return (
     <div className="animate-slide-up flex flex-col gap-0">
       <SectionHeader
@@ -72,6 +90,7 @@ export function PatientClinicStep({
               {t("Organización")}
             </label>
             <Select
+              items={organizationItems}
               value={loading ? "" : form.organizationId}
               onValueChange={(value) =>
                 setForm({
@@ -117,6 +136,7 @@ export function PatientClinicStep({
               {t("Clínica (opcional)")}
             </label>
             <Select
+              items={clinicItems}
               value={
                 form.clinicAssignments.length > 0
                   ? form.clinicAssignments[0].clinicId

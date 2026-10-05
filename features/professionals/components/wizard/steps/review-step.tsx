@@ -22,6 +22,7 @@ import {
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { type OrganizationTree } from "@/features/professionals/services/employees-service";
+import { composeE164 } from "@/lib/phone";
 import {
   type ProfessionalTypeDto,
   type SpecialtyDto,
@@ -135,7 +136,9 @@ export function ReviewStep({
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   {t("Teléfono")}
                 </p>
-                <p className="mt-0.5 truncate font-medium">{form.phone}</p>
+                <p className="mt-0.5 truncate font-medium">
+                  {composeE164(form.phoneCountryCode, form.phone)}
+                </p>
               </div>
             )}
             {isPatient && form.documentNumber && (
@@ -162,7 +165,10 @@ export function ReviewStep({
                   {[
                     form.emergencyContactName.trim(),
                     form.emergencyContactRelationship.trim(),
-                    form.emergencyContactPhone.trim(),
+                    composeE164(
+                      form.emergencyContactPhoneCountryCode,
+                      form.emergencyContactPhone,
+                    ),
                     form.emergencyContactEmail.trim(),
                   ]
                     .filter(Boolean)

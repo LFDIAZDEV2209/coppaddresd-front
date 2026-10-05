@@ -176,6 +176,8 @@ export interface FormState {
   lastName: string;
   email: string;
   phone: string;
+  /** Código de país del teléfono (sin "+", ej. "57"). */
+  phoneCountryCode: string;
 
   // Organización / clínicas (profesional + empleado)
   organizationId: string;
@@ -199,6 +201,8 @@ export interface FormState {
   emergencyContactName: string;
   emergencyContactRelationship: string;
   emergencyContactPhone: string;
+  /** Código de país del teléfono del contacto (sin "+", ej. "57"). */
+  emergencyContactPhoneCountryCode: string;
   emergencyContactEmail: string;
 
   // Compartido
@@ -211,6 +215,7 @@ export const EMPTY_FORM: FormState = {
   lastName: "",
   email: "",
   phone: "",
+  phoneCountryCode: "57",
   organizationId: "",
   clinicAssignments: [],
   professionalTypeId: "",
@@ -224,6 +229,7 @@ export const EMPTY_FORM: FormState = {
   emergencyContactName: "",
   emergencyContactRelationship: "",
   emergencyContactPhone: "",
+  emergencyContactPhoneCountryCode: "57",
   emergencyContactEmail: "",
   sendInvitation: true,
   mode: null,
