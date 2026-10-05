@@ -7,7 +7,10 @@
  * como literal en cualquier archivo escaneado (uso dinámico vía
  * t(variable) sobre arrays/consts) o si viene de datos del backend/mock.
  *
- * Usage:  node scripts/i18n-scan.mjs [--json]
+ * Además reporta (sin fallar) los llamados t(variable) cuyo literal no
+ * puede verificar, porque la clave vive en arrays/consts del código.
+ *
+ * Usage:  node scripts/i18n-scan.mjs [--json] [--no-orphan]
  */
 import { readFileSync, readdirSync } from "fs";
 import { join, relative } from "path";
@@ -45,6 +48,7 @@ for (const d of dirs) {
 
 // Collect all t() keys used in code + full source blob (para detectar uso dinámico)
 const codeKeys = new Map(); // key → Set of files using it
+const dynamicSites = new Map(); // file → count of t(variable) call sites
 let sourceBlob = "";
 for (const f of files) {
   const src = readFileSync(f, "utf8");
@@ -55,6 +59,13 @@ for (const f of files) {
     const key = m[2];
     if (!codeKeys.has(key)) codeKeys.set(key, new Set());
     codeKeys.get(key).add(relative(ROOT, f));
+  }
+  // t(variable): llamados cuya clave no es un literal verificable.
+  // Excluye métodos (.t) y llamados con literal (ya contados arriba).
+  const dyRe = /(?<![.\w])t\(\s*(?![`"'\s])/g;
+  const rel = relative(ROOT, f);
+  while (dyRe.exec(src)) {
+    dynamicSites.set(rel, (dynamicSites.get(rel) ?? 0) + 1);
   }
 }
 
@@ -87,8 +98,19 @@ for (const key of Object.keys(en)) {
 }
 
 // Output
+const dynamicSiteEntries = [...dynamicSites.entries()].sort(
+  (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+);
+const totalDynamicSites = dynamicSiteEntries.reduce((sum, [, n]) => sum + n, 0);
+
 if (process.argv.includes("--json")) {
-  console.log(JSON.stringify({ missing, orphaned, dynamic }, null, 2));
+  console.log(
+    JSON.stringify(
+      { missing, orphaned, dynamic, dynamicSites: Object.fromEntries(dynamicSiteEntries) },
+      null,
+      2
+    )
+  );
 } else {
   console.log(`\ni18n scan results:`);
   console.log(`  t() calls in code:  ${codeKeys.size}`);
@@ -97,6 +119,9 @@ if (process.argv.includes("--json")) {
     `  Missing from en.json: ${missing.length > 0 ? "\x1b[31m" + missing.length + "\x1b[0m" : "\x1b[32m0\x1b[0m"}`
   );
   console.log(`  Dynamic keys (used via t(variable)): ${dynamic.length}`);
+  console.log(
+    `  Dynamic t() call sites: ${totalDynamicSites} en ${dynamicSiteEntries.length} archivos (clave no verificable por el scan)`
+  );
   console.log(`  Orphaned in en.json:  ${orphaned.length}`);
 
   if (missing.length > 0) {
@@ -106,6 +131,19 @@ if (process.argv.includes("--json")) {
     )) {
       console.log(`  "${key}"`);
       console.log(`    used in: ${files.join(", ")}`);
+    }
+  }
+
+  if (totalDynamicSites > 0 && !process.argv.includes("--no-orphan")) {
+    console.log(
+      `\nDynamic t() call sites (revisar que sus claves existan en en.json):`
+    );
+    const top = dynamicSiteEntries.slice(0, 12);
+    for (const [file, count] of top) {
+      console.log(`  ${file} (${count})`);
+    }
+    if (dynamicSiteEntries.length > top.length) {
+      console.log(`  … y ${dynamicSiteEntries.length - top.length} archivos más`);
     }
   }
 
