@@ -410,12 +410,22 @@ export async function refreshAccessToken(): Promise<RefreshOutcome> {
   return refreshPromise;
 }
 
+/**
+ * Cuerpo de refresh: indica la aplicacion para que el Auth Service lea la
+ * cookie propia (copp_refresh_token_erp) y no la de otra aplicacion que
+ * comparta el mismo host (p. ej. la app del paciente en localhost).
+ */
+function refreshBody(): string {
+  return JSON.stringify({ application: env.applicationCode });
+}
+
 async function doRefresh(): Promise<RefreshOutcome> {
   try {
     const response = await fetch(`${env.apiUrl}/api/auth/refresh`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
+      body: refreshBody(),
     });
 
     if (response.ok) {
@@ -436,6 +446,7 @@ async function doRefresh(): Promise<RefreshOutcome> {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
+        body: refreshBody(),
       });
 
       if (retry.ok) {
