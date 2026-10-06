@@ -529,11 +529,11 @@ export function UsersPageContent() {
           open={Boolean(deleting)}
           onOpenChange={(open) => !open && setDeleting(undefined)}
         >
-          <AlertDialogContent>
-            <AlertDialogMedia className="bg-destructive-soft text-destructive">
-              <Trash2 />
-            </AlertDialogMedia>
+          <AlertDialogContent className="sm:max-w-md!">
             <AlertDialogHeader>
+              <AlertDialogMedia className="bg-destructive-soft text-destructive">
+                <Trash2 />
+              </AlertDialogMedia>
               <AlertDialogTitle>{t("¿Eliminar usuario?")}</AlertDialogTitle>
               <AlertDialogDescription>
                 {t("Se eliminará el usuario")}

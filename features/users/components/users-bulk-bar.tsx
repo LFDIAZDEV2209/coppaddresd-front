@@ -166,11 +166,11 @@ export function UsersBulkBar({
         open={pending === "delete"}
         onOpenChange={(open) => !open && setPending(null)}
       >
-        <AlertDialogContent>
-          <AlertDialogMedia className="bg-destructive-soft text-destructive">
-            <Trash2 />
-          </AlertDialogMedia>
+        <AlertDialogContent className="sm:max-w-md!">
           <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive-soft text-destructive">
+              <Trash2 />
+            </AlertDialogMedia>
             <AlertDialogTitle>
               {t("¿Eliminar {count} usuarios?", {
                 count: String(selectedCount),
