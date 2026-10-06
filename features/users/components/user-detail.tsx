@@ -611,7 +611,9 @@ export function UserDetail({ userId }: UserDetailProps) {
               <strong>
                 {user.firstName} {user.lastName}
               </strong>{" "}
-              {t("y todas sus asignaciones. Esta acción no se puede deshacer.")}
+              {t(
+                "y todas sus asignaciones. El perfil del directorio y el historial clínico se conservan. Esta acción no se puede deshacer.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -178,7 +178,7 @@ export function UsersBulkBar({
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t(
-                "Se eliminarán los usuarios seleccionados y todas sus asignaciones. Esta acción no se puede deshacer.",
+                "Se eliminarán los usuarios seleccionados y todas sus asignaciones. Los perfiles del directorio y el historial clínico se conservan. Esta acción no se puede deshacer.",
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

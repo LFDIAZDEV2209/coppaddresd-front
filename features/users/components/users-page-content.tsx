@@ -541,7 +541,7 @@ export function UsersPageContent() {
                   ? ` "${deleting.firstName} ${deleting.lastName}"`
                   : ""}{" "}
                 {t(
-                  "y todas sus asignaciones. Esta acción no se puede deshacer.",
+                  "y todas sus asignaciones. El perfil del directorio y el historial clínico se conservan. Esta acción no se puede deshacer.",
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>
