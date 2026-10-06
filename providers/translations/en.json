@@ -1458,6 +1458,7 @@
   "El conocimiento global queda disponible para todos los agentes.": "Global knowledge is available to all agents.",
   "El contacto de emergencia requiere teléfono.": "Emergency contact requires a phone number.",
   "El correo es obligatorio.": "Email is required.",
+  "Ya existe un empleado con el correo '{email}' en esta organización.": "An employee with the email '{email}' already exists in this organization.",
   "El dashboard de Citas está disponible para profesionales con asignación clínica en el ERP.": "The Appointments dashboard is available for professionals with a clinical assignment in the ERP.",
   "El dashboard de Telemedicina está disponible para profesionales con asignación clínica en el ERP.": "The Telemedicine dashboard is available for professionals with a clinical assignment in the ERP.",
   "El desglose exacto de semanas congeladas lo confirma el backend al aplicar.": "The exact frozen-week breakdown is confirmed by the backend when applying.",

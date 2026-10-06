@@ -4086,6 +4086,7 @@
   "Ingresa un correo válido (ej. nombre@clinica.com).": "Ingresa un correo válido (ej. nombre@clinica.com).",
   "El apellido es obligatorio.": "El apellido es obligatorio.",
   "El correo es obligatorio.": "El correo es obligatorio.",
+  "Ya existe un empleado con el correo '{email}' en esta organización.": "Ya existe un empleado con el correo '{email}' en esta organización.",
   "Desactivar bloquea el acceso del paciente a la app; conserva su historial clínico.": "Desactivar bloquea el acceso del paciente a la app; conserva su historial clínico.",
   "El paciente quedará Inactivo en el directorio y no podrá acceder a la app. Su historial clínico y asignaciones se conservan; puedes reactivarlo cuando quieras.": "El paciente quedará Inactivo en el directorio y no podrá acceder a la app. Su historial clínico y asignaciones se conservan; puedes reactivarlo cuando quieras.",
   "Soltero/a": "Soltero/a",

@@ -286,6 +286,21 @@ export async function createProfessional(
   );
 }
 
+/**
+ * Preflight del alta de personal: consulta si el correo ya existe dentro de
+ * la organización para avisar en el propio campo del wizard. La autoridad
+ * final sigue siendo el POST (409 con el mensaje definitivo).
+ */
+export async function checkEmployeeEmailAvailability(
+  email: string,
+  organizationId: string,
+): Promise<{ available: boolean }> {
+  const query = new URLSearchParams({ email, organizationId });
+  return apiFetch<{ available: boolean }>(
+    `${env.apiUrl}/api/v1/professionals/email-availability?${query.toString()}`,
+  );
+}
+
 // --- Asignaciones scoped (roles + overrides por clínica) ---
 
 export interface ScopedRoleView {

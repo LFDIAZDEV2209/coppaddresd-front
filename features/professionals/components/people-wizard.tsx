@@ -24,6 +24,7 @@ import {
   fetchEmployee,
   fetchOrganizationTree,
   createProfessional,
+  checkEmployeeEmailAvailability,
   type OrganizationTree,
 } from "@/features/professionals/services/employees-service";
 import { updateSchedules } from "@/features/professionals/services/schedules-service";
@@ -126,6 +127,13 @@ export function PeopleWizard({
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Último resultado del preflight: correo consultado + si ya existe. La
+  // vigencia se deriva comparándolo con el correo actual (evita setState
+  // síncrono en el efecto cuando el campo está incompleto).
+  const [emailCheck, setEmailCheck] = useState<{
+    email: string;
+    taken: boolean;
+  } | null>(null);
   const [created, setCreated] = useState<{
     id: string;
     invitationLink: string | null;
@@ -142,6 +150,38 @@ export function PeopleWizard({
     roles: false,
     countries: false,
   });
+
+  // Preflight del correo del personal: mientras se escribe se consulta si ya
+  // existe en la organización para avisar en el propio campo (la autoridad
+  // final sigue siendo el POST → 409).
+  useEffect(() => {
+    const isStaff = form.mode === "professional" || form.mode === "employee";
+    const email = form.email.trim().toLowerCase();
+    const organizationId = form.organizationId;
+    if (!isStaff || !organizationId || !/\S+@\S+\.\S+/.test(email)) {
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      checkEmployeeEmailAvailability(email, organizationId)
+        .then((result) => {
+          if (!cancelled) setEmailCheck({ email, taken: !result.available });
+        })
+        .catch(() => {
+          if (!cancelled) setEmailCheck({ email, taken: false });
+        });
+    }, 450);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [form.mode, form.email, form.organizationId]);
+
+  const emailTaken =
+    emailCheck?.taken === true &&
+    emailCheck.email === form.email.trim().toLowerCase();
 
   // Cargar catálogos de forma condicional según el modo SELECCIONADO (no al montar).
   // Cuando form.mode=null (selector de modo), NO se hace fetch — el selector
@@ -694,6 +734,7 @@ export function PeopleWizard({
                 onNext={goNext}
                 onBack={availableModes.length > 1 ? backToSelector : undefined}
                 countries={countries}
+                emailTaken={emailTaken}
               />
             )}
 

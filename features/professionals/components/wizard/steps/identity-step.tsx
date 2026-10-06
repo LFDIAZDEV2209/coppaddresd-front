@@ -29,6 +29,8 @@ import type { CountryOption } from "@/features/patients/types";
 interface IdentityStepProps extends Omit<StepProps, "onBack"> {
   onBack?: () => void;
   countries?: CountryOption[];
+  /** El correo ya existe en la organización (preflight del wizard). */
+  emailTaken?: boolean;
 }
 
 export function IdentityStep({
@@ -37,6 +39,7 @@ export function IdentityStep({
   onNext,
   onBack,
   countries = [],
+  emailTaken = false,
 }: IdentityStepProps) {
   const t = useT();
   const isPatient = form.mode === "patient";
@@ -81,6 +84,11 @@ export function IdentityStep({
         errors.email = t("El correo es obligatorio.");
       else if (!/\S+@\S+\.\S+/.test(form.email))
         errors.email = t("Ingresa un correo válido (ej. nombre@clinica.com).");
+      else if (emailTaken)
+        errors.email = t(
+          "Ya existe un empleado con el correo '{email}' en esta organización.",
+          { email: form.email.trim() },
+        );
     }
     if (isPatient) {
       // El backend exige documento, fecha de nacimiento, género y teléfono.
@@ -121,6 +129,7 @@ export function IdentityStep({
     form.emergencyContactPhone,
     form.emergencyContactEmail,
     isPatient,
+    emailTaken,
     t,
   ]);
 
@@ -140,7 +149,7 @@ export function IdentityStep({
   const canContinue =
     form.firstName.trim() !== "" &&
     form.lastName.trim() !== "" &&
-    (isPatient || /\S+@\S+\.\S+/.test(form.email)) &&
+    (isPatient || (/\S+@\S+\.\S+/.test(form.email) && !emailTaken)) &&
     (!isPatient ||
       (form.documentNumber.trim() !== "" &&
         form.birthDate !== "" &&
@@ -210,7 +219,7 @@ export function IdentityStep({
             <Field
               label={t("Correo electrónico")}
               required={!isPatient}
-              error={touched.has("email") ? fieldErrors.email : ""}
+              error={touched.has("email") || emailTaken ? fieldErrors.email : ""}
               hint={
                 !isPatient
                   ? t("El profesional usará este correo para acceder al ERP.")
