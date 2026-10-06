@@ -70,7 +70,7 @@ export function StepNav({
                 disabled={!clickable}
                 onClick={() => clickable && onStepClick?.(i)}
                 aria-current={active ? "step" : undefined}
-                aria-label={`${s.label}${done ? " (completado)" : ""}`}
+                aria-label={`${t(s.label)}${done ? ` (${t("Completado")})` : ""}`}
                 className={cn(
                   "flex size-10 shrink-0 items-center justify-center rounded-full border transition-all duration-200 sm:size-11",
                   done &&
@@ -101,10 +101,10 @@ export function StepNav({
                     !done && !active && "text-muted-foreground",
                   )}
                 >
-                  {s.label}
+                  {t(s.label)}
                 </span>
                 <span className="truncate text-[10px] text-muted-foreground">
-                  {done ? t("Completado") : s.hint}
+                  {done ? t("Completado") : t(s.hint)}
                 </span>
               </span>
             </div>
