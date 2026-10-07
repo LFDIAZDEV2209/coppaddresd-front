@@ -16,6 +16,7 @@ import {
   LoaderCircle,
   Lock,
   Mail,
+  MailPlus,
   RefreshCw,
   ShieldCheck,
   ShieldPlus,
@@ -51,11 +52,14 @@ import {
 } from "@/features/auth-common/utils/validation";
 import type { User } from "../types";
 import {
+  checkUserEmailAvailability,
   createUser,
   fetchUser,
   fetchUserPermissions,
   fetchUserRoles,
+  linkUserAccount,
   updateUser,
+  type UserEmailAvailability,
 } from "../services/users-service";
 import { generatePassword } from "../services/users-mock";
 import { PermissionSelector } from "./permission-selector";
@@ -174,6 +178,13 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
   );
   const [copied, setCopied] = useState(false);
   const [createRoleOpen, setCreateRoleOpen] = useState(false);
+  /** Preflight del correo en alta: si ya tiene cuenta, se vincula (unión). */
+  const [emailCheck, setEmailCheck] = useState<{
+    email: string;
+    result: UserEmailAvailability;
+  } | null>(null);
+  /** true cuando el éxito provino de vincular una cuenta existente. */
+  const [createdViaLink, setCreatedViaLink] = useState(false);
 
   /** Refetch roles y seleccionar el recién creado. */
   const handleRoleCreated = useCallback(
@@ -292,6 +303,38 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleIds]);
 
+  // Preflight del correo (solo alta): si ya tiene cuenta, se ofrece vincularla
+  // con unión de roles/permisos en vez de fallar recién al final.
+  useEffect(() => {
+    if (isEdit) return;
+    const email = form.email.trim().toLowerCase();
+    if (!/\S+@\S+\.\S+/.test(email)) return;
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const result = await checkUserEmailAvailability(email);
+          if (!cancelled) setEmailCheck({ email, result });
+        } catch {
+          // Best-effort: si falla el preflight, el alta normal sigue disponible.
+        }
+      })();
+    }, 450);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [form.email, isEdit]);
+
+  const emailContext =
+    !isEdit && emailCheck && emailCheck.email === form.email.trim().toLowerCase()
+      ? emailCheck.result
+      : null;
+  const linkContext = emailContext?.exists ? emailContext : null;
+  const linkMode = Boolean(linkContext?.isActive);
+
   /** Permisos heredados de TODOS los roles seleccionados (unión). */
   const inherited = useMemo(() => {
     const map = new Map<string, { permission: Permission; roleName: string }>();
@@ -320,14 +363,21 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
   };
 
   const validateStep1 = useCallback(() => {
-    return validateUserForm({
+    const errors = validateUserForm({
       email: form.email,
       password: form.password,
       firstName: form.firstName,
       lastName: form.lastName,
       isEditing: isEdit,
     });
-  }, [form, isEdit]);
+    if (linkMode) {
+      // Vincular no crea credenciales ni identidad: solo importa el correo.
+      errors.password = "";
+      errors.firstName = "";
+      errors.lastName = "";
+    }
+    return errors;
+  }, [form, isEdit, linkMode]);
 
   const handleBlur = (field: (typeof ALL_FIELDS)[number]) => () => {
     setTouched((prev) => new Set(prev).add(field));
@@ -358,9 +408,10 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
 
   const canNext =
     step === 0
-      ? ALL_FIELDS.filter((field) => !(isEdit && field === "password")).every(
-          (field) => !fieldErrors[field],
-        )
+      ? (linkContext ? linkContext.isActive : true) &&
+        ALL_FIELDS.filter((field) => !(isEdit && field === "password"))
+          .filter((field) => !(linkMode && field !== "email"))
+          .every((field) => !fieldErrors[field])
       : true;
 
   const goNext = () => {
@@ -433,6 +484,15 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
             ? `/users/${userId}?updated=assignments`
             : `/users/${userId}`,
         );
+      } else if (linkMode) {
+        const user = await linkUserAccount({
+          email: form.email.trim(),
+          roleIds: canAssignRoles ? [...roleIds] : undefined,
+          permissionIds: canAssignPermissions ? [...permissionIds] : undefined,
+        });
+        setCreatedViaLink(true);
+        setGeneratedPassword(null);
+        setCreatedUser(user);
       } else {
         const user = await createUser({
           email: form.email.trim(),
@@ -467,11 +527,14 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
         user={createdUser}
         generatedPassword={generatedPassword}
         copied={copied}
+        linked={createdViaLink}
         onCopy={() => void copyPassword()}
         onView={() => router.push(`/users/${createdUser.id}`)}
         onRepeat={() => {
           setCreatedUser(null);
           setGeneratedPassword(null);
+          setCreatedViaLink(false);
+          setEmailCheck(null);
           setStep(0);
           setForm({
             email: "",
@@ -572,47 +635,53 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
               />
               <div className="flex flex-col gap-4 p-5 sm:p-6">
                 <div className="flex gap-5">
-                  <div className="hidden shrink-0 flex-col items-center gap-2 sm:flex">
-                    <ProfessionalAvatar
-                      employee={{
-                        firstName: form.firstName.trim() || "?",
-                        lastName: form.lastName.trim(),
-                      }}
-                      size="lg"
-                    />
-                    <span className="text-[10.5px] text-muted-foreground">
-                      {t("Vista previa")}
-                    </span>
-                  </div>
+                  {!linkMode && (
+                    <div className="hidden shrink-0 flex-col items-center gap-2 sm:flex">
+                      <ProfessionalAvatar
+                        employee={{
+                          firstName: form.firstName.trim() || "?",
+                          lastName: form.lastName.trim(),
+                        }}
+                        size="lg"
+                      />
+                      <span className="text-[10.5px] text-muted-foreground">
+                        {t("Vista previa")}
+                      </span>
+                    </div>
+                  )}
                   <div className="grid flex-1 gap-4 sm:grid-cols-2">
-                    <Field
-                      label={t("Nombre")}
-                      required
-                      error={touched.has("firstName") ? fieldErrors.firstName : ""}
-                    >
-                      <Input
-                        value={form.firstName}
-                        onChange={(e) => update("firstName", e.target.value)}
-                        onBlur={handleBlur("firstName")}
-                        placeholder={t("Ej. María")}
-                        disabled={saving}
-                        aria-invalid={Boolean(fieldErrors.firstName)}
-                      />
-                    </Field>
-                    <Field
-                      label={t("Apellido")}
-                      required
-                      error={touched.has("lastName") ? fieldErrors.lastName : ""}
-                    >
-                      <Input
-                        value={form.lastName}
-                        onChange={(e) => update("lastName", e.target.value)}
-                        onBlur={handleBlur("lastName")}
-                        placeholder={t("Ej. González")}
-                        disabled={saving}
-                        aria-invalid={Boolean(fieldErrors.lastName)}
-                      />
-                    </Field>
+                    {!linkMode && (
+                      <>
+                        <Field
+                          label={t("Nombre")}
+                          required
+                          error={touched.has("firstName") ? fieldErrors.firstName : ""}
+                        >
+                          <Input
+                            value={form.firstName}
+                            onChange={(e) => update("firstName", e.target.value)}
+                            onBlur={handleBlur("firstName")}
+                            placeholder={t("Ej. María")}
+                            disabled={saving}
+                            aria-invalid={Boolean(fieldErrors.firstName)}
+                          />
+                        </Field>
+                        <Field
+                          label={t("Apellido")}
+                          required
+                          error={touched.has("lastName") ? fieldErrors.lastName : ""}
+                        >
+                          <Input
+                            value={form.lastName}
+                            onChange={(e) => update("lastName", e.target.value)}
+                            onBlur={handleBlur("lastName")}
+                            placeholder={t("Ej. González")}
+                            disabled={saving}
+                            aria-invalid={Boolean(fieldErrors.lastName)}
+                          />
+                        </Field>
+                      </>
+                    )}
                     <Field
                       label={t("Email")}
                       required
@@ -635,6 +704,32 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                       />
                     </Field>
 
+                    {linkContext && (
+                      <div className="rounded-xl border border-border/70 bg-muted/40 p-3.5 sm:col-span-2">
+                        <div className="flex items-start gap-2.5">
+                          {linkContext.isActive ? (
+                            <MailPlus className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <Info className="mt-0.5 size-4 shrink-0 text-destructive" />
+                          )}
+                          <p className="text-[12.5px] leading-snug text-muted-foreground">
+                            {linkContext.isActive
+                              ? t(
+                                  "Este correo ya tiene una cuenta ({name}). Los roles y permisos seleccionados se sumarán sin quitar los existentes; las credenciales no cambian.",
+                                  {
+                                    name:
+                                      `${linkContext.firstName ?? ""} ${linkContext.lastName ?? ""}`.trim() ||
+                                      form.email.trim(),
+                                  },
+                                )
+                              : t(
+                                  "La cuenta está inactiva. Reactívala en Usuarios antes de vincularla.",
+                                )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {isEdit ? (
                       <div className="flex items-center justify-between rounded-lg border border-border p-3">
                         <div className="flex flex-col gap-0.5">
@@ -652,7 +747,7 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                           aria-label={t("Usuario activo")}
                         />
                       </div>
-                    ) : (
+                    ) : !linkMode ? (
                       <Field
                         label={t("Contraseña inicial")}
                         required
@@ -705,19 +800,19 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                           </Button>
                         </div>
                       </Field>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 
                 {/* Checklist en vivo de la política de contraseñas */}
-                {!isEdit && (
+                {!isEdit && !linkMode && (
                   <PasswordChecklist
                     password={form.password}
                     errors={passwordRules}
                   />
                 )}
 
-                {form.autoPassword && form.password && !isEdit && (
+                {form.autoPassword && form.password && !isEdit && !linkMode && (
                   <div className="flex items-center justify-between gap-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2.5">
                     <p className="flex items-center gap-1.5 text-[12px] text-teal-800">
                       <BadgeCheck className="size-4 shrink-0" />
@@ -885,7 +980,11 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
                 ) : (
                   <CheckCircle2 data-icon="inline-start" />
                 )}
-                {isEdit ? t("Guardar cambios") : t("Crear usuario")}
+                {isEdit
+                  ? t("Guardar cambios")
+                  : linkMode
+                    ? t("Vincular cuenta")
+                    : t("Crear usuario")}
               </Button>
             )}
           </div>
@@ -1085,11 +1184,12 @@ function Field({
   );
 }
 
-/** Pantalla de éxito tras crear el usuario. */
+/** Pantalla de éxito tras crear o vincular el usuario. */
 function CreatedScreen({
   user,
   generatedPassword,
   copied,
+  linked,
   onCopy,
   onView,
   onRepeat,
@@ -1098,6 +1198,7 @@ function CreatedScreen({
   user: User;
   generatedPassword: string | null;
   copied: boolean;
+  linked?: boolean;
   onCopy: () => void;
   onView: () => void;
   onRepeat: () => void;
@@ -1111,12 +1212,18 @@ function CreatedScreen({
           <CheckCircle2 className="size-7" />
         </span>
         <h2 className="text-lg font-bold text-foreground">
-          {t("¡Usuario creado correctamente!")}
+          {linked
+            ? t("¡Cuenta vinculada correctamente!")
+            : t("¡Usuario creado correctamente!")}
         </h2>
         <p className="max-w-md text-[13px] text-muted-foreground">
-          {t(
-            "El usuario fue creado y ya puede iniciar sesión con las credenciales configuradas.",
-          )}
+          {linked
+            ? t(
+                "La cuenta existente quedó vinculada y sus roles y permisos se sumaron sin quitar los existentes.",
+              )
+            : t(
+                "El usuario fue creado y ya puede iniciar sesión con las credenciales configuradas.",
+              )}
         </p>
 
         <div className="mt-2 flex w-full max-w-sm flex-col gap-2 rounded-xl bg-muted/60 p-3.5 text-left">

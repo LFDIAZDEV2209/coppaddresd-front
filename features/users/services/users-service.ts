@@ -232,6 +232,47 @@ export async function deleteUser(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
 }
 
+// --- Alta vinculada (el correo ya tiene cuenta) ---
+
+/** Estado de la cuenta existente para un correo (GET email-availability). */
+export interface UserEmailAvailability {
+  exists: boolean;
+  isActive: boolean;
+  hasPassword: boolean;
+  userId: string | null;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+/**
+ * Preflight del alta: consulta si el correo ya tiene cuenta para ofrecer
+ * vincularla (roles/permisos en unión) en vez de fallar al final.
+ */
+export async function checkUserEmailAvailability(
+  email: string,
+): Promise<UserEmailAvailability> {
+  const query = new URLSearchParams({ email });
+  return apiFetch<UserEmailAvailability>(
+    `${PATH}/email-availability?${query.toString()}`,
+  );
+}
+
+/**
+ * Vincula los roles/permisos seleccionados a la cuenta existente
+ * (POST /api/auth/users/link). El backend hace unión pura: no quita nada y
+ * no cambia las credenciales.
+ */
+export async function linkUserAccount(input: {
+  email: string;
+  roleIds?: string[];
+  permissionIds?: string[];
+}): Promise<User> {
+  return apiFetch<User>(`${PATH}/link`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 // --- Creación masiva de usuarios (CSV) ---
 
 /** Fila individual enviada al bulk endpoint de usuarios. */
