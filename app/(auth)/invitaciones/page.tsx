@@ -3,9 +3,24 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, KeyRound, Loader2, ShieldCheck } from "lucide-react";
-import { acceptInvitation, validateInvitation, type InvitationValidation } from "@/lib/api/invitation-service";
+import {
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  acceptInvitation,
+  validateInvitation,
+  type InvitationValidation,
+} from "@/lib/api/invitation-service";
 import { ApiError } from "@/lib/api/http";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PasswordChecklist } from "@/features/auth-common/components/password-checklist";
+import { validatePassword } from "@/features/auth-common/utils/validation";
 import { useT } from "@/providers/i18n-provider";
 
 type Phase = "loading" | "invalid" | "ready" | "submitting" | "done";
@@ -53,15 +68,16 @@ function InvitationPageContent() {
     };
   }, [token, t]);
 
+  // Validación en vivo contra la política del backend (misma que el alta).
+  const passwordErrors = validatePassword(password);
+  const passwordValid = passwordErrors.length === 0;
+  const mismatch = confirm.length > 0 && confirm !== password;
+  const canSubmit =
+    phase === "ready" && passwordValid && confirm.length > 0 && !mismatch;
+  const isSubmitting = phase === "submitting";
+
   const submit = async () => {
-    if (password.length < 8) {
-      setError(t("La contraseña debe tener al menos 8 caracteres."));
-      return;
-    }
-    if (password !== confirm) {
-      setError(t("Las contraseñas no coinciden."));
-      return;
-    }
+    if (!passwordValid || confirm.length === 0 || mismatch) return;
 
     setPhase("submitting");
     setError(null);
@@ -72,27 +88,31 @@ function InvitationPageContent() {
     } catch (err) {
       setPhase("ready");
       setError(
-        err instanceof ApiError ? err.message : t("No se pudo completar el acceso. Intenta nuevamente."),
+        err instanceof ApiError
+          ? err.message
+          : t("No se pudo completar el acceso. Intenta nuevamente."),
       );
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--sidebar)] px-4 py-10">
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary-strong">
             <KeyRound className="size-7" />
           </div>
-          <h1 className="text-2xl font-bold text-white">{t("Completa tu acceso")}</h1>
-          <p className="mt-1 text-sm text-white/65">
+          <h1 className="font-heading text-2xl font-bold text-brand-navy">
+            {t("Completa tu acceso")}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {t("Establece tu contraseña para entrar a la plataforma.")}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
           {phase === "loading" && (
-            <div className="flex items-center justify-center gap-2 py-8 text-white/70">
+            <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
               <Loader2 className="size-5 animate-spin" />
               <span className="text-sm">{t("Validando invitación...")}</span>
             </div>
@@ -100,86 +120,129 @@ function InvitationPageContent() {
 
           {phase === "invalid" && (
             <div className="py-4 text-center">
-              <p className="text-sm text-white/85">{error}</p>
+              <p className="text-sm text-muted-foreground">{error}</p>
               <Link
                 href="/login"
-                className="mt-4 inline-block rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition-colors"
+                className="mt-4 inline-block rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent/40"
               >
                 {t("Volver al inicio de sesión")}
               </Link>
             </div>
           )}
 
-          {phase === "ready" && (
+          {(phase === "ready" || phase === "submitting") && (
             <div>
-              <div className="mb-5 flex items-center gap-3 rounded-xl bg-emerald-500/10 p-3">
-                <ShieldCheck className="size-5 shrink-0 text-emerald-400" />
+              <div className="mb-5 flex items-center gap-3 rounded-xl border border-border/70 bg-accent/40 p-3">
+                <ShieldCheck className="size-5 shrink-0 text-brand-teal" />
                 <div>
-                  <p className="text-[13px] font-semibold text-white">
+                  <p className="text-[13px] font-semibold text-foreground">
                     {validation?.firstName} {validation?.lastName}
                   </p>
-                  <p className="text-[11.5px] text-white/60">{validation?.email}</p>
+                  <p className="text-[11.5px] text-muted-foreground">
+                    {validation?.email}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="password" className="mb-1.5 block text-[12.5px] font-medium text-white/80">
+                  <label
+                    htmlFor="password"
+                    className="mb-1.5 block text-[13px] font-semibold text-foreground"
+                  >
                     {t("Nueva contraseña")}
                   </label>
                   <div className="relative">
-                    <input
+                    <KeyRound className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
                       id="password"
                       type={show ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={t("Mínimo 8 caracteres")}
-                      className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3.5 pr-10 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/60"
+                      className="h-11 rounded-xl border-border/80 bg-card pr-10 pl-10 text-[14.5px] shadow-none"
+                      aria-invalid={password.length > 0 && !passwordValid}
+                      autoComplete="new-password"
                     />
                     <button
                       type="button"
                       onClick={() => setShow((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80"
-                      aria-label={show ? t("Ocultar contraseña") : t("Mostrar contraseña")}
+                      className="absolute top-1/2 right-3.5 -translate-y-1/2 cursor-pointer text-muted-foreground transition-colors hover:text-brand-navy"
+                      aria-label={
+                        show ? t("Ocultar contraseña") : t("Mostrar contraseña")
+                      }
                     >
-                      {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      {show ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
                     </button>
+                  </div>
+                  <div className="mt-2">
+                    <PasswordChecklist password={password} errors={passwordErrors} />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="confirm" className="mb-1.5 block text-[12.5px] font-medium text-white/80">
+                  <label
+                    htmlFor="confirm"
+                    className="mb-1.5 block text-[13px] font-semibold text-foreground"
+                  >
                     {t("Confirmar contraseña")}
                   </label>
-                    <input
+                  <div className="relative">
+                    <ShieldCheck className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
                       id="confirm"
                       type={show ? "text" : "password"}
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}
                       placeholder={t("Repite la contraseña")}
-                      className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/60"
+                      className="h-11 rounded-xl border-border/80 bg-card pl-10 text-[14.5px] shadow-none"
+                      aria-invalid={mismatch}
+                      autoComplete="new-password"
                     />
+                  </div>
+                  {mismatch && (
+                    <p className="mt-1.5 text-[12px] text-destructive">
+                      {t("Las contraseñas no coinciden.")}
+                    </p>
+                  )}
                 </div>
 
                 {error && (
-                  <p className="rounded-lg bg-red-500/10 px-3 py-2 text-[12.5px] text-red-300">{error}</p>
+                  <div className="flex items-center gap-2 rounded-xl bg-destructive-soft px-3.5 py-3 text-[13px] text-destructive">
+                    <AlertTriangle className="size-4 shrink-0" />
+                    {error}
+                  </div>
                 )}
 
-                <button
+                <Button
+                  type="button"
                   onClick={submit}
-                  className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"
+                  disabled={!canSubmit || isSubmitting}
+                  className="h-11 w-full rounded-xl"
                 >
-                  {t("Establecer contraseña e iniciar")}
-                </button>
+                  {isSubmitting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    t("Establecer contraseña e iniciar")
+                  )}
+                </Button>
               </div>
             </div>
           )}
 
           {phase === "done" && (
             <div className="py-6 text-center">
-              <ShieldCheck className="mx-auto mb-3 size-10 text-emerald-400" />
-              <p className="text-sm font-semibold text-white">{t("¡Acceso completado!")}</p>
-              <p className="mt-1 text-[12.5px] text-white/60">{t("Redirigiendo al inicio de sesión...")}</p>
+              <ShieldCheck className="mx-auto mb-3 size-10 text-brand-teal" />
+              <p className="text-sm font-semibold text-foreground">
+                {t("¡Acceso completado!")}
+              </p>
+              <p className="mt-1 text-[12.5px] text-muted-foreground">
+                {t("Redirigiendo al inicio de sesión...")}
+              </p>
             </div>
           )}
         </div>
