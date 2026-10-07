@@ -22,7 +22,7 @@ env:
   ECS_CLUSTER: cooppadresd-cluster
   ECS_SERVICE: cooppadresd-frontend
   NEXT_PUBLIC_GATEWAY_URL: https://erp.coppadresd.com
-  NEXT_PUBLIC_COMMUNITY_API_URL: https://erp.coppadresd.com/api/v1/community
+  NEXT_PUBLIC_COMMUNITY_API_URL: https://erp.coppadresd.com
   NEXT_PUBLIC_APPLICATION_CODE: erp
   NEXT_PUBLIC_SESSION_IDLE_MINUTES: "30"
 
@@ -49,6 +49,11 @@ jobs:
 
       - name: Lint
         run: yarn lint
+
+      - name: Validar URLs del gateway y comunidad
+        run: |
+          node --test scripts/check-service-urls.test.mjs
+          node scripts/check-service-urls.mjs
 
       - name: Build
         run: yarn build
