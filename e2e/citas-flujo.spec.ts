@@ -24,11 +24,6 @@ interface ConfirmResponse {
   scheduledStart: string;
 }
 
-function toDateInput(value: Date): string {
-  const pad = (part: number) => String(part).padStart(2, "0");
-  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
-}
-
 test.describe("flujo de citas bandeja -> agenda", () => {
   test("confirmar y agendar convierte la solicitud y la cita aparece en agenda", async ({
     page,
@@ -41,6 +36,14 @@ test.describe("flujo de citas bandeja -> agenda", () => {
     }
     const requestId = fixtures.requests.inboxPending;
     const patientName = fixtures.patient.name ?? "";
+    // La API puede devolver el nombre con dobles espacios cuando el paciente
+    // no tiene segundo nombre ("Evelyn  Rivera"); la búsqueda del filtro es
+    // literal (includes), así que normalizamos los espacios en las aserciones
+    // y usamos el primer nombre para la búsqueda.
+    const namePattern = new RegExp(
+      patientName.trim().split(/\s+/).join("\\s+"),
+    );
+    const nameSearch = patientName.trim().split(/\s+/)[0] ?? patientName;
 
     // 1. Bandeja del profesional con la solicitud E2E pendiente.
     await loginAsProfessional(page);
@@ -73,43 +76,41 @@ test.describe("flujo de citas bandeja -> agenda", () => {
     const dateInput = page.locator("#confirm-date");
     await expect(dateInput).toBeVisible();
 
-    // La fecha preferida del seed puede caer sin horario: se prueban hasta
-    // 6 días consecutivos hasta que el picker liste slots (evidencia
-    // qa-citas 2026-09-29: 27 sin slots, 30 con slots).
-    const slotsRegion = page.getByLabel("Horarios disponibles");
-    let slotDate = "";
-    let slotPicked = false;
-    const startDate = (await dateInput.inputValue()) || toDateInput(new Date());
-    const base = new Date(`${startDate}T12:00:00`);
-    for (let offset = 0; offset < 6 && !slotPicked; offset += 1) {
-      const candidate = new Date(base);
-      candidate.setDate(candidate.getDate() + offset);
-      const candidateInput = toDateInput(candidate);
-      await dateInput.fill(candidateInput);
-      // El picker dispara fetchAvailabilitySlots por cambio de fecha.
-      const noSlots = page.getByText(
-        "No hay horarios disponibles para esta fecha.",
-      );
-      const firstSlot = slotsRegion.getByRole("button").first();
-      const winner = await Promise.race([
-        firstSlot
-          .waitFor({ state: "visible", timeout: 10_000 })
-          .then(() => "slot" as const)
-          .catch(() => null),
-        noSlots
-          .waitFor({ state: "visible", timeout: 10_000 })
-          .then(() => "empty" as const)
-          .catch(() => null),
-      ]);
-      if (winner === "slot") {
-        await firstSlot.click();
-        // El botón queda con aria-pressed=true al seleccionar.
-        await expect(firstSlot).toHaveAttribute("aria-pressed", "true");
-        slotDate = candidateInput;
-        slotPicked = true;
-      }
+    // La fecha preferida del seed puede caer sin horario: el picker ofrece
+    // automáticamente los próximos horarios disponibles (chips) cuando el
+    // día seleccionado no tiene cupos.
+    const slotsRegion = page.getByLabel("Horarios disponibles", { exact: true });
+    const nearestRegion = page.getByLabel("Próximos horarios disponibles", {
+      exact: true,
+    });
+    const firstSlot = slotsRegion.getByRole("button").first();
+    const firstNearest = nearestRegion.getByRole("button").first();
+    const winner = await Promise.race([
+      firstSlot
+        .waitFor({ state: "visible", timeout: 20_000 })
+        .then(() => "slot" as const)
+        .catch(() => null),
+      firstNearest
+        .waitFor({ state: "visible", timeout: 20_000 })
+        .then(() => "nearest" as const)
+        .catch(() => null),
+    ]);
+    expect(winner).not.toBeNull();
+
+    let slotDate = await dateInput.inputValue();
+    if (winner === "slot") {
+      await firstSlot.click();
+      // El botón queda con aria-pressed=true al seleccionar.
+      await expect(firstSlot).toHaveAttribute("aria-pressed", "true");
+    } else {
+      await firstNearest.click();
+      // El chip selecciona un día posterior: el picker recarga esa fecha y
+      // deja el slot elegido marcado en la grilla principal.
+      await expect(
+        slotsRegion.getByRole("button", { pressed: true }),
+      ).toBeVisible();
+      slotDate = await dateInput.inputValue();
     }
-    expect(slotPicked).toBe(true);
 
     const confirmButton = dialog.getByRole("button", {
       name: "Confirmar y agendar cita",
@@ -148,9 +149,9 @@ test.describe("flujo de citas bandeja -> agenda", () => {
     ).toBeVisible();
     if (patientName) {
       const agendaSearch = page.getByPlaceholder("Buscar paciente");
-      await agendaSearch.fill(patientName);
+      await agendaSearch.fill(nameSearch);
     }
-    const agendaRow = page.locator("div", { hasText: patientName }).first();
+    const agendaRow = page.locator("div", { hasText: namePattern }).first();
     await expect(agendaRow).toBeVisible();
     await expect(page.getByText("Confirmada").first()).toBeVisible();
 
@@ -158,7 +159,7 @@ test.describe("flujo de citas bandeja -> agenda", () => {
     // agenda: el deep-link directo falla porque el fetch inicial no lleva
     // X-Clinic-Id (hallazgo de producto documentado en e2e/README.md).
     const detailButton = page
-      .locator("div.group", { hasText: patientName })
+      .locator("div.group", { hasText: namePattern })
       .first()
       .getByRole("button", { name: "Detalle", exact: true });
     await expect(detailButton).toBeVisible();
