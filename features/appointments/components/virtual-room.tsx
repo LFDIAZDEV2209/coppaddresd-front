@@ -240,7 +240,7 @@ export function VirtualRoom() {
       const tile = remoteScreensRef.current.find((item) => item.track === track);
       if (!tile) return;
       track.detach().forEach((el) => el.remove());
-      attachedTracksRef.current.delete(`screen:${tile.identity}:${track.id}`);
+      attachedTracksRef.current.delete(`screen:${tile.identity}:${track.sid}`);
       syncRemoteScreens(
         remoteScreensRef.current.filter((item) => item.track !== track),
       );
@@ -256,7 +256,7 @@ export function VirtualRoom() {
       if (leaving.length === 0) return;
       leaving.forEach(({ track }) => {
         track.detach().forEach((el) => el.remove());
-        attachedTracksRef.current.delete(`screen:${identity}:${track.id}`);
+        attachedTracksRef.current.delete(`screen:${identity}:${track.sid}`);
       });
       syncRemoteScreens(
         remoteScreensRef.current.filter((tile) => tile.identity !== identity),
@@ -305,7 +305,7 @@ export function VirtualRoom() {
         identity,
         list.filter((t) => t !== track),
       );
-      attachedTracksRef.current.delete(`${identity}:${track.id}`);
+      attachedTracksRef.current.delete(`${identity}:${track.sid}`);
       syncRemoteVideo(identity);
       setTracksVersion((v) => v + 1);
     },
@@ -739,7 +739,7 @@ export function VirtualRoom() {
       const container = trackContainersRef.current.get(identity);
       if (!container) return;
       tracks.forEach((track) => {
-        const key = `${identity}:${track.id}`;
+        const key = `${identity}:${track.sid}`;
         if (track.kind === "data" || attachedTracksRef.current.has(key))
           return;
         attachedTracksRef.current.add(key);
@@ -748,8 +748,8 @@ export function VirtualRoom() {
     });
 
     remoteScreens.forEach(({ identity, track }) => {
-      const key = `screen:${identity}:${track.id}`;
-      const container = screenContainersRef.current.get(`${identity}:${track.id}`);
+      const key = `screen:${identity}:${track.sid}`;
+      const container = screenContainersRef.current.get(`${identity}:${track.sid}`);
       if (!container || attachedTracksRef.current.has(key)) return;
       attachedTracksRef.current.add(key);
       container.appendChild(track.attach());
@@ -1438,7 +1438,7 @@ export function VirtualRoom() {
             <div className="flex min-h-0 flex-col gap-2">
               {remoteScreens.map(({ identity, track }) => (
                 <div
-                  key={`${identity}:${track.id}`}
+                  key={`${identity}:${track.sid}`}
                   className="overflow-hidden rounded-[26px] border border-primary/30 bg-foreground shadow-sm"
                 >
                   <div className="flex items-center gap-2 border-b border-white/10 px-3.5 py-2">
@@ -1452,7 +1452,7 @@ export function VirtualRoom() {
                   <div
                     ref={(el) => {
                       const map = screenContainersRef.current;
-                      const key = `${identity}:${track.id}`;
+                      const key = `${identity}:${track.sid}`;
                       if (el) map.set(key, el);
                       else map.delete(key);
                     }}

@@ -34,7 +34,7 @@ declare namespace TwilioVideo {
   interface RemoteTrack {
     kind: "audio" | "video" | "data";
     isEnabled: boolean;
-    id: string;
+    sid: string;
     name?: string;
     attach(element?: HTMLElement): HTMLElement;
     detach(): HTMLElement[];
