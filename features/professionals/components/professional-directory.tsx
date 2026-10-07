@@ -18,11 +18,21 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAppContext } from "@/providers/context-provider";
 import { CatalogManagement } from "./catalog-management";
 import { useProfessionals } from "../hooks/use-professionals";
 import type { EmployeeListItem } from "../services/employees-service";
-import { inviteEmployee } from "../services/employees-service";
+import { deleteEmployee, inviteEmployee } from "../services/employees-service";
 import { ApiError } from "@/lib/api/http";
 import type { DataView } from "@/components/feedback/view-toggle";
 import { statusLabel } from "./professional-visuals";
@@ -65,10 +75,15 @@ export function ProfessionalDirectory() {
   } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkInviting, setBulkInviting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<EmployeeListItem | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
   const [view, setView] = useState<DataView>("table");
 
   const canCreate = can("Professionals.Create");
   const canInvite = can("Professionals.Update");
+  const canDelete = can("Employees.Delete");
 
   const openCreate = () => router.push("/people/new?context=staff");
   const openDetail = (employee: EmployeeListItem) =>
@@ -140,6 +155,38 @@ export function ProfessionalDirectory() {
       });
     } finally {
       setInvitingId(null);
+    }
+  };
+
+  // --- Eliminación lógica del perfil (libera el correo) ---
+  const onDelete = (employee: EmployeeListItem) => {
+    setDeleteTarget(employee);
+    setFeedback(null);
+  };
+
+  const confirmDeleteProfile = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteEmployee(deleteTarget.id);
+      setFeedback({
+        kind: "ok",
+        message: t(
+          "Perfil eliminado. El correo quedó libre para una nueva alta.",
+        ),
+      });
+      setDeleteTarget(null);
+      await retry();
+    } catch (err) {
+      setFeedback({
+        kind: "error",
+        message:
+          err instanceof ApiError
+            ? err.message
+            : t("No se pudo eliminar el perfil."),
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -344,12 +391,14 @@ export function ProfessionalDirectory() {
                   <DirectoryCards
                     employees={result.data}
                     canInvite={canInvite}
+                    canDelete={canDelete}
                     invitingId={invitingId}
                     copiedId={copiedId}
                     selected={selected}
                     onToggleOne={toggleOne}
                     onOpen={openDetail}
                     onInvite={onInvite}
+                    onDelete={onDelete}
                   />
                 </div>
                 {view === "table" ? (
@@ -357,6 +406,7 @@ export function ProfessionalDirectory() {
                     <DirectoryTable
                       employees={result.data}
                       canInvite={canInvite}
+                      canDelete={canDelete}
                       invitingId={invitingId}
                       copiedId={copiedId}
                       selected={selected}
@@ -366,6 +416,7 @@ export function ProfessionalDirectory() {
                       onToggleOne={toggleOne}
                       onOpen={openDetail}
                       onInvite={onInvite}
+                      onDelete={onDelete}
                     />
                   </div>
                 ) : (
@@ -373,12 +424,14 @@ export function ProfessionalDirectory() {
                     <DirectoryCards
                       employees={result.data}
                       canInvite={canInvite}
+                      canDelete={canDelete}
                       invitingId={invitingId}
                       copiedId={copiedId}
                       selected={selected}
                       onToggleOne={toggleOne}
                       onOpen={openDetail}
                       onInvite={onInvite}
+                      onDelete={onDelete}
                     />
                   </div>
                 )}
@@ -415,6 +468,49 @@ export function ProfessionalDirectory() {
         {/* Gestión de catálogos (tipos y especialidades): solo Super Admin. */}
         {canManageCatalogs && <CatalogManagement />}
       </div>
+
+      {/* Confirmación de la eliminación lógica del perfil de empleado. */}
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setDeleteTarget(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("¿Eliminar el perfil de {name}?", {
+                name: deleteTarget
+                  ? `${deleteTarget.firstName} ${deleteTarget.lastName}`.trim()
+                  : "",
+              })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                "El perfil se ocultará del directorio y su correo quedará libre. La cuenta de acceso y el historial clínico se conservan.",
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t("Cancelar")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmDeleteProfile();
+              }}
+            >
+              {deleting && <RefreshCw className="size-4 animate-spin" />}
+              {t("Eliminar")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ProfessionalAccessProvider>
   );
 }

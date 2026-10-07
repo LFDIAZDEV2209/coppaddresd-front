@@ -1,7 +1,7 @@
 "use client";
 
 import { useT } from "@/providers/i18n-provider";
-import { Check, Eye, MailPlus, MoreHorizontal } from "lucide-react";
+import { Check, Eye, MailPlus, MoreHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,17 +22,21 @@ import type { EmployeeListItem } from "../../services/employees-service";
 export function ActionsMenu({
   employee,
   canInvite,
+  canDelete,
   inviting,
   copied,
   onOpen,
   onInvite,
+  onDelete,
 }: {
   employee: EmployeeListItem;
   canInvite: boolean;
+  canDelete: boolean;
   inviting: boolean;
   copied: boolean;
   onOpen: (employee: EmployeeListItem) => void;
   onInvite: (employee: EmployeeListItem) => void;
+  onDelete: (employee: EmployeeListItem) => void;
 }) {
   const t = useT();
   const access = useProfessionalAccessState(employee);
@@ -80,6 +84,18 @@ export function ActionsMenu({
               }}
             >
               <ProfessionalAccess employee={employee} />
+            </DropdownMenuItem>
+          </>
+        )}
+        {canDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => onDelete(employee)}
+            >
+              <Trash2 />
+              {t("Eliminar perfil")}
             </DropdownMenuItem>
           </>
         )}

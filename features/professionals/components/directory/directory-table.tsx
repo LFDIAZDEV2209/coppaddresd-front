@@ -101,6 +101,7 @@ function SortableHead({
 export function DirectoryTable({
   employees,
   canInvite,
+  canDelete,
   invitingId,
   copiedId,
   selected,
@@ -110,9 +111,11 @@ export function DirectoryTable({
   onToggleOne,
   onOpen,
   onInvite,
+  onDelete,
 }: {
   employees: EmployeeListItem[];
   canInvite: boolean;
+  canDelete: boolean;
   invitingId: string | null;
   copiedId: string | null;
   selected: Set<string>;
@@ -122,6 +125,7 @@ export function DirectoryTable({
   onToggleOne: (id: string) => void;
   onOpen: (employee: EmployeeListItem) => void;
   onInvite: (employee: EmployeeListItem) => void;
+  onDelete: (employee: EmployeeListItem) => void;
 }) {
   const t = useT();
   const [sort, setSort] = useState<SortState>({ field: "name", dir: "asc" });
@@ -295,10 +299,12 @@ export function DirectoryTable({
                 <ActionsMenu
                   employee={employee}
                   canInvite={canInvite}
+                  canDelete={canDelete}
                   inviting={invitingId === employee.id}
                   copied={copiedId === employee.id}
                   onOpen={onOpen}
                   onInvite={onInvite}
+                  onDelete={onDelete}
                 />
               </TableCell>
             </TableRow>

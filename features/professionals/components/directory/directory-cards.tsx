@@ -18,21 +18,25 @@ import type { EmployeeListItem } from "../../services/employees-service";
 export function DirectoryCards({
   employees,
   canInvite,
+  canDelete,
   invitingId,
   copiedId,
   selected,
   onToggleOne,
   onOpen,
   onInvite,
+  onDelete,
 }: {
   employees: EmployeeListItem[];
   canInvite: boolean;
+  canDelete: boolean;
   invitingId: string | null;
   copiedId: string | null;
   selected: Set<string>;
   onToggleOne: (id: string) => void;
   onOpen: (employee: EmployeeListItem) => void;
   onInvite: (employee: EmployeeListItem) => void;
+  onDelete: (employee: EmployeeListItem) => void;
 }) {
   const t = useT();
   return (
@@ -56,10 +60,12 @@ export function DirectoryCards({
             <ActionsMenu
               employee={employee}
               canInvite={canInvite}
+              canDelete={canDelete}
               inviting={invitingId === employee.id}
               copied={copiedId === employee.id}
               onOpen={onOpen}
               onInvite={onInvite}
+              onDelete={onDelete}
             />
           </div>
 

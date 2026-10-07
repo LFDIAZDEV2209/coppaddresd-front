@@ -25,7 +25,11 @@ import {
   fetchOrganizationTree,
   createProfessional,
   checkEmployeeEmailAvailability,
+  deleteEmployee,
+  inviteEmployee,
   type OrganizationTree,
+  type EmailAvailabilityResult,
+  type EmployeeEmailMatch,
 } from "@/features/professionals/services/employees-service";
 import { updateSchedules } from "@/features/professionals/services/schedules-service";
 import {
@@ -132,13 +136,16 @@ export function PeopleWizard({
   // síncrono en el efecto cuando el campo está incompleto).
   const [emailCheck, setEmailCheck] = useState<{
     email: string;
-    taken: boolean;
+    result: EmailAvailabilityResult;
   } | null>(null);
+  const [emailActionBusy, setEmailActionBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [created, setCreated] = useState<{
     id: string;
     invitationLink: string | null;
     email: string;
     mode: Mode;
+    accountLinked: boolean;
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -166,10 +173,20 @@ export function PeopleWizard({
     const timer = setTimeout(() => {
       checkEmployeeEmailAvailability(email, organizationId)
         .then((result) => {
-          if (!cancelled) setEmailCheck({ email, taken: !result.available });
+          if (!cancelled) setEmailCheck({ email, result });
         })
         .catch(() => {
-          if (!cancelled) setEmailCheck({ email, taken: false });
+          if (!cancelled) {
+            setEmailCheck({
+              email,
+              result: {
+                available: true,
+                employee: null,
+                patient: null,
+                account: null,
+              },
+            });
+          }
         });
     }, 450);
 
@@ -179,9 +196,64 @@ export function PeopleWizard({
     };
   }, [form.mode, form.email, form.organizationId]);
 
-  const emailTaken =
-    emailCheck?.taken === true &&
-    emailCheck.email === form.email.trim().toLowerCase();
+  // Contexto vigente del preflight: solo si el correo consultado coincide con
+  // el valor actual del campo (evita mostrar datos de un correo viejo).
+  const emailContext =
+    emailCheck && emailCheck.email === form.email.trim().toLowerCase()
+      ? emailCheck.result
+      : null;
+  const emailEmployee: EmployeeEmailMatch | null =
+    emailContext?.employee ?? null;
+
+  /** Invita al perfil existente en vez de crear uno nuevo (el backend une
+   *  sus roles y permisos por alcance — union pura). */
+  const inviteExistingProfile = async () => {
+    if (!emailEmployee) return;
+    setEmailActionBusy(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const result = await inviteEmployee(emailEmployee.id);
+      setCreated({
+        id: result.employeeId,
+        invitationLink: result.invitationLink,
+        email: form.email.trim(),
+        mode: form.mode as Mode,
+        accountLinked: false,
+      });
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : t("No se pudo enviar la invitación."),
+      );
+    } finally {
+      setEmailActionBusy(false);
+    }
+  };
+
+  /** Elimina el perfil existente para liberar el correo (soft-delete). */
+  const deleteExistingProfile = async () => {
+    if (!emailEmployee) return;
+    setEmailActionBusy(true);
+    setNotice(null);
+    setError(null);
+    try {
+      await deleteEmployee(emailEmployee.id);
+      setEmailCheck(null);
+      setNotice(
+        t("Perfil eliminado. El correo quedó libre para una nueva alta."),
+      );
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : t("No se pudo eliminar el perfil."),
+      );
+    } finally {
+      setEmailActionBusy(false);
+    }
+  };
 
   // Cargar catálogos de forma condicional según el modo SELECCIONADO (no al montar).
   // Cuando form.mode=null (selector de modo), NO se hace fetch — el selector
@@ -430,6 +502,7 @@ export function PeopleWizard({
           invitationLink: result.invitationLink,
           email: form.email.trim(),
           mode,
+          accountLinked: result.accountLinked,
         });
       } else if (mode === "patient") {
         // Paciente: payload mínimo — el resto se completa en el perfil
@@ -490,6 +563,7 @@ export function PeopleWizard({
           invitationLink: null,
           email: form.email.trim(),
           mode,
+          accountLinked: false,
         });
       }
     } catch (err) {
@@ -608,11 +682,15 @@ export function PeopleWizard({
                   ? `${created.email} ${
                       created.mode === "patient"
                         ? t("fue registrado en el sistema")
-                        : created.invitationLink
+                        : created.accountLinked
                           ? t(
-                              "recibió la invitación y puede completar su acceso con el enlace",
+                              "ya tenía una cuenta; se vinculó al perfil y se sumaron sus roles",
                             )
-                          : t("recibió la invitación por correo")
+                          : created.invitationLink
+                            ? t(
+                                "recibió la invitación y puede completar su acceso con el enlace",
+                              )
+                            : t("recibió la invitación por correo")
                     }`
                   : t("Creado correctamente")}
                 .
@@ -700,6 +778,11 @@ export function PeopleWizard({
               {error}
             </div>
           )}
+          {notice && (
+            <div className="border-b border-border bg-success-soft px-5 py-2.5 text-[13px] text-success-foreground">
+              {notice}
+            </div>
+          )}
 
           {/* Paso -1: selector de modo */}
           {step === -1 && (
@@ -734,7 +817,10 @@ export function PeopleWizard({
                 onNext={goNext}
                 onBack={availableModes.length > 1 ? backToSelector : undefined}
                 countries={countries}
-                emailTaken={emailTaken}
+                emailContext={emailContext}
+                emailActionBusy={emailActionBusy}
+                onInviteExisting={inviteExistingProfile}
+                onDeleteExisting={deleteExistingProfile}
               />
             )}
 

@@ -10,10 +10,29 @@
 
 import { useT } from "@/providers/i18n-provider";
 import { useCallback, useState, useMemo } from "react";
-import { ArrowLeft, ArrowRight, Siren, UserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  MailPlus,
+  Siren,
+  Trash2,
+  UserRound,
+} from "lucide-react";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -21,16 +40,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ProfessionalAvatar } from "../../professional-visuals";
+import {
+  ProfessionalAvatar,
+  statusLabel,
+} from "../../professional-visuals";
 import { Field } from "../shared";
 import type { StepProps } from "../wizard-state";
 import type { CountryOption } from "@/features/patients/types";
+import type { EmailAvailabilityResult } from "@/features/professionals/services/employees-service";
 
 interface IdentityStepProps extends Omit<StepProps, "onBack"> {
   onBack?: () => void;
   countries?: CountryOption[];
-  /** El correo ya existe en la organización (preflight del wizard). */
-  emailTaken?: boolean;
+  /** Contexto del preflight del correo: perfiles y cuenta que ya lo usan. */
+  emailContext?: EmailAvailabilityResult | null;
+  /** Acción en curso sobre el perfil existente (invitar/eliminar). */
+  emailActionBusy?: boolean;
+  onInviteExisting?: () => void;
+  onDeleteExisting?: () => void;
 }
 
 export function IdentityStep({
@@ -39,10 +66,19 @@ export function IdentityStep({
   onNext,
   onBack,
   countries = [],
-  emailTaken = false,
+  emailContext = null,
+  emailActionBusy = false,
+  onInviteExisting,
+  onDeleteExisting,
 }: IdentityStepProps) {
   const t = useT();
+  const router = useRouter();
   const isPatient = form.mode === "patient";
+  const emailEmployee = emailContext?.employee ?? null;
+  const emailTaken = emailEmployee != null;
+  const emailPatient = emailContext?.patient ?? null;
+  const emailAccount = emailContext?.account ?? null;
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Catálogo deduplicado por código telefónico (varios países comparten el
   // +1). El trigger muestra solo el prefijo; el nombre completo aparece en
@@ -219,7 +255,11 @@ export function IdentityStep({
             <Field
               label={t("Correo electrónico")}
               required={!isPatient}
-              error={touched.has("email") || emailTaken ? fieldErrors.email : ""}
+              error={
+                // Con la tarjeta de perfil existente el aviso rojo sería
+                // redundante: la tarjeta explica y ofrece las acciones.
+                emailEmployee ? "" : touched.has("email") || emailTaken ? fieldErrors.email : ""
+              }
               hint={
                 !isPatient
                   ? t("El profesional usará este correo para acceder al ERP.")
@@ -237,6 +277,123 @@ export function IdentityStep({
                 autoComplete="off"
               />
             </Field>
+
+            {/* Tarjeta de perfil existente: invitar el perfil o liberar el
+                correo eliminándolo. La creación nueva queda bloqueada. */}
+            {!isPatient && emailEmployee && (
+              <>
+                <div className="rounded-xl border border-border/70 bg-muted/40 p-3.5 sm:col-span-2">
+                  <div className="flex items-start gap-2.5">
+                    <UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                      <p className="text-[13px] font-medium text-foreground">
+                        {t(
+                          "Existe un perfil de {name} ({status}) en esta organización.",
+                          {
+                            name: `${emailEmployee.firstName} ${emailEmployee.lastName}`.trim(),
+                            status: t(statusLabel(emailEmployee.status)),
+                          },
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {emailEmployee.hasAccount
+                          ? t(
+                              "Este perfil ya tiene una cuenta vinculada. Si necesitas reutilizar este correo, elimina el perfil.",
+                            )
+                          : t(
+                              "Puedes invitar al perfil existente (se sumarán sus roles) o eliminarlo para liberar el correo.",
+                            )}
+                      </p>
+                      <div className="flex flex-wrap gap-2 pt-0.5">
+                        {!emailEmployee.hasAccount && onInviteExisting && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={onInviteExisting}
+                            disabled={emailActionBusy}
+                          >
+                            <MailPlus data-icon="inline-start" />
+                            {t("Invitar perfil existente")}
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            router.push(`/employees/${emailEmployee.id}`)
+                          }
+                        >
+                          <Eye data-icon="inline-start" />
+                          {t("Ver perfil")}
+                        </Button>
+                        {onDeleteExisting && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => setConfirmDelete(true)}
+                            disabled={emailActionBusy}
+                          >
+                            <Trash2 data-icon="inline-start" />
+                            {t("Eliminar perfil")}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <AlertDialog
+                  open={confirmDelete}
+                  onOpenChange={setConfirmDelete}
+                >
+                  <AlertDialogContent className="sm:max-w-md!">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {t("¿Eliminar el perfil de {name}?", {
+                          name: `${emailEmployee.firstName} ${emailEmployee.lastName}`.trim(),
+                        })}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t(
+                          "El perfil se ocultará del directorio y su correo quedará libre. La cuenta de acceso y el historial clínico se conservan.",
+                        )}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-white hover:bg-destructive/90"
+                        onClick={() => {
+                          setConfirmDelete(false);
+                          onDeleteExisting?.();
+                        }}
+                      >
+                        {t("Eliminar")}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
+
+            {/* Nota de coexistencia: el correo ya vive en un paciente o en una
+                cuenta; el nuevo perfil se vincula y los roles se suman. */}
+            {!isPatient &&
+              !emailEmployee &&
+              (emailPatient || emailAccount?.exists) && (
+                <p className="rounded-xl border border-border/70 bg-muted/40 p-3 text-xs text-muted-foreground sm:col-span-2">
+                  {emailPatient
+                    ? t(
+                        "Este correo ya pertenece a un paciente. Se creará el perfil y se vinculará la misma cuenta; sus roles se suman sin quitar los existentes.",
+                      )
+                    : t(
+                        "Este correo ya tiene una cuenta. Se vinculará al nuevo perfil y sus roles se suman sin quitar los existentes.",
+                      )}
+                </p>
+              )}
 
             <Field
               label={isPatient ? t("Teléfono") : t("Teléfono (opcional)")}

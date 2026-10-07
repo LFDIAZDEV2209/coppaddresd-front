@@ -231,6 +231,11 @@ export interface CreateProfessionalResult {
   invitationId: string | null;
   invitationExpiresAt: string | null;
   invitationLink: string | null;
+  /**
+   * true cuando el correo ya tenía una cuenta con contraseña: no se envió
+   * invitación, la cuenta existente quedó vinculada al perfil.
+   */
+  accountLinked: boolean;
 }
 
 export async function createProfessional(
@@ -286,19 +291,64 @@ export async function createProfessional(
   );
 }
 
+/** Perfil de empleado que ya usa el correo dentro de la organización. */
+export interface EmployeeEmailMatch {
+  id: string;
+  firstName: string;
+  lastName: string;
+  status: string;
+  hasAccount: boolean;
+}
+
+/** Perfil de paciente que ya usa el correo (coexistencia de perfiles). */
+export interface PatientEmailMatch {
+  id: string;
+  firstName: string;
+  lastName: string;
+  status: string;
+  hasAccount: boolean;
+}
+
+/** Estado de la cuenta Auth asociada al correo. */
+export interface AccountEmailMatch {
+  exists: boolean;
+  isActive: boolean;
+  hasPassword: boolean;
+}
+
+/** Contexto del correo en el alta: perfiles y cuenta que ya lo usan. */
+export interface EmailAvailabilityResult {
+  available: boolean;
+  employee: EmployeeEmailMatch | null;
+  patient: PatientEmailMatch | null;
+  account: AccountEmailMatch | null;
+}
+
 /**
- * Preflight del alta de personal: consulta si el correo ya existe dentro de
- * la organización para avisar en el propio campo del wizard. La autoridad
- * final sigue siendo el POST (409 con el mensaje definitivo).
+ * Preflight del alta de personal: consulta la disponibilidad del correo en la
+ * organización y el contexto de los perfiles/cuenta que ya lo usan, para
+ * mostrar la tarjeta de perfil existente en el propio campo del wizard.
+ * La autoridad final sigue siendo el POST (409 con el mensaje definitivo).
  */
 export async function checkEmployeeEmailAvailability(
   email: string,
   organizationId: string,
-): Promise<{ available: boolean }> {
+): Promise<EmailAvailabilityResult> {
   const query = new URLSearchParams({ email, organizationId });
-  return apiFetch<{ available: boolean }>(
+  return apiFetch<EmailAvailabilityResult>(
     `${env.apiUrl}/api/v1/professionals/email-availability?${query.toString()}`,
   );
+}
+
+/**
+ * Elimina (soft-delete) el perfil de empleado del directorio y libera su
+ * correo para un alta nueva. La cuenta de acceso y el historial clínico se
+ * conservan.
+ */
+export async function deleteEmployee(id: string): Promise<void> {
+  await apiFetch<void>(`${env.apiUrl}/api/v1/employees/${id}`, {
+    method: "DELETE",
+  });
 }
 
 // --- Asignaciones scoped (roles + overrides por clínica) ---

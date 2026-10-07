@@ -1,5 +1,6 @@
 {
   "1234567890": "1234567890",
+  "¿Eliminar el perfil de {name}?": "Delete {name}'s profile?",
   " · borrador actual": " · current draft",
   " · versión seleccionada": " · selected version",
   " por clínica": " per clinic",
@@ -1458,6 +1459,16 @@
   "El conocimiento global queda disponible para todos los agentes.": "Global knowledge is available to all agents.",
   "El contacto de emergencia requiere teléfono.": "Emergency contact requires a phone number.",
   "El correo es obligatorio.": "Email is required.",
+  "El perfil se ocultará del directorio y su correo quedará libre. La cuenta de acceso y el historial clínico se conservan.": "The profile will be hidden from the directory and its email will become available. The access account and clinical history are preserved.",
+  "Eliminar perfil": "Delete profile",
+  "Este correo ya pertenece a un paciente. Se creará el perfil y se vinculará la misma cuenta; sus roles se suman sin quitar los existentes.": "This email already belongs to a patient. The profile will be created and linked to the same account; roles are merged without removing existing ones.",
+  "Este correo ya tiene una cuenta. Se vinculará al nuevo perfil y sus roles se suman sin quitar los existentes.": "This email already has an account. It will be linked to the new profile and roles are merged without removing existing ones.",
+  "Este perfil ya tiene una cuenta vinculada. Si necesitas reutilizar este correo, elimina el perfil.": "This profile already has a linked account. If you need to reuse this email, delete the profile.",
+  "Existe un perfil de {name} ({status}) en esta organización.": "A profile for {name} ({status}) already exists in this organization.",
+  "Invitar perfil existente": "Invite existing profile",
+  "No se pudo eliminar el perfil.": "The profile could not be deleted.",
+  "Perfil eliminado. El correo quedó libre para una nueva alta.": "Profile deleted. The email is now available for a new registration.",
+  "Puedes invitar al perfil existente (se sumarán sus roles) o eliminarlo para liberar el correo.": "You can invite the existing profile (their roles will be merged) or delete it to free the email.",
   "Ya existe un empleado con el correo '{email}' en esta organización.": "An employee with the email '{email}' already exists in this organization.",
   "El dashboard de Citas está disponible para profesionales con asignación clínica en el ERP.": "The Appointments dashboard is available for professionals with a clinical assignment in the ERP.",
   "El dashboard de Telemedicina está disponible para profesionales con asignación clínica en el ERP.": "The Telemedicine dashboard is available for professionals with a clinical assignment in the ERP.",
@@ -4483,5 +4494,6 @@
   "XP total": "Total XP",
   "y todas sus asignaciones. El perfil del directorio y el historial clínico se conservan. Esta acción no se puede deshacer.": "and all their assignments. The directory profile and clinical history are preserved. This action cannot be undone.",
   "Ya empezaron sus evaluaciones": "They have started their evaluations",
-  "Ya reposteaste esta publicación": "You already reposted this post"
+  "Ya reposteaste esta publicación": "You already reposted this post",
+  "ya tenía una cuenta; se vinculó al perfil y se sumaron sus roles": "already had an account; it was linked to the profile and their roles were merged"
 }

@@ -16,6 +16,7 @@ import {
   Phone,
   ShieldCheck,
   Stethoscope,
+  Trash2,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -30,8 +31,20 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAppContext } from "@/providers/context-provider";
+import {
   fetchEmployee,
   inviteEmployee,
+  deleteEmployee,
   fetchProfessionalScopes,
   updateProfessionalScopes,
   type EmployeeDetail,
@@ -59,6 +72,7 @@ import {
 export function ProfessionalDetail({ id }: { id: string }) {
   const t = useT();
   const router = useRouter();
+  const { can } = useAppContext();
 
   const [employee, setEmployee] = useState<EmployeeDetail | null>(null);
   const [scopes, setScopes] = useState<ProfessionalScopes | null>(null);
@@ -76,6 +90,8 @@ export function ProfessionalDetail({ id }: { id: string }) {
   const [invitationLink, setInvitationLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Construir el mapa clinicId → roleId desde los roles scoped actuales.
   const mapScopedRoles = useCallback((sc: ProfessionalScopes | null) => {
@@ -156,6 +172,8 @@ export function ProfessionalDetail({ id }: { id: string }) {
     [employee, scopes],
   );
 
+  const canDelete = can("Employees.Delete");
+
   const onInvite = async () => {
     setBusy(true);
     setFeedback(null);
@@ -180,6 +198,27 @@ export function ProfessionalDetail({ id }: { id: string }) {
       });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const onDeleteProfile = async () => {
+    if (!employee) return;
+    setDeleting(true);
+    setFeedback(null);
+    try {
+      await deleteEmployee(employee.id);
+      router.push("/employees");
+    } catch (err) {
+      setFeedback({
+        kind: "error",
+        message:
+          err instanceof ApiError
+            ? err.message
+            : t("No se pudo eliminar el perfil."),
+      });
+      setConfirmDelete(false);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -341,6 +380,18 @@ export function ProfessionalDetail({ id }: { id: string }) {
                 {employee.userId
                   ? t("Reenviar invitación")
                   : t("Invitar al profesional")}
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => setConfirmDelete(true)}
+                disabled={busy || deleting}
+              >
+                <Trash2 data-icon="inline-start" />
+                {t("Eliminar perfil")}
               </Button>
             )}
             <Button
@@ -695,6 +746,47 @@ export function ProfessionalDetail({ id }: { id: string }) {
           )}
         </div>
       </div>
+
+      {/* Confirmación de la eliminación lógica del perfil. */}
+      <AlertDialog
+        open={confirmDelete}
+        onOpenChange={(open) => {
+          if (!deleting) {
+            setConfirmDelete(open);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("¿Eliminar el perfil de {name}?", {
+                name: employee ? fullName(employee) : "",
+              })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                "El perfil se ocultará del directorio y su correo quedará libre. La cuenta de acceso y el historial clínico se conservan.",
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t("Cancelar")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={(event) => {
+                event.preventDefault();
+                void onDeleteProfile();
+              }}
+            >
+              {deleting && <Loader2 className="size-4 animate-spin" />}
+              {t("Eliminar")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
