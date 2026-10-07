@@ -536,10 +536,6 @@ export function VirtualRoom() {
           appointmentInfo?.status ?? appointment?.status ?? null,
         sessionStatus: roomInfo?.activeSessionStatus ?? null,
         roomStatus: roomInfo?.status ?? null,
-        roomOpensAt: appointmentInfo?.roomOpensAt ?? appointment?.roomOpensAt,
-        roomClosesAt:
-          appointmentInfo?.roomClosesAt ?? appointment?.roomClosesAt,
-        now: Date.now(),
       });
 
       if (cause !== "network" || retryUsedRef.current) {
@@ -926,13 +922,12 @@ export function VirtualRoom() {
     // (`reopenGraceMinutes`); sin el campo el botón no se muestra (fail-closed).
     const canReopen = canManage && canReopenWithinGrace(appointment, now);
 
-    const closeAtIso = appointment?.roomClosesAt ?? null;
-    const closeTime = closeAtIso ? new Date(closeAtIso).getTime() : null;
-    const windowStillOpen =
+    // El backend ya no limita la ventana al personal: se puede reintentar
+    // mientras la cita siga confirmada o en curso.
+    const canRetry =
+      endCause === "network" &&
       (appointment?.status === "Confirmed" ||
-        appointment?.status === "InProgress") &&
-      (closeTime == null || Number.isNaN(closeTime) || now < closeTime);
-    const canRetry = endCause === "network" && windowStillOpen;
+        appointment?.status === "InProgress");
 
     const title =
       endCause === "network"
@@ -1009,20 +1004,10 @@ export function VirtualRoom() {
   if (phase === "ready" || phase === "connecting") {
     const statusAllowsJoin =
       appointment.status === "Confirmed" || appointment.status === "InProgress";
-    // La ventana viene del detalle de la cita (settings efectivas del
-    // backend); la sala diferida no hace falta para decidir el ingreso.
-    const openAtIso = appointment?.roomOpensAt ?? null;
-    const closeAtIso = appointment?.roomClosesAt ?? null;
-    const openTime = openAtIso ? new Date(openAtIso).getTime() : null;
-    const closeTime = closeAtIso ? new Date(closeAtIso).getTime() : null;
-    const windowClosed =
-      closeTime != null && !Number.isNaN(closeTime) && now >= closeTime;
-    const windowNotOpen =
-      !windowClosed &&
-      openTime != null &&
-      !Number.isNaN(openTime) &&
-      now < openTime;
-    const canJoin = statusAllowsJoin && !windowClosed && !windowNotOpen;
+    // El personal puede entrar apenas la cita está confirmada o en curso: la
+    // ventana horaria solo restringe al paciente en su propia app. El backend
+    // es la fuente de verdad y crea la sala de forma perezosa al ingresar.
+    const canJoin = statusAllowsJoin;
     const connecting = phase === "connecting";
 
     const appointmentCode = appointment.id.slice(0, 8).toUpperCase();
@@ -1215,35 +1200,21 @@ export function VirtualRoom() {
                       </Button>
                     )}
                     <p className="pt-1 text-center text-[11.5px] leading-5 text-muted-foreground">
-                      {t(
-                        "Necesita cámara y micrófono. La sala abre poco antes del inicio y cierra unos minutos después del fin.",
-                      )}
+                      {t("Necesita cámara y micrófono.")}
                     </p>
                   </div>
                 ) : (
                   <div className="mt-5 flex flex-col items-center gap-2 rounded-2xl border border-amber-200/80 bg-amber-50/70 px-4 py-5 text-center dark:border-amber-900/50 dark:bg-amber-950/20">
                     <AlertTriangle className="size-5 text-amber-600" />
                     <p className="text-[13px] font-semibold text-foreground">
-                      {windowClosed
-                        ? t("La ventana de acceso a la sala ya terminó")
-                        : windowNotOpen
-                          ? t("La sala todavía no está abierta")
-                          : t(
-                              "La sala solo está disponible para citas confirmadas o en curso",
-                            )}
+                      {t(
+                        "La sala solo está disponible para citas confirmadas o en curso",
+                      )}
                     </p>
                     <p className="text-[12px] leading-5 text-muted-foreground">
-                      {windowClosed && closeAtIso
-                        ? t("Cerró el {date}", {
-                            date: formatDateTime(closeAtIso),
-                          })
-                        : windowNotOpen && openAtIso
-                          ? t("Abre el {date}", {
-                              date: formatDateTime(openAtIso),
-                            })
-                          : t("Estado actual: {status}", {
-                              status: appointmentStatus,
-                            })}
+                      {t("Estado actual: {status}", {
+                        status: appointmentStatus,
+                      })}
                     </p>
                   </div>
                 )}

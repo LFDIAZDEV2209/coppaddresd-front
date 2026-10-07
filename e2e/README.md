@@ -11,7 +11,7 @@ credenciales ni media real.
 | --- | --- |
 | `login.spec.ts` | Credenciales demo (Enter), credenciales del profesional y error con credenciales inválidas. |
 | `booking-lead-time.spec.ts` | El alta manual prellena el primer hueco (≥ 2 h 30 min, bloques de 30) y el guard local de reprogramación. |
-| `room-gating.spec.ts` | Fuera de ventana: aviso «La sala todavía no está abierta», join ausente y **cero** requests a `sdk.twilio.com`. Fuera de gracia: sin reabrir. Corre también en proyecto móvil 390 px. |
+| `room-gating.spec.ts` | Fuera de ventana: el personal ve el join disponible (sin aviso «La sala todavía no está abierta»). Fuera de gracia: sin reabrir. Corre también en proyecto móvil 390 px. |
 | `room-call.spec.ts` | Prejoin → «Conectando…» → conectado (SDK stub), toggles de mic/cámara y finalización real (`session/end`). |
 | `reopen-grace.spec.ts` | Dentro de la gracia: botón visible con el copy «hasta {minutes} minutos» con el default del backend (60, el seed no configura la gracia); fuera: sin botón. La reapertura exitosa requiere Twilio real (ver límites). |
 | `dashboard-metrics.spec.ts` | `calls` en `/me/analytics` y `expect.poll` (≤ 10 s) del incremento de `sessionsStarted` vía API. |
