@@ -140,6 +140,7 @@ export function VirtualRoom() {
   const localTracksRef = useRef<TwilioVideo.LocalTrack[]>([]);
   const remoteTracksRef = useRef(new Map<string, TwilioVideo.RemoteTrack[]>());
   const attachedTracksRef = useRef(new Set<string>());
+  const remoteMediaElementsRef = useRef(new WeakMap<TwilioVideo.RemoteTrack, HTMLElement>());
   const trackContainersRef = useRef(new Map<string, HTMLDivElement>());
   const screenContainersRef = useRef(new Map<string, HTMLDivElement>());
   const remoteScreensRef = useRef<RemoteScreenTile[]>([]);
@@ -305,7 +306,7 @@ export function VirtualRoom() {
         identity,
         list.filter((t) => t !== track),
       );
-      attachedTracksRef.current.delete(`${identity}:${track.sid}`);
+      remoteMediaElementsRef.current.delete(track);
       syncRemoteVideo(identity);
       setTracksVersion((v) => v + 1);
     },
@@ -436,6 +437,7 @@ export function VirtualRoom() {
       localTracksRef.current = [];
       remoteTracksRef.current = new Map();
       attachedTracksRef.current = new Set();
+      remoteMediaElementsRef.current = new WeakMap();
       syncRemoteScreens([]);
       setRemoteTiles([]);
       try {
@@ -739,11 +741,15 @@ export function VirtualRoom() {
       const container = trackContainersRef.current.get(identity);
       if (!container) return;
       tracks.forEach((track) => {
-        const key = `${identity}:${track.sid}`;
-        if (track.kind === "data" || attachedTracksRef.current.has(key))
-          return;
-        attachedTracksRef.current.add(key);
-        container.appendChild(track.attach());
+        if (track.kind === "data") return;
+        // Audio y video son objetos distintos, incluso si falta su identificador.
+        // Reutilizar el elemento permite adjuntarlo de nuevo si cambió el tile.
+        let element = remoteMediaElementsRef.current.get(track);
+        if (!element) {
+          element = track.attach();
+          remoteMediaElementsRef.current.set(track, element);
+        }
+        if (element.parentElement !== container) container.appendChild(element);
       });
     });
 
