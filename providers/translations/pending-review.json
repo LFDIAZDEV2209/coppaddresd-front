@@ -5,5 +5,15 @@
   "Sep 20": "Sep 20",
   "Sep 21": "Sep 21",
   "Sep 22": "Sep 22",
-  "Sep 23": "Sep-23"
+  "Sep 23": "Sep-23",
+  "New person": "New person",
+  "Select the type of person and complete the data to add them to the directory.": "Select the type of person and complete the data to add them to the directory.",
+  "New professional": "New professional",
+  "Create the profile, assign care hours, and email the invitation.": "Create the profile, assign care hours, and email the invitation.",
+  "New employee": "add new employee",
+  "Create the employee profile and send the invitation by email so they can complete their access.": "Create the employee profile and send the invitation by email so they can complete their access.",
+  "New patient": "New patient",
+  "Register the patient's basic data. You can complete the clinical information later.": "Register the patient's basic data. You can complete the clinical information later.",
+  "New user": "New user",
+  "Create access credentials with roles and permissions, without an employee or patient profile.": "Create access credentials with roles and permissions, without an employee or patient profile."
 }

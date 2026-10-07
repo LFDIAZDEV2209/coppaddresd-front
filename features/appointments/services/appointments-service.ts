@@ -16,6 +16,7 @@ import type {
   AppointmentAlertDto,
   AppointmentDto,
   AppointmentRequestDto,
+  AvailabilityRangeResponseDto,
   AvailabilityResponseDto,
   ChatMessageDto,
   ClinicalDataDto,
@@ -66,6 +67,39 @@ export async function fetchAvailabilitySlots(
     if (value) params.set(key, value);
   }
   return apiFetch<AvailabilityResponseDto>(
+    `${APPOINTMENTS_PATH}/availability?${params.toString()}`,
+    { signal: query.signal },
+  );
+}
+
+export interface AvailabilityRangeQuery {
+  professionalId?: string | null;
+  specialtyId?: string | null;
+  organizationId?: string | null;
+  clinicId?: string | null;
+  locationId?: string | null;
+  /** Inicio del rango en YYYY-MM-DD (inclusive). */
+  from: string;
+  /** Fin del rango (inclusive; el backend limita a 14 días). */
+  to: string;
+  signal?: AbortSignal;
+}
+
+export async function fetchAvailabilityRange(
+  query: AvailabilityRangeQuery,
+): Promise<AvailabilityRangeResponseDto> {
+  const params = new URLSearchParams({ from: query.from, to: query.to });
+  for (const key of [
+    "professionalId",
+    "specialtyId",
+    "organizationId",
+    "clinicId",
+    "locationId",
+  ] as const) {
+    const value = query[key];
+    if (value) params.set(key, value);
+  }
+  return apiFetch<AvailabilityRangeResponseDto>(
     `${APPOINTMENTS_PATH}/availability?${params.toString()}`,
     { signal: query.signal },
   );

@@ -82,6 +82,18 @@ export interface AvailabilityResponseDto {
   slots: AvailabilitySlotDto[];
 }
 
+export interface AvailabilityDayDto {
+  date: string;
+  slots: AvailabilitySlotDto[];
+}
+
+export interface AvailabilityRangeResponseDto {
+  professionalId: string | null;
+  specialtyId: string | null;
+  timezoneOffset: string;
+  days: AvailabilityDayDto[];
+}
+
 export interface AppointmentDto {
   id: string;
   requestId: string | null;
