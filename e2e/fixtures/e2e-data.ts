@@ -10,7 +10,7 @@ export interface E2EFixtures {
   appointments: {
     /** Confirmada (hoy, ventana abierta) con sala activa: journey de llamada. */
     roomOpen: string;
-    /** Confirmada a futuro con la sala todavía cerrada: gating sin Twilio. */
+    /** Confirmada a futuro: el personal puede iniciar/unirse sin esperar la ventana. */
     roomClosed: string;
     /** Confirmada (hoy, ventana abierta) para el journey de métricas vía API. */
     metrics: string;

@@ -1,8 +1,8 @@
 /**
  * Lógica pura de la experiencia de llamada: clasificación de la causa de fin
- * (red vs consulta finalizada por el profesional vs ventana cerrada) y mapeo
- * de códigos de error de Twilio a copy accionable. Sin dependencias de React
- * para poder testearse y reutilizarse en la UI.
+ * (red vs consulta finalizada por el profesional vs ingreso no permitido) y
+ * mapeo de códigos de error de Twilio a copy accionable. Sin dependencias de
+ * React para poder testearse y reutilizarse en la UI.
  */
 
 import type { AppointmentStatus } from "../types";
@@ -15,15 +15,6 @@ export interface RoomEndContext {
   sessionStatus: string | null;
   /** status de GET /room (p. ej. "Active", "Ended"). */
   roomStatus: string | null;
-  roomOpensAt?: string | null;
-  roomClosesAt?: string | null;
-  now: number;
-}
-
-function toTime(value: string | null | undefined): number | null {
-  if (!value) return null;
-  const time = new Date(value).getTime();
-  return Number.isNaN(time) ? null : time;
 }
 
 /**
@@ -31,7 +22,8 @@ function toTime(value: string | null | undefined): number | null {
  * UI de fin:
  * - `session-ended`: la cita ya está Completed/Cancelled/NoShow o la sesión/sala
  *   quedó Ended (la finalizó el profesional o el webhook de Twilio).
- * - `window-closed`: la cita no admite ingreso o la ventana de la sala pasó.
+ * - `window-closed`: la cita no admite ingreso (estado fuera de Confirmada o En
+ *   curso). La ventana horaria solo restringe al paciente, no al personal.
  * - `network`: todo lo demás (caída de red con consulta vigente).
  */
 export function classifyRoomEnd(context: RoomEndContext): RoomEndCause {
@@ -53,10 +45,6 @@ export function classifyRoomEnd(context: RoomEndContext): RoomEndCause {
   ) {
     return "window-closed";
   }
-  const closeAt = toTime(context.roomClosesAt);
-  if (closeAt != null && context.now >= closeAt) return "window-closed";
-  const openAt = toTime(context.roomOpensAt);
-  if (openAt != null && context.now < openAt) return "window-closed";
   return "network";
 }
 
