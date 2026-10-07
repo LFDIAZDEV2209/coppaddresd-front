@@ -57,6 +57,11 @@ export interface PatientListItem {
   status: string;
 }
 
+/**
+ * Búsqueda de pacientes para agendar: usa el alcance de organización para
+ * profesionales (los que agendan ven pacientes de todas las sedes de su
+ * organización, no solo los que tienen asignados).
+ */
 export async function fetchPatients(search?: string): Promise<{
   data: PatientListItem[];
   total: number;
@@ -64,6 +69,6 @@ export async function fetchPatients(search?: string): Promise<{
   const params = new URLSearchParams({ page: "1", pageSize: "20" });
   if (search?.trim()) params.set("search", search.trim());
   return apiFetch<{ data: PatientListItem[]; total: number }>(
-    `${env.apiUrl}/api/v1/patients?${params.toString()}`,
+    `${env.apiUrl}/api/v1/patients/scheduling?${params.toString()}`,
   );
 }
