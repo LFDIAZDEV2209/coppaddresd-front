@@ -145,6 +145,8 @@ export interface PaginatedAdminRequestsResult {
 // --- Sala virtual y sesiones ---
 
 export interface RoomParticipantDto {
+  displayName?: string | null;
+  role?: "Patient" | "Professional" | "Supervisor" | null;
   participantSid: string;
   identity: string;
   isConnected: boolean;

@@ -53,6 +53,7 @@ declare namespace TwilioVideo {
       event: "trackUnsubscribed",
       listener: (track: RemoteTrack, publication: TrackPublication) => void,
     ): Participant;
+    on(event: "trackEnabled" | "trackDisabled", listener: (publication: TrackPublication) => void): Participant;
     on(event: "trackPublicationFailed", listener: (track: RemoteTrack) => void): Participant;
   }
 
