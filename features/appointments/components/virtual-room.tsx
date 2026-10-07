@@ -165,6 +165,7 @@ export function VirtualRoom() {
     hasAppointmentPermission(hasPermission, "Appointments.SessionsManage") ||
     isOwner;
 
+  const [participantRoster, setParticipantRoster] = useState<import("../types").RoomParticipantDto[]>([]);
   const myIdentity = session?.id ?? null;
   const isProfessionalParticipant = isOwner;
 
@@ -176,18 +177,13 @@ export function VirtualRoom() {
         if (context?.patient) return { name: t("Tú"), role: t("Paciente") };
         return { name: t("Tú"), role: t("Supervisor") };
       }
-      if (isProfessionalParticipant) {
-        return {
-          name: appointment?.patientName ?? t("Paciente"),
-          role: t("Paciente"),
-        };
-      }
-      return {
-        name: appointment?.professionalName ?? t("Profesional"),
-        role: t("Profesional"),
-      };
+      const participant = participantRoster.find(p => p.identity === identity);
+      const role = participant?.role === "Patient" ? t("Paciente")
+        : participant?.role === "Professional" ? t("Profesional")
+        : participant?.role === "Supervisor" ? t("Supervisor") : t("Participante");
+      return { name: participant?.displayName || role, role };
     },
-    [appointment, context, isProfessionalParticipant, myIdentity, t],
+    [context, isProfessionalParticipant, myIdentity, participantRoster, t],
   );
 
   // --- Carga inicial de la cita ---
@@ -282,14 +278,23 @@ export function VirtualRoom() {
     [removeScreensForIdentity],
   );
 
+  const [remoteVideoByIdentity, setRemoteVideoByIdentity] = useState<Record<string, boolean>>({});
+  const syncRemoteVideo = useCallback((identity: string) => {
+    const enabled = remoteTracksRef.current.get(identity)?.some(
+      track => track.kind === "video" && track.isEnabled,
+    ) ?? false;
+    setRemoteVideoByIdentity(previous => ({ ...previous, [identity]: enabled }));
+  }, []);
+
   const attachRemoteTrack = useCallback(
     (identity: string, track: TwilioVideo.RemoteTrack) => {
       const list = remoteTracksRef.current.get(identity) ?? [];
       list.push(track);
       remoteTracksRef.current.set(identity, list);
+      syncRemoteVideo(identity);
       setTracksVersion((v) => v + 1);
     },
-    [],
+    [syncRemoteVideo],
   );
 
   const detachRemoteTrack = useCallback(
@@ -301,9 +306,10 @@ export function VirtualRoom() {
         list.filter((t) => t !== track),
       );
       attachedTracksRef.current.delete(`${identity}:${track.id}`);
+      syncRemoteVideo(identity);
       setTracksVersion((v) => v + 1);
     },
-    [],
+    [syncRemoteVideo],
   );
 
   const watchParticipant = useCallback(
@@ -325,6 +331,8 @@ export function VirtualRoom() {
           attachRemoteTrack(participant.identity, track);
         }
       });
+      participant.on("trackEnabled", () => syncRemoteVideo(participant.identity));
+      participant.on("trackDisabled", () => syncRemoteVideo(participant.identity));
       participant.on("trackUnsubscribed", (track, publication) => {
         if (isScreenPublication(publication, track)) {
           removeRemoteScreen(track);
@@ -338,6 +346,7 @@ export function VirtualRoom() {
       attachRemoteTrack,
       detachRemoteTrack,
       removeRemoteScreen,
+      syncRemoteVideo,
     ],
   );
 
@@ -731,7 +740,7 @@ export function VirtualRoom() {
       if (!container) return;
       tracks.forEach((track) => {
         const key = `${identity}:${track.id}`;
-        if (track.kind !== "video" || attachedTracksRef.current.has(key))
+        if (track.kind === "data" || attachedTracksRef.current.has(key))
           return;
         attachedTracksRef.current.add(key);
         container.appendChild(track.attach());
@@ -765,6 +774,7 @@ export function VirtualRoom() {
         const room = await fetchRoom(appointmentId);
         if (!active) return;
         setBackendRoomStatus(room.activeSessionStatus ?? room.status);
+        setParticipantRoster(room.participants);
         // El profesional finalizó la consulta (session/end o webhook): cerrar
         // la llamada con el copy de consulta finalizada, sin CTA de reintento.
         if (room.activeSessionStatus === "Ended" || room.status === "Ended") {
@@ -828,7 +838,8 @@ export function VirtualRoom() {
 
   const renderTile = (tile: RoomTile) => {
     const info = nameFor(tile.identity, tile.isLocal);
-    const showPlaceholder = !tile.isLocal || !videoOn;
+    const hasRemoteVideo = remoteVideoByIdentity[tile.identity] ?? false;
+    const showPlaceholder = tile.isLocal ? !videoOn : !hasRemoteVideo;
     const initials = info.name
       .split(" ")
       .filter(Boolean)
