@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "config:check": "node scripts/check-service-urls.mjs",
+    "config:test": "node --test scripts/check-service-urls.test.mjs",
     "i18n:apply": "node scripts/i18n-review.mjs",
     "i18n:check": "node scripts/i18n-scan.mjs",
     "e2e": "playwright test",
