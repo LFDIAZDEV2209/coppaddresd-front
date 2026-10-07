@@ -2787,6 +2787,7 @@
   "No se pudo cargar la cita. Verificá que el enlace sea válido.": "Could not load the appointment. Verify that the link is valid.",
   "No se pudo cargar la información necesaria.": "Failed to load the required information.",
   "No se pudo cargar la inscripción.": "Could not load the enrollment.",
+  "No se pudo cargar la organización.": "Could not load the organization.",
   "No se pudo cargar la pre-consulta.": "The pre-visit intake could not be loaded.",
   "No se pudo cargar la rutina.": "Could not load the routine.",
   "No se pudo clonar la plantilla.": "The template could not be cloned.",

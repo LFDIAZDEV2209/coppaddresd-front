@@ -4,6 +4,7 @@ import { useT } from "@/providers/i18n-provider";
 import { useAuth } from "@/providers/auth-provider";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { ApiError } from "@/lib/api/http";
 import {
   Video,
   ArrowLeft,
@@ -42,13 +43,23 @@ interface RoomPanelProps {
   onSessionChanged: () => void;
 }
 
+/** Error del panel: clave i18n estática o mensaje dinámico del backend. */
+type PanelError = { kind: "key"; value: string } | { kind: "message"; value: string };
+
+function toPanelError(err: unknown, fallbackKey: string): PanelError {
+  if (err instanceof ApiError && err.message) {
+    return { kind: "message", value: err.message };
+  }
+  return { kind: "key", value: fallbackKey };
+}
+
 function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
   const t = useT();
   const router = useRouter();
   const [room, setRoom] = useState<VirtualRoomDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<PanelError | null>(null);
   // "Ahora" con tick: permite calcular la gracia de reapertura sin leer el
   // reloj durante el render (regla de pureza de React).
   const [now, setNow] = useState(() => Date.now());
@@ -99,8 +110,8 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       await startSession(appointment.id);
       await refreshRoom();
       onSessionChanged();
-    } catch {
-      setError("No se pudo iniciar la sesión.");
+    } catch (err) {
+      setError(toPanelError(err, "No se pudo iniciar la sesión."));
     } finally {
       setBusy(false);
     }
@@ -113,8 +124,8 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       await endSession(appointment.id, "Finalizada por el profesional");
       await refreshRoom();
       onSessionChanged();
-    } catch {
-      setError("No se pudo finalizar la sesión.");
+    } catch (err) {
+      setError(toPanelError(err, "No se pudo finalizar la sesión."));
     } finally {
       setBusy(false);
     }
@@ -127,8 +138,8 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
       await reopenSession(appointment.id);
       await refreshRoom();
       onSessionChanged();
-    } catch {
-      setError("No se pudo reabrir la consulta.");
+    } catch (err) {
+      setError(toPanelError(err, "No se pudo reabrir la consulta."));
     } finally {
       setBusy(false);
     }
@@ -193,7 +204,7 @@ function RoomPanel({ appointment, onSessionChanged }: RoomPanelProps) {
           className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
           role="alert"
         >
-          {t(error)}
+          {error.kind === "key" ? t(error.value) : error.value}
         </p>
       )}
 

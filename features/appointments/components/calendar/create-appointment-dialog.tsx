@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarPlus, Loader2, Search, User } from "lucide-react";
+import { fetchMyContext } from "@/lib/api/context-service";
 import { useT } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -134,6 +135,7 @@ function CreateAppointmentForm({
   const [patientOpen, setPatientOpen] = useState(false);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [patientLabel, setPatientLabel] = useState<string | null>(null);
+  const [patientError, setPatientError] = useState<string | null>(null);
 
   const [specialties, setSpecialties] = useState<SpecialtyDto[]>([]);
   const [specialtyId, setSpecialtyId] = useState("");
@@ -172,25 +174,47 @@ function CreateAppointmentForm({
   const searchAbort = useRef<AbortController | null>(null);
   const searchTimer = useRef<number | null>(null);
 
-  // Catálogos: organizaciones (primera activa) + especialidades del profesional.
+  // Catálogos: especialidades (obligatorias) + organización. El árbol de
+  // organizaciones exige Organizations.View, permiso que el rol clínico no
+  // tiene: si falla, la organización se resuelve con /me/context. Así el
+  // diálogo sigue operativo aunque el árbol devuelva 403.
   useEffect(() => {
     let active = true;
     (async () => {
+      const [specialtiesResult, orgTreeResult] = await Promise.allSettled([
+        fetchSpecialties(),
+        fetchOrganizationTree(),
+      ]);
+      if (!active) return;
+      if (specialtiesResult.status === "rejected") {
+        setError(t("No se pudieron cargar los catálogos."));
+        return;
+      }
+      const allSpecialties = specialtiesResult.value;
+      const allowed =
+        specialtyIds && specialtyIds.length > 0
+          ? allSpecialties.filter((s) => specialtyIds.includes(s.id))
+          : allSpecialties;
+      setSpecialties(allowed);
+      if (allowed.length === 1) setSpecialtyId(allowed[0].id);
+
+      const treeOrganizationId =
+        orgTreeResult.status === "fulfilled"
+          ? (orgTreeResult.value[0]?.id ?? null)
+          : null;
+      if (treeOrganizationId) {
+        setOrganizationId(treeOrganizationId);
+        return;
+      }
       try {
-        const [orgs, allSpecialties] = await Promise.all([
-          fetchOrganizationTree(),
-          fetchSpecialties(),
-        ]);
+        const own = await fetchMyContext();
         if (!active) return;
-        setOrganizationId(orgs[0]?.id ?? null);
-        const allowed =
-          specialtyIds && specialtyIds.length > 0
-            ? allSpecialties.filter((s) => specialtyIds.includes(s.id))
-            : allSpecialties;
-        setSpecialties(allowed);
-        if (allowed.length === 1) setSpecialtyId(allowed[0].id);
+        setOrganizationId(own.organization?.id ?? null);
+        if (!own.organization) {
+          setError(t("No se pudo cargar la organización."));
+        }
       } catch {
-        if (active) setError(t("No se pudieron cargar los catálogos."));
+        if (active) setError(t("No se pudo cargar la organización."));
       }
     })();
     return () => {
@@ -206,6 +230,7 @@ function CreateAppointmentForm({
     const controller = new AbortController();
     searchAbort.current = controller;
     searchTimer.current = window.setTimeout(async () => {
+      setPatientError(null);
       setPatientLoading(true);
       try {
         const result = await fetchPatients(patientQuery.trim());
@@ -218,7 +243,10 @@ function CreateAppointmentForm({
           })),
         );
       } catch {
-        if (!controller.signal.aborted) setPatientResults([]);
+        if (!controller.signal.aborted) {
+          setPatientResults([]);
+          setPatientError(t("No se pudo buscar pacientes."));
+        }
       } finally {
         if (!controller.signal.aborted) setPatientLoading(false);
       }
@@ -226,7 +254,7 @@ function CreateAppointmentForm({
     return () => {
       controller.abort();
     };
-  }, [patientQuery, patientOpen]);
+  }, [patientQuery, patientOpen, t]);
 
   useEffect(() => {
     return () => {
@@ -341,6 +369,13 @@ function CreateAppointmentForm({
                       <Loader2 className="size-3.5 animate-spin" />
                       {t("Buscando…")}
                     </div>
+                  ) : patientError ? (
+                    <p
+                      className="px-3 py-2.5 text-[12px] text-destructive"
+                      role="alert"
+                    >
+                      {patientError}
+                    </p>
                   ) : patientResults.length === 0 ? (
                     <p className="px-3 py-2.5 text-[12px] text-muted-foreground">
                       {t("Sin resultados")}
