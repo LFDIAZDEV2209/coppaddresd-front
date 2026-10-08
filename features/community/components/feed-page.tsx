@@ -80,7 +80,7 @@ export function FeedPage() {
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Actividad reciente")}
-            description={t("Últimos 2 días de actividad")}
+            description={t("Actividad más reciente de la comunidad")}
             icon={Activity}
             variant="primary"
             actions={
