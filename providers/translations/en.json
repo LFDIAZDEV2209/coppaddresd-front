@@ -4570,5 +4570,7 @@
   "Publicada": "Published",
   "Retirada": "Retired",
   "Sin completar": "Incomplete",
-  "No se pudo reproducir este video. El archivo puede no estar disponible o tener un formato incompatible.": "This video could not be played. The file may be unavailable or use an unsupported format."
+  "No se pudo reproducir este video. El archivo puede no estar disponible o tener un formato incompatible.": "This video could not be played. The file may be unavailable or use an unsupported format.",
+  "Fecha de asignación no disponible": "Assignment date unavailable",
+  "Recordatorios guardados en el centro de avisos de la app": "Reminders saved in the app notification center"
 }

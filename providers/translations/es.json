@@ -4178,5 +4178,7 @@
   "Publicada": "Publicada",
   "Retirada": "Retirada",
   "Sin completar": "Sin completar",
-  "No se pudo reproducir este video. El archivo puede no estar disponible o tener un formato incompatible.": "No se pudo reproducir este video. El archivo puede no estar disponible o tener un formato incompatible."
+  "No se pudo reproducir este video. El archivo puede no estar disponible o tener un formato incompatible.": "No se pudo reproducir este video. El archivo puede no estar disponible o tener un formato incompatible.",
+  "Fecha de asignación no disponible": "Fecha de asignación no disponible",
+  "Recordatorios guardados en el centro de avisos de la app": "Recordatorios guardados en el centro de avisos de la app"
 }

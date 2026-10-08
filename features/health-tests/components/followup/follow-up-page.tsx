@@ -318,12 +318,10 @@ function PendingTable({
                 </TableCell>
                 <TableCell>
                   <span className="text-sm font-semibold text-foreground">
-                    {String(
-                      Number.isFinite(row.daysPending) ? row.daysPending : 0,
-                    )}
+                    {row.daysPending === null ? "—" : String(row.daysPending)}
                   </span>
                   <span className="block text-[11px] text-muted-foreground">
-                    {t("desde asignación")}
+                    {t(row.daysPending === null ? "Fecha de asignación no disponible" : "desde asignación")}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -397,7 +395,7 @@ function PendingTable({
         {t("{count} pacientes pendientes", { count: String(rows.length) })}
         <span aria-hidden>·</span>
         <History className="size-3.5" />
-        {t("Recordatorios son simulados en esta versión")}
+        {t("Recordatorios guardados en el centro de avisos de la app")}
       </div>
     </div>
   );
