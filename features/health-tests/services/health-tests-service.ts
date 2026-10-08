@@ -1,3 +1,4 @@
+import { completedInDateOrder, riskFromSeverity } from "../lib/evaluation-results";
 import { aggregatePatientRisks } from "../lib/indicator-aggregates";
 import type {
   AlertSeverity,
@@ -23,7 +24,6 @@ import type {
   PatientProfile,
   PatientTestResult,
   PendingPatientRow,
-  RiskLevel,
   TestCategory,
 } from "../types";
 import {
@@ -54,7 +54,7 @@ import { env } from "@/lib/config/env";
  * - Las evaluaciones/resultados del backend se agregan por paciente en las
  *   consultas de cobertura/maestra; la tendencia de cobertura se deriva de los
  *   datos reales devueltos por los endpoints de stats/evaluaciones.
- * - El riesgo se clasifica en lectura (mismo algoritmo que el mock).
+ * - El riesgo conserva la severidad persistida por el instrumento; sin ella no se clasifica.
  *
  * NOTA: las funciones internas se definen con nombre (sin `this.*`) para que
  * puedan pasarse por referencia a `useAsyncData` sin perder el binding.
@@ -485,13 +485,6 @@ const ALERT_STATUS_MAP: Record<string, AlertStatus> = {
   closed: "cerrada",
 };
 
-const RISK_MAP: Record<string, RiskLevel> = {
-  low: "bajo",
-  moderate: "moderado",
-  high: "alto",
-  critical: "critico",
-};
-
 function mapTest(dto: InstrumentDto): HealthTest {
   const activeVersion = dto.versions.find(
     (v) => v.isCurrent && v.status === "active",
@@ -696,17 +689,6 @@ function ageFromDateOfBirth(dateOfBirth: string | null): number {
   return Math.max(0, age);
 }
 
-function riskFromSeverity(severity: string | null): RiskLevel {
-  return RISK_MAP[severity ?? ""] ?? "sin-evaluar";
-}
-
-function scoreToRisk(score: number | null): RiskLevel {
-  if (score === null) return "sin-evaluar";
-  if (score >= 70) return "alto";
-  if (score >= 40) return "moderado";
-  return "bajo";
-}
-
 /** Agrega evaluaciones de un paciente en PatientTestResult por test. */
 function aggregateResults(evaluations: EvaluationDto[]): PatientTestResult[] {
   const byVersion = new Map<string, EvaluationDto[]>();
@@ -718,7 +700,7 @@ function aggregateResults(evaluations: EvaluationDto[]): PatientTestResult[] {
 
   const results: PatientTestResult[] = [];
   for (const [versionId, evs] of byVersion) {
-    const completed = evs.filter((e) => e.status === "completed");
+    const completed = completedInDateOrder(evs);
     const latest =
       completed.length > 0 ? completed[completed.length - 1] : null;
     const inProgress = evs.find((e) => e.status === "started");
@@ -732,9 +714,7 @@ function aggregateResults(evaluations: EvaluationDto[]): PatientTestResult[] {
       score: score !== null && score !== undefined ? score : null,
       scorePercentage: latest?.scorePercentage ?? null,
       interpretation: scoreResult?.qualifier ?? "",
-      risk: scoreResult?.severity
-        ? riskFromSeverity(scoreResult.severity)
-        : scoreToRisk(score),
+      risk: riskFromSeverity(scoreResult?.severity),
       updatedAt: latest?.completedAt ?? evs[0]?.startedAt ?? "",
       completedAt: latest?.completedAt ?? null,
       history: completed.map((e) => {
@@ -764,6 +744,9 @@ function mapPatientEvaluation(ev: EvaluationDto): PatientEvaluation {
     completedAt: ev.completedAt,
     score: ev.score,
     scorePercentage: ev.scorePercentage,
+    risk: ev.status === "completed"
+      ? riskFromSeverity(ev.results.find((result) => result.resultType === "score")?.severity)
+      : "sin-evaluar",
     attempt: 0,
   };
 }

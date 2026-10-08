@@ -4180,5 +4180,7 @@
   "Sin completar": "Sin completar",
   "No se pudo reproducir este video. El archivo puede no estar disponible o tener un formato incompatible.": "No se pudo reproducir este video. El archivo puede no estar disponible o tener un formato incompatible.",
   "Fecha de asignación no disponible": "Fecha de asignación no disponible",
-  "Recordatorios guardados en el centro de avisos de la app": "Recordatorios guardados en el centro de avisos de la app"
+  "Recordatorios guardados en el centro de avisos de la app": "Recordatorios guardados en el centro de avisos de la app",
+  "Análisis IA no disponible": "Análisis IA no disponible",
+  "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial.": "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial."
 }

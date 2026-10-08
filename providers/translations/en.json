@@ -4572,5 +4572,7 @@
   "Sin completar": "Incomplete",
   "No se pudo reproducir este video. El archivo puede no estar disponible o tener un formato incompatible.": "This video could not be played. The file may be unavailable or use an unsupported format.",
   "Fecha de asignación no disponible": "Assignment date unavailable",
-  "Recordatorios guardados en el centro de avisos de la app": "Reminders saved in the app notification center"
+  "Recordatorios guardados en el centro de avisos de la app": "Reminders saved in the app notification center",
+  "Análisis IA no disponible": "AI analysis unavailable",
+  "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial.": "There is no saved AI analysis for this patient. Review the recorded results and answers for each assessment in the history."
 }

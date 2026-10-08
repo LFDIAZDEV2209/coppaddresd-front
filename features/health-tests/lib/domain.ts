@@ -12,9 +12,8 @@ import type {
 /**
  * Lógica de dominio del módulo de Tests de Salud.
  *
- * Hoy se alimenta de mock data; mañana estas mismas funciones reciben los
- * DTOs del backend. La tipificación y los umbrales están declarados aquí
- * (único lugar) para que sea trivial moverlos a reglas de servidor.
+ * Consume resultados persistidos. La ausencia de clasificación se conserva
+ * sin inferir riesgo clínico de puntajes crudos ni datos faltantes.
  */
 
 export const CATEGORY_LABELS: Record<TestCategory, string> = {
@@ -43,7 +42,7 @@ export function riskSeverity(risk: RiskLevel): number {
 
 /** Riesgo global = el peor nivel entre los tests evaluados. */
 export function patientRisk(results: PatientTestResult[]): RiskLevel {
-  const evaluated = results.filter((r) => r.score !== null);
+  const evaluated = results.filter((r) => riskSeverity(r.risk) >= 0);
   if (evaluated.length === 0) return "sin-evaluar";
   let worst: RiskLevel = "bajo";
   for (const r of evaluated) {
@@ -67,7 +66,7 @@ export function interpretScore(
 
 /**
  * Tipificación del paciente según completitud de la batería y resultados.
- * Reglas declarativas (mock) — mismas categorías que maneja el ERP.
+ * Clasificación basada en resultados registrados, sin interpretar puntajes crudos.
  */
 export function typifyPatient(patient: PatientProfile): PatientTypification {
   const results = patient.results;
@@ -84,6 +83,7 @@ export function typifyPatient(patient: PatientProfile): PatientTypification {
   const risk = patientRisk(results);
   if (risk === "critico" || risk === "alto") return "alto-riesgo";
   if (risk === "moderado") return "riesgo-moderado";
+  if (risk === "sin-evaluar") return "evaluacion-completa";
   return "bajo-riesgo";
 }
 

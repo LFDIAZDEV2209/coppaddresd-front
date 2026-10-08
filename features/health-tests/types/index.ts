@@ -142,6 +142,8 @@ export interface PatientEvaluation {
   completedAt: string | null;
   score: number | null;
   scorePercentage: number | null;
+  /** Clasificación persistida del instrumento, nunca inferida del puntaje crudo. */
+  risk?: RiskLevel;
   /** Número de intento (1..n) entre evaluaciones del mismo test. */
   attempt: number;
 }
