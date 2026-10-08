@@ -93,6 +93,8 @@ export interface PatientTestResult {
   risk: RiskLevel;
   /** Fecha de la última respuesta guardada (en progreso) o del completado. */
   updatedAt: string;
+  /** Antigüedad real de las asignaciones aún pendientes; ausente en APIs anteriores. */
+  pendingAssignedAt?: string | null;
   /** Fecha de la última evaluación completada. */
   completedAt: string | null;
   /** Historial de evaluaciones (evolución). */
@@ -331,7 +333,7 @@ export interface PendingPatientRow {
   pendingCount: number;
   lastTestDate: string | null;
   assignedAt: string;
-  daysPending: number;
+  daysPending: number | null;
   professionalName: string;
   priority: "alta" | "media" | "baja";
   status: PatientStatus;
