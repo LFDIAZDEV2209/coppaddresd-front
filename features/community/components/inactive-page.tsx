@@ -80,7 +80,7 @@ export function InactivePage() {
             <div className="flex flex-col gap-0 min-w-0">
               <p className="text-[13px] font-semibold leading-tight text-warning-soft-foreground">
                 {t(
-                  "40% más probabilidad de abandonar si no se reactivan antes de 14 días",
+                  "Estos miembros no tienen publicaciones recientes.",
                 )}
               </p>
               <p className="text-[11px] leading-tight text-muted-foreground">

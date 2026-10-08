@@ -4510,5 +4510,13 @@
   "Actividad más reciente de la comunidad": "Most recent community activity",
   "{count} publicaciones en el intervalo seleccionado": "{count} posts in the selected range",
   "No se pudo reindexar. Si sigue procesando, espera unos minutos y reintenta.": "Could not reindex. If it is still processing, wait a few minutes and retry.",
-  "Duración registrada: {duration}": "Registered duration: {duration}"
+  "Duración registrada: {duration}": "Registered duration: {duration}",
+  "Cargando miembros...": "Loading members...",
+  "Publicación creada correctamente": "Post created successfully",
+  "🌐 Todas las comunidades": "🌐 All communities",
+  "No hay publicaciones semanales registradas en los grupos mostrados.": "No weekly posts have been recorded for the displayed groups.",
+  "{diagnosis} registra la mayor participación: {posts} publicaciones semanales por miembro.": "{diagnosis} has the highest participation: {posts} weekly posts per member.",
+  "Estos miembros no tienen publicaciones recientes.": "These members have no recent posts.",
+  "No pudimos cargar las publicaciones. Intenta de nuevo.": "Could not load posts. Please try again.",
+  "Cargando publicaciones...": "Loading posts..."
 }

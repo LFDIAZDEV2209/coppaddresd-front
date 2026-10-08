@@ -30,6 +30,8 @@ export function DiagnosticsPage() {
     context: d.adherence > 0 ? `${d.adherence}%` : undefined,
   }));
 
+  const highestParticipation = diagnostics.filter((d) => d.postsPerWeek > 0)
+    .sort((a, b) => b.postsPerWeek - a.postsPerWeek)[0];
   const chartData = diagnostics.map((d) => ({
     label: d.diagnosis,
     postsProm: d.postsPerWeek,
@@ -82,15 +84,19 @@ export function DiagnosticsPage() {
               />
             </div>
             {/* Insight — footer compacto */}
-            <div className="mx-3 mb-3 mt-1 rounded-xl bg-success-soft px-3 py-2.5">
+            {!diagnosticsLoading && diagnostics.length > 0 && <div className="mx-3 mb-3 mt-1 rounded-xl bg-success-soft px-3 py-2.5">
               <div className="flex items-start gap-2">
                 <Info className="mt-0.5 size-4 shrink-0 text-success-soft-foreground" />
                 <p className="text-[11.5px] leading-snug text-success-soft-foreground">
                   <b>{t("Insight:")}</b>{" "}
-                  {t("Los pacientes con DM2+HTA tienen la mayor participación semanal (9.1 posts) y la racha promedio más alta (21 días). Son los más comprometidos con el programa.")}
+                  {highestParticipation
+                    ? t("{diagnosis} registra la mayor participación: {posts} publicaciones semanales por miembro.", {
+                        diagnosis: highestParticipation.diagnosis, posts: String(highestParticipation.postsPerWeek),
+                      })
+                    : t("No hay publicaciones semanales registradas en los grupos mostrados.")}
                 </p>
               </div>
-            </div>
+            </div>}
           </div>
         </div>
 
