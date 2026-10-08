@@ -78,12 +78,12 @@ export function IndicatorsPage() {
     aggregates.reduce((acc, a) => acc + a.average, 0) /
       Math.max(1, aggregates.length),
   );
-  const affected = aggregates.reduce((acc, a) => acc + a.affectedCount, 0);
-  const evaluated = aggregates.reduce((acc, a) => acc + a.evaluatedCount, 0);
+  const affected = new Set(aggregates.flatMap(a => a.affectedPatientIds)).size;
+  const evaluated = aggregates.reduce((acc, a) => acc + a.evaluationCount, 0);
   const improving = aggregates.filter(
     (a) =>
       a.trend.length >= 2 &&
-      a.trend[a.trend.length - 1].value > a.trend[0].value,
+      a.trend[a.trend.length - 1].value < a.trend[a.trend.length - 2].value,
   ).length;
 
   return (
@@ -92,8 +92,9 @@ export function IndicatorsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label={t("Promedio global")}
-          value={`${avgAll} pts`}
+          label={t("Prevalencia media de riesgo alto/crítico")}
+          value={avgAll}
+          suffix="%"
           icon={TrendingUp}
           variant="primary"
           context={t("Sobre los indicadores evaluados")}
@@ -113,11 +114,11 @@ export function IndicatorsPage() {
           context={t("Resultados de la batería")}
         />
         <StatCard
-          label={t("Indicadores en mejora")}
-          value={`${improving}/${aggregates.length}`}
+          label={t("Categorías con menor prevalencia")}
+          value={`${improving}/${aggregates.filter(a => a.trend.length >= 2).length}`}
           icon={ArrowUpRight}
           variant="success"
-          context={t("Tendencia positiva vs período anterior")}
+          context={t("Comparación entre meses con evaluaciones")}
         />
       </div>
 
@@ -173,9 +174,9 @@ function IndicatorCard({ aggregate }: { aggregate: IndicatorAggregate }) {
       <div className="flex flex-col gap-4 px-4 pb-4">
         <ScoreBar
           value={average}
-          label={t("Promedio poblacional")}
+          label={t("Pacientes con riesgo alto/crítico (%)")}
           color={scoreBarColor(
-            average >= 60 ? "bajo" : average >= 40 ? "moderado" : "alto",
+            average === 0 ? "bajo" : "alto",
           )}
         />
 
@@ -216,14 +217,14 @@ function IndicatorCard({ aggregate }: { aggregate: IndicatorAggregate }) {
           {trend.length >= 2 && (
             <span
               className={`flex items-center gap-1 font-semibold ${
-                trend[trend.length - 1].value >= trend[0].value
+                trend[trend.length - 1].value <= trend[trend.length - 2].value
                   ? "text-success"
                   : "text-destructive"
               }`}
             >
               <TrendingUp className="size-3.5" />
-              {trend[trend.length - 1].value - trend[0].value >= 0 ? "+" : ""}
-              {trend[trend.length - 1].value - trend[0].value}
+              {trend[trend.length - 1].value - trend[trend.length - 2].value >= 0 ? "+" : ""}
+              {trend[trend.length - 1].value - trend[trend.length - 2].value}
             </span>
           )}
         </div>

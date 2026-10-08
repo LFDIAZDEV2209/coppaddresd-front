@@ -170,6 +170,7 @@ export function useAdminAppointments(
   filters: AdminAppointmentsFilters = {},
 ): UseAdminListReturn<AppointmentDto> {
   const filterDeps = [
+    filters.search,
     filters.professionalId,
     filters.patientId,
     filters.clinicId,
@@ -183,7 +184,8 @@ export function useAdminAppointments(
       fetchAdminAppointments({ ...filters, page, pageSize }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      filters.professionalId,
+      filters.search,
+    filters.professionalId,
       filters.patientId,
       filters.clinicId,
       filters.locationId,
@@ -209,6 +211,7 @@ export function useScopedAppointments(
       const base = { page, pageSize };
       if (scope === "professional") {
         const scoped: MyAppointmentsFilters = {
+          search: filters.search,
           patientId: filters.patientId,
           locationId: filters.locationId,
           status: filters.status,
@@ -222,7 +225,8 @@ export function useScopedAppointments(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       scope,
-      filters.professionalId,
+      filters.search,
+    filters.professionalId,
       filters.patientId,
       filters.clinicId,
       filters.locationId,
@@ -233,6 +237,7 @@ export function useScopedAppointments(
   );
   return useAdminList(loader, [
     scope,
+    filters.search,
     filters.professionalId,
     filters.patientId,
     filters.clinicId,

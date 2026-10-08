@@ -1,5 +1,6 @@
 "use client";
 
+import { CommunityVideo } from "./community-video";
 import { useCallback } from "react";
 import { X } from "lucide-react";
 import { Dialog, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
@@ -50,7 +51,7 @@ export function MediaLightbox({
           {/* Media */}
           <div className="flex max-h-[85vh] max-w-[90vw] flex-col items-center gap-3">
             {isVideo ? (
-              <video
+              <CommunityVideo
                 src={url}
                 controls
                 autoPlay

@@ -10,7 +10,6 @@ import {
   Flag,
   History,
   Hourglass,
-  Send,
   Stethoscope,
   UserCheck,
   Users,
@@ -61,13 +60,11 @@ const priorityLabel: Record<PendingPatientRow["priority"], string> = {
 };
 
 /**
- * Seguimiento: pacientes con tests pendientes, recordatorios (mock) y
- * navegación al perfil. La UX del recordatorio queda lista para conectarla
- * a notificaciones reales (push/SMS/email).
+ * Seguimiento de pendientes con avisos persistidos en el centro de notificaciones de la app.
  */
 export function FollowUpPage() {
   const t = useT();
-  const { data, loading, error, reload, sendReminder } = usePendingPatients();
+  const { data, loading, error, reload, sendReminder, sending, reminderMessage } = usePendingPatients();
   const [search, setSearch] = useState("");
   const [priority, setPriority] = useState<PriorityFilter>("all");
 
@@ -87,7 +84,7 @@ export function FollowUpPage() {
   const totals = useMemo(() => {
     if (!data) return null;
     const high = data.rows.filter((r) => r.priority === "alta").length;
-    const reminded = Object.keys(data.reminded).length;
+    const reminded = Object.values(data.reminded).reduce((sum, count) => sum + count, 0);
     const started = data.rows.filter((r) =>
       r.patient.results.some(
         (x) => x.state === "completado" || x.state === "en-progreso",
@@ -109,21 +106,7 @@ export function FollowUpPage() {
         "Pacientes con tests por aplicar, recordatorios y prioridades de intervención",
       )}
       icon={Hourglass}
-      actions={
-        totals?.total ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
-            onClick={() => {
-              data?.rows.forEach((r) => sendReminder(r.patient.id));
-            }}
-          >
-            <Send data-icon="inline-start" />
-            {t("Recordatorio a todos")}
-          </Button>
-        ) : undefined
-      }
+
     />
   );
 
@@ -137,7 +120,7 @@ export function FollowUpPage() {
     );
   }
 
-  if (error && !data) {
+  if (error) {
     return (
       <div className="flex flex-col gap-6 p-4 sm:p-6">
         {header}
@@ -153,6 +136,7 @@ export function FollowUpPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       {header}
+      {reminderMessage && <p role="status" className="rounded-xl bg-muted p-3 text-sm">{t(reminderMessage)}</p>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -174,7 +158,7 @@ export function FollowUpPage() {
           value={String(totals.reminded)}
           icon={BellRing}
           variant="info"
-          context={t("En esta sesión (mock)")}
+          context={t("Guardados en el centro de avisos de la app")}
         />
         <StatCard
           label={t("Con batería iniciada")}
@@ -251,6 +235,7 @@ export function FollowUpPage() {
             rows={filtered}
             tests={data.tests}
             onRemind={sendReminder}
+            sending={sending}
             reminded={data.reminded}
           />
         )}
@@ -264,10 +249,12 @@ function PendingTable({
   tests,
   onRemind,
   reminded,
+  sending,
 }: {
   rows: PendingPatientRow[];
   tests: { id: string; name: string; icon: string }[];
-  onRemind: (patientId: string) => void;
+  onRemind: (patientId: string) => Promise<void>;
+  sending: string | null;
   reminded: Record<string, number>;
 }) {
   const t = useT();
@@ -379,7 +366,8 @@ function PendingTable({
                         sentCount > 0 &&
                           "text-success hover:bg-success-soft hover:text-success",
                       )}
-                      onClick={() => onRemind(row.patient.id)}
+                      disabled={sending !== null}
+                      onClick={() => void onRemind(row.patient.id)}
                       aria-label={t("Enviar recordatorio a {name}", {
                         name: `${row.patient.firstName} ${row.patient.lastName}`,
                       })}

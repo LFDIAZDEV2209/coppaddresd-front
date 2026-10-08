@@ -129,6 +129,7 @@ export async function logout(): Promise<void> {
       method: "POST",
       auth: false,
       retry: false,
+      body: JSON.stringify({ application: env.applicationCode }),
     });
   } catch {
     // Best effort: el logout local no debe fallar por el servicio.

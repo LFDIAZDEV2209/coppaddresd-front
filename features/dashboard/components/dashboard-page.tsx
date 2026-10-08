@@ -47,34 +47,35 @@ export function DashboardPage() {
   // degrada a null + error: la página muestra "—" y el banner, sin romperse.
   const { data: kpis, loading: kpisLoading, error } = useDashboardKpis();
 
-  // Tarjetas inferiores (uso de agentes, crecimiento, actividad reciente y
-  // accesos rápidos) siguen siendo mock.
+  // Tarjetas conectadas a analytics de pacientes y ejecuciones reales de agentes.
   const [agentUsage, setAgentUsage] = useState<AgentUsage[]>([]);
   const [growthData, setGrowthData] = useState<GrowthDataPoint[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityEvent[]>([]);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
-  const [mocksLoading, setMocksLoading] = useState(true);
+  const [detailsError, setDetailsError] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(true);
 
-  const loadMockData = useCallback(async () => {
+  const loadDetails = useCallback(async () => {
     try {
       const [agentUsageData, growthDataResult, recentActivityResult] =
-        await Promise.all([
+        await Promise.allSettled([
           fetchAgentUsage(),
           fetchGrowthData(),
           fetchRecentActivity(),
         ]);
-      setAgentUsage(agentUsageData);
-      setGrowthData(growthDataResult);
-      setRecentActivity(recentActivityResult);
+      setAgentUsage(agentUsageData.status === "fulfilled" ? agentUsageData.value : []);
+      setGrowthData(growthDataResult.status === "fulfilled" ? growthDataResult.value : []);
+      setRecentActivity(recentActivityResult.status === "fulfilled" ? recentActivityResult.value : []);
+      setDetailsError([agentUsageData, growthDataResult, recentActivityResult].some(result => result.status === "rejected"));
       setQuickActions(getQuickActions());
     } finally {
-      setMocksLoading(false);
+      setDetailsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadMockData();
-  }, [loadMockData]);
+    void loadDetails();
+  }, [loadDetails]);
 
   // Serie diaria para la gráfica: el backend trae una entrada por día con los
   // conteos por módulo; se agregan en "registros del día" (pacientes, tests,
@@ -93,7 +94,7 @@ export function DashboardPage() {
     [kpis],
   );
 
-  if ((kpisLoading && !kpis) || mocksLoading) {
+  if ((kpisLoading && !kpis) || detailsLoading) {
     return <DashboardPageSkeleton />;
   }
 
@@ -105,12 +106,12 @@ export function DashboardPage() {
         icon={LayoutDashboard}
       />
 
-      {error && (
+      {(error || detailsError) && (
         <p
           className="rounded-xl bg-destructive-soft px-4 py-3 text-sm text-destructive"
           role="alert"
         >
-          {error}
+          {error || t("No se pudieron cargar todas las métricas. Intenta de nuevo.")}
         </p>
       )}
 
@@ -200,7 +201,7 @@ export function DashboardPage() {
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
           <SectionHeader
             title={t("Uso de agentes")}
-            description={t("Consumo por agente")}
+            description={t("Ejecuciones por agente (30 días)")}
             icon={Bot}
             variant="primary"
           />
@@ -212,7 +213,7 @@ export function DashboardPage() {
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
           <SectionHeader
             title={t("Crecimiento")}
-            description={t("Usuarios nuevos por mes")}
+            description={t("Pacientes nuevos por mes")}
             icon={Users}
             variant="primary"
           />
@@ -223,7 +224,7 @@ export function DashboardPage() {
 
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border/50 bg-card">
           <SectionHeader
-            title={t("Actividad reciente")}
+            title={t("Ejecuciones recientes de IA")}
             description={t("Últimas acciones")}
             icon={MessageSquare}
             variant="primary"

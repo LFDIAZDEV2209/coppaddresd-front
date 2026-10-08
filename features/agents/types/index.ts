@@ -5,7 +5,7 @@ export type AgentStatus = "Borrador" | "Activo" | "Inactivo";
 
 export type KnowledgeBaseScope = "Global" | "Agent";
 
-export type AgentDocumentStatus = "Pendiente" | "Procesando" | "Listo" | "Error";
+export type AgentDocumentStatus = "Pendiente" | "Procesando" | "Listo" | "Error" | "Archivado";
 
 export type AgentInstanceStatus = "Activo" | "Inactivo";
 
@@ -122,6 +122,7 @@ export interface AgentExecutionDetail extends AgentExecutionSummary {
 }
 
 export interface AgentExecutionsList {
+  isAvailable?: boolean;
   total: number;
   items: AgentExecutionSummary[];
 }

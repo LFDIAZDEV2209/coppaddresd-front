@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useT } from "@/providers/i18n-provider";
 import { useState } from "react";
 import { ShieldAlert, RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -45,6 +47,7 @@ const STATUS_OPTIONS: { value: WeaknessTransitionStatus; label: string }[] = [
 ];
 
 export function ProgramWeaknessesPage() {
+  const t = useT();
   const { hasPermission } = useAuth();
   const canAdapt = hasPermission("Program.Adapt");
 
@@ -150,7 +153,7 @@ export function ProgramWeaknessesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Código</TableHead>
-                  <TableHead className="hidden md:table-cell">Paciente</TableHead>
+                  <TableHead>{t("Paciente")}</TableHead>
                   <TableHead>Categoría</TableHead>
                   <TableHead>Severidad</TableHead>
                   <TableHead className="hidden md:table-cell">Título</TableHead>
@@ -169,32 +172,10 @@ export function ProgramWeaknessesPage() {
                     <TableCell>
                       <span className="text-sm font-mono">{weakness.code}</span>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {weakness.patient_name ? (
-                        <div className="flex items-center gap-2">
-                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary-soft-foreground">
-                            {weakness.patient_name
-                              .split(/\s+/)
-                              .map((w) => w[0])
-                              .slice(0, 2)
-                              .join("")
-                              .toUpperCase()}
-                          </span>
-                          <span
-                            className="truncate text-sm font-medium"
-                            title={weakness.patientId}
-                          >
-                            {weakness.patient_name}
-                          </span>
-                        </div>
-                      ) : (
-                        <span
-                          className="text-sm font-mono"
-                          title={weakness.patientId}
-                        >
-                          {weakness.patientId.slice(0, 8)}…
-                        </span>
-                      )}
+                    <TableCell>
+                      <Link className="text-sm font-medium text-primary underline-offset-4 hover:underline" href={`/program/gestion?view=perfil-360&patient=${weakness.patientId}`}>
+                        {weakness.patient_name || weakness.patientId}
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">{weakness.category}</span>

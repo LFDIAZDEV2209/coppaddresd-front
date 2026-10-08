@@ -1,4 +1,6 @@
 "use client";
+import { listCatalogAlertRules } from "../services/health-tests-service";
+import { sendHealthTestReminder, listHealthTestReminders } from "../services/health-tests-service";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
@@ -304,34 +306,42 @@ export function useCoverage() {
 export function usePendingPatients() {
   const rows = useAsyncData(healthTestsApi.getPendingPatients);
   const tests = useAsyncData(healthTestsApi.listTests);
-  const [reminded, setReminded] = useState<Record<string, number>>({});
+  const reminders = useAsyncData(listHealthTestReminders);
+  const [sending, setSending] = useState<string | null>(null);
+  const [reminderMessage, setReminderMessage] = useState<string | null>(null);
 
-  const loading = rows.loading || tests.loading;
+  const loading = rows.loading || tests.loading || reminders.loading;
   const error = rows.error ?? tests.error;
 
   const reload = useCallback(() => {
     void rows.reload();
     void tests.reload();
-  }, [rows, tests]);
+    void reminders.reload();
+  }, [rows, tests, reminders]);
 
-  /** Mock: registra el recordatorio enviado (UX lista para API real). */
-  const sendReminder = useCallback((patientId: string) => {
-    setReminded((prev) => ({
-      ...prev,
-      [patientId]: (prev[patientId] ?? 0) + 1,
-    }));
-  }, []);
+  const sendReminder = useCallback(async (patientId: string) => {
+    if (sending) return;
+    setSending(patientId);
+    setReminderMessage(null);
+    try {
+      const result = await sendHealthTestReminder(patientId);
+      setReminderMessage(result.reason);
+      await reminders.reload();
+    } catch {
+      setReminderMessage("No se pudo enviar el recordatorio. Intenta de nuevo.");
+    } finally { setSending(null); }
+  }, [sending, reminders]);
 
   const data = useMemo(() => {
     if (!rows.data || !tests.data) return null;
     return {
       rows: rows.data as PendingPatientRow[],
       tests: tests.data as HealthTest[],
-      reminded,
+      reminded: reminders.data ?? {},
     };
-  }, [rows.data, tests.data, reminded]);
+  }, [rows.data, tests.data, reminders.data]);
 
-  return { data, loading, error, reload, sendReminder };
+  return { data, loading, error: error ?? reminders.error, reload, sendReminder, sending, reminderMessage };
 }
 
 /* ------------------------------------------------------------------ */
@@ -527,27 +537,30 @@ export function useEvaluationDetail(patientId: string, evaluationId: string) {
 /* ------------------------------------------------------------------ */
 
 export function useCatalog() {
+  const rules = useAsyncData(listCatalogAlertRules);
   const tests = useAsyncData(healthTestsApi.listTests);
   const batteries = useAsyncData(healthTestsApi.listBatteries);
   const indicators = useAsyncData(healthTestsApi.listIndicators);
 
-  const loading = tests.loading || batteries.loading || indicators.loading;
-  const error = tests.error ?? batteries.error ?? indicators.error;
+  const loading = tests.loading || batteries.loading || indicators.loading || rules.loading;
+  const error = tests.error ?? batteries.error ?? indicators.error ?? rules.error;
 
   const reload = useCallback(() => {
     void tests.reload();
     void batteries.reload();
     void indicators.reload();
-  }, [tests, batteries, indicators]);
+    void rules.reload();
+  }, [tests, batteries, indicators, rules]);
 
   const data = useMemo(() => {
     if (!tests.data || !batteries.data || !indicators.data) return null;
     return {
+      rules: rules.data ?? [],
       tests: tests.data as HealthTest[],
       batteries: batteries.data as Battery[],
       indicators: indicators.data as ClinicalIndicator[],
     };
-  }, [tests.data, batteries.data, indicators.data]);
+  }, [tests.data, batteries.data, indicators.data, rules.data]);
 
   return { data, loading, error, reload };
 }

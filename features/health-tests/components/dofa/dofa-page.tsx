@@ -15,7 +15,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/feedback/stat-card";
 import { useIndicators } from "../../hooks/use-health-tests";
 import type { DofaItem } from "../../types";
-import { categoryAccent } from "../shared/colors";
 import { StatSkeleton } from "../shared/module-chart-card";
 import { ModuleErrorState } from "../shared/module-states";
 
@@ -89,15 +88,10 @@ export function DofaPage() {
 
   if (!data) return null;
 
-  const dofa = buildDofa(data.aggregates);
-  const totalAffected = data.aggregates.reduce(
-    (acc, a) => acc + a.affectedCount,
-    0,
-  );
-  const totalEvaluated = data.aggregates.reduce(
-    (acc, a) => acc + a.evaluatedCount,
-    0,
-  );
+  const dofa = buildDofa(data.aggregates, t);
+  const totalAffected = new Set(data.aggregates.flatMap(a => a.affectedPatientIds)).size;
+  const totalEvaluated = new Set(data.aggregates.flatMap(a => a.evaluatedPatientIds)).size;
+
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -143,7 +137,7 @@ export function DofaPage() {
       <p className="flex items-center gap-2 rounded-xl bg-muted px-4 py-3 text-[11.5px] text-muted-foreground">
         <ArrowUpRight className="size-3.5 shrink-0" />
         {t(
-          "El DOFA se genera automáticamente a partir de los promedios y tendencias de los indicadores clínicos; las reglas quedarán listas para moverse al backend.",
+          "El DOFA describe las severidades registradas y los datos faltantes. La tendencia refleja meses con evaluaciones reales.",
         )}
       </p>
     </div>
@@ -229,97 +223,17 @@ function DofaCard({
   );
 }
 
-/** Derivación declarativa del DOFA a partir de los agregados de indicadores. */
-function buildDofa(
-  aggregates: {
-    indicator: {
-      id: string;
-      name: string;
-      icon: string;
-      category: string;
-      higherIsBetter: boolean;
-    };
-    average: number;
-    affectedCount: number;
-    evaluatedCount: number;
-    trend: { value: number }[];
-  }[],
-): {
-  fortalezas: DofaItem[];
-  oportunidades: DofaItem[];
-  debilidades: DofaItem[];
-  amenazas: DofaItem[];
-} {
-  const fortes: DofaItem[] = [];
-  const oportunidades: DofaItem[] = [];
-  const debilidades: DofaItem[] = [];
-  const amenazas: DofaItem[] = [];
-
-  for (const agg of aggregates) {
-    const { indicator, average, affectedCount, trend } = agg;
-    const accent = categoryAccent(indicator.category);
-    const improving =
-      trend.length >= 2 && trend[trend.length - 1].value > trend[0].value;
-    const total = aggregates.reduce((acc, a) => acc + a.evaluatedCount, 0);
-    const pct =
-      total === 0 ? 0 : Math.round((agg.evaluatedCount / total) * 100);
-
-    const base = {
-      id: indicator.id,
-      quadrant: "fortalezas" as const,
-      title: indicator.name,
-      metric: "pts",
-      indicatorId: indicator.id,
-    };
-
-    if (indicator.higherIsBetter && average >= 60) {
-      fortes.push({
-        ...base,
-        quadrant: "fortalezas",
-        value: average,
-        description: `Promedio ${average} pts · presente en el ${pct}% de la población evaluada.`,
-      });
-    } else if (indicator.higherIsBetter && average >= 50) {
-      oportunidades.push({
-        ...base,
-        quadrant: "oportunidades",
-        value: average,
-        description: improving
-          ? `Promedio ${average} pts con tendencia positiva · palanca de mejora con intervención.`
-          : `Promedio ${average} pts · área con margen de mejora sostenible.`,
-      });
-    } else if (indicator.higherIsBetter) {
-      debilidades.push({
-        ...base,
-        quadrant: "debilidades",
-        value: average,
-        description: `Promedio ${average} pts · hábito deficitario frecuente en la población.`,
-      });
-    }
-
-    if (!indicator.higherIsBetter && average >= 50) {
-      amenazas.push({
-        ...base,
-        quadrant: "amenazas",
-        value: average,
-        description: `Nivel ${average} pts · ${affectedCount} pacientes en rango de riesgo.`,
-      });
-    } else if (!indicator.higherIsBetter && affectedCount > 0) {
-      oportunidades.push({
-        ...base,
-        quadrant: "oportunidades",
-        value: average,
-        description: `Nivel controlado (${average} pts) · ${affectedCount} pacientes puntuales requieren foco.`,
-      });
-    }
-
-    void accent;
+/** DOFA descriptivo basado en severidades persistidas, sin umbrales inventados. */
+function buildDofa(aggregates: import("../../types").IndicatorAggregate[], t: ReturnType<typeof useT>) {
+  const fortalezas: DofaItem[] = [], oportunidades: DofaItem[] = [], debilidades: DofaItem[] = [], amenazas: DofaItem[] = [];
+  for (const aggregate of aggregates) {
+    const { indicator, average, distribution, evaluatedCount, affectedCount } = aggregate;
+    if (!evaluatedCount) continue;
+    const base = { id: indicator.id, title: indicator.name, metric: "%", indicatorId: indicator.id, value: average };
+    if (affectedCount > 0) amenazas.push({ ...base, quadrant: "amenazas", description: t("{count} pacientes con severidad alta/crítica registrada.", { count: String(affectedCount) }) });
+    else if (distribution["sin-evaluar"] === 0 || distribution.bajo > 0) fortalezas.push({ ...base, quadrant: "fortalezas", description: t("Sin resultados de severidad alta/crítica registrados en esta categoría.") });
+    if (distribution.moderado > 0) oportunidades.push({ ...base, quadrant: "oportunidades", description: t("{count} pacientes con severidad moderada registrada.", { count: String(distribution.moderado) }) });
+    if (distribution["sin-evaluar"] > 0) debilidades.push({ ...base, quadrant: "debilidades", value: distribution["sin-evaluar"], metric: "", description: t("{count} pacientes sin severidad disponible en esta categoría.", { count: String(distribution["sin-evaluar"]) }) });
   }
-
-  return {
-    fortalezas: fortes.sort((a, b) => b.value - a.value),
-    oportunidades: oportunidades.sort((a, b) => b.value - a.value),
-    debilidades: debilidades.sort((a, b) => b.value - a.value),
-    amenazas: amenazas.sort((a, b) => b.value - a.value),
-  };
+  return { fortalezas, oportunidades, debilidades, amenazas };
 }
