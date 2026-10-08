@@ -543,6 +543,7 @@ function mapAlert(dto: AlertDto): HealthAlert {
   return {
     id: dto.id,
     patientId: dto.patientId,
+    patientName: dto.patientName,
     testId: dto.ruleId ?? "",
     indicatorId: dto.ruleId ?? "",
     indicatorName: dto.patientName

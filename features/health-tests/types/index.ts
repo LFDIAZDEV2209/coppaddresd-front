@@ -226,6 +226,7 @@ export type AlertStatus = "activa" | "en-revision" | "atendida" | "cerrada";
 export interface HealthAlert {
   id: string;
   patientId: string;
+  patientName?: string | null;
   testId: string;
   indicatorId: string;
   indicatorName: string;
