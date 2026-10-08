@@ -26,6 +26,7 @@ import {
   type HealthTestStats,
 } from "../services/health-tests-service";
 import { ApiError } from "@/lib/api/http";
+import { resolveAlertData } from "../lib/alert-data";
 
 /** Estado genérico de carga async (reutilizable por todos los hooks). */
 export function useAsyncData<T>(loader: () => Promise<T>, key?: string) {
@@ -363,23 +364,18 @@ export function useIndicators() {
 /* Alertas                                                             */
 /* ------------------------------------------------------------------ */
 
-export function useAlerts() {
+export function useAlerts({ requirePatientDirectory = true } = {}) {
   const alerts = useAsyncData(healthTestsApi.listAlerts);
   const patients = useAsyncData(healthTestsApi.listPatients);
-  const tests = useAsyncData(healthTestsApi.listTests);
   const [statusChanges, setStatusChanges] = useState<
     Record<string, HealthAlert["status"]>
   >({});
   const [statusError, setStatusError] = useState<string | null>(null);
 
-  const loading = alerts.loading || patients.loading || tests.loading;
-  const error = alerts.error ?? patients.error ?? tests.error;
-
   const reload = useCallback(() => {
     void alerts.reload();
     void patients.reload();
-    void tests.reload();
-  }, [alerts, patients, tests]);
+  }, [alerts, patients]);
 
   /** Transición de estado real contra el backend (permiso HealthTests.Review). */
   const changeStatus = useCallback(
@@ -407,17 +403,18 @@ export function useAlerts() {
     [],
   );
 
-  const data = useMemo(() => {
-    if (!alerts.data || !patients.data || !tests.data) return null;
-    return {
-      alerts: alerts.data.map((a) => ({
-        ...a,
-        status: statusChanges[a.id] ?? a.status,
-      })),
-      patients: patients.data,
-      tests: tests.data,
-    };
-  }, [alerts.data, patients.data, tests.data, statusChanges]);
+  const { data: alertRows, loading: alertsLoading, error: alertsError } = alerts;
+  const { data: patientRows, loading: patientsLoading, error: patientsError } = patients;
+  const { data, loading, error } = useMemo(
+    () => resolveAlertData(
+      { data: alertRows, loading: alertsLoading, error: alertsError },
+      { data: patientRows, loading: patientsLoading, error: patientsError },
+      requirePatientDirectory,
+      statusChanges,
+    ),
+    [alertRows, alertsLoading, alertsError, patientRows, patientsLoading, patientsError,
+      requirePatientDirectory, statusChanges],
+  );
 
   return { data, loading, error, reload, changeStatus, statusError };
 }

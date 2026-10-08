@@ -62,6 +62,7 @@ import { AlertsInsightsRail } from "./alerts-insights";
 import { useAlerts } from "../../hooks/use-health-tests";
 import type { AlertSeverity, AlertStatus, HealthAlert } from "../../types";
 import { formatDate, initials } from "../../lib/format";
+import { alertPatientName } from "../../lib/alert-data";
 import { severityHex, tones } from "../shared/colors";
 import { chipStyle } from "../shared/depth";
 import { AlertStatusBadge, SeverityBadge } from "../shared/badges";
@@ -134,7 +135,9 @@ export function AlertsPage() {
   const t = useT();
   const { hasPermission } = useAuth();
   const canReview = hasPermission("HealthTests.Review");
-  const { data, loading, error, reload, changeStatus, statusError } = useAlerts();
+  const { data, loading, error, reload, changeStatus, statusError } = useAlerts({
+    requirePatientDirectory: false,
+  });
 
   const [search, setSearch] = useState("");
   const [severity, setSeverity] = useState<AlertSeverity | "all">("all");
@@ -187,7 +190,7 @@ export function AlertsPage() {
         if (term) {
           const patient = data?.patients.find((item) => item.id === alert.patientId);
           const haystack =
-            `${patient?.firstName ?? ""} ${patient?.lastName ?? ""} ${alert.indicatorName}`.toLowerCase();
+            `${alertPatientName(alert, patient)} ${alert.indicatorName}`.toLowerCase();
           if (!haystack.includes(term)) {
             return false;
           }
@@ -716,6 +719,8 @@ function AlertsTable({
         <TableBody>
           {alerts.map((alert) => {
             const patient = patients.find((item) => item.id === alert.patientId);
+            const patientName = alertPatientName(alert, patient);
+            const nameParts = patientName.split(/\s+/);
             const selected = selectedIds.includes(alert.id);
 
             return (
@@ -742,11 +747,11 @@ function AlertsTable({
                         color: severityHex(alert.severity),
                       }}
                     >
-                      {initials(patient?.firstName ?? "", patient?.lastName ?? "")}
+                      {initials(nameParts[0] ?? "", nameParts[1] ?? "")}
                     </span>
                     <span className="flex min-w-0 flex-col">
                       <span className="truncate text-[12.5px] font-medium text-foreground">
-                        {patient ? `${patient.firstName} ${patient.lastName}` : "—"}
+                        {patientName || "—"}
                       </span>
                       <span className="truncate text-[11px] text-muted-foreground">
                         {alert.indicatorName}
