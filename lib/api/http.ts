@@ -416,6 +416,7 @@ async function doRefresh(): Promise<RefreshOutcome> {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
+      body: "{}",
     });
 
     if (response.ok) {
@@ -436,6 +437,7 @@ async function doRefresh(): Promise<RefreshOutcome> {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
+        body: "{}",
       });
 
       if (retry.ok) {

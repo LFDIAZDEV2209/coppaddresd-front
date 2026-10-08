@@ -754,7 +754,7 @@ export function PostsPage() {
         <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Todas las publicaciones")}
-            description={`${nonPinnedPosts.length} ${t("publicaciones este mes")}`}
+            description={t("{count} publicaciones en el intervalo seleccionado", { count: String(nonPinnedPosts.length) })}
             icon={FileText}
             variant="primary"
           />
