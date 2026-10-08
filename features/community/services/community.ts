@@ -724,8 +724,10 @@ export const CREATE_ANNOUNCEMENT = gql`
     $type: PostType!
     $destination: PostDestination!
     $pinned: Boolean!
+    $pollOptions: [String!]
+    $mediaUrl: String
   ) {
-    createAnnouncement(body: $body, type: $type, destination: $destination, pinned: $pinned) {
+    createAnnouncement(body: $body, type: $type, destination: $destination, pinned: $pinned, pollOptions: $pollOptions, mediaUrl: $mediaUrl) {
       id
       body
       pinned
@@ -1726,3 +1728,39 @@ export interface ProfileSearchResult {
 export interface ProfilesSearchResult {
   profiles: ProfileSearchResult[];
 }
+
+// Directorio ERP con filtros y paginación sobre todos los perfiles, no una muestra local.
+export const PROFILES_PAGE_QUERY = gql`
+  query ProfilesPage($take: Int!, $skip: Int!, $search: String, $status: ProfileStatus, $diagnosis: ProfileDiagnosis, $region: ProfileRegion) {
+    profilesPage(take: $take, skip: $skip, search: $search, status: $status, diagnosis: $diagnosis, region: $region) {
+      totalCount
+      items {
+      id
+      userId
+      displayName
+      isSystem
+      bio
+      status
+      region
+      diagnosis
+      week
+      lastPostAt
+      lastActiveAt
+      currentStreak
+      bestStreak
+      xpTotal
+      levelName
+      riskLevel
+      postsCount
+      commentsCount
+      likesCount
+      }
+    }
+  }
+`;
+
+export interface ProfilesPageResult {
+  profilesPage: { items: Profile[]; totalCount: number };
+}
+
+export const POST_ADDED_SUB = gql`subscription PostAdded { postAdded { id } }`;

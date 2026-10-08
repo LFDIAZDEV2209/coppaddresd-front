@@ -17,6 +17,7 @@ import {
   X,
   Link2,
   Plus,
+  RefreshCw,
   Check,
   ChevronUp,
   ChevronDown,
@@ -149,7 +150,7 @@ function PollBlockInline({
 }
 
 const DESTINOS = [
-  "🌐 Todas las comunidades (284)",
+  "🌐 Todas las comunidades",
   "🏥 Comunidad ADRED",
   "🏃 Reto caminata 30 días",
   "🧠 Apoyo emocional",
@@ -182,16 +183,17 @@ const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
 export function PostsPage() {
   const t = useT();
   const { can } = useAppContext();
-  const { posts, publishPost, togglePin, deletePost, members, me, reorderPinned, reportPost, repostPost, unrepostPost, sortBy, setSortBy, interval, setInterval, fetchPostReposts, postReposts, postRepostsLoading } = useErp();
+  const { posts, postsLoading, postsError, refetchPosts, publishPost, togglePin, deletePost, members, me, reorderPinned, reportPost, repostPost, unrepostPost, sortBy, setSortBy, interval, setInterval, fetchPostReposts, postReposts, postRepostsLoading } = useErp();
+  useEffect(() => { refetchPosts(); }, [refetchPosts]);
   const canModerate = can("Community.Moderate");
+  const canManage = can("Community.Manage");
   // Sin useSearchParams para evitar Suspense; el dashboard abre con ?compose=1
   const [type, setType] = useState<PostType>("Texto");
   const [destination, setDestination] = useState(DESTINOS[0]);
   const [body, setBody] = useState("");
   const [pinned, setPinned] = useState(false);
-  const [push, setPush] = useState(false);
-  const [giveXp, setGiveXp] = useState(false);
-  // Campos específicos por tipo (frontend-only, se combinan en body al publicar)
+  const [publishing, setPublishing] = useState(false);
+  // Campos del contrato real de publicación: adjuntos HTTPS y opciones de encuesta.
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [pollQuestion, setPollQuestion] = useState("");
@@ -270,34 +272,31 @@ export function PostsPage() {
   };
 
   const buildBody = () => {
+    if (type === "Encuesta") return pollQuestion.trim();
     const base = body.trim();
-    if (type === "Imagen" && imageUrl.trim()) return `${base}${base ? "\n\n" : ""}🖼️ ${imageUrl.trim()}`;
-    if (type === "Video" && videoUrl.trim()) return `${base}${base ? "\n\n" : ""}🎬 ${videoUrl.trim()}`;
-    if (type === "Encuesta") {
-      const opts = pollOptions.map((o) => o.trim()).filter(Boolean);
-      const poll = `${pollQuestion.trim() ? `📊 ${pollQuestion.trim()}\n` : ""}${opts.map((o, i) => `${i + 1}. ${o}`).join("\n")}`;
-      return `${base}${base && poll ? "\n\n" : ""}${poll}`;
-    }
     if (type === "Logro" && logroTitle.trim()) return `${base}${base ? "\n\n" : ""}🏆 ${logroTitle.trim()}`;
     return base;
   };
+  const attachment = type === "Imagen" ? imageUrl.trim() : type === "Video" ? videoUrl.trim() : undefined;
+  const options = pollOptions.map((option) => option.trim()).filter(Boolean);
+  const validAttachment = !attachment ? type !== "Imagen" && type !== "Video" : (() => {
+    try { return new URL(attachment).protocol === "https:"; } catch { return false; }
+  })();
+  const validPoll = type !== "Encuesta" || (pollQuestion.trim().length >= 3 && pollQuestion.trim().length <= 300
+    && options.length >= 2 && options.length <= 4 && options.every((option) => option.length <= 100)
+    && new Set(options.map((option) => option.toLocaleLowerCase())).size === options.length);
+  const canPublish = !publishing && buildBody().length > 0 && validAttachment && validPoll;
 
-  const canPublish = buildBody().length > 0;
-
-  const handlePublish = () => {
-    const finalBody = buildBody();
-    if (!finalBody) return;
-    publishPost({ type, destination, body: finalBody, pinned });
-    setBody("");
-    setPinned(false);
-    setPush(false);
-    setGiveXp(false);
-    setImageUrl("");
-    setVideoUrl("");
-    setPollQuestion("");
-    setPollOptions(["", ""]);
-    setLogroTitle("");
-    setShowComposer(false);
+  const handlePublish = async () => {
+    if (!canPublish) return;
+    setPublishing(true);
+    try {
+      const saved = await publishPost({ type, destination, body: buildBody(), pinned,
+        pollOptions: type === "Encuesta" ? options : undefined, mediaUrl: attachment || undefined });
+      if (!saved) return;
+      setBody(""); setPinned(false); setImageUrl(""); setVideoUrl("");
+      setPollQuestion(""); setPollOptions(["", ""]); setLogroTitle(""); setShowComposer(false);
+    } finally { setPublishing(false); }
   };
 
   const openDetail = (post: ErpPost) => {
@@ -319,18 +318,26 @@ export function PostsPage() {
         title={t("Publicaciones")}
         description={t("Gestión de publicaciones de Copp Adresd Comunidad ADRED")}
         icon={Send}
-        actions={
-          canModerate ? (
+        actions={<div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={refetchPosts} disabled={postsLoading}>
+            <RefreshCw data-icon="inline-start" />{t("Actualizar")}
+          </Button>
+          {canManage ? (
             <Button variant="outline" size="sm" onClick={() => setShowComposer((v) => !v)}>
               {showComposer ? <X data-icon="inline-start" className="size-3.5" /> : <Plus data-icon="inline-start" />}
               {showComposer ? t("Cerrar") : t("Nuevo post")}
             </Button>
-          ) : undefined
-        }
+          ) : null}</div>}
       />
 
+      {postsError && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive-soft p-4 text-sm text-destructive">
+        {t("No pudimos cargar las publicaciones. Intenta de nuevo.")}
+        <p className="mt-1 text-xs">{postsError}</p>
+      </div>}
+      {postsLoading && <p role="status" className="text-sm text-muted-foreground">{t("Cargando publicaciones...")}</p>}
+
       {/* Composer - aparece al hacer clic en Nuevo post con animación */}
-      {showComposer && (
+      {showComposer && canManage && (
         <div className="relative origin-top overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-strong)] shadow-lg shadow-primary/20 animate-in fade-in slide-in-from-top-2 duration-300 ease-out">
           <div className="relative flex items-center gap-3 border-b border-white/15 px-4 py-3.5">
             <span className="flex size-9 items-center justify-center rounded-xl bg-white/15 text-[15px] font-extrabold text-white ring-1 ring-white/25 shadow-lg shadow-black/10">
@@ -343,6 +350,7 @@ export function PostsPage() {
             <Button
               variant="ghost"
               size="icon-sm"
+              disabled={publishing}
               onClick={() => setShowComposer(false)}
               className="ml-auto text-white/70 hover:bg-white/10 hover:text-white"
               aria-label={t("Cerrar")}
@@ -350,13 +358,14 @@ export function PostsPage() {
               <X className="size-4" />
             </Button>
           </div>
-          <div className="relative flex flex-col gap-4 p-4">
+          <fieldset disabled={publishing} className="relative flex min-w-0 flex-col gap-4 p-4">
             {/* Type tabs */}
             <div className="flex flex-wrap gap-2">
               {TIPOS.map((tip) => {
                 const Icon = tip.icon;
                 return (
                   <button
+                    disabled={publishing}
                     key={tip.key}
                     onClick={() => setType(tip.key)}
                     className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px ${
@@ -372,13 +381,14 @@ export function PostsPage() {
               })}
             </div>
 
-            <Textarea
+            {type !== "Encuesta" && <Textarea
+              disabled={publishing}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={3}
               placeholder={t("Escribe tu mensaje...")}
               className="border-white/20 bg-white/10 text-sm text-white placeholder:text-white/50 focus-visible:ring-white/40"
-            />
+            />}
 
             {/* Campos específicos por tipo */}
             {type === "Imagen" && (
@@ -447,7 +457,7 @@ export function PostsPage() {
                     )}
                   </div>
                 ))}
-                {pollOptions.length < 6 && (
+                {pollOptions.length < 4 && (
                   <Button size="sm" variant="ghost" className="h-7 self-start text-xs text-white/80 hover:bg-white/10 hover:text-white" onClick={() => setPollOptions([...pollOptions, ""])}>
                     <Plus data-icon="inline-start" className="size-3" />
                     {t("Añadir opción")}
@@ -491,21 +501,12 @@ export function PostsPage() {
                 <Checkbox checked={pinned} onCheckedChange={(c) => setPinned(Boolean(c))} className="border-white/40" />
                 <span className="text-xs">{t("Fijar al tope")}</span>
               </label>
-              <label className="flex items-center gap-2 text-white">
-                <Checkbox checked={push} onCheckedChange={(c) => setPush(Boolean(c))} className="border-white/40" />
-                <span className="text-xs">{t("Push notification")}</span>
-              </label>
-              <label className="flex items-center gap-2 text-white">
-                <Checkbox checked={giveXp} onCheckedChange={(c) => setGiveXp(Boolean(c))} className="border-white/40" />
-                <span className="text-xs">{t("Dar XP por comentar")}</span>
-              </label>
-
               <Button size="sm" onClick={handlePublish} disabled={!canPublish} className="ml-auto bg-white text-primary transition-all hover:-translate-y-px active:scale-[0.97] disabled:opacity-50">
                 <Send data-icon="inline-start" />
-                {t("Publicar")}
+                {t(publishing ? "Publicando..." : "Publicar")}
               </Button>
             </div>
-          </div>
+          </fieldset>
         </div>
       )}
 

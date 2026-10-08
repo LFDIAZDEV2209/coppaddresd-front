@@ -23,12 +23,13 @@ interface MessageDialogProps {
   description?: string;
   /** Texto sugerido, prellenado y editable. */
   defaultText: string;
-  onSend: (text: string) => void;
+  onSend: (text: string) => Promise<boolean>;
 }
 
 /** Diálogo editable antes de enviar un mensaje (montar con key para resetear el borrador). */
 export function MessageDialog({ open, onOpenChange, title, description, defaultText, onSend }: MessageDialogProps) {
   const t = useT();
+  const [sending, setSending] = useState(false);
   const [text, setText] = useState(defaultText);
 
   return (
@@ -39,6 +40,7 @@ export function MessageDialog({ open, onOpenChange, title, description, defaultT
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
         <Textarea
+          disabled={sending}
           rows={4}
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -50,10 +52,12 @@ export function MessageDialog({ open, onOpenChange, title, description, defaultT
           </Button>
           <Button
             size="sm"
-            disabled={!text.trim()}
-            onClick={() => {
-              onSend(text);
-              onOpenChange(false);
+            disabled={sending || !text.trim()}
+            onClick={async () => {
+              if (sending) return;
+              setSending(true);
+              try { if (await onSend(text)) onOpenChange(false); }
+              finally { setSending(false); }
             }}
           >
             <Send data-icon="inline-start" />

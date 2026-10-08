@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Users,
@@ -46,11 +46,12 @@ import { MessageDialog } from "./message-dialog";
 import { CommunityPagination } from "./community-pagination";
 import { ProfileTimelineDialog } from "./profile-timeline-dialog";
 import type { CommunityMember } from "../types";
+import { useMemberPage } from "../hooks/use-member-page";
 
 export function MembersPage() {
   const t = useT();
   const { can } = useAppContext();
-  const { members, sendMessage, membersLoading, membersError } = useErp();
+  const { sendMessage } = useErp();
   const canManage = can("Community.Manage");
   const [diagFilter, setDiagFilter] = useState("all");
   const [regionFilter, setRegionFilter] = useState("all");
@@ -68,36 +69,20 @@ export function MembersPage() {
   const [timelineTarget, setTimelineTarget] = useState<CommunityMember | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
 
-  const filtered = useMemo(() => {
-    return members.filter((m) => {
-      if (diagFilter !== "all" && m.diagnosis !== diagFilter) return false;
-      if (regionFilter !== "all" && m.region !== regionFilter) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        const name = `${m.firstName} ${m.lastName}`.toLowerCase();
-        if (!name.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [members, diagFilter, regionFilter, search]);
-
-  const activeMembers = filtered.filter((m) => m.status === "Activo");
-
-  const paginatedCards = useMemo(() => {
-    const start = (cardsPage - 1) * cardsPageSize;
-    return activeMembers.slice(start, start + cardsPageSize);
-  }, [activeMembers, cardsPage, cardsPageSize]);
-
-  const paginatedTable = useMemo(() => {
-    const start = (tablePage - 1) * tablePageSize;
-    return filtered.slice(start, start + tablePageSize);
-  }, [filtered, tablePage, tablePageSize]);
+  const cards = useMemberPage(search, diagFilter, regionFilter, cardsPage, cardsPageSize, true);
+  const table = useMemberPage(search, diagFilter, regionFilter, tablePage, tablePageSize);
+  const activeMembers = cards.members;
+  const paginatedCards = cards.loading || cards.error ? [] : cards.members;
+  const filtered = table.members;
+  const paginatedTable = table.members;
+  const membersLoading = table.loading;
+  const membersError = table.error;
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Miembros")}
-        description={`${members.length} ${t("miembros en Copp Adresd Comunidad ADRED")}`}
+        description={`${table.total} ${t("miembros en Copp Adresd Comunidad ADRED")}`}
         icon={Users}
         actions={canManage ? <AwardDialog /> : undefined}
       />
@@ -151,7 +136,7 @@ export function MembersPage() {
 
       {/* Active member cards — paginadas */}
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
-        <SectionHeader title={t("Miembros activos")} description={`${activeMembers.length} ${t("miembros")}`} icon={Users} variant="primary" />
+        <SectionHeader title={t("Miembros activos")} description={`${cards.total} ${t("miembros")}`} icon={Users} variant="primary" />
         <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {paginatedCards.map((m) => (
             <div
@@ -233,11 +218,13 @@ export function MembersPage() {
             </div>
           ))}
         </div>
-        {activeMembers.length === 0 && (
+        {cards.loading && <p className="pb-6 text-center text-sm text-muted-foreground">{t("Cargando miembros...")}</p>}
+        {cards.error && <p role="alert" className="pb-6 text-center text-sm text-destructive">{t("Error al cargar los miembros")}: {cards.error}</p>}
+        {!cards.loading && !cards.error && activeMembers.length === 0 && (
           <p className="pb-6 text-center text-sm text-muted-foreground">{t("No hay miembros que coincidan con el filtro")}</p>
         )}
-        {activeMembers.length > 0 && (
-          <CommunityPagination page={cardsPage} pageSize={cardsPageSize} total={activeMembers.length} onPageChange={setCardsPage} onPageSizeChange={(s) => { setCardsPageSize(s); setCardsPage(1); }} />
+        {cards.total > 0 && (
+          <CommunityPagination page={cardsPage} pageSize={cardsPageSize} total={cards.total} onPageChange={setCardsPage} onPageSizeChange={(s) => { setCardsPageSize(s); setCardsPage(1); }} />
         )}
       </div>
 
@@ -363,8 +350,8 @@ export function MembersPage() {
               )}
           </TableBody>
         </Table>
-        {filtered.length > 0 && (
-          <CommunityPagination page={tablePage} pageSize={tablePageSize} total={filtered.length} onPageChange={setTablePage} onPageSizeChange={(s) => { setTablePageSize(s); setTablePage(1); }} />
+        {table.total > 0 && (
+          <CommunityPagination page={tablePage} pageSize={tablePageSize} total={table.total} onPageChange={setTablePage} onPageSizeChange={(s) => { setTablePageSize(s); setTablePage(1); }} />
         )}
       </div>
 

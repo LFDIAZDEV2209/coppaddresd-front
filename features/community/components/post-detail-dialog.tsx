@@ -182,6 +182,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
     postRepostsLoading,
   } = useErp();
 
+  const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<{ commentId: string; author: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // commentId a eliminar
@@ -228,16 +229,16 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
   const chipColor = TYPE_CHIP_COLORS[post.type] ?? TYPE_CHIP_COLORS.Texto;
   const member = members.find((m) => m.id === post.authorId);
 
-  const handleSendComment = () => {
+  const handleSendComment = async () => {
     const text = draft.trim();
-    if (!text || !post) return;
-    if (replyTo) {
-      replyToComment(replyTo.commentId, text);
-      setReplyTo(null);
-    } else {
-      addComment(post.id, text);
-    }
-    setDraft("");
+    if (!text || !post || sending) return;
+    setSending(true);
+    try {
+      const saved = replyTo
+        ? await replyToComment(replyTo.commentId, text)
+        : await addComment(post.id, text);
+      if (saved) { setDraft(""); setReplyTo(null); }
+    } finally { setSending(false); }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -527,6 +528,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
             {/* Input de comentario */}
             <div className="flex items-center gap-2">
               <Input
+                disabled={sending}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -536,7 +538,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
               <Button
                 size="sm"
                 onClick={handleSendComment}
-                disabled={!draft.trim()}
+                disabled={sending || !draft.trim()}
                 className="h-8 shrink-0"
               >
                 <Send data-icon="inline-start" className="size-3.5" />

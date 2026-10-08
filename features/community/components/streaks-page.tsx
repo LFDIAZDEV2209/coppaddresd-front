@@ -101,7 +101,7 @@ export function StreaksPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Rachas y logros")}
-        description={`${members.length} ${t("miembros")} · ${monthLabel}`}
+        description={monthLabel}
         icon={Flame}
         actions={
           canManage ? (

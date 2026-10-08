@@ -49,6 +49,7 @@ export function GroupsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [messageTarget, setMessageTarget] = useState<CommunityGroup | null>(null);
+  const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
 
   const groups = useMemo(
@@ -147,6 +148,7 @@ export function GroupsPage() {
             </DialogDescription>
           </DialogHeader>
           <Textarea
+            disabled={sending}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder={t("Escribe tu mensaje para el grupo…")}
@@ -158,12 +160,13 @@ export function GroupsPage() {
             </Button>
             <Button
               size="sm"
-              disabled={!draft.trim()}
-              onClick={() => {
-                if (!messageTarget) return;
-                sendGroupMessage(messageTarget.id, draft);
-                setMessageTarget(null);
-                setDraft("");
+              disabled={sending || !draft.trim()}
+              onClick={async () => {
+                if (!messageTarget || sending) return;
+                setSending(true);
+                try {
+                  if (await sendGroupMessage(messageTarget.id, draft)) { setMessageTarget(null); setDraft(""); }
+                } finally { setSending(false); }
               }}
             >
               <Send data-icon="inline-start" />

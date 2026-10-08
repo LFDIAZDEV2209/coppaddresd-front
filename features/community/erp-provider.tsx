@@ -38,6 +38,7 @@ import {
   NETWORKS_QUERY,
   PIN_POST,
   POST_REPOSTS,
+  POST_ADDED_SUB,
   PROFILE_TIMELINE,
   PROFILES_QUERY,
   PROFILES_SEARCH_QUERY,
@@ -172,7 +173,7 @@ function normalizeEnum(s: string | null | undefined): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
-function mapProfile(p: Profile): CommunityMember {
+export function mapProfile(p: Profile): CommunityMember {
   const { firstName, lastName } = splitName(p.displayName);
   // Normalizar status del wire ("Active"|"Banned") → ("ACTIVE"|"BANNED")
   const normalizedStatus: "ACTIVE" | "BANNED" =
@@ -181,8 +182,8 @@ function mapProfile(p: Profile): CommunityMember {
     id: p.id,
     firstName,
     lastName,
-    diagnosis: normalizeEnum(p.diagnosis),
-    region: normalizeEnum(p.region),
+    diagnosis: p.diagnosis?.toUpperCase().replace(/_/g, "") === "DM2HTA" ? "DM2+HTA" : p.diagnosis?.toUpperCase() === "DM2" ? "DM2" : normalizeEnum(p.diagnosis),
+    region: p.region?.toUpperCase() === "NY" ? "NY" : normalizeEnum(p.region),
     week: p.week,
     posts: p.postsCount,
     reposts: p.reposts?.length ?? 0,
@@ -576,17 +577,19 @@ interface ErpContextValue {
     destination: string;
     body: string;
     pinned: boolean;
-  }) => void;
+    pollOptions?: string[];
+    mediaUrl?: string;
+  }) => Promise<boolean>;
   togglePin: (id: string, nextPinned: boolean) => void;
   deletePost: (id: string) => void;
   viewPost: (id: string) => void;
   reorderPinned: (orderedIds: string[]) => Promise<void>;
   awardXp: (payload: AwardPayload) => void;
-  sendMessage: (memberId: string, message: string) => void;
-  sendBulkInactive: (message: string) => void;
-  sendGroupMessage: (groupId: string, body: string) => void;
-  addComment: (postId: string, body: string) => void;
-  replyToComment: (commentId: string, body: string) => void;
+  sendMessage: (memberId: string, message: string) => Promise<boolean>;
+  sendBulkInactive: (message: string) => Promise<boolean>;
+  sendGroupMessage: (groupId: string, body: string) => Promise<boolean>;
+  addComment: (postId: string, body: string) => Promise<boolean>;
+  replyToComment: (commentId: string, body: string) => Promise<boolean>;
   deleteComment: (commentId: string) => void;
   reportPost: (postId: string, reason: string, details?: string) => void;
   reportedPosts: ReportedPostWire[];
@@ -682,6 +685,13 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     query: FEED_EVENTS_QUERY,
     variables: { take: 100, skip: 0 },
   });
+
+  const reloadPosts = useCallback(() => refetchPosts({ requestPolicy: "network-only" }), [refetchPosts]);
+
+  const [postAddedResult] = useSubscription<{ postAdded: { id: string } }>({ query: POST_ADDED_SUB });
+  useEffect(() => {
+    if (postAddedResult.data?.postAdded) refetchPosts({ requestPolicy: "network-only" });
+  }, [postAddedResult.data, refetchPosts]);
 
   // Suscripción en tiempo real para el feed en vivo.
   const [liveFeedEvents, setLiveFeedEvents] = useState<FeedEvent[]>([]);
@@ -807,7 +817,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
 
   const [, createPostMut] = useMutation<
     CreateAnnouncementResult,
-    { body: string; type: PostType; destination: string; pinned: boolean }
+    { body: string; type: PostType; destination: string; pinned: boolean; pollOptions?: string[]; mediaUrl?: string }
   >(CREATE_ANNOUNCEMENT);
   const [, pinPostMut] = useMutation<
     PinPostResult,
@@ -1149,33 +1159,36 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const publishPost = useCallback<ErpContextValue["publishPost"]>(
-    ({ type, destination, body, pinned }) => {
+    async ({ type, destination, body, pinned, pollOptions, mediaUrl }) => {
       // HotChocolate 16 serializa enums en SCREAMING_SNAKE_CASE (TEXTO, COMUNIDAD_ADRED)
       const wireType = String(type).toUpperCase();
       const pascalDest = toDestinationEnum(destination);
       const wireDestination = pascalDest
         .replace(/([a-z])([A-Z])/g, "$1_$2")
         .toUpperCase();
-      createPostMut({
+      const res = await createPostMut({
         body,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         type: wireType as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         destination: wireDestination as any,
         pinned: Boolean(pinned),
-      }).then((res) => {
+        pollOptions, mediaUrl,
+      });
         if (res.error) {
           const msg = res.error.message || "No se pudo publicar la publicación";
           console.error("[community] createPost failed:", res.error);
           toast(msg);
+          return false;
         } else {
-          toast("Publicación creada correctamente");
-          refetchPosts();
-          refetchFeed();
+          if (!res.data?.createAnnouncement) return false;
+          toast(t("Publicación creada correctamente"));
+          refetchPosts({ requestPolicy: "network-only" });
+          refetchFeed({ requestPolicy: "network-only" });
+          return true;
         }
-      });
     },
-    [toast, refetchPosts, refetchFeed, createPostMut],
+    [toast, t, refetchPosts, refetchFeed, createPostMut],
   );
 
   const togglePin = useCallback<ErpContextValue["togglePin"]>(
@@ -1186,7 +1199,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
           toast(msg);
         } else {
           toast("Estado de fijado actualizado");
-          refetchPosts();
+          refetchPosts({ requestPolicy: "network-only" });
         }
       });
     },
@@ -1200,7 +1213,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
           toast("No se pudo eliminar la publicación");
         } else {
           toast("Publicación eliminada");
-          refetchPosts();
+          refetchPosts({ requestPolicy: "network-only" });
         }
       });
     },
@@ -1211,7 +1224,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   const viewPost = useCallback<ErpContextValue["viewPost"]>(
     (id) => {
       viewPostMut({ id }).then((res) => {
-        if (!res.error) refetchPosts();
+        if (!res.error) refetchPosts({ requestPolicy: "network-only" });
       });
     },
     [refetchPosts, viewPostMut],
@@ -1225,7 +1238,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
           res.error.message || "No se pudo reordenar las publicaciones fijadas",
         );
       } else {
-        refetchPosts();
+        refetchPosts({ requestPolicy: "network-only" });
       }
     },
     [toast, refetchPosts, reorderPinnedMut],
@@ -1259,54 +1272,42 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
   );
 
   const sendMessage = useCallback<ErpContextValue["sendMessage"]>(
-    (memberId, message) => {
-      sendDirectMessageMut({ profileId: memberId, body: message }).then(
-        (res) => {
-          if (res.error) {
-            toast(t("No pudimos enviar el mensaje. Intenta de nuevo."));
-          } else {
-            toast(t("Enviado como Equipo Copp Adresd"));
-          }
-        },
-      );
-    },
-    [toast, t, sendDirectMessageMut],
+    async (memberId, message) => {
+      const res = await sendDirectMessageMut({ profileId: memberId, body: message });
+      const saved = !res.error && !!res.data?.sendDirectMessage;
+      toast(t(saved ? "Enviado como Equipo Copp Adresd" : "No pudimos enviar el mensaje. Intenta de nuevo."));
+      return saved;
+    }, [toast, t, sendDirectMessageMut],
   );
 
   const sendBulkInactive = useCallback<ErpContextValue["sendBulkInactive"]>(
-    (message) => {
-      sendBulkMessageMut({ scope: "INACTIVE", body: message }).then((res) => {
-        if (res.error) {
-          toast(t("No pudimos enviar el mensaje. Intenta de nuevo."));
-        } else {
-          const count = res.data?.sendBulkMessage ?? 0;
-          toast(t("Mensajes enviados: {n}", { n: String(count) }));
-        }
-      });
-    },
-    [toast, t, sendBulkMessageMut],
+    async (message) => {
+      const res = await sendBulkMessageMut({ scope: "INACTIVE", body: message });
+      if (res.error || res.data?.sendBulkMessage == null) {
+        toast(t("No pudimos enviar el mensaje. Intenta de nuevo.")); return false;
+      }
+      toast(t("Mensajes enviados: {n}", { n: String(res.data.sendBulkMessage) }));
+      return true;
+    }, [toast, t, sendBulkMessageMut],
   );
 
   const sendGroupMessage = useCallback<ErpContextValue["sendGroupMessage"]>(
-    (groupId, body) => {
-      if (!body.trim()) return;
-      sendGroupMessageMut({ groupId, body: body.trim() }).then((res) => {
-        if (res.error) {
-          toast(t("No se pudo enviar el mensaje. Intenta de nuevo."));
-        } else {
-          toast(t("Mensaje enviado al grupo"));
-        }
-      });
-    },
-    [toast, t, sendGroupMessageMut],
+    async (groupId, body) => {
+      if (!body.trim()) return false;
+      const res = await sendGroupMessageMut({ groupId, body: body.trim() });
+      const saved = !res.error && !!res.data?.sendGroupMessage;
+      toast(t(saved ? "Mensaje enviado al grupo" : "No se pudo enviar el mensaje. Intenta de nuevo."));
+      return saved;
+    }, [toast, t, sendGroupMessageMut],
   );
 
   const addComment = useCallback<ErpContextValue["addComment"]>(
-    (postId, body) => {
-      if (!body.trim()) return;
-      addCommentMut({ postId, body: body.trim() }).then((res) => {
+    async (postId, body) => {
+      if (!body.trim()) return false;
+      const res = await addCommentMut({ postId, body: body.trim() });
         if (res.error) {
           toast(t("No se pudo comentar. Intenta de nuevo."));
+          return false;
         } else {
           const c = res.data?.addComment;
           if (c) {
@@ -1328,19 +1329,21 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
               });
             }, 3000);
             toast(t("Comentario publicado"));
+            return true;
           }
         }
-      });
+      return false;
     },
     [toast, t, addCommentMut],
   );
 
   const replyToComment = useCallback<ErpContextValue["replyToComment"]>(
-    (commentId, body) => {
-      if (!body.trim()) return;
-      replyToCommentMut({ commentId, body: body.trim() }).then((res) => {
+    async (commentId, body) => {
+      if (!body.trim()) return false;
+      const res = await replyToCommentMut({ commentId, body: body.trim() });
         if (res.error) {
           toast(t("No se pudo responder. Intenta de nuevo."));
+          return false;
         } else {
           const c = res.data?.replyToComment;
           if (c) {
@@ -1361,9 +1364,10 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
               });
             }, 3000);
             toast(t("Respuesta publicada"));
+            return true;
           }
         }
-      });
+      return false;
     },
     [toast, t, replyToCommentMut],
   );
@@ -1375,7 +1379,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
           toast(t("No se pudo eliminar el comentario."));
         } else {
           toast(t("Comentario eliminado"));
-          refetchPosts();
+          refetchPosts({ requestPolicy: "network-only" });
         }
       });
     },
@@ -1401,7 +1405,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         if (res.error) {
           toast(t("No se pudo dar like al comentario."));
         } else {
-          refetchPosts();
+          refetchPosts({ requestPolicy: "network-only" });
         }
       });
     },
@@ -1414,7 +1418,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
         if (res.error) {
           toast(t("No se pudo quitar el like."));
         } else {
-          refetchPosts();
+          refetchPosts({ requestPolicy: "network-only" });
         }
       });
     },
@@ -1463,7 +1467,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
           }
         } else {
           toast("Reposteado correctamente");
-          refetchPosts();
+          refetchPosts({ requestPolicy: "network-only" });
         }
       });
     },
@@ -1477,7 +1481,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
           toast("No se pudo quitar el repost");
         } else {
           toast("Repost eliminado");
-          refetchPosts();
+          refetchPosts({ requestPolicy: "network-only" });
         }
       });
     },
@@ -1614,7 +1618,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       refetchMembers,
       postsLoading: postsResult.fetching,
       postsError: postsResult.error?.message,
-      refetchPosts,
+      refetchPosts: reloadPosts,
       feedLoading: feedResult.fetching,
       feedError: feedResult.error?.message,
       refetchFeed,
@@ -1717,7 +1721,7 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
       refetchMembers,
       postsResult.fetching,
       postsResult.error,
-      refetchPosts,
+      reloadPosts,
       feedResult.fetching,
       feedResult.error,
       refetchFeed,
