@@ -203,7 +203,7 @@ export function ClinicsStep({
           </p>
           {activeOrg && activeOrg.clinics.length === 0 ? (
             <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border py-10 text-center">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-warning-soft text-warning-foreground">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-warning-soft text-warning-soft-foreground">
                 <Building2 className="size-5" />
               </span>
               <p className="max-w-sm text-[12.5px] font-medium text-foreground">

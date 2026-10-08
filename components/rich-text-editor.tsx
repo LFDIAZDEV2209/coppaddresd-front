@@ -158,7 +158,7 @@ function ToolbarButton({
       className={cn(
         "flex size-8 items-center justify-center rounded-md transition-colors",
         active
-          ? "bg-primary-soft text-primary"
+          ? "bg-primary-soft text-primary-soft-foreground"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >

@@ -90,7 +90,7 @@ export function MovementsPage() {
       />
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-info-soft text-info-foreground">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-info-soft text-info-soft-foreground">
             <CalendarDays className="size-4" />
           </div>
           <div>
@@ -189,8 +189,8 @@ export function MovementsPage() {
                         movement.direction === "Entrada"
                           ? {
                               bg: "var(--success-soft)",
-                              text: "var(--success-foreground)",
-                              dot: "var(--success-foreground)",
+                              text: "var(--success-soft-foreground)",
+                              dot: "var(--success-soft-foreground)",
                             }
                           : {
                               bg: "var(--destructive-soft)",
@@ -202,7 +202,7 @@ export function MovementsPage() {
                   </TableCell>
                   <TableCell>
                     <span
-                      className={`flex items-center gap-1 font-bold ${movement.direction === "Entrada" ? "text-success-foreground" : "text-destructive"}`}
+                      className={`flex items-center gap-1 font-bold ${movement.direction === "Entrada" ? "text-success-soft-foreground" : "text-destructive"}`}
                     >
                       {movement.direction === "Entrada" ? (
                         <ArrowDownToLine className="size-3.5" />

@@ -397,7 +397,7 @@ function CofresTablaPaginada({
                 <TableRow key={row.patient_id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
                         {initials(row.patient_name)}
                       </span>
                       {row.patient_id ? (

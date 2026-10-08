@@ -184,7 +184,7 @@ export function PatientProfessionalsSection({
                 className="flex items-center justify-between gap-3 rounded-xl bg-muted/50 px-3 py-2.5"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
                     {initials(assignment.fullName)}
                   </span>
                   <div className="min-w-0">

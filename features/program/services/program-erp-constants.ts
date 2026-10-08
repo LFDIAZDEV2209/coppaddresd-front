@@ -128,12 +128,12 @@ export function adherenceChipClass(pct: number): string {
   const base =
     "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11.5px] font-semibold";
   if (pct >= 80)
-    return `${base} bg-success-soft text-success-foreground border-success/20`;
+    return `${base} bg-success-soft text-success-soft-foreground border-success/20`;
   if (pct >= 65)
-    return `${base} bg-warning-soft text-warning border-warning/20`;
+    return `${base} bg-warning-soft text-warning-soft-foreground border-warning/20`;
   if (pct >= 50)
-    return `${base} bg-warning-soft/60 text-warning/80 border-warning/20`;
-  return `${base} bg-destructive-soft text-destructive border-destructive/20`;
+    return `${base} bg-warning-soft/60 text-warning-soft-foreground border-warning/20`;
+  return `${base} bg-destructive-soft text-destructive-soft-foreground border-destructive/20`;
 }
 
 /** Iniciales a partir de nombre completo. */

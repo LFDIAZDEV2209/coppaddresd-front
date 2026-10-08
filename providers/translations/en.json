@@ -4509,5 +4509,6 @@
   "ya tenía una cuenta; se vinculó al perfil y se sumaron sus roles": "already had an account; it was linked to the profile and their roles were merged",
   "Actividad más reciente de la comunidad": "Most recent community activity",
   "{count} publicaciones en el intervalo seleccionado": "{count} posts in the selected range",
-  "No se pudo reindexar. Si sigue procesando, espera unos minutos y reintenta.": "Could not reindex. If it is still processing, wait a few minutes and retry."
+  "No se pudo reindexar. Si sigue procesando, espera unos minutos y reintenta.": "Could not reindex. If it is still processing, wait a few minutes and retry.",
+  "Duración registrada: {duration}": "Registered duration: {duration}"
 }

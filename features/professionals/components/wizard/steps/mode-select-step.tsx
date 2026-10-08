@@ -145,7 +145,7 @@ export function ModeSelectStep({
             "flex size-12 items-center justify-center rounded-xl",
             selected
               ? "bg-primary text-primary-foreground"
-              : "bg-primary-soft text-primary",
+              : "bg-primary-soft text-primary-soft-foreground",
           )}
         >
           <Icon className="size-6" />
@@ -206,7 +206,7 @@ export function ModeSelectStep({
 
         {availableModes.length === 0 && (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
-            <span className="flex size-12 items-center justify-center rounded-xl bg-warning-soft text-warning-foreground">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-warning-soft text-warning-soft-foreground">
               <Building2 className="size-6" />
             </span>
             <div>

@@ -12,8 +12,8 @@ type ChipTone = "neutral" | "info" | "primary" | "success" | "warning" | "danger
 const CHIP_TONES: Record<ChipTone, string> = {
   neutral: "border-border bg-muted text-muted-foreground",
   info: "border-info/20 bg-info-soft text-info",
-  primary: "border-primary/20 bg-primary-soft text-primary",
-  success: "border-success/20 bg-success-soft text-success-foreground",
+  primary: "border-primary/20 bg-primary-soft text-primary-soft-foreground",
+  success: "border-success/20 bg-success-soft text-success-soft-foreground",
   warning: "border-warning/20 bg-warning-soft text-warning",
   danger: "border-destructive/20 bg-destructive-soft text-destructive",
 };

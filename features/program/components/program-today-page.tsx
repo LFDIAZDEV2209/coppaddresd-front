@@ -210,7 +210,7 @@ function TodayContent({
             <button
               className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
                 feedFilter === "all"
-                  ? "bg-primary-soft text-primary"
+                  ? "bg-primary-soft text-primary-soft-foreground"
                   : "text-muted-foreground hover:bg-muted"
               }`}
               onClick={() => onFeedFilterChange("all")}

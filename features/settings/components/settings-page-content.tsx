@@ -145,7 +145,7 @@ export function SettingsPageContent() {
                 className={cn(
                   "group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-all duration-200",
                   active
-                    ? "bg-primary-soft font-semibold text-primary shadow-sm"
+                    ? "bg-primary-soft font-semibold text-primary-soft-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >

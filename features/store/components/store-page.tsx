@@ -185,7 +185,7 @@ function StoreTable({
             <TableRow key={item.id}>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                     <ShoppingBag className="size-4" />
                   </span>
                   <div className="min-w-0">
@@ -201,7 +201,7 @@ function StoreTable({
                 <StatusBadge
                   status={item.status === "Visible" ? "Activo" : "Inactivo"}
                   color={item.status === "Visible"
-                    ? { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }
+                    ? { bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" }
                     : { bg: "var(--muted)", text: "var(--muted-foreground)", dot: "var(--muted-foreground)" }}
                 />
               </TableCell>
@@ -299,7 +299,7 @@ function AddToStoreDialog({
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs">{t('Destacado')}</Label>
               <button type="button" onClick={() => setFeatured(!featured)}
-                className={`flex size-9 items-center justify-center rounded-md border ${featured ? "border-warning bg-warning-soft text-warning-foreground" : "border-input bg-background text-muted-foreground"}`}>
+                className={`flex size-9 items-center justify-center rounded-md border ${featured ? "border-warning bg-warning-soft text-warning-soft-foreground" : "border-input bg-background text-muted-foreground"}`}>
                 <Star className="size-4" fill={featured ? "currentColor" : "none"} />
               </button>
             </div>
@@ -366,9 +366,9 @@ function EditStoreDialog({
 
 function Metric({ label, value, tone }: { label: string; value: string; tone: "primary" | "warning" | "success" | "danger" }) {
   const colors = {
-    primary: "bg-primary-soft text-primary",
-    warning: "bg-warning-soft text-warning-foreground",
-    success: "bg-success-soft text-success-foreground",
+    primary: "bg-primary-soft text-primary-soft-foreground",
+    warning: "bg-warning-soft text-warning-soft-foreground",
+    success: "bg-success-soft text-success-soft-foreground",
     danger: "bg-destructive-soft text-destructive",
   };
   return (

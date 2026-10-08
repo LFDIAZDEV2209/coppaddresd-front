@@ -305,7 +305,7 @@ export function MediaPage() {
 
       {createdNotice && (
         <div
-          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-soft-foreground"
           role="status"
         >
           <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
@@ -489,7 +489,7 @@ export function MediaPage() {
               className={
                 pendingAction?.action === "archive"
                   ? "bg-muted-foreground hover:bg-muted-foreground/90"
-                  : "bg-success hover:bg-success/90"
+                  : "bg-success text-success-foreground hover:bg-success/90"
               }
               disabled={actionLoading}
               onClick={() =>
@@ -544,10 +544,10 @@ export function MediaPage() {
               key={toastItem.id}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg ${
                 toastItem.type === "success"
-                  ? "border-success/20 bg-success-soft text-success-foreground"
+                  ? "border-success/20 bg-success-soft text-success-soft-foreground"
                   : toastItem.type === "error"
                     ? "border-destructive/20 bg-destructive-soft text-destructive"
-                    : "border-info/20 bg-info-soft text-info-foreground"
+                    : "border-info/20 bg-info-soft text-info-soft-foreground"
               }`}
               role="status"
             >

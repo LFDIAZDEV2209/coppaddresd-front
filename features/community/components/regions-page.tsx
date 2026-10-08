@@ -14,7 +14,7 @@ import { RegionsMap } from "./regions-vector-map";
 const REGION_COLORS: Record<string, string> = {
   Miami: "var(--primary)",
   NY: "var(--success)",
-  Barranquilla: "var(--warning-foreground)",
+  Barranquilla: "var(--warning-soft-foreground)",
   Orlando: "var(--warning)",
   Houston: "#7C3AED",
   Dallas: "#DC2626",

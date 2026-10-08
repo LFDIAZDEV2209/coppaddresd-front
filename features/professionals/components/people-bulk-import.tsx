@@ -428,7 +428,7 @@ export function PeopleBulkImport({
                   active
                     ? "bg-brand-gradient text-white shadow-sm"
                     : done
-                      ? "bg-success/10 text-success-foreground"
+                      ? "bg-success/10 text-success-soft-foreground"
                       : "bg-muted text-muted-foreground",
                 )}
               >
@@ -804,7 +804,7 @@ export function PeopleBulkImport({
                                   "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium",
                                   duplicate
                                     ? "border-destructive/30 bg-destructive-soft text-destructive"
-                                    : "border-warning/40 bg-warning-soft text-warning-foreground",
+                                    : "border-warning/40 bg-warning-soft text-warning-soft-foreground",
                                 )}
                               >
                                 {duplicate ? (
@@ -817,7 +817,7 @@ export function PeopleBulkImport({
                             ))}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-success px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-success px-2 py-0.5 text-[11px] font-semibold text-success-foreground shadow-sm">
                             <CheckCircle2 className="size-3" />
                             {t("OK")}
                           </span>
@@ -1086,7 +1086,7 @@ export function PeopleBulkImport({
           {/* Detalle de filas con error del backend */}
           {failedRows.length > 0 && (
             <div className="mt-2 w-full max-w-xl rounded-xl border border-warning/30 bg-warning-soft/40 p-3 text-left">
-              <p className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-warning-foreground">
+              <p className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-warning-soft-foreground">
                 <AlertTriangle className="size-3.5" />
                 {t("Detalles de filas con error")}
               </p>
@@ -1176,8 +1176,8 @@ function SummaryChip({
     <span
       className={cn(
         "animate-scale-in inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold",
-        tone === "success" && "bg-success text-white",
-        tone === "warning" && "bg-warning-soft text-warning-foreground",
+        tone === "success" && "bg-success text-success-foreground",
+        tone === "warning" && "bg-warning-soft text-warning-soft-foreground",
         tone === "destructive" && "bg-destructive-soft text-destructive",
       )}
     >

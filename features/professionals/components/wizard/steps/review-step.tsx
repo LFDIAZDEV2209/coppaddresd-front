@@ -321,7 +321,7 @@ export function ReviewStep({
                           {t("Horario estándar (lun–vie 8:00–17:00)")}
                         </span>
                       ) : enabledDays.length === 0 ? (
-                        <span className="text-warning-foreground">
+                        <span className="text-warning-soft-foreground">
                           {t("Sin días de atención configurados")}
                         </span>
                       ) : (

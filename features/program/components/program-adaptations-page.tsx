@@ -75,9 +75,9 @@ const KIND_LABELS: Record<AdaptationKind, string> = {
 
 const STATUS_BADGE: Record<AdaptationStatus, string> = {
   Pending: "bg-warning-soft text-warning",
-  Approved: "bg-info-soft text-info-foreground",
+  Approved: "bg-info-soft text-info-soft-foreground",
   Rejected: "bg-destructive-soft text-destructive",
-  Applied: "bg-success-soft text-success-foreground",
+  Applied: "bg-success-soft text-success-soft-foreground",
   Superseded: "bg-muted text-muted-foreground",
 };
 
@@ -230,7 +230,7 @@ export function ProgramAdaptationsPage() {
                     <TableCell>
                       {patientName ? (
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary" aria-hidden>
+                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary-soft-foreground" aria-hidden>
                             {initials}
                           </span>
                           <span className="min-w-0 flex-1 truncate text-sm font-medium" title={patientName}>

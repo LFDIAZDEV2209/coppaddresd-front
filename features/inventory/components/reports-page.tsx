@@ -200,7 +200,7 @@ export function ReportsPage() {
 
       {success && (
         <p
-          className="flex items-center gap-2 rounded-lg bg-success-soft px-3 py-2 text-sm text-success-foreground"
+          className="flex items-center gap-2 rounded-lg bg-success-soft px-3 py-2 text-sm text-success-soft-foreground"
           role="status"
         >
           <CheckCircle2 className="size-4" />
@@ -463,7 +463,7 @@ function VencimientoReport({ analytics }: { analytics: InventoryAnalytics }) {
                     className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                       product.state === "Vencido"
                         ? "bg-destructive-soft text-destructive"
-                        : "bg-warning-soft text-warning-foreground"
+                        : "bg-warning-soft text-warning-soft-foreground"
                     }`}
                   >
                     {product.state ? t(product.state) : ""}

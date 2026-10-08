@@ -172,11 +172,11 @@ function normalizeEnum(s: string | null | undefined): string {
 }
 
 const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
-  Texto: { bg: "var(--info-soft)", text: "var(--info-foreground)" },
-  Imagen: { bg: "var(--success-soft)", text: "var(--success-foreground)" },
-  Video: { bg: "var(--primary-soft)", text: "var(--primary)" },
-  Encuesta: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
-  Logro: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
+  Texto: { bg: "var(--info-soft)", text: "var(--info-soft-foreground)" },
+  Imagen: { bg: "var(--success-soft)", text: "var(--success-soft-foreground)" },
+  Video: { bg: "var(--primary-soft)", text: "var(--primary-soft-foreground)" },
+  Encuesta: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)" },
+  Logro: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)" },
 };
 
 export function PostsPage() {
@@ -711,7 +711,7 @@ export function PostsPage() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <StatusBadge
                         status={t("Fijado")}
-                        color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                        color={{ bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)", dot: "var(--warning-soft-foreground)" }}
                       />
                       <span
                         className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"

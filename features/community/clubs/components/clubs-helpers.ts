@@ -20,26 +20,26 @@ export interface BadgeColor {
 export const VISIBILITY_COLORS: Record<ClubVisibility, BadgeColor> = {
   PUBLICO: {
     bg: "var(--success-soft)",
-    text: "var(--success-foreground)",
-    dot: "var(--success-foreground)",
+    text: "var(--success-soft-foreground)",
+    dot: "var(--success-soft-foreground)",
   },
   PRIVADO: {
     bg: "var(--warning-soft)",
-    text: "var(--warning-foreground)",
+    text: "var(--warning-soft-foreground)",
     dot: "var(--warning)",
   },
   INVITACION: {
     bg: "var(--info-soft)",
-    text: "var(--info-foreground)",
-    dot: "var(--info-foreground)",
+    text: "var(--info-soft-foreground)",
+    dot: "var(--info-soft-foreground)",
   },
 };
 
 export const CLUB_STATUS_COLORS: Record<ClubStatus, BadgeColor> = {
   ACTIVO: {
     bg: "var(--success-soft)",
-    text: "var(--success-foreground)",
-    dot: "var(--success-foreground)",
+    text: "var(--success-soft-foreground)",
+    dot: "var(--success-soft-foreground)",
   },
   ARCHIVADO: {
     bg: "var(--muted)",
@@ -51,13 +51,13 @@ export const CLUB_STATUS_COLORS: Record<ClubStatus, BadgeColor> = {
 export const MEMBER_ROLE_COLORS: Record<ClubMemberRole, BadgeColor> = {
   ADMIN: {
     bg: "var(--primary-soft)",
-    text: "var(--primary)",
+    text: "var(--primary-soft-foreground)",
     dot: "var(--primary)",
   },
   MODERADOR: {
     bg: "var(--info-soft)",
-    text: "var(--info-foreground)",
-    dot: "var(--info-foreground)",
+    text: "var(--info-soft-foreground)",
+    dot: "var(--info-soft-foreground)",
   },
   MIEMBRO: {
     bg: "var(--muted)",
@@ -69,12 +69,12 @@ export const MEMBER_ROLE_COLORS: Record<ClubMemberRole, BadgeColor> = {
 export const MEMBER_STATUS_COLORS: Record<ClubMemberStatus, BadgeColor> = {
   ACTIVO: {
     bg: "var(--success-soft)",
-    text: "var(--success-foreground)",
-    dot: "var(--success-foreground)",
+    text: "var(--success-soft-foreground)",
+    dot: "var(--success-soft-foreground)",
   },
   PENDIENTE: {
     bg: "var(--warning-soft)",
-    text: "var(--warning-foreground)",
+    text: "var(--warning-soft-foreground)",
     dot: "var(--warning)",
   },
   EXPULSADO: {
@@ -84,7 +84,7 @@ export const MEMBER_STATUS_COLORS: Record<ClubMemberStatus, BadgeColor> = {
   },
   SILENCIADO: {
     bg: "var(--warning-soft)",
-    text: "var(--warning-foreground)",
+    text: "var(--warning-soft-foreground)",
     dot: "var(--warning)",
   },
 };
@@ -92,12 +92,12 @@ export const MEMBER_STATUS_COLORS: Record<ClubMemberStatus, BadgeColor> = {
 export const POST_VISIBILITY_COLORS: Record<PostVisibility, BadgeColor> = {
   PUBLICO: {
     bg: "var(--success-soft)",
-    text: "var(--success-foreground)",
-    dot: "var(--success-foreground)",
+    text: "var(--success-soft-foreground)",
+    dot: "var(--success-soft-foreground)",
   },
   PRIVADO: {
     bg: "var(--warning-soft)",
-    text: "var(--warning-foreground)",
+    text: "var(--warning-soft-foreground)",
     dot: "var(--warning)",
   },
 };
@@ -105,12 +105,12 @@ export const POST_VISIBILITY_COLORS: Record<PostVisibility, BadgeColor> = {
 export const EVENT_TYPE_COLORS: Record<EventType, BadgeColor> = {
   PRESENCIAL: {
     bg: "var(--info-soft)",
-    text: "var(--info-foreground)",
-    dot: "var(--info-foreground)",
+    text: "var(--info-soft-foreground)",
+    dot: "var(--info-soft-foreground)",
   },
   VIRTUAL: {
     bg: "var(--primary-soft)",
-    text: "var(--primary)",
+    text: "var(--primary-soft-foreground)",
     dot: "var(--primary)",
   },
 };
@@ -118,8 +118,8 @@ export const EVENT_TYPE_COLORS: Record<EventType, BadgeColor> = {
 export const LIVE_STATUS_COLORS: Record<LiveSessionStatus, BadgeColor> = {
   PROGRAMADO: {
     bg: "var(--info-soft)",
-    text: "var(--info-foreground)",
-    dot: "var(--info-foreground)",
+    text: "var(--info-soft-foreground)",
+    dot: "var(--info-soft-foreground)",
   },
   ACTIVO: {
     bg: "var(--destructive-soft)",
@@ -141,22 +141,22 @@ export const LIVE_STATUS_COLORS: Record<LiveSessionStatus, BadgeColor> = {
 export const CATEGORY_COLORS: Record<string, BadgeColor> = {
   Salud: {
     bg: "var(--info-soft)",
-    text: "var(--info-foreground)",
-    dot: "var(--info-foreground)",
+    text: "var(--info-soft-foreground)",
+    dot: "var(--info-soft-foreground)",
   },
   Deporte: {
     bg: "var(--success-soft)",
-    text: "var(--success-foreground)",
-    dot: "var(--success-foreground)",
+    text: "var(--success-soft-foreground)",
+    dot: "var(--success-soft-foreground)",
   },
   Bienestar: {
     bg: "var(--primary-soft)",
-    text: "var(--primary)",
+    text: "var(--primary-soft-foreground)",
     dot: "var(--primary)",
   },
   Nutrición: {
     bg: "var(--warning-soft)",
-    text: "var(--warning-foreground)",
+    text: "var(--warning-soft-foreground)",
     dot: "var(--warning)",
   },
   Embarazo: {
@@ -166,8 +166,8 @@ export const CATEGORY_COLORS: Record<string, BadgeColor> = {
   },
   Diabetes: {
     bg: "var(--info-soft)",
-    text: "var(--info-foreground)",
-    dot: "var(--info-foreground)",
+    text: "var(--info-soft-foreground)",
+    dot: "var(--info-soft-foreground)",
   },
   "Adultos mayores": {
     bg: "var(--muted)",
@@ -176,12 +176,12 @@ export const CATEGORY_COLORS: Record<string, BadgeColor> = {
   },
   Empresas: {
     bg: "var(--primary-soft)",
-    text: "var(--primary)",
+    text: "var(--primary-soft-foreground)",
     dot: "var(--primary)",
   },
   Hobbies: {
     bg: "var(--warning-soft)",
-    text: "var(--warning-foreground)",
+    text: "var(--warning-soft-foreground)",
     dot: "var(--warning)",
   },
 };

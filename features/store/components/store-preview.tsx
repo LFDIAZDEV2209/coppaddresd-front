@@ -58,7 +58,7 @@ export function StorePreviewPage() {
 
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-info-soft text-info-foreground">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-info-soft text-info-soft-foreground">
             <ShoppingBag className="size-4" />
           </span>
           <div>
@@ -126,7 +126,7 @@ function PreviewCard({ item, featured }: { item: StoreItemListItem; featured?: b
       <div className="relative flex h-32 items-center justify-center bg-gradient-to-br from-primary-soft to-info-soft">
         <ShoppingBag className="size-10 text-primary" />
         {featured && (
-          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-[10px] font-bold text-white">
+          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-[10px] font-bold text-warning-foreground">
             <Sparkles className="size-3" />
             {t('Destacado')}
           </span>
@@ -148,7 +148,7 @@ function PreviewCard({ item, featured }: { item: StoreItemListItem; featured?: b
           <span
             className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
               item.stock > 0
-                ? "bg-primary-soft text-primary"
+                ? "bg-primary-soft text-primary-soft-foreground"
                 : "bg-destructive-soft text-destructive"
             }`}
           >

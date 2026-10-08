@@ -221,7 +221,7 @@ export function ProgramBulkAssignDialog({
           /* Panel de resultado transparente (contrato REQ-PCA-04) */
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3 rounded-xl border border-success/30 bg-success-soft/40 p-4">
-              <div className="flex items-center gap-2 text-success-foreground">
+              <div className="flex items-center gap-2 text-success-soft-foreground">
                 <Check className="size-5 shrink-0" />
                 <p className="text-sm font-semibold">
                   {result.message || t("Asignación completada.")}
@@ -235,7 +235,7 @@ export function ProgramBulkAssignDialog({
                 </Badge>
                 <Badge
                   variant="secondary"
-                  className="bg-success-soft text-success-foreground"
+                  className="bg-success-soft text-success-soft-foreground"
                 >
                   {t("{count} semanas actualizadas", {
                     count: String(result.updatedWeeks),
@@ -244,7 +244,7 @@ export function ProgramBulkAssignDialog({
                 {result.frozenWeeksSkipped > 0 && (
                   <Badge
                     variant="secondary"
-                    className="bg-warning-soft text-warning-foreground"
+                    className="bg-warning-soft text-warning-soft-foreground"
                   >
                     {t("{count} semanas congeladas omitidas", {
                       count: String(result.frozenWeeksSkipped),
@@ -418,7 +418,7 @@ export function ProgramBulkAssignDialog({
                     .
                   </span>
                   {frozenEstimate > 0 && !forceFrozen && (
-                    <span className="text-warning-foreground">
+                    <span className="text-warning-soft-foreground">
                       {t(
                         "≈ {count} semanas congeladas (pasadas) se omitirán para preservar el historial del paciente.",
                         { count: String(frozenEstimate) },
@@ -455,7 +455,7 @@ export function ProgramBulkAssignDialog({
             {isEnrollment && (
               <div className="flex items-start justify-between gap-3 rounded-xl border border-warning/30 bg-warning-soft/40 p-3">
                 <div className="flex items-start gap-2">
-                  <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
+                  <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning-soft-foreground" />
                   <div>
                     <p className="text-xs font-semibold text-foreground">
                       {t("Forzar semanas congeladas")}

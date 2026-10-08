@@ -136,11 +136,11 @@ function PollBlockInline({
 
 /** Colores de chip por tipo de publicación. */
 const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
-  Texto: { bg: "var(--info-soft)", text: "var(--info-foreground)" },
-  Imagen: { bg: "var(--success-soft)", text: "var(--success-foreground)" },
-  Video: { bg: "var(--primary-soft)", text: "var(--primary)" },
-  Encuesta: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
-  Logro: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
+  Texto: { bg: "var(--info-soft)", text: "var(--info-soft-foreground)" },
+  Imagen: { bg: "var(--success-soft)", text: "var(--success-soft-foreground)" },
+  Video: { bg: "var(--primary-soft)", text: "var(--primary-soft-foreground)" },
+  Encuesta: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)" },
+  Logro: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)" },
 };
 
 /** Razones de reporte disponibles. */
@@ -274,7 +274,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
           {isReply && (
             <CornerDownRight className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
           )}
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary-soft-foreground">
             {profileName(c.author, c.isSystem, t).slice(0, 2).toUpperCase()}
           </span>
           <div className="flex min-w-0 flex-1 flex-col">
@@ -445,7 +445,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
               {post.pinned && (
                 <StatusBadge
                   status={t("Fijado")}
-                  color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                  color={{ bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)", dot: "var(--warning-soft-foreground)" }}
                 />
               )}
               <span
@@ -513,7 +513,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
 
             {/* Indicador de respuesta */}
             {replyTo && (
-              <div className="flex items-center justify-between rounded-lg bg-primary-soft px-2 py-1 text-xs text-primary">
+              <div className="flex items-center justify-between rounded-lg bg-primary-soft px-2 py-1 text-xs text-primary-soft-foreground">
                 <span className="flex items-center gap-1">
                   <CornerDownRight className="size-3" />{" "}
                   {t("Respondiendo a {name}", { name: replyTo.author })}

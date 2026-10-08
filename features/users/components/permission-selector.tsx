@@ -221,7 +221,7 @@ export function PermissionSelector({
                   </span>
                 </span>
                 {selectedCount > 0 && (
-                  <span className="animate-scale-in rounded-full bg-success/15 px-2 py-0.5 text-[10.5px] font-bold text-success-foreground">
+                  <span className="animate-scale-in rounded-full bg-success/15 px-2 py-0.5 text-[10.5px] font-bold text-success-soft-foreground">
                     {selectedCount}
                   </span>
                 )}

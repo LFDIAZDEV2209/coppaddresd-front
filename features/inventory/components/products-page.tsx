@@ -231,7 +231,7 @@ export function ProductsPage() {
       />
       {createdNotice && (
         <div
-          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-soft-foreground"
           role="status"
         >
           <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
@@ -273,19 +273,19 @@ export function ProductsPage() {
       </div>
       {alerts.length > 0 && (
         <div className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center">
-          <AlertTriangle className="size-5 shrink-0 text-warning-foreground" />
+          <AlertTriangle className="size-5 shrink-0 text-warning-soft-foreground" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-warning-foreground">
+            <p className="text-sm font-semibold text-warning-soft-foreground">
               {t("{count} alertas requieren atención", { count: String(alerts.length) })}
             </p>
-            <p className="text-xs text-warning-foreground/80">
+            <p className="text-xs text-warning-soft-foreground">
               {t("Revisa productos con stock bajo, sin existencias o próximos a vencer.")}
             </p>
           </div>
           <button
             type="button"
             onClick={() => updateFilters({ status: "Con alertas" })}
-            className="text-xs font-bold text-warning-foreground underline underline-offset-2"
+            className="text-xs font-bold text-warning-soft-foreground underline underline-offset-2"
           >
             {t("Ver alertas")}
           </button>
@@ -437,7 +437,7 @@ function ProductTable({
                     className="flex items-center gap-3 text-left"
                     onClick={() => onDetails(product)}
                   >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                       <Package className="size-4" />
                     </span>
                     <span className="min-w-0">
@@ -458,7 +458,7 @@ function ProductTable({
                 </TableCell>
                 <TableCell>
                   <span
-                    className={`font-semibold ${state === "Sin stock" || state === "Stock bajo" ? "text-warning-foreground" : "text-foreground"}`}
+                    className={`font-semibold ${state === "Sin stock" || state === "Stock bajo" ? "text-warning-soft-foreground" : "text-foreground"}`}
                   >
                     {product.stock}
                   </span>
@@ -960,10 +960,10 @@ function Metric({
   tone: "primary" | "warning" | "danger" | "info";
 }) {
   const colors = {
-    primary: "bg-primary-soft text-primary",
-    warning: "bg-warning-soft text-warning-foreground",
+    primary: "bg-primary-soft text-primary-soft-foreground",
+    warning: "bg-warning-soft text-warning-soft-foreground",
     danger: "bg-destructive-soft text-destructive",
-    info: "bg-info-soft text-info-foreground",
+    info: "bg-info-soft text-info-soft-foreground",
   };
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
@@ -1045,17 +1045,17 @@ function stateColor(state: InventoryFilters["status"]) {
   const colors = {
     Disponible: {
       bg: "var(--success-soft)",
-      text: "var(--success-foreground)",
-      dot: "var(--success-foreground)",
+      text: "var(--success-soft-foreground)",
+      dot: "var(--success-soft-foreground)",
     },
     "Con alertas": {
       bg: "var(--warning-soft)",
-      text: "var(--warning-foreground)",
+      text: "var(--warning-soft-foreground)",
       dot: "var(--warning)",
     },
     "Stock bajo": {
       bg: "var(--warning-soft)",
-      text: "var(--warning-foreground)",
+      text: "var(--warning-soft-foreground)",
       dot: "var(--warning)",
     },
     "Sin stock": {
@@ -1065,7 +1065,7 @@ function stateColor(state: InventoryFilters["status"]) {
     },
     "Próximo a vencer": {
       bg: "var(--warning-soft)",
-      text: "var(--warning-foreground)",
+      text: "var(--warning-soft-foreground)",
       dot: "var(--warning)",
     },
     Vencido: {

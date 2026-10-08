@@ -37,7 +37,7 @@ export function UserAvatar({
 export function UserStatusBadge({ isActive }: { isActive: boolean }) {
   const t = useT();
   return isActive ? (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-success px-2.5 py-[5px] text-[11.5px] font-semibold text-white shadow-sm">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-success px-2.5 py-[5px] text-[11.5px] font-semibold text-success-foreground shadow-sm">
       <CheckCircle2 className="size-3.5" />
       {t("Activo")}
     </span>
@@ -85,7 +85,7 @@ export function RoleChips({
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)}>
       {hasNoRoles && (
-        <span className="inline-flex items-center gap-1 rounded-md bg-warning px-2 py-0.5 text-[10.5px] font-semibold text-white shadow-sm">
+        <span className="inline-flex items-center gap-1 rounded-md bg-warning px-2 py-0.5 text-[10.5px] font-semibold text-warning-foreground shadow-sm">
           <ShieldAlert className="size-3" />
           {t("Sin roles")}
         </span>

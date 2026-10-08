@@ -334,7 +334,7 @@ export function ProfessionalDirectory() {
 
         {statsError && (
           <p
-            className="animate-slide-down rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning-foreground"
+            className="animate-slide-down rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning-soft-foreground"
             role="alert"
           >
             {t("No pudimos cargar las estadísticas")}: {statsError}
@@ -346,7 +346,7 @@ export function ProfessionalDirectory() {
             className={cn(
               "animate-slide-down rounded-xl px-4 py-3 text-sm",
               feedback.kind === "ok"
-                ? "bg-success-soft text-success-foreground"
+                ? "bg-success-soft text-success-soft-foreground"
                 : "bg-destructive-soft text-destructive",
             )}
             role="status"
@@ -533,7 +533,7 @@ function BulkBar({
   const t = useT();
   return (
     <div className="animate-slide-up sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3 shadow-lg shadow-black/5">
-      <span className="flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-[12.5px] font-semibold text-primary">
+      <span className="flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-[12.5px] font-semibold text-primary-soft-foreground">
         <UserRound className="size-3.5" />
         {t("{count} seleccionados", { count: String(count) })}
       </span>
@@ -606,7 +606,7 @@ function EmptyState({
   const t = useT();
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card py-16 text-center">
-      <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+      <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
         <UserRoundCheck className="size-6" />
       </span>
       <div>

@@ -300,7 +300,7 @@ export function UserDetail({ userId }: UserDetailProps) {
 
       {notice && (
         <div
-          className="animate-slide-down flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          className="animate-slide-down flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-soft-foreground"
           role="status"
         >
           <Info className="mt-0.5 size-4 shrink-0" />
@@ -438,7 +438,7 @@ export function UserDetail({ userId }: UserDetailProps) {
           <div className="flex flex-col gap-3 p-5">
             {roles.length === 0 && scopedRoles.length === 0 ? (
               <div className="rounded-lg border border-dashed border-warning/40 bg-warning-soft px-3 py-3">
-                <p className="text-[12.5px] text-warning-foreground">
+                <p className="text-[12.5px] text-warning-soft-foreground">
                   {t(
                     "Este usuario no tiene roles: solo puede acceder con permisos directos. Asígnales uno desde Editar para heredar permisos automáticamente.",
                   )}

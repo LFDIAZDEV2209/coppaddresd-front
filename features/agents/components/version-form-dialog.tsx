@@ -192,7 +192,7 @@ export function VersionFormFields({
               />
               {instructionsFile ? (
                 <div className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                     <FileText className="size-4.5" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -428,7 +428,7 @@ export function VersionFormFields({
                       }
                       className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
                         form.memoryCategories.includes(category)
-                          ? "border-primary bg-primary-soft text-primary"
+                          ? "border-primary bg-primary-soft text-primary-soft-foreground"
                           : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                       disabled={saving || uploadingInstructions}
@@ -527,7 +527,7 @@ function Section({
   return (
     <fieldset className="flex flex-col gap-3 rounded-2xl border border-border bg-background/40 p-4">
       <legend className="flex items-center gap-2 px-2">
-        <span className="flex size-6 items-center justify-center rounded-md bg-primary-soft text-primary">
+        <span className="flex size-6 items-center justify-center rounded-md bg-primary-soft text-primary-soft-foreground">
           <Icon className="size-3.5" />
         </span>
         <span className="text-[13px] font-semibold">{title}</span>

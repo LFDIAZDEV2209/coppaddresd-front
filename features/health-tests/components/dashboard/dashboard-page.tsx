@@ -800,7 +800,7 @@ function HealthGeoMapRow({
                   href={`/health-tests/pacientes/${a.patientId}`}
                   className="group flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 transition-colors hover:border-destructive/20 hover:bg-destructive-soft/30"
                 >
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary ring-1 ring-border">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary-soft-foreground ring-1 ring-border">
                     {a.name.slice(0, 2).toUpperCase()}
                   </span>
                   <div className="min-w-0 flex-1">

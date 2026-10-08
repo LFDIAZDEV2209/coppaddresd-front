@@ -268,10 +268,10 @@ export function BatteriesPage() {
                 className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               >
                 <span className="flex items-center justify-between gap-2">
-                  <span className="flex size-9 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                  <span className="flex size-9 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
                     <moment.icon className="size-4.5" />
                   </span>
-                  <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-foreground">
+                  <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-soft-foreground">
                     {t("Activa")}
                   </span>
                 </span>
@@ -350,16 +350,16 @@ function BatteryCard({
 }) {
   const t = useT();
   const stateStyle = {
-    activa: { bg: "var(--success-soft)", text: "var(--success-foreground)" },
+    activa: { bg: "var(--success-soft)", text: "var(--success-soft-foreground)" },
     inactiva: { bg: "var(--muted)", text: "var(--muted-foreground)" },
-    borrador: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
+    borrador: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)" },
   }[battery.state];
 
   return (
     <article className="flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between gap-3 px-4 pt-4">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
             <Layers className="size-5" />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">

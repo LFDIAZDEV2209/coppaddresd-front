@@ -178,7 +178,7 @@ export function ClubNewPage() {
                 i === step
                   ? "bg-primary text-white"
                   : i < step
-                    ? "bg-primary-soft text-primary"
+                    ? "bg-primary-soft text-primary-soft-foreground"
                     : "bg-muted text-muted-foreground"
               }`}
             >

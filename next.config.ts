@@ -54,6 +54,9 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const storageTarget = process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5080";
     return [
+      ...(process.env.NODE_ENV === "development"
+        ? [{ source: "/api/:path*", destination: `${storageTarget}/api/:path*` }]
+        : []),
       { source: "/storage/:path*", destination: `${storageTarget}/storage/:path*` },
     ];
   },

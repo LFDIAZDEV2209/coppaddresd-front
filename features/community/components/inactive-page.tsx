@@ -74,11 +74,11 @@ export function InactivePage() {
       {inactive.length > 0 && (
         <div className="flex flex-col gap-2.5 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning text-white">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning text-warning-foreground">
               <AlertTriangle className="size-4" />
             </span>
             <div className="flex flex-col gap-0 min-w-0">
-              <p className="text-[13px] font-semibold leading-tight text-warning-foreground">
+              <p className="text-[13px] font-semibold leading-tight text-warning-soft-foreground">
                 {t(
                   "40% más probabilidad de abandonar si no se reactivan antes de 14 días",
                 )}

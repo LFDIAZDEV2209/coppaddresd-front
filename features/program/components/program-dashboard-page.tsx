@@ -599,7 +599,7 @@ function BiometriaPatientListCard({
               }}
               className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
                 isActive
-                  ? "border-primary bg-primary-soft text-primary"
+                  ? "border-primary bg-primary-soft text-primary-soft-foreground"
                   : "border-border bg-muted text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -846,7 +846,7 @@ function AlertasCriticasCard({
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive-soft text-destructive ring-1 ring-destructive/10">
                   <AlertTriangle className="size-4" />
                 </span>
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary ring-1 ring-border">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary-soft-foreground ring-1 ring-border">
                   {initialsOf(a.name)}
                 </span>
                 <div className="min-w-0 flex-1">

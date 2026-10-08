@@ -356,7 +356,7 @@ function AdherenciaRachasCard({
               <span className="w-5 shrink-0 text-center text-xs font-semibold tabular-nums text-muted-foreground">
                 {r.rank ?? idx + 1}
               </span>
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
                 {r.patient_name
                   .split(" ")
                   .map((w) => w[0])
@@ -523,7 +523,7 @@ function AdherenciaTablaSection({
                 <TableRow key={row.patient_id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
                         {row.patient_name
                           .split(" ")
                           .map((w) => w[0])

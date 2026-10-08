@@ -11,6 +11,7 @@ interface MediaPlayerProps {
   mediaType: MediaItem["mediaType"];
   className?: string;
   preload?: "none" | "metadata" | "auto";
+  onDuration?: (seconds: number) => void;
 }
 
 /**
@@ -23,6 +24,7 @@ export function MediaPlayer({
   mediaType,
   className = "",
   preload = "metadata",
+  onDuration,
 }: MediaPlayerProps) {
   const t = useT();
   const [url, setUrl] = useState<string | null>(null);
@@ -67,13 +69,21 @@ export function MediaPlayer({
       <video
         src={url}
         controls
+        onLoadedMetadata={(event) => {
+          const seconds = event.currentTarget.duration;
+          if (Number.isFinite(seconds) && seconds > 0) onDuration?.(seconds);
+        }}
         preload={preload}
-        className={`max-h-72 w-full bg-black ${className}`}
+        playsInline
+        className={`max-h-72 w-full min-w-0 max-w-full bg-black ${className}`}
       />
     );
   }
 
   return (
-    <audio src={url} controls preload={preload} className={`w-full ${className}`} />
+    <audio src={url} controls onLoadedMetadata={(event) => {
+      const seconds = event.currentTarget.duration;
+      if (Number.isFinite(seconds) && seconds > 0) onDuration?.(seconds);
+    }} preload={preload} className={`block w-full min-w-0 max-w-full ${className}`} />
   );
 }

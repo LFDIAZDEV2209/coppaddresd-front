@@ -53,13 +53,13 @@ const variantConfig: Record<
   },
   success: {
     iconBg: "bg-success",
-    iconColor: "text-white",
+    iconColor: "text-success-foreground",
     trendColor: "text-success",
     accent: "#10B981",
   },
   warning: {
     iconBg: "bg-warning",
-    iconColor: "text-white",
+    iconColor: "text-warning-foreground",
     trendColor: "text-warning",
     accent: "#F59E0B",
   },
@@ -71,7 +71,7 @@ const variantConfig: Record<
   },
   info: {
     iconBg: "bg-info",
-    iconColor: "text-white",
+    iconColor: "text-info-foreground",
     trendColor: "text-info",
     accent: "#0EA5E9",
   },

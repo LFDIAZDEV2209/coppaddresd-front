@@ -280,7 +280,12 @@ export function MediaFormFields({
           takeaways: parsedTakeaways,
         };
 
-    await onSubmit(input, file ?? undefined, thumbnailFile, setProgress);
+    try {
+      await onSubmit(input, file ?? undefined, thumbnailFile, setProgress);
+    } finally {
+      // Una subida fallida debe permitir corregir o reintentar, sin perder el archivo.
+      setProgress(null);
+    }
   };
 
   const uploading = progress !== null && progress > 0 && progress < 100;
@@ -308,7 +313,7 @@ export function MediaFormFields({
           />
           {file ? (
             <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-background p-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                 <FileAudio className="size-5" />
               </span>
               <div className="min-w-0 flex-1">
@@ -338,7 +343,7 @@ export function MediaFormFields({
               onClick={() => fileInputRef.current?.click()}
               className="mt-2 flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background px-4 py-8 text-center transition-colors hover:border-primary/50 hover:bg-primary-soft/40"
             >
-              <span className="flex size-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
                 <UploadCloud className="size-6" />
               </span>
               <span className="text-sm font-medium">

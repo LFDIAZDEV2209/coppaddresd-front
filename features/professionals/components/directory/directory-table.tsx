@@ -253,7 +253,7 @@ export function DirectoryTable({
                     employee.specialtyNames.slice(0, 2).map((name) => (
                       <span
                         key={name}
-                        className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary"
+                        className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary-soft-foreground"
                       >
                         {t(name)}
                       </span>

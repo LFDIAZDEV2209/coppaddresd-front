@@ -181,7 +181,7 @@ export function ProgramXpRulesPage() {
                       <Badge
                         className={
                           rule.active
-                            ? "bg-success-soft text-success-foreground"
+                            ? "bg-success-soft text-success-soft-foreground"
                             : "bg-muted text-muted-foreground"
                         }
                       >

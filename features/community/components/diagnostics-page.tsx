@@ -84,8 +84,8 @@ export function DiagnosticsPage() {
             {/* Insight — footer compacto */}
             <div className="mx-3 mb-3 mt-1 rounded-xl bg-success-soft px-3 py-2.5">
               <div className="flex items-start gap-2">
-                <Info className="mt-0.5 size-4 shrink-0 text-success-foreground" />
-                <p className="text-[11.5px] leading-snug text-success-foreground">
+                <Info className="mt-0.5 size-4 shrink-0 text-success-soft-foreground" />
+                <p className="text-[11.5px] leading-snug text-success-soft-foreground">
                   <b>{t("Insight:")}</b>{" "}
                   {t("Los pacientes con DM2+HTA tienen la mayor participación semanal (9.1 posts) y la racha promedio más alta (21 días). Son los más comprometidos con el programa.")}
                 </p>

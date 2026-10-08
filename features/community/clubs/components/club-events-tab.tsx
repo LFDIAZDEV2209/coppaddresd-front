@@ -114,13 +114,13 @@ export function ClubEventsTab({
                     event.status === "ABIERTO"
                       ? {
                           bg: "var(--success-soft)",
-                          text: "var(--success-foreground)",
-                          dot: "var(--success-foreground)",
+                          text: "var(--success-soft-foreground)",
+                          dot: "var(--success-soft-foreground)",
                         }
                       : event.status === "LLENO"
                         ? {
                             bg: "var(--warning-soft)",
-                            text: "var(--warning-foreground)",
+                            text: "var(--warning-soft-foreground)",
                             dot: "var(--warning)",
                           }
                         : {

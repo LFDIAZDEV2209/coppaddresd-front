@@ -459,7 +459,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
         <div
           className={`animate-slide-down mt-5 rounded-xl px-4 py-3 text-[13px] ${
             feedback.kind === "ok"
-              ? "bg-success-soft text-success-foreground"
+              ? "bg-success-soft text-success-soft-foreground"
               : "bg-destructive-soft text-destructive"
           }`}
           role="status"
@@ -499,7 +499,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
                     .map((r) => (
                       <span
                         key={`${r.scopeType}-${r.roleId}`}
-                        className="rounded-full bg-primary-soft px-2.5 py-1 text-[11.5px] font-medium text-primary"
+                        className="rounded-full bg-primary-soft px-2.5 py-1 text-[11.5px] font-medium text-primary-soft-foreground"
                       >
                         {r.roleName}
                       </span>
@@ -670,7 +670,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
                   }}
                   className="flex w-full items-center justify-between rounded-lg bg-success-soft px-3 py-2 transition-colors hover:bg-success-soft/70"
                 >
-                  <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-success-foreground">
+                  <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-success-soft-foreground">
                     <Check className="size-3.5" />
                     {t("Usuario vinculado")}
                   </span>

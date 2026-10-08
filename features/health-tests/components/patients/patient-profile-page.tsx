@@ -396,7 +396,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
             }}
           />
           <div className="relative flex items-center gap-4">
-            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-lg font-bold text-primary ring-1 ring-primary/15">
+            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-lg font-bold text-primary-soft-foreground ring-1 ring-primary/15">
               {initials(patient.firstName, patient.lastName)}
             </span>
             <div className="flex flex-col gap-1">
@@ -579,7 +579,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
           >
             {evolutionData.length === 0 ? (
               <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-                <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
                   <TrendingUp className="size-6" />
                 </span>
                 <p className="max-w-52 text-xs text-muted-foreground">
@@ -1130,7 +1130,7 @@ function PatientIaSection({
           variant="primary"
         />
         <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
-          <span className="flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+          <span className="flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary-soft-foreground">
             <Sparkles className="size-7" />
           </span>
           <h4 className="text-sm font-bold text-foreground">
@@ -1315,10 +1315,10 @@ function PatientIaSection({
                           : "var(--destructive-soft)",
                     color:
                       m.tone === "ok"
-                        ? "var(--success-foreground)"
+                        ? "var(--success-soft-foreground)"
                         : m.tone === "warn"
-                          ? "var(--warning-foreground)"
-                          : "var(--destructive-foreground)",
+                          ? "var(--warning-soft-foreground)"
+                          : "var(--destructive-soft-foreground)",
                   }}
                 >
                   {t(m.qualifier)}

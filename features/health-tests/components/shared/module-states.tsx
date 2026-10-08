@@ -25,7 +25,7 @@ export function ModuleEmptyState({
         className,
       )}
     >
-      <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+      <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
         <SearchX className="size-6" />
       </span>
       <div>

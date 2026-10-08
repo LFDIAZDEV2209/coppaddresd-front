@@ -205,7 +205,7 @@ export function DirectoryToolbar({
           {activeChips.map((chip) => (
             <span
               key={chip.key}
-              className="animate-scale-in inline-flex items-center gap-1 rounded-full border border-primary bg-primary-soft py-0.5 pr-1 pl-2.5 text-[11px] font-medium text-primary transition-all hover:bg-muted"
+              className="animate-scale-in inline-flex items-center gap-1 rounded-full border border-primary bg-primary-soft py-0.5 pr-1 pl-2.5 text-[11px] font-medium text-primary-soft-foreground transition-all hover:bg-muted"
             >
               {chip.label}
               <button

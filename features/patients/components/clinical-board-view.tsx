@@ -72,14 +72,14 @@ import type {
 } from "../types";
 
 const RISK_STYLES: Record<PatientBoardRisk, string> = {
-  low: "bg-success-soft text-success-foreground",
-  moderate: "bg-warning-soft text-warning-foreground",
+  low: "bg-success-soft text-success-soft-foreground",
+  moderate: "bg-warning-soft text-warning-soft-foreground",
   high: "bg-destructive-soft text-destructive",
   critical: "bg-destructive text-white",
 };
 
 const FOLLOW_UP_STYLES: Record<PatientFollowUp, string> = {
-  "al-dia": "bg-success-soft text-success-foreground",
+  "al-dia": "bg-success-soft text-success-soft-foreground",
   vencido: "bg-destructive-soft text-destructive",
   "sin-asignacion": "bg-muted text-muted-foreground",
 };
@@ -88,12 +88,12 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> =
   {
     Activo: {
       bg: "var(--success-soft)",
-      text: "var(--success-foreground)",
-      dot: "var(--success-foreground)",
+      text: "var(--success-soft-foreground)",
+      dot: "var(--success-soft-foreground)",
     },
     Pendiente: {
       bg: "var(--warning-soft)",
-      text: "var(--warning-foreground)",
+      text: "var(--warning-soft-foreground)",
       dot: "var(--warning)",
     },
     Inactivo: {
@@ -327,7 +327,7 @@ export function ClinicalBoardView({
           value={summary?.riskLow ?? null}
           sub={pctOfScope(summary?.riskLow)}
           icon={ShieldCheck}
-          iconClassName="text-success-foreground"
+          iconClassName="text-success-soft-foreground"
           active={filters.risk === "low"}
           onClick={() => toggleRisk("low")}
         />
@@ -536,7 +536,7 @@ export function ClinicalBoardView({
         </div>
       ) : result && result.data.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-16 text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
             <ClipboardList className="size-6" aria-hidden="true" />
           </div>
           <p className="mt-4 text-base font-semibold text-foreground">
@@ -604,7 +604,7 @@ export function ClinicalBoardView({
                     <TableCell>
                       <div className="flex items-center gap-2.5">
                         <span
-                          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary"
+                          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary-soft-foreground"
                           aria-hidden="true"
                         >
                           {initials(item.firstName, item.lastName)}

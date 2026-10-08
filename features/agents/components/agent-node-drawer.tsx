@@ -53,7 +53,7 @@ const STATE_LABEL_KEYS: Record<string, string> = {
 
 const STATE_BADGE: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
-  running: "bg-primary-soft text-primary",
+  running: "bg-primary-soft text-primary-soft-foreground",
   done: "bg-emerald-50 text-emerald-700",
   skipped: "bg-muted text-muted-foreground",
   error: "bg-destructive-soft text-destructive",

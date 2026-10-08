@@ -97,7 +97,7 @@ export function ClubAnalyticsTab({ clubId }: { clubId: string }) {
                   key={post.postId}
                   className="flex items-center gap-3 px-5 py-3"
                 >
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
                     {index + 1}
                   </span>
                   <div className="flex min-w-0 flex-1 flex-col">

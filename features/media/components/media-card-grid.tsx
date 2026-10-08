@@ -150,7 +150,7 @@ export function MediaGridEmpty({
   const t = useT();
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card py-16 text-center">
-      <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+      <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
         <FileArchive className="size-6" />
       </span>
       <div>

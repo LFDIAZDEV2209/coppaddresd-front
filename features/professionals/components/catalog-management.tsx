@@ -300,7 +300,7 @@ export function CatalogManagement() {
                           className={cn(
                             "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold",
                             type.isActive
-                              ? "bg-success text-white"
+                              ? "bg-success text-success-foreground"
                               : "bg-destructive-soft text-destructive",
                           )}
                         >
@@ -395,7 +395,7 @@ export function CatalogManagement() {
                           className={cn(
                             "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold",
                             specialty.isActive
-                              ? "bg-success text-white"
+                              ? "bg-success text-success-foreground"
                               : "bg-destructive-soft text-destructive",
                           )}
                         >

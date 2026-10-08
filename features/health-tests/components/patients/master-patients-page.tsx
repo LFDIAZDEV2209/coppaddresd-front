@@ -581,7 +581,7 @@ export function MasterPatientsPage() {
                 {t("{count} pacientes", { count: String(sorted.length) })}
               </span>
               {batteryId !== "all" && (
-                <span className="hidden items-center gap-1 rounded-full bg-primary-soft px-2 py-1 text-[11px] font-semibold text-primary sm:inline-flex">
+                <span className="hidden items-center gap-1 rounded-full bg-primary-soft px-2 py-1 text-[11px] font-semibold text-primary-soft-foreground sm:inline-flex">
                   <Layers className="size-3" />
                   {batteries.find((b) => b.id === batteryId)?.name}
                 </span>
@@ -830,7 +830,7 @@ function MasterTable({
                       href={`/health-tests/pacientes/${row.patient.id}`}
                       className="flex items-center gap-3 text-left"
                     >
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
                         {initials(row.patient.firstName, row.patient.lastName)}
                       </span>
                       <span className="flex min-w-0 flex-col gap-0.5">
@@ -862,7 +862,7 @@ function MasterTable({
                         / {row.assignedCount}
                       </span>
                       {row.inProgressCount > 0 && (
-                        <span className="ml-1 inline-flex items-center rounded-full bg-info-soft px-2 py-0.5 text-[10.5px] font-semibold text-info-foreground">
+                        <span className="ml-1 inline-flex items-center rounded-full bg-info-soft px-2 py-0.5 text-[10.5px] font-semibold text-info-soft-foreground">
                           {row.inProgressCount} {t("en curso")}
                         </span>
                       )}
@@ -1005,7 +1005,7 @@ function MasterCards({
                   href={`/health-tests/pacientes/${row.patient.id}`}
                   className="flex min-w-0 items-center gap-3 text-left"
                 >
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary-soft-foreground">
                     {initials(row.patient.firstName, row.patient.lastName)}
                   </span>
                   <span className="flex min-w-0 flex-col gap-0.5">
@@ -1191,7 +1191,7 @@ function ExpandedPanel({
     <div className={cn("flex flex-col gap-4", compact ? "p-4" : "p-5")}>
       {batteryName && (
         <div className="flex items-center gap-2 text-xs">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 font-semibold text-primary">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 font-semibold text-primary-soft-foreground">
             <Layers className="size-3.5" />
             {batteryName}
           </span>
@@ -1398,7 +1398,7 @@ function IaSummary({
             </span>
           )}
           {pending > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-warning-soft px-2.5 py-1 text-xs font-semibold text-warning-foreground">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-warning-soft px-2.5 py-1 text-xs font-semibold text-warning-soft-foreground">
               <Hourglass className="size-3" />
               {pending} {t("pendientes")}
             </span>

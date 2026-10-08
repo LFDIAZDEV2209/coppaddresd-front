@@ -479,7 +479,7 @@ export function ProgramGamificacionTab({
                       <Badge
                         className={
                           granted
-                            ? "bg-success-soft text-success-foreground border-success/20"
+                            ? "bg-success-soft text-success-soft-foreground border-success/20"
                             : "bg-muted text-muted-foreground"
                         }
                       >
@@ -547,7 +547,7 @@ export function ProgramGamificacionTab({
                       title={title}
                       className={`flex aspect-square items-center justify-center rounded-md border text-[10px] font-medium ${
                         cell.completed
-                          ? "border-success/20 bg-success text-white"
+                          ? "border-success/20 bg-success text-success-foreground"
                           : "border-border bg-muted text-muted-foreground"
                       } ${isToday ? "ring-2 ring-primary ring-offset-1" : ""}`}
                     >
@@ -701,7 +701,7 @@ export function ProgramGamificacionTab({
                             dc.is_perfect_day
                               ? "border-amber-300 bg-amber-50 text-amber-700"
                               : dc.total_points > 0
-                                ? "border-success/20 bg-success-soft text-success-foreground"
+                                ? "border-success/20 bg-success-soft text-success-soft-foreground"
                                 : "border-border bg-muted text-muted-foreground"
                           } ${isToday ? "ring-2 ring-primary ring-offset-1" : ""}`}
                         >
