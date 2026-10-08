@@ -91,7 +91,7 @@ export function PlaygroundPage({ agentTypeId }: { agentTypeId: string }) {
         </Button>
       </div>
 
-      <Playground agent={agent} demoUserId="demo-admin-user" />
+      <Playground key={`${agent.id}:${agent.activeVersionNumber}`} agent={agent} demoUserId="demo-admin-user" />
     </div>
   );
 }
