@@ -826,7 +826,7 @@ function MasterTable({
                   style={{ borderLeftColor: riskHex(row.risk) }}
                 >
                   <TableCell>
-                    <a
+                    <Link
                       href={`/health-tests/pacientes/${row.patient.id}`}
                       className="flex items-center gap-3 text-left"
                     >
@@ -842,7 +842,7 @@ function MasterTable({
                           {row.patient.age} años
                         </span>
                       </span>
-                    </a>
+                    </Link>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <span className="text-[12.5px] text-muted-foreground">
@@ -1001,7 +1001,7 @@ function MasterCards({
           >
             <div className="flex flex-col gap-3 p-4">
               <div className="flex items-start justify-between gap-2">
-                <a
+                <Link
                   href={`/health-tests/pacientes/${row.patient.id}`}
                   className="flex min-w-0 items-center gap-3 text-left"
                 >
@@ -1016,7 +1016,7 @@ function MasterCards({
                       {row.patient.documentNumber} · {row.patient.age} años
                     </span>
                   </span>
-                </a>
+                </Link>
                 <RiskBadge risk={row.risk} label={RISK_LABELS[row.risk]} />
               </div>
 
@@ -1540,14 +1540,14 @@ function RowActions({ row }: { row: PatientMasterRow }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          render={<a href={`/health-tests/pacientes/${row.patient.id}`} />}
+          render={<Link href={`/health-tests/pacientes/${row.patient.id}`} />}
         >
           <Eye />
           {t("Ver perfil")}
         </DropdownMenuItem>
         <DropdownMenuItem
           render={
-            <a href={`/health-tests/pacientes/${row.patient.id}#historial`} />
+            <Link href={`/health-tests/pacientes/${row.patient.id}#historial`} />
           }
         >
           <ClipboardCheck />
