@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useT } from "@/providers/i18n-provider";
 import { useState } from "react";
 import {
   Activity,
@@ -86,6 +88,7 @@ const SHOW_ASSIGNED_TO: InterventionStatus[] = [
 // --- Componente principal ---
 
 export function ProgramInterventionsPage() {
+  const t = useT();
   const { hasPermission } = useAuth();
   const canAdapt = hasPermission("Program.Adapt");
 
@@ -179,7 +182,7 @@ export function ProgramInterventionsPage() {
                   <TableHead className="whitespace-nowrap">Tipo</TableHead>
                   <TableHead className="min-w-[220px]">Título</TableHead>
                   <TableHead>Severidad</TableHead>
-                  <TableHead className="hidden md:table-cell">Paciente</TableHead>
+                  <TableHead>{t("Paciente")}</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="hidden lg:table-cell whitespace-nowrap">Recomendada</TableHead>
                   <TableHead className="hidden lg:table-cell whitespace-nowrap">Completada</TableHead>
@@ -223,33 +226,11 @@ export function ProgramInterventionsPage() {
                         {intervention.severity}
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell>
                       <div className="flex items-center gap-2">
-                        {intervention.patient_name ? (
-                          <>
-                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary-soft-foreground">
-                              {intervention.patient_name
-                                .split(/\s+/)
-                                .map((w) => w[0])
-                                .slice(0, 2)
-                                .join("")
-                                .toUpperCase()}
-                            </span>
-                            <span
-                              className="truncate text-sm font-medium"
-                              title={intervention.patientId}
-                            >
-                              {intervention.patient_name}
-                            </span>
-                          </>
-                        ) : (
-                          <span
-                            className="text-sm font-mono"
-                            title={intervention.patientId}
-                          >
-                            {intervention.patientId.slice(0, 8)}…
-                          </span>
-                        )}
+                        <Link className="text-sm font-medium text-primary underline-offset-4 hover:underline" href={`/program/gestion?view=perfil-360&patient=${intervention.patientId}`}>
+                        {intervention.patient_name || intervention.patientId}
+                      </Link>
                       </div>
                     </TableCell>
                     <TableCell>

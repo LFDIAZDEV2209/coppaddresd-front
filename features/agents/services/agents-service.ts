@@ -169,7 +169,9 @@ export async function fetchExecutions(
   if (filters.toDate) params.set("toDate", filters.toDate);
   if (filters.limit) params.set("limit", String(filters.limit));
   if (filters.offset) params.set("offset", String(filters.offset));
-  return apiFetch<AgentExecutionsList>(`${PATH}/executions?${params.toString()}`);
+  const result = await apiFetch<AgentExecutionsList>(`${PATH}/executions?${params.toString()}`);
+  if (result.isAvailable === false) throw new Error("Execution monitoring unavailable");
+  return result;
 }
 
 export async function fetchExecution(id: string): Promise<AgentExecutionDetail> {
@@ -225,4 +227,8 @@ export function formatFileSize(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export async function archiveDocument(id: string): Promise<AgentDocument> {
+  return apiFetch<AgentDocument>(`${PATH}/documents/${id}/archive`, { method: "POST" });
 }

@@ -468,6 +468,7 @@ export type { AppointmentAlertDto };
 // --- Admin (vista global, requiere Appointments.AdminView) ---
 
 export interface AdminAppointmentsFilters {
+  search?: string;
   professionalId?: string;
   patientId?: string;
   clinicId?: string;
@@ -486,6 +487,7 @@ export async function fetchAdminSummary(): Promise<AdminSummaryDto> {
 // --- "Mis citas" del profesional (por identidad del JWT, requiere perfil clínico) ---
 
 export interface MyAppointmentsFilters {
+  search?: string;
   patientId?: string;
   locationId?: string;
   status?: string;

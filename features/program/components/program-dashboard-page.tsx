@@ -195,21 +195,25 @@ function BiometriaKpis({
     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
         label="IMC promedio"
-        value={data.avg_imc != null ? data.avg_imc.toFixed(1) : "—"}
+        value={data.avg_imc ?? "—"}
+        decimals={1}
         icon={Activity}
         variant="info"
         context="Índice de Masa Corporal promedio"
       />
       <StatCard
         label="% Grasa promedio"
-        value={data.avg_grasa != null ? `${data.avg_grasa.toFixed(1)}%` : "—"}
+        value={data.avg_grasa ?? "—"}
+        decimals={1}
+        suffix="%"
         icon={Heart}
         variant="warning"
         context="Grasa corporal promedio"
       />
       <StatCard
         label="Glucosa promedio"
-        value={data.avg_glucosa != null ? data.avg_glucosa.toFixed(1) : "—"}
+        value={data.avg_glucosa ?? "—"}
+        decimals={1}
         icon={Droplet}
         variant="destructive"
         context="Glucosa promedio (mg/dL)"

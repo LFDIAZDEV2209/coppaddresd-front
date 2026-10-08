@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Activity, Bot, FileSearch, ShieldCheck } from "lucide-react";
-import { useT } from "@/providers/i18n-provider";
+import { useI18n, useT } from "@/providers/i18n-provider";
 import type { ActivityEvent } from "../types";
 interface RecentActivityCardProps {
   data: ActivityEvent[];
@@ -24,6 +24,7 @@ function inferIcon(action: string) {
  */
 export function RecentActivityCard({ data }: RecentActivityCardProps) {
   const t = useT();
+  const { lang } = useI18n();
   return (
     <div className="flex flex-col">
       {data.length === 0 ? (
@@ -74,7 +75,7 @@ export function RecentActivityCard({ data }: RecentActivityCardProps) {
                   </span>
                 </div>
                 <span className="shrink-0 text-[10px] whitespace-nowrap text-muted-foreground transition-colors group-hover:text-foreground/70">
-                  {event.time}
+                  {new Date(event.time).toLocaleString(lang === "en" ? "en-US" : "es-CO")}
                 </span>
               </div>
             );
@@ -83,10 +84,10 @@ export function RecentActivityCard({ data }: RecentActivityCardProps) {
       )}
 
       <Link
-        href="/settings/audit"
+        href="/agents/monitoring"
         className="mt-2 text-center text-[12px] font-medium text-primary transition-colors hover:text-primary-strong"
       >
-        {t("Ver toda la actividad →")}
+        {t("Ver ejecuciones →")}
       </Link>
     </div>
   );

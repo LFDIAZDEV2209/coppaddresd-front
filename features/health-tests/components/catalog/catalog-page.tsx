@@ -3,16 +3,13 @@
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
-  ArrowRight,
   Clock,
-  ClipboardList,
   FileText,
   Filter,
   Layers,
   ListChecks,
   Pencil,
   Plus,
-  Timer,
   ToggleLeft,
 } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
@@ -32,9 +29,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CatalogEditor } from "./catalog-editor";
 import { useCatalog } from "../../hooks/use-health-tests";
 import { CATEGORY_LABELS } from "../../lib/domain";
 import type { HealthTest, TestCategory } from "../../types";
@@ -44,7 +41,7 @@ import { ModuleErrorState, ModuleEmptyState } from "../shared/module-states";
 
 /**
  * Catálogo y parametrización de tests: la batería de la aplicación de
- * pacientes pasa a administrarse desde el ERP (acciones mock por ahora).
+ * pacientes se administra con versiones persistidas e inmutables al publicar.
  */
 export function CatalogPage() {
   const t = useT();
@@ -53,6 +50,7 @@ export function CatalogPage() {
   const { data, loading, error, reload } = useCatalog();
   const [category, setCategory] = useState<TestCategory | "all">("all");
   const [onlyActive, setOnlyActive] = useState(false);
+  const [editor, setEditor] = useState<{ id: string | null } | null>(null);
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -80,7 +78,7 @@ export function CatalogPage() {
     );
   }
 
-  if (error && !data) {
+  if (error) {
     return (
       <div className="p-4 sm:p-6">
         <ModuleErrorState message={error} onRetry={reload} />
@@ -92,7 +90,7 @@ export function CatalogPage() {
 
   const activeCount = data.tests.filter((x) => x.state === "activo").length;
   const requiredCount = data.tests.filter((x) => x.required).length;
-  const ruleCount = data.tests.reduce((acc, x) => acc + x.alertRules.length, 0);
+  const ruleCount = data.rules.length;
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6">
@@ -106,6 +104,7 @@ export function CatalogPage() {
           hasManage ? (
             <Button
               size="sm"
+              onClick={() => setEditor({ id: null })}
               variant="outline"
               className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
             >
@@ -207,23 +206,30 @@ export function CatalogPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((test) => (
-              <TestCatalogCard key={test.id} test={test} />
+              <TestCatalogCard key={test.id} test={test} onEdit={() => setEditor({ id: test.id })} />
             ))}
           </div>
         )}
       </section>
 
+      <section className="grid gap-3 rounded-2xl border bg-card p-5">
+        <h2 className="font-semibold">{t("Reglas de alerta activas")}</h2>
+        {data.rules.map(rule => <div key={rule.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"><span>{rule.name}</span><span className="rounded-full bg-warning-soft px-2 py-1 text-xs text-warning-soft-foreground">{t(({ low: "Baja", moderate: "Moderada", high: "Alta", critical: "Crítica" } as Record<string, string>)[rule.severity] ?? rule.severity)}</span></div>)}
+        {data.rules.length === 0 && <p className="text-muted-foreground">{t("Sin reglas activas")}</p>}
+      </section>
+
       <p className="flex items-center gap-2 rounded-xl bg-muted px-4 py-3 text-[11.5px] text-muted-foreground">
         <Clock className="size-3.5 shrink-0" />
         {t(
-          "Las acciones de edición son simuladas en esta versión; la estructura queda lista para conectar el CRUD real.",
+          "Las versiones publicadas conservan los resultados históricos. Edita las preguntas en un borrador y publícalo para nuevas asignaciones.",
         )}
       </p>
+      {editor && <CatalogEditor id={editor.id} onClose={() => setEditor(null)} onSaved={reload} />}
     </div>
   );
 }
 
-function TestCatalogCard({ test }: { test: HealthTest }) {
+function TestCatalogCard({ test, onEdit }: { test: HealthTest; onEdit: () => void }) {
   const t = useT();
   const accent = categoryAccent(test.category);
   return (
@@ -245,7 +251,7 @@ function TestCatalogCard({ test }: { test: HealthTest }) {
             </span>
           </div>
         </div>
-        <TestActions test={test} />
+        <TestActions test={test} onEdit={onEdit} />
       </div>
 
       <p className="text-[11.5px] leading-relaxed text-muted-foreground">
@@ -263,8 +269,7 @@ function TestCatalogCard({ test }: { test: HealthTest }) {
           {test.required ? t("Obligatorio") : t("Opcional")}
         </span>
         <span className="flex items-center gap-1.5 text-muted-foreground">
-          <Timer className="size-3.5" style={{ color: accent }} />
-          {test.timeMinutes} min · {test.questionsCount} {t("preguntas")}
+          <ListChecks className="size-3.5" style={{ color: accent }} /> {test.questionsCount} {t("preguntas")}
         </span>
         <span className="flex items-center gap-1.5 text-muted-foreground">
           <Clock className="size-3.5" style={{ color: accent }} />
@@ -332,7 +337,7 @@ function TestCatalogCard({ test }: { test: HealthTest }) {
   );
 }
 
-function TestActions({ test }: { test: HealthTest }) {
+function TestActions({ test, onEdit }: { test: HealthTest; onEdit: () => void }) {
   const t = useT();
   const { hasPermission } = useAuth();
   const hasManage = hasPermission("HealthTests.Manage");
@@ -346,29 +351,16 @@ function TestActions({ test }: { test: HealthTest }) {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Acciones de ${test.name}`}
+            aria-label={t("Acciones de {name}", { name: test.name })}
           />
         }
       >
         <Pencil />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => {}}>
+        <DropdownMenuItem onClick={onEdit}>
           <Pencil />
           {t("Editar configuración")}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => {}}>
-          <ClipboardList />
-          {t("Duplicar test")}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-warning" onClick={() => {}}>
-          <ToggleLeft />
-          {test.state === "activo" ? t("Desactivar") : t("Activar")}
-        </DropdownMenuItem>
-        <DropdownMenuItem className="text-destructive" onClick={() => {}}>
-          <ArrowRight />
-          {t("Eliminar (mock)")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

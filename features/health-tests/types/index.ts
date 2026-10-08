@@ -30,7 +30,7 @@ export interface HealthTest {
   category: TestCategory;
   icon: string;
   /** Puntaje máximo de la escala propia del test (0-100 normalizado). */
-  maxScore: number;
+  maxScore: number | null;
   /** Orden dentro de la batería de evaluación inicial (1-9). */
   order: number;
   required: boolean;
@@ -41,7 +41,7 @@ export interface HealthTest {
   version: string;
   /** Id de la versión activa del instrumento (para crear items de batería). */
   versionId?: string | null;
-  timeMinutes: number;
+  timeMinutes: number | null;
   questionsCount: number;
   sections: string[];
   /** Indicadores que alimenta este test. */
@@ -296,7 +296,7 @@ export interface BatteryItem {
 /** Representación agregada de un indicador sobre la población. */
 export interface IndicatorAggregate {
   indicator: ClinicalIndicator;
-  /** Score promedio poblacional 0-100. */
+  /** Porcentaje de pacientes evaluados con riesgo alto/crítico. */
   average: number;
   /** Distribución de niveles de riesgo (bajo/moderado/alto/crítico). */
   distribution: Record<RiskLevel, number>;
@@ -304,7 +304,10 @@ export interface IndicatorAggregate {
   evaluatedCount: number;
   /** Pacientes con resultado en el rango más desfavorable. */
   affectedCount: number;
-  /** Serie de evolución del promedio (últimos períodos). */
+  affectedPatientIds: string[];
+  evaluatedPatientIds: string[];
+  evaluationCount: number;
+  /** Porcentaje observado de pacientes con riesgo alto/crítico por mes. */
   trend: { label: string; value: number }[];
 }
 

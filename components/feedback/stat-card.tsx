@@ -3,6 +3,7 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
+import { useI18n } from "@/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 
 type CardVariant =
@@ -16,7 +17,9 @@ type CardVariant =
 
 interface StatCardProps {
   label: string;
-  value: string;
+  value: string | number;
+  decimals?: number;
+  suffix?: string;
   context?: string;
   trend?: { value: string; direction: "up" | "down" };
   icon: LucideIcon;
@@ -83,51 +86,31 @@ const variantConfig: Record<
   },
 };
 
-/** Extrae parte numérica + sufijo (ej. "99,8%" → 99.8 + "%"). */
-function parseValue(
-  target: string,
-): { num: number; decimals: number; suffix: string } | null {
-  const match = target.match(/^([\d.,]+)(.*)$/);
-  if (!match) return null;
-  const numeric = match[1];
-  const normalized = numeric.replace(/\./g, "").replace(",", ".");
-  const num = parseFloat(normalized);
-  if (Number.isNaN(num)) return null;
-  const decimals = numeric.split(",")[1]?.length ?? 0;
-  return { num, decimals, suffix: match[2] };
-}
-
-/** Count-up suave al montar; respeta prefers-reduced-motion. */
-function useCountUp(target: string, duration = 750): string {
-  const parsed = parseValue(target);
-  const [display, setDisplay] = useState(target);
+/** Solo se animan números tipados; los textos formateados se conservan literalmente. */
+function useCountUp(target: string | number, decimals: number, suffix: string, locale: string): string {
+  const format = (value: number) => value.toLocaleString(locale, {
+    minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+  }) + suffix;
+  const finalValue = typeof target === "number" ? format(target) : target;
+  const [display, setDisplay] = useState(finalValue);
 
   useEffect(() => {
-    // Sincronización intencional del valor objetivo al cambiar `target` —
-    // necesaria para resetear la animación de count-up. No es derivación
-    // pura: el valor intermedio se anima vía rAF.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDisplay(target);
-    if (!parsed) return;
+    setDisplay(finalValue);
+    if (typeof target !== "number" || !Number.isFinite(target)) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const start = performance.now();
     let raf = 0;
     const tick = (now: number) => {
-      const p = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(
-        (parsed.num * eased).toLocaleString("es-CO", {
-          minimumFractionDigits: parsed.decimals,
-          maximumFractionDigits: parsed.decimals,
-        }) + parsed.suffix,
-      );
-      if (p < 1) raf = requestAnimationFrame(tick);
+      const progress = Math.min((now - start) / 750, 1);
+      setDisplay((target * (1 - Math.pow(1 - progress, 3))).toLocaleString(locale, {
+        minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+      }) + suffix);
+      if (progress < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target]);
-
+  }, [target, decimals, suffix, locale, finalValue]);
   return display;
 }
 
@@ -139,6 +122,8 @@ function useCountUp(target: string, duration = 750): string {
 export function StatCard({
   label,
   value,
+  decimals = 0,
+  suffix = "",
   context,
   trend,
   icon: Icon,
@@ -147,7 +132,8 @@ export function StatCard({
   align = "left",
 }: StatCardProps) {
   const config = variantConfig[variant];
-  const displayValue = useCountUp(value);
+  const { lang } = useI18n();
+  const displayValue = useCountUp(value, decimals, suffix, lang === "en" ? "en-US" : "es-CO");
   const centered = align === "center";
 
   return (

@@ -403,7 +403,11 @@ function isRefreshEndpoint(path: string): boolean {
  */
 export async function refreshAccessToken(): Promise<RefreshOutcome> {
   if (!refreshPromise) {
-    refreshPromise = doRefresh().finally(() => {
+    refreshPromise = (async (): Promise<RefreshOutcome> => {
+      if (typeof navigator !== "undefined" && navigator.locks)
+        return await navigator.locks.request(`copp-refresh-${env.applicationCode}`, doRefresh);
+      return await doRefresh();
+    })().finally(() => {
       refreshPromise = null;
     });
   }
@@ -416,7 +420,7 @@ async function doRefresh(): Promise<RefreshOutcome> {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: "{}",
+      body: JSON.stringify({ application: env.applicationCode }),
     });
 
     if (response.ok) {
@@ -437,7 +441,7 @@ async function doRefresh(): Promise<RefreshOutcome> {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: "{}",
+        body: JSON.stringify({ application: env.applicationCode }),
       });
 
       if (retry.ok) {

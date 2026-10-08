@@ -1,3 +1,4 @@
+import { aggregatePatientRisks } from "../lib/indicator-aggregates";
 import type {
   AlertSeverity,
   AlertStatus,
@@ -242,6 +243,8 @@ interface VersionDto {
   isCurrent: boolean;
   scoringStrategy: string;
   points: number | null;
+  questionsCount?: number;
+  sections?: string[];
 }
 
 interface BatteryDto {
@@ -445,6 +448,7 @@ interface MasterPatientResultDto {
   qualifier: string | null;
   severity: string | null;
   completedAt: string | null;
+  history?: { completedAt: string; score: number | null; severity: string | null }[];
 }
 
 interface MasterRowDto {
@@ -499,18 +503,18 @@ function mapTest(dto: InstrumentDto): HealthTest {
     description: dto.description ?? "",
     category,
     icon: categoryIcon(category),
-    maxScore: activeVersion?.points ?? 100,
+    maxScore: null, // XP no es el máximo clínico del instrumento.
     order: dto.sortOrder,
-    required: true,
+    required: false,
     state: dto.isActive ? "activo" : "inactivo",
     applicationMoment: "inicial",
     frequency: "",
     priority: "media",
-    version: activeVersion ? `v${activeVersion.versionNumber}` : "—",
+    version: activeVersion ? `${activeVersion.versionNumber}` : "—",
     versionId: activeVersion?.id ?? null,
-    timeMinutes: 5,
-    questionsCount: 0,
-    sections: [],
+    timeMinutes: null,
+    questionsCount: activeVersion?.questionsCount ?? 0,
+    sections: activeVersion?.sections ?? [],
     indicators: [],
     alertRules: [],
   };
@@ -622,7 +626,7 @@ function inferCategory(code: string): TestCategory {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function loadVersionMap(): Promise<Map<string, HealthTest>> {
   const response = await apiFetch<PaginatedDto<InstrumentDto>>(
-    `${BASE}?page=1&pageSize=100&isActive=true`,
+    `${BASE}?page=1&pageSize=100`,
   );
   const map = new Map<string, HealthTest>();
   for (const dto of response.data) {
@@ -1144,9 +1148,14 @@ async function listTestsCached(): Promise<HealthTest[]> {
 
 async function listTestsRaw(): Promise<HealthTest[]> {
   const response = await apiFetch<PaginatedDto<InstrumentDto>>(
-    `${BASE}?page=1&pageSize=100&isActive=true`,
+    `${BASE}?page=1&pageSize=100`,
   );
-  return response.data.map(mapTest);
+  const batteries = await listBatteries();
+  return response.data.map(dto => {
+    const test = mapTest(dto);
+    const items = batteries.filter(battery => battery.state === "activa").flatMap(battery => battery.items ?? []).filter(item => item.instrumentId === test.id);
+    return { ...test, required: items.some(item => item.required), frequency: items.some(item => item.frequencyDays) ? String(items.find(item => item.frequencyDays)?.frequencyDays) + " d" : "—" };
+  });
 }
 
 /** Fila maestra desde el DTO del backend (una sola llamada, sin N+1). */
@@ -1187,7 +1196,7 @@ function mapMasterResult(r: MasterPatientResultDto): PatientTestResult {
     risk: riskFromSeverity(r.severity),
     updatedAt: ts,
     completedAt: r.completedAt,
-    history: [],
+    history: (r.history ?? []).flatMap((point) => point.score == null ? [] : [{ completedAt: point.completedAt, score: point.score, risk: riskFromSeverity(point.severity) }]),
     details: {},
   };
 }
@@ -1302,72 +1311,17 @@ async function getCoverageByCategory(): Promise<CoverageByCategory[]> {
 
 async function getIndicatorAggregates(): Promise<IndicatorAggregate[]> {
   const [masterRows, tests] = await Promise.all([getMasterRows(), listTests()]);
-  const categories = [
-    ...new Set(tests.map((t) => t.category)),
-  ] as TestCategory[];
-  return categories.map((category) => {
-    const categoryTests = tests.filter((t) => t.category === category);
-    const testCodes = new Set(categoryTests.map((t) => t.code));
-    const scores: number[] = [];
-    const distribution: IndicatorAggregate["distribution"] = {
-      bajo: 0,
-      moderado: 0,
-      alto: 0,
-      critico: 0,
-      "sin-evaluar": 0,
-    };
-    let evaluatedCount = 0;
-    for (const row of masterRows) {
-      const catResults = row.patient.results.filter(
-        (r) =>
-          r.testCode &&
-          testCodes.has(r.testCode) &&
-          r.state === "completado" &&
-          r.score !== null,
-      );
-      if (catResults.length === 0) {
-        distribution["sin-evaluar"] += 1;
-        continue;
-      }
-      evaluatedCount += 1;
-      for (const r of catResults) {
-        const s = r.score as number;
-        scores.push(s);
-        const risk = r.risk;
-        if (risk in distribution) {
-          distribution[risk as keyof typeof distribution] += 1;
-        }
-      }
-    }
-    const average =
-      scores.length > 0
-        ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-        : 0;
-    const affectedCount = distribution.alto + distribution.critico;
-    const indicator = {
-      id: `cat-${category}`,
-      code: category,
-      name: CATEGORY_LABELS[category] ?? category,
-      category,
-      icon: categoryTests[0]?.icon ?? "📊",
-      description: `Agregado poblacional de ${CATEGORY_LABELS[category] ?? category}`,
-      higherIsBetter: category !== "cardiometabolico",
-    } as unknown as ClinicalIndicator;
+  return aggregatePatientRisks(masterRows, tests).map(aggregate => ({ ...aggregate, indicator: { ...aggregate.indicator, name: CATEGORY_LABELS[aggregate.indicator.category] } }));
+}
 
-    return {
-      indicator,
-      average,
-      distribution,
-      evaluatedCount,
-      affectedCount,
-      trend: [
-        { label: "May", value: Math.max(0, average - 4) },
-        { label: "Jun", value: Math.max(0, average - 2) },
-        { label: "Jul", value: average },
-        { label: "Ago", value: Math.min(100, average + 3) },
-      ],
-    } satisfies IndicatorAggregate;
-  });
+export async function sendHealthTestReminder(patientId: string): Promise<{ sent: boolean; reason: string }> {
+  const result = await apiFetch<{ sent: boolean; reason: string }>(`${BASE}/patients/${patientId}/reminders`, { method: "POST" });
+  invalidateHealthTestsCache();
+  return result;
+}
+
+export function listHealthTestReminders(): Promise<Record<string, number>> {
+  return apiFetch(`${BASE}/reminders`);
 }
 
 export const healthTestsApi: HealthTestsApi = {
@@ -1427,3 +1381,6 @@ export function findAlert(id: string): HealthAlert | null {
   void id;
   return null;
 }
+
+export interface CatalogAlertRule { id: string; name: string; condition: string; severity: string; }
+export function listCatalogAlertRules(): Promise<CatalogAlertRule[]> { return apiFetch(`${BASE}/alert-rules`); }

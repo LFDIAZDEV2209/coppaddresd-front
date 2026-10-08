@@ -45,6 +45,7 @@ import { formatFileSize, formatDate } from "../services/agents-service";
 import { uploadDocumentToStorage } from "../services/upload-agent-document";
 import { useAgentKnowledge } from "../hooks/use-agent-knowledge";
 import { useT } from "@/providers/i18n-provider";
+import { ArchiveDocumentButton } from "./archive-document-button";
 import { RetryDocumentButton } from "./retry-document-button";
 
 const docStatusVariant: Record<string, "default" | "destructive" | "secondary" | "outline"> = {
@@ -270,9 +271,17 @@ export function KnowledgePageContent() {
                           )}
                         </div>
                         <Badge variant={docStatusVariant[doc.status] ?? "outline"}>
-                          {doc.status}
+                          {t(doc.status)}
                         </Badge>
                         <RetryDocumentButton document={doc} onComplete={(updated) => {
+                          setDocsByBase((current) => ({
+                            ...current,
+                            [doc.knowledgeBaseId]: (current[doc.knowledgeBaseId] ?? []).map(
+                              (item) => item.id === updated.id ? updated : item,
+                            ),
+                          }));
+                        }} />
+                        <ArchiveDocumentButton document={doc} onComplete={(updated) => {
                           setDocsByBase((current) => ({
                             ...current,
                             [doc.knowledgeBaseId]: (current[doc.knowledgeBaseId] ?? []).map(

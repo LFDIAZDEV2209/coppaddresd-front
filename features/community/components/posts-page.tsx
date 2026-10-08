@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { CommunityVideo } from "./community-video";
 import { useEffect, useMemo, useState } from "react";
 import {
   Send,
@@ -694,7 +695,7 @@ export function PostsPage() {
                         onClick={() => openLightbox(post.imageUrl!, "VIDEO", post.body)}
                         className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
                       >
-                        <video
+                        <CommunityVideo
                           src={post.imageUrl}
                           muted
                           className="w-full rounded-lg object-cover"
@@ -864,7 +865,7 @@ export function PostsPage() {
                         onClick={() => openLightbox(post.imageUrl!, "VIDEO", post.body)}
                         className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
                       >
-                        <video
+                        <CommunityVideo
                           src={post.imageUrl}
                           muted
                           className="w-full rounded-lg object-cover"

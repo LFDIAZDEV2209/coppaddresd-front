@@ -52,7 +52,7 @@ export function AgentUsageCard({ data }: AgentUsageCardProps) {
               placement={index < 3 ? "bottom" : "top"}
               title={agent.name}
               label={t("de uso")}
-              value={`${agent.usage}%`}
+              value={String(agent.usage)}
               extra={t("{rank}º en uso", { rank: String(rank) })}
             />
             <span
@@ -97,7 +97,7 @@ export function AgentUsageCard({ data }: AgentUsageCardProps) {
                   : "font-semibold text-muted-foreground",
               )}
             >
-              {agent.usage}%
+              {agent.usage}
             </span>
           </div>
         );

@@ -1,5 +1,6 @@
 "use client";
 
+import { CommunityVideo } from "./community-video";
 import { useEffect, useMemo, useState } from "react";
 import {
   Send,
@@ -425,7 +426,7 @@ export function PostDetailDialog({ open, onOpenChange, post }: PostDetailDialogP
                 onClick={() => openLightbox(post.imageUrl!, "VIDEO")}
                 className="group relative w-full cursor-zoom overflow-hidden rounded-lg border border-border"
               >
-                <video
+                <CommunityVideo
                   src={post.imageUrl}
                   muted
                   className="w-full rounded-lg object-cover"

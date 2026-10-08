@@ -262,6 +262,11 @@ export function AdminAppointments({
   const [view, setView] = useState<ViewMode>("table");
   const [filters, setFilters] = useState<AppointmentFilters>(emptyFilters);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
   const [sortKey, setSortKey] = useState<SortKey>("scheduledStart");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -269,14 +274,15 @@ export function AdminAppointments({
 
   const serverFilters = useMemo<AdminAppointmentsFilters>(
     () => ({
+      search: debouncedSearch || undefined,
       professionalId: filters.professionalId || undefined,
       patientId: filters.patientId || undefined,
       locationId: filters.locationId || undefined,
       status: filters.status || undefined,
-      from: filters.from ? `${filters.from}T00:00:00` : undefined,
-      to: filters.to ? `${filters.to}T23:59:59` : undefined,
+      from: filters.from ? new Date(`${filters.from}T00:00:00`).toISOString() : undefined,
+      to: filters.to ? (() => { const end = new Date(`${filters.to}T00:00:00`); end.setDate(end.getDate() + 1); return end.toISOString(); })() : undefined,
     }),
-    [filters],
+    [filters, debouncedSearch],
   );
 
   const { items, total, page, pageSize, totalPages, loading, error, setPage } =
@@ -289,25 +295,14 @@ export function AdminAppointments({
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   const visibleItems = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    let list = items;
-    if (query) {
-      list = list.filter((appointment) =>
-        [
-          appointment.patientName,
-          appointment.professionalName,
-          appointment.specialtyName,
-          appointment.locationName,
-        ].some((value) => value?.toLowerCase().includes(query)),
-      );
-    }
+    const list = items;
     const dir = sortDir === "asc" ? 1 : -1;
     return [...list].sort((a, b) => {
       const av = a[sortKey] ?? "";
       const bv = b[sortKey] ?? "";
       return String(av).localeCompare(String(bv), "es") * dir;
     });
-  }, [items, search, sortKey, sortDir]);
+  }, [items, sortKey, sortDir]);
 
   const updateFilter = useCallback(
     (patch: Partial<AppointmentFilters>) => {
@@ -495,7 +490,7 @@ export function AdminAppointments({
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => { setSearch(event.target.value); setPage(1); }}
                 placeholder={t("Buscar citas…")}
                 className="pl-9"
                 aria-label={t("Buscar citas")}
