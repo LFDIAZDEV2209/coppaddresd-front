@@ -127,11 +127,20 @@ export async function registerDocument(
   return apiFetch<AgentDocument>(`${PATH}/knowledge-bases/${knowledgeBaseId}/documents`, {
     method: "POST",
     body: JSON.stringify(input),
+    // La ingestión/embeddings puede superar los 30 s del cliente HTTP general.
+    timeoutMs: 180_000,
   });
 }
 
 export async function deleteDocument(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/documents/${id}`, { method: "DELETE" });
+}
+
+export async function retryDocument(id: string): Promise<AgentDocument> {
+  return apiFetch<AgentDocument>(`${PATH}/documents/${id}/retry`, {
+    method: "POST",
+    timeoutMs: 180_000,
+  });
 }
 
 // --- Instancias ---

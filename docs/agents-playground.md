@@ -42,3 +42,21 @@ El backend (`.NET`) proxya el AI Service (`/internal/agents/{id}/graph`, `/api/v
 ## i18n
 
 Todas las strings visibles usan `t()` (`useT`); las nuevas keys están en `providers/translations/es.json` y `en.json` (`yarn i18n:check` pasa).
+
+## Aislamiento y recuperación de documentos (QA 2026-10-08)
+
+Cambiar de agente o versión remonta el playground: conversación, detalle,
+métricas y trazabilidad empiezan vacíos. Limpiar el chat o salir cancela el
+stream y descarta respuestas pendientes, incluido el detalle de la ejecución.
+
+Las vistas de conocimiento global y por agente ofrecen **Reintentar** para
+documentos pendientes, con error o en procesamiento. Usan
+`POST /api/v1/agents/documents/{id}/retry`; se actualiza el mismo registro y no
+se vuelve a subir ni duplicar el archivo. Si otro intento mantiene una reserva
+vigente, el backend responde 409. Tras 15 minutos una reserva abandonada se
+puede recuperar. Registro e indexación permiten hasta 180 segundos en el cliente;
+si se interrumpe el intento, el estado de error permite reintentar.
+
+Pruebas del contrato cliente: `node scripts/agent-document-service.test.mjs`.
+La verificación en producción debe comprobar cambio de agente durante un stream,
+reindexación del documento atascado y una respuesta con fuentes RAG.

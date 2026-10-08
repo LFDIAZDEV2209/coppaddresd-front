@@ -41,6 +41,7 @@ import type { KnowledgeBase, AgentDocument, KnowledgeBaseRequest } from "../type
 import { formatFileSize, formatDate } from "../services/agents-service";
 import { uploadDocumentToStorage } from "../services/upload-agent-document";
 import { useT } from "@/providers/i18n-provider";
+import { RetryDocumentButton } from "./retry-document-button";
 
 interface KnowledgeTabProps {
   knowledge: {
@@ -243,6 +244,14 @@ export function KnowledgeTab({ knowledge, agentTypeId }: KnowledgeTabProps) {
                         <Badge variant={docStatusVariant[doc.status] ?? "outline"}>
                           {doc.status}
                         </Badge>
+                        <RetryDocumentButton document={doc} onComplete={(updated) => {
+                          setDocsByBase((current) => ({
+                            ...current,
+                            [doc.knowledgeBaseId]: (current[doc.knowledgeBaseId] ?? []).map(
+                              (item) => item.id === updated.id ? updated : item,
+                            ),
+                          }));
+                        }} />
                         <Button
                           variant="ghost"
                           size="icon-sm"

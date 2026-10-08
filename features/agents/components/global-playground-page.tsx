@@ -104,7 +104,7 @@ export function GlobalPlaygroundPage() {
       />
 
       {selected ? (
-        <Playground agent={selected} demoUserId="demo-admin-user" />
+        <Playground key={`${selected.id}:${selected.activeVersionNumber}`} agent={selected} demoUserId="demo-admin-user" />
       ) : (
         <div className="flex min-h-[380px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border text-center">
           <span className="flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">

@@ -102,7 +102,13 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
   }, []);
 
   useEffect(() => {
+    const graphRequests = graphRequestRef;
     requestGraph(agent.id);
+    return () => {
+      graphRequests.current++;
+      abortRef.current?.abort();
+      abortRef.current = null;
+    };
   }, [agent.id, requestGraph]);
 
   const retryGraph = () => {
@@ -123,6 +129,10 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
 
   const clearChat = () => {
     abortRef.current?.abort();
+    abortRef.current = null;
+    setSending(false);
+    setDetailLoading(false);
+    setInput("");
     setMessages([]);
     setDetail(null);
     setError(null);
@@ -134,6 +144,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
   const send = async () => {
     const text = input.trim();
     if (!text || sending) return;
+    abortRef.current?.abort();
 
     // Demo: cada envío usa un thread fresco del checkpointer (evita historial
     // corrupto tras un stream fallido).
@@ -176,6 +187,7 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
           userId: demoUserId,
         },
         (event) => {
+          if (controller.signal.aborted) return;
           if (event.type === "token" && event.token) {
             setMessages((current) =>
               current.map((m) =>
@@ -194,30 +206,40 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
         controller.signal,
       );
     } catch (err) {
+      if (controller.signal.aborted) return;
       if (err instanceof DOMException && err.name === "AbortError") return;
       streamError = true;
       setError(t('No se pudo conectar con el agente. Intentá de nuevo.'));
     } finally {
-      setSending(false);
-      flow.complete(streamError);
-      setMessages((current) =>
-        current.map((m) =>
-          m.id === assistantId ? { ...m, streaming: false } : m,
-        ),
-      );
-      abortRef.current = null;
+      if (abortRef.current === controller) {
+        setSending(false);
+        flow.complete(streamError);
+        setMessages((current) =>
+          current.map((m) =>
+            m.id === assistantId ? { ...m, streaming: false } : m,
+          ),
+        );
+        abortRef.current = null;
+      }
     }
 
     // Tras terminar, se carga el detalle de la ejecución para el panel debug
     // (fuentes RAG, tools, tokens, latencia).
-    if (finishedExecutionId) {
+    if (finishedExecutionId && !controller.signal.aborted) {
+      // Mantener el controlador hasta que termine el detalle permite invalidar
+      // también esta petición al limpiar o cambiar de agente.
+      abortRef.current = controller;
       setDetailLoading(true);
       try {
-        setDetail(await fetchExecution(finishedExecutionId));
+        const execution = await fetchExecution(finishedExecutionId);
+        if (!controller.signal.aborted) setDetail(execution);
       } catch {
-        setDetail(null);
+        if (!controller.signal.aborted) setDetail(null);
       } finally {
-        setDetailLoading(false);
+        if (abortRef.current === controller) {
+          setDetailLoading(false);
+          abortRef.current = null;
+        }
       }
     }
   };
