@@ -188,7 +188,7 @@ export function MembersPage() {
               {m.topRank && (
                 <StatusBadge
                   status={`TOP ${m.topRank}`}
-                  color={{ bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" }}
+                  color={{ bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)", dot: "var(--warning-soft-foreground)" }}
                 />
               )}
               <div className="flex w-full gap-2">
@@ -322,7 +322,7 @@ export function MembersPage() {
                     status={t(m.status)}
                     color={
                       m.status === "Activo"
-                        ? { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }
+                        ? { bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" }
                         : { bg: "var(--destructive-soft)", text: "var(--destructive)", dot: "var(--destructive)" }
                     }
                   />

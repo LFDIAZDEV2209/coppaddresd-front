@@ -285,7 +285,7 @@ function TestCatalogCard({ test }: { test: HealthTest }) {
             test.indicators.map((id) => (
               <span
                 key={id}
-                className="inline-flex items-center rounded-full bg-primary-soft px-2 py-0.5 text-[10.5px] font-semibold text-primary"
+                className="inline-flex items-center rounded-full bg-primary-soft px-2 py-0.5 text-[10.5px] font-semibold text-primary-soft-foreground"
               >
                 {id}
               </span>

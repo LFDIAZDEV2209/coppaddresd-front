@@ -1577,7 +1577,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                       <Stethoscope className="size-4" />
                     </span>
                     Diagnóstico {index + 1}
@@ -1697,7 +1697,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                       <Pill className="size-4" />
                     </span>
                     Medicamento {index + 1}
@@ -1802,7 +1802,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
               >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                       <AlertTriangle className="size-4" />
                     </span>
                     Alergia {index + 1}
@@ -1911,7 +1911,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                     className="rounded-xl border border-border bg-muted/30 p-4"
                   >
                     <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-                      <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                         <Activity className="size-4" />
                       </span>
                       Medición actual

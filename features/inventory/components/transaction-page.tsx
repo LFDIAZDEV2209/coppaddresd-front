@@ -236,18 +236,18 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       >
         <div className="flex items-start gap-3">
           <Warehouse
-            className={`mt-0.5 size-5 ${isEntry ? "text-success-foreground" : "text-warning-foreground"}`}
+            className={`mt-0.5 size-5 ${isEntry ? "text-success-soft-foreground" : "text-warning-soft-foreground"}`}
           />
           <div>
             <p
-              className={`text-sm font-semibold ${isEntry ? "text-success-foreground" : "text-warning-foreground"}`}
+              className={`text-sm font-semibold ${isEntry ? "text-success-soft-foreground" : "text-warning-soft-foreground"}`}
             >
               {isEntry
                 ? t("Incremento de inventario")
                 : t("Disminución de inventario")}
             </p>
             <p
-              className={`mt-1 text-xs ${isEntry ? "text-success-foreground/80" : "text-warning-foreground/80"}`}
+              className={`mt-1 text-xs ${isEntry ? "text-success-soft-foreground" : "text-warning-soft-foreground"}`}
             >
               {isEntry
                 ? t("Los productos recibidos quedarán disponibles después de confirmar la operación.")
@@ -380,7 +380,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
         )}
         {success && (
           <p
-            className="flex items-center gap-2 rounded-lg bg-success-soft px-3 py-2 text-sm text-success-foreground"
+            className="flex items-center gap-2 rounded-lg bg-success-soft px-3 py-2 text-sm text-success-soft-foreground"
             role="status"
           >
             <CheckCircle2 className="size-4" />
@@ -416,7 +416,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
 
       <section className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
             <ClipboardList className="size-4" />
           </div>
           <div>
@@ -494,7 +494,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
       >
         <AlertDialogContent size="sm" className="sm:max-w-sm">
           <AlertDialogMedia
-            className={`size-12 rounded-full ring-8 ${isEntry ? "bg-success-soft text-success-foreground ring-success-soft/50" : "bg-warning-soft text-warning-foreground ring-warning-soft/50"}`}
+            className={`size-12 rounded-full ring-8 ${isEntry ? "bg-success-soft text-success-soft-foreground ring-success-soft/50" : "bg-warning-soft text-warning-soft-foreground ring-warning-soft/50"}`}
           >
             {isEntry ? <ArrowDownToLine /> : <ArrowUpFromLine />}
           </AlertDialogMedia>

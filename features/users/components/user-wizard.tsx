@@ -1092,8 +1092,8 @@ function RoleCard({
 function Notice({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
   return (
     <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2.5">
-      <Icon className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
-      <p className="text-[12px] leading-snug text-warning-foreground">{text}</p>
+      <Icon className="mt-0.5 size-4 shrink-0 text-warning-soft-foreground" />
+      <p className="text-[12px] leading-snug text-warning-soft-foreground">{text}</p>
     </div>
   );
 }

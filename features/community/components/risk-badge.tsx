@@ -7,8 +7,8 @@ import type { RiskLevel } from "../types";
 
 const COLORS: Record<string, { bg: string; text: string; dot: string }> = {
   Alto: { bg: "var(--destructive-soft)", text: "var(--destructive)", dot: "var(--destructive)" },
-  Medio: { bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning)" },
-  Bajo: { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" },
+  Medio: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)", dot: "var(--warning)" },
+  Bajo: { bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" },
 };
 
 const FALLBACK = COLORS.Bajo;

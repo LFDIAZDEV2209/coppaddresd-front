@@ -214,7 +214,7 @@ function PostRow({
     <div className="flex flex-col gap-2 px-5 py-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
             {initials(post.author.displayName)}
           </span>
           <div className="flex min-w-0 flex-col">
@@ -327,12 +327,12 @@ function SectionHead({
 }) {
   const tones = {
     primary: {
-      bg: "bg-primary-soft text-primary",
+      bg: "bg-primary-soft text-primary-soft-foreground",
       chip: "bg-primary text-white",
     },
     warning: {
-      bg: "bg-warning-soft text-warning-foreground",
-      chip: "bg-warning text-white",
+      bg: "bg-warning-soft text-warning-soft-foreground",
+      chip: "bg-warning text-warning-foreground",
     },
     muted: {
       bg: "bg-muted text-muted-foreground",

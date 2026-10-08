@@ -413,7 +413,7 @@ export function RolePermissionsPanel({
 
         {savedFlash && !loadError && (
           <div
-            className="flex items-center gap-2 rounded-xl border border-success/30 bg-success-soft px-3.5 py-2.5 text-[13px] font-medium text-success-foreground animate-slide-down"
+            className="flex items-center gap-2 rounded-xl border border-success/30 bg-success-soft px-3.5 py-2.5 text-[13px] font-medium text-success-soft-foreground animate-slide-down"
             role="status"
           >
             <CheckCircle2
@@ -437,14 +437,14 @@ export function RolePermissionsPanel({
       {/* Barra sticky de guardado: visible solo con cambios sin guardar. */}
       {dirty && canAssignPermissions && !showSkeleton && (
         <div className="sticky bottom-3 z-10 mx-4 mb-3 flex items-center gap-3 rounded-xl border border-warning/40 bg-warning-soft/95 px-4 py-3 shadow-lg shadow-black/5 backdrop-blur animate-slide-up">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning/15 text-warning-foreground">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning/15 text-warning-soft-foreground">
             <TriangleAlert className="size-4" aria-hidden="true" />
           </div>
           <div className="flex min-w-0 flex-col">
-            <span className="text-[13px] font-semibold text-warning-foreground">
+            <span className="text-[13px] font-semibold text-warning-soft-foreground">
               {t("Cambios sin guardar")}
             </span>
-            <span className="truncate text-[11px] text-warning-foreground/80">
+            <span className="truncate text-[11px] text-warning-soft-foreground">
               {t("{added} para agregar · {removed} para quitar", {
                 added: String(addedCount),
                 removed: String(removedCount),

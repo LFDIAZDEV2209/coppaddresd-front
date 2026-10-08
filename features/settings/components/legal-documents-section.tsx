@@ -219,7 +219,7 @@ export function LegalDocumentsSection() {
         </p>
       )}
       {success && (
-        <p className="flex items-center gap-2 rounded-lg bg-success-soft px-3 py-2 text-sm text-success-foreground" role="status">
+        <p className="flex items-center gap-2 rounded-lg bg-success-soft px-3 py-2 text-sm text-success-soft-foreground" role="status">
           <CheckCircle2 className="size-4" />
           {success}
         </p>
@@ -240,12 +240,12 @@ export function LegalDocumentsSection() {
               </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 {detail?.isPublished ? (
-                  <span className="rounded-full bg-success px-2.5 py-0.5 text-xs font-bold text-white">
+                  <span className="rounded-full bg-success px-2.5 py-0.5 text-xs font-bold text-success-foreground">
                     <CheckCircle2 className="mr-1 inline size-3" />
                     {t('Publicado · v{version}', { version: String(detail.currentVersion) })}
                   </span>
                 ) : (
-                  <span className="rounded-full bg-warning px-2.5 py-0.5 text-xs font-bold text-white">
+                  <span className="rounded-full bg-warning px-2.5 py-0.5 text-xs font-bold text-warning-foreground">
                     <PenLine className="mr-1 inline size-3" />
                     {t("Sin publicar")}
                   </span>
@@ -275,7 +275,7 @@ export function LegalDocumentsSection() {
                 {t("Nuevo documento")}
               </Button>
             )}
-            <Button size="sm" className="bg-success text-white hover:bg-success/90" onClick={openPublish} disabled={!hasDrafts || publishing || !can("LegalDocuments.Manage")}>
+            <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" onClick={openPublish} disabled={!hasDrafts || publishing || !can("LegalDocuments.Manage")}>
               <Rocket data-icon="inline-start" />
               {t("Publicar")}
             </Button>
@@ -298,7 +298,7 @@ export function LegalDocumentsSection() {
                 <button
                   type="button"
                   onClick={() => openDocument(document.code)}
-                  className={`flex items-start gap-2 rounded-lg px-2.5 py-2 text-left text-sm ${selectedCode === document.code ? "bg-primary-soft font-semibold text-primary" : "hover:bg-muted"}`}
+                  className={`flex items-start gap-2 rounded-lg px-2.5 py-2 text-left text-sm ${selectedCode === document.code ? "bg-primary-soft font-semibold text-primary-soft-foreground" : "hover:bg-muted"}`}
                 >
                   <FileText className="mt-0.5 size-4 shrink-0" />
                   <span className="min-w-0 flex-1">
@@ -316,10 +316,10 @@ export function LegalDocumentsSection() {
                         type="button"
                         key={version.versionId}
                         onClick={() => openVersion(version.documentCode, version.versionId)}
-                        className={`flex items-center justify-between gap-2 rounded-md px-2 py-1 text-left text-xs ${previewVersionId === version.versionId ? "bg-primary-soft font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                        className={`flex items-center justify-between gap-2 rounded-md px-2 py-1 text-left text-xs ${previewVersionId === version.versionId ? "bg-primary-soft font-semibold text-primary-soft-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                       >
                         <span className="font-mono">v{version.versionLabel}</span>
-                        <span className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${version.isPublished ? "bg-success-soft text-success-foreground" : "bg-warning-soft text-warning-foreground"}`}>
+                        <span className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${version.isPublished ? "bg-success-soft text-success-soft-foreground" : "bg-warning-soft text-warning-soft-foreground"}`}>
                           {version.isPublished ? <CheckCircle2 className="size-2.5" /> : <PenLine className="size-2.5" />}
                           {version.isPublished ? t("Publicado") : t("Borrador")}
                         </span>
@@ -474,17 +474,17 @@ export function LegalDocumentsSection() {
                               v{item.versionLabel}
                             </span>
                             {item.isPublished ? (
-                              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-bold text-success-foreground">
+                              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-bold text-success-soft-foreground">
                                 <CheckCircle2 className="size-3" />
                                 {t("Publicado")}
                               </span>
                             ) : (
-                              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-warning-foreground">
+                              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-warning-soft-foreground">
                                 <PenLine className="size-3" />
                                 {t("Borrador")}
                               </span>
                             )}
-                            {item.isCurrent && <span className="ml-2 text-xs text-success-foreground">· {t("Activa")}</span>}
+                            {item.isCurrent && <span className="ml-2 text-xs text-success-soft-foreground">· {t("Activa")}</span>}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {new Date(item.createdAt).toLocaleString("es-CO")} · {item.createdBy ?? "Administrador"}
@@ -495,7 +495,7 @@ export function LegalDocumentsSection() {
                           {t("Ver")}
                         </Button>
                         {!item.isPublished && can("LegalDocuments.Manage") && (
-                          <Button size="sm" className="bg-success text-white hover:bg-success/90" disabled={publishing} onClick={() => { openDocument(item.documentCode); setPublishVersionId(item.versionId); setPublishOpen(true); }}>
+                          <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" disabled={publishing} onClick={() => { openDocument(item.documentCode); setPublishVersionId(item.versionId); setPublishOpen(true); }}>
                             <Rocket data-icon="inline-start" />
                             {t("Publicar")}
                           </Button>
@@ -540,7 +540,7 @@ export function LegalDocumentsSection() {
               <Button variant="outline" size="sm" onClick={() => setPublishOpen(false)} disabled={publishing}>
                 {t("Cancelar")}
               </Button>
-              <Button size="sm" className="bg-success text-white hover:bg-success/90" onClick={() => void publish()} disabled={publishing || !publishVersionId}>
+              <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" onClick={() => void publish()} disabled={publishing || !publishVersionId}>
                 <Rocket data-icon="inline-start" />
                 {publishing ? t("Publicando...") : t("Publicar")}
               </Button>

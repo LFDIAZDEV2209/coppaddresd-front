@@ -58,7 +58,7 @@ export function VersionsTab({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
             <Layers className="size-4.5" />
           </div>
           <div>
@@ -165,7 +165,7 @@ export function VersionsTab({
 
       {createdNotice && (
         <div
-          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-soft-foreground"
           role="status"
         >
           <CheckCircle2 className="mt-0.5 size-4 shrink-0" />

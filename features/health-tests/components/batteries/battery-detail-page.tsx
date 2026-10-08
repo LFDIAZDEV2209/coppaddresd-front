@@ -193,9 +193,9 @@ export function BatteryDetailPage({ batteryId }: { batteryId: string }) {
     totalSum === 0 ? 0 : Math.round((completedSum / totalSum) * 100);
 
   const stateStyle = {
-    activa: { bg: "var(--success-soft)", text: "var(--success-foreground)" },
+    activa: { bg: "var(--success-soft)", text: "var(--success-soft-foreground)" },
     inactiva: { bg: "var(--muted)", text: "var(--muted-foreground)" },
-    borrador: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
+    borrador: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)" },
   }[battery.state];
 
   const patientOptions: AssignPatientOption[] = rows.map((row) => ({
@@ -250,7 +250,7 @@ export function BatteryDetailPage({ batteryId }: { batteryId: string }) {
           {t("Creada")} {formatDate(battery.createdAt)}
         </span>
         {battery.autoAssignOnPatientCreate && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-info-soft px-2.5 py-1 text-[11px] font-medium text-info-foreground">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-info-soft px-2.5 py-1 text-[11px] font-medium text-info-soft-foreground">
             <PackageCheck className="size-3" />
             {t("Auto-asignación de pacientes nuevos")}
           </span>

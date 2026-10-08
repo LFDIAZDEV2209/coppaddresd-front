@@ -668,7 +668,7 @@ export function PeopleWizard({
       {created && (
         <div className="animate-scale-in mt-6 flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-xl bg-success-soft text-success-foreground">
+            <span className="flex size-11 items-center justify-center rounded-xl bg-success-soft text-success-soft-foreground">
               <BadgeCheck className="size-6" />
             </span>
             <div>
@@ -779,7 +779,7 @@ export function PeopleWizard({
             </div>
           )}
           {notice && (
-            <div className="border-b border-border bg-success-soft px-5 py-2.5 text-[13px] text-success-foreground">
+            <div className="border-b border-border bg-success-soft px-5 py-2.5 text-[13px] text-success-soft-foreground">
               {notice}
             </div>
           )}

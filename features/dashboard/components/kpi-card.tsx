@@ -20,7 +20,7 @@ export function KpiCard({ data }: KpiCardProps) {
 
         <div className="flex items-center gap-1 rounded-full bg-success-soft px-2 py-1">
           {trend.direction === "up" ? (
-            <TrendingUp className="size-3 text-success-foreground" />
+            <TrendingUp className="size-3 text-success-soft-foreground" />
           ) : (
             <TrendingDown className="size-3 text-destructive" />
           )}
@@ -29,7 +29,7 @@ export function KpiCard({ data }: KpiCardProps) {
             style={{
               color:
                 trend.direction === "up"
-                  ? "var(--success-foreground)"
+                  ? "var(--success-soft-foreground)"
                   : "var(--destructive)",
             }}
           >

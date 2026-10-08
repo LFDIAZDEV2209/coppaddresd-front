@@ -33,11 +33,11 @@ import type { CommunityGroup, GroupType } from "../types";
 import { CommunityPagination } from "./community-pagination";
 
 const GROUP_TYPE_COLORS: Record<GroupType, { bg: string; text: string; dot: string }> = {
-  Reto: { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" },
-  Apoyo: { bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" },
-  Nutrición: { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" },
-  General: { bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning-foreground)" },
-  Principal: { bg: "var(--info-soft)", text: "var(--info-foreground)", dot: "var(--info-foreground)" },
+  Reto: { bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" },
+  Apoyo: { bg: "var(--primary-soft)", text: "var(--primary-soft-foreground)", dot: "var(--primary)" },
+  Nutrición: { bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" },
+  General: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)", dot: "var(--warning-soft-foreground)" },
+  Principal: { bg: "var(--info-soft)", text: "var(--info-soft-foreground)", dot: "var(--info-soft-foreground)" },
 };
 
 export function GroupsPage() {

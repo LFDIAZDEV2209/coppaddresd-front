@@ -190,7 +190,7 @@ export function MediaCleanupAdminDialog({
               ) : (
                 <Badge
                   variant="secondary"
-                  className="bg-success-soft text-success-foreground"
+                  className="bg-success-soft text-success-soft-foreground"
                 >
                   {t("{count} purgados", {
                     count: String(report.purgedObjects),

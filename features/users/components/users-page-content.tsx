@@ -586,7 +586,7 @@ export function UsersPageContent() {
 }
 
 const noticeInfoClass =
-  "flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground";
+  "flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-soft-foreground";
 const noticeErrorClass =
   "flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive-soft px-4 py-3 text-sm text-destructive";
 
@@ -653,7 +653,7 @@ function EmptyState({
       <div
         className={
           isFilterIssue
-            ? "flex size-12 items-center justify-center rounded-xl bg-warning-soft text-warning-foreground"
+            ? "flex size-12 items-center justify-center rounded-xl bg-warning-soft text-warning-soft-foreground"
             : "flex size-12 items-center justify-center rounded-xl bg-muted"
         }
       >

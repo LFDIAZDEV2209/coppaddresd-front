@@ -473,7 +473,7 @@ function LinkToMaster() {
       className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
     >
       <span className="flex items-center gap-3">
-        <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
+        <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
           <ClipboardCheck className="size-5" />
         </span>
         <span className="flex flex-col">

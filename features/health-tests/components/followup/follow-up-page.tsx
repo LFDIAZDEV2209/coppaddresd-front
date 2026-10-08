@@ -50,7 +50,7 @@ const priorityStyle: Record<
   { bg: string; text: string }
 > = {
   alta: { bg: "var(--destructive-soft)", text: "var(--destructive)" },
-  media: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
+  media: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)" },
   baja: { bg: "var(--muted)", text: "var(--muted-foreground)" },
 };
 
@@ -294,7 +294,7 @@ function PendingTable({
                     href={`/health-tests/pacientes/${row.patient.id}`}
                     className="flex items-center gap-3 text-left"
                   >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
                       {initials(row.patient.firstName, row.patient.lastName)}
                     </span>
                     <span className="flex min-w-0 flex-col gap-0.5">

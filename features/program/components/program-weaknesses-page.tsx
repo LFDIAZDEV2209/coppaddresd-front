@@ -77,7 +77,7 @@ export function ProgramWeaknessesPage() {
       case "medium":
         return "bg-warning-soft text-warning";
       case "low":
-        return "bg-success-soft text-success-foreground";
+        return "bg-success-soft text-success-soft-foreground";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -172,7 +172,7 @@ export function ProgramWeaknessesPage() {
                     <TableCell className="hidden md:table-cell">
                       {weakness.patient_name ? (
                         <div className="flex items-center gap-2">
-                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary">
+                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary-soft-foreground">
                             {weakness.patient_name
                               .split(/\s+/)
                               .map((w) => w[0])

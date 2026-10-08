@@ -117,7 +117,7 @@ export function AppointmentActionDialogs({
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                 <CalendarClock className="size-4" />
               </span>
               {t("Reprogramar cita")}

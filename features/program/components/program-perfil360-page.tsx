@@ -93,7 +93,7 @@ function PatientSearchBox({
                     key={p.id}
                     className="flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted"
                   >
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary-soft-foreground">
                       {initialsOf(p)}
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">

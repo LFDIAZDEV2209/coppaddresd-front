@@ -44,6 +44,8 @@ export async function requestUploadIntent(
  * - Si el destino es un endpoint del backend o gateway (localhost, IP local, proxy interno, o /api/v1/storage/),
  *   se adjunta Authorization: Bearer ${token} si está disponible.
  */
+class UploadNetworkError extends Error {}
+
 export async function uploadToPresignedUrl(
   presignedUrl: string,
   file: File,
@@ -52,6 +54,7 @@ export async function uploadToPresignedUrl(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", presignedUrl);
+    xhr.timeout = 300_000;
 
     if (shouldAttachAuthToken(presignedUrl, env.apiUrl)) {
       const token = getAccessToken();
@@ -74,9 +77,33 @@ export async function uploadToPresignedUrl(
         reject(new Error(`La subida falló (${xhr.status}).`));
       }
     };
-    xhr.onerror = () => reject(new Error("Error de red al subir el archivo."));
+    xhr.onerror = () => reject(new UploadNetworkError("Error de red al subir el archivo."));
+    xhr.ontimeout = () => reject(new Error("La subida excedió el tiempo de espera."));
+    xhr.onabort = () => reject(new Error("La subida fue cancelada."));
     xhr.send(file);
   });
+}
+
+/** Si la conexión directa falla, usar el PUT autenticado del mismo gateway.
+ * La clave procede del upload-intent; no se reenvían credenciales al bucket.
+ * PUT es idempotente: repetir la misma clave no crea otra copia del archivo.
+ */
+async function uploadWithGatewayFallback(
+  intent: UploadIntentResponse,
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<void> {
+  try {
+    await uploadToPresignedUrl(intent.presignedUrl, file, onProgress);
+  } catch (error) {
+    if (!(error instanceof UploadNetworkError)) throw error;
+    const destination = new URL(intent.presignedUrl, env.apiUrl);
+    const gateway = new URL(env.apiUrl);
+    // Un endpoint del gateway ya fallido no debe repetirse en un bucle.
+    if (destination.origin === gateway.origin) throw error;
+    const key = intent.storageKey.split("/").map(encodeURIComponent).join("/");
+    await uploadToPresignedUrl(`${env.apiUrl}/api/v1/storage/${key}`, file, onProgress);
+  }
 }
 
 /**
@@ -100,7 +127,7 @@ export async function resolveStorageKeys(
       input.contentType ?? "application/octet-stream",
     );
     onProgress?.(3);
-    await uploadToPresignedUrl(intent.presignedUrl, file, onProgress);
+    await uploadWithGatewayFallback(intent, file, onProgress);
     storageKey = intent.storageKey;
   }
 
@@ -113,7 +140,7 @@ export async function resolveStorageKeys(
       thumbnailFile.type,
       "thumbnail",
     );
-    await uploadToPresignedUrl(thumbIntent.presignedUrl, thumbnailFile);
+    await uploadWithGatewayFallback(thumbIntent, thumbnailFile);
     thumbnailKey = thumbIntent.storageKey;
   }
 

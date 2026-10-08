@@ -145,7 +145,7 @@ export function ProfessionalSchedulesSection({
           <div
             className={`animate-slide-down rounded-xl px-4 py-3 text-[13px] ${
               toast.kind === "ok"
-                ? "bg-success-soft text-success-foreground"
+                ? "bg-success-soft text-success-soft-foreground"
                 : "bg-destructive-soft text-destructive"
             }`}
             role="status"
@@ -215,7 +215,7 @@ export function ProfessionalSchedulesSection({
         ) : (
           // Vacío: profesional sin horarios aún (dar de alta vía edición).
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-8 text-center">
-            <span className="flex size-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <span className="flex size-11 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
               <Clock className="size-5" />
             </span>
             <div>

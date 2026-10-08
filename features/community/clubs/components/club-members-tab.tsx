@@ -186,7 +186,7 @@ export function ClubMembersTab({ clubId }: { clubId: string }) {
                 >
                   <TableCell className="py-2.5">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary-soft-foreground">
                         {initials(member.profile.displayName)}
                       </span>
                       <span className="text-sm font-semibold">

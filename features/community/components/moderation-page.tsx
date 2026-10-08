@@ -58,11 +58,11 @@ function normalizeEnum(s: string | null | undefined): string {
 
 /** Colores de chip por tipo de publicación. */
 const TYPE_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
-  Texto: { bg: "var(--info-soft)", text: "var(--info-foreground)" },
-  Imagen: { bg: "var(--success-soft)", text: "var(--success-foreground)" },
-  Video: { bg: "var(--primary-soft)", text: "var(--primary)" },
-  Encuesta: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
-  Logro: { bg: "var(--warning-soft)", text: "var(--warning-foreground)" },
+  Texto: { bg: "var(--info-soft)", text: "var(--info-soft-foreground)" },
+  Imagen: { bg: "var(--success-soft)", text: "var(--success-soft-foreground)" },
+  Video: { bg: "var(--primary-soft)", text: "var(--primary-soft-foreground)" },
+  Encuesta: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)" },
+  Logro: { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)" },
 };
 
 /** Carta de un post reportado con sus reportes y acciones. */

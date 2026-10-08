@@ -146,7 +146,7 @@ export function UsersToolbar({
             <SelectItem value="all">{t("Todos los roles")}</SelectItem>
             <SelectItem value="none">
               <span className="flex items-center gap-1.5">
-                <ShieldAlert className="size-3.5 text-warning-foreground" />
+                <ShieldAlert className="size-3.5 text-warning-soft-foreground" />
                 {t("Sin roles")}
               </span>
             </SelectItem>

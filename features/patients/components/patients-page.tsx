@@ -106,7 +106,7 @@ export function PatientsPage() {
   if (!canView) {
     return (
       <div className="p-6">
-        <p className="rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning-foreground">
+        <p className="rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning-soft-foreground">
           {t("No tienes permiso para ver el módulo de pacientes.")}
         </p>
       </div>
@@ -146,7 +146,7 @@ export function PatientsPage() {
 
       {stateCode && (
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary-soft-foreground">
             <MapPin aria-hidden className="size-3.5" />
             {t("Filtrado por estado")}: {stateCode}
             <button

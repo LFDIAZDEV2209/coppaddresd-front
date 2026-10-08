@@ -50,11 +50,11 @@ const STATUS_OPTIONS: { value: InterventionStatus; label: string }[] = [
 
 const STATUS_COLOR: Record<string, string> = {
   detected: "bg-warning-soft text-warning",
-  evaluated: "bg-info-soft text-info-foreground",
-  recommended: "bg-primary-soft text-primary",
-  accepted: "bg-primary-soft text-primary",
+  evaluated: "bg-info-soft text-info-soft-foreground",
+  recommended: "bg-primary-soft text-primary-soft-foreground",
+  accepted: "bg-primary-soft text-primary-soft-foreground",
   in_progress: "bg-warning-soft text-warning",
-  completed: "bg-success-soft text-success-foreground",
+  completed: "bg-success-soft text-success-soft-foreground",
   reevaluation: "bg-warning-soft text-warning",
 };
 
@@ -227,7 +227,7 @@ export function ProgramInterventionsPage() {
                       <div className="flex items-center gap-2">
                         {intervention.patient_name ? (
                           <>
-                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary">
+                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary-soft-foreground">
                               {intervention.patient_name
                                 .split(/\s+/)
                                 .map((w) => w[0])

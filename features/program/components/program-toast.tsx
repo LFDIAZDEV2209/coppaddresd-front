@@ -26,9 +26,9 @@ export function ProgramToastContainer({
           className={cn(
             "flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg transition-all",
             t.type === "success" &&
-              "border-success/20 bg-success-soft text-success-foreground",
+              "border-success/20 bg-success-soft text-success-soft-foreground",
             t.type === "info" &&
-              "border-info/20 bg-info-soft text-info-foreground",
+              "border-info/20 bg-info-soft text-info-soft-foreground",
             t.type === "error" &&
               "border-destructive/20 bg-destructive-soft text-destructive",
           )}

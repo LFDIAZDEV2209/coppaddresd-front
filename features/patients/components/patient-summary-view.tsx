@@ -302,11 +302,11 @@ export function PatientSummaryView({
           </p>
         </div>
         <div className="hidden shrink-0 items-center gap-2 sm:flex">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary-soft-foreground">
             <Users aria-hidden className="size-3.5" />
             {kpis.total} {t("pacientes")}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success-foreground">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success-soft-foreground">
             <HeartHandshake aria-hidden className="size-3.5" />
             {data.emergencyContactPct.toFixed(0)}%{" "}
             {t("con contacto de emergencia")}
@@ -378,7 +378,7 @@ export function PatientSummaryView({
               key: "riskLow",
               label: t("Riesgo bajo"),
               icon: ShieldCheck,
-              tone: "text-success-foreground",
+              tone: "text-success-soft-foreground",
               value: clinicalSummary?.riskLow ?? null,
               filters: { risk: "low" } as Partial<ClinicalBoardFilters>,
             },

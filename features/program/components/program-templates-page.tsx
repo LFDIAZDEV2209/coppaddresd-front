@@ -91,7 +91,7 @@ export function ProgramTemplatesPage() {
   const statusColor = (status: string) => {
     switch (status) {
       case "Active":
-        return "bg-success-soft text-success-foreground";
+        return "bg-success-soft text-success-soft-foreground";
       case "Draft":
         return "bg-warning-soft text-warning";
       case "Archived":
@@ -371,7 +371,7 @@ export function ProgramTemplatesPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-success hover:bg-success/90"
+              className="bg-success text-success-foreground hover:bg-success/90"
               disabled={actionLoading}
               onClick={async () => {
                 if (publishing) await publish(publishing.id);

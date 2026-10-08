@@ -74,7 +74,7 @@ export function StepNav({
                 className={cn(
                   "flex size-10 shrink-0 items-center justify-center rounded-full border transition-all duration-200 sm:size-11",
                   done &&
-                    "border-success bg-success text-white shadow-sm shadow-success/30",
+                    "border-success bg-success text-success-foreground shadow-sm shadow-success/30",
                   active &&
                     "scale-105 border-[var(--sidebar)] bg-[var(--sidebar)] text-white shadow-md shadow-[var(--sidebar)]/30 ring-4 ring-primary/15",
                   !done &&

@@ -100,11 +100,11 @@ function categoryTone(category: string): string {
   if (c === "alto")
     return "bg-destructive-soft text-destructive border-destructive/20";
   if (c.includes("sobrepeso") || c.includes("prediabetes"))
-    return "bg-warning-soft text-warning-foreground border-warning/20";
+    return "bg-warning-soft text-warning-soft-foreground border-warning/20";
   if (c.includes("óptimo") || c.includes("optimo") || c.includes("normal"))
-    return "bg-success-soft text-success-foreground border-success/20";
+    return "bg-success-soft text-success-soft-foreground border-success/20";
   if (c === "bajo peso")
-    return "bg-info-soft text-info-foreground border-info/20";
+    return "bg-info-soft text-info-soft-foreground border-info/20";
   return "bg-muted text-muted-foreground border-border";
 }
 

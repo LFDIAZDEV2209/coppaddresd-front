@@ -106,7 +106,7 @@ export function StoreFeaturedPage() {
                 <TableRow key={item.id}>
                   <TableCell>
                     <span className="flex items-center gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
                         <Store className="size-4" />
                       </span>
                       <span className="min-w-0">
@@ -138,7 +138,7 @@ export function StoreFeaturedPage() {
                         status={t('Destacado')}
                         color={{
                           bg: "var(--warning-soft)",
-                          text: "var(--warning-foreground)",
+                          text: "var(--warning-soft-foreground)",
                           dot: "var(--warning)",
                         }}
                       />
@@ -155,7 +155,7 @@ export function StoreFeaturedPage() {
                     >
                       {item.featured ? (
                         <>
-                          <StarOff data-icon="inline-start" className="text-warning-foreground" />
+                          <StarOff data-icon="inline-start" className="text-warning-soft-foreground" />
                           {t('Quitar')}
                         </>
                       ) : (
@@ -186,9 +186,9 @@ function Summary({
   tone: "primary" | "warning" | "info";
 }) {
   const colors = {
-    primary: "bg-primary-soft text-primary",
-    warning: "bg-warning-soft text-warning-foreground",
-    info: "bg-info-soft text-info-foreground",
+    primary: "bg-primary-soft text-primary-soft-foreground",
+    warning: "bg-warning-soft text-warning-soft-foreground",
+    info: "bg-info-soft text-info-soft-foreground",
   };
   return (
     <div className="rounded-2xl border border-border bg-card p-4">

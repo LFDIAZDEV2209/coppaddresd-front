@@ -172,7 +172,7 @@ export function ProgramTemplateDetailDialog({
   const statusColor = (status: string) => {
     switch (status) {
       case "Active":
-        return "bg-success-soft text-success-foreground";
+        return "bg-success-soft text-success-soft-foreground";
       case "Draft":
         return "bg-warning-soft text-warning";
       case "Archived":

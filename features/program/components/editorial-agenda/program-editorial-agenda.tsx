@@ -378,7 +378,7 @@ export function ProgramEditorialAgenda({
           </Badge>
         )}
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-[var(--success-foreground)]" />
+          <span className="size-1.5 rounded-full bg-[var(--success-soft-foreground)]" />
           {t("Publicado")}
         </span>
         <span className="inline-flex items-center gap-1">

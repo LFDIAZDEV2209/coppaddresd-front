@@ -192,7 +192,7 @@ function MediaDeleteBlockedContent({
                 {ref.isFrozen && (
                   <Badge
                     variant="secondary"
-                    className="bg-warning-soft text-warning-foreground text-[10px]"
+                    className="bg-warning-soft text-warning-soft-foreground text-[10px]"
                   >
                     {t("Congelada")}
                   </Badge>

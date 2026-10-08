@@ -181,7 +181,7 @@ export function StreaksPage() {
                       {s.shared ? (
                         <StatusBadge
                           status={t("Sí")}
-                          color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }}
+                          color={{ bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" }}
                         />
                       ) : (
                         <StatusBadge
@@ -191,7 +191,7 @@ export function StreaksPage() {
                       )}
                     </TableCell>
                     <TableCell className="py-2 text-right">
-                      <span className="inline-flex items-center rounded-lg bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-[var(--warning-foreground)]">
+                      <span className="inline-flex items-center rounded-lg bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-[var(--warning-soft-foreground)]">
                         {s.xp.toLocaleString()}
                       </span>
                     </TableCell>
@@ -248,7 +248,7 @@ export function StreaksPage() {
             <div className="flex flex-col divide-y divide-border">
               {(analyticsLoading ? [] : milestones).map((ms, i) => (
                 <div key={i} className="flex items-start gap-3 p-3">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-[var(--warning-foreground)]">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-[var(--warning-soft-foreground)]">
                     <Flame className="size-4" />
                   </span>
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">

@@ -59,12 +59,12 @@ const ACTION_CONFIG: Record<
 > = {
   INSERT: {
     label: "Creación",
-    className: "bg-success-soft text-success-foreground",
+    className: "bg-success-soft text-success-soft-foreground",
     icon: Plus,
   },
   UPDATE: {
     label: "Actualización",
-    className: "bg-info-soft text-info-foreground",
+    className: "bg-info-soft text-info-soft-foreground",
     icon: Pencil,
   },
   DELETE: {

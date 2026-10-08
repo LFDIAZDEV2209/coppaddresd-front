@@ -117,7 +117,7 @@ export function AgentsPageContent() {
 
       {createdNotice && (
         <div
-          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-foreground"
+          className="flex items-start gap-2 rounded-xl border border-info-soft bg-info-soft px-4 py-3 text-sm text-info-soft-foreground"
           role="status"
         >
           <CheckCircle2 className="mt-0.5 size-4 shrink-0" />

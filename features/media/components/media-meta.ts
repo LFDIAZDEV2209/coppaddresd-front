@@ -79,13 +79,13 @@ export const mediaStatusMeta: Record<
   Published: {
     label: "Publicado",
     bg: "var(--success-soft)",
-    text: "var(--success-foreground)",
-    dot: "var(--success-foreground)",
+    text: "var(--success-soft-foreground)",
+    dot: "var(--success-soft-foreground)",
   },
   Draft: {
     label: "Borrador",
     bg: "var(--warning-soft)",
-    text: "var(--warning-foreground)",
+    text: "var(--warning-soft-foreground)",
     dot: "var(--warning)",
   },
   Archived: {

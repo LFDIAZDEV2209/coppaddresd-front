@@ -5,11 +5,7 @@ interface StatusBadgeProps {
   color: { bg: string; text: string; dot: string };
 }
 
-/**
- * Badge de estado de alto contraste: fondo sólido del color del estado y
- * texto blanco (nunca pastel translúcido — los tokens -soft quedan para
- * superficies informativas, no para estados).
- */
+/** Etiqueta semántica: el color de texto debe corresponder al fondo sólido o suave. */
 export function StatusBadge({ status, color }: StatusBadgeProps) {
   return (
     <span

@@ -45,15 +45,15 @@ const FEED_ICON: Record<FeedKind, typeof ImageIcon> = {
 };
 
 const FEED_ICON_BG: Record<FeedKind, string> = {
-  foto: "bg-success-soft text-success-foreground",
-  hito: "bg-warning-soft text-[var(--warning-foreground)]",
-  comentario: "bg-primary-soft text-primary",
-  grupo: "bg-warning-soft text-warning-foreground",
-  nutriobiotico: "bg-info-soft text-info-foreground",
-  publicacion: "bg-primary-soft text-primary",
-  racha: "bg-warning-soft text-warning-foreground",
-  video: "bg-info-soft text-info-foreground",
-  logro: "bg-success-soft text-success-foreground",
+  foto: "bg-success-soft text-success-soft-foreground",
+  hito: "bg-warning-soft text-[var(--warning-soft-foreground)]",
+  comentario: "bg-primary-soft text-primary-soft-foreground",
+  grupo: "bg-warning-soft text-warning-soft-foreground",
+  nutriobiotico: "bg-info-soft text-info-soft-foreground",
+  publicacion: "bg-primary-soft text-primary-soft-foreground",
+  racha: "bg-warning-soft text-warning-soft-foreground",
+  video: "bg-info-soft text-info-soft-foreground",
+  logro: "bg-success-soft text-success-soft-foreground",
 };
 
 export function FeedPage() {
@@ -86,7 +86,7 @@ export function FeedPage() {
             actions={
               <StatusBadge
                 status={t("En vivo")}
-                color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }}
+                color={{ bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" }}
               />
             }
           />
@@ -109,7 +109,7 @@ export function FeedPage() {
                   {item.xp ? (
                     <StatusBadge
                       status={`+${item.xp} XP`}
-                      color={{ bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }}
+                      color={{ bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" }}
                     />
                   ) : null}
                 </div>

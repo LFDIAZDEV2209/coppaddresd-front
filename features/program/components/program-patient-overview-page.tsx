@@ -266,7 +266,7 @@ export function PatientResumenBody({
                     <Badge
                       className={
                         t.completed
-                          ? "bg-success-soft text-success-foreground"
+                          ? "bg-success-soft text-success-soft-foreground"
                           : "bg-muted text-muted-foreground"
                       }
                     >
@@ -542,7 +542,7 @@ export function PatientResumenBody({
               predicciones de racha y riesgo de abandono) estará disponible
               próximamente.
             </p>
-            <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-[11px] font-semibold text-info-foreground">
+            <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-[11px] font-semibold text-info-soft-foreground">
               <Clock className="size-3" />
               Próximamente
             </span>
@@ -1435,7 +1435,7 @@ function TrendBadge({ trend }: { trend: string }) {
   const config = {
     up: {
       label: "Mejorando",
-      className: "bg-success-soft text-success-foreground",
+      className: "bg-success-soft text-success-soft-foreground",
     },
     down: {
       label: "Empeorando",

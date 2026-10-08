@@ -697,7 +697,7 @@ export function AgentFlowDiagram({
           {t('Grafo base')}
         </span>
       ) : (
-        <span className="rounded bg-primary-soft px-1.5 py-0.5 font-medium text-primary">
+        <span className="rounded bg-primary-soft px-1.5 py-0.5 font-medium text-primary-soft-foreground">
           {t('Versión activa')}
         </span>
       )}

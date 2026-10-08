@@ -568,7 +568,7 @@ function ResponsesSection({ detail }: { detail: EvaluationDetail }) {
                     {r.answerOptionText ?? r.valueText ?? t("Sin respuesta")}
                     {r.answerOptionScore !== null &&
                     r.answerOptionScore !== undefined ? (
-                      <span className="rounded-full bg-primary-soft px-1.5 py-0.5 text-[11px] font-bold text-primary ring-1 ring-primary/15">
+                      <span className="rounded-full bg-primary-soft px-1.5 py-0.5 text-[11px] font-bold text-primary-soft-foreground ring-1 ring-primary/15">
                         {r.answerOptionScore} pts
                       </span>
                     ) : null}

@@ -213,7 +213,7 @@ export function ClubLivesTab({
             ) : (
               activeLive?.chat.map((message) => (
                 <div key={message.id} className="flex items-start gap-2">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold text-primary-soft-foreground">
                     {initials(message.sender.displayName)}
                   </span>
                   <div className="flex min-w-0 flex-col">
@@ -362,7 +362,7 @@ function ScheduleLiveDialog({
               {speakers.map((id) => (
                 <span
                   key={id}
-                  className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary"
+                  className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary-soft-foreground"
                 >
                   {speakerNames[id] ?? id}
                   <button

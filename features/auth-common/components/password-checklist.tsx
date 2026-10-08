@@ -42,7 +42,7 @@ export function PasswordChecklist({
           className={cn(
             "flex items-center gap-1 text-[11.5px] transition-colors",
             rule.met
-              ? "font-medium text-success-foreground"
+              ? "font-medium text-success-soft-foreground"
               : "text-muted-foreground",
           )}
         >

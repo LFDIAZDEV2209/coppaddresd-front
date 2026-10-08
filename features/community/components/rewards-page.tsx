@@ -32,9 +32,9 @@ const SCOPE_LABELS: Record<string, string> = {
 };
 
 const SCOPE_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  TODOS: { bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" },
+  TODOS: { bg: "var(--primary-soft)", text: "var(--primary-soft-foreground)", dot: "var(--primary)" },
   INACTIVOS: { bg: "var(--destructive-soft)", text: "var(--destructive)", dot: "var(--destructive)" },
-  ACTIVOS7: { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" },
+  ACTIVOS7: { bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" },
 };
 
 export function RewardsPage() {
@@ -100,11 +100,11 @@ export function RewardsPage() {
                   <TableCell className="py-2">
                     <StatusBadge
                       status={r.typeLabel}
-                      color={{ bg: "var(--primary-soft)", text: "var(--primary)", dot: "var(--primary)" }}
+                      color={{ bg: "var(--primary-soft)", text: "var(--primary-soft-foreground)", dot: "var(--primary)" }}
                     />
                   </TableCell>
                   <TableCell className="py-2 text-right">
-                    <span className="inline-flex items-center rounded-lg bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-[var(--warning-foreground)]">
+                    <span className="inline-flex items-center rounded-lg bg-warning-soft px-2 py-0.5 text-[11px] font-bold text-[var(--warning-soft-foreground)]">
                       +{r.xp}
                     </span>
                   </TableCell>
@@ -113,8 +113,8 @@ export function RewardsPage() {
                       status={t(r.status)}
                       color={
                         r.status === "Enviado"
-                          ? { bg: "var(--success-soft)", text: "var(--success-foreground)", dot: "var(--success-foreground)" }
-                          : { bg: "var(--warning-soft)", text: "var(--warning-foreground)", dot: "var(--warning)" }
+                          ? { bg: "var(--success-soft)", text: "var(--success-soft-foreground)", dot: "var(--success-soft-foreground)" }
+                          : { bg: "var(--warning-soft)", text: "var(--warning-soft-foreground)", dot: "var(--warning)" }
                       }
                     />
                   </TableCell>

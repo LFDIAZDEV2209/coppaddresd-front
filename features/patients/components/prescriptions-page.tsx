@@ -185,7 +185,7 @@ export function PrescriptionsPage() {
                     </p>
                   </div>
                 </div>
-                <span className="rounded-full bg-info-soft px-3 py-1 text-xs font-semibold text-info-foreground">
+                <span className="rounded-full bg-info-soft px-3 py-1 text-xs font-semibold text-info-soft-foreground">
                   {history.length} {t('receta')}{history.length !== 1 ? t("s") : ""}{" "}
                   {t('registrada')}{history.length !== 1 ? t("s") : ""}
                 </span>
@@ -204,7 +204,7 @@ export function PrescriptionsPage() {
                     </p>
                   </div>
                   {success && (
-                    <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1.5 text-xs font-semibold text-success-foreground">
+                    <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1.5 text-xs font-semibold text-success-soft-foreground">
                       <CheckCircle2 className="size-3.5" />
                       {t('Receta guardada')}
                     </span>
@@ -460,7 +460,7 @@ function PrescriptionHistory({
               <div className="mt-3 flex flex-wrap gap-2">
                 {prescription.medications.map((medication) => (
                   <span
-                    className="rounded-md bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary"
+                    className="rounded-md bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary-soft-foreground"
                     key={medication.id}
                   >
                     {medication.name || t("Medicamento sin nombre")} ·{" "}
@@ -486,7 +486,7 @@ function EmptyPrescription() {
   const t = useT();
   return (
     <div className="flex min-h-[460px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card text-center">
-      <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+      <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
         <UserRound className="size-6" />
       </span>
       <h2 className="text-sm font-semibold">{t('Selecciona un paciente')}</h2>

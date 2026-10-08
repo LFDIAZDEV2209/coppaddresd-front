@@ -117,7 +117,7 @@ export function PatientGeoView({
         <div ref={containerRef} className="relative p-4">
           {selected && (
             <div className="mb-3 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary-soft-foreground">
                 {STATE_NAMES[selected] ?? selected}
                 <button
                   type="button"

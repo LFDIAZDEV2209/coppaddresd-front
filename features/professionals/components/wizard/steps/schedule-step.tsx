@@ -167,7 +167,7 @@ export function ScheduleStep({
       <div className="flex flex-col gap-5 p-5 sm:p-6">
         {assignedClinics.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
-            <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
               <Building2 className="size-6" />
             </span>
             <div>
@@ -406,7 +406,7 @@ export function ScheduleStep({
                           )}
 
                           {enabledDays.length === 0 && (
-                            <p className="rounded-lg bg-warning-soft px-3 py-2 text-[12px] text-warning-foreground">
+                            <p className="rounded-lg bg-warning-soft px-3 py-2 text-[12px] text-warning-soft-foreground">
                               {t(
                                 "Marca al menos un día de atención para esta clínica.",
                               )}

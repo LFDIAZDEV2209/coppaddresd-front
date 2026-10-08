@@ -152,7 +152,7 @@ export function AssignPatientsDialog({
 
         {result !== null ? (
           <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
-            <span className="flex size-12 items-center justify-center rounded-xl bg-success-soft text-success-foreground">
+            <span className="flex size-12 items-center justify-center rounded-xl bg-success-soft text-success-soft-foreground">
               <CheckCircle2 className="size-6" />
             </span>
             <p className="text-sm font-semibold">
@@ -220,7 +220,7 @@ export function AssignPatientsDialog({
                       />
                       <span
                         aria-hidden
-                        className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary-soft text-[11px] font-bold text-primary"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary-soft text-[11px] font-bold text-primary-soft-foreground"
                       >
                         {initialsOf(patient.name)}
                       </span>

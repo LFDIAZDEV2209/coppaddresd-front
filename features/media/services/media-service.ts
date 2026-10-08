@@ -173,9 +173,10 @@ export function getMediaStatuses(): MediaItem["status"][] {
 }
 
 export function formatDuration(secs: number | null): string {
-  if (secs === null || secs <= 0) return "—";
-  const minutes = Math.floor(secs / 60);
-  const seconds = secs % 60;
+  if (secs === null || !Number.isFinite(secs) || secs <= 0) return "—";
+  const wholeSeconds = Math.floor(secs);
+  const minutes = Math.floor(wholeSeconds / 60);
+  const seconds = wholeSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
