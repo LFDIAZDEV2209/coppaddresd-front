@@ -4182,5 +4182,17 @@
   "Fecha de asignación no disponible": "Fecha de asignación no disponible",
   "Recordatorios guardados en el centro de avisos de la app": "Recordatorios guardados en el centro de avisos de la app",
   "Análisis IA no disponible": "Análisis IA no disponible",
-  "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial.": "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial."
+  "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial.": "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial.",
+  "{count} d": "{count} d",
+  "Grupos con más mensajes": "Grupos con más mensajes",
+  "Mensajes acumulados por grupo": "Mensajes acumulados por grupo",
+  "Registro manual de canales externos; no está conectado a sus plataformas.": "Registro manual de canales externos; no está conectado a sus plataformas.",
+  "Las cifras se cargan manualmente y no representan métricas en tiempo real.": "Las cifras se cargan manualmente y no representan métricas en tiempo real.",
+  "Comparativa del último registro manual disponible": "Comparativa del último registro manual disponible",
+  "Promedio de puntaje por categoría": "Promedio de puntaje por categoría",
+  "Puntajes normalizados; el riesgo corresponde a la clasificación registrada.": "Puntajes normalizados; el riesgo corresponde a la clasificación registrada.",
+  "Selecciona una fecha u hora diferente a la cita actual.": "Selecciona una fecha u hora diferente a la cita actual.",
+  "Último acceso registrado": "Último acceso registrado",
+  "Este archivo es un marcador de demostración. Carga la grabación aprobada antes de publicarlo o asignarlo a pacientes.": "Este archivo es un marcador de demostración. Carga la grabación aprobada antes de publicarlo o asignarlo a pacientes.",
+  "El archivo de demostración debe reemplazarse antes de publicar.": "El archivo de demostración debe reemplazarse antes de publicar."
 }

@@ -969,7 +969,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
                 {showScore ? (
                   <div className="flex flex-col gap-2.5">
                     <ScoreBar
-                      value={result.score ?? 0}
+                      value={result.scorePercentage ?? 0}
                       color={scoreBarColor(result.risk)}
                       label={t("Score")}
                     />

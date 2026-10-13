@@ -119,11 +119,9 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
   const graphLoading = graphEntry?.agentId !== agent.id;
   const graph = graphEntry?.agentId === agent.id ? graphEntry.graph : null;
   const graphError = graphEntry?.agentId === agent.id && graphEntry.error;
-  const threadIdRef = useRef<string>(`playground-${agent.id.slice(0, 8)}`);
-  // El checkpointer de LangGraph reenvía el historial completo del thread en
-  // cada turno; si una ejecución falla a mitad (loop de tools, stream cortado)
-  // deja mensajes tool_use huérfanos que Anthropic rechaza. El playground es
-  // una demo: thread nuevo por envío = historial limpio siempre.
+  const threadIdRef = useRef<string>(`playground-${agent.id.slice(0, 8)}-${uuid()}`);
+  // Hilo único por conversación y navegador. Se renueva al limpiar el chat;
+  // el runtime recupera historiales con herramientas interrumpidas.
   const nextThread = () =>
     `playground-${agent.id.slice(0, 8)}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -146,9 +144,8 @@ export function Playground({ agent, demoUserId }: PlaygroundProps) {
     if (!text || sending) return;
     abortRef.current?.abort();
 
-    // Demo: cada envío usa un thread fresco del checkpointer (evita historial
-    // corrupto tras un stream fallido).
-    threadIdRef.current = nextThread();
+    // Un hilo por conversación conserva el contexto entre turnos. El runtime
+    // descarta llamadas de herramientas incompletas al recuperar un stream.
 
     setInput("");
     setError(null);

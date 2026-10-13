@@ -13,6 +13,7 @@ import {
   Link2,
   Send,
   Undo2,
+  TriangleAlert,
 } from "lucide-react";
 import {
   Dialog,
@@ -32,6 +33,7 @@ import {
   formatDuration,
   formatFileSize,
   hasPublishableMetadata,
+  isPlaceholderMedia,
 } from "../services/media-service";
 import { MediaPlayer } from "./media-player";
 import { MediaThumb } from "./media-thumb";
@@ -100,6 +102,7 @@ function MediaDetailContent({
   const category = getMediaCategoryMeta(media.category);
   const TypeIcon = type.icon;
   const publishable = hasPublishableMetadata(media);
+  const isPlaceholder = isPlaceholderMedia(media);
   const [fileDuration, setFileDuration] = useState<number | null>(null);
 
   return (
@@ -119,6 +122,12 @@ function MediaDetailContent({
       </div>
 
       <div className="min-w-0 space-y-4">
+        {isPlaceholder && (
+          <div className="flex gap-2 rounded-xl border border-warning/30 bg-warning-soft p-3 text-sm text-warning-soft-foreground">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            <p>{t("Este archivo es un marcador de demostración. Carga la grabación aprobada antes de publicarlo o asignarlo a pacientes.")}</p>
+          </div>
+        )}
         {media.thumbnailKey && media.mediaType !== "Video" && (
           <MediaThumb
             storageKey={media.thumbnailKey}
@@ -127,14 +136,16 @@ function MediaDetailContent({
           />
         )}
 
-        <div className="overflow-hidden rounded-xl border border-border bg-background">
-          <MediaPlayer
-            key={media.storageKey}
-            storageKey={media.storageKey}
-            mediaType={media.mediaType}
-            onDuration={setFileDuration}
-          />
-        </div>
+        {!isPlaceholder && (
+          <div className="overflow-hidden rounded-xl border border-border bg-background">
+            <MediaPlayer
+              key={media.storageKey}
+              storageKey={media.storageKey}
+              mediaType={media.mediaType}
+              onDuration={setFileDuration}
+            />
+          </div>
+        )}
 
         {/* Acciones semánticas + "dónde se usa" (REQ-PCA-03/07) */}
         {onAction && (
@@ -146,7 +157,9 @@ function MediaDetailContent({
                 title={
                   !publishable
                     ? t(
-                        "Faltan metadatos para publicar (duración o Content-Type).",
+                        isPlaceholder
+                          ? "El archivo de demostración debe reemplazarse antes de publicar."
+                          : "Faltan metadatos para publicar (duración o Content-Type).",
                       )
                     : undefined
                 }

@@ -162,8 +162,8 @@ function relativeTime(iso: string | null): string {
   return `Hace ${d} días`;
 }
 
-function daysSince(iso: string | null): number {
-  if (!iso) return 9999;
+function daysSince(iso: string | null): number | null {
+  if (!iso) return null;
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
 }
 
@@ -1142,7 +1142,8 @@ function ErpDataProvider({ children }: { children: ReactNode }) {
     () =>
       members.filter((m) => {
         const risk = m.risk ?? "Bajo";
-        const stale = daysSince(m.lastPostAt ?? null) > 7;
+        const lastPostDays = daysSince(m.lastPostAt ?? null);
+        const stale = lastPostDays == null || lastPostDays > 7;
         return risk === "Alto" || risk === "Medio" || stale;
       }),
     [members],

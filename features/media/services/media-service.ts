@@ -137,10 +137,16 @@ export async function cleanupOrphanedBlobs(input: {
  */
 export function hasPublishableMetadata(item: MediaItem): boolean {
   return (
+    !isPlaceholderMedia(item) &&
     item.durationSecs !== null &&
     item.durationSecs > 0 &&
     Boolean(item.contentType)
   );
+}
+
+/** El dataset de demostración no equivale a una grabación aprobada. */
+export function isPlaceholderMedia(item: Pick<MediaItem, "storageKey">): boolean {
+  return item.storageKey.trim().toLowerCase() === "media/podcasts/demo-copp.mp3";
 }
 
 export async function createMediaItem(input: MediaInput): Promise<MediaItem> {

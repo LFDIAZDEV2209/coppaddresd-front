@@ -114,7 +114,7 @@ export interface PatientProfile {
   firstName: string;
   lastName: string;
   documentNumber: string;
-  gender: "Femenino" | "Masculino";
+  gender: "Femenino" | "Masculino" | "No registrado";
   age: number;
   clinic: string;
   professionalId: string;

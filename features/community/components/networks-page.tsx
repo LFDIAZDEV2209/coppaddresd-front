@@ -78,9 +78,13 @@ export function NetworksPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Redes Copp Adresd")}
-        description={t("Canales externos de Copp Adresd Comunidad")}
+        description={t("Registro manual de canales externos; no está conectado a sus plataformas.")}
         icon={Share2}
       />
+
+      <p className="rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning-soft-foreground">
+        {t("Las cifras se cargan manualmente y no representan métricas en tiempo real.")}
+      </p>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Channel cards */}
@@ -135,7 +139,7 @@ export function NetworksPage() {
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Alcance total por canal")}
-          description={t("Comparativa de seguidores/miembros actuales")}
+          description={t("Comparativa del último registro manual disponible")}
           icon={BarChart3}
           variant="primary"
         />

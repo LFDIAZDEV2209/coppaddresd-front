@@ -142,7 +142,9 @@ export function InactivePage() {
                       />
                     </TableCell>
                     <TableCell className="py-2 text-right text-xs font-semibold text-destructive whitespace-nowrap">
-                      {m.daysSincePost} d
+                      {m.daysSincePost == null
+                        ? t("Sin publicaciones")
+                        : t("{count} d", { count: String(m.daysSincePost) })}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell py-2 text-right text-xs whitespace-nowrap">
                       💤 {m.streak}

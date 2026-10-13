@@ -102,6 +102,10 @@ export function BiometriaHeroSections({
   tareasHoy?: PatientOverviewTaskHoy[] | null;
 }) {
   const gender = resolveGender(data.gender);
+  // Elegir por fecha y omitir semanas sin medición; no depende del orden de la API.
+  const latestGlucose = [...data.historial_semanal]
+    .filter((week) => week.glucosa != null)
+    .sort((a, b) => Date.parse(b.week_start) - Date.parse(a.week_start))[0]?.glucosa ?? null;
   const iccAlto = (data.biometria_exacta?.icc ?? 0) > 0.9;
   const exacta = data.biometria_exacta;
 
@@ -156,22 +160,8 @@ export function BiometriaHeroSections({
                 />
                 <ZoneChip
                   label="Glucosa"
-                  value={
-                    data.historial_semanal.length > 0
-                      ? (data.historial_semanal[
-                          data.historial_semanal.length - 1
-                        ].glucosa?.toFixed(1) ?? "—")
-                      : "—"
-                  }
-                  category={
-                    data.historial_semanal.length > 0
-                      ? getGlucosaCategory(
-                          data.historial_semanal[
-                            data.historial_semanal.length - 1
-                          ].glucosa,
-                        )
-                      : null
-                  }
+                  value={latestGlucose?.toFixed(1) ?? "—"}
+                  category={getGlucosaCategory(latestGlucose)}
                 />
                 <ZoneChip
                   label="ICC"

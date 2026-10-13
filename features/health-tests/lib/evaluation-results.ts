@@ -1,7 +1,9 @@
 import type { RiskLevel } from "../types";
 
 /** La severidad procede del instrumento; un puntaje crudo no define riesgo. */
-export function riskFromSeverity(severity: string | null | undefined): RiskLevel {
+export function riskFromSeverity(severity: string | null | undefined, qualifier?: string | null): RiskLevel {
+  // Compatibilidad con resultados históricos guardados con low sin rangos.
+  if (qualifier?.trim().toLowerCase() === "sin clasificar") return "sin-evaluar";
   const levels: Record<string, RiskLevel> = {
     low: "bajo", moderate: "moderado", high: "alto", critical: "critico",
   };

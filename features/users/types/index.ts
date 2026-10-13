@@ -16,6 +16,7 @@ export interface User {
   lastName: string;
   isActive: boolean;
   createdAt: string;
+  lastAccessAt?: string | null;
   /** Nombres de los roles asignados al usuario (globales). */
   roles: string[];
   /** Roles con scope (clínica/organización). */

@@ -4574,5 +4574,17 @@
   "Fecha de asignación no disponible": "Assignment date unavailable",
   "Recordatorios guardados en el centro de avisos de la app": "Reminders saved in the app notification center",
   "Análisis IA no disponible": "AI analysis unavailable",
-  "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial.": "There is no saved AI analysis for this patient. Review the recorded results and answers for each assessment in the history."
+  "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial.": "There is no saved AI analysis for this patient. Review the recorded results and answers for each assessment in the history.",
+  "{count} d": "{count} d",
+  "Grupos con más mensajes": "Groups with the most messages",
+  "Mensajes acumulados por grupo": "Cumulative messages by group",
+  "Registro manual de canales externos; no está conectado a sus plataformas.": "Manual record of external channels; it is not connected to their platforms.",
+  "Las cifras se cargan manualmente y no representan métricas en tiempo real.": "These figures are entered manually and are not real-time metrics.",
+  "Comparativa del último registro manual disponible": "Comparison using the latest available manual record",
+  "Promedio de puntaje por categoría": "Average score by category",
+  "Puntajes normalizados; el riesgo corresponde a la clasificación registrada.": "Scores are normalized; risk reflects the recorded classification.",
+  "Selecciona una fecha u hora diferente a la cita actual.": "Choose a date or time different from the current appointment.",
+  "Último acceso registrado": "Last recorded access",
+  "Este archivo es un marcador de demostración. Carga la grabación aprobada antes de publicarlo o asignarlo a pacientes.": "This file is a demo placeholder. Upload the approved recording before publishing or assigning it to patients.",
+  "El archivo de demostración debe reemplazarse antes de publicar.": "The demo file must be replaced before publication."
 }

@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { useT } from "@/providers/i18n-provider";
 import type { User, UserSort, UserSortField } from "../types";
 import { formatDate, getFullName } from "../services/users-service";
-import { getMockLastAccess, formatRelativeTime } from "../services/users-mock";
+import { formatRelativeTime } from "../services/users-mock";
 import {
   RoleChips,
   UserAvatar,
@@ -187,7 +187,7 @@ export function UsersTable({
       <TableBody>
         {users.map((user, index) => {
           const selected = selectedIds.has(user.id);
-          const lastAccess = getMockLastAccess(user.id);
+          const lastAccess = user.lastAccessAt ? Date.parse(user.lastAccessAt) : null;
           return (
             <TableRow
               key={user.id}
@@ -222,7 +222,7 @@ export function UsersTable({
               <TableCell>
                 <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
                   <Clock className="size-3 shrink-0 text-muted-foreground/70" />
-                  {formatRelativeTime(lastAccess)}
+                  {lastAccess != null ? formatRelativeTime(lastAccess) : t("No disponible")}
                 </span>
               </TableCell>
               <TableCell>

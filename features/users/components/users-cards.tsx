@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { useT } from "@/providers/i18n-provider";
 import type { User } from "../types";
 import { formatDate } from "../services/users-service";
-import { getMockLastAccess, formatRelativeTime } from "../services/users-mock";
+import { formatRelativeTime } from "../services/users-mock";
 import { RoleChips, UserAvatar, UserStatusBadge } from "./user-visuals";
 
 interface UsersCardsProps {
@@ -198,7 +198,9 @@ export function UsersCards({
                   {t("Último acceso")}
                 </span>
                 <span className="text-[11.5px] font-medium text-foreground">
-                  {formatRelativeTime(getMockLastAccess(user.id))}
+                  {user.lastAccessAt
+                    ? formatRelativeTime(Date.parse(user.lastAccessAt))
+                    : t("No disponible")}
                 </span>
               </div>
               <div className="col-span-2 flex flex-col gap-1 border-t border-border/50 pt-2">

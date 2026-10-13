@@ -56,7 +56,7 @@ import {
   formatDate,
   updateUser,
 } from "../services/users-service";
-import { formatRelativeTime, getMockLastAccess } from "../services/users-mock";
+import { formatRelativeTime } from "../services/users-mock";
 import { RoleChips, UserAvatar, UserStatusBadge } from "./user-visuals";
 
 interface UserDetailProps {
@@ -420,9 +420,9 @@ export function UserDetail({ userId }: UserDetailProps) {
               />
               <InfoItem
                 label={t("Último acceso")}
-                value={formatRelativeTime(getMockLastAccess(user.id))}
+                value={user.lastAccessAt ? formatRelativeTime(Date.parse(user.lastAccessAt)) : t("No disponible")}
                 icon={Clock}
-                hint={t("Referencia (mock)")}
+                hint={t("Último acceso registrado")}
               />
             </dl>
           </div>

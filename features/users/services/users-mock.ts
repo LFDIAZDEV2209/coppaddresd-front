@@ -1,9 +1,9 @@
 /**
  * Mock data del módulo de usuarios — AISLADO de la lógica de producción.
  *
- * El backend todavía no expone "último acceso": aquí vive el mock
- * determinista. Cuando el backend lo soporte, se reemplaza por la llamada
- * real sin tocar la UI.
+ * El backend todavía no expone "último acceso". La interfaz muestra ese dato
+ * como no disponible hasta que la API lo entregue; este archivo conserva solo
+ * utilidades sin datos simulados.
  *
  * Los helpers de CSV importación (parseUsersCsv, validateBulkRows,
  * downloadTemplate, etc.) y la simulación de creación masiva
@@ -11,21 +11,6 @@
  * features/professionals/services/people-csv.ts y
  * features/professionals/components/people-bulk-import.tsx.
  */
-
-/**
- * Hash simple (FNV-1a) del id del usuario → mock de último acceso
- * determinista (el mismo usuario siempre muestra el mismo valor).
- * Rango: entre 10 minutos y 90 días atrás.
- */
-export function getMockLastAccess(userId: string): number {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < userId.length; i++) {
-    hash ^= userId.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  const minutes = 10 + (Math.abs(hash) % (90 * 24 * 60 - 10));
-  return Date.now() - minutes * 60 * 1000;
-}
 
 /** Formato relativo en español ("Hace 2 horas", "Hace 3 días"). */
 export function formatRelativeTime(timestamp: number): string {

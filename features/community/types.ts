@@ -28,7 +28,7 @@ export interface CommunityMember {
   streak: number; // racha en días
   level: MemberLevel;
   status: MemberStatus;
-  daysSincePost: number; // 0 si está activo
+  daysSincePost: number | null; // null si nunca ha publicado
   lastPost: string; // texto relativo, p.ej. "Hace 2 días"
   risk?: RiskLevel; // nivel de riesgo (derivado del backend)
   lastPostAt?: string; // ISO del último post (para derivar inactividad)

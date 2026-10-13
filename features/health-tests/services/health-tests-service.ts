@@ -661,7 +661,7 @@ function mapPatientListItem(
     firstName: dto.firstName,
     lastName: dto.lastName,
     documentNumber: dto.documentNumber ?? "",
-    gender: dto.gender === "Masculino" ? "Masculino" : "Femenino",
+    gender: dto.gender === "Masculino" || dto.gender === "Femenino" ? dto.gender : "No registrado",
     age: ageFromDateOfBirth(dto.dateOfBirth),
     clinic: dto.clinicName ?? "",
     professionalId: dto.professionalNames?.[0] ?? "",
@@ -714,7 +714,7 @@ function aggregateResults(evaluations: EvaluationDto[]): PatientTestResult[] {
       score: score !== null && score !== undefined ? score : null,
       scorePercentage: latest?.scorePercentage ?? null,
       interpretation: scoreResult?.qualifier ?? "",
-      risk: riskFromSeverity(scoreResult?.severity),
+      risk: riskFromSeverity(scoreResult?.severity, scoreResult?.qualifier),
       updatedAt: latest?.completedAt ?? evs[0]?.startedAt ?? "",
       completedAt: latest?.completedAt ?? null,
       history: completed.map((e) => {
@@ -722,7 +722,7 @@ function aggregateResults(evaluations: EvaluationDto[]): PatientTestResult[] {
         return {
           completedAt: e.completedAt ?? e.startedAt,
           score: r?.value ?? 0,
-          risk: r?.severity ? riskFromSeverity(r.severity) : "sin-evaluar",
+          risk: r?.severity ? riskFromSeverity(r.severity, r.qualifier) : "sin-evaluar",
         };
       }),
       details: {},
@@ -745,7 +745,7 @@ function mapPatientEvaluation(ev: EvaluationDto): PatientEvaluation {
     score: ev.score,
     scorePercentage: ev.scorePercentage,
     risk: ev.status === "completed"
-      ? riskFromSeverity(ev.results.find((result) => result.resultType === "score")?.severity)
+      ? riskFromSeverity(ev.results.find((result) => result.resultType === "score")?.severity, ev.results.find((result) => result.resultType === "score")?.qualifier)
       : "sin-evaluar",
     attempt: 0,
   };
@@ -831,11 +831,14 @@ async function listPatients(): Promise<PatientProfile[]> {
 }
 
 async function getPatient(id: string): Promise<PatientProfile | null> {
-  const [patient, evaluations] = await Promise.all([
+  const [patient, evaluations, masterRows] = await Promise.all([
     apiFetch<PatientListItemDto>(`${env.apiUrl}/api/v1/patients/${id}`),
-    getPatientEvaluations(id).catch(() => []),
+    getPatientEvaluations(id),
+    getMasterRows(),
   ]);
-  return mapPatientListItem(patient, aggregateResults(evaluations));
+  // La tabla maestra incluye reasignaciones abiertas posteriores a un resultado.
+  const assigned = masterRows.find((row) => row.patient.id === id);
+  return mapPatientListItem(patient, assigned?.patient.results ?? aggregateResults(evaluations));
 }
 
 /** Evaluaciones de un paciente (paginadas, con filtros opcionales). */
@@ -1153,7 +1156,7 @@ function mapMasterRow(
     firstName: dto.patient.firstName,
     lastName: dto.patient.lastName,
     documentNumber: dto.patient.documentNumber ?? "",
-    gender: dto.patient.gender === "Masculino" ? "Masculino" : "Femenino",
+    gender: dto.patient.gender === "Masculino" || dto.patient.gender === "Femenino" ? dto.patient.gender : "No registrado",
     age: ageFromDateOfBirth(dto.patient.dateOfBirth),
     clinic: dto.patient.clinicName ?? "",
     professionalId: resolveProfessionalId(professionalName, professionalIndex),
@@ -1177,7 +1180,7 @@ function mapMasterResult(r: MasterPatientResultDto): PatientTestResult {
     score: r.score,
     scorePercentage: r.scorePercentage ?? undefined,
     interpretation: r.qualifier ?? "",
-    risk: riskFromSeverity(r.severity),
+    risk: riskFromSeverity(r.severity, r.qualifier),
     updatedAt: ts,
     pendingAssignedAt: r.pendingAssignedAt,
     completedAt: r.completedAt,
@@ -1252,7 +1255,6 @@ async function getPendingPatients(): Promise<PendingPatientRow[]> {
 
 async function getCoverageByTest(): Promise<CoverageByTest[]> {
   const [tests, masterRows] = await Promise.all([listTests(), getMasterRows()]);
-  const total = Math.max(masterRows.length, 1);
   return tests.map((test) => {
     let completed = 0;
     let inProgress = 0;
@@ -1272,8 +1274,8 @@ async function getCoverageByTest(): Promise<CoverageByTest[]> {
       inProgress,
       pending,
       overdue,
-      coverage: coveragePercent(completed, total),
-      total,
+      coverage: coveragePercent(completed, completed + inProgress + pending + overdue),
+      total: completed + inProgress + pending + overdue,
     } satisfies CoverageByTest;
   });
 }

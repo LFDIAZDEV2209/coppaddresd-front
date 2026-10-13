@@ -83,16 +83,9 @@ export async function fetchBiometriaPatient(
 // --- CSV Export ---
 
 export async function exportBiometriaCsv(signal?: AbortSignal): Promise<void> {
-  const response = await fetch(`${PATH}/export/csv`, {
-    signal,
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    throw new Error("Error al exportar CSV");
-  }
-
-  const blob = await response.blob();
+  // apiFetch adjunta Bearer/ámbito y renueva la sesión igual que el listado.
+  const csv = await apiFetch<string>(`${PATH}/export/csv`, { signal });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

@@ -286,7 +286,7 @@ export function ProgramTemplateDetailDialog({
                       ? editDays.map((day, idx) => (
                           <TableRow key={`${day.id}-${idx}`}>
                             <TableCell className="font-medium">
-                              {WEEKDAY_LABELS[day.weekday] ??
+                              {WEEKDAY_LABELS[day.weekday - 1] ??
                                 `Día ${day.weekday}`}
                             </TableCell>
                             <TableCell>
@@ -347,7 +347,7 @@ export function ProgramTemplateDetailDialog({
                           ([weekday, days]) => (
                             <TableRow key={weekday}>
                               <TableCell className="font-medium">
-                                {WEEKDAY_LABELS[Number(weekday)] ??
+                                {WEEKDAY_LABELS[Number(weekday) - 1] ??
                                   `Día ${weekday}`}
                               </TableCell>
                               <TableCell>

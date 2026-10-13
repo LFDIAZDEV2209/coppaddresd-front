@@ -20,7 +20,6 @@ import type {
   UserUpdateInput,
   UsersFilters,
 } from "../types";
-import { getMockLastAccess } from "./users-mock";
 import type { Permission } from "@/features/permissions/types";
 import type { Role } from "@/features/roles/types";
 import {
@@ -101,7 +100,7 @@ export function filterUsers(users: User[], filters: UsersFilters): User[] {
   });
 }
 
-/** Ordenamiento client-side; "lastAccess" usa el mock determinista. */
+/** Ordenamiento client-side; "lastAccess" solo ordena fechas registradas. */
 export function sortUsers(users: User[], sort: UserSort): User[] {
   const factor = sort.dir === "asc" ? 1 : -1;
   const byField: Record<
@@ -117,7 +116,7 @@ export function sortUsers(users: User[], sort: UserSort): User[] {
     status: (a, b) => Number(b.isActive) - Number(a.isActive),
     createdAt: (a, b) =>
       new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    lastAccess: (a, b) => getMockLastAccess(a.id) - getMockLastAccess(b.id),
+    lastAccess: (a, b) => (Date.parse(a.lastAccessAt ?? "") || 0) - (Date.parse(b.lastAccessAt ?? "") || 0),
   };
 
   if (sort.field) {

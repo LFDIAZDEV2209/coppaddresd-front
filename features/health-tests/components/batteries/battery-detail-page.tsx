@@ -34,11 +34,10 @@ import {
   type AssignPatientOption,
 } from "./assign-patients-dialog";
 
-function severityRisk(average: number | null): RiskLevel {
-  if (average === null) return "sin-evaluar";
-  if (average >= 70) return "alto";
-  if (average >= 40) return "moderado";
-  return "bajo";
+function recordedRisk(results: { risk: RiskLevel }[]): RiskLevel {
+  const order: RiskLevel[] = ["sin-evaluar", "bajo", "moderado", "alto", "critico"];
+  return results.reduce<RiskLevel>((worst, result) =>
+    order.indexOf(result.risk) > order.indexOf(worst) ? result.risk : worst, "sin-evaluar");
 }
 
 /**
@@ -135,6 +134,7 @@ export function BatteryDetailPage({ batteryId }: { batteryId: string }) {
       required,
       frequencyDays,
       average,
+      risk: recordedRisk(completedResults),
       completed,
       total,
       patientsWith,
@@ -179,7 +179,7 @@ export function BatteryDetailPage({ batteryId }: { batteryId: string }) {
     }))
     .sort((a, b) => a.average - b.average);
 
-  const severityOrder: RiskLevel[] = ["bajo", "moderado", "alto", "critico"];
+  const severityOrder: RiskLevel[] = ["bajo", "moderado", "alto", "critico", "sin-evaluar"];
   const distribution = severityOrder.map((risk) => ({
     risk,
     count: batteryResults.filter((result) => result.risk === risk).length,
@@ -307,7 +307,7 @@ export function BatteryDetailPage({ batteryId }: { batteryId: string }) {
         ) : (
           <ul className="flex flex-col">
             {perTest.map((item, index) => {
-              const risk = severityRisk(item.average);
+              const risk = item.risk;
               const colors = riskColors(risk);
               return (
                 <li
@@ -385,10 +385,10 @@ export function BatteryDetailPage({ batteryId }: { batteryId: string }) {
         <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
           <div>
             <h2 className="text-[14px] font-bold">
-              {t("Promedio de severidad por categoría")}
+              {t("Promedio de puntaje por categoría")}
             </h2>
             <p className="text-[12px] text-muted-foreground">
-              {t("Promedio 0–100 de los tests completados en esta batería.")}
+              {t("Puntajes normalizados; el riesgo corresponde a la clasificación registrada.")}
             </p>
           </div>
           {categories.length === 0 ? (
@@ -398,7 +398,7 @@ export function BatteryDetailPage({ batteryId }: { batteryId: string }) {
           ) : (
             <ul className="flex flex-col gap-3">
               {categories.map((category) => {
-                const risk = severityRisk(category.average);
+                const risk = recordedRisk(batteryResults.filter((result) => ordered.find(({test}) => test.code === result.testCode)?.test.category === category.category));
                 const colors = riskColors(risk);
                 return (
                   <li key={category.category} className="flex items-center gap-3">

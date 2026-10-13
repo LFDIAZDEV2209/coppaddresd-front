@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { ApiError } from "@/lib/api/http";
 import { useT } from "@/providers/i18n-provider";
 import {
   cancelAppointment,
@@ -80,6 +81,11 @@ export function useAppointmentActions({
   const confirmReschedule = useCallback(async () => {
     if (!rescheduling || !newStart) return;
 
+    if (new Date(newStart).getTime() === new Date(rescheduling.scheduledStart).getTime()) {
+      setActionError(t("Selecciona una fecha u hora diferente a la cita actual."));
+      return;
+    }
+
     // Guard local: evita el 409 por anticipación mínima con un mensaje claro.
     if (new Date(newStart).getTime() < nextBookableStart().getTime()) {
       setActionError(
@@ -98,11 +104,11 @@ export function useAppointmentActions({
       });
       closeAll();
       onSuccess();
-    } catch {
+    } catch (error) {
       setActionError(
-        t(
-          "No se pudo reprogramar la cita. Verifica el horario y la anticipación.",
-        ),
+        error instanceof ApiError && error.status >= 400 && error.status < 500
+          ? error.message
+          : t("No se pudo reprogramar la cita. Verifica el horario y la anticipación."),
       );
     } finally {
       setBusy(false);
