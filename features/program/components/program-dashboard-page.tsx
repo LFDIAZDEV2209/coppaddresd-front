@@ -472,7 +472,7 @@ function BiometriaPatientListCard({
     setExporting(true);
     setExportError(false);
     try {
-      await exportBiometriaCsv();
+      await exportBiometriaCsv(filters);
     } catch {
       setExportError(true);
     } finally {

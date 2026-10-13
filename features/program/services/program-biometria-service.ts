@@ -82,9 +82,18 @@ export async function fetchBiometriaPatient(
 
 // --- CSV Export ---
 
-export async function exportBiometriaCsv(signal?: AbortSignal): Promise<void> {
+export async function exportBiometriaCsv(
+  filters: Omit<Parameters<typeof fetchBiometriaPatients>[0], "page" | "pageSize" | "signal"> = {},
+  signal?: AbortSignal,
+): Promise<void> {
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (key !== "page" && key !== "pageSize" && typeof value === "string" && value.trim()) {
+      qs.set(key, value.trim());
+    }
+  }
   // apiFetch adjunta Bearer/ámbito y renueva la sesión igual que el listado.
-  const csv = await apiFetch<string>(`${PATH}/export/csv`, { signal });
+  const csv = await apiFetch<string>(`${PATH}/export/csv?${qs}`, { signal });
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

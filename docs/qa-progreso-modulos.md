@@ -87,3 +87,10 @@ Metodología completa en `/PROMPT_TESTING.md`.
 - "Último acceso" es mock (`features/users/services/users-mock.ts`); backend Auth no expone
   el campo. Org del import muestra UUID (dato seed de dev).
 - Menú de fila a veces no abre al primer click con mouse sintético (con JS/teclado OK).
+
+## QA 2026-10-13: CSV de biometría filtrado
+
+El botón CSV del Dashboard General envía los mismos filtros que el listado,
+incluidos nombre, categorías, tendencia y ámbito geográfico. La paginación de la
+pantalla no limita el archivo: el backend exporta todas las filas coincidentes.
+Se mantiene la descarga autenticada y el mensaje visible si falla.
