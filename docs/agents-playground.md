@@ -60,3 +60,7 @@ si se interrumpe el intento, el estado de error permite reintentar.
 Pruebas del contrato cliente: `node scripts/agent-document-service.test.mjs`.
 La verificación en producción debe comprobar cambio de agente durante un stream,
 reindexación del documento atascado y una respuesta con fuentes RAG.
+
+## QA 2026-10-13: conversación y restauración
+
+El Playground conserva un UUID de conversación entre envíos; limpiar el chat genera otro. El runtime elimina solamente secuencias de herramientas incompletas, conservando los turnos válidos para preguntas de seguimiento. La restauración del documento consulta los chunks retenidos por documento y KB antes de volver a descargar el archivo. Requiere despliegue coordinado de ERP, backend y runtime; comprobar 43 × 17 y luego «suma 1», además de archivar/restaurar el documento técnico.

@@ -58,6 +58,7 @@ import { exportBiometriaCsv } from "../services/program-biometria-service";
 
 import { BiometriaUsaSvgMap } from "./biometria-usa-svg-map";
 import { CHART_TOOLTIP } from "../services/program-erp-constants";
+import { useT } from "@/providers/i18n-provider";
 
 // --- Biometría colors (no hardcoded hex — use CSS vars where possible) ---
 const GLUCOSA_COLORS: Record<string, string> = {
@@ -464,6 +465,20 @@ function BiometriaPatientListCard({
   geoFilter: GeoFilter;
   onClearGeoFilter: () => void;
 }) {
+  const t = useT();
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
+  async function downloadCsv() {
+    setExporting(true);
+    setExportError(false);
+    try {
+      await exportBiometriaCsv();
+    } catch {
+      setExportError(true);
+    } finally {
+      setExporting(false);
+    }
+  }
   const { data, loading, filters, updateFilters } = useBiometriaPatients({
     pageSize: 5,
   });
@@ -488,7 +503,8 @@ function BiometriaPatientListCard({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => exportBiometriaCsv()}
+            onClick={downloadCsv}
+            disabled={exporting}
             className="h-7 text-xs"
           >
             <Download className="mr-1 size-3" />
@@ -496,6 +512,8 @@ function BiometriaPatientListCard({
           </Button>
         }
       />
+
+      {exportError && <p role="alert" className="px-5 py-3 text-sm text-destructive">{t("No se pudo exportar el CSV. Intenta de nuevo.")}</p>}
 
       {/* Geo active filter chip */}
       {geoFilter && (

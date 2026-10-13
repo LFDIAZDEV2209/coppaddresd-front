@@ -20,14 +20,6 @@ const CHANNEL_ICONS: Record<string, string> = {
   WhatsApp: "💬",
 };
 
-const CHANNEL_HANDLES: Record<string, string> = {
-  TikTok: "@antaresbiohacking",
-  Instagram: "@antares.biohacking",
-  Facebook: "Copp Adresd Biohacking",
-  YouTube: "SUMMITs · Clases",
-  WhatsApp: "Grupo COPP-ADRESD",
-};
-
 const CHANNEL_LABEL: Record<string, string> = {
   TikTok: "seguidores",
   Instagram: "seguidores",
@@ -78,12 +70,12 @@ export function NetworksPage() {
     <div className="flex flex-col gap-6 p-4 sm:p-6">
       <PageHeader
         title={t("Redes Copp Adresd")}
-        description={t("Registro manual de canales externos; no está conectado a sus plataformas.")}
+        description={t("Canales externos sin integración de métricas verificada.")}
         icon={Share2}
       />
 
       <p className="rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning-soft-foreground">
-        {t("Las cifras se cargan manualmente y no representan métricas en tiempo real.")}
+        {t("Datos no verificados: pueden incluir valores de demostración. No representan la audiencia real ni métricas en tiempo real.")}
       </p>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -104,11 +96,11 @@ export function NetworksPage() {
                 <span className="text-2xl">{CHANNEL_ICONS[ch.name] ?? "🌐"}</span>
                 <div className="flex flex-1 flex-col gap-0.5">
                   <span className="text-[13px] font-bold">{ch.name} Copp Adresd</span>
-                  <span className="text-[10px] opacity-60">{CHANNEL_HANDLES[ch.name] ?? ch.name}</span>
+                  <span className="text-[10px]">{t("Datos no verificados")}</span>
                 </div>
                 <div className="text-right">
                   <div className="text-base font-black">{ch.followers}</div>
-                  <div className="text-[9px] opacity-60">{t(CHANNEL_LABEL[ch.name] ?? "seguidores")}</div>
+                  <div className="text-[9px]">{t(CHANNEL_LABEL[ch.name] ?? "seguidores")}</div>
                 </div>
               </div>
             ))}
@@ -139,7 +131,7 @@ export function NetworksPage() {
       <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Alcance total por canal")}
-          description={t("Comparativa del último registro manual disponible")}
+          description={t("Registros sin verificar; no usar como medida de alcance real")}
           icon={BarChart3}
           variant="primary"
         />

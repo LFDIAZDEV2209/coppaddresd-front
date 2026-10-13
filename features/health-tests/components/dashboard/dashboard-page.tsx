@@ -291,7 +291,7 @@ export function HealthTestsDashboard() {
           context={t("Con batería avanzada o completa")}
         />
         <StatCard
-          label={t("Pacientes pendientes")}
+          label={t("Evaluaciones pendientes")}
           value={String(stats.pending)}
           icon={Hourglass}
           variant="warning"

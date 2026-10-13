@@ -8,9 +8,24 @@ import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react";
 
 function Select<Value, Multiple extends boolean | undefined = false>({
   modal = false,
+  children,
+  items,
   ...props
 }: SelectPrimitive.Root.Props<Value, Multiple>) {
-  return <SelectPrimitive.Root data-slot="select" modal={modal} {...props} />;
+  // Supply labels before the portalled popup mounts, including initial filters.
+  const labels: { value: Value; label: React.ReactNode }[] = [];
+  function collect(nodes: React.ReactNode) {
+    React.Children.forEach(nodes, (node) => {
+      if (!React.isValidElement<{ value?: Value; children?: React.ReactNode }>(node)) return;
+      if (node.type === SelectItem) {
+        labels.push({ value: node.props.value as Value, label: node.props.children });
+      } else if (node.type === SelectContent || node.type === SelectGroup || node.type === React.Fragment) {
+        collect(node.props.children);
+      }
+    });
+  }
+  collect(children);
+  return <SelectPrimitive.Root data-slot="select" modal={modal} items={items ?? (labels.length ? labels : undefined)} {...props}>{children}</SelectPrimitive.Root>;
 }
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {

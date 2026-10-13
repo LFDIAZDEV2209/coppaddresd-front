@@ -4586,5 +4586,13 @@
   "Selecciona una fecha u hora diferente a la cita actual.": "Choose a date or time different from the current appointment.",
   "Último acceso registrado": "Last recorded access",
   "Este archivo es un marcador de demostración. Carga la grabación aprobada antes de publicarlo o asignarlo a pacientes.": "This file is a demo placeholder. Upload the approved recording before publishing or assigning it to patients.",
-  "El archivo de demostración debe reemplazarse antes de publicar.": "The demo file must be replaced before publication."
+  "El archivo de demostración debe reemplazarse antes de publicar.": "The demo file must be replaced before publication.",
+  "Evaluaciones pendientes": "Pending assessments",
+  "Actividad de las últimas 24 horas": "Activity in the last 24 hours",
+  "No se pudo exportar el CSV. Intenta de nuevo.": "Could not export the CSV. Please try again.",
+  "Canales externos sin integración de métricas verificada.": "External channels without a verified metrics integration.",
+  "Datos no verificados: pueden incluir valores de demostración. No representan la audiencia real ni métricas en tiempo real.": "Unverified data: may include demo values. These do not represent actual audiences or real-time metrics.",
+  "Datos no verificados": "Unverified data",
+  "Registros sin verificar; no usar como medida de alcance real": "Unverified records; do not use as a measure of actual reach",
+  "Falta configurar la plantilla de este control. No se envió una evaluación.": "This check-in needs a configured template. No assessment was sent."
 }

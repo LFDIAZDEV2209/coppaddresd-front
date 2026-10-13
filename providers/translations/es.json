@@ -4194,5 +4194,13 @@
   "Selecciona una fecha u hora diferente a la cita actual.": "Selecciona una fecha u hora diferente a la cita actual.",
   "Último acceso registrado": "Último acceso registrado",
   "Este archivo es un marcador de demostración. Carga la grabación aprobada antes de publicarlo o asignarlo a pacientes.": "Este archivo es un marcador de demostración. Carga la grabación aprobada antes de publicarlo o asignarlo a pacientes.",
-  "El archivo de demostración debe reemplazarse antes de publicar.": "El archivo de demostración debe reemplazarse antes de publicar."
+  "El archivo de demostración debe reemplazarse antes de publicar.": "El archivo de demostración debe reemplazarse antes de publicar.",
+  "Evaluaciones pendientes": "Evaluaciones pendientes",
+  "Actividad de las últimas 24 horas": "Actividad de las últimas 24 horas",
+  "No se pudo exportar el CSV. Intenta de nuevo.": "No se pudo exportar el CSV. Intenta de nuevo.",
+  "Canales externos sin integración de métricas verificada.": "Canales externos sin integración de métricas verificada.",
+  "Datos no verificados: pueden incluir valores de demostración. No representan la audiencia real ni métricas en tiempo real.": "Datos no verificados: pueden incluir valores de demostración. No representan la audiencia real ni métricas en tiempo real.",
+  "Datos no verificados": "Datos no verificados",
+  "Registros sin verificar; no usar como medida de alcance real": "Registros sin verificar; no usar como medida de alcance real",
+  "Falta configurar la plantilla de este control. No se envió una evaluación.": "Falta configurar la plantilla de este control. No se envió una evaluación."
 }

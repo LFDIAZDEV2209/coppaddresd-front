@@ -135,7 +135,7 @@ export function FeedPage() {
           {/* Hoy en números — grid compacto 2×3 */}
           <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
-              title={t("Hoy en números")}
+              title={t("Actividad de las últimas 24 horas")}
               icon={Zap}
               variant="primary"
             />
@@ -173,7 +173,7 @@ export function FeedPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(analyticsLoading ? [] : communityGroups).slice(0, 8).map((g) => (
+                {(analyticsLoading ? [] : [...communityGroups].sort((a, b) => b.posts - a.posts)).slice(0, 8).map((g) => (
                   <TableRow key={g.id} className="transition-colors hover:bg-muted/50">
                     <TableCell className="max-w-[140px] truncate py-2 text-xs font-semibold">{g.name}</TableCell>
                     <TableCell className="py-2 text-right text-xs font-bold">{g.posts.toLocaleString()}</TableCell>

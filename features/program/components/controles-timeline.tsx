@@ -165,6 +165,9 @@ export function ControlesTimeline({
                 status={milestone.status}
                 closedReason={milestone.closed_reason}
               />
+              {milestone.status === "skipped" && (
+                <p className="text-xs text-muted-foreground">{t("Falta configurar la plantilla de este control. No se envió una evaluación.")}</p>
+              )}
               <span className="text-[11px] text-muted-foreground">
                 {formatControlDate(milestone.target_date)}
               </span>
