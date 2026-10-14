@@ -15,6 +15,9 @@ declare namespace TwilioVideo {
     kind: "audio" | "video" | "data";
     isEnabled: boolean;
     isTrackEnabled: boolean;
+    isStopped?: boolean;
+    mediaStreamTrack?: MediaStreamTrack;
+    restart?(constraints?: MediaTrackConstraints): Promise<LocalTrack>;
     id: string;
     enable(): void;
     disable(): void;
@@ -87,6 +90,7 @@ declare namespace TwilioVideo {
       options?: { priority?: "low" | "medium" | "high" },
     ): Promise<TrackPublication>;
     unpublishTrack(track: LocalTrack): Promise<TrackPublication | undefined>;
+    on(event: "trackPublicationFailed", listener: (error: Error, track: LocalTrack) => void): LocalParticipant;
     on(event: "trackPublished", listener: (publication: TrackPublication) => void): LocalParticipant;
     on(event: "trackUnpublished", listener: (publication: TrackPublication) => void): LocalParticipant;
   }
@@ -94,10 +98,6 @@ declare namespace TwilioVideo {
   interface Video {
     connect(token: string, options?: ConnectOptions): Promise<Room>;
     isSupported: boolean;
-    /** Adquiere el track de pantalla compartida (nombre "screen"). */
-    createLocalScreenTracks(options?: {
-      audio?: boolean;
-      video?: boolean;
-    }): Promise<LocalVideoTrack[]>;
+    createLocalVideoTrack(options?: MediaTrackConstraints): Promise<LocalVideoTrack>;
   }
 }

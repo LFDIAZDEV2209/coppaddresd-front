@@ -136,7 +136,7 @@ export function ConsultationPanel({
   isProfessional: boolean;
   canManage: boolean;
   localLabel: { name: string; role: string; connectedAt?: string | null };
-  remoteLabels: { name: string; role: string; connectedAt?: string | null }[];
+  remoteLabels: { identity: string; name: string; role: string; connectedAt?: string | null }[];
   heightPx: number;
   onHeightChange: (px: number) => void;
 }) {
@@ -719,7 +719,7 @@ function ParticipantsBody({
   appointment,
 }: {
   localLabel: { name: string; role: string; connectedAt?: string | null };
-  remoteLabels: { name: string; role: string; connectedAt?: string | null }[];
+  remoteLabels: { identity: string; name: string; role: string; connectedAt?: string | null }[];
   patientConnected: boolean;
   isProfessional: boolean;
   appointment: AppointmentDto;
@@ -732,6 +732,7 @@ function ParticipantsBody({
   const waitingRole = isProfessional ? t("Paciente") : t("Profesional");
   const participants: ParticipantInfo[] = [
     {
+      identity: "local",
       name: localLabel.name,
       role: localLabel.role,
       connected: true,
@@ -741,6 +742,7 @@ function ParticipantsBody({
     ...(remoteLabels.length === 0
       ? [
           {
+            identity: "waiting",
             name: waitingName,
             role: waitingRole,
             connected: patientConnected,
@@ -749,6 +751,7 @@ function ParticipantsBody({
           },
         ]
       : remoteLabels.map((info) => ({
+          identity: `remote:${info.identity}`,
           name: info.name,
           role: info.role,
           connected: true,
@@ -785,7 +788,7 @@ function ParticipantsBody({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {participants.map((info) => (
           <ParticipantCard
-            key={`${info.name}-${info.role}`}
+            key={info.identity}
             info={info}
             onOpen={() => setSelected(info)}
           />
@@ -915,6 +918,7 @@ function FormBody({
 }
 
 interface ParticipantInfo {
+  identity: string;
   name: string;
   role: string;
   connected: boolean;

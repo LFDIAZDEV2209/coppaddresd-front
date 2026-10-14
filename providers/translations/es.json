@@ -4202,5 +4202,17 @@
   "Datos no verificados: pueden incluir valores de demostración. No representan la audiencia real ni métricas en tiempo real.": "Datos no verificados: pueden incluir valores de demostración. No representan la audiencia real ni métricas en tiempo real.",
   "Datos no verificados": "Datos no verificados",
   "Registros sin verificar; no usar como medida de alcance real": "Registros sin verificar; no usar como medida de alcance real",
-  "Falta configurar la plantilla de este control. No se envió una evaluación.": "Falta configurar la plantilla de este control. No se envió una evaluación."
+  "Falta configurar la plantilla de este control. No se envió una evaluación.": "Falta configurar la plantilla de este control. No se envió una evaluación.",
+  "Tu cámara no se está publicando en la consulta.": "Tu cámara no se está publicando en la consulta.",
+  "Restablecer cámara": "Restablecer cámara",
+  "No se pudo restablecer la cámara. Revisa sus permisos e inténtalo de nuevo.": "No se pudo restablecer la cámara. Revisa sus permisos e inténtalo de nuevo.",
+  "Dispositivos de la consulta": "Dispositivos de la consulta",
+  "Salida de audio": "Salida de audio",
+  "Seleccionar dispositivo": "Seleccionar dispositivo",
+  "Controla la salida de audio desde tu dispositivo.": "Controla la salida de audio desde tu dispositivo.",
+  "No se pudieron cargar los dispositivos.": "No se pudieron cargar los dispositivos.",
+  "No se pudo cambiar el dispositivo. Revisa sus permisos.": "No se pudo cambiar el dispositivo. Revisa sus permisos.",
+  "Dispositivos": "Dispositivos",
+  "Elige cómo te ven y te escuchan durante la consulta.": "Elige cómo te ven y te escuchan durante la consulta.",
+  "Cargando": "Cargando"
 }

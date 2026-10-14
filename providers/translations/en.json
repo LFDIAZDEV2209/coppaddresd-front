@@ -4594,5 +4594,17 @@
   "Datos no verificados: pueden incluir valores de demostración. No representan la audiencia real ni métricas en tiempo real.": "Unverified data: may include demo values. These do not represent actual audiences or real-time metrics.",
   "Datos no verificados": "Unverified data",
   "Registros sin verificar; no usar como medida de alcance real": "Unverified records; do not use as a measure of actual reach",
-  "Falta configurar la plantilla de este control. No se envió una evaluación.": "This check-in needs a configured template. No assessment was sent."
+  "Falta configurar la plantilla de este control. No se envió una evaluación.": "This check-in needs a configured template. No assessment was sent.",
+  "Tu cámara no se está publicando en la consulta.": "Your camera is not being published to the consultation.",
+  "Restablecer cámara": "Restore camera",
+  "No se pudo restablecer la cámara. Revisa sus permisos e inténtalo de nuevo.": "Could not restore the camera. Check its permissions and try again.",
+  "Dispositivos de la consulta": "Call devices",
+  "Salida de audio": "Audio output",
+  "Seleccionar dispositivo": "Select device",
+  "Controla la salida de audio desde tu dispositivo.": "Control audio output from your device.",
+  "No se pudieron cargar los dispositivos.": "Could not load devices.",
+  "No se pudo cambiar el dispositivo. Revisa sus permisos.": "Could not switch device. Check its permissions.",
+  "Dispositivos": "Devices",
+  "Elige cómo te ven y te escuchan durante la consulta.": "Choose how others see and hear you during the consultation.",
+  "Cargando": "Loading"
 }

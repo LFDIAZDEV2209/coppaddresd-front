@@ -26,16 +26,16 @@ import {
   CircleCheck,
   MapPin,
   ShieldCheck,
-  ScreenShare,
-  ScreenShareOff,
   WifiOff,
 } from "lucide-react";
+import { RoomDeviceSettings } from "./room-device-settings";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/providers/auth-provider";
 import { hasAppointmentPermission } from "@/lib/config/appointment-permissions";
 import { useCurrentUser } from "../hooks/use-current-user";
+import { replacePublishedCamera } from "@/lib/twilio/camera-publication";
 import { loadTwilioVideo } from "@/lib/twilio/twilio-loader";
 import { lightenHex, readCssVar } from "@/lib/config/css-vars";
 import { DEFAULT_ACCENT } from "@/lib/config/accent-colors";
@@ -74,14 +74,9 @@ import type { AppointmentDto } from "../types";
 
 type Phase = "loading" | "ready" | "connecting" | "connected" | "ended";
 
-interface RemoteScreenTile {
-  identity: string;
-  track: TwilioVideo.RemoteTrack;
-}
-
 const LOCAL_IDENTITY = "__local__";
 
-/** Identifica publicaciones de pantalla compartida (trackName "screen"). */
+/** Ignora pantallas publicadas por clientes antiguos: la sala solo muestra cámaras. */
 function isScreenPublication(
   publication: TwilioVideo.TrackPublication | undefined,
   track: TwilioVideo.RemoteTrack,
@@ -110,6 +105,8 @@ export function VirtualRoom() {
   const [connectError, setConnectError] = useState<string | null>(null);
   const [audioOn, setAudioOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [recoveringCamera, setRecoveringCamera] = useState(false);
   const [remoteTiles, setRemoteTiles] = useState<RoomTile[]>([]);
   const [elapsed, setElapsed] = useState(0);
   const [backendRoomStatus, setBackendRoomStatus] = useState<string | null>(
@@ -125,9 +122,6 @@ export function VirtualRoom() {
   const [reopening, setReopening] = useState(false);
   const [reopenError, setReopenError] = useState<string | null>(null);
   const [tracksVersion, setTracksVersion] = useState(0);
-  const [remoteScreens, setRemoteScreens] = useState<RemoteScreenTile[]>([]);
-  const [sharingScreen, setSharingScreen] = useState(false);
-  const [screenError, setScreenError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [joinedAt, setJoinedAt] = useState<string | null>(null);
   const [panelHeight, setPanelHeight] = useState<number>(() => {
@@ -142,15 +136,12 @@ export function VirtualRoom() {
   const attachedTracksRef = useRef(new Set<string>());
   const remoteMediaElementsRef = useRef(new WeakMap<TwilioVideo.RemoteTrack, HTMLElement>());
   const trackContainersRef = useRef(new Map<string, HTMLDivElement>());
-  const screenContainersRef = useRef(new Map<string, HTMLDivElement>());
-  const remoteScreensRef = useRef<RemoteScreenTile[]>([]);
   /** Salida voluntaria: no dispara auto-retry ni pantalla de fin. */
   const intentionalRef = useRef(false);
   /** Presupuesto de un auto-retry por conexión (se rearma al reintentar a mano). */
   const retryUsedRef = useRef(false);
   const lastVideoRef = useRef(true);
   const handleDisconnectRef = useRef<() => void>(() => {});
-  const screenTrackRef = useRef<TwilioVideo.LocalVideoTrack | null>(null);
   const sdkRef = useRef<TwilioVideo.Video | null>(null);
   /** Evita conectar/reintentar después de desmontar (sin salas huérfanas). */
   const disposedRef = useRef(false);
@@ -222,53 +213,8 @@ export function VirtualRoom() {
     );
   }, []);
 
-  const syncRemoteScreens = useCallback((next: RemoteScreenTile[]) => {
-    remoteScreensRef.current = next;
-    setRemoteScreens(next);
-  }, []);
-
-  const addRemoteScreen = useCallback(
-    (identity: string, track: TwilioVideo.RemoteTrack) => {
-      const current = remoteScreensRef.current;
-      if (current.some((tile) => tile.track === track)) return;
-      syncRemoteScreens([...current, { identity, track }]);
-    },
-    [syncRemoteScreens],
-  );
-
-  const removeRemoteScreen = useCallback(
-    (track: TwilioVideo.RemoteTrack) => {
-      const tile = remoteScreensRef.current.find((item) => item.track === track);
-      if (!tile) return;
-      track.detach().forEach((el) => el.remove());
-      attachedTracksRef.current.delete(`screen:${tile.identity}:${track.sid}`);
-      syncRemoteScreens(
-        remoteScreensRef.current.filter((item) => item.track !== track),
-      );
-    },
-    [syncRemoteScreens],
-  );
-
-  const removeScreensForIdentity = useCallback(
-    (identity: string) => {
-      const leaving = remoteScreensRef.current.filter(
-        (tile) => tile.identity === identity,
-      );
-      if (leaving.length === 0) return;
-      leaving.forEach(({ track }) => {
-        track.detach().forEach((el) => el.remove());
-        attachedTracksRef.current.delete(`screen:${identity}:${track.sid}`);
-      });
-      syncRemoteScreens(
-        remoteScreensRef.current.filter((tile) => tile.identity !== identity),
-      );
-    },
-    [syncRemoteScreens],
-  );
-
   const removeRemoteTile = useCallback(
     (identity: string) => {
-      removeScreensForIdentity(identity);
       setRemoteTiles((tiles) => tiles.filter((t) => t.identity !== identity));
       remoteTracksRef.current.delete(identity);
       attachedTracksRef.current.forEach((id) => {
@@ -276,7 +222,7 @@ export function VirtualRoom() {
       });
       setTracksVersion((v) => v + 1);
     },
-    [removeScreensForIdentity],
+    [],
   );
 
   const [remoteVideoByIdentity, setRemoteVideoByIdentity] = useState<Record<string, boolean>>({});
@@ -319,111 +265,32 @@ export function VirtualRoom() {
       participant.tracks.forEach((publication) => {
         if (publication.track) {
           const track = publication.track as TwilioVideo.RemoteTrack;
-          if (isScreenPublication(publication, track)) {
-            addRemoteScreen(participant.identity, track);
-          } else {
-            attachRemoteTrack(participant.identity, track);
-          }
+          if (!isScreenPublication(publication, track)) attachRemoteTrack(participant.identity, track);
         }
       });
       participant.on("trackSubscribed", (track, publication) => {
-        if (isScreenPublication(publication, track)) {
-          addRemoteScreen(participant.identity, track);
-        } else {
-          attachRemoteTrack(participant.identity, track);
-        }
+        if (!isScreenPublication(publication, track)) attachRemoteTrack(participant.identity, track);
       });
       participant.on("trackEnabled", () => {
         // Una publicación inicialmente apagada también debe adjuntarse al activarse.
         participant.tracks.forEach(publication => {
           const track = publication.track as TwilioVideo.RemoteTrack | undefined;
           if (!track) return;
-          if (isScreenPublication(publication, track)) addRemoteScreen(participant.identity, track);
-          else attachRemoteTrack(participant.identity, track);
+          if (!isScreenPublication(publication, track)) attachRemoteTrack(participant.identity, track);
         });
         syncRemoteVideo(participant.identity);
       });
       participant.on("trackDisabled", () => syncRemoteVideo(participant.identity));
       participant.on("trackUnsubscribed", (track, publication) => {
-        if (isScreenPublication(publication, track)) {
-          removeRemoteScreen(track);
-        } else {
-          detachRemoteTrack(participant.identity, track);
-        }
+        if (!isScreenPublication(publication, track)) detachRemoteTrack(participant.identity, track);
       });
     },
     [
-      addRemoteScreen,
       attachRemoteTrack,
       detachRemoteTrack,
-      removeRemoteScreen,
       syncRemoteVideo,
     ],
   );
-
-  // --- Pantalla compartida (solo escritorio: getDisplayMedia) ---
-
-  /** Despublica, detiene y limpia el track local de pantalla. */
-  const stopScreenShare = useCallback(async () => {
-    const track = screenTrackRef.current;
-    const room = roomRef.current;
-    screenTrackRef.current = null;
-    setSharingScreen(false);
-    if (!track) return;
-    try {
-      if (room) await room.localParticipant.unpublishTrack(track);
-    } catch {
-      // Best-effort: la sala pudo desconectarse mientras se detenía.
-    }
-    track.detach().forEach((el) => el.remove());
-    track.stop();
-  }, []);
-
-  const startScreenShare = useCallback(async () => {
-    const room = roomRef.current;
-    const sdk = sdkRef.current;
-    if (!room || !sdk || screenTrackRef.current) return;
-    setScreenError(null);
-    try {
-      const tracks = await sdk.createLocalScreenTracks();
-      const track = tracks[0];
-      if (!track) return;
-      if (roomRef.current !== room) {
-        track.stop();
-        return;
-      }
-      await room.localParticipant.publishTrack(track, { priority: "high" });
-      if (roomRef.current !== room) {
-        track.stop();
-        return;
-      }
-      screenTrackRef.current = track;
-      setSharingScreen(true);
-      // El usuario puede detener la compartición desde el picker del navegador.
-      track.once("stopped", () => {
-        if (screenTrackRef.current !== track) return;
-        screenTrackRef.current = null;
-        setSharingScreen(false);
-        const activeRoom = roomRef.current;
-        if (activeRoom) {
-          void activeRoom.localParticipant
-            .unpublishTrack(track)
-            .catch(() => {});
-        }
-        track.detach().forEach((el) => el.remove());
-      });
-    } catch (error) {
-      const name =
-        typeof error === "object" && error !== null && "name" in error
-          ? String((error as { name?: unknown }).name ?? "")
-          : "";
-      setScreenError(
-        name === "NotAllowedError" || name === "AbortError"
-          ? t("Permiso de captura denegado o cancelado.")
-          : t("No se pudo compartir la pantalla."),
-      );
-    }
-  }, [t]);
 
   // --- Conexión a la sala ---
 
@@ -440,15 +307,12 @@ export function VirtualRoom() {
         setReconnecting(false);
       }
       setConnectError(null);
-      setScreenError(null);
       intentionalRef.current = false;
       lastVideoRef.current = withVideo;
-      void stopScreenShare();
       localTracksRef.current = [];
       remoteTracksRef.current = new Map();
       attachedTracksRef.current = new Set();
       remoteMediaElementsRef.current = new WeakMap();
-      syncRemoteScreens([]);
       setRemoteTiles([]);
       try {
         const result = await fetchJoinToken(appointmentId);
@@ -471,12 +335,31 @@ export function VirtualRoom() {
           return false;
         }
         roomRef.current = room;
-        setVideoOn(withVideo);
+        const publishedCamera = Array.from(room.localParticipant.tracks.values()).some(p =>
+          p.track?.kind === "video" && p.trackName !== "screen" &&
+          (p.track as TwilioVideo.LocalVideoTrack).name !== "screen" &&
+          p.track.isEnabled && !(p.track as TwilioVideo.LocalTrack).isStopped);
+        setVideoOn(publishedCamera);
+        setCameraError(withVideo && !publishedCamera ? t("Tu cámara no se está publicando en la consulta.") : null);
+        room.localParticipant.on?.("trackPublicationFailed", (error, track) => {
+          if (roomRef.current !== room || track.kind !== "video" || (track as TwilioVideo.LocalVideoTrack).name === "screen") return;
+          console.warn("[room] Falló la publicación de cámara", {name: error.name, code: (error as Error & {code?: number}).code});
+          setVideoOn(false);
+          setCameraError(t("Tu cámara no se está publicando en la consulta."));
+        });
 
         room.localParticipant.tracks.forEach((publication) => {
           const track = publication.track;
           if (track && (track.kind === "audio" || track.kind === "video")) {
-            localTracksRef.current.push(track as TwilioVideo.LocalTrack);
+            const localTrack = track as TwilioVideo.LocalTrack;
+            localTracksRef.current.push(localTrack);
+            if (localTrack.kind === "video" && (localTrack as TwilioVideo.LocalVideoTrack).name !== "screen") {
+              localTrack.on("stopped", () => {
+                if (disposedRef.current || roomRef.current !== room) return;
+                setVideoOn(false);
+                setCameraError(t("Tu cámara no se está publicando en la consulta."));
+              });
+            }
           }
         });
         setTracksVersion((v) => v + 1);
@@ -533,8 +416,6 @@ export function VirtualRoom() {
       addRemoteTile,
       appointmentId,
       removeRemoteTile,
-      stopScreenShare,
-      syncRemoteScreens,
       t,
       watchParticipant,
     ],
@@ -619,12 +500,11 @@ export function VirtualRoom() {
 
   const leave = useCallback(() => {
     intentionalRef.current = true;
-    void stopScreenShare();
     const room = roomRef.current;
     roomRef.current = null;
     room?.disconnect();
     router.back();
-  }, [router, stopScreenShare]);
+  }, [router]);
 
   const finalize = useCallback(async () => {
     if (!appointment) return;
@@ -633,7 +513,6 @@ export function VirtualRoom() {
     try {
       await endSession(appointment.id, "Finalizada por el profesional");
       intentionalRef.current = true;
-      void stopScreenShare();
       const room = roomRef.current;
       roomRef.current = null;
       room?.disconnect();
@@ -642,7 +521,7 @@ export function VirtualRoom() {
       setConnectError(t("No se pudo finalizar la sesión. Intentá nuevamente."));
       setEnding(false);
     }
-  }, [appointment, router, stopScreenShare, t]);
+  }, [appointment, router, t]);
 
   // Reapertura dentro de la gracia (60 min desde la finalización): vuelve la
   // cita a InProgress con sala nueva y reconecta al usuario en el momento.
@@ -679,12 +558,38 @@ export function VirtualRoom() {
     }
   }, []);
 
+  const recoverCamera = useCallback(async () => {
+    const room = roomRef.current;
+    const sdk = sdkRef.current;
+    if (!room || !sdk || recoveringCamera) return;
+    setRecoveringCamera(true);
+    setCameraError(null);
+    setVideoOn(false);
+    const current = localTracksRef.current.filter(track => track.kind === "video" && (track as TwilioVideo.LocalVideoTrack).name !== "screen");
+    try {
+      const camera = await replacePublishedCamera<TwilioVideo.LocalTrack>({
+        current,
+        create: () => sdk.createLocalVideoTrack(),
+        publish: track => room.localParticipant.publishTrack(track),
+        unpublish: track => room.localParticipant.unpublishTrack(track),
+        active: () => !disposedRef.current && roomRef.current === room,
+      });
+      if (disposedRef.current || roomRef.current !== room) return;
+      localTracksRef.current = [...localTracksRef.current.filter(track => !current.includes(track)), camera];
+      current.forEach(track => attachedTracksRef.current.delete(`${LOCAL_IDENTITY}:${track.id}`));
+      setVideoOn(camera.isEnabled && !camera.isStopped);
+      setCameraError(null);
+      setTracksVersion(version => version + 1);
+    } catch {
+      if (!disposedRef.current && roomRef.current === room) setCameraError(t("No se pudo restablecer la cámara. Revisa sus permisos e inténtalo de nuevo."));
+    } finally { if (!disposedRef.current) setRecoveringCamera(false); }
+  }, [recoveringCamera, t]);
+
   const toggleVideo = useCallback(() => {
     const room = roomRef.current;
     if (!room) return;
     const publications = Array.from(room.localParticipant.tracks.values());
-    // Excluye el track de pantalla compartida: apagar la cámara no debe
-    // detener la compartición.
+    // Solo controla publicaciones de cámara, incluso con clientes antiguos.
     const track = publications.find((p) => {
       const candidate = p.track as TwilioVideo.LocalVideoTrack | undefined;
       return (
@@ -693,7 +598,8 @@ export function VirtualRoom() {
         p.trackName !== "screen"
       );
     })?.track as TwilioVideo.LocalTrack | undefined;
-    if (!track) return;
+    if (!track || track.isStopped) { void recoverCamera(); return; }
+    if (recoveringCamera) return;
     if (track.isEnabled) {
       track.disable();
       setVideoOn(false);
@@ -701,7 +607,7 @@ export function VirtualRoom() {
       track.enable();
       setVideoOn(true);
     }
-  }, []);
+  }, [recoverCamera, recoveringCamera]);
 
   // --- Limpieza al desmontar ---
 
@@ -712,10 +618,6 @@ export function VirtualRoom() {
       intentionalRef.current = true;
       roomRef.current?.disconnect();
       roomRef.current = null;
-      const screenTrack = screenTrackRef.current;
-      screenTrackRef.current = null;
-      screenTrack?.detach().forEach((el) => el.remove());
-      screenTrack?.stop();
       localTracksRef.current.forEach((track) => {
         track.detach().forEach((el) => el.remove());
         track.stop();
@@ -724,10 +626,6 @@ export function VirtualRoom() {
       remoteTracksRef.current.forEach((tracks) => {
         tracks.forEach((track) => track.detach().forEach((el) => el.remove()));
       });
-      remoteScreensRef.current.forEach(({ track }) =>
-        track.detach().forEach((el) => el.remove()),
-      );
-      remoteScreensRef.current = [];
     };
   }, []);
 
@@ -763,14 +661,7 @@ export function VirtualRoom() {
       });
     });
 
-    remoteScreens.forEach(({ identity, track }) => {
-      const key = `screen:${identity}:${track.sid}`;
-      const container = screenContainersRef.current.get(`${identity}:${track.sid}`);
-      if (!container || attachedTracksRef.current.has(key)) return;
-      attachedTracksRef.current.add(key);
-      container.appendChild(track.attach());
-    });
-  }, [phase, remoteScreens, tracksVersion]);
+  }, [phase, tracksVersion]);
 
   // --- Reloj de la sesión ---
 
@@ -794,8 +685,7 @@ export function VirtualRoom() {
         // El profesional finalizó la consulta (session/end o webhook): cerrar
         // la llamada con el copy de consulta finalizada, sin CTA de reintento.
         if (room.activeSessionStatus === "Ended" || room.status === "Ended") {
-          void stopScreenShare();
-          const current = roomRef.current;
+              const current = roomRef.current;
           roomRef.current = null;
           current?.disconnect();
           setEndCause("session-ended");
@@ -813,7 +703,7 @@ export function VirtualRoom() {
       active = false;
       window.clearInterval(timer);
     };
-  }, [phase, appointmentId, stopScreenShare]);
+  }, [phase, appointmentId, t]);
 
   useEffect(() => {
     if (phase !== "ready" && phase !== "connecting" && phase !== "ended") {
@@ -823,20 +713,14 @@ export function VirtualRoom() {
     return () => window.clearInterval(timer);
   }, [phase]);
 
-  // --- Detección de soporte de pantalla compartida (escritorio) ---
-
-  // La sala conectada solo se renderiza en el cliente, así que la detección
-  // directa no rompe la hidratación (el SSR siempre renderiza "loading").
-  const screenShareSupported =
-    typeof navigator !== "undefined" &&
-    typeof navigator.mediaDevices?.getDisplayMedia === "function";
-
   // Persistencia de la altura elegida del panel inferior.
   useEffect(() => {
     window.localStorage.setItem(PANEL_HEIGHT_STORAGE_KEY, String(panelHeight));
   }, [panelHeight]);
 
   // --- Helpers de render ---
+
+  const getDeviceTracks = useCallback(() => localTracksRef.current, []);
 
   const localLabel = useMemo(
     () => ({ ...nameFor(myIdentity ?? "", true), connectedAt: joinedAt }),
@@ -1188,7 +1072,8 @@ export function VirtualRoom() {
                   </div>
                 </div>
 
-                {connectError && (
+                {cameraError && <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive">{cameraError}</p>}
+          {connectError && (
                   <p
                     className="mt-5 rounded-xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive"
                     role="alert"
@@ -1202,7 +1087,7 @@ export function VirtualRoom() {
                     <Button
                       size="lg"
                       onClick={join}
-                      disabled={connecting}
+                      disabled={connecting || preflight.checking}
                       className="h-12 gap-2 rounded-xl"
                     >
                       {connecting ? (
@@ -1221,6 +1106,7 @@ export function VirtualRoom() {
                         variant="ghost"
                         size="sm"
                         onClick={joinAudioOnly}
+                        disabled={connecting || preflight.checking}
                         className="text-muted-foreground hover:bg-muted hover:text-foreground"
                       >
                         {t("Unirme solo con audio")}
@@ -1432,6 +1318,7 @@ export function VirtualRoom() {
 
       <div className="flex min-h-0 flex-1">
         <main className="flex min-w-0 flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-5">
+          {cameraError && <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive">{cameraError}</p>}
           {connectError && (
             <p
               className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-[13px] text-destructive shadow-sm"
@@ -1439,44 +1326,6 @@ export function VirtualRoom() {
             >
               {connectError}
             </p>
-          )}
-
-          {screenError && (
-            <p
-              className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-[13px] text-destructive shadow-sm"
-              role="alert"
-            >
-              {screenError}
-            </p>
-          )}
-
-          {remoteScreens.length > 0 && (
-            <div className="flex min-h-0 flex-col gap-2">
-              {remoteScreens.map(({ identity, track }) => (
-                <div
-                  key={`${identity}:${track.sid}`}
-                  className="overflow-hidden rounded-[26px] border border-primary/30 bg-foreground shadow-sm"
-                >
-                  <div className="flex items-center gap-2 border-b border-white/10 px-3.5 py-2">
-                    <ScreenShare className="size-4 text-primary" />
-                    <span className="truncate text-[12px] font-semibold text-background">
-                      {t("Pantalla compartida de {name}", {
-                        name: nameFor(identity, false).name,
-                      })}
-                    </span>
-                  </div>
-                  <div
-                    ref={(el) => {
-                      const map = screenContainersRef.current;
-                      const key = `${identity}:${track.sid}`;
-                      if (el) map.set(key, el);
-                      else map.delete(key);
-                    }}
-                    className="aspect-video w-full bg-black [&_video]:h-full [&_video]:w-full [&_video]:object-contain"
-                  />
-                </div>
-              ))}
-            </div>
           )}
 
           <div
@@ -1538,37 +1387,12 @@ export function VirtualRoom() {
                 <VideoOff className="size-5" />
               )}
             </ControlButton>
-            {screenShareSupported && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (sharingScreen) void stopScreenShare();
-                  else void startScreenShare();
-                }}
-                aria-label={
-                  sharingScreen
-                    ? t("Dejar de compartir")
-                    : t("Compartir pantalla")
-                }
-                aria-pressed={sharingScreen}
-                className={`h-11 gap-1.5 rounded-full border px-4 shadow-sm ${
-                  sharingScreen
-                    ? "border-primary/30 bg-primary/10 text-primary hover:bg-primary/15"
-                    : "border-border bg-background text-foreground hover:bg-muted"
-                }`}
-              >
-                {sharingScreen ? (
-                  <ScreenShareOff className="size-4" />
-                ) : (
-                  <ScreenShare className="size-4" />
-                )}
-                <span className="hidden sm:inline">
-                  {sharingScreen
-                    ? t("Dejar de compartir")
-                    : t("Compartir pantalla")}
-                </span>
-              </Button>
-            )}
+            <Button variant="ghost" disabled={recoveringCamera} onClick={() => void recoverCamera()}
+              className="h-11 gap-1.5 rounded-full border border-border bg-background px-4" aria-label={t("Restablecer cámara")}>
+              {recoveringCamera ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />}
+              {t("Restablecer cámara")}
+            </Button>
+            <RoomDeviceSettings getTracks={getDeviceTracks} version={tracksVersion} disabled={recoveringCamera} />
             {canManage && (
               <Button
                 onClick={finalize}
@@ -1606,6 +1430,7 @@ export function VirtualRoom() {
         canManage={canManage}
         localLabel={localLabel}
         remoteLabels={remoteTiles.map((tile) => ({
+          identity: tile.identity,
           ...nameFor(tile.identity, false),
           connectedAt: tile.connectedAt,
         }))}
