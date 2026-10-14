@@ -290,6 +290,7 @@ export function VirtualRoom() {
   const attachRemoteTrack = useCallback(
     (identity: string, track: TwilioVideo.RemoteTrack) => {
       const list = remoteTracksRef.current.get(identity) ?? [];
+      if (list.includes(track)) return;
       list.push(track);
       remoteTracksRef.current.set(identity, list);
       syncRemoteVideo(identity);
@@ -316,7 +317,7 @@ export function VirtualRoom() {
   const watchParticipant = useCallback(
     (participant: TwilioVideo.Participant) => {
       participant.tracks.forEach((publication) => {
-        if (publication.track && publication.isTrackEnabled) {
+        if (publication.track) {
           const track = publication.track as TwilioVideo.RemoteTrack;
           if (isScreenPublication(publication, track)) {
             addRemoteScreen(participant.identity, track);
@@ -332,7 +333,16 @@ export function VirtualRoom() {
           attachRemoteTrack(participant.identity, track);
         }
       });
-      participant.on("trackEnabled", () => syncRemoteVideo(participant.identity));
+      participant.on("trackEnabled", () => {
+        // Una publicación inicialmente apagada también debe adjuntarse al activarse.
+        participant.tracks.forEach(publication => {
+          const track = publication.track as TwilioVideo.RemoteTrack | undefined;
+          if (!track) return;
+          if (isScreenPublication(publication, track)) addRemoteScreen(participant.identity, track);
+          else attachRemoteTrack(participant.identity, track);
+        });
+        syncRemoteVideo(participant.identity);
+      });
       participant.on("trackDisabled", () => syncRemoteVideo(participant.identity));
       participant.on("trackUnsubscribed", (track, publication) => {
         if (isScreenPublication(publication, track)) {
