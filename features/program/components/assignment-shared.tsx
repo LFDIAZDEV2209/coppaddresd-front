@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { AssignmentState } from "../types/assignments";
 
 export const assignmentLabels: Record<AssignmentState, string> = {
-  proposed: "Propuesta lista", "pending-narrative": "Narrativa en preparación", applied: "Aplicada", edited: "Aplicada con ajuste", dismissed: "Desestimada", fallback: "Asignación automática",
+  proposed: "Lista para revisar", "pending-narrative": "Explicación en preparación", applied: "Aplicada", edited: "Aplicada con ajuste", dismissed: "Descartada", fallback: "Asignación automática",
 };
 
 const assignmentTones: Record<AssignmentState, string> = {

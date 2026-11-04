@@ -34,6 +34,8 @@ export interface AssignmentCondition {
 }
 
 export interface AssignmentProfile {
+  patient?: { name?: string; sex?: string; age?: number };
+  tests?: { code: string; name?: string; score?: number; maximum?: number; qualifier?: string; severity?: string }[];
   conditions?: AssignmentCondition[];
   results?: { testCode: string; code: string; type: string; value: number; severity?: string | null; qualifier?: string | null; maximum?: number | null }[];
   biometrics?: { questionCode: string; value: number; unit?: string; valid?: boolean }[];
@@ -46,7 +48,7 @@ export interface AssignmentProposal {
   routineName?: string | null;
   nutritionPlan?: { id: string; name: string } | null;
   routine?: { id: string; name: string } | null;
-  matchedRules?: { ruleId?: string; ruleCode?: string; conditionCode?: string; reason: string; sourceRef?: string; source_ref?: string; appliesNutrition?: boolean; appliesRoutine?: boolean }[];
+  matchedRules?: { ruleId?: string; ruleCode?: string; conditionCode?: string; reason: string; sourceRef?: string; source_ref?: string; appliesNutrition?: boolean; appliesRoutine?: boolean; criteria?: { sourceRef?: string; safety?: { sourceRef?: string } } }[];
 }
 
 export interface AssignmentDetail extends AssignmentItem {
