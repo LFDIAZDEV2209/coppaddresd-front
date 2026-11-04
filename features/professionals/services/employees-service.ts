@@ -400,6 +400,30 @@ export async function updateProfessionalScopes(
   });
 }
 
+/**
+ * Actualiza el perfil de un empleado (PUT /api/v1/employees/{id}).
+ * Semántica PATCH: los campos omitidos quedan intactos y las listas enviadas
+ * (p. ej. specialtyIds) reemplazan por completo su colección actual.
+ */
+export interface UpdateEmployeeInput {
+  specialtyIds?: string[];
+}
+
+export async function updateEmployee(
+  id: string,
+  input: UpdateEmployeeInput,
+): Promise<EmployeeDetail> {
+  const data = await apiFetch<EmployeeDetail>(
+    `${env.apiUrl}/api/v1/employees/${id}`,
+    { method: "PUT", body: JSON.stringify(input) },
+  );
+  return {
+    ...data,
+    isProfessional: data.professional != null,
+    professionalTypeName: data.professional?.professionalTypeName ?? null,
+  };
+}
+
 // --- Creación masiva de empleados (CSV) ---
 
 /** Fila individual enviada al bulk endpoint. */

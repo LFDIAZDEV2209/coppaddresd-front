@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Activity,
+  BadgeCheck,
   Building2,
   CalendarDays,
   Check,
@@ -13,6 +14,7 @@ import {
   Loader2,
   Mail,
   MailPlus,
+  Pencil,
   Phone,
   ShieldCheck,
   Stethoscope,
@@ -21,6 +23,14 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { InfoItem } from "@/components/ui/info-item";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -47,10 +57,18 @@ import {
   deleteEmployee,
   fetchProfessionalScopes,
   updateProfessionalScopes,
+  updateEmployee,
   type EmployeeDetail,
   type ProfessionalScopes,
 } from "@/features/professionals/services/employees-service";
 import { PROFESSIONAL_CLINICS_ENABLED } from "@/features/professionals/config";
+import {
+  fetchProfessionalTypes,
+  fetchSpecialties,
+  type ProfessionalTypeDto,
+  type SpecialtyDto,
+} from "@/features/professionals/services/professional-catalogs-service";
+import { SPECIALTY_CATEGORIES } from "@/features/professionals/components/wizard/wizard-state";
 import { ProfessionalSchedulesSection } from "./detail/professional-schedules-section";
 import { useBreadcrumbTitle } from "@/components/layout/breadcrumb-provider";
 import { fetchRoles } from "@/features/roles/services/roles-service";
@@ -92,6 +110,15 @@ export function ProfessionalDetail({ id }: { id: string }) {
   const [copiedUserId, setCopiedUserId] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // Especialidades del profesional: borrador del diálogo + catálogo cargado
+  // bajo demanda (el DTO de detalle solo envía los ids, no los nombres).
+  const [specialtyDialogOpen, setSpecialtyDialogOpen] = useState(false);
+  const [specialtyDraft, setSpecialtyDraft] = useState<string[]>([]);
+  const [specialtySaving, setSpecialtySaving] = useState(false);
+  const [specialtyCatalog, setSpecialtyCatalog] = useState<SpecialtyDto[] | null>(null);
+  const [professionalTypeCatalog, setProfessionalTypeCatalog] = useState<
+    ProfessionalTypeDto[] | null
+  >(null);
 
   // Construir el mapa clinicId → roleId desde los roles scoped actuales.
   const mapScopedRoles = useCallback((sc: ProfessionalScopes | null) => {
@@ -173,6 +200,109 @@ export function ProfessionalDetail({ id }: { id: string }) {
   );
 
   const canDelete = can("Employees.Delete");
+  const canEditProfessional = can("Employees.Update");
+
+  // Carga el catálogo de especialidades y tipos profesionales una sola vez
+  // (best-effort: si falla, el diálogo reintenta al abrirse).
+  const loadSpecialtyCatalog = useCallback(async () => {
+    try {
+      const [types, specialties] = await Promise.all([
+        fetchProfessionalTypes(),
+        fetchSpecialties(),
+      ]);
+      setProfessionalTypeCatalog(types);
+      setSpecialtyCatalog(specialties);
+    } catch {
+      setFeedback({
+        kind: "error",
+        message: t("No se pudo cargar el catálogo de especialidades."),
+      });
+    }
+  }, [t]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [types, specialties] = await Promise.all([
+          fetchProfessionalTypes(),
+          fetchSpecialties(),
+        ]);
+        if (!cancelled) {
+          setProfessionalTypeCatalog(types);
+          setSpecialtyCatalog(specialties);
+        }
+      } catch {
+        // Best-effort: el diálogo reintenta la carga al abrirse.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Nombres de las especialidades actuales (el detalle solo trae los ids).
+  const specialtyNames = useMemo(() => {
+    const ids = employee?.professional?.specialtyIds ?? [];
+    if (!specialtyCatalog || ids.length === 0) return [];
+    const byId = new Map(specialtyCatalog.map((s) => [s.id, s.name]));
+    return ids
+      .map((specialtyId) => byId.get(specialtyId))
+      .filter((name): name is string => Boolean(name));
+  }, [employee, specialtyCatalog]);
+
+  // Especialidades válidas para el tipo del profesional (mismo criterio del wizard).
+  const specialtyGroups = useMemo(() => {
+    if (!specialtyCatalog) return [];
+    const type = professionalTypeCatalog?.find(
+      (item) => item.id === employee?.professional?.professionalTypeId,
+    );
+    const validIds = new Set(
+      type?.validSpecialtyIds ?? specialtyCatalog.map((s) => s.id),
+    );
+    const valid = specialtyCatalog.filter((s) => validIds.has(s.id));
+    return SPECIALTY_CATEGORIES.map((category) => ({
+      category,
+      items: valid.filter((s) => s.category === category),
+    })).filter((group) => group.items.length > 0);
+  }, [specialtyCatalog, professionalTypeCatalog, employee]);
+
+  const openSpecialtyEditor = () => {
+    setSpecialtyDraft(employee?.professional?.specialtyIds ?? []);
+    setSpecialtyDialogOpen(true);
+    if (!specialtyCatalog || !professionalTypeCatalog) {
+      void loadSpecialtyCatalog();
+    }
+  };
+
+  const toggleSpecialty = (specialtyId: string) => {
+    setSpecialtyDraft((prev) =>
+      prev.includes(specialtyId)
+        ? prev.filter((id) => id !== specialtyId)
+        : [...prev, specialtyId],
+    );
+  };
+
+  const saveSpecialties = async () => {
+    if (!employee) return;
+    setSpecialtySaving(true);
+    try {
+      await updateEmployee(employee.id, { specialtyIds: specialtyDraft });
+      setSpecialtyDialogOpen(false);
+      setFeedback({ kind: "ok", message: t("Especialidades actualizadas.") });
+      await load();
+    } catch (err) {
+      setFeedback({
+        kind: "error",
+        message:
+          err instanceof ApiError
+            ? err.message
+            : t("No se pudieron actualizar las especialidades."),
+      });
+    } finally {
+      setSpecialtySaving(false);
+    }
+  };
 
   const onInvite = async () => {
     setBusy(true);
@@ -721,6 +851,42 @@ export function ProfessionalDetail({ id }: { id: string }) {
                     value={employee.professionalTypeName}
                     icon={Stethoscope}
                   />
+                  {employee.professional && (
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                          {t("Especialidades")}
+                        </p>
+                        {canEditProfessional && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={openSpecialtyEditor}
+                          >
+                            <Pencil data-icon="inline-start" />
+                            {t("Editar especialidades")}
+                          </Button>
+                        )}
+                      </div>
+                      {specialtyNames.length > 0 ? (
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {specialtyNames.map((name) => (
+                            <span
+                              key={name}
+                              className="inline-flex items-center rounded-full border border-border bg-muted/40 px-3 py-1.5 text-[12.5px] font-medium"
+                            >
+                              {name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-1.5 text-[12.5px] text-muted-foreground">
+                          {t("Sin especialidades")}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <p className="text-[12px] text-muted-foreground">
                     {t(
                       "El profesional puede completar su perfil y credenciales desde su propio acceso.",
@@ -746,6 +912,91 @@ export function ProfessionalDetail({ id }: { id: string }) {
           )}
         </div>
       </div>
+
+      {/* Edición de las especialidades del profesional (PUT /api/v1/employees/{id}). */}
+      <Dialog
+        open={specialtyDialogOpen}
+        onOpenChange={(open) => {
+          if (!specialtySaving) {
+            setSpecialtyDialogOpen(open);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("Especialidades del profesional")}</DialogTitle>
+            <DialogDescription>
+              {t("Selecciona las especialidades que atiende este profesional.")}
+            </DialogDescription>
+          </DialogHeader>
+          {specialtyCatalog ? (
+            <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
+              {specialtyGroups.length > 0 ? (
+                specialtyGroups.map((group) => (
+                  <div key={group.category}>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                      {group.category}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {group.items.map((specialty) => {
+                        const active = specialtyDraft.includes(specialty.id);
+                        return (
+                          <button
+                            key={specialty.id}
+                            type="button"
+                            onClick={() => toggleSpecialty(specialty.id)}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
+                              active
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border hover:border-primary/40"
+                            }`}
+                          >
+                            {active && <BadgeCheck className="size-3.5" />}
+                            {specialty.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[12.5px] text-muted-foreground">
+                  {t("Sin especialidades")}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-[12.5px] text-muted-foreground">{t("Cargando...")}</p>
+          )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSpecialtyDialogOpen(false)}
+              disabled={specialtySaving}
+            >
+              {t("Cancelar")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void saveSpecialties()}
+              disabled={specialtySaving || !specialtyCatalog}
+            >
+              {specialtySaving ? (
+                <>
+                  <Loader2 className="animate-spin" data-icon="inline-start" />
+                  {t("Guardando...")}
+                </>
+              ) : (
+                <>
+                  <Check data-icon="inline-start" />
+                  {t("Guardar especialidades")}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmación de la eliminación lógica del perfil. */}
       <AlertDialog

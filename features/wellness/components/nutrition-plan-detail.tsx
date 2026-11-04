@@ -15,18 +15,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { NutritionPlan, MealType } from "../types";
 import { PLAN_STATUS_LABELS } from "../services/nutrition-plans-service";
+import { NutritionPlanReview } from "./nutrition-plan-review";
 
 interface NutritionPlanDetailDialogProps {
   planId: string | null;
   onClose: () => void;
   getPlan: (id: string) => Promise<NutritionPlan | null>;
+  onApproved?: () => void;
 }
 
 const MEAL_LABELS: Record<MealType, string> = {
   Desayuno: "Desayuno",
   Almuerzo: "Almuerzo",
   Cena: "Cena",
-  Snack: "Snack",
+  Snack: "Merienda",
 };
 
 const MEAL_COLORS: Record<MealType, string> = {
@@ -40,6 +42,7 @@ export function NutritionPlanDetailDialog({
   planId,
   onClose,
   getPlan,
+  onApproved,
 }: NutritionPlanDetailDialogProps) {
   const t = useT();
   const [plan, setPlan] = useState<NutritionPlan | null>(null);
@@ -107,7 +110,7 @@ export function NutritionPlanDetailDialog({
 
   return (
     <Dialog open={Boolean(planId)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[85vh] max-w-2xl min-w-[700px]">
+      <DialogContent className="max-h-[85vh] w-[calc(100vw-2rem)] max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Apple className="size-5" />
@@ -119,6 +122,7 @@ export function NutritionPlanDetailDialog({
           <DetailSkeleton />
         ) : plan ? (
           <div className="flex flex-col gap-4 overflow-y-auto pr-2 max-h-[60vh]">
+            <NutritionPlanReview plan={plan} onApproved={updated => { setPlan(updated); onApproved?.(); }} />
             {/* Info básica */}
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
@@ -199,7 +203,7 @@ export function NutritionPlanDetailDialog({
                             >
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs font-bold uppercase">
-                                  {MEAL_LABELS[meal.mealType]}
+                                  {t(MEAL_LABELS[meal.mealType])}
                                 </span>
                                 {meal.calories && (
                                   <Badge variant="outline" className="text-xs">

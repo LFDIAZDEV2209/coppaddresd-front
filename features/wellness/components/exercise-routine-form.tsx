@@ -47,6 +47,7 @@ import {
   generatePlan,
   mapExercisePayloadToForm,
 } from "../services/generate-plan-service";
+import { ExerciseMediaPicker } from "./exercise-media-picker";
 
 interface ExerciseRoutineFormDialogProps {
   open: boolean;
@@ -93,6 +94,7 @@ interface ExerciseFormData {
   rpe: string;
   tips: string;
   notes: string;
+  mediaId: string;
 }
 
 const EMPTY_EXERCISE: ExerciseFormData = {
@@ -109,6 +111,7 @@ const EMPTY_EXERCISE: ExerciseFormData = {
   rpe: "",
   tips: "",
   notes: "",
+  mediaId: "",
 };
 
 export function ExerciseRoutineFormFields({
@@ -141,6 +144,10 @@ export function ExerciseRoutineFormFields({
   const [cooldownNotes, setCooldownNotes] = useState("");
   const [exercises, setExercises] = useState<ExerciseFormData[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(Boolean(routine));
+  const [detailError, setDetailError] = useState(false);
+  const [detailAttempt, setDetailAttempt] = useState(0);
+  const [routineMediaId, setRoutineMediaId] = useState<string | null>(null);
+  const [mediaUploads, setMediaUploads] = useState(0);
 
   // Estado del picker de paciente + generación con IA (solo en creación)
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
@@ -188,6 +195,14 @@ export function ExerciseRoutineFormFields({
       .then((full) => {
         if (cancelled) return;
         if (full) {
+          setName(full.name);
+          setDescription(full.description ?? "");
+          setDifficulty(full.difficulty);
+          setEstimatedMinutes(full.estimatedMinutes?.toString() ?? "");
+          setCategory(full.category);
+          setStatus(full.status);
+          setRoutineMediaId(full.mediaId);
+          setDetailError(false);
           setTargetMuscles(full.targetMuscles ?? "");
           setEquipment(full.equipment ?? "");
           setWarmupNotes(full.warmupNotes ?? "");
@@ -209,11 +224,12 @@ export function ExerciseRoutineFormFields({
                 rpe: e.rpe?.toString() ?? "",
                 tips: e.tips ?? "",
                 notes: "",
+                mediaId: e.mediaId ?? "",
               })),
           );
-        }
+        } else setDetailError(true);
       })
-      .catch(() => {})
+      .catch(() => { if (!cancelled) setDetailError(true); })
       .finally(() => {
         if (!cancelled) setLoadingDetail(false);
       });
@@ -221,7 +237,7 @@ export function ExerciseRoutineFormFields({
     return () => {
       cancelled = true;
     };
-  }, [routine]);
+  }, [routine, detailAttempt]);
 
   const addExercise = () => {
     setExercises((prev) => [...prev, { ...EMPTY_EXERCISE }]);
@@ -288,7 +304,7 @@ export function ExerciseRoutineFormFields({
       setEquipment(values.equipment);
       setWarmupNotes(values.warmupNotes);
       setCooldownNotes(values.cooldownNotes);
-      setExercises(values.exercises);
+      setExercises(values.exercises.map((exercise) => ({ ...exercise, mediaId: "" })));
     } catch (err) {
       setGenerateError(
         err instanceof ApiError
@@ -301,7 +317,7 @@ export function ExerciseRoutineFormFields({
   };
 
   const handleSubmit = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || loadingDetail || detailError || mediaUploads > 0) return;
 
     const exercisesInput: RoutineExerciseInput[] = exercises
       .filter((ex) => ex.name.trim())
@@ -318,7 +334,7 @@ export function ExerciseRoutineFormFields({
         tempo: ex.tempo.trim() || null,
         rpe: ex.rpe ? parseInt(ex.rpe, 10) : null,
         tips: ex.tips.trim() || null,
-        mediaId: null,
+        mediaId: ex.mediaId || null,
         sortOrder: idx,
       }));
 
@@ -336,7 +352,7 @@ export function ExerciseRoutineFormFields({
         equipment: equipment.trim() || null,
         warmupNotes: warmupNotes.trim() || null,
         cooldownNotes: cooldownNotes.trim() || null,
-        mediaId: null,
+        mediaId: routineMediaId,
         patientId: selectedPatientId ?? undefined,
         exercises: exercisesInput.length > 0 ? exercisesInput : null,
       },
@@ -351,7 +367,15 @@ export function ExerciseRoutineFormFields({
   };
 
   return (
-    <div className="flex flex-col gap-5 px-6 py-5">
+    <div className="flex flex-col gap-6 px-4 py-5 sm:px-6">
+      <div className="rounded-xl border border-border bg-primary-soft px-4 py-4">
+        <p className="text-sm font-semibold text-foreground">{t("Una rutina clara, ejercicio por ejercicio")}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("Define la técnica, la intensidad y una demostración visual para que el paciente sepa cómo moverse.")}</p>
+      </div>
+      {detailError && <div role="alert" className="flex flex-col gap-2 rounded-xl border border-destructive p-4">
+        <p className="text-sm text-destructive">{t("No se pudo cargar la rutina. Vuelve a intentarlo antes de guardar.")}</p>
+        <Button type="button" variant="outline" onClick={() => { setLoadingDetail(true); setDetailAttempt((value) => value + 1); }}>{t("Reintentar")}</Button>
+      </div>}
       <div className="flex flex-col gap-4">
         {/* Paciente (opcional) + generación con IA — solo en creación.
             Al guardar con paciente, la rutina nace activa y se asigna
@@ -473,13 +497,13 @@ export function ExerciseRoutineFormFields({
                   value={category}
                   onValueChange={(v) => setCategory(v as RoutineCategory)}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger aria-label={t("Categoría")}>
+                    <SelectValue>{t(CATEGORY_OPTIONS.find((option) => option.value === category)?.label ?? category)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {CATEGORY_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
+                        {t(opt.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -491,13 +515,13 @@ export function ExerciseRoutineFormFields({
                   value={difficulty}
                   onValueChange={(v) => setDifficulty(v as RoutineDifficulty)}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger aria-label={t("Dificultad")}>
+                    <SelectValue>{t(DIFFICULTY_OPTIONS.find((option) => option.value === difficulty)?.label ?? difficulty)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {DIFFICULTY_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
+                        {t(opt.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -520,13 +544,13 @@ export function ExerciseRoutineFormFields({
                   value={status}
                   onValueChange={(v) => setStatus(v as NutritionPlanStatus)}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger aria-label={t("Estado")}>
+                    <SelectValue>{t(PLAN_STATUS_LABELS[status])}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {PLAN_STATUSES.map((s) => (
                       <SelectItem key={s} value={s}>
-                        {PLAN_STATUS_LABELS[s]}
+                        {t(PLAN_STATUS_LABELS[s])}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -604,7 +628,7 @@ export function ExerciseRoutineFormFields({
               {exercises.map((exercise, index) => (
                 <div
                   key={index}
-                  className="flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-3"
+                  className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm"
                 >
                   <div className="flex items-center gap-2">
                     <GripVertical className="size-4 text-muted-foreground" />
@@ -616,8 +640,9 @@ export function ExerciseRoutineFormFields({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-6"
-                        disabled={index === 0}
+                        className="size-10"
+                        aria-label={t("Mover ejercicio arriba")}
+                        disabled={index === 0 || mediaUploads > 0}
                         onClick={() => moveExercise(index, -1)}
                       >
                         ↑
@@ -626,8 +651,9 @@ export function ExerciseRoutineFormFields({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-6"
-                        disabled={index === exercises.length - 1}
+                        className="size-10"
+                        aria-label={t("Mover ejercicio abajo")}
+                        disabled={index === exercises.length - 1 || mediaUploads > 0}
                         onClick={() => moveExercise(index, 1)}
                       >
                         ↓
@@ -636,7 +662,9 @@ export function ExerciseRoutineFormFields({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-6 text-destructive"
+                        className="size-10 text-destructive"
+                        aria-label={t("Eliminar ejercicio")}
+                        disabled={mediaUploads > 0}
                         onClick={() => removeExercise(index)}
                       >
                         <Trash2 className="size-3" />
@@ -645,111 +673,114 @@ export function ExerciseRoutineFormFields({
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <Input
-                      placeholder={t("Nombre del ejercicio *")}
+                      aria-label={t("Nombre del ejercicio *")} placeholder={t("Nombre del ejercicio *")}
                       value={exercise.name}
                       onChange={(e) =>
                         updateExercise(index, "name", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
-                      placeholder={t("Descripción")}
+                      aria-label={t("Descripción")} placeholder={t("Descripción")}
                       value={exercise.description}
                       onChange={(e) =>
                         updateExercise(index, "description", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
                       type="number"
-                      placeholder={t("Series")}
+                      aria-label={t("Series")} placeholder={t("Series")}
                       value={exercise.sets}
                       onChange={(e) =>
                         updateExercise(index, "sets", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
                       type="number"
-                      placeholder={t("Repeticiones")}
+                      aria-label={t("Repeticiones")} placeholder={t("Repeticiones")}
                       value={exercise.repetitions}
                       onChange={(e) =>
                         updateExercise(index, "repetitions", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
                       type="number"
-                      placeholder={t("Descanso (seg)")}
+                      aria-label={t("Descanso (seg)")} placeholder={t("Descanso (seg)")}
                       value={exercise.restSeconds}
                       onChange={(e) =>
                         updateExercise(index, "restSeconds", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
                       type="number"
-                      placeholder={t("Duración (seg)")}
+                      aria-label={t("Duración (seg)")} placeholder={t("Duración (seg)")}
                       value={exercise.durationSecs}
                       onChange={(e) =>
                         updateExercise(index, "durationSecs", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
                       type="number"
                       step="0.5"
-                      placeholder={t("Peso (kg)")}
+                      aria-label={t("Peso (kg)")} placeholder={t("Peso (kg)")}
                       value={exercise.weightKg}
                       onChange={(e) =>
                         updateExercise(index, "weightKg", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
-                      placeholder={t("Músculo objetivo")}
+                      aria-label={t("Músculo objetivo")} placeholder={t("Músculo objetivo")}
                       value={exercise.targetMuscle}
                       onChange={(e) =>
                         updateExercise(index, "targetMuscle", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
-                      placeholder={t("Equipamiento")}
+                      aria-label={t("Equipamiento")} placeholder={t("Equipamiento")}
                       value={exercise.equipment}
                       onChange={(e) =>
                         updateExercise(index, "equipment", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
-                      placeholder={t("Tempo (ej: 2-1-2)")}
+                      aria-label={t("Tempo (ej: 2-1-2)")} placeholder={t("Tempo (ej: 2-1-2)")}
                       value={exercise.tempo}
                       onChange={(e) =>
                         updateExercise(index, "tempo", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
                       type="number"
                       min={1}
                       max={10}
-                      placeholder={t("RPE (1-10)")}
+                      aria-label={t("RPE (1-10)")} placeholder={t("RPE (1-10)")}
                       value={exercise.rpe}
                       onChange={(e) =>
                         updateExercise(index, "rpe", e.target.value)
                       }
-                      className="h-8 text-sm"
+                      className="min-h-11 text-sm"
                     />
                     <Input
-                      placeholder={t("Tips de forma")}
+                      aria-label={t("Tips de forma")} placeholder={t("Tips de forma")}
                       value={exercise.tips}
                       onChange={(e) =>
                         updateExercise(index, "tips", e.target.value)
                       }
-                      className="h-8 text-sm sm:col-span-2"
+                      className="min-h-11 text-sm sm:col-span-2"
                     />
                    </div>
+                   <ExerciseMediaPicker value={exercise.mediaId} exerciseName={exercise.name} disabled={saving || generating}
+                     onChange={(id) => updateExercise(index, "mediaId", id)}
+                     onBusyChange={(busy) => setMediaUploads((count) => Math.max(0, count + (busy ? 1 : -1)))} />
                  </div>
                ))}
             </div>
@@ -760,14 +791,14 @@ export function ExerciseRoutineFormFields({
           type="button"
           variant="outline"
           onClick={onCancel}
-          disabled={saving}
+          disabled={saving || mediaUploads > 0}
         >
           {t("Cancelar")}
         </Button>
         <Button
           type="button"
           onClick={handleSubmit}
-          disabled={saving || !name.trim()}
+          disabled={saving || !name.trim() || loadingDetail || detailError || mediaUploads > 0}
         >
           {saving
             ? t("Guardando...")
@@ -796,7 +827,7 @@ export function ExerciseRoutineFormDialog({
   const t = useT();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden p-0">
+      <DialogContent className="max-h-[90vh] w-[92vw] max-w-3xl overflow-hidden p-0 sm:max-w-4xl">
         <DialogHeader className="px-6 pb-1 pt-5">
           <DialogTitle>
             {routine

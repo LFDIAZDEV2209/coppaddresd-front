@@ -183,6 +183,15 @@ function MediaReferencesContent({ mediaId }: { mediaId: string }) {
       </div>
 
       {/* Semanas de pacientes (TasksSnapshot) */}
+      {(refs.routineReferences?.length ?? 0) > 0 && <section className="flex flex-col gap-2">
+        <p className="text-xs font-semibold">{t("Rutinas y ejercicios")}</p>
+        <ul className="flex flex-col gap-2">
+          {refs.routineReferences!.map((ref) => <li key={`${ref.routineId}:${ref.exerciseId ?? "cover"}`}
+            className="rounded-lg border border-border p-3 text-xs">
+            <strong>{ref.routineName}</strong>{ref.exerciseName && <span> · {ref.exerciseName}</span>}
+          </li>)}
+        </ul>
+      </section>}
       <div className="flex flex-col gap-2">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
           <User className="size-3.5 text-primary" />

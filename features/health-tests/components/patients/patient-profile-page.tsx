@@ -1158,14 +1158,14 @@ function PatientIaSection({
           icon={Sparkles}
           variant="primary"
         />
-        <div className="relative overflow-hidden bg-gradient-to-br from-[var(--sidebar)] via-[color-mix(in_srgb,var(--sidebar)_92%,var(--primary))] to-[color-mix(in_srgb,var(--sidebar)_88%,var(--primary))] p-5 sm:p-6">
+        <div className="relative overflow-hidden bg-muted/40 p-5 sm:p-6">
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-white/10 blur-2xl"
+            className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-primary/5 blur-2xl"
           />
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              {/* Anillo AHS con texto blanco para contraste sobre navy */}
+              {/* Anillo AHS sobre fondo claro */}
               {(() => {
                 const size = 92;
                 const stroke = 8;
@@ -1191,7 +1191,8 @@ function PatientIaSection({
                         cy={size / 2}
                         r={r}
                         fill="none"
-                        stroke="rgba(255,255,255,0.15)"
+                        stroke="currentColor"
+            className="text-border"
                         strokeWidth={stroke}
                       />
                       <circle
@@ -1209,26 +1210,26 @@ function PatientIaSection({
                         }}
                       />
                     </svg>
-                    <span className="absolute text-[15px] font-extrabold tracking-tight text-white">
+                    <span className="absolute text-[15px] font-extrabold tracking-tight text-foreground">
                       {pct}%
                     </span>
                   </div>
                 );
               })()}
               <div className="flex flex-col gap-1.5">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-white/70">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
                   <Sparkles className="size-3" />
                   {t("Perfil Copp Adresd · IA")}
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur">
+                  <span className="rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-bold text-foreground">
                     AHS {profile.ahs}/100 · {t(profile.summary)}
                   </span>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--sidebar)]">
+                  <span className="rounded-full bg-[var(--sidebar)] px-2.5 py-1 text-[11px] font-bold text-white">
                     {t(profile.condition)}
                   </span>
                 </div>
-                <p className="max-w-md text-[12px] leading-relaxed text-white/80">
+                <p className="max-w-md text-[12px] leading-relaxed text-muted-foreground">
                   {t(
                     "Análisis generado con los {n} tests completados de {name}.",
                     {
@@ -1240,13 +1241,13 @@ function PatientIaSection({
               </div>
             </div>
             <div className="hidden shrink-0 flex-col items-end gap-2 sm:flex">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-white/60">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("Paciente")}
               </span>
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-bold text-foreground">
                 {fullName(patient.firstName, patient.lastName)}
               </span>
-              <span className="text-[11px] text-white/70">
+              <span className="text-[11px] text-muted-foreground">
                 {patient.age > 0 ? `${patient.age} ${t("años")} · ` : ""}
                 {patient.gender}
               </span>
@@ -1257,7 +1258,7 @@ function PatientIaSection({
             {profile.chips.map((c) => (
               <span
                 key={c.text}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.18] px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur border border-white/20"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-semibold text-foreground"
               >
                 <span className="text-[11px]">{c.ico}</span>
                 {t(c.text)}

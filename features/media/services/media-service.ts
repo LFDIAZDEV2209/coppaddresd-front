@@ -137,8 +137,7 @@ export async function cleanupOrphanedBlobs(input: {
  */
 export function hasPublishableMetadata(item: MediaItem): boolean {
   return (
-    item.durationSecs !== null &&
-    item.durationSecs > 0 &&
+    (item.mediaType === "Image" || (item.durationSecs !== null && item.durationSecs > 0)) &&
     Boolean(item.contentType)
   );
 }
@@ -165,7 +164,7 @@ export async function deleteMediaItem(id: string): Promise<void> {
 }
 
 export function getMediaTypes(): MediaItem["mediaType"][] {
-  return ["Podcast", "Video", "Audio"];
+  return ["Podcast", "Video", "Audio", "Image"];
 }
 
 export function getMediaStatuses(): MediaItem["status"][] {

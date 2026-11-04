@@ -1,11 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Inter,
-  Plus_Jakarta_Sans,
-  Geist_Mono,
-  IBM_Plex_Sans,
-  IBM_Plex_Mono,
-} from "next/font/google";
+import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -17,34 +11,49 @@ import "./globals.css";
 /* Línea visual COPP-ADRESD: Plus Jakarta Sans para display/headings, Inter
    para UI/cuerpo (mejor legibilidad en tablas y densidad de datos), Geist Mono
    intacto para código y cifras monoespaciadas. */
-const plusJakarta = Plus_Jakarta_Sans({
+const plusJakarta = localFont({
+  src: "./fonts/plus-jakarta-sans.woff2",
   variable: "--font-plus-jakarta",
-  subsets: ["latin"],
+  weight: "200 800",
+  style: "normal",
 });
 
-const inter = Inter({
+const inter = localFont({
+  src: "./fonts/inter.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
+  weight: "100 900",
+  style: "normal",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/geist-mono.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: "100 900",
+  style: "normal",
 });
 
 /* Tipografía IBM Plex (Carbon). Se cargan aquí pero SOLO se aplican dentro
    de app/(dashboard)/health-tests (ver ese layout), para evaluar el look
    del módulo sin afectar al resto del ERP. */
-const plexSans = IBM_Plex_Sans({
+const plexSans = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-sans.woff2", weight: "400" },
+    { path: "./fonts/ibm-plex-sans.woff2", weight: "500" },
+    { path: "./fonts/ibm-plex-sans.woff2", weight: "600" },
+    { path: "./fonts/ibm-plex-sans.woff2", weight: "700" },
+  ],
   variable: "--font-plex",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  style: "normal",
 });
 
-const plexMono = IBM_Plex_Mono({
+const plexMono = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-mono-400.woff2", weight: "400" },
+    { path: "./fonts/ibm-plex-mono-500.woff2", weight: "500" },
+    { path: "./fonts/ibm-plex-mono-600.woff2", weight: "600" },
+  ],
   variable: "--font-plex-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  style: "normal",
 });
 
 export const metadata: Metadata = {

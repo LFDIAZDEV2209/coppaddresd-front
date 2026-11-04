@@ -52,6 +52,7 @@ import {
 } from "../services/nutrition-plans-service";
 import { NutritionPlanFormDialog } from "./nutrition-plan-form";
 import { NutritionPlanDetailDialog } from "./nutrition-plan-detail";
+import { NutritionPlanBulkReview } from "./nutrition-plan-bulk-review";
 import type { NutritionPlanListItem } from "../types";
 
 export function NutritionPlansPage() {
@@ -218,6 +219,10 @@ export function NutritionPlansPage() {
         </div>
       </section>
 
+      {result && !loading && can("NutritionPlans.Approve") ? <NutritionPlanBulkReview
+        key={`${filters.search}-${filters.isTemplate}-${filters.status}-${result.page}`}
+        plans={result.data} onReview={setDetails} onApproved={retry} /> : null}
+
       {/* Contenido */}
       {loading ? (
         <PlansSkeleton />
@@ -285,7 +290,10 @@ export function NutritionPlansPage() {
                     </TableCell>
                     <TableCell>
                       <Badge className={statusColor(plan.status)}>
-                        {PLAN_STATUS_LABELS[plan.status] ?? plan.status}
+                        {!plan.isTemplate && plan.reviewStatus !== "approved"
+                          ? plan.generationStatus === "queued" || plan.generationStatus === "generating" ? t("Generando borrador")
+                            : plan.generationStatus === "failed" ? t("Generación pendiente") : t("Pendiente de revisión")
+                          : t(PLAN_STATUS_LABELS[plan.status] ?? plan.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
@@ -395,7 +403,7 @@ export function NutritionPlansPage() {
         onOpenChange={setFormOpen}
         onSubmit={save}
         onCreated={(patientName) =>
-          setCreatedMessage(t("Plan creado y asignado a {patientName}", { patientName }))
+          setCreatedMessage(t("Borrador creado para {patientName}. Pendiente de aprobación.", { patientName }))
         }
       />
 
@@ -404,6 +412,7 @@ export function NutritionPlansPage() {
         planId={details?.id ?? null}
         onClose={() => setDetails(undefined)}
         getPlan={getPlan}
+        onApproved={retry}
       />
 
       {/* Confirmar clonación */}
