@@ -26,6 +26,7 @@ import {
   ASSIGNMENT_STATUS_OPTIONS,
   fetchPatientsForPicker,
   fetchRoutinesForPicker,
+  createRoutineAssignment,
   createNutritionPlanAssignment,
 } from "../services/assignments-service";
 
@@ -181,8 +182,8 @@ export function AssignmentFormFields({
           assignment.id,
         );
       } else {
-        if (assignmentType === "routine" && onSubmit) {
-          await onSubmit({
+        if (assignmentType === "routine") {
+          const input: CreateRoutineAssignmentInput = {
             patientId,
             routineId: routineId!,
             startDate: new Date(startDate).toISOString(),
@@ -190,7 +191,9 @@ export function AssignmentFormFields({
             frequency,
             status,
             notes: notes.trim() || null,
-          });
+          };
+          if (onSubmit) await onSubmit(input);
+          else await createRoutineAssignment(input);
         } else {
           await createNutritionPlanAssignment({
             patientId,
