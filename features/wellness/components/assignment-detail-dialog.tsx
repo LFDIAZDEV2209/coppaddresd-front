@@ -5,11 +5,11 @@ import { Dumbbell, Apple, Clock, Flame } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
+  DialogBody,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -89,8 +89,8 @@ export function AssignmentDetailDialog({ assignment, onClose }: Props) {
       open={Boolean(assignment)}
       onOpenChange={(open) => !open && onClose()}
     >
-      <DialogContent className="max-w-2xl max-h-[85vh] min-w-[700px]">
-        <DialogHeader>
+      <DialogContent size="lg" className="gap-0 overflow-hidden p-0">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="flex items-center gap-2">
             {assignment.type === "routine" ? (
               <Dumbbell className="size-5 text-blue-600" />
@@ -104,7 +104,7 @@ export function AssignmentDetailDialog({ assignment, onClose }: Props) {
             {t("Asignada a {patientName}", { patientName: assignment.patientName ?? "—" })}
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[60vh] pr-4">
+        <DialogBody>
           {loading ? (
             <DetailSkeleton />
           ) : assignment.type === "routine" ? (
@@ -112,7 +112,7 @@ export function AssignmentDetailDialog({ assignment, onClose }: Props) {
           ) : (
             <PlanDetail assignment={assignment} plan={plan} />
           )}
-        </ScrollArea>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

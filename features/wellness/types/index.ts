@@ -179,6 +179,7 @@ export interface RoutineExercise {
   rpe: number | null;
   tips: string | null;
   mediaId: string | null;
+  referenceVideo?: { embedUrl: string; sourceUrl: string; author: string } | null;
   sortOrder: number;
 }
 

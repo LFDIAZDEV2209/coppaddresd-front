@@ -985,7 +985,7 @@ export function NutritionPlanFormDialog({
   const t = useT();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl min-w-[700px] overflow-hidden p-0">
+      <DialogContent size="lg" className="max-h-[calc(100dvh-2rem)] overflow-hidden p-0">
         <DialogHeader className="px-6 pb-1 pt-5">
           <DialogTitle>
             {plan
@@ -998,7 +998,7 @@ export function NutritionPlanFormDialog({
               : t("Crea un nuevo plan nutricional con sus días y comidas.")}
           </DialogDescription>
         </DialogHeader>
-        <div className="max-h-[calc(90vh-8rem)] overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           <NutritionPlanFormFields
             plan={plan}
             saving={saving}

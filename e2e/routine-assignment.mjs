@@ -26,16 +26,16 @@ try{
    return reply({detail:'La rutina debe asignarse mediante routine-assignments.'},422);
   }
   if(p==='/api/v1/patients')return reply({data:[{id:patientId,firstName:'Paciente',lastName:'QA',email:'paciente@example.invalid'}],total:1,page:1,pageSize:10,totalPages:1});
+  if(p==='/api/v1/wellness/exercise-routines/'+routineId)return reply(routine);
   if(p==='/api/v1/wellness/exercise-routines')return reply({data:[routine],total:1,page:1,pageSize:10,totalPages:1});
   if(p==='/api/v1/wellness/routine-assignments')return reply({data:assignments,total:assignments.length,page:1,pageSize:100,totalPages:1});
   if(p==='/api/v1/wellness/nutrition-plan-assignments'||p==='/api/v1/wellness/nutrition-plans')return reply({data:[],total:0,page:1,pageSize:100,totalPages:0});
   return reply({},404);
  });
- await page.goto(origin+'/wellness/assignments/new');
+ await page.goto(origin+'/wellness/assignments/new?routineId='+routineId);
+ await expect(page.getByText(routine.name,{exact:true})).toBeVisible();
  await page.getByPlaceholder('Buscar paciente por nombre...', {exact:true}).fill('Paciente QA');
  await page.getByRole('button',{name:/Paciente QA paciente@example.invalid/}).click();
- await page.getByPlaceholder('Buscar rutina por nombre...', {exact:true}).fill('Rutina existente');
- await page.getByRole('button',{name:/Rutina existente con vídeo QA/}).click();
  await page.locator('#start-date').fill('2026-11-04');await page.locator('#end-date').fill('2026-11-25');
  const response=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().includes('/api/v1/wellness/'));
  await page.getByRole('button',{name:'Crear asignación',exact:true}).click();await response;

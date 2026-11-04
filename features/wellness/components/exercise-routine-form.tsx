@@ -827,7 +827,7 @@ export function ExerciseRoutineFormDialog({
   const t = useT();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] w-[92vw] max-w-3xl overflow-hidden p-0 sm:max-w-4xl">
+      <DialogContent size="lg" className="overflow-hidden p-0">
         <DialogHeader className="px-6 pb-1 pt-5">
           <DialogTitle>
             {routine
@@ -840,12 +840,15 @@ export function ExerciseRoutineFormDialog({
               : t("Crea una nueva rutina con sus ejercicios.")}
           </DialogDescription>
         </DialogHeader>
-        <div className="max-h-[calc(90vh-8rem)] overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           <ExerciseRoutineFormFields
             routine={routine}
             saving={saving}
             onCancel={() => onOpenChange(false)}
-            onSubmit={onSubmit}
+            onSubmit={async (input, id) => {
+              await onSubmit(input, id);
+              onOpenChange(false);
+            }}
             onCreated={onCreated}
           />
         </div>

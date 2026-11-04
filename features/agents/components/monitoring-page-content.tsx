@@ -228,7 +228,7 @@ export function MonitoringPageContent() {
       )}
 
       <Dialog open={detail !== null} onOpenChange={(open) => !open && setDetail(null)}>
-        <DialogContent className="max-h-[92vh] min-w-[700px] max-w-3xl overflow-y-auto p-0">
+        <DialogContent className="max-h-[92vh] min-w-0 max-w-3xl overflow-y-auto p-0">
           <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
             <DialogTitle className="text-base font-semibold">
               {t('Ejecución {id}', { id: detail?.id.slice(0, 8) ?? '' })}

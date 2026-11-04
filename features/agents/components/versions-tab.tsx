@@ -181,7 +181,7 @@ export function VersionsTab({
       )}
 
       <Dialog open={viewing !== null} onOpenChange={(open) => !open && setViewing(null)}>
-        <DialogContent className="max-h-[92vh] min-w-[640px] max-w-2xl overflow-y-auto p-0">
+        <DialogContent className="max-h-[92vh] min-w-0 max-w-2xl overflow-y-auto p-0">
           <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
             <DialogTitle className="text-base font-semibold">
               {t('Configuración de v{version}', { version: String(viewing?.versionNumber ?? '') })}

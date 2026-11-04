@@ -32,6 +32,7 @@ import {
 
 interface AssignmentFormFieldsProps {
   assignment?: RoutineAssignment;
+  initialRoutine?: { id: string; name: string };
   saving?: boolean;
   onCancel: () => void;
   onSubmit?: (
@@ -49,6 +50,7 @@ interface PickerItem {
 
 export function AssignmentFormFields({
   assignment,
+  initialRoutine,
   saving: savingProp,
   onCancel,
   onSubmit,
@@ -67,10 +69,10 @@ export function AssignmentFormFields({
     assignment?.patientName ?? "",
   );
   const [routineId, setRoutineId] = useState<string | null>(
-    assignment?.routineId ?? null,
+    assignment?.routineId ?? initialRoutine?.id ?? null,
   );
   const [routineLabel, setRoutineLabel] = useState(
-    assignment?.routineName ?? "",
+    assignment?.routineName ?? initialRoutine?.name ?? "",
   );
   const [assignmentType, setAssignmentType] = useState<"routine" | "nutrition">(
     "routine",
@@ -220,12 +222,13 @@ export function AssignmentFormFields({
             <div className="flex flex-col gap-1.5">
               <Label>{t("Paciente")} *</Label>
               {patientId && patientLabel ? (
-                <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">
+                <div className="flex min-h-11 items-center gap-3 rounded-md border border-input bg-muted px-3 py-1 text-sm">
                   {patientLabel}
                   {!isEditing && (
                     <button
                       type="button"
-                      className="ml-auto text-muted-foreground hover:text-foreground"
+                      aria-label={t("Quitar selección")}
+                      className="ml-auto flex size-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
                       onClick={() => {
                         setPatientId(null);
                         setPatientLabel("");
@@ -327,12 +330,13 @@ export function AssignmentFormFields({
                   : t("Plan de alimentación *")}
               </Label>
               {routineId && routineLabel ? (
-                <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">
-                  {routineLabel}
+                <div className="flex min-h-11 items-center gap-3 rounded-md border border-input bg-muted px-3 py-1 text-sm">
+                  <span className="min-w-0 break-words">{routineLabel}</span>
                   {!isEditing && (
                     <button
                       type="button"
-                      className="ml-auto text-muted-foreground hover:text-foreground"
+                      aria-label={t("Quitar selección")}
+                      className="ml-auto flex size-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
                       onClick={() => {
                         setRoutineId(null);
                         setRoutineLabel("");
