@@ -2,9 +2,9 @@
 
 # This is NOT the Next.js you know
 
-This version has breaking changes  APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
-This block is written and re-added by `next dev`  verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
 
@@ -64,7 +64,7 @@ yarn typecheck                              # TypeScript check (si configurado)
 2. **Leer docs de Next.js 16**: `node_modules/next/dist/docs/` � APIs cambiaron vs training data.
 
 3. **Design workflow**:
-   - **Pencil MCP** para mockups/diseno visual antes de codificar
+   - **chrome-devtools MCP** para inspección en Chrome en vivo (consola, red, performance) durante el desarrollo
    - **Playwright MCP** para QA y verificacion visual despues de implementar
 
 4. **Component composition**: Preferir compound components, render props, hooks. NO prop drilling.
@@ -106,16 +106,16 @@ yarn typecheck                              # TypeScript check (si configurado)
 | TypeScript avanzado     | `typescript-advanced-types`                                                                                 |
 | Caching/Performance     | `next-cache-components`                                                                                     |
 | Testing E2E             | Usar **Playwright MCP**                                                                                     |
-| Diseno visual           | `design-taste-frontend` + `impeccable` + **Pencil MCP**                                                     |
+| Diseno visual           | `design-taste-frontend` + `impeccable` (mockups/QA visual con Playwright MCP y chrome-devtools MCP)         |
 | Pre-ship                | `npx impeccable detect` o `/impeccable audit/polish`                                                        |
 
 ## MCPs disponibles
 
-| MCP            | Uso                                      |
-| -------------- | ---------------------------------------- |
-| **pencil**     | Diseno visual, mockups, prototipos UI/UX |
-| **playwright** | QA, testing E2E, verificacion visual     |
-| **codegraph**  | Entender codigo, buscar simbolos         |
+| MCP                 | Uso                                                   |
+| ------------------- | ----------------------------------------------------- |
+| **chrome-devtools** | Debugging en Chrome: consola, red, performance traces |
+| **playwright**      | QA, testing E2E, verificacion visual                  |
+| **codegraph**       | Entender codigo, buscar simbolos                      |
 
 ## i18n (internacionalizacion)
 
