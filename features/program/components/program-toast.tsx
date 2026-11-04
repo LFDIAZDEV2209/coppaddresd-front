@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/providers/i18n-provider";
 
 interface ToastItem {
   id: number;
@@ -16,6 +17,7 @@ export function ProgramToastContainer({
   toasts: ToastItem[];
   onDismiss: (id: number) => void;
 }) {
+  const translate = useT();
   if (toasts.length === 0) return null;
 
   return (
@@ -35,6 +37,8 @@ export function ProgramToastContainer({
         >
           <span className="flex-1">{t.message}</span>
           <button
+            type="button"
+            aria-label={translate("Cerrar notificación")}
             onClick={() => onDismiss(t.id)}
             className="shrink-0 rounded p-0.5 opacity-60 transition-opacity hover:opacity-100"
           >

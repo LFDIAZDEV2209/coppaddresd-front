@@ -35,9 +35,7 @@
       "description": "Revisor Next.js/React sin editar",
       "mode": "subagent",
       "system": "Revisor Next.js/React senior. Analiza sin editar: límites RSC, composición vs prop drilling, caché Next 16, accesibilidad, i18n, rendimiento. Cita archivo:línea.",
-      "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-      ],
+      "permissions": [{ "action": "edit", "resource": "*", "effect": "deny" }],
     },
   },
   "experimental": {
@@ -54,10 +52,7 @@
         "type": "local",
         "command": ["codegraph", "serve", "--mcp"],
       },
-      "playwright": {
-        "type": "local",
-        "command": ["npx", "@playwright/mcp@latest"],
-      },
+      // playwright y chrome-devtools: config global (~/.config/opencode/opencode.json)
     },
   },
   "formatter": {

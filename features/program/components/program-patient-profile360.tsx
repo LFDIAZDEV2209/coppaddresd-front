@@ -29,6 +29,7 @@ import { ProgramControlesTab } from "./program-controles-tab";
 import { fetchEnrollmentById } from "../services/program-enrollments-service";
 import type { ProgramEnrollment } from "../types";
 import { cn } from "@/lib/utils";
+import { PatientAssignmentBlock } from "./patient-assignment-block";
 
 interface ProgramPatientProfile360Props {
   patientId: string;
@@ -143,6 +144,8 @@ export function ProgramPatientProfile360({
       ) : data ? (
         <PatientResumenHero data={data} biometria={biometriaData ?? null} />
       ) : null}
+
+      {!loading && data && <PatientAssignmentBlock patientId={patientId} patientName={data.patient_name ?? ""} />}
 
       {/* Fila: tabs + lupa/actualizar en la misma línea */}
       <div className="flex flex-wrap items-center gap-3">
