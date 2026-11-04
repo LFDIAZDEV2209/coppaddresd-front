@@ -11,9 +11,18 @@ export const assignmentLabels: Record<AssignmentState, string> = {
   proposed: "Propuesta lista", "pending-narrative": "Narrativa en preparación", applied: "Aplicada", edited: "Aplicada con ajuste", dismissed: "Desestimada", fallback: "Asignación automática",
 };
 
+const assignmentTones: Record<AssignmentState, string> = {
+  proposed: "border-warning/20 bg-warning-soft text-[color-mix(in_srgb,var(--warning-soft-foreground)_85%,black)] dark:text-warning-soft-foreground",
+  "pending-narrative": "border-warning/20 bg-warning-soft text-[color-mix(in_srgb,var(--warning-soft-foreground)_85%,black)] dark:text-warning-soft-foreground",
+  applied: "border-success/20 bg-success-soft text-[color-mix(in_srgb,var(--success-soft-foreground)_85%,black)] dark:text-success-soft-foreground",
+  edited: "border-success/20 bg-success-soft text-[color-mix(in_srgb,var(--success-soft-foreground)_85%,black)] dark:text-success-soft-foreground",
+  dismissed: "border-border bg-muted text-foreground",
+  fallback: "border-border bg-muted text-foreground",
+};
+
 export function AssignmentStatus({ state }: { state: AssignmentState }) {
   const t = useT();
-  return <span className={cn("inline-flex rounded-md px-2.5 py-1 text-xs font-semibold", state === "applied" || state === "edited" ? "bg-success-soft text-success-soft-foreground" : "bg-muted text-foreground")}>{t(assignmentLabels[state] ?? state)}</span>;
+  return <span className={cn("inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold", assignmentTones[state])}>{t(assignmentLabels[state] ?? state)}</span>;
 }
 
 export function AssignmentSkeleton() {
