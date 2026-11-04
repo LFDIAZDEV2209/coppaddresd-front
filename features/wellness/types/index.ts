@@ -27,6 +27,11 @@ export interface NutritionPlanDay {
 
 /** Plan de alimentación (template o personalizado). */
 export interface NutritionPlan {
+  revision?: number;
+  reviewStatus?: "pending_review" | "approved";
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  generationStatus?: "queued" | "generating" | "failed" | "completed" | null;
   id: string;
   name: string;
   description: string | null;
@@ -53,6 +58,11 @@ export interface NutritionPlan {
 
 /** Item del listado de planes (sin días embebidos). */
 export interface NutritionPlanListItem {
+  revision?: number;
+  reviewStatus?: "pending_review" | "approved";
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  generationStatus?: "queued" | "generating" | "failed" | "completed" | null;
   id: string;
   name: string;
   description: string | null;
@@ -115,6 +125,7 @@ export interface CreateNutritionPlanInput {
 
 /** Payload para actualizar un plan. */
 export interface UpdateNutritionPlanInput {
+  revision?: number;
   name: string;
   description: string | null;
   targetCondition: string | null;

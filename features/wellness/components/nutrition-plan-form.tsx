@@ -91,7 +91,7 @@ const MEAL_LABELS: Record<MealType, string> = {
   Desayuno: "Desayuno",
   Almuerzo: "Almuerzo",
   Cena: "Cena",
-  Snack: "Snack",
+  Snack: "Merienda",
 };
 
 /** Vasos de 300 ml para la meta de agua diaria. Regla de redondeo consistente:
@@ -116,7 +116,8 @@ export function NutritionPlanFormFields({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [targetCondition, setTargetCondition] = useState("");
-  const [durationDays, setDurationDays] = useState("7");
+  const [durationDays, setDurationDays] = useState("30");
+  const [loadedRevision, setLoadedRevision] = useState(plan?.revision);
   const [dailyCalorieTarget, setDailyCalorieTarget] = useState("");
   const [dailyProteinTarget, setDailyProteinTarget] = useState("");
   const [dailyCarbsTarget, setDailyCarbsTarget] = useState("");
@@ -185,6 +186,7 @@ export function NutritionPlanFormFields({
 
         // Datos básicos
         setName(full.name);
+        setLoadedRevision(full.revision);
         setDescription(full.description ?? "");
         setTargetCondition(full.targetCondition ?? "");
         setDurationDays(String(full.durationDays));
@@ -320,10 +322,10 @@ const handleSelectPatient = (p: PickerItem) => {
       setPatientSearch("");
       setPatientResults([]);
       setGenerateError("");
-      // Un plan vinculado a un paciente es personalizado (no template) y
-      // nace como asignación activa para que aparezca en Asignaciones.
+      // La aprobación clínica crea la asignación; este formulario solo guarda borrador.
       setIsTemplate(false);
-      setStatus("Active");
+      setStatus("Draft");
+      setDurationDays("30");
     };
 
   const handleClearPatient = () => {
@@ -346,7 +348,7 @@ const handleSelectPatient = (p: PickerItem) => {
       setName(values.name);
       setDescription(values.description);
       setTargetCondition(values.targetCondition);
-      setDurationDays(values.durationDays);
+      setDurationDays("30");
       setDailyCalorieTarget(values.dailyCalorieTarget);
       setDailyProteinTarget(values.dailyProteinTarget);
       setDailyCarbsTarget(values.dailyCarbsTarget);
@@ -424,6 +426,7 @@ const handleSelectPatient = (p: PickerItem) => {
       await onSubmit(
         {
           name: name.trim(),
+          revision: loadedRevision,
           description: description.trim() || null,
           targetCondition: targetCondition.trim() || null,
           durationDays: numDays,
@@ -434,7 +437,7 @@ const handleSelectPatient = (p: PickerItem) => {
           dailyFiberTarget: parseNum(dailyFiberTarget),
           allergens: allergens.trim() || null,
           mealTiming: mealTiming.trim() || null,
-          status,
+          status: isTemplate ? status : "Draft",
           days: daysArray.length > 0 ? daysArray : null,
         },
         plan.id,
@@ -456,7 +459,7 @@ const handleSelectPatient = (p: PickerItem) => {
         isTemplate: selectedPatientId ? false : isTemplate,
         patientId: selectedPatientId,
         sourcePlanId: null,
-        status,
+        status: isTemplate ? status : "Draft",
         days: daysArray.length > 0 ? daysArray : null,
       });
 
@@ -470,12 +473,17 @@ const handleSelectPatient = (p: PickerItem) => {
 
   const numDays = parseInt(durationDays, 10) || 1;
   const dayTabs = Array.from(
-    { length: Math.min(numDays, 30) },
+    { length: isTemplate ? Math.min(numDays, 30) : Math.min(30, Math.max(7,
+      ...Object.entries(days).filter(([, meal]) => meal.description || meal.foods)
+        .map(([key]) => Number(key.split("-")[0])))) },
     (_, i) => i + 1,
   );
 
   return (
     <div className="flex flex-col gap-5 px-6 py-5">
+      {!isTemplate ? <p role="status" className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+        {t("Ciclo de 30 días. El menú se repite desde el primer día del ciclo. Guardar cambios requiere una nueva aprobación antes de mostrarlos al paciente.")}
+      </p> : null}
       <div className="flex flex-col gap-4">
         {/* Paciente (opcional) + generación con IA */}
             <div className="flex flex-col gap-1.5">
@@ -608,6 +616,7 @@ const handleSelectPatient = (p: PickerItem) => {
                   min={1}
                   max={365}
                   value={durationDays}
+                  disabled={!isTemplate}
                   onChange={(e) => handleDurationChange(e.target.value)}
                 />
               </div>
@@ -691,7 +700,8 @@ const handleSelectPatient = (p: PickerItem) => {
               <div className="flex flex-col gap-1.5">
                 <Label>{t("Estado")}</Label>
                 <Select
-                  value={status}
+                  value={isTemplate ? status : "Draft"}
+                  disabled={!isTemplate}
                   onValueChange={(v) => setStatus(v as NutritionPlanStatus)}
                 >
                   <SelectTrigger>
@@ -700,7 +710,7 @@ const handleSelectPatient = (p: PickerItem) => {
                   <SelectContent>
                     {PLAN_STATUSES.map((s) => (
                       <SelectItem key={s} value={s}>
-                        {PLAN_STATUS_LABELS[s]}
+                        {t(PLAN_STATUS_LABELS[s])}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -815,7 +825,7 @@ const handleSelectPatient = (p: PickerItem) => {
                             >
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-semibold uppercase text-muted-foreground">
-                                  {MEAL_LABELS[meal]}
+                                  {t(MEAL_LABELS[meal])}
                                 </span>
                               </div>
                               <div className="grid gap-2 sm:grid-cols-3">
@@ -993,7 +1003,10 @@ export function NutritionPlanFormDialog({
             plan={plan}
             saving={saving}
             onCancel={() => onOpenChange(false)}
-            onSubmit={onSubmit}
+            onSubmit={async (input, id) => {
+              await onSubmit(input, id);
+              onOpenChange(false);
+            }}
             onCreated={onCreated}
           />
         </div>

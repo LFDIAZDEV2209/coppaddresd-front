@@ -306,7 +306,7 @@ export function MediaFormFields({
             ref={fileInputRef}
             id="media-file"
             type="file"
-            accept="audio/*,video/*"
+            accept="audio/*,video/*,image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
             onChange={handleFileChange}
             disabled={uploading}
@@ -393,7 +393,7 @@ export function MediaFormFields({
             ref={fileInputRef}
             id="media-file-edit"
             type="file"
-            accept="audio/*,video/*"
+            accept="audio/*,video/*,image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
             onChange={handleFileChange}
           />

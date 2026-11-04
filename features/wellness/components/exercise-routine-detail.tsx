@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, Eye } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { getMediaItemById } from "@/features/media/services/media-service";
+import { MediaPlayer } from "@/features/media/components/media-player";
+import type { MediaItem } from "@/features/media/types";
 import type { ExerciseRoutine } from "../types";
 import { PLAN_STATUS_LABELS } from "../services/nutrition-plans-service";
 import {
@@ -33,6 +37,11 @@ export function ExerciseRoutineDetailDialog({
   const t = useT();
   const [routine, setRoutine] = useState<ExerciseRoutine | null>(null);
   const [loading, setLoading] = useState(Boolean(routineId));
+  const [loadedRoutineId, setLoadedRoutineId] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [demonstrations, setDemonstrations] = useState<Record<string, MediaItem | null>>({});
+  const [openedMedia, setOpenedMedia] = useState<string | null>(null);
+  const [mediaErrors, setMediaErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!routineId) return;
@@ -42,16 +51,27 @@ export function ExerciseRoutineDetailDialog({
     getRoutine(routineId).then((data) => {
       if (!cancelled) {
         setRoutine(data);
+        setLoadedRoutineId(routineId);
         setLoading(false);
       }
-    });
+    }).catch(() => { if (!cancelled) { setRoutine(null); setLoadedRoutineId(routineId); setLoading(false); } });
 
     return () => {
       cancelled = true;
     };
-  }, [routineId, getRoutine]);
+  }, [routineId, getRoutine, attempt]);
+
+  const openDemonstration = async (id: string) => {
+    setOpenedMedia(id); setMediaErrors((current) => ({ ...current, [id]: false }));
+    if (demonstrations[id]) return;
+    try {
+      const medium = await getMediaItemById(id);
+      setDemonstrations((current) => ({ ...current, [id]: medium }));
+    } catch { setMediaErrors((current) => ({ ...current, [id]: true })); }
+  };
 
   if (!routineId) return null;
+  const waiting = loading || loadedRoutineId !== routineId;
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -73,15 +93,15 @@ export function ExerciseRoutineDetailDialog({
       open={Boolean(routineId)}
       onOpenChange={(open) => !open && onClose()}
     >
-      <DialogContent className="max-h-[85vh] max-w-2xl">
+      <DialogContent className="max-h-[85vh] w-[92vw] max-w-2xl sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Dumbbell className="size-5" />
-            {loading ? t("Cargando...") : (routine?.name ?? t("Rutina"))}
+            {waiting ? t("Cargando...") : (routine?.name ?? t("Rutina"))}
           </DialogTitle>
         </DialogHeader>
 
-        {loading ? (
+        {waiting ? (
           <DetailSkeleton />
         ) : routine ? (
           <div className="flex flex-col gap-4 overflow-y-auto pr-2 max-h-[60vh]">
@@ -91,7 +111,7 @@ export function ExerciseRoutineDetailDialog({
                 <span className="text-xs text-muted-foreground">{t("Categoría")}</span>
                 <p>
                   <Badge className={CATEGORY_COLORS[routine.category] ?? ""}>
-                    {routine.category}
+                    {t(routine.category)}
                   </Badge>
                 </p>
               </div>
@@ -103,7 +123,7 @@ export function ExerciseRoutineDetailDialog({
                   <Badge
                     className={DIFFICULTY_COLORS[routine.difficulty] ?? ""}
                   >
-                    {routine.difficulty}
+                    {t(routine.difficulty === "Facil" ? "Fácil" : routine.difficulty === "Dificil" ? "Difícil" : "Moderado")}
                   </Badge>
                 </p>
               </div>
@@ -111,7 +131,7 @@ export function ExerciseRoutineDetailDialog({
                 <span className="text-xs text-muted-foreground">{t("Estado")}</span>
                 <p>
                   <Badge className={statusColor(routine.status)}>
-                    {PLAN_STATUS_LABELS[routine.status]}
+                    {t(PLAN_STATUS_LABELS[routine.status])}
                   </Badge>
                 </p>
               </div>
@@ -148,7 +168,7 @@ export function ExerciseRoutineDetailDialog({
                   .map((exercise, index) => (
                     <div
                       key={exercise.id}
-                      className="flex flex-col gap-1 rounded-lg border border-border bg-muted/50 p-3"
+                      className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-muted-foreground">
@@ -158,6 +178,18 @@ export function ExerciseRoutineDetailDialog({
                           {exercise.name}
                         </span>
                       </div>
+                      {exercise.targetMuscle && <p className="text-xs text-muted-foreground">{t("Músculo objetivo")}: {exercise.targetMuscle}</p>}
+                      {exercise.equipment && <p className="text-xs text-muted-foreground">{t("Equipamiento")}: {exercise.equipment}</p>}
+                      {exercise.tips && <p className="rounded-lg bg-primary-soft p-3 text-sm">{exercise.tips}</p>}
+                      {exercise.mediaId ? <>
+                        <Button type="button" variant="outline" className="min-h-11 justify-start" onClick={() => void openDemonstration(exercise.mediaId!)}>
+                          <Eye className="size-4" />{t("Ver demostración")}
+                        </Button>
+                        {openedMedia === exercise.mediaId && (mediaErrors[exercise.mediaId] ? <p role="alert" className="text-xs text-destructive">{t("No se pudo cargar la demostración. Vuelve a intentarlo.")}</p>
+                          : demonstrations[exercise.mediaId] ? <MediaPlayer key={exercise.mediaId} storageKey={demonstrations[exercise.mediaId]!.storageKey}
+                              mediaType={demonstrations[exercise.mediaId]!.mediaType} alt={exercise.name} preload="none" className="rounded-xl" />
+                            : <Skeleton className="aspect-video w-full rounded-xl" />)}
+                      </> : <p className="text-xs text-muted-foreground">{t("Este ejercicio todavía no tiene imagen o vídeo.")}</p>}
                       {exercise.description && (
                         <p className="text-xs text-muted-foreground pl-5">
                           {exercise.description}
@@ -200,9 +232,10 @@ export function ExerciseRoutineDetailDialog({
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            {t("No se pudo cargar la rutina.")}
-          </p>
+          <div className="flex flex-col gap-3 py-4 text-center">
+            <p role="alert" className="text-sm text-muted-foreground">{t("No se pudo cargar la rutina.")}</p>
+            <Button type="button" variant="outline" onClick={() => { setLoading(true); setAttempt((value) => value + 1); }}>{t("Reintentar")}</Button>
+          </div>
         )}
       </DialogContent>
     </Dialog>
