@@ -1,5 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
 import { mockNutritionHttp, nutritionE1PatientId } from "./fixtures/nutrition-http";
+import { loginAsAdmin } from "./fixtures/auth";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
 
 // API HTTP simulada de forma explícita: la aplicación usa siempre apiFetch.
 async function session(page: Page, permissions: string[], english = false) {
@@ -21,7 +24,9 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole("button", { name: "Colapsar sidebar", exact: true }).click();
   await expect(page.getByRole("link", { name: "Nutrición 3 planes por aprobar", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Expandir sidebar", exact: true }).click();
+  // El indicador de Next dev puede superponerse al botón inferior; validar teclado.
+  await page.getByRole("button", { name: "Expandir sidebar", exact: true }).focus();
+  await page.keyboard.press("Enter");
   const filters = page.getByRole("group", { name: "Filtrar planes por estado" });
   await filters.getByRole("button", { name: /Por aprobar/ }).click();
   await expect(list.getByRole("listitem")).toHaveCount(3);
@@ -78,17 +83,38 @@ test.describe("E1 sin plan provisional", () => {
     test.setTimeout(180_000);
     testInfo.annotations.push({ type: "api-mode", description: live ? "API local real, sin interceptaciones" : "HTTP simulado: backend local no disponible" });
     const required = (key: string) => { const value = process.env[key]; if (!value) throw new Error(`Configura ${key} para E1 real; no se inventan datos clínicos.`); return value; };
-    if (live) required("NUTRITION_E2E_STORAGE_STATE");
+    if (live && !process.env.NUTRITION_E2E_STORAGE_STATE) await loginAsAdmin(page);
+    const capture = async (stage: string, focus?: ReturnType<Page["locator"]>) => {
+      if (!live || !process.env.NUTRITION_E2E_SCREENSHOTS) return;
+      const directory = process.env.NUTRITION_E2E_SCREENSHOTS;
+      await mkdir(directory, { recursive: true });
+      for (const mobile of [false, true]) {
+        await page.setViewportSize(mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 });
+        if (focus) await focus.scrollIntoViewIfNeeded();
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.querySelector("main")!.scrollWidth <= document.querySelector("main")!.clientWidth)).toBe(true);
+        await page.screenshot({ path: path.join(directory, `${stage}${mobile ? "-mobile" : ""}.png`), animations: "disabled" });
+      }
+      await page.setViewportSize({ width: 1440, height: 900 });
+    };
     const fixture = live ? null : await mockNutritionHttp(page, ["Nutrition.Manage", "Nutrition.Approve"], { includeE1: true });
     const patientId = live ? required("NUTRITION_E2E_PATIENT_ID") : nutritionE1PatientId;
     const search = live ? required("NUTRITION_E2E_SEARCH") : "E1-SINTETICO";
     if (!live) await page.setViewportSize({ width: 1366, height: 768 });
+    const firstQueue = live ? page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname === "/api/v1/nutrition/patients" && url.searchParams.get("state") === "all";
+    }) : null;
     await page.goto("/nutrition");
+    if (firstQueue) expect((await firstQueue).status(), "E1 requiere GET /api/v1/nutrition/patients disponible en backend local").toBe(200);
     await page.getByLabel("Buscar paciente", { exact: true }).fill(search);
+    await page.getByRole("group", { name: "Filtrar planes por estado" }).getByRole("button", { name: /Sin plan/ }).click();
     const patientLink = page.locator(`a[href="/nutrition/${encodeURIComponent(patientId)}"]`);
     await expect(page.getByRole("listitem").filter({ has: patientLink }).locator('[data-status="sin_plan"]')).toBeVisible();
+    await capture("bandeja", page.getByRole("heading", { name: "Nutrición", exact: true }));
     await patientLink.click();
     await expect(page.getByRole("heading", { name: "Este paciente aún no tiene plan", exact: true })).toBeVisible();
+    if (live) await expect(page.getByText("0 de 9 completados", { exact: true })).toBeVisible();
+    await capture("ficha", page.locator("main h1"));
     await page.getByLabel("Peso (kg)", { exact: true }).fill(live ? required("NUTRITION_E2E_WEIGHT") : "92");
     await page.getByLabel("Talla (cm)", { exact: true }).fill(live ? required("NUTRITION_E2E_HEIGHT") : "160");
     await page.getByLabel("Fecha de nacimiento", { exact: true }).fill(live ? required("NUTRITION_E2E_BIRTH_DATE") : "1982-04-10");
@@ -102,11 +128,14 @@ test.describe("E1 sin plan provisional", () => {
     await page.getByRole("button", { name: "Generar propuesta con IA", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Plan provisional", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Menú de 30 días", exact: true })).toBeVisible();
+    await expect(page.getByLabel(/Gramos de/).first()).toBeVisible();
+    await capture("editor", page.getByRole("heading", { name: "Menú de 30 días", exact: true }));
     await page.getByRole("button", { name: "Enviar a aprobación", exact: true }).click();
     await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByRole("button", { name: "Aprobar y publicar", exact: true })).toBeDisabled();
     await dialog.getByRole("checkbox", { name: /Revisé personalmente/ }).check();
+    await capture("aprobacion", dialog);
     await dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }).click();
     await expect(dialog).toHaveCount(0);
     await expect(page.getByText("Aprobado", { exact: true })).toBeVisible();
