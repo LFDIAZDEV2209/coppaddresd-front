@@ -641,6 +641,12 @@ export function getBreadcrumbSegments(
     { label: "Copp Adresd", href: "/dashboard" },
   ];
 
+  if (pathname.startsWith("/nutrition/")) {
+    segments.push({ label: "Nutrición", href: "/nutrition" });
+    segments.push({ label: "Plan nutricional" });
+    return segments;
+  }
+
   // Rutas legacy de enrollments: redirigen a Gestión · Perfil 360
   if (pathname.startsWith("/program/enrollments")) {
     segments.push({ label: "Gestión del programa", href: "/program/gestion" });

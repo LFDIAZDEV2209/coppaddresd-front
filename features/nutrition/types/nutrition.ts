@@ -34,6 +34,7 @@ export interface NutritionMeal {
   dayNumber: number;
   mealType: "desayuno" | "almuerzo" | "merienda" | "cena";
   localTime: string;
+  waterGlasses: number;
   items: NutritionMealItem[];
   totals: Omit<NutritionTargets, "waterGlasses">;
 }
@@ -101,3 +102,49 @@ export interface NutritionQueueResponse {
 }
 
 export interface NutritionPendingCount { count: number }
+
+export interface NutritionScope { userId: string; clinicId: string | null }
+export interface NutritionActor { id: string; name: string }
+
+export interface NutritionClinicalProfile {
+  age: number | null;
+  sex: "female" | "male" | null;
+  bmi: number | null;
+  hba1c: number | null;
+  movement: string | null;
+  adherence: string | null;
+  cardiometabolicRisk: string | null;
+  completedTests: number;
+  provisionalFields: string[];
+  programPatientId: string | null;
+}
+
+export interface NutritionAuditEntry {
+  id: string;
+  action: "created" | "saved" | "submitted" | "approved" | "returned" | "version_created" | "regenerated";
+  actorId: string;
+  actorName: string;
+  occurredAt: string;
+  version: number;
+  comment: string | null;
+  criticalAlertsConfirmed: number;
+  autoApproved: boolean;
+}
+
+export interface NutritionPatientDetail {
+  patientId: string;
+  patientName: string;
+  patientDocument: string | null;
+  nextPendingPatientId: string | null;
+  profile: NutritionClinicalProfile;
+  cycle: NutritionCycle | null;
+  /** Instantánea inmutable: editar el borrador no altera lo publicado. */
+  publishedCycle: NutritionCycle | null;
+  revision: number;
+  audit: NutritionAuditEntry[];
+}
+
+export interface NutritionWorkspace {
+  patient: NutritionPatientDetail | null;
+  catalog: NutritionFood[];
+}

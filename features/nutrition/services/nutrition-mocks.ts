@@ -27,9 +27,9 @@ export const nutritionMockPatients: NutritionPatientSummary[] = names.map((patie
 
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
 
-export function mockNutritionQueue(query: NutritionQueueQuery): NutritionQueueResponse {
+export function mockNutritionQueue(query: NutritionQueueQuery, patients = nutritionMockPatients): NutritionQueueResponse {
   const search = normalize(query.search.trim());
-  const searched = nutritionMockPatients.filter((item) => normalize(`${item.patientName} ${item.patientDocument ?? ""}`).includes(search));
+  const searched = patients.filter((item) => normalize(`${item.patientName} ${item.patientDocument ?? ""}`).includes(search));
   const counts: Record<NutritionFilter, number> = { all: searched.length, en_aprobacion: 0, borrador_ia: 0, devuelto: 0, aprobado: 0, por_renovar: 0, sin_plan: 0 };
   for (const item of searched) counts[item.plan?.queueState ?? "sin_plan"]++;
   const filtered = searched.filter((item) => query.state === "all" || (item.plan?.queueState ?? "sin_plan") === query.state);

@@ -1,12 +1,13 @@
 "use client";
 
 import { Search, Sparkles, ClipboardCheck, ShieldAlert } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useI18n, useT } from "@/providers/i18n-provider";
 import { useNutritionQueue } from "../hooks/use-nutrition-queue";
-import { nutritionUsesMocks } from "../services/nutrition-service";
+import { NutritionDemoNotice } from "./nutrition-shared";
 import type { NutritionFilter, NutritionPatientSummary, NutritionQueueState } from "../types/nutrition";
 import { NutritionError, NutritionSkeleton } from "./nutrition-feedback";
 import "../nutrition.css";
@@ -33,7 +34,7 @@ function PatientRow({ patient }: { patient: NutritionPatientSummary }) {
   const state = plan?.queueState ?? "sin_plan";
   return <li className="nutrition-patient">
     <div className="min-w-0">
-      <h3 className="break-words text-base font-semibold">{patient.patientName}</h3>
+      <h3 className="break-words text-base font-semibold"><Link className="nutrition-link" href={`/nutrition/${encodeURIComponent(patient.patientId)}`}>{patient.patientName}</Link></h3>
       <p className="mt-1 break-words text-sm text-muted-foreground">{patient.patientDocument ?? t("Sin documento")}</p>
     </div>
     <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -59,7 +60,7 @@ export function NutritionQueue() {
       <div className="min-w-0"><h1 className="nutrition-display text-3xl font-semibold sm:text-4xl">{t("Nutrición")}</h1><p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">{t("Una bandeja para acompañar el plan nutricional de cada paciente.")}</p></div>
       <Button variant="outline" disabled={loading} onClick={retry}>{t("Actualizar")}</Button>
     </header>
-    {nutritionUsesMocks && <p className="rounded-lg border border-info/30 bg-info-soft px-4 py-3 text-sm text-info-soft-foreground">{t("Vista de demostración · Pacientes y metas ficticios. No se realizan cambios clínicos.")}</p>}
+    <NutritionDemoNotice />
     <section className="min-w-0 rounded-xl border border-border bg-card" aria-labelledby="nutrition-queue-title">
       <div className="space-y-5 border-b border-border p-4 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-5">
