@@ -49,14 +49,15 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: "qa-reports/nutrition/mobile.png", fullPage: true });
   expect(nutritionRequests.length).toBeGreaterThan(0);
-  expect(nutritionRequests.every((url) => new URL(url).pathname === "/api/v1/nutrition/patients")).toBe(true);
+  expect(nutritionRequests.every((url) => new URL(url).pathname === "/api/v1/nutrition/inbox")).toBe(true);
 });
 
 test("endpoint ausente y contrato incompatible no producen datos demo", async ({ page }) => {
-  await mockNutritionHttp(page, ["Nutrition.Manage"], { unavailable: "/api/v1/nutrition/patients" });
+  await mockNutritionHttp(page, ["Nutrition.Manage"], { unavailable: "/api/v1/nutrition/inbox" });
   await page.goto("/nutrition");
   await expect(page.getByText("El endpoint o recurso de Nutrición no está disponible. No se muestran datos de demostración.", { exact: true })).toBeVisible();
   await expect(page.getByRole("list", { name: "Planes de pacientes" })).toHaveCount(0);
+  await expect(page.getByText("Endpoint pendiente de backend", { exact: true })).toBeVisible();
   await page.unroute("**/api/**");
   await mockNutritionHttp(page, ["Nutrition.Manage"], { malformedQueue: true });
   await page.reload();
@@ -74,6 +75,14 @@ test("conflicto de revisión bloquea reenvío y exige recarga", async ({ page })
   await expect(dialog.getByRole("button", { name: "Aprobar y publicar", exact: true })).toBeDisabled();
   expect(writes).toHaveLength(1);
   expect(writes[0].body).not.toHaveProperty("actor");
+  await expect(dialog.getByText("Revisión obsoleta", { exact: true })).toBeVisible();
+  await dialog.getByRole("button", { name: "Recargar ficha", exact: true }).click();
+  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
+  await dialog.getByRole("checkbox", { name: /Revisé personalmente/ }).check();
+  await dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(writes).toHaveLength(2);
+  expect(writes[1].body.revision).toBe(Number(writes[0].body.revision) + 1);
 });
 
 test.describe("E1 sin plan provisional", () => {
@@ -98,14 +107,14 @@ test.describe("E1 sin plan provisional", () => {
     };
     const fixture = live ? null : await mockNutritionHttp(page, ["Nutrition.Manage", "Nutrition.Approve"], { includeE1: true });
     const patientId = live ? required("NUTRITION_E2E_PATIENT_ID") : nutritionE1PatientId;
-    const search = live ? required("NUTRITION_E2E_SEARCH") : "E1-SINTETICO";
+    const search = live ? required("NUTRITION_E2E_SEARCH") : "Paciente E1";
     if (!live) await page.setViewportSize({ width: 1366, height: 768 });
     const firstQueue = live ? page.waitForResponse((response) => {
       const url = new URL(response.url());
-      return url.pathname === "/api/v1/nutrition/patients" && url.searchParams.get("state") === "all";
+      return url.pathname === "/api/v1/nutrition/inbox" && !url.searchParams.has("state");
     }) : null;
     await page.goto("/nutrition");
-    if (firstQueue) expect((await firstQueue).status(), "E1 requiere GET /api/v1/nutrition/patients disponible en backend local").toBe(200);
+    if (firstQueue) expect((await firstQueue).status(), "E1 requiere GET /api/v1/nutrition/inbox disponible en backend local").toBe(200);
     await page.getByLabel("Buscar paciente", { exact: true }).fill(search);
     await page.getByRole("group", { name: "Filtrar planes por estado" }).getByRole("button", { name: /Sin plan/ }).click();
     const patientLink = page.locator(`a[href="/nutrition/${encodeURIComponent(patientId)}"]`);
@@ -113,7 +122,7 @@ test.describe("E1 sin plan provisional", () => {
     await capture("bandeja", page.getByRole("heading", { name: "Nutrición", exact: true }));
     await patientLink.click();
     await expect(page.getByRole("heading", { name: "Este paciente aún no tiene plan", exact: true })).toBeVisible();
-    if (live) await expect(page.getByText("0 de 9 completados", { exact: true })).toBeVisible();
+    // El DTO de prescripción no incluye número de tests: verificar0/9 en el seed real.
     await capture("ficha", page.locator("main h1"));
     await page.getByLabel("Peso (kg)", { exact: true }).fill(live ? required("NUTRITION_E2E_WEIGHT") : "92");
     await page.getByLabel("Talla (cm)", { exact: true }).fill(live ? required("NUTRITION_E2E_HEIGHT") : "160");
@@ -166,4 +175,26 @@ test("sin permisos Nutrition no hay bandeja, enlace ni peticiones de datos", asy
   await expect(page.getByText("Acceso denegado", { exact: true })).toBeVisible();
   await expect(page.getByRole("list", { name: "Planes de pacientes" })).toHaveCount(0);
   await expect(page.locator('a[href="/nutrition"]')).toHaveCount(0);
+});
+
+test("gateway local enruta prescripciones aunque su health esté degradado", async ({ page, request }, testInfo) => {
+  test.skip(process.env.NUTRITION_E2E_MODE !== "live", "Sonda real local; no utiliza fixtures HTTP");
+  await loginAsAdmin(page);
+  const outgoing = page.waitForRequest((entry) => new URL(entry.url()).pathname === "/api/v1/nutrition/inbox");
+  await page.goto("/nutrition");
+  const authorization = (await outgoing).headers().authorization;
+  expect(authorization).toBeTruthy();
+  const patientId = process.env.NUTRITION_E2E_PATIENT_ID;
+  if (!patientId) throw new Error("Configura NUTRITION_E2E_PATIENT_ID para la sonda local");
+  const resource = `/api/v1/nutrition/patients/${encodeURIComponent(patientId)}/prescriptions`;
+  const headers = { Authorization: authorization };
+  const direct = await request.get(`http://localhost:5122${resource}`, { headers });
+  const gateway = await request.get(`http://localhost:5080${resource}`, { headers });
+  const health = await request.get("http://localhost:5080/health");
+  const evidence = { resource, direct: direct.status(), gateway: gateway.status(), healthStatus: health.status(), health: await health.json() };
+  await testInfo.attach("gateway-local-sin-credenciales", { body: JSON.stringify(evidence, null, 2), contentType: "application/json" });
+  console.log(JSON.stringify(evidence));
+  expect(direct.status()).toBe(200);
+  expect(gateway.status()).toBe(200);
+  expect(Array.isArray(await gateway.json())).toBe(true);
 });

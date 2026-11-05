@@ -51,6 +51,8 @@ test("editar, previsualizar catálogo, copiar 30 días y conservar al volver", a
   await expect(grams).toHaveValue("80");
   await page.getByRole("button", { name: "Aplicar este día a los 30 días", exact: true }).click();
   await page.getByRole("button", { name: "Confirmar copia a 30 días", exact: true }).click();
+  await expect.poll(() => writes.filter((write) => write.path.endsWith("/apply-day")).length).toBe(1);
+  expect(writes.find((write) => write.path.endsWith("/apply-day"))?.body).toMatchObject({ edit: { sourceDay: 1, confirmManualEdits: true } });
   await page.getByRole("button", { name: "Día 30", exact: true }).click();
   await expect(grams).toHaveValue("80");
   await page.getByLabel("Indicaciones del plan", { exact: true }).fill("Indicaciones editadas en demo");
@@ -113,18 +115,24 @@ test("devolver exige comentario no vacío y lo conserva en ficha y bitácora", a
 });
 
 test("nueva versión conserva la publicada y bloquea aprobación con comida vacía", async ({ page }) => {
-  await demoSession(page);
+  const { writes } = await demoSession(page);
   await page.goto("/nutrition/demo-patient-4");
   await expect(page.getByLabel("Indicaciones del plan", { exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Crear nueva versión", exact: true }).click();
   await expect(page.getByText("Versión 2", { exact: true })).toBeVisible();
   await page.getByLabel("Indicaciones del plan", { exact: true }).fill("Borrador v2 sin publicar");
+  await saved(page);
+  const versionWrite = writes.find((write) => write.path.endsWith("/create-version"))!;
+  const draftWrite = writes.find((write) => write.path.endsWith("/save"))!;
+  expect(draftWrite.body.revision).toBe(1);
+  expect(draftWrite.path.split("/").at(-2)).not.toBe(versionWrite.path.split("/").at(-2));
   await page.getByText("Ver versión publicada", { exact: true }).click();
   await expect(page.getByText("Indicaciones sintéticas para revisar y ajustar en la demostración.", { exact: true })).toBeVisible();
   await expect(page.getByText("Versión publicada: v1", { exact: true })).toBeVisible();
   await page.getByLabel("Quitar Avena demo de Desayuno", { exact: true }).click();
   await page.getByLabel("Quitar Yogur demo de Desayuno", { exact: true }).click();
   await expect(page.getByRole("status")).toContainText("No se guardaron los últimos cambios.");
+  await expect(page.getByText("Comida vacía", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Enviar a aprobación", exact: true })).toBeDisabled();
 });
 
