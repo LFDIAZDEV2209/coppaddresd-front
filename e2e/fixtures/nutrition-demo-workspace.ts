@@ -1,6 +1,6 @@
-import type { NutritionActor, NutritionAuditEntry, NutritionCycle, NutritionFood, NutritionPatientDetail, NutritionScope } from "../types/nutrition";
-import { cycleIsComplete, mealDefinitions, recalculateCycle } from "../lib/nutrition-calculations";
-import { nutritionMockPatients } from "./nutrition-mocks";
+import type { NutritionActor, NutritionAuditEntry, NutritionCycle, NutritionFood, NutritionPatientDetail, NutritionScope } from "../../features/nutrition/types/nutrition";
+import { cycleIsComplete, mealDefinitions, recalculateCycle } from "../../features/nutrition/lib/nutrition-calculations";
+import { nutritionMockPatients } from "./nutrition-demo-patients";
 
 // TODO(backend-nutrition): fixtures y persistencia efímera SOLO para demostración.
 // No localStorage, datos reales, llamadas de red ni motor clínico de producción.
@@ -91,7 +91,7 @@ export function actOnMockPatient(patientId: string, action: NutritionMockAction,
     if (cycle) throw new Error("nutrition-transition");
     cycle = createPatient(1, scope).cycle!;
     cycle.id = crypto.randomUUID(); cycle.patientId = patientId; cycle.createdBy = actor.id;
-    cycle.version = 1; cycle.provisional = patient.profile.completedTests < 9;
+    cycle.version = 1; cycle.provisional = patient.profile.completedTests === null || patient.profile.completedTests < 9;
     cycle.provisionalReason = cycle.provisional ? "Batería pendiente: 6 de 9 tests completados." : null;
     auditAction = "created";
   } else {

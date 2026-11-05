@@ -18,7 +18,7 @@ export const nutrientDefinitions: { key: keyof NutritionTargets; label: string; 
 
 export const emptyTotals = (): NutritionTargets => ({ kcal: 0, carbsG: 0, proteinG: 0, fatG: 0, fiberG: 0, waterGlasses: 0 });
 
-/** Cálculo exclusivamente demostrativo; el backend será autoridad al conectar. */
+/** Vista previa por catálogo; las validaciones definitivas pertenecen al backend. */
 export function itemTotals(food: NutritionFood, grams: number): NutritionTargets {
   const factor = grams / 100;
   const { carbsG, proteinG, fatG, fiberG } = food.per100g;

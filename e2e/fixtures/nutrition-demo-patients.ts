@@ -1,4 +1,4 @@
-import type { NutritionFilter, NutritionPatientSummary, NutritionQueueQuery, NutritionQueueResponse, NutritionQueueState } from "../types/nutrition";
+import type { NutritionFilter, NutritionPatientSummary, NutritionQueueQuery, NutritionQueueResponse, NutritionQueueState } from "../../features/nutrition/types/nutrition";
 
 // TODO(backend-nutrition): retirar fixtures al habilitar los endpoints reales.
 // Son identidades y medidas ficticias para maquetación, nunca datos clínicos reales.

@@ -1,70 +1,97 @@
 import { apiFetch, ApiError } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
-import type { NutritionActor, NutritionCycle, NutritionPatientSummary, NutritionPendingCount, NutritionQueueQuery, NutritionQueueResponse, NutritionScope, NutritionWorkspace } from "../types/nutrition";
-import type { NutritionMockAction } from "./nutrition-mock-workspace";
+import type { NutritionAction, NutritionActionOptions, NutritionCycle, NutritionFood, NutritionPatientDetail, NutritionQueueQuery, NutritionServiceIssue, NutritionWorkspace } from "../types/nutrition";
+import type { NutritionEventWire, NutritionFoodWire, NutritionPatientWire, NutritionQueueWire, NutritionViewWire } from "../types/nutrition-wire";
+import { mapNutritionCycle, mapNutritionFoods, mapNutritionHistory, mapNutritionPatient, mapNutritionQueue, toNutritionEdit } from "../types/nutrition-mappers";
 
-export const nutritionApiUrl = `${env.apiUrl}/api/v1/nutrition`;
-// TODO(backend-nutrition): desactivar mocks al acordar el DTO wire con backend.
-// El modo es explícito; un error real NUNCA se sustituye por datos demo.
-export const nutritionUsesMocks = process.env.NEXT_PUBLIC_NUTRITION_MOCKS !== "false";
+const ROOT = "/api/v1/nutrition";
+const prescriptions = (patientId: string) => `${ROOT}/patients/${encodeURIComponent(patientId)}/prescriptions`;
+export class NutritionRequestError extends Error {
+  constructor(readonly issue: NutritionServiceIssue) { super("nutrition-request-failed"); }
+}
+export function nutritionIssue(error: unknown): NutritionServiceIssue {
+  return error instanceof NutritionRequestError ? error.issue : { kind: "request", endpoint: ROOT, status: error instanceof ApiError ? error.status : 0 };
+}
 
-export async function fetchNutritionQueue(query: NutritionQueueQuery, signal?: AbortSignal, scope?: NutritionScope): Promise<NutritionQueueResponse> {
-  signal?.throwIfAborted();
-  if (nutritionUsesMocks) {
-    const { mockNutritionQueue } = await import("./nutrition-mocks");
-    signal?.throwIfAborted();
-    return mockNutritionQueue(query, scope ? await mockSummaries(scope) : undefined);
+/** Cliente único: Bearer/refresh/clínica se mantienen en apiFetch. */
+async function request<T, R>(path: string, init: RequestInit, map: (wire: T) => R): Promise<R> {
+  const endpoint = `${init.method ?? "GET"} ${path.split("?")[0]}`;
+  try {
+    const wire = await apiFetch<T>(`${env.apiUrl}${path}`, { ...init, cache: "no-store", timeoutMs: init.method === "POST" ? 120_000 : 30_000 });
+    try { return map(wire); }
+    catch { throw new NutritionRequestError({ kind: "contract", endpoint, status: 502 }); }
+  } catch (error) {
+    if (error instanceof NutritionRequestError) throw error;
+    const status = error instanceof ApiError ? error.status : 0;
+    throw new NutritionRequestError({ kind: [404, 501, 503].includes(status) ? "endpoint" : [409, 412].includes(status) ? "conflict" : "request", endpoint, status });
   }
+}
+
+export function fetchNutritionQueue(query: NutritionQueueQuery, signal?: AbortSignal) {
   const params = new URLSearchParams({ search: query.search, state: query.state, page: String(query.page), pageSize: String(query.pageSize) });
-  return apiFetch<NutritionQueueResponse>(`${nutritionApiUrl}/patients?${params}`, { signal, cache: "no-store" });
+  // Pendiente de confirmar en backend: una sola proyección global, jamás N+1.
+  return request<NutritionQueueWire, ReturnType<typeof mapNutritionQueue>>(`${ROOT}/patients?${params}`, { signal }, mapNutritionQueue);
+}
+export async function fetchNutritionPendingCount(signal?: AbortSignal) {
+  const queue = await fetchNutritionQueue({ search: "", state: "en_aprobacion", page: 1, pageSize: 1 }, signal);
+  return { count: queue.total };
 }
 
-export async function fetchNutritionPendingCount(signal?: AbortSignal, scope?: NutritionScope): Promise<NutritionPendingCount> {
-  signal?.throwIfAborted();
-  if (nutritionUsesMocks) {
-    const { nutritionMockPatients } = await import("./nutrition-mocks");
-    signal?.throwIfAborted();
-    const patients = scope ? await mockSummaries(scope) : nutritionMockPatients;
-    return { count: patients.filter((item) => item.plan?.state === "en_aprobacion").length };
+export async function fetchNutritionWorkspace(patientId: string, signal: AbortSignal): Promise<NutritionWorkspace> {
+  // Rutas agregadas de ficha y catálogo pendientes; ausencia => error visible.
+  const path = `${ROOT}/patients/${encodeURIComponent(patientId)}`;
+  const profile = await request<NutritionPatientWire, NutritionPatientWire>(path, { signal }, (wire) => {
+    if (wire?.patientId !== patientId || !("prescriptionId" in wire) || !("publishedPrescriptionId" in wire)) throw new Error("nutrition-patient-contract");
+    return wire;
+  });
+  const catalog = await request<NutritionFoodWire[], NutritionFood[]>(`${ROOT}/foods`, { signal }, mapNutritionFoods);
+  const read = (id: string) => request<NutritionViewWire, { cycle: NutritionCycle; revision: number }>(`${prescriptions(patientId)}/${encodeURIComponent(id)}`, { signal }, (wire) => {
+    if (wire?.patientId !== patientId) throw new Error("nutrition-patient-mismatch");
+    return { cycle: mapNutritionCycle(wire, catalog), revision: wire.revision };
+  });
+  const current = profile.prescriptionId ? await read(profile.prescriptionId) : null;
+  const published = profile.publishedPrescriptionId ? profile.publishedPrescriptionId === profile.prescriptionId ? current : await read(profile.publishedPrescriptionId) : null;
+  let patient: NutritionPatientDetail;
+  try { patient = mapNutritionPatient(profile, current?.cycle ?? null, published?.cycle ?? null, current?.revision ?? 0); }
+  catch { throw new NutritionRequestError({ kind: "contract", endpoint: `GET ${path}`, status: 502 }); }
+  if (patient.cycle) return { patient: await withHistory(patient, signal), catalog };
+  return { patient, catalog };
+}
+
+async function withHistory(patient: NutritionPatientDetail, signal?: AbortSignal): Promise<NutritionPatientDetail> {
+  if (!patient.cycle) return patient;
+  const version = patient.cycle.version;
+  try {
+    const audit = await request<NutritionEventWire[], ReturnType<typeof mapNutritionHistory>>(`${prescriptions(patient.patientId)}/${encodeURIComponent(patient.cycle.id)}/history`, { signal }, (wire) => mapNutritionHistory(wire, version));
+    return { ...patient, audit, auditIssue: null };
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    // Una lectura fallida nunca transforma una escritura confirmada en "fallida".
+    return { ...patient, audit: [], auditIssue: nutritionIssue(error) };
   }
-  return apiFetch<NutritionPendingCount>(`${nutritionApiUrl}/pending-count`, { signal, cache: "no-store" });
 }
 
-async function mockSummaries(scope: NutritionScope): Promise<NutritionPatientSummary[]> {
-  const { mockWorkspace } = await import("./nutrition-mock-workspace");
-  return Array.from(mockWorkspace(scope).values()).map((patient) => ({
-    patientId: patient.patientId, patientName: patient.patientName, patientDocument: patient.patientDocument,
-    plan: patient.cycle ? {
-      id: patient.cycle.id, state: patient.cycle.state,
-      queueState: patient.cycle.state === "aprobado" && patient.cycle.endDate && (Date.parse(`${patient.cycle.endDate}T23:59:59Z`) - Date.now()) / 86_400_000 <= 5 ? "por_renovar" : patient.cycle.state,
-      version: patient.cycle.version, dailyKcal: patient.cycle.targets.kcal,
-      criticalAlertCount: patient.cycle.alerts.filter((alert) => alert.severity === "critical").length,
-      aiAssisted: true, provisional: patient.cycle.provisional, endDate: patient.cycle.endDate,
-    } : null,
-  }));
-}
-
-function requireDemoMode() {
-  if (!nutritionUsesMocks) throw new ApiError(503, "unavailable", "nutrition-demo-only");
-}
-
-export async function fetchNutritionWorkspace(patientId: string, signal: AbortSignal, scope: NutritionScope): Promise<NutritionWorkspace> {
-  requireDemoMode(); signal.throwIfAborted();
-  const { mockPatient, nutritionMockCatalog } = await import("./nutrition-mock-workspace");
-  signal.throwIfAborted();
-  return { patient: mockPatient(patientId, scope), catalog: structuredClone(nutritionMockCatalog) };
-}
-
-export async function saveNutritionDraft(patientId: string, cycle: NutritionCycle, revision: number, scope: NutritionScope) {
-  requireDemoMode();
-  const { saveMockDraft } = await import("./nutrition-mock-workspace");
-  return saveMockDraft(patientId, cycle, revision, scope);
-}
-
-export async function performNutritionAction(patientId: string, action: NutritionMockAction, revision: number, actor: NutritionActor, scope: NutritionScope, options: { comment?: string; criticalConfirmed?: boolean } = {}) {
-  requireDemoMode();
-  const { actOnMockPatient } = await import("./nutrition-mock-workspace");
-  const patient = actOnMockPatient(patientId, action, revision, actor, scope, options);
+async function mutate(patient: NutritionPatientDetail, catalog: NutritionFood[], path: string, body: unknown, signal?: AbortSignal) {
+  const result = await request<NutritionViewWire, { cycle: NutritionCycle; revision: number; published: boolean }>(path, { method: "POST", body: JSON.stringify(body), signal }, (wire) => {
+    if (wire?.patientId !== patient.patientId) throw new Error("nutrition-patient-mismatch");
+    return { cycle: mapNutritionCycle(wire, catalog), revision: wire.revision, published: wire.isPublished };
+  });
+  const publishedCycle = result.published ? result.cycle : patient.publishedCycle;
+  const updated = { ...patient, cycle: { ...result.cycle, patientTimeZone: patient.cycle?.patientTimeZone ?? "", publishedVersionId: publishedCycle?.id ?? null }, publishedCycle, revision: result.revision };
   window.dispatchEvent(new Event("nutrition-changed"));
-  return patient;
+  return withHistory(updated, signal);
+}
+
+export function saveNutritionDraft(patient: NutritionPatientDetail, cycle: NutritionCycle, previous: NutritionCycle, revision: number, catalog: NutritionFood[], signal?: AbortSignal) {
+  return mutate(patient, catalog, `${prescriptions(patient.patientId)}/${encodeURIComponent(cycle.id)}/save`, { revision, edit: toNutritionEdit(cycle, previous) }, signal);
+}
+
+export function performNutritionAction(patient: NutritionPatientDetail, action: NutritionAction, revision: number, catalog: NutritionFood[], options: NutritionActionOptions = {}, signal?: AbortSignal) {
+  const base = prescriptions(patient.patientId);
+  if (action === "create") return mutate(patient, catalog, base, options.generate ?? {}, signal);
+  if (!patient.cycle) throw new NutritionRequestError({ kind: "contract", endpoint: `POST ${base}`, status: 422 });
+  const verb = action === "new-version" ? "create-version" : action;
+  const body = { revision, ...(action === "approve" ? { criticalConfirmed: options.criticalConfirmed === true, comment: options.comment?.trim() || undefined } : {}), ...(action === "return" ? { comment: options.comment?.trim() } : {}), ...(action === "regenerate" ? { generate: options.generate ?? { preserveConfirmedEdits: true } } : {}) };
+  // Actor y capacidades se resuelven en el backend desde JWT; no viajan en el cuerpo.
+  return mutate(patient, catalog, `${base}/${encodeURIComponent(patient.cycle.id)}/${verb}`, body, signal);
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { fetchNutritionQueue } from "../services/nutrition-service";
-import type { NutritionFilter, NutritionQueueQuery, NutritionScope } from "../types/nutrition";
+import type { NutritionFilter, NutritionQueueQuery } from "../types/nutrition";
 import { useNutritionResource } from "./use-nutrition-resource";
 
 export function useNutritionQueue() {
@@ -12,7 +12,7 @@ export function useNutritionQueue() {
     const timer = setTimeout(() => setQuery((prev) => prev.search === search.trim() ? prev : { ...prev, search: search.trim(), page: 1 }), 350);
     return () => clearTimeout(timer);
   }, [search]);
-  const load = useCallback((signal: AbortSignal, scope: NutritionScope) => fetchNutritionQueue(query, signal, scope), [query]);
+  const load = useCallback((signal: AbortSignal) => fetchNutritionQueue(query, signal), [query]);
   const resource = useNutritionResource(load, "", true);
   return {
     ...resource, search, setSearch, query,

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useI18n, useT } from "@/providers/i18n-provider";
 import { useNutritionQueue } from "../hooks/use-nutrition-queue";
-import { NutritionDemoNotice } from "./nutrition-shared";
+import { NutritionServiceNotice } from "./nutrition-shared";
 import type { NutritionFilter, NutritionPatientSummary, NutritionQueueState } from "../types/nutrition";
 import { NutritionError, NutritionSkeleton } from "./nutrition-feedback";
 import "../nutrition.css";
@@ -60,7 +60,7 @@ export function NutritionQueue() {
       <div className="min-w-0"><h1 className="nutrition-display text-3xl font-semibold sm:text-4xl">{t("Nutrición")}</h1><p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">{t("Una bandeja para acompañar el plan nutricional de cada paciente.")}</p></div>
       <Button variant="outline" disabled={loading} onClick={retry}>{t("Actualizar")}</Button>
     </header>
-    <NutritionDemoNotice />
+    <NutritionServiceNotice />
     <section className="min-w-0 rounded-xl border border-border bg-card" aria-labelledby="nutrition-queue-title">
       <div className="space-y-5 border-b border-border p-4 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-5">
@@ -75,7 +75,7 @@ export function NutritionQueue() {
         </ToggleGroup>
       </div>
       <div aria-busy={loading}>
-        {loading ? <NutritionSkeleton /> : error ? <div className="p-5"><NutritionError retry={retry} /></div> : data?.items.length ? <>
+        {loading ? <NutritionSkeleton /> : error ? <div className="p-5"><NutritionError retry={retry} issue={error} /></div> : data?.items.length ? <>
           <ul role="list" aria-label={t("Planes de pacientes")} className="divide-y divide-border">{data.items.map((patient) => <PatientRow key={patient.patientId} patient={patient} />)}</ul>
           <nav aria-label={t("Paginación de nutrición")} className="flex flex-wrap items-center justify-between gap-4 border-t border-border p-4 sm:px-6">
             <p role="status" className="text-sm text-muted-foreground">{t("Página {page} de {pages} · {total} pacientes", { page: String(data.page), pages: String(Math.max(1, data.totalPages)), total: String(data.total) })}</p>

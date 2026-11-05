@@ -17,7 +17,7 @@ export interface NutritionFood {
   id: string;
   name: string;
   group: string;
-  role: "C" | "P" | "F" | "V";
+  role?: "C" | "P" | "F" | "V";
   per100g: Omit<NutritionTargets, "waterGlasses">;
   householdEquivalent: string;
 }
@@ -34,6 +34,8 @@ export interface NutritionMeal {
   dayNumber: number;
   mealType: "desayuno" | "almuerzo" | "merienda" | "cena";
   localTime: string;
+  menuName?: string | null;
+  notes?: string | null;
   waterGlasses: number;
   items: NutritionMealItem[];
   totals: Omit<NutritionTargets, "waterGlasses">;
@@ -64,6 +66,14 @@ export interface NutritionCycle {
   createdBy: string;
   approvedBy: string | null;
   approvedAt: string | null;
+  /** Contexto numérico del motor conservado al editar metas; nunca se inventa. */
+  engineContext?: NutritionEngineContext;
+  canRegenerate?: boolean;
+}
+
+export interface NutritionEngineContext {
+  bmr: number; tdee: number; deficit: number; floor: number; phase: string;
+  targetWeightKg: number; remainingKg: number; weeklyKg: number; weeks: number;
 }
 
 /** Proyección incluida en el listado: ninguna tarjeta consulta el detalle. */
@@ -114,14 +124,17 @@ export interface NutritionClinicalProfile {
   movement: string | null;
   adherence: string | null;
   cardiometabolicRisk: string | null;
-  completedTests: number;
+  completedTests: number | null;
+  weightKg?: number | null;
+  heightCm?: number | null;
+  birthDate?: string | null;
   provisionalFields: string[];
   programPatientId: string | null;
 }
 
 export interface NutritionAuditEntry {
   id: string;
-  action: "created" | "saved" | "submitted" | "approved" | "returned" | "version_created" | "regenerated";
+  action: "created" | "saved" | "submitted" | "approved" | "returned" | "version_created" | "regenerated" | "publication_replaced";
   actorId: string;
   actorName: string;
   occurredAt: string;
@@ -142,9 +155,27 @@ export interface NutritionPatientDetail {
   publishedCycle: NutritionCycle | null;
   revision: number;
   audit: NutritionAuditEntry[];
+  auditIssue?: NutritionServiceIssue | null;
 }
 
 export interface NutritionWorkspace {
   patient: NutritionPatientDetail | null;
   catalog: NutritionFood[];
+}
+
+export type NutritionAction = "submit" | "approve" | "return" | "new-version" | "create" | "regenerate";
+export interface NutritionGenerateInput {
+  birthDate?: string;
+  manual?: { peso: number; talla: number; edad: number; sexo: "F" | "M"; imc?: number };
+  preserveConfirmedEdits?: boolean;
+}
+export interface NutritionActionOptions {
+  comment?: string;
+  criticalConfirmed?: boolean;
+  generate?: NutritionGenerateInput;
+}
+export interface NutritionServiceIssue {
+  kind: "endpoint" | "contract" | "conflict" | "request";
+  endpoint: string;
+  status: number;
 }

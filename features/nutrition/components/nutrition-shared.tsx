@@ -2,14 +2,12 @@
 
 import { Sparkles } from "lucide-react";
 import { useI18n, useT } from "@/providers/i18n-provider";
-import { nutritionUsesMocks } from "../services/nutrition-service";
 import type { NutritionQueueState, NutritionTargets } from "../types/nutrition";
 import { nutrientDefinitions } from "../lib/nutrition-calculations";
 
-export function NutritionDemoNotice() {
+export function NutritionServiceNotice() {
   const t = useT();
-  if (!nutritionUsesMocks) return null;
-  return <div className="nutrition-demo-notice" role="note"><p>{t("Vista de demostración · Pacientes y metas ficticios. No se realizan cambios clínicos.")}</p><p className="mt-1 text-xs">{t("Los cambios se conservan solo durante esta sesión demo. Recargar reinicia los datos.")}</p></div>;
+  return <div className="nutrition-service-notice" role="note"><p>{t("El borrador conserva la versión publicada hasta que apruebes los cambios.")}</p></div>;
 }
 
 export function NutritionStateChip({ state }: { state: NutritionQueueState }) {

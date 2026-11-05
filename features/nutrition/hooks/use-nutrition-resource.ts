@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/providers/auth-provider";
 import { useAppContext } from "@/providers/context-provider";
-import type { NutritionScope } from "../types/nutrition";
+import type { NutritionScope, NutritionServiceIssue } from "../types/nutrition";
+import { nutritionIssue } from "../services/nutrition-service";
 
 /** Patrón revision + AbortController del ERP, aislado por sesión y clínica. */
 export function useNutritionResource<T>(load: (signal: AbortSignal, scope: NutritionScope) => Promise<T>, refreshKey = "", listenChanges = false) {
@@ -13,14 +14,14 @@ export function useNutritionResource<T>(load: (signal: AbortSignal, scope: Nutri
   const identity = `${user?.id ?? ""}:${activeClinicId ?? ""}`;
   const userId = user?.id ?? "";
   const [revision, setRevision] = useState(0);
-  const [result, setResult] = useState<{ load: typeof load; identity: string; revision: number; refreshKey: string; data?: T; error?: boolean }>();
+  const [result, setResult] = useState<{ load: typeof load; identity: string; revision: number; refreshKey: string; data?: T; error?: NutritionServiceIssue }>();
 
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
     load(controller.signal, { userId, clinicId: activeClinicId }).then(
       (data) => { if (!controller.signal.aborted) setResult({ load, identity, revision, refreshKey, data }); },
-      () => { if (!controller.signal.aborted) setResult({ load, identity, revision, refreshKey, error: true }); },
+      (error) => { if (!controller.signal.aborted) setResult({ load, identity, revision, refreshKey, error: nutritionIssue(error) }); },
     );
     return () => controller.abort();
   }, [load, enabled, identity, revision, refreshKey, userId, activeClinicId]);
