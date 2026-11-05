@@ -122,6 +122,18 @@ export const navModules: NavModule[] = [
     ],
   },
   {
+    label: "Nutrición",
+    icon: Apple,
+    color: "#035d4d",
+    permission: ["Nutrition.Manage", "Nutrition.Approve"],
+    items: [{
+      label: "Nutrición",
+      href: "/nutrition",
+      icon: Apple,
+      permission: ["Nutrition.Manage", "Nutrition.Approve"],
+    }],
+  },
+  {
     label: "Gestión",
     icon: FolderKanban,
     color: "#1F6E9F",
@@ -465,13 +477,6 @@ export const navModules: NavModule[] = [
     color: "#D97706",
     items: [
       {
-        label: "Asignación",
-        href: "/program/asignacion",
-        icon: ClipboardList,
-        color: "#123B63",
-        permission: "Program.Enroll",
-      },
-      {
         label: "Dashboard General",
         href: "/program/dashboard",
         icon: BarChart3,
@@ -628,6 +633,12 @@ export function getBreadcrumbSegments(
   const segments: { label: string; href?: string }[] = [
     { label: "Copp Adresd", href: "/dashboard" },
   ];
+
+  if (pathname.startsWith("/nutrition/")) {
+    segments.push({ label: "Nutrición", href: "/nutrition" });
+    segments.push({ label: "Plan nutricional" });
+    return segments;
+  }
 
   // Rutas legacy de enrollments: redirigen a Gestión · Perfil 360
   if (pathname.startsWith("/program/enrollments")) {

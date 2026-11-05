@@ -123,3 +123,161 @@ asignar profesional ni reservar un slot. El contrato requiere `organizationId`
 en este modo. Los UUID y el token se inyectan por entorno y no se almacenan en
 el repositorio.
 
+### Nutrición ERP: HTTP simulado y E1 real
+
+El producto usa exclusivamente `lib/api/http.ts`. Las fixtures sintéticas viven
+en `e2e/fixtures/`; Playwright intercepta HTTP explícitamente, sin activar mocks
+en la aplicación. La suite de cierre ejecutó 14/14 casos sobre build de producción
+local. Cubre E1, permisos, ausencia de N+1, errores 404/contrato/409, revisiones,
+edición, publicación, devolución y agua nullable. No certifica persistencia real
+ni cálculo clínico del motor.
+
+Con el frontend servido en background y disponible en el puerto elegido:
+
+```powershell
+$env:E2E_BASE_URL = "http://localhost:3107"
+$env:NUTRITION_E2E_MODE = "mock"
+corepack yarn playwright test e2e/nutrition-queue.spec.ts e2e/nutrition-editor.spec.ts --project chromium-desktop
+```
+
+Para E1 real, configurar `NUTRITION_E2E_MODE=live` y ejecutar la spec de bandeja
+con `--grep "E1 sin plan provisional"`. Ese caso no intercepta peticiones.
+Acepta `NUTRITION_E2E_STORAGE_STATE` (archivo de sesión fuera del repositorio),
+`NUTRITION_E2E_PATIENT_ID`, `NUTRITION_E2E_SEARCH`, `NUTRITION_E2E_WEIGHT`,
+`NUTRITION_E2E_HEIGHT`, `NUTRITION_E2E_BIRTH_DATE` (YYYY-MM-DD) y
+`NUTRITION_E2E_SEX` (female/male). Usar un paciente QA sin plan ni tests, con
+alertas críticas previstas; el caso genera y aprueba una prescripción.
+
+Al cierre de Ola3 no había backend local en5080/5122. En Ola4B las propuestas
+anteriores se sustituyen por `GET /api/v1/nutrition/inbox` y `GET /api/v1/nutrition/foods`.
+La ficha usa la colección de prescripciones del paciente y el detalle por id;
+no existe un alias Nutrition de perfil por paciente. Errores, contrato y evidencia en
+`../openspec/changes/plan-nutricional-erp/NOTES-frontend.md` del workspace.
+
+#### Ola 4: ejecución real local (2026-11-05)
+
+El stack está iniciado mediante `scripts/dev-up.ps1`, con ERP `corepack yarn dev`
+en3000 y gateway5080/API5122. PostgreSQL Docker ya estaba healthy. Se aplicó
+`dotnet run --no-build --project src/CoppAddresd.Api -- --migrate` en Development:
+tablas nuevas y35 alimentos disponibles, sin prescripciones creadas por esta QA.
+
+`CONTRACT.md` faltó en ambos intentos, separados por cinco minutos. El Swagger
+real solo expone prescripciones/acciones; faltan las tres lecturas anteriores.
+La UI autenticada registra404 en bandeja y ficha. No se inventa una ruta alternativa.
+E1 real queda bloqueado antes de generar. `PRUEBA NOMBRE` tiene11 evaluaciones
+completadas; el paciente sintético existente `Test E2E` (documento88888888,
+id `2ab93970-b240-4122-b1ba-74aa9769ac38`) tiene0 evaluaciones completadas y0
+prescripciones. No se ejecuta el seed legacy masivo ni el seed de asignación:
+no proporcionan el escenario nuevo y afectarían datos fuera de esta QA.
+
+E1 acepta una sesión externa mediante `NUTRITION_E2E_STORAGE_STATE`; si falta,
+usa el login real del admin QA ya existente (`loginAsAdmin`, variables
+`E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD`). No se intercepta HTTP en ese caso.
+`NUTRITION_E2E_SCREENSHOTS` habilita las ocho capturas por etapa en el directorio
+elegido, en1440×900 y390×844. Se generan únicamente al alcanzar cada etapa.
+Los otros cinco casos de la spec siguen siendo regresiones HTTP simuladas y
+se informan por separado del único journey real. La expansión del sidebar usa
+teclado para evitar el indicador de Next dev que se superpone al botón inferior.
+Resultado final del comando `corepack yarn e2e e2e/nutrition-queue.spec.ts
+--project=chromium-desktop` con `NUTRITION_E2E_MODE=live`: **5 passed,1 failed**
+(13,7s). Las cinco regresiones simuladas pasan; E1 falla explícitamente al
+esperar200 y recibir404 del GET global. No se omite ni se convierte el fallo en éxito.
+
+#### Ola4B: contrato exacto y routing real
+
+Se leyó `CONTRACT.md`. Acciones POST bajo
+`/api/v1/nutrition/patients/{patientId}/prescriptions/{id}/{verb}`:
+`save`, `apply-day`, `create-version`, `submit`, `approve`, `return`, `regenerate`.
+Generar es POST a la colección, no `/generate`. Cada respuesta sustituye id y
+revision; nueva versión también actualiza el query `prescriptionId` de la URL.
+Al abrir desde bandeja se conserva el id seleccionado; un deep-link con solo
+paciente usa la primera cabecera en el orden que devuelve la API. Las comidas
+se leen del detalle, nunca de las cabeceras vacías del listado. El GET móvil
+`/api/v1/me/nutrition-plan` queda solo como referencia al contrato congelado.
+
+La bandeja apunta a `/inbox`; el DTO confirmado en el backend local es
+`{items:[{patientId,patientName,state,prescription}],total,page,pageSize}`.
+`prescription` incluye `k` y `revision`; no hay documento, contadores globales
+ni `totalPages`. Solo se calcula paginación y total del filtro consultado;
+los otros contadores no se muestran ni se solicitan por separado. Se omite
+`state` para Todos y `search` busca por nombre. Usar `NUTRITION_E2E_SEARCH="Test E2E"`,
+no el documento del fixture. `/foods` ya responde200 y usa el DTO público
+`{code,name,group,role,kcal100,carbs100,protein100,fat100,fiber100,householdEquivalent}`;
+la equivalencia es null u objeto `{unitSingular,unitPlural,gramsPerUnit,unitStep}`.
+No se confunde con la entidad (`id`, `foodGroup`, `calories100`).
+
+Demografía opcional: DTO existente `/api/v1/patients/{id}`. Su403/404 no bloquea
+una prescripción ya autorizada por Nutrition: se muestra error y UUID, sin
+inventar datos clínicos. El DTO de prescripción no incluye perfil completo,
+timezone ni número de tests. Una página llena de100 cabeceras no se asume como
+historial entero: ese caso requiere ampliar navegación y da error explícito.
+
+Regresiones: ProblemDetails.detail visible, recarga409 antes de nuevo envío,
+id nuevo/revision1 al versionar, y apply-day con
+`edit:{sourceDay,confirmManualEdits:true}`. La recarga también está dentro del
+diálogo para que el modal no impida resolver el conflicto. Suite simulada final:
+**15 aprobadas y1 sonda real omitida**,38,0s; incluye identidad403/404 opcional.
+
+Spec con modo live final: **7 aprobadas**,45,5s: **5 regresiones simuladas**,
+**1 sonda real** y **E1 real completo**. Al entregar backend inbox/catalogo se
+compiló y recargó solamente API5122. E1 duró29,8s: paciente sin plan → generación201
+→ editor con ítems/metas → submit → críticas confirmadas → approve → reload
+con publicado v1. DB verifica120 comidas, revision3, provisional=true,
+una crítica confirmada, autoApproved=true y `narrativeSource=llm`.
+La sonda verifica prescripciones200 tanto en API5122 como gateway5080. Artefactos
+reales en `qa-reports/nutrition/wave4b-live/`; simulados en `wave4b-simulated/`.
+La generación real espera su respuesta hasta125s, dentro del timeout del journey;
+no se aplica la aserción genérica10s al tiempo del proveedor.
+
+Health: Api/Auth/Telemedicine Unhealthy, Community Healthy. Los logs registran
+`HttpClient.Timeout` de2s en las sondas; HTTP directo responde200 en aproximadamente
+2,5–3s. No se determinó la causa final de esa latencia ni se modificó el gateway.
+Las ocho capturas reales del recorrido están en el directorio screenshots de
+OpenSpec: bandeja/ficha/editor/aprobacion y sus variantes-mobile. Las imágenes
+anteriores de404 fueron sustituidas al desbloquearse backend.
+
+El paciente QA Test E2E ya quedó aprobado con prescripción
+`132e81a7-c290-49df-a482-3724716f4311`. Para repetir E1 completo se necesita otro
+fixture sin plan/tests o un reset coordinado del seed; el test no borra planes,
+no devuelve un aprobado a borrador ni realiza limpieza destructiva automática.
+
+#### Ola5: correcciones visuales y capturas reales
+
+Vigencia incompleta muestra dos «Sin definir» sin flecha, en resumen y metas.
+Review conserva cabecera y acciones fuera del cuerpo con scroll; las acciones
+son visibles sin desplazamiento en1440×900 y390×844. Consentimiento inicia false
+y se remonta al reabrir; las capturas se toman ANTES de marcar el checkbox.
+Autor: «Nutricionista actual» si coincide con el usuario, «Nutricionista externo»
+en otro caso, sin mostrar UUID ni consultar un directorio adicional.
+
+El círculo N era el indicador de Next dev, no un badge de nuestra aplicación.
+`devIndicators:false` lo oculta de forma oficial sin ocultar errores de runtime.
+Se regeneraron las ocho imágenes reales sin el artefacto. El chip IA conserva
+dorado con AA comprobado en ambos temas; excesos colorean valor/barra ámbar.
+Documento, peso y talla numéricos usan Plex Mono; singular crítico corregido.
+
+Contadores reales de los siete chips: como inbox no publica counts, se consulta
+la página y seis agregados restantes con pageSize1, en paralelo, misma búsqueda
+y señal de cancelación. Lote fijo independiente del número de pacientes; nunca
+se lee un detalle por tarjeta. El badge del sidebar mantiene una única consulta.
+Un fallo del lote se muestra por el manejo de errores del recurso, sin ceros falsos.
+
+Para regenerar E1/capturas sin alterar un plan aprobado, el test admite
+`NUTRITION_E2E_CREATE_PATIENT=1` junto a modo live. Crea por la API existente de
+Patients un fixture QA único, sin plan/tests, solo si el host es localhost o
+127.0.0.1. No ejecuta SQL ni borra datos; el fixture termina aprobado. Mantener
+las variables de mínimos clínicos y el directorio de capturas documentados arriba.
+
+```powershell
+$env:NUTRITION_E2E_MODE = "live"
+$env:NUTRITION_E2E_CREATE_PATIENT = "1"
+corepack yarn e2e --project=chromium-desktop e2e/nutrition-queue.spec.ts
+```
+
+Ola5: spec pedida7/7 en50,6s (5 simuladas+E1 real33,9s+sonda real).
+Editor11/11 en26,3s: fechas vacías, consentimiento/reapertura, autor externo,
+footer en viewport, contraste≥4,5 claro/oscuro y exceso perceptible. Lint/build
+verdes; i18n0 faltantes. Artefactos en `qa-reports/nutrition/wave5-live/` y
+`wave5-regression/`. Fixture real05900dde-45ce-40f1-b1b6-e3b6a5a0830a;
+las capturas actuales son de este recorrido, con consentimiento desmarcado.
+
