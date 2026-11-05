@@ -142,7 +142,7 @@ corepack yarn playwright test e2e/nutrition-queue.spec.ts e2e/nutrition-editor.s
 
 Para E1 real, configurar `NUTRITION_E2E_MODE=live` y ejecutar la spec de bandeja
 con `--grep "E1 sin plan provisional"`. Ese caso no intercepta peticiones.
-Requiere `NUTRITION_E2E_STORAGE_STATE` (archivo de sesión fuera del repositorio),
+Acepta `NUTRITION_E2E_STORAGE_STATE` (archivo de sesión fuera del repositorio),
 `NUTRITION_E2E_PATIENT_ID`, `NUTRITION_E2E_SEARCH`, `NUTRITION_E2E_WEIGHT`,
 `NUTRITION_E2E_HEIGHT`, `NUTRITION_E2E_BIRTH_DATE` (YYYY-MM-DD) y
 `NUTRITION_E2E_SEX` (female/male). Usar un paciente QA sin plan ni tests, con
@@ -153,4 +153,33 @@ Al cierre no había backend local en 5080/5122. Las lecturas agregadas
 y `GET /api/v1/nutrition/foods` siguen pendientes de confirmación del backend;
 su ausencia muestra error explícito. Contratos y evidencia en
 `../openspec/changes/plan-nutricional-erp/NOTES-frontend.md` del workspace.
+
+#### Ola 4: ejecución real local (2026-11-05)
+
+El stack está iniciado mediante `scripts/dev-up.ps1`, con ERP `corepack yarn dev`
+en3000 y gateway5080/API5122. PostgreSQL Docker ya estaba healthy. Se aplicó
+`dotnet run --no-build --project src/CoppAddresd.Api -- --migrate` en Development:
+tablas nuevas y35 alimentos disponibles, sin prescripciones creadas por esta QA.
+
+`CONTRACT.md` faltó en ambos intentos, separados por cinco minutos. El Swagger
+real solo expone prescripciones/acciones; faltan las tres lecturas anteriores.
+La UI autenticada registra404 en bandeja y ficha. No se inventa una ruta alternativa.
+E1 real queda bloqueado antes de generar. `PRUEBA NOMBRE` tiene11 evaluaciones
+completadas; el paciente sintético existente `Test E2E` (documento88888888,
+id `2ab93970-b240-4122-b1ba-74aa9769ac38`) tiene0 evaluaciones completadas y0
+prescripciones. No se ejecuta el seed legacy masivo ni el seed de asignación:
+no proporcionan el escenario nuevo y afectarían datos fuera de esta QA.
+
+E1 acepta una sesión externa mediante `NUTRITION_E2E_STORAGE_STATE`; si falta,
+usa el login real del admin QA ya existente (`loginAsAdmin`, variables
+`E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD`). No se intercepta HTTP en ese caso.
+`NUTRITION_E2E_SCREENSHOTS` habilita las ocho capturas por etapa en el directorio
+elegido, en1440×900 y390×844. Se generan únicamente al alcanzar cada etapa.
+Los otros cinco casos de la spec siguen siendo regresiones HTTP simuladas y
+se informan por separado del único journey real. La expansión del sidebar usa
+teclado para evitar el indicador de Next dev que se superpone al botón inferior.
+Resultado final del comando `corepack yarn e2e e2e/nutrition-queue.spec.ts
+--project=chromium-desktop` con `NUTRITION_E2E_MODE=live`: **5 passed,1 failed**
+(13,7s). Las cinco regresiones simuladas pasan; E1 falla explícitamente al
+esperar200 y recibir404 del GET global. No se omite ni se convierte el fallo en éxito.
 
