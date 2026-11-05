@@ -12,6 +12,7 @@ export interface NutritionTargets {
   fiberG: number;
   waterGlasses: number;
 }
+export type NutritionTotals = Omit<NutritionTargets, "waterGlasses"> & { waterGlasses: number | null };
 
 export interface NutritionFood {
   id: string;
@@ -36,7 +37,7 @@ export interface NutritionMeal {
   localTime: string;
   menuName?: string | null;
   notes?: string | null;
-  waterGlasses: number;
+  waterGlasses: number | null;
   items: NutritionMealItem[];
   totals: Omit<NutritionTargets, "waterGlasses">;
 }
@@ -148,6 +149,7 @@ export interface NutritionPatientDetail {
   patientId: string;
   patientName: string;
   patientDocument: string | null;
+  timeZone?: string | null;
   nextPendingPatientId: string | null;
   profile: NutritionClinicalProfile;
   cycle: NutritionCycle | null;

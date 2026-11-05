@@ -71,19 +71,20 @@ async function withHistory(patient: NutritionPatientDetail, signal?: AbortSignal
   }
 }
 
-async function mutate(patient: NutritionPatientDetail, catalog: NutritionFood[], path: string, body: unknown, signal?: AbortSignal) {
+async function mutate(patient: NutritionPatientDetail, catalog: NutritionFood[], path: string, body: unknown, signal?: AbortSignal, identity?: NutritionCycle) {
   const result = await request<NutritionViewWire, { cycle: NutritionCycle; revision: number; published: boolean }>(path, { method: "POST", body: JSON.stringify(body), signal }, (wire) => {
     if (wire?.patientId !== patient.patientId) throw new Error("nutrition-patient-mismatch");
-    return { cycle: mapNutritionCycle(wire, catalog), revision: wire.revision, published: wire.isPublished };
+    return { cycle: mapNutritionCycle(wire, catalog, identity), revision: wire.revision, published: wire.isPublished };
   });
-  const publishedCycle = result.published ? result.cycle : patient.publishedCycle;
-  const updated = { ...patient, cycle: { ...result.cycle, patientTimeZone: patient.cycle?.patientTimeZone ?? "", publishedVersionId: publishedCycle?.id ?? null }, publishedCycle, revision: result.revision };
+  const cycle = { ...result.cycle, patientTimeZone: patient.timeZone ?? patient.cycle?.patientTimeZone ?? "", publishedVersionId: result.published ? result.cycle.id : patient.publishedCycle?.id ?? null };
+  const publishedCycle = result.published ? cycle : patient.publishedCycle;
+  const updated = { ...patient, cycle, publishedCycle, revision: result.revision };
   window.dispatchEvent(new Event("nutrition-changed"));
   return withHistory(updated, signal);
 }
 
 export function saveNutritionDraft(patient: NutritionPatientDetail, cycle: NutritionCycle, previous: NutritionCycle, revision: number, catalog: NutritionFood[], signal?: AbortSignal) {
-  return mutate(patient, catalog, `${prescriptions(patient.patientId)}/${encodeURIComponent(cycle.id)}/save`, { revision, edit: toNutritionEdit(cycle, previous) }, signal);
+  return mutate(patient, catalog, `${prescriptions(patient.patientId)}/${encodeURIComponent(cycle.id)}/save`, { revision, edit: toNutritionEdit(cycle, previous) }, signal, cycle);
 }
 
 export function performNutritionAction(patient: NutritionPatientDetail, action: NutritionAction, revision: number, catalog: NutritionFood[], options: NutritionActionOptions = {}, signal?: AbortSignal) {

@@ -1,28 +1,21 @@
 import { test, expect, type Page } from "@playwright/test";
+import { mockNutritionHttp } from "./fixtures/nutrition-http";
 
 async function demoSession(page: Page, permissions = ["Nutrition.Manage", "Nutrition.Approve"], english = false) {
-  if (english) await page.context().addCookies([{ name: "copp_lang", value: "en", url: process.env.E2E_BASE_URL ?? "http://localhost:3000" }]);
-  await page.route("**/api/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const reply = (body: unknown) => route.fulfill({ contentType: "application/json", body: JSON.stringify(body) });
-    if (path === "/api/auth/refresh") return reply({ accessToken: "synthetic-nutrition-qa", expiresIn: 3600 });
-    if (path === "/api/auth/me") return reply({ id: "nutrition-qa", email: "qa@example.invalid", firstName: "QA", lastName: "Nutrición", roles: ["Reviewer"], permissions });
-    if (path === "/api/v1/me/context") return reply({ userId: "nutrition-qa", employeeId: null, professionalId: null, organization: null, isProfessional: false, onboardingCompleted: true, employeeStatus: "Active", clinics: [], activeClinicId: null });
-    return route.fulfill({ status: 404, contentType: "application/json", body: "{}" });
-  });
+  return mockNutritionHttp(page, permissions, { english });
 }
 
 async function saved(page: Page) {
-  await expect(page.getByRole("status").filter({ hasText: "Guardado en esta sesión demo" })).toHaveText("Guardado en esta sesión demo");
+  await expect(page.getByRole("status").filter({ hasText: "Todos los cambios guardados" })).toHaveText("Todos los cambios guardados");
 }
 
 test("editar, previsualizar catálogo, copiar 30 días y conservar al volver", async ({ page }) => {
-  await demoSession(page);
+  const { writes } = await demoSession(page);
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto("/nutrition/demo-patient-2");
   await expect(page.getByRole("heading", { name: "Carlos Demo", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Plan provisional", exact: true })).toBeVisible();
-  const action = page.getByRole("button", { name: "Enviar a aprobación demo", exact: true });
+  const action = page.getByRole("button", { name: "Enviar a aprobación", exact: true });
   const contrast = () => action.evaluate((element) => {
     const style = getComputedStyle(element);
     const luminance = (color: string) => {
@@ -40,6 +33,8 @@ test("editar, previsualizar catálogo, copiar 30 días y conservar al volver", a
   const grams = page.getByLabel("Gramos de Avena demo", { exact: true });
   await grams.fill("80");
   await saved(page);
+  const firstSave = writes.find((write) => write.path.endsWith("/save"));
+  expect(firstSave?.body.edit).not.toHaveProperty("targets");
   await page.getByLabel("Agregar alimento a Desayuno", { exact: true }).click();
   const picker = page.getByRole("dialog");
   await picker.getByLabel("Alimento", { exact: true }).selectOption("food-avocado");
@@ -82,9 +77,9 @@ test("aprobar exige críticas; registra autoaprobación y actualiza bandeja", as
   page.on("request", (request) => { if (request.url().includes("/api/v1/nutrition/")) writes.push(request.url()); });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/nutrition/demo-patient-1");
-  await page.getByRole("button", { name: "Aprobar plan demo", exact: true }).click();
+  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
   const dialog = page.getByRole("dialog");
-  const confirm = dialog.getByRole("button", { name: "Confirmar aprobación demo", exact: true });
+  const confirm = dialog.getByRole("button", { name: "Aprobar y publicar", exact: true });
   await expect(dialog.getByRole("heading", { name: "Revisar aprobación del plan", exact: true })).toBeFocused();
   await expect(confirm).toBeDisabled();
   await expect(dialog).toHaveJSProperty("scrollWidth", await dialog.evaluate((element) => element.clientWidth));
@@ -98,7 +93,7 @@ test("aprobar exige críticas; registra autoaprobación y actualiza bandeja", as
   await page.getByRole("link", { name: "Volver a la bandeja", exact: true }).click();
   const maria = page.getByRole("listitem").filter({ has: page.getByRole("link", { name: "María Demo", exact: true }) });
   await expect(maria.getByText("Aprobado", { exact: true })).toBeVisible();
-  expect(writes).toEqual([]);
+  expect(writes.some((path) => path.endsWith("/approve"))).toBe(true);
 });
 
 test("devolver exige comentario no vacío y lo conserva en ficha y bitácora", async ({ page }) => {
@@ -106,7 +101,7 @@ test("devolver exige comentario no vacío y lo conserva en ficha y bitácora", a
   await page.goto("/nutrition/demo-patient-7");
   await page.getByRole("button", { name: "Devolver con comentario", exact: true }).click();
   const dialog = page.getByRole("dialog");
-  const confirm = dialog.getByRole("button", { name: "Confirmar devolución demo", exact: true });
+  const confirm = dialog.getByRole("button", { name: "Confirmar devolución", exact: true });
   await expect(confirm).toBeDisabled();
   await dialog.getByLabel("Motivo de devolución (obligatorio)", { exact: true }).fill("   ");
   await expect(confirm).toBeDisabled();
@@ -121,26 +116,26 @@ test("nueva versión conserva la publicada y bloquea aprobación con comida vac�
   await demoSession(page);
   await page.goto("/nutrition/demo-patient-4");
   await expect(page.getByLabel("Indicaciones del plan", { exact: true })).toBeDisabled();
-  await page.getByRole("button", { name: "Crear nueva versión demo", exact: true }).click();
+  await page.getByRole("button", { name: "Crear nueva versión", exact: true }).click();
   await expect(page.getByText("Versión 2", { exact: true })).toBeVisible();
   await page.getByLabel("Indicaciones del plan", { exact: true }).fill("Borrador v2 sin publicar");
-  await page.getByText("Ver copia publicada demo", { exact: true }).click();
+  await page.getByText("Ver versión publicada", { exact: true }).click();
   await expect(page.getByText("Indicaciones sintéticas para revisar y ajustar en la demostración.", { exact: true })).toBeVisible();
-  await expect(page.getByText("Versión publicada en demo: v1", { exact: true })).toBeVisible();
+  await expect(page.getByText("Versión publicada: v1", { exact: true })).toBeVisible();
   await page.getByLabel("Quitar Avena demo de Desayuno", { exact: true }).click();
   await page.getByLabel("Quitar Yogur demo de Desayuno", { exact: true }).click();
-  await saved(page);
-  await expect(page.getByRole("button", { name: "Enviar a aprobación demo", exact: true })).toBeDisabled();
+  await expect(page.getByRole("status")).toContainText("No se guardaron los últimos cambios.");
+  await expect(page.getByRole("button", { name: "Enviar a aprobación", exact: true })).toBeDisabled();
 });
 
 test("permisos separados, inglés y paciente desconocido sin datos fabricados", async ({ page }) => {
   await demoSession(page, ["Nutrition.Approve"], true);
   await page.goto("/nutrition/demo-patient-2");
-  await expect(page.getByRole("heading", { name: "Demo clinical profile", exact: true })).toBeVisible();
-  await expect(page.getByLabel("Grams of Demo oats", { exact: true })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Submit for demo approval", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Clinical profile", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Grams of Avena demo", { exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Submit for approval", exact: true })).toHaveCount(0);
   await page.goto("/nutrition/unknown-patient");
-  await expect(page.getByRole("heading", { name: "Patient unavailable in this demo", exact: true })).toBeVisible();
+  await expect(page.getByText("The Nutrition endpoint or resource is unavailable. No demo data is shown.", { exact: true })).toBeVisible();
 });
 
 test("cambiar metas exige regenerar antes de revisión y aprobación", async ({ page }) => {
@@ -148,15 +143,15 @@ test("cambiar metas exige regenerar antes de revisión y aprobación", async ({ 
   await page.goto("/nutrition/demo-patient-2");
   await page.getByText("Editar metas del borrador", { exact: true }).click();
   await page.locator("#target-kcal").fill("1800");
-  await page.getByRole("button", { name: "Guardar metas demo", exact: true }).click();
+  await page.getByRole("button", { name: "Guardar metas", exact: true }).click();
   await saved(page);
-  await expect(page.getByRole("button", { name: "Enviar a aprobación demo", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Enviar a aprobación", exact: true })).toBeDisabled();
   await expect(page.getByText("Menús desactualizados: las metas cambiaron.", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Regenerar menú demo", exact: true }).click();
+  await page.getByRole("button", { name: "Regenerar propuesta", exact: true }).click();
   await expect(page.getByText("Menús desactualizados: las metas cambiaron.", { exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "Enviar a aprobación demo", exact: true }).click();
-  await page.getByRole("button", { name: "Aprobar plan demo", exact: true }).click();
-  await page.getByRole("button", { name: "Confirmar aprobación demo", exact: true }).click();
+  await page.getByRole("button", { name: "Enviar a aprobación", exact: true }).click();
+  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
+  await page.getByRole("button", { name: "Aprobar y publicar", exact: true }).click();
   await expect(page.getByText("Auto-aprobado", { exact: true })).toHaveCount(2);
 });
 
@@ -164,8 +159,18 @@ test("Manage permite editar pero no aprobar ni devolver", async ({ page }) => {
   await demoSession(page, ["Nutrition.Manage"]);
   await page.goto("/nutrition/demo-patient-1");
   await expect(page.getByRole("heading", { name: "María Demo", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Aprobar plan demo", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Aprobar plan", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Devolver con comentario", exact: true })).toHaveCount(0);
   await page.goto("/nutrition/demo-patient-2");
   await expect(page.getByLabel("Gramos de Avena demo", { exact: true })).toBeEnabled();
+});
+
+test("agua nullable del contrato se conserva sin inventar cero", async ({ page }) => {
+  const { store } = await mockNutritionHttp(page, ["Nutrition.Manage"], { nullableWater: true });
+  await page.goto("/nutrition/demo-patient-2");
+  await expect(page.getByLabel("Agua (vasos)", { exact: true }).first()).toHaveValue("");
+  await expect(page.getByRole("progressbar", { name: "Agua respecto a la meta", exact: true })).toHaveCount(0);
+  await page.getByLabel("Indicaciones del plan", { exact: true }).fill("Agua pendiente de registrar");
+  await saved(page);
+  expect(store.get("demo-patient-2")!.cycle!.meals[0].waterGlasses).toBeNull();
 });

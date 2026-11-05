@@ -1,4 +1,4 @@
-import type { NutritionCycle, NutritionFood, NutritionMeal, NutritionMealItem, NutritionTargets } from "../types/nutrition";
+import type { NutritionCycle, NutritionFood, NutritionMeal, NutritionMealItem, NutritionTargets, NutritionTotals } from "../types/nutrition";
 
 export const mealDefinitions = [
   { type: "desayuno", label: "Desayuno", time: "07:00" },
@@ -25,7 +25,7 @@ export function itemTotals(food: NutritionFood, grams: number): NutritionTargets
   return { carbsG: carbsG * factor, proteinG: proteinG * factor, fatG: fatG * factor, fiberG: fiberG * factor, kcal: (4 * carbsG + 4 * proteinG + 9 * fatG) * factor, waterGlasses: 0 };
 }
 
-export function mealTotals(meal: NutritionMeal, catalog: NutritionFood[]): NutritionTargets {
+export function mealTotals(meal: NutritionMeal, catalog: NutritionFood[]): NutritionTotals {
   const total = emptyTotals();
   for (const item of meal.items) {
     const food = catalog.find((entry) => entry.id === item.foodId);
@@ -33,14 +33,14 @@ export function mealTotals(meal: NutritionMeal, catalog: NutritionFood[]): Nutri
     const nutrients = itemTotals(food, item.grams);
     for (const key of Object.keys(total) as (keyof NutritionTargets)[]) total[key] += nutrients[key];
   }
-  total.waterGlasses = meal.waterGlasses;
-  return total;
+  return { ...total, waterGlasses: meal.waterGlasses };
 }
 
-export function dayTotals(meals: NutritionMeal[], catalog: NutritionFood[]): NutritionTargets {
-  return meals.reduce((total, meal) => {
+export function dayTotals(meals: NutritionMeal[], catalog: NutritionFood[]): NutritionTotals {
+  return meals.reduce<NutritionTotals>((total, meal) => {
     const nutrients = mealTotals(meal, catalog);
-    for (const key of Object.keys(total) as (keyof NutritionTargets)[]) total[key] += nutrients[key];
+    for (const key of ["kcal", "carbsG", "proteinG", "fatG", "fiberG"] as const) total[key] += nutrients[key];
+    total.waterGlasses = total.waterGlasses === null || nutrients.waterGlasses === null ? null : total.waterGlasses + nutrients.waterGlasses;
     return total;
   }, emptyTotals());
 }
@@ -57,6 +57,6 @@ export function replicateDay(cycle: NutritionCycle, day: number): NutritionCycle
 export function cycleIsComplete(cycle: NutritionCycle, catalog: NutritionFood[]): boolean {
   return !cycle.menusOutdated && cycle.meals.length === 120 && Array.from({ length: 30 }, (_, index) => index + 1).every((day) => mealDefinitions.every(({ type, time }) => {
     const matches = cycle.meals.filter((meal) => meal.dayNumber === day && meal.mealType === type);
-    return matches.length === 1 && matches[0].localTime === time && Number.isFinite(matches[0].waterGlasses) && matches[0].waterGlasses >= 0 && matches[0].items.length > 0 && matches[0].items.every((item) => Number.isFinite(item.grams) && item.grams >= 1 && item.grams <= 1000 && catalog.some((food) => food.id === item.foodId));
+    return matches.length === 1 && matches[0].localTime === time && (matches[0].waterGlasses === null || Number.isFinite(matches[0].waterGlasses) && matches[0].waterGlasses >= 0) && matches[0].items.length > 0 && matches[0].items.every((item) => Number.isFinite(item.grams) && item.grams >= 1 && item.grams <= 1000 && catalog.some((food) => food.id === item.foodId));
   }));
 }

@@ -21,21 +21,28 @@ export function mapNutritionFoods(rows: NutritionFoodWire[]): NutritionFood[] {
   });
 }
 
-export function mapNutritionCycle(row: NutritionViewWire, catalog: NutritionFood[]): NutritionCycle {
+export function mapNutritionCycle(row: NutritionViewWire, catalog: NutritionFood[], identity?: NutritionCycle): NutritionCycle {
   requireField(row && typeof row.id === "string" && typeof row.patientId === "string" && states.includes(row.state));
-  requireField(Number.isInteger(row.version) && Number.isInteger(row.revision) && typeof row.provisional === "boolean" && typeof row.isPublished === "boolean" && typeof row.menusOutdated === "boolean");
+  requireField(Number.isInteger(row.version) && row.version > 0 && Number.isInteger(row.revision) && row.revision > 0 && typeof row.provisional === "boolean" && typeof row.isPublished === "boolean" && typeof row.menusOutdated === "boolean" && typeof row.canRegenerate === "boolean");
   const target = row.targets;
   requireField(target && [target.k, target.c, target.p, target.f, target.fi, target.vasos, target.bmr, target.tdee, target.deficit, target.floor, target.metaKg, target.kgLeft, target.wkKg, target.semanas].every(finite) && typeof target.fase === "string");
   requireField(Array.isArray(row.meals) && Array.isArray(row.alerts) && Array.isArray(row.missingData));
   const meals = row.meals.map((meal) => {
     requireField(meal && meal.mealType in mealTypes && Number.isInteger(meal.dayNumber) && meal.dayNumber >= 1 && meal.dayNumber <= 30 && Array.isArray(meal.items));
-    requireField(finite(meal.waterMl) && meal.waterMl >= 0);
+    requireField(meal.waterMl === null || finite(meal.waterMl) && meal.waterMl >= 0);
     const type = mealTypes[meal.mealType];
-    const id = `${row.id}-${meal.dayNumber}-${type}`;
-    return { id, dayNumber: meal.dayNumber, mealType: type, menuName: meal.menuName, notes: meal.notes, localTime: mealDefinitions.find((entry) => entry.type === type)!.time, waterGlasses: meal.waterMl / 250,
+    const prior = identity?.id === row.id ? identity.meals.find((entry) => entry.dayNumber === meal.dayNumber && entry.mealType === type) : undefined;
+    const id = prior?.id ?? `${row.id}-${meal.dayNumber}-${type}`;
+    const remaining = [...(prior?.items ?? [])];
+    return { id, dayNumber: meal.dayNumber, mealType: type, menuName: meal.menuName, notes: meal.notes, localTime: mealDefinitions.find((entry) => entry.type === type)!.time, waterGlasses: meal.waterMl === null ? null : meal.waterMl / 250,
       items: meal.items.map((item, index) => {
         requireField(item && typeof item.foodItemId === "string" && finite(item.grams) && item.grams > 0 && catalog.some((food) => food.id === item.foodItemId));
-        return { id: `${id}-${index}`, foodId: item.foodItemId, grams: item.grams, notes: item.notes ?? null };
+        // El DTO no expone IDs de ítems. Conservar los de la edición confirmada
+        // evita que una respuesta cambie la identidad de controles aún enfocados.
+        let position = remaining.findIndex((entry) => entry.foodId === item.foodItemId && entry.grams === item.grams && entry.notes === (item.notes ?? null));
+        if (position < 0) position = remaining.findIndex((entry) => entry.foodId === item.foodItemId);
+        const previous = position >= 0 ? remaining.splice(position, 1)[0] : undefined;
+        return { id: previous?.id ?? `${id}-${index}`, foodId: item.foodItemId, grams: item.grams, notes: item.notes ?? null };
       }), totals: { kcal: 0, carbsG: 0, proteinG: 0, fatG: 0, fiberG: 0 },
     };
   });
@@ -46,7 +53,7 @@ export function mapNutritionCycle(row: NutritionViewWire, catalog: NutritionFood
     startDate: row.startDate, endDate: row.endDate, patientTimeZone: "", targets: { kcal: target.k, carbsG: target.c, proteinG: target.p, fatG: target.f, fiberG: target.fi, waterGlasses: target.vasos },
     engineContext: { bmr: target.bmr, tdee: target.tdee, deficit: target.deficit, floor: target.floor, phase: target.fase, targetWeightKg: target.metaKg, remainingKg: target.kgLeft, weeklyKg: target.wkKg, weeks: target.semanas },
     instructions: row.instructions ?? "", meals, alerts: row.alerts.map((alert, index) => {
-      requireField(alert && ["crit", "warn", "info"].includes(alert.s) && typeof alert.m === "string");
+      requireField(alert && ["crit", "warn", "info"].includes(alert.s) && typeof alert.m === "string" && typeof alert.tec === "boolean");
       return { code: `${row.id}-alert-${index}`, severity: alert.s === "crit" ? "critical" : alert.tec ? "technical" : alert.s === "warn" ? "warning" : "informational", message: alert.m };
     }), createdBy: row.createdBy, approvedBy: row.approvedBy, approvedAt: row.approvedAt, canRegenerate: row.canRegenerate,
   }, catalog);
@@ -68,14 +75,14 @@ export function mapNutritionPatient(row: NutritionPatientWire, cycle: NutritionC
   const profile = row.profile;
   requireField([profile.age, profile.bmi, profile.hba1c, profile.completedTests].every((value) => value === null || finite(value)) && Array.isArray(profile.provisionalFields));
   requireField((cycle?.id ?? null) === row.prescriptionId && (publishedCycle?.id ?? null) === row.publishedPrescriptionId);
-  return { patientId: row.patientId, patientName: row.patientName, patientDocument: row.patientDocument, nextPendingPatientId: row.nextPendingPatientId, profile, cycle: cycle ? { ...cycle, patientTimeZone: row.timeZone ?? "", publishedVersionId: publishedCycle?.id ?? null } : null, publishedCycle: publishedCycle ? { ...publishedCycle, patientTimeZone: row.timeZone ?? "" } : null, revision, audit: [] };
+  return { patientId: row.patientId, patientName: row.patientName, patientDocument: row.patientDocument, timeZone: row.timeZone, nextPendingPatientId: row.nextPendingPatientId, profile, cycle: cycle ? { ...cycle, patientTimeZone: row.timeZone ?? "", publishedVersionId: publishedCycle?.id ?? null } : null, publishedCycle: publishedCycle ? { ...publishedCycle, patientTimeZone: row.timeZone ?? "" } : null, revision, audit: [] };
 }
 
 export function mapNutritionHistory(rows: NutritionEventWire[], version: number): NutritionAuditEntry[] {
   requireField(Array.isArray(rows));
   const actions: Record<string, NutritionAuditEntry["action"]> = { generate: "created", save: "saved", applyday: "saved", createversion: "version_created", submit: "submitted", approve: "approved", return: "returned", regenerate: "regenerated", publication_replaced: "publication_replaced" };
   return rows.map((row) => {
-    requireField(row && typeof row.id === "string" && typeof row.actorUserId === "string" && typeof row.occurredAt === "string" && actions[row.action] && typeof row.autoApproved === "boolean");
+    requireField(row && typeof row.id === "string" && typeof row.actorUserId === "string" && typeof row.occurredAt === "string" && Number.isFinite(Date.parse(row.occurredAt)) && actions[row.action] && typeof row.autoApproved === "boolean" && typeof row.criticalConfirmed === "boolean" && Number.isInteger(row.criticalCount) && row.criticalCount >= 0);
     let eventVersion = version;
     if (row.snapshotJson) { const snapshot: unknown = JSON.parse(row.snapshotJson); if (snapshot && typeof snapshot === "object" && "version" in snapshot && finite(snapshot.version)) eventVersion = snapshot.version; }
     return { id: row.id, action: actions[row.action], actorId: row.actorUserId, actorName: row.actorUserId, occurredAt: row.occurredAt, version: eventVersion, comment: row.comment, criticalAlertsConfirmed: row.criticalConfirmed ? row.criticalCount : 0, autoApproved: row.autoApproved };
@@ -90,7 +97,7 @@ export function toNutritionEdit(cycle: NutritionCycle, previous: NutritionCycle)
     edit.targets = { k: cycle.targets.kcal, c: cycle.targets.carbsG, p: cycle.targets.proteinG, f: cycle.targets.fatG, fi: cycle.targets.fiberG, vasos: cycle.targets.waterGlasses,
       bmr: engine.bmr, tdee: engine.tdee, deficit: engine.deficit, floor: engine.floor, fase: engine.phase, metaKg: engine.targetWeightKg, kgLeft: engine.remainingKg, wkKg: engine.weeklyKg, semanas: engine.weeks };
   }
-  const meals = (source: NutritionCycle): NutritionMealWire[] => source.meals.map((meal) => ({ dayNumber: meal.dayNumber, mealType: wireMealTypes[meal.mealType], menuName: meal.menuName ?? null, items: meal.items.map((item) => ({ foodItemId: item.foodId, grams: item.grams, notes: item.notes })), notes: meal.notes ?? null, waterMl: Math.round(meal.waterGlasses * 250) }));
+  const meals = (source: NutritionCycle): NutritionMealWire[] => source.meals.map((meal) => ({ dayNumber: meal.dayNumber, mealType: wireMealTypes[meal.mealType], menuName: meal.menuName ?? null, items: meal.items.map((item) => ({ foodItemId: item.foodId, grams: item.grams, notes: item.notes })), notes: meal.notes ?? null, waterMl: meal.waterGlasses === null ? null : Math.round(meal.waterGlasses * 250) }));
   if (JSON.stringify(meals(cycle)) !== JSON.stringify(meals(previous))) { edit.meals = meals(cycle); edit.confirmManualEdits = !edit.targets && !previous.menusOutdated; }
   if (cycle.instructions !== previous.instructions) edit.instructions = cycle.instructions;
   return edit;
