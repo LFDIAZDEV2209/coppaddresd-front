@@ -148,10 +148,10 @@ Acepta `NUTRITION_E2E_STORAGE_STATE` (archivo de sesión fuera del repositorio),
 `NUTRITION_E2E_SEX` (female/male). Usar un paciente QA sin plan ni tests, con
 alertas críticas previstas; el caso genera y aprueba una prescripción.
 
-Al cierre no había backend local en 5080/5122. Las lecturas agregadas
-`GET /api/v1/nutrition/patients`, `GET /api/v1/nutrition/patients/{patientId}`
-y `GET /api/v1/nutrition/foods` siguen pendientes de confirmación del backend;
-su ausencia muestra error explícito. Contratos y evidencia en
+Al cierre de Ola3 no había backend local en5080/5122. En Ola4B las propuestas
+anteriores se sustituyen por `GET /api/v1/nutrition/inbox` y `GET /api/v1/nutrition/foods`.
+La ficha usa la colección de prescripciones del paciente y el detalle por id;
+no existe un alias Nutrition de perfil por paciente. Errores, contrato y evidencia en
 `../openspec/changes/plan-nutricional-erp/NOTES-frontend.md` del workspace.
 
 #### Ola 4: ejecución real local (2026-11-05)
@@ -182,4 +182,47 @@ Resultado final del comando `corepack yarn e2e e2e/nutrition-queue.spec.ts
 --project=chromium-desktop` con `NUTRITION_E2E_MODE=live`: **5 passed,1 failed**
 (13,7s). Las cinco regresiones simuladas pasan; E1 falla explícitamente al
 esperar200 y recibir404 del GET global. No se omite ni se convierte el fallo en éxito.
+
+#### Ola4B: contrato exacto y routing real
+
+Se leyó `CONTRACT.md`. Acciones POST bajo
+`/api/v1/nutrition/patients/{patientId}/prescriptions/{id}/{verb}`:
+`save`, `apply-day`, `create-version`, `submit`, `approve`, `return`, `regenerate`.
+Generar es POST a la colección, no `/generate`. Cada respuesta sustituye id y
+revision; nueva versión también actualiza el query `prescriptionId` de la URL.
+Al abrir desde bandeja se conserva el id seleccionado; un deep-link con solo
+paciente usa la primera cabecera en el orden que devuelve la API. Las comidas
+se leen del detalle, nunca de las cabeceras vacías del listado. El GET móvil
+`/api/v1/me/nutrition-plan` queda solo como referencia al contrato congelado.
+
+La bandeja apunta a `/inbox`; el DTO observado en el backend en preparación es
+`{items:[{patientId,patientName,state,prescription}],total,page,pageSize}`.
+`prescription` incluye `k` y `revision`; no hay documento, contadores globales
+ni `totalPages`. Solo se calcula paginación y total del filtro consultado;
+los otros contadores no se muestran ni se solicitan por separado. Se omite
+`state` para Todos y `search` busca por nombre. Usar `NUTRITION_E2E_SEARCH="Test E2E"`,
+no el documento del fixture. `/foods` sigue pendiente de entrega HTTP.
+
+Demografía opcional: DTO existente `/api/v1/patients/{id}`. Su403/404 no bloquea
+una prescripción ya autorizada por Nutrition: se muestra error y UUID, sin
+inventar datos clínicos. El DTO de prescripción no incluye perfil completo,
+timezone ni número de tests. Una página llena de100 cabeceras no se asume como
+historial entero: ese caso requiere ampliar navegación y da error explícito.
+
+Regresiones: ProblemDetails.detail visible, recarga409 antes de nuevo envío,
+id nuevo/revision1 al versionar, y apply-day con
+`edit:{sourceDay,confirmManualEdits:true}`. La recarga también está dentro del
+diálogo para que el modal no impida resolver el conflicto. Suite simulada final:
+**15 aprobadas y1 sonda real omitida**,40,8s; incluye identidad403/404 opcional.
+
+Spec con modo live: **6 aprobadas,1 fallida**,20,1s. Son **5 regresiones simuladas**,
+**1 sonda real aprobada** y **E1 real fallido** (`GET /inbox`404). La sonda verifica
+GET de prescripciones200 tanto en API5122 como gateway5080. Artefactos reales
+en `qa-reports/nutrition/wave4b-live/`; simulados en `wave4b-simulated/`.
+
+Health: Api/Auth/Telemedicine Unhealthy, Community Healthy. Los logs registran
+`HttpClient.Timeout` de2s en las sondas; HTTP directo responde200 en aproximadamente
+2,5–3s. No se determinó la causa final de esa latencia ni se modificó el gateway.
+Cuatro capturas reales renovadas documentan /inbox404 y /foods404. Editor y
+aprobación siguen inaccesibles y no se sustituyen con capturas simuladas.
 

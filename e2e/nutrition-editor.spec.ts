@@ -182,3 +182,16 @@ test("agua nullable del contrato se conserva sin inventar cero", async ({ page }
   await saved(page);
   expect(store.get("demo-patient-2")!.cycle!.meals[0].waterGlasses).toBeNull();
 });
+
+test("demografía inaccesible no bloquea una ficha autorizada por Nutrición", async ({ page }) => {
+  for (const identityStatus of [403, 404] as const) {
+    await page.unroute("**/api/**");
+    await mockNutritionHttp(page, ["Nutrition.Manage"], { identityStatus });
+    await page.goto("/nutrition/demo-patient-2");
+    await expect(page.getByRole("heading", { name: "demo-patient-2", exact: true })).toBeVisible();
+    await expect(page.getByText("Demografía fuera de alcance", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Gramos de Avena demo", { exact: true })).toBeEnabled();
+    await page.getByLabel("Indicaciones del plan", { exact: true }).fill("Edición con permiso Nutrition.Manage");
+    await saved(page);
+  }
+});

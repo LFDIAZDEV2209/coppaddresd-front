@@ -11,7 +11,7 @@ const mealType = { desayuno: "des", almuerzo: "alm", merienda: "mer", cena: "cen
 const uiMealType = { des: "desayuno", alm: "almuerzo", mer: "merienda", cen: "cena" } as const;
 
 /** Contrato HTTP sintético; jamás se importa desde app/features. No sustituye QA del backend. */
-export async function mockNutritionHttp(page: Page, permissions = ["Nutrition.Manage", "Nutrition.Approve"], options: { english?: boolean; includeE1?: boolean; unavailable?: string; malformedQueue?: boolean; conflictOnce?: boolean; nullableWater?: boolean } = {}) {
+export async function mockNutritionHttp(page: Page, permissions = ["Nutrition.Manage", "Nutrition.Approve"], options: { english?: boolean; includeE1?: boolean; unavailable?: string; malformedQueue?: boolean; conflictOnce?: boolean; nullableWater?: boolean; identityStatus?: 403 | 404 } = {}) {
   const scope = { userId: randomUUID(), clinicId: null };
   const actor = { id: scope.userId, name: "QA Nutrición" };
   const store = mockWorkspace(scope);
@@ -57,6 +57,7 @@ export async function mockNutritionHttp(page: Page, permissions = ["Nutrition.Ma
     if (path === "/api/auth/me/preferences") return reply({});
     if (path === "/api/v1/me/context") return reply({ userId: scope.userId, employeeId: null, professionalId: null, organization: null, isProfessional: false, onboardingCompleted: true, employeeStatus: "Active", clinics: [], activeClinicId: null });
     if (path.startsWith("/api/v1/patients/")) {
+      if (options.identityStatus) return reply({ detail: "Demografía fuera de alcance" }, options.identityStatus);
       const patient = store.get(decodeURIComponent(path.split("/").at(-1)!));
       if (!patient) return reply({ detail: "Paciente no encontrado" }, 404);
       return reply({ id: patient.patientId, firstName: patient.patientName, middleName: null, lastName: "", documentNumber: patient.patientDocument, dateOfBirth: patient.profile.birthDate ?? null, gender: patient.profile.sex === "female" ? "Femenino" : patient.profile.sex === "male" ? "Masculino" : null });
