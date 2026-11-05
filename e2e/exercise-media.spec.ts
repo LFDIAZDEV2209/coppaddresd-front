@@ -90,11 +90,13 @@ test("new routine uploads, publishes and attaches a real image with mobile scrol
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test("routine detail shows the configured demonstration on demand", async ({ page }, testInfo) => {
+test("routine detail displays the configured demonstration with its exercise", async ({ page }, testInfo) => {
   await mockApi(page);
   await page.goto("/wellness/exercise-routines");
   await page.getByTitle("Ver detalles", { exact: true }).click();
-  await page.getByRole("button", { name: "Ver demostración", exact: true }).click();
-  await expect(page.getByRole("img", { name: "Movimiento de prueba", exact: true })).toBeVisible();
+  const demonstration = page.getByRole("region", { name: "Movimiento de prueba", exact: true })
+    .getByRole("img", { name: "Movimiento de prueba", exact: true });
+  await expect(demonstration).toBeVisible();
+  await expect.poll(() => demonstration.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
   await page.screenshot({ path: testInfo.outputPath("exercise-erp-detail-desktop.png"), fullPage: true });
 });
