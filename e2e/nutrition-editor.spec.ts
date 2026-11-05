@@ -195,3 +195,70 @@ test("demografía inaccesible no bloquea una ficha autorizada por Nutrición", a
     await saved(page);
   }
 });
+
+test("revisión sin fechas, autor legible, acciones fijas y consentimiento nuevo al reabrir", async ({ page }) => {
+  const { store } = await demoSession(page);
+  const cycle = store.get("demo-patient-1")!.cycle!;
+  cycle.startDate = null; cycle.endDate = null;
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/nutrition/demo-patient-1");
+  const validity = page.locator('[aria-labelledby="nutrition-targets-title"] > p');
+  await expect(validity).toContainText("Sin definir");
+  await expect(validity).not.toContainText("→");
+  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  const date = dialog.getByText("Vigencia del ciclo", { exact: true }).locator("..");
+  await expect(date.getByText("Sin definir", { exact: true })).toHaveCount(2);
+  await expect(date).not.toContainText("→");
+  await expect(dialog.getByText("Nutricionista actual", { exact: true })).toBeVisible();
+  const checkbox = dialog.getByRole("checkbox", { name: /Revisé personalmente/ });
+  const confirm = dialog.getByRole("button", { name: "Aprobar y publicar", exact: true });
+  await expect(checkbox).not.toBeChecked();
+  await expect(confirm).toBeDisabled();
+  const before = await confirm.boundingBox();
+  expect(before).not.toBeNull();
+  expect(before!.y).toBeGreaterThanOrEqual(0);
+  expect(before!.y + before!.height).toBeLessThanOrEqual(900);
+  await checkbox.check();
+  await expect(confirm).toBeEnabled();
+  const after = await confirm.boundingBox();
+  expect(after!.y).toBeCloseTo(before!.y, 0);
+  await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
+  await expect(checkbox).not.toBeChecked();
+  await expect(confirm).toBeDisabled();
+  await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+  cycle.createdBy = "00000000-0000-4000-8000-000000000042";
+  await page.reload();
+  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
+  await expect(dialog.getByText("Nutricionista externo", { exact: true })).toBeVisible();
+  await expect(dialog).not.toContainText(cycle.createdBy);
+});
+
+test("contraste AA del chip IA y exceso ámbar en valores del editor", async ({ page }) => {
+  await demoSession(page);
+  await page.goto("/nutrition");
+  const ai = page.getByRole("button", { name: /Borradores IA/ });
+  const contrast = () => ai.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const luminance = (color: string) => color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map((n) => { const c = n / 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }).reduce((sum, c, i) => sum + c * [.2126, .7152, .0722][i], 0);
+    const a = luminance(style.color), b = luminance(style.backgroundColor);
+    return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+  });
+  await expect.poll(contrast).toBeGreaterThanOrEqual(4.5);
+  await page.getByRole("button", { name: "Modo oscuro", exact: true }).click();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expect.poll(contrast).toBeGreaterThanOrEqual(4.5);
+  await page.getByRole("button", { name: "Modo claro", exact: true }).click();
+  await page.goto("/nutrition/demo-patient-2");
+  const grams = page.getByLabel("Gramos de Avena demo", { exact: true });
+  await expect(grams).toHaveCSS("font-family", /Plex.*Mono/i);
+  await grams.fill("1000");
+  await saved(page);
+  const over = page.locator('[data-over-target="true"]').first();
+  await expect(over).toBeVisible();
+  const color = await over.locator("dd").evaluate((element) => getComputedStyle(element).color);
+  const [r, g, b] = color.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+  expect(r).toBeGreaterThan(g); expect(g).toBeGreaterThan(b);
+  await expect(over.locator("p")).toContainText("sobre la meta");
+});

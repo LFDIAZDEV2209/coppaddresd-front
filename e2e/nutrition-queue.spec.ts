@@ -9,6 +9,25 @@ async function session(page: Page, permissions: string[], english = false) {
   return mockNutritionHttp(page, permissions, { english });
 }
 
+/** Fixture opt-in por API existente, solo localhost; nunca modifica un plan previo. */
+async function createLocalNutritionPatient(page: Page) {
+  const origin = new URL(page.url());
+  if (!["localhost", "127.0.0.1"].includes(origin.hostname)) throw new Error("El fixture de Nutrición solo se crea en localhost");
+  const outgoing = page.waitForRequest((entry) => new URL(entry.url()).pathname === "/api/v1/nutrition/inbox" && !!entry.headers().authorization);
+  await page.goto("/nutrition");
+  const headers = (await outgoing).headers();
+  const stamp = String(Date.now());
+  const firstName = `QA Nutricion Ola5 ${stamp}`;
+  const response = await page.request.post(`${origin.origin}/api/v1/patients`, {
+    headers: { Authorization: headers.authorization, ...(headers["x-clinic-id"] ? { "X-Clinic-Id": headers["x-clinic-id"] } : {}) },
+    data: { firstName, lastName: "Visual", documentNumber: `95${stamp}`, medicalRecordNumber: `NUT-QA-${stamp}`, dateOfBirth: "1982-04-10", gender: "Femenino", phoneCountryCode: "+57", phoneNumber: `300${stamp.slice(-7)}`, status: "Activo" },
+  });
+  expect(response.status(), "Crear fixture local sin plan por Patients API").toBe(201);
+  const patient = await response.json() as { id: string };
+  console.log(JSON.stringify({ nutritionQaPatientId: patient.id, search: firstName }));
+  return { id: patient.id, search: firstName };
+}
+
 test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({ page }) => {
   await session(page, ["Nutrition.Manage"]);
   const nutritionRequests: string[] = [];
@@ -28,6 +47,8 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
   await page.getByRole("button", { name: "Expandir sidebar", exact: true }).focus();
   await page.keyboard.press("Enter");
   const filters = page.getByRole("group", { name: "Filtrar planes por estado" });
+  await expect(filters.locator("button span")).toHaveCount(7);
+  for (const counter of await filters.locator("button span").all()) await expect(counter).toHaveText(/^\d+$/);
   await filters.getByRole("button", { name: /Por aprobar/ }).click();
   await expect(list.getByRole("listitem")).toHaveCount(3);
   await expect(filters.getByRole("button", { name: /Por aprobar/ })).toHaveAttribute("aria-pressed", "true");
@@ -93,6 +114,7 @@ test.describe("E1 sin plan provisional", () => {
     testInfo.annotations.push({ type: "api-mode", description: live ? "API local real, sin interceptaciones" : "HTTP simulado: backend local no disponible" });
     const required = (key: string) => { const value = process.env[key]; if (!value) throw new Error(`Configura ${key} para E1 real; no se inventan datos clínicos.`); return value; };
     if (live && !process.env.NUTRITION_E2E_STORAGE_STATE) await loginAsAdmin(page);
+    const localPatient = live && process.env.NUTRITION_E2E_CREATE_PATIENT === "1" ? await createLocalNutritionPatient(page) : null;
     const capture = async (stage: string, focus?: ReturnType<Page["locator"]>) => {
       if (!live || !process.env.NUTRITION_E2E_SCREENSHOTS) return;
       const directory = process.env.NUTRITION_E2E_SCREENSHOTS;
@@ -106,8 +128,8 @@ test.describe("E1 sin plan provisional", () => {
       await page.setViewportSize({ width: 1440, height: 900 });
     };
     const fixture = live ? null : await mockNutritionHttp(page, ["Nutrition.Manage", "Nutrition.Approve"], { includeE1: true });
-    const patientId = live ? required("NUTRITION_E2E_PATIENT_ID") : nutritionE1PatientId;
-    const search = live ? required("NUTRITION_E2E_SEARCH") : "Paciente E1";
+    const patientId = live ? localPatient?.id ?? required("NUTRITION_E2E_PATIENT_ID") : nutritionE1PatientId;
+    const search = live ? localPatient?.search ?? required("NUTRITION_E2E_SEARCH") : "Paciente E1";
     if (!live) await page.setViewportSize({ width: 1366, height: 768 });
     const firstQueue = live ? page.waitForResponse((response) => {
       const url = new URL(response.url());
@@ -145,8 +167,9 @@ test.describe("E1 sin plan provisional", () => {
     await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByRole("button", { name: "Aprobar y publicar", exact: true })).toBeDisabled();
-    await dialog.getByRole("checkbox", { name: /Revisé personalmente/ }).check();
+    await expect(dialog.getByRole("checkbox", { name: /Revisé personalmente/ })).not.toBeChecked();
     await capture("aprobacion", dialog);
+    await dialog.getByRole("checkbox", { name: /Revisé personalmente/ }).check();
     await dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }).click();
     await expect(dialog).toHaveCount(0);
     await expect(page.getByText("Aprobado", { exact: true })).toBeVisible();

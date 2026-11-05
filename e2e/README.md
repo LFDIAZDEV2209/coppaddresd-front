@@ -241,3 +241,43 @@ El paciente QA Test E2E ya quedó aprobado con prescripción
 fixture sin plan/tests o un reset coordinado del seed; el test no borra planes,
 no devuelve un aprobado a borrador ni realiza limpieza destructiva automática.
 
+#### Ola5: correcciones visuales y capturas reales
+
+Vigencia incompleta muestra dos «Sin definir» sin flecha, en resumen y metas.
+Review conserva cabecera y acciones fuera del cuerpo con scroll; las acciones
+son visibles sin desplazamiento en1440×900 y390×844. Consentimiento inicia false
+y se remonta al reabrir; las capturas se toman ANTES de marcar el checkbox.
+Autor: «Nutricionista actual» si coincide con el usuario, «Nutricionista externo»
+en otro caso, sin mostrar UUID ni consultar un directorio adicional.
+
+El círculo N era el indicador de Next dev, no un badge de nuestra aplicación.
+`devIndicators:false` lo oculta de forma oficial sin ocultar errores de runtime.
+Se regeneraron las ocho imágenes reales sin el artefacto. El chip IA conserva
+dorado con AA comprobado en ambos temas; excesos colorean valor/barra ámbar.
+Documento, peso y talla numéricos usan Plex Mono; singular crítico corregido.
+
+Contadores reales de los siete chips: como inbox no publica counts, se consulta
+la página y seis agregados restantes con pageSize1, en paralelo, misma búsqueda
+y señal de cancelación. Lote fijo independiente del número de pacientes; nunca
+se lee un detalle por tarjeta. El badge del sidebar mantiene una única consulta.
+Un fallo del lote se muestra por el manejo de errores del recurso, sin ceros falsos.
+
+Para regenerar E1/capturas sin alterar un plan aprobado, el test admite
+`NUTRITION_E2E_CREATE_PATIENT=1` junto a modo live. Crea por la API existente de
+Patients un fixture QA único, sin plan/tests, solo si el host es localhost o
+127.0.0.1. No ejecuta SQL ni borra datos; el fixture termina aprobado. Mantener
+las variables de mínimos clínicos y el directorio de capturas documentados arriba.
+
+```powershell
+$env:NUTRITION_E2E_MODE = "live"
+$env:NUTRITION_E2E_CREATE_PATIENT = "1"
+corepack yarn e2e --project=chromium-desktop e2e/nutrition-queue.spec.ts
+```
+
+Ola5: spec pedida7/7 en50,6s (5 simuladas+E1 real33,9s+sonda real).
+Editor11/11 en26,3s: fechas vacías, consentimiento/reapertura, autor externo,
+footer en viewport, contraste≥4,5 claro/oscuro y exceso perceptible. Lint/build
+verdes; i18n0 faltantes. Artefactos en `qa-reports/nutrition/wave5-live/` y
+`wave5-regression/`. Fixture real05900dde-45ce-40f1-b1b6-e3b6a5a0830a;
+las capturas actuales son de este recorrido, con consentimiento desmarcado.
+
