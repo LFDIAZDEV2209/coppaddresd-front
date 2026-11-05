@@ -56,7 +56,7 @@ export async function fetchNutritionWorkspace(patientId: string, signal: AbortSi
     return wire;
   }).catch((error) => {
     // Demografía opcional: Nutrition.* no concede Patients.View. No inventar datos.
-    if (nutritionIssue(error).status !== 403) throw error;
+    if (![403, 404].includes(nutritionIssue(error).status)) throw error;
     identityIssue = nutritionIssue(error);
     return null;
   });
