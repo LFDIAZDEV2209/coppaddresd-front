@@ -320,35 +320,36 @@ export function PatientDetailPage({ id }: { id: string }) {
             />
           </div>
 
-          {emergencyContact && (
+          {[emergencyContact, emergencyContact?.secondary].map((contact, index) => contact && (
             <DetailCard
-              title={t("Contacto de emergencia")}
+              key={index}
+              title={t(index === 0 ? "Contacto principal" : "Contacto opcional")}
               icon={Siren}
               tone="destructive"
               items={[
                 {
                   icon: UserRound,
                   label: t("Nombre"),
-                  value: emergencyContact.name ?? "No registrado",
+                  value: contact.name ?? "No registrado",
                 },
                 {
                   icon: Heart,
                   label: t("Parentesco"),
-                  value: emergencyContact.relationship ?? "No registrado",
+                  value: contact.relationship ?? "No registrado",
                 },
                 {
                   icon: Phone,
                   label: t("Teléfono"),
-                  value: emergencyContact.phone ?? "No registrado",
+                  value: contact.phone ?? "No registrado",
                 },
                 {
                   icon: Mail,
                   label: t("Correo"),
-                  value: emergencyContact.email ?? "No registrado",
+                  value: contact.email ?? "No registrado",
                 },
               ]}
             />
-          )}
+          ))}
 
           <div className="grid gap-6 lg:grid-cols-2">
             <DetailCard
@@ -813,7 +814,7 @@ function normalizeEmergencyContact(value: unknown): EmergencyContact | null {
   const phone = contact.phone?.trim() || null;
   const email = contact.email?.trim() || null;
   if (!name && !relationship && !phone && !email) return null;
-  return { name, relationship, phone, email };
+  return { name, relationship, phone, email, secondary: contact.secondary ? normalizeEmergencyContact({ ...contact.secondary, secondary: null }) : null };
 }
 
 function statusColor(status: Patient["status"]) {

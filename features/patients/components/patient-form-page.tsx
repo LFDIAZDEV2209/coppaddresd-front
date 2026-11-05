@@ -38,7 +38,6 @@ import {
   Scissors,
   ShieldAlert,
   ShieldCheck,
-  Siren,
   Stethoscope,
   Trash2,
   User,
@@ -52,16 +51,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select as UiSelect,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { PatientEmergencyContacts, contactDraft, emptyContact, hasContact, type ContactDraft } from "./patient-emergency-contacts";
 import { CatalogCombobox } from "./catalog-combobox";
 import { ApiError } from "@/lib/api/http";
+import { normalizeEmergencyPhone } from "../utils/emergency-phone";
 import { composeE164, splitE164 } from "@/lib/phone";
 import {
   fetchBloodTypes,
@@ -235,6 +229,7 @@ interface PatientFormState {
   emergencyContactPhone: string;
   emergencyContactPhoneCountryCode: string;
   emergencyContactEmail: string;
+  secondaryEmergencyContact: ContactDraft;
   insurerId: string;
   memberId: string;
   maritalStatus: string;
@@ -333,6 +328,7 @@ const SERVER_FIELD_MAP: Record<string, string> = {
   "EmergencyContact.Relationship": "emergencyContactRelationship",
   "EmergencyContact.Phone": "emergencyContactPhone",
   "EmergencyContact.Email": "emergencyContactEmail",
+  "EmergencyContact.Secondary": "secondaryEmergencyContact",
   MemberId: "memberId",
   MaritalStatus: "maritalStatus",
   SmokingStatus: "smokingStatus",
@@ -437,6 +433,7 @@ function createEmptyForm(): PatientFormState {
     emergencyContactPhone: "",
     emergencyContactPhoneCountryCode: "57",
     emergencyContactEmail: "",
+    secondaryEmergencyContact: emptyContact(),
     insurerId: "",
     memberId: "",
     maritalStatus: "",
@@ -526,6 +523,7 @@ function fromPatient(
     cityName: patient.cityName ?? "",
     postalCode: patient.postalCode ?? "",
     ...toEmergencyContactFields(patient.emergencyContact),
+    secondaryEmergencyContact: contactDraft(typeof patient.emergencyContact === "object" ? patient.emergencyContact?.secondary : null),
     emergencyContactPhone: emergencyPhoneSplit.national,
     emergencyContactPhoneCountryCode: emergencyPhoneSplit.phoneCode,
     insurerId: patient.insurerId ?? "",
@@ -606,6 +604,12 @@ function toInput(form: PatientFormState): PatientInput {
             relationship: text(form.emergencyContactRelationship),
             phone: emergencyContactPhone || null,
             email: text(form.emergencyContactEmail),
+            secondary: {
+              name: text(form.secondaryEmergencyContact.name),
+              relationship: text(form.secondaryEmergencyContact.relationship),
+              phone: normalizeEmergencyPhone(form.secondaryEmergencyContact.phone),
+              email: text(form.secondaryEmergencyContact.email),
+            },
           }
         : null,
     insurerId: form.insurerId || null,
@@ -677,31 +681,6 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
   const [form, setForm] = useState<PatientFormState>(createEmptyForm);
   const [insurers, setInsurers] = useState<Insurer[]>([]);
   const [countries, setCountries] = useState<CountryOption[]>([]);
-  // Catálogo deduplicado por código telefónico (varios países comparten el
-  // +1). El trigger muestra solo el prefijo; el nombre aparece en el modal.
-  const emergencyCountryOptions = useMemo(() => {
-    const seen = new Set<string>();
-    const options: { value: string; label: string }[] = [];
-    for (const country of countries) {
-      if (!country.phoneCode || seen.has(country.phoneCode)) continue;
-      seen.add(country.phoneCode);
-      options.push({
-        value: country.phoneCode,
-        label: `+${country.phoneCode} · ${country.name}`,
-      });
-    }
-    return options;
-  }, [countries]);
-  const emergencyCountryItems = useMemo(
-    () =>
-      Object.fromEntries(
-        emergencyCountryOptions.map((option) => [
-          option.value,
-          `+${option.value}`,
-        ]),
-      ),
-    [emergencyCountryOptions],
-  );
   const [states, setStates] = useState<StateOption[]>([]);
   const [bloodTypes, setBloodTypes] = useState<CatalogOption[]>([]);
   const [documentTypes, setDocumentTypes] = useState<CatalogOption[]>([]);
@@ -934,23 +913,18 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
     if (!form.phoneNumber.trim()) {
       clientErrors.phoneNumber = [t("El teléfono es obligatorio.")];
     }
-    // Contacto de emergencia: opcional, pero si hay nombre exige teléfono.
-    if (
-      form.emergencyContactName.trim() &&
-      !form.emergencyContactPhone.trim()
-    ) {
-      clientErrors.emergencyContactPhone = [
-        t("El contacto de emergencia requiere teléfono."),
-      ];
+    const primary = { name: form.emergencyContactName, relationship: form.emergencyContactRelationship, phone: form.emergencyContactPhone, email: form.emergencyContactEmail };
+    for (const [contact, key] of [[primary, "emergencyContactPhone"], [form.secondaryEmergencyContact, "secondaryEmergencyContact"]] as const) {
+      if (!hasContact(contact)) continue;
+      if (!contact.name.trim() || !contact.phone.trim()) {
+        clientErrors[key] = [t(key === "secondaryEmergencyContact" ? "El contacto opcional requiere nombre y teléfono." : "El contacto principal requiere nombre y teléfono.")];
+        continue;
+      }
+      const phone = key === "secondaryEmergencyContact" ? contact.phone : (contact.phone.trim().startsWith("+") ? contact.phone : `+${form.emergencyContactPhoneCountryCode}${contact.phone}`);
+      if (!normalizeEmergencyPhone(phone)) clientErrors[key] = [t("Ingresa un teléfono válido con el código de país seleccionado.")];
+      if (contact.email.trim() && !/\S+@\S+\.\S+/.test(contact.email)) clientErrors[key] = [t("Ingresa un correo válido (ej. nombre@clinica.com).")];
     }
-    if (
-      form.emergencyContactEmail.trim() &&
-      !/\S+@\S+\.\S+/.test(form.emergencyContactEmail)
-    ) {
-      clientErrors.emergencyContactEmail = [
-        t("Ingresa un correo válido (ej. nombre@clinica.com)."),
-      ];
-    }
+    if (hasContact(form.secondaryEmergencyContact) && (!primary.name.trim() || !primary.phone.trim())) clientErrors.emergencyContactName = [t("Registra primero el contacto principal.")];
     Object.assign(clientErrors, validateVitals(form.vitals));
 
     if (Object.keys(clientErrors).length > 0) {
@@ -1192,111 +1166,18 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
                 ))}
               </Select>
             </Field>
-            {/* Contacto de emergencia (estructurado): opcional, pero el
-                teléfono es obligatorio si se registra un nombre. */}
-            <div className="flex flex-col gap-4 sm:col-span-2 lg:col-span-3">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  <Siren
-                    className="size-4 text-primary/70"
-                    aria-hidden="true"
-                  />
-                  {t("Contacto de emergencia")}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {t("Si registras el nombre, el teléfono es obligatorio.")}
-                </span>
-              </div>
-              <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
-                <Field
-                  label={t("Nombre")}
-                  error={fieldError("emergencyContactName")}
-                >
-                  <Input
-                    value={form.emergencyContactName}
-                    onChange={(event) =>
-                      update("emergencyContactName", event.target.value)
-                    }
-                    placeholder={t("Nombre de contacto de emergencia")}
-                    autoComplete="off"
-                  />
-                </Field>
-                <Field
-                  label={t("Parentesco")}
-                  error={fieldError("emergencyContactRelationship")}
-                >
-                  <Input
-                    value={form.emergencyContactRelationship}
-                    onChange={(event) =>
-                      update(
-                        "emergencyContactRelationship",
-                        event.target.value,
-                      )
-                    }
-                    placeholder={t("Ej. Madre, cónyuge, hermano")}
-                    autoComplete="off"
-                  />
-                </Field>
-                <Field
-                  label={t("Teléfono")}
-                  required={form.emergencyContactName.trim() !== ""}
-                  error={fieldError("emergencyContactPhone")}
-                >
-                  <div className="flex gap-2">
-                    <div className="w-36 shrink-0">
-                      <UiSelect
-                        items={emergencyCountryItems}
-                        value={form.emergencyContactPhoneCountryCode}
-                        onValueChange={(value) =>
-                          update(
-                            "emergencyContactPhoneCountryCode",
-                            value ?? "",
-                          )
-                        }
-                      >
-                        <SelectTrigger
-                          aria-label={t("País del teléfono")}
-                          className="h-9! w-full"
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {emergencyCountryOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </UiSelect>
-                    </div>
-                    <Input
-                      className="min-w-0 flex-1"
-                      type="tel"
-                      value={form.emergencyContactPhone}
-                      onChange={(event) =>
-                        update("emergencyContactPhone", event.target.value)
-                      }
-                      placeholder={t("300 000 0000")}
-                      autoComplete="off"
-                    />
-                  </div>
-                </Field>
-                <Field
-                  label={t("Correo")}
-                  error={fieldError("emergencyContactEmail")}
-                >
-                  <Input
-                    type="email"
-                    value={form.emergencyContactEmail}
-                    onChange={(event) =>
-                      update("emergencyContactEmail", event.target.value)
-                    }
-                    placeholder={t("correo@ejemplo.com")}
-                    autoComplete="off"
-                  />
-                </Field>
-              </div>
-            </div>
+            <PatientEmergencyContacts
+              primary={{ name: form.emergencyContactName, relationship: form.emergencyContactRelationship, phone: composeE164(form.emergencyContactPhoneCountryCode, form.emergencyContactPhone), email: form.emergencyContactEmail }}
+              secondary={form.secondaryEmergencyContact}
+              countries={countries} disabled={saving}
+              onPrimaryChange={value => {
+                const phone = splitE164(value.phone, countries, "57");
+                setForm(current => ({ ...current, emergencyContactName: value.name, emergencyContactRelationship: value.relationship, emergencyContactPhone: phone.national, emergencyContactPhoneCountryCode: phone.phoneCode, emergencyContactEmail: value.email }));
+                setFieldErrors(current => Object.fromEntries(Object.entries(current).filter(([key]) => !key.startsWith("emergencyContact"))));
+              }}
+              onSecondaryChange={value => update("secondaryEmergencyContact", value)}
+              errors={Object.entries(fieldErrors).filter(([key]) => key.startsWith("emergencyContact") || key.startsWith("secondaryEmergencyContact")).flatMap(([, messages]) => messages)}
+            />
           </FormSection>
 
           {/* ── Contacto y ubicación ── */}
