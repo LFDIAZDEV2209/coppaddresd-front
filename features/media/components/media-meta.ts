@@ -1,4 +1,4 @@
-import { Mic, Video, AudioLines, type LucideIcon } from "lucide-react";
+import { Mic, Video, AudioLines, ImageIcon, type LucideIcon } from "lucide-react";
 import type { MediaItem } from "../types";
 
 export const mediaTypeMeta: Record<
@@ -11,6 +11,7 @@ export const mediaTypeMeta: Record<
     tone: "text-primary bg-primary-soft",
   },
   Video: { icon: Video, label: "Video", tone: "text-info bg-info-soft" },
+  Image: { icon: ImageIcon, label: "Imagen", tone: "text-info bg-info-soft" },
   Audio: {
     icon: AudioLines,
     label: "Audio",

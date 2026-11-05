@@ -23,7 +23,7 @@ const QUADRANT_STYLE = {
     label: "Fortalezas",
     description: "Aspectos positivos predominantes de la población",
     icon: ShieldCheck,
-    headerBg: "linear-gradient(135deg,#0F766E,#10B981)",
+    headerBg: "var(--success-soft)",
     itemColor: "#10B981",
     barBg: "var(--success-soft)",
   },
@@ -31,7 +31,7 @@ const QUADRANT_STYLE = {
     label: "Oportunidades",
     description: "Áreas con potencial claro de intervención",
     icon: Lightbulb,
-    headerBg: "linear-gradient(135deg,#1D4ED8,#0EA5E9)",
+    headerBg: "var(--info-soft)",
     itemColor: "#0EA5E9",
     barBg: "var(--info-soft)",
   },
@@ -39,7 +39,7 @@ const QUADRANT_STYLE = {
     label: "Debilidades",
     description: "Problemas frecuentes detectados en la evaluación",
     icon: ArrowDownRight,
-    headerBg: "linear-gradient(135deg,#B45309,#F59E0B)",
+    headerBg: "var(--warning-soft)",
     itemColor: "#F59E0B",
     barBg: "var(--warning-soft)",
   },
@@ -47,7 +47,7 @@ const QUADRANT_STYLE = {
     label: "Amenazas",
     description: "Riesgos relevantes que requieren atención",
     icon: AlertTriangle,
-    headerBg: "linear-gradient(135deg,#B91C1C,#EF4444)",
+    headerBg: "var(--destructive-soft)",
     itemColor: "#EF4444",
     barBg: "var(--destructive-soft)",
   },
@@ -159,15 +159,20 @@ function DofaCard({
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div
-        className="flex items-center gap-3 px-4 py-3"
+        className="flex items-center gap-3 border-b border-border px-4 py-3"
         style={{ background: style.headerBg }}
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white">
+        <span
+          className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm"
+          style={{ color: style.itemColor }}
+        >
           <Icon className="size-4.5" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h3 className="text-[13px] font-bold text-white">{t(style.label)}</h3>
-          <p className="truncate text-[11px] text-white/80">
+          <h3 className="text-[13px] font-bold text-foreground">
+            {t(style.label)}
+          </h3>
+          <p className="truncate text-[11px] text-muted-foreground">
             {t(style.description)}
           </p>
         </div>

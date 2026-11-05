@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { FileAudio, LoaderCircle } from "lucide-react";
 import { getMediaStreamUrl } from "../services/media-service";
 import type { MediaItem } from "../types";
@@ -12,6 +13,7 @@ interface MediaPlayerProps {
   className?: string;
   preload?: "none" | "metadata" | "auto";
   onDuration?: (seconds: number) => void;
+  alt?: string;
 }
 
 /**
@@ -25,6 +27,7 @@ export function MediaPlayer({
   className = "",
   preload = "metadata",
   onDuration,
+  alt,
 }: MediaPlayerProps) {
   const t = useT();
   const [url, setUrl] = useState<string | null>(null);
@@ -62,6 +65,11 @@ export function MediaPlayer({
         {t('Cargando medio...')}
       </div>
     );
+  }
+
+  if (mediaType === "Image") {
+    return <Image src={url} alt={alt ?? t("Imagen del ejercicio")} width={960} height={540} unoptimized
+      onError={() => setError(true)} className={`h-auto max-h-80 w-full object-contain ${className}`} />;
   }
 
   if (mediaType === "Video") {

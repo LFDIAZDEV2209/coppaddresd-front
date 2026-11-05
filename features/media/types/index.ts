@@ -1,4 +1,4 @@
-export type MediaType = "Podcast" | "Video" | "Audio";
+export type MediaType = "Podcast" | "Video" | "Audio" | "Image";
 
 export type MediaStatus = "Draft" | "Published" | "Archived";
 
@@ -145,6 +145,7 @@ export interface MediaReferences {
   totalReferences: number;
   templateReferences: MediaTemplateReference[];
   enrollmentReferences: MediaEnrollmentReference[];
+  routineReferences?: { routineId: string; routineName: string; exerciseId: string | null; exerciseName: string | null }[];
 }
 
 /** Reporte del recolector de huérfanos (REQ-PCA-08). */

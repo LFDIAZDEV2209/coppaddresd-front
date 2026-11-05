@@ -67,6 +67,32 @@ export async function deleteNutritionPlan(id: string): Promise<void> {
   await apiFetch<void>(`${PATH}/${id}`, { method: "DELETE" });
 }
 
+export interface NutritionPlanReviewEvent {
+  id: string;
+  actorUserId: string | null;
+  actorName?: string | null;
+  occurredAt: string;
+  action: string;
+  revision: number;
+  notes: string | null;
+}
+
+export async function fetchNutritionPlanHistory(id: string, signal?: AbortSignal): Promise<NutritionPlanReviewEvent[]> {
+  return apiFetch<NutritionPlanReviewEvent[]>(`${PATH}/${id}/history`, { signal });
+}
+
+export async function approveNutritionPlans(plans: Array<{ id: string; revision: number }>, notes?: string): Promise<NutritionPlan[]> {
+  return apiFetch<NutritionPlan[]>(`${PATH}/approve`, {
+    method: "POST",
+    body: JSON.stringify({ plans: plans.map(plan => ({ ...plan, notes: notes?.trim() || null })) }),
+  });
+}
+
+export function canReviewNutritionPlan(plan: Pick<NutritionPlanListItem, "isTemplate" | "patientId" | "reviewStatus" | "generationStatus" | "revision">): boolean {
+  return !plan.isTemplate && Boolean(plan.patientId) && plan.reviewStatus === "pending_review"
+    && !["queued", "generating", "failed"].includes(plan.generationStatus ?? "") && Number(plan.revision) > 0;
+}
+
 export async function cloneNutritionPlan(
   sourcePlanId: string,
   patientId: string,
@@ -116,8 +142,8 @@ export function generateEmptyDays(
   const meals: Array<"Desayuno" | "Almuerzo" | "Cena" | "Snack"> = [
     "Desayuno",
     "Almuerzo",
-    "Cena",
     "Snack",
+    "Cena",
   ];
   const days: Array<{
     dayNumber: number;
@@ -153,8 +179,8 @@ export function generateEmptyDays(
 export const MEAL_TYPES: Array<"Desayuno" | "Almuerzo" | "Cena" | "Snack"> = [
   "Desayuno",
   "Almuerzo",
-  "Cena",
   "Snack",
+  "Cena",
 ];
 
 export const PLAN_STATUSES: Array<"Draft" | "Active" | "Completed" | "Archived"> = [

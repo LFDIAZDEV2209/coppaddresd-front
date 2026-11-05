@@ -34,7 +34,7 @@ export function AgentFormDialog({
   const t = useT();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] min-w-[560px] max-w-xl overflow-y-auto p-0">
+      <DialogContent className="max-h-[92vh] min-w-0 max-w-xl overflow-y-auto p-0">
         <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">

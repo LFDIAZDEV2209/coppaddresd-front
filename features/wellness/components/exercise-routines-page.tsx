@@ -386,6 +386,8 @@ export function ExerciseRoutinesPage() {
         routineId={details?.id ?? null}
         onClose={() => setDetails(undefined)}
         getRoutine={getRoutine}
+        onAssign={can("Wellness.Manage") ? routine => router.push(`/wellness/assignments/new?routineId=${encodeURIComponent(routine.id)}`) : undefined}
+        onEdit={can("Wellness.Manage") ? routine => { setDetails(undefined); void openEdit(routine); } : undefined}
       />
 
       <AlertDialog

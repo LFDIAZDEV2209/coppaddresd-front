@@ -125,6 +125,7 @@ export async function resolveStorageKeys(
     const intent = await requestUploadIntent(
       file.name,
       input.contentType ?? "application/octet-stream",
+      input.mediaType === "Image" ? "thumbnail" : "content",
     );
     onProgress?.(3);
     await uploadWithGatewayFallback(intent, file, onProgress);
@@ -198,6 +199,7 @@ const MIME_TO_TYPE: Record<string, MediaItem["mediaType"]> = {
 };
 
 function mediaTypeFromContentType(contentType: string): MediaItem["mediaType"] {
+  if (["image/jpeg", "image/png", "image/webp", "image/gif"].includes(contentType)) return "Image";
   if (contentType.startsWith("video/")) return "Video";
   if (contentType === "audio/mpeg" || contentType === "audio/mp3" || contentType === "audio/ogg")
     return "Podcast";
@@ -242,7 +244,10 @@ function readMediaDuration(file: File, isVideo: boolean): Promise<number> {
       : document.createElement("audio");
     element.preload = "metadata";
 
-    const cleanup = () => URL.revokeObjectURL(url);
+    const timeout = setTimeout(() => {
+      cleanup(); reject(new Error("No se pudo leer la duración del archivo."));
+    }, 20_000);
+    const cleanup = () => { clearTimeout(timeout); URL.revokeObjectURL(url); };
 
     element.onloadedmetadata = () => {
       const duration = element.duration;

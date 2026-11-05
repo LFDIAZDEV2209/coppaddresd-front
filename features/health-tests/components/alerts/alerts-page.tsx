@@ -517,7 +517,7 @@ export function AlertsPage() {
                 </PopoverContent>
               </Popover>
               {selectedAlerts.length > 0 ? (
-                <div className="ml-auto flex flex-wrap items-center gap-1.5 rounded-full bg-brand-gradient py-1 pl-3 pr-1 text-white shadow-sm">
+                <div className="ml-auto flex flex-wrap items-center gap-1.5 rounded-full bg-[var(--sidebar)] py-1 pl-3 pr-1 text-white shadow-sm">
                   <span className="text-[11.5px] font-medium">
                     {selectedAlerts.length} {t("seleccionadas")}
                   </span>

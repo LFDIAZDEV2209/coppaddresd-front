@@ -376,7 +376,7 @@ function UploadDocumentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-[560px] max-w-lg p-0">
+      <DialogContent className="min-w-0 max-w-lg p-0">
         <DialogHeader className="border-b border-border bg-primary-soft px-6 py-5">
           <DialogTitle className="text-base font-semibold">
             {t('Subir documento a "{name}"', { name: base.name })}

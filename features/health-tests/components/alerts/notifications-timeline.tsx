@@ -57,8 +57,8 @@ export function NotificationsTimeline({
       )}
     >
       {/* Cabecera compacta del rail: el título corto evita el truncado
-          y el botón queda legible sobre el degradado de marca. */}
-      <div className="flex items-center gap-3 bg-brand-gradient px-4 py-3 text-white">
+          y el botón queda legible sobre la cabecera navy. */}
+      <div className="flex items-center gap-3 bg-[var(--sidebar)] px-4 py-3 text-white">
         <div
           className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white"
           style={chipStyle(tones.sky, 32)}
