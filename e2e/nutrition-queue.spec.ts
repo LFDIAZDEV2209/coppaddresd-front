@@ -47,8 +47,8 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
   await page.getByRole("button", { name: "Expandir sidebar", exact: true }).focus();
   await page.keyboard.press("Enter");
   const filters = page.getByRole("group", { name: "Filtrar planes por estado" });
-  await expect(filters.locator("button span")).toHaveCount(7);
-  for (const counter of await filters.locator("button span").all()) await expect(counter).toHaveText(/^\d+$/);
+  await expect(filters.locator("button > span:last-child")).toHaveCount(7);
+  for (const counter of await filters.locator("button > span:last-child").all()) await expect(counter).toHaveText(/^\d+$/);
   await filters.getByRole("button", { name: /Por aprobar/ }).click();
   await expect(list.getByRole("listitem")).toHaveCount(3);
   await expect(filters.getByRole("button", { name: /Por aprobar/ })).toHaveAttribute("aria-pressed", "true");
@@ -141,8 +141,10 @@ test.describe("E1 sin plan provisional", () => {
     await page.getByRole("group", { name: "Filtrar planes por estado" }).getByRole("button", { name: /Sin plan/ }).click();
     const patientLink = page.locator(`a[href="/nutrition/${encodeURIComponent(patientId)}"]`);
     await expect(page.getByRole("listitem").filter({ has: patientLink }).locator('[data-status="sin_plan"]')).toBeVisible();
-    await capture("bandeja", page.getByRole("heading", { name: "Nutrición", exact: true }));
+    await capture("bandeja", page.getByRole("heading", { name: "Nutricionista", exact: true }));
     await patientLink.click();
+    await expect(page.getByRole("heading", { name: "Lecturas", exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Plan de 30 días editar", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Este paciente aún no tiene plan", exact: true })).toBeVisible();
     // El DTO de prescripción no incluye número de tests: verificar0/9 en el seed real.
     await capture("ficha", page.locator("main h1"));
@@ -159,7 +161,9 @@ test.describe("E1 sin plan provisional", () => {
     const generationResponse = live ? page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === `/api/v1/nutrition/patients/${encodeURIComponent(patientId)}/prescriptions`, { timeout: 125_000 }) : null;
     await page.getByRole("button", { name: "Generar propuesta con IA", exact: true }).click();
     if (generationResponse) expect((await generationResponse).status(), "Generación real de la prescripción").toBe(201);
-    await expect(page.getByRole("heading", { name: "Plan provisional", exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Resultados y ciclos", exact: true }).click();
+    await expect(page.getByText("Plan provisional", { exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Plan de 30 días editar", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Menú de 30 días", exact: true })).toBeVisible();
     await expect(page.getByLabel(/Gramos de/).first()).toBeVisible();
     await capture("editor", page.getByRole("heading", { name: "Menú de 30 días", exact: true }));
@@ -172,9 +176,10 @@ test.describe("E1 sin plan provisional", () => {
     await dialog.getByRole("checkbox", { name: /Revisé personalmente/ }).check();
     await dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }).click();
     await expect(dialog).toHaveCount(0);
-    await expect(page.getByText("Aprobado", { exact: true })).toBeVisible();
+    await expect(page.locator(".nutrition-detail-header").getByText("Aprobado", { exact: true })).toBeVisible();
     await page.reload();
-    await expect(page.getByText("Aprobado", { exact: true })).toBeVisible();
+    await expect(page.locator(".nutrition-detail-header").getByText("Aprobado", { exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Resultados y ciclos", exact: true }).click();
     await expect(page.getByText("Versión publicada: v1", { exact: true })).toBeVisible();
     if (fixture) {
       const generated = fixture.writes.find((write) => write.path.endsWith("/prescriptions"));
@@ -189,7 +194,7 @@ test.describe("E1 sin plan provisional", () => {
 test("Nutrition.Approve basta y los textos cambian a inglés", async ({ page }) => {
   await session(page, ["Nutrition.Approve"], true);
   await page.goto("/nutrition");
-  await expect(page.getByRole("heading", { name: "Nutrition", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nutritionist", exact: true })).toBeVisible();
   await expect(page.getByRole("list", { name: "Patient plans" }).getByRole("listitem")).toHaveCount(10);
   await expect(page.getByRole("button", { name: /AI drafts/ })).toBeVisible();
 });

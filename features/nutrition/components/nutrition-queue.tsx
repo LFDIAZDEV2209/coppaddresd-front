@@ -1,88 +1,86 @@
 "use client";
 
-import { Search, Sparkles, ClipboardCheck, ShieldAlert } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, Check, ArrowRight, ClipboardCheck, RefreshCw, Search, ShieldAlert, Stethoscope, Users } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useI18n, useT } from "@/providers/i18n-provider";
+import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeader } from "@/components/layout/section-header";
+import { StatCard } from "@/components/feedback/stat-card";
+import { useT } from "@/providers/i18n-provider";
 import { useNutritionQueue } from "../hooks/use-nutrition-queue";
-import { NutritionServiceNotice } from "./nutrition-shared";
-import type { NutritionFilter, NutritionPatientSummary, NutritionQueueState } from "../types/nutrition";
+import { NutritionPatientDetail } from "./nutrition-patient-detail";
+import { NutritionStateChip } from "./nutrition-shared";
+import type { NutritionFilter } from "../types/nutrition";
 import { NutritionError, NutritionSkeleton } from "./nutrition-feedback";
 import "../nutrition.css";
 
 const filters: { value: NutritionFilter; label: string }[] = [
-  { value: "all", label: "Todos" },
-  { value: "en_aprobacion", label: "Por aprobar" },
-  { value: "borrador_ia", label: "Borradores IA" },
-  { value: "devuelto", label: "Devueltos" },
-  { value: "aprobado", label: "Aprobados" },
-  { value: "por_renovar", label: "Por renovar" },
-  { value: "sin_plan", label: "Sin plan" },
+  { value: "all", label: "Todos" }, { value: "en_aprobacion", label: "Por aprobar" },
+  { value: "borrador_ia", label: "Borradores IA" }, { value: "devuelto", label: "Devueltos" },
+  { value: "aprobado", label: "Aprobados" }, { value: "por_renovar", label: "Por renovar" }, { value: "sin_plan", label: "Sin plan" },
 ];
 
-const stateLabels: Record<NutritionQueueState, string> = {
-  en_aprobacion: "Por aprobar", borrador_ia: "Borrador IA", devuelto: "Devuelto",
-  aprobado: "Aprobado", por_renovar: "Por renovar", sin_plan: "Sin plan",
-};
-
-function PatientRow({ patient }: { patient: NutritionPatientSummary }) {
-  const t = useT();
-  const { lang } = useI18n();
-  const { plan } = patient;
-  const state = plan?.queueState ?? "sin_plan";
-  return <li className="nutrition-patient">
-    <div className="min-w-0">
-      <h3 className="break-words text-base font-semibold"><Link className="nutrition-link" href={`/nutrition/${encodeURIComponent(patient.patientId)}${plan ? `?prescriptionId=${encodeURIComponent(plan.id)}` : ""}`}>{patient.patientName}</Link></h3>
-      {patient.patientDocument && <p className="mt-1 break-words text-sm text-muted-foreground">{patient.patientDocument}</p>}
-    </div>
-    <div className="flex min-w-0 flex-wrap items-center gap-2">
-      <span className="nutrition-chip" data-status={state}>{state === "borrador_ia" && <Sparkles aria-hidden="true" className="size-3.5" />}{t(stateLabels[state])}</span>
-      {plan?.provisional && <span className="text-xs font-medium text-muted-foreground">{t("Provisional")}</span>}
-    </div>
-    <dl className="grid grid-cols-2 gap-x-5 gap-y-2">
-      <div><dt className="text-xs text-muted-foreground">{t("Versión")}</dt><dd className="nutrition-measure mt-1 text-sm">{plan ? t("v{version}", { version: String(plan.version) }) : t("Sin plan")}</dd></div>
-      <div><dt className="text-xs text-muted-foreground">{t("Meta diaria")}</dt><dd className="nutrition-measure mt-1 text-sm">{plan?.dailyKcal != null ? t("{kcal} kcal", { kcal: new Intl.NumberFormat(lang === "en" ? "en-US" : "es-CO").format(plan.dailyKcal) }) : t("Sin definir")}</dd></div>
-    </dl>
-    <div className="flex flex-wrap items-center gap-2">
-      {plan && plan.criticalAlertCount > 0 ? <span className="nutrition-chip" data-status="critical"><ShieldAlert aria-hidden="true" className="size-3.5" />{plan.criticalAlertCount === 1 ? t("1 alerta crítica") : t("{count} alertas críticas", { count: String(plan.criticalAlertCount) })}</span> : <span className="text-xs text-muted-foreground">{plan ? t("Sin alertas críticas") : t("Plan aún no creado")}</span>}
-      {plan?.aiAssisted && state !== "borrador_ia" && <span className="nutrition-chip" data-status="borrador_ia"><Sparkles aria-hidden="true" className="size-3.5" />{t("Asistido por IA")}</span>}
-    </div>
-  </li>;
-}
-
-export function NutritionQueue() {
+export function NutritionQueue({ initialPatientId, initialPrescriptionId }: { initialPatientId?: string; initialPrescriptionId?: string } = {}) {
   const t = useT();
   const { data, loading, error, retry, search, setSearch, query, setState, setPage } = useNutritionQueue();
-  return <div className="nutrition-module mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-7 p-4 sm:p-8">
-    <header className="flex flex-wrap items-start justify-between gap-4">
-      <div className="min-w-0"><h1 className="nutrition-display text-3xl font-semibold sm:text-4xl">{t("Nutrición")}</h1><p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">{t("Una bandeja para acompañar el plan nutricional de cada paciente.")}</p></div>
-      <Button variant="outline" disabled={loading} onClick={retry}>{t("Actualizar")}</Button>
-    </header>
-    <NutritionServiceNotice />
-    <section className="min-w-0 rounded-xl border border-border bg-card" aria-labelledby="nutrition-queue-title">
-      <div className="space-y-5 border-b border-border p-4 sm:p-6">
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <div><h2 id="nutrition-queue-title" className="nutrition-display text-xl font-semibold">{t("Planes de pacientes")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("Filtra por estado y encuentra a tu paciente.")}</p></div>
-          <div className="w-full sm:w-80"><label htmlFor="nutrition-search" className="mb-2 block text-sm font-medium">{t("Buscar paciente")}</label><div className="relative"><Search aria-hidden="true" className="absolute left-3 top-3 size-4 text-muted-foreground" /><Input id="nutrition-search" type="search" maxLength={200} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("Nombre")} className="h-10 pl-9" /></div></div>
+  const [selection, setSelection] = useState<{ patientId: string; prescriptionId?: string } | null>(initialPatientId ? { patientId: initialPatientId, prescriptionId: initialPrescriptionId } : null);
+  const [locked, setLocked] = useState(false);
+
+  useEffect(() => {
+    const restore = () => {
+      if (locked) {
+        const path = selection ? `/nutrition/${encodeURIComponent(selection.patientId)}${selection.prescriptionId ? `?prescriptionId=${encodeURIComponent(selection.prescriptionId)}` : ""}` : "/nutrition";
+        window.history.replaceState(null, "", path);
+        return;
+      }
+      const match = window.location.pathname.match(/^\/nutrition\/([^/]+)$/);
+      setSelection(match ? { patientId: decodeURIComponent(match[1]), prescriptionId: new URLSearchParams(window.location.search).get("prescriptionId") ?? undefined } : null);
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, [locked, selection]);
+
+  function select(patientId?: string, prescriptionId?: string) {
+    if (locked) return;
+    setSelection(patientId ? { patientId, prescriptionId } : null);
+    window.history.pushState(null, "", patientId ? `/nutrition/${encodeURIComponent(patientId)}${prescriptionId ? `?prescriptionId=${encodeURIComponent(prescriptionId)}` : ""}` : "/nutrition");
+  }
+
+  return <div className="nutrition-module nutrition-rework" data-has-patient={!!selection}>
+    <PageHeader title={t("Nutricionista")} description={t("Resultados, programación y planes en un mismo espacio.")} icon={Stethoscope} actions={<Button variant="secondary" size="sm" disabled={loading} onClick={retry} aria-label={t("Actualizar bandeja")}><RefreshCw className="size-4" aria-hidden="true" /><span className="hidden sm:inline">{t("Actualizar")}</span></Button>} />
+    <div className="nutrition-workbench">
+      <aside className="nutrition-patient-rail" aria-label={t("Bandeja de pacientes")}>
+        <SectionHeader title={t("Pacientes")} icon={Users} variant="secondary" description={data ? t("{count} pacientes", { count: String(data.total) }) : t("Bandeja de nutrición")} />
+        <div className="nutrition-rail-tools">
+          <label htmlFor="nutrition-search" className="sr-only">{t("Buscar paciente")}</label>
+          <div className="relative"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" aria-hidden="true" /><Input id="nutrition-search" type="search" maxLength={200} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("Buscar paciente")} className="pl-9" /></div>
+          <ToggleGroup aria-label={t("Filtrar planes por estado")} value={[query.state]} onValueChange={(values) => { const filter = filters.find((item) => item.value === values[0]); if (filter) setState(filter.value); }} variant="outline" className="nutrition-filters nutrition-rail-filters">
+            {filters.map((filter) => <ToggleGroupItem key={filter.value} value={filter.value} data-status={filter.value} className="nutrition-filter"><span>{t(filter.label)}</span><span className="nutrition-measure">{data?.counts[filter.value] ?? "—"}</span></ToggleGroupItem>)}
+          </ToggleGroup>
         </div>
-        <ToggleGroup aria-label={t("Filtrar planes por estado")} value={[query.state]} onValueChange={(values) => { const selected = filters.find((filter) => filter.value === values[0]); if (selected) setState(selected.value); }} className="nutrition-filters max-w-full flex-wrap justify-start" variant="outline">
-          {filters.map((filter) => <ToggleGroupItem key={filter.value} value={filter.value} className="nutrition-filter min-h-10 gap-2 rounded-full px-3" data-status={filter.value}>
-            {filter.value === "borrador_ia" && <Sparkles aria-hidden="true" className="size-3.5" />}{t(filter.label)}
-            {data?.counts[filter.value] != null && <span className="nutrition-measure text-xs">{data.counts[filter.value]}</span>}
-          </ToggleGroupItem>)}
-        </ToggleGroup>
-      </div>
-      <div aria-busy={loading}>
-        {loading ? <NutritionSkeleton /> : error ? <div className="p-5"><NutritionError retry={retry} issue={error} /></div> : data?.items.length ? <>
-          <ul role="list" aria-label={t("Planes de pacientes")} className="divide-y divide-border">{data.items.map((patient) => <PatientRow key={patient.patientId} patient={patient} />)}</ul>
-          <nav aria-label={t("Paginación de nutrición")} className="flex flex-wrap items-center justify-between gap-4 border-t border-border p-4 sm:px-6">
-            <p role="status" className="text-sm text-muted-foreground">{t("Página {page} de {pages} · {total} pacientes", { page: String(data.page), pages: String(Math.max(1, data.totalPages)), total: String(data.total) })}</p>
-            <div className="flex gap-2"><Button variant="outline" disabled={data.page <= 1} onClick={() => setPage(data.page - 1)}>{t("Anterior")}</Button><Button variant="outline" disabled={data.page >= data.totalPages} onClick={() => setPage(data.page + 1)}>{t("Siguiente")}</Button></div>
-          </nav>
-        </> : <div role="status" className="flex flex-col items-center gap-3 px-5 py-16 text-center"><ClipboardCheck aria-hidden="true" className="size-9 text-info" /><h3 className="text-lg font-semibold">{t("No encontramos pacientes en esta vista")}</h3><p className="max-w-md text-sm text-muted-foreground">{t("Prueba con otro nombre, documento o estado.")}</p>{(query.search || query.state !== "all") && <Button variant="outline" onClick={() => { setSearch(""); setState("all"); }}>{t("Limpiar filtros")}</Button>}</div>}
-      </div>
-    </section>
+        <div className="nutrition-patient-list" aria-busy={loading}>
+          {loading ? <NutritionSkeleton /> : error ? <NutritionError retry={retry} issue={error} /> : data?.items.length ? <ul aria-label={t("Planes de pacientes")}>
+            {data.items.map((patient) => <li key={patient.patientId} className="nutrition-patient-option" data-selected={selection?.patientId === patient.patientId}>
+              <Link aria-label={patient.patientName} href={`/nutrition/${encodeURIComponent(patient.patientId)}${patient.plan ? `?prescriptionId=${encodeURIComponent(patient.plan.id)}` : ""}`} aria-current={selection?.patientId === patient.patientId ? "true" : undefined} aria-disabled={locked} onClick={(event) => { if (event.ctrlKey || event.metaKey || event.shiftKey) return; event.preventDefault(); select(patient.patientId, patient.plan?.id); }}>
+                <span className="nutrition-patient-name">{patient.patientName}{selection?.patientId === patient.patientId && <Check className="size-4 shrink-0" aria-label={t("Paciente seleccionado")} />}</span>
+                <span className="flex flex-wrap items-center justify-between gap-2"><NutritionStateChip state={patient.plan?.queueState ?? "sin_plan"} /><span className="nutrition-measure text-xs">{patient.plan?.dailyKcal != null ? `${patient.plan.dailyKcal.toLocaleString()} kcal` : t("Sin definir")}</span></span>
+                <span className="flex items-center justify-between gap-2 text-xs text-muted-foreground"><span>{patient.plan ? t("Versión {version}", { version: String(patient.plan.version) }) : t("Plan aún no creado")}</span>{!!patient.plan?.criticalAlertCount && <span className="nutrition-critical-count"><ShieldAlert className="size-3" aria-hidden="true" />{patient.plan.criticalAlertCount}</span>}</span>
+              </Link>
+            </li>)}
+          </ul> : <div className="nutrition-rail-empty"><Search className="size-6" aria-hidden="true" /><p>{t("No encontramos pacientes en esta vista")}</p><Button variant="outline" size="sm" onClick={() => { setSearch(""); setState("all"); }}>{t("Limpiar filtros")}</Button></div>}
+        </div>
+        <nav className="nutrition-rail-pagination" aria-label={t("Paginación de nutrición")}><p role="status">{data ? t("Página {page} de {pages} · {total} pacientes", { page: String(data.page), pages: String(Math.max(1, data.totalPages)), total: String(data.total) }) : "—"}</p><div className="flex gap-2"><Button size="sm" variant="outline" disabled={loading || !data || query.page <= 1} onClick={() => setPage(query.page - 1)}>{t("Anterior")}</Button><Button size="sm" variant="outline" disabled={loading || !data || query.page >= data.totalPages} onClick={() => setPage(query.page + 1)}>{t("Siguiente")}</Button></div></nav>
+      </aside>
+      <section className="nutrition-detail-panel" aria-label={t("Ficha nutricional")}>
+        {selection ? <NutritionPatientDetail patientId={selection.patientId} prescriptionId={selection.prescriptionId} onBack={() => select()} onNavigationLock={setLocked} onPlanChanged={retry} /> : <div className="nutrition-workbench-empty">
+          <SectionHeader title={t("Tu bandeja de trabajo")} description={t("Selecciona un paciente para revisar su plan.")} icon={ClipboardCheck} />
+          <div className="nutrition-overview-stats"><StatCard label={t("Pacientes")} value={data?.counts.all ?? "—"} icon={Users} variant="primary" /><StatCard label={t("Por aprobar")} value={data?.counts.en_aprobacion ?? "—"} icon={ClipboardCheck} variant="warning" /><StatCard label={t("Sin plan")} value={data?.counts.sin_plan ?? "—"} icon={Activity} variant="info" /></div>
+          <div className="nutrition-selection-guide"><Stethoscope className="size-10 text-primary" aria-hidden="true" /><h2>{t("Una revisión, tres pasos")}</h2><p>{t("Consulta los resultados, revisa la programación y ajusta el plan de 30 días.")}</p><span className="flex items-center gap-2 text-sm text-muted-foreground"><ArrowRight className="size-4" aria-hidden="true" />{t("Elige un paciente de la bandeja")}</span></div>
+        </div>}
+      </section>
+    </div>
   </div>;
 }
