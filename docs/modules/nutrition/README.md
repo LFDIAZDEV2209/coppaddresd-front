@@ -8,3 +8,5 @@ duplicar la especificación.
 
 - [Crítica dirigida](../../../../openspec/changes/plan-nutricional-erp/DESIGN-CRITIQUE.md): quince problemas contrastados con ocho capturas y componentes del ERP.
 - Alcance: rediseño de presentación y composición; servicios, contrato HTTP y permisos existentes conservados.
+- [Especificación visual](../../../../openspec/changes/plan-nutricional-erp/DESIGN-SPEC.md): dos paneles, tres pestañas y revisión mensual;1440/1280/390px, AA y controles clínicos existentes.
+- Primitivas: PageHeader, SectionHeader, StatCard y Tabs del ERP; IBM Plex, tokens semánticos y densidad operativa. El detalle de decisiones permanece en OpenSpec.
