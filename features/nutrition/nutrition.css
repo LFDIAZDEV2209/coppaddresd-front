@@ -1,0 +1,41 @@
+/* Tokens acotados al módulo: hereda superficies y contraste del ERP. */
+.nutrition-module {
+  --nutrition-display: var(--font-plex), sans-serif;
+  --nutrition-measure: var(--font-plex-mono), monospace;
+  --nutrition-ai-foreground: #715000;
+  --nutrition-ai-background: #fff5d6;
+  --nutrition-renew-foreground: #6b3aa0;
+  --nutrition-renew-background: #f3eafb;
+  font-family: var(--font-plex), sans-serif;
+  color: var(--foreground);
+}
+.dark .nutrition-module {
+  --nutrition-ai-foreground: #f7d87e;
+  --nutrition-ai-background: #3b2d10;
+  --nutrition-renew-foreground: #d8b9f4;
+  --nutrition-renew-background: #302039;
+}
+.nutrition-module .nutrition-display { font-family: var(--nutrition-display); line-height: 1.15; letter-spacing: -0.025em; }
+.nutrition-measure { font-family: var(--nutrition-measure); font-variant-numeric: tabular-nums; }
+.nutrition-patient { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; padding: 1.5rem; }
+@media (min-width: 768px) {
+  .nutrition-patient { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; }
+  .nutrition-patient > :last-child { grid-column: 1 / -1; }
+}
+@media (min-width: 1280px) {
+  .nutrition-patient { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr); }
+  .nutrition-patient > :last-child { grid-column: auto; }
+}
+.nutrition-chip { display: inline-flex; align-items: center; gap: 0.375rem; max-width: 100%; border-radius: 999px; padding: 0.375rem 0.625rem; font-size: 0.75rem; font-weight: 600; }
+.nutrition-chip, .nutrition-filter { --state-fg: var(--muted-foreground); --state-bg: var(--muted); }
+.nutrition-module [data-status="en_aprobacion"] { --state-fg: var(--info-soft-foreground); --state-bg: var(--info-soft); }
+.nutrition-module [data-status="borrador_ia"] { --state-fg: var(--nutrition-ai-foreground); --state-bg: var(--nutrition-ai-background); }
+.nutrition-module [data-status="aprobado"] { --state-fg: var(--success-soft-foreground); --state-bg: var(--success-soft); }
+.nutrition-module [data-status="devuelto"], .nutrition-module [data-status="critical"] { --state-fg: var(--destructive-soft-foreground); --state-bg: var(--destructive-soft); }
+.nutrition-module [data-status="por_renovar"] { --state-fg: var(--nutrition-renew-foreground); --state-bg: var(--nutrition-renew-background); }
+.nutrition-chip { color: var(--state-fg); background: var(--state-bg); }
+.nutrition-filters .nutrition-filter { color: var(--state-fg); border-color: var(--border); white-space: normal; height: auto; }
+.nutrition-filters .nutrition-filter[aria-pressed="true"] { background: var(--state-bg); border-color: var(--state-fg); box-shadow: inset 0 -2px 0 var(--state-fg); }
+.nutrition-filters .nutrition-filter:hover { background: var(--state-bg); }
+.nutrition-module ::selection { color: var(--info-soft-foreground); background: var(--info-soft); }
+.nutrition-module input { caret-color: var(--info); }

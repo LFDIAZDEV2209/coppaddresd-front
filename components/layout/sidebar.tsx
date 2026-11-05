@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { NutritionPendingBadge } from "@/features/nutrition/components/nutrition-pending-badge";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -158,8 +159,9 @@ export function Sidebar({
                         if (firstItem) onCloseMobile();
                       }}
                       render={<Link href={firstItem?.href ?? "#"} />}
+                      aria-label={firstItem?.href === "/nutrition" ? undefined : t(mod.label)}
                     >
-                      <Icon className="size-[18px]" />
+                      <span className="relative"><Icon className="size-[18px]" />{firstItem?.href === "/nutrition" && <><span className="sr-only">{t(mod.label)}</span><NutritionPendingBadge collapsed /></>}</span>
                     </TooltipTrigger>
                     <TooltipContent side="right" sideOffset={8}>
                       {t(mod.label)}
@@ -192,6 +194,7 @@ export function Sidebar({
                     <span className="flex-1 text-left tracking-wide">
                       {t(mod.label)}
                     </span>
+                    {onlyItem.href === "/nutrition" && <NutritionPendingBadge />}
                   </Link>
                 );
               }

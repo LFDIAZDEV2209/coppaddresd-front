@@ -122,6 +122,18 @@ export const navModules: NavModule[] = [
     ],
   },
   {
+    label: "Nutrición",
+    icon: Apple,
+    color: "#035d4d",
+    permission: ["Nutrition.Manage", "Nutrition.Approve"],
+    items: [{
+      label: "Nutrición",
+      href: "/nutrition",
+      icon: Apple,
+      permission: ["Nutrition.Manage", "Nutrition.Approve"],
+    }],
+  },
+  {
     label: "Gestión",
     icon: FolderKanban,
     color: "#1F6E9F",
