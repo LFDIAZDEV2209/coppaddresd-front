@@ -15,9 +15,11 @@ const wireMealTypes = { desayuno: "des", almuerzo: "alm", merienda: "mer", cena:
 export function mapNutritionFoods(rows: NutritionFoodWire[]): NutritionFood[] {
   requireField(Array.isArray(rows));
   return rows.map((row) => {
-    requireField(row && typeof row.id === "string" && typeof row.name === "string" && typeof row.foodGroup === "string");
-    requireField([row.calories100, row.carbs100, row.protein100, row.fat100, row.fiber100].every(finite));
-    return { id: row.id, name: row.name, group: row.foodGroup, per100g: { kcal: row.calories100, carbsG: row.carbs100, proteinG: row.protein100, fatG: row.fat100, fiberG: row.fiber100 }, householdEquivalent: row.gramsPerUnit && row.unitSingular ? `${row.gramsPerUnit} g / ${row.unitSingular}` : "" };
+    requireField(row && typeof row.code === "string" && typeof row.name === "string" && typeof row.group === "string" && ["C", "P", "F", "V"].includes(row.role));
+    requireField([row.kcal100, row.carbs100, row.protein100, row.fat100, row.fiber100].every(finite));
+    const equivalent = row.householdEquivalent;
+    requireField(equivalent === null || equivalent && typeof equivalent.unitSingular === "string" && typeof equivalent.unitPlural === "string" && finite(equivalent.gramsPerUnit) && equivalent.gramsPerUnit > 0 && finite(equivalent.unitStep) && equivalent.unitStep > 0);
+    return { id: row.code, name: row.name, group: row.group, role: row.role, per100g: { kcal: row.kcal100, carbsG: row.carbs100, proteinG: row.protein100, fatG: row.fat100, fiberG: row.fiber100 }, householdEquivalent: equivalent ? `${equivalent.gramsPerUnit} g / ${equivalent.unitSingular}` : "" };
   });
 }
 

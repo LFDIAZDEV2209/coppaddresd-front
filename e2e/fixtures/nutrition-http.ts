@@ -69,7 +69,7 @@ export async function mockNutritionHttp(page: Page, permissions = ["Nutrition.Ma
       if (options.malformedQueue) return reply({ items: [{ patientName: "Dato incompleto" }] });
       return reply(queueOf({ search: url.searchParams.get("search") ?? "", state: (url.searchParams.get("state") ?? "all") as NutritionQueueQuery["state"], page: Number(url.searchParams.get("page") ?? 1), pageSize: Number(url.searchParams.get("pageSize") ?? 10) }));
     }
-    if (path === "/api/v1/nutrition/foods") return reply(nutritionMockCatalog.map((food): NutritionFoodWire => ({ id: food.id, name: food.name, foodGroup: food.group, calories100: food.per100g.kcal, carbs100: food.per100g.carbsG, protein100: food.per100g.proteinG, fat100: food.per100g.fatG, fiber100: food.per100g.fiberG, unitSingular: null, unitPlural: null, gramsPerUnit: null, unitStep: null })));
+    if (path === "/api/v1/nutrition/foods") return reply(nutritionMockCatalog.map((food): NutritionFoodWire => ({ code: food.id, name: food.name, group: food.group, role: food.role ?? "C", kcal100: food.per100g.kcal, carbs100: food.per100g.carbsG, protein100: food.per100g.proteinG, fat100: food.per100g.fatG, fiber100: food.per100g.fiberG, householdEquivalent: null })));
     const match = path.match(/^\/api\/v1\/nutrition\/patients\/([^/]+)(?:\/prescriptions(?:\/([^/]+)(?:\/([^/]+))?)?)?$/);
     if (!match) return reply({}, 404);
     const patientId = decodeURIComponent(match[1]); const id = match[2]; const verb = match[3];

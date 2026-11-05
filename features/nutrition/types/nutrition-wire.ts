@@ -69,10 +69,9 @@ export interface NutritionIdentityWire {
   id: string; firstName: string; middleName: string | null; lastName: string;
   documentNumber: string | null; dateOfBirth: string | null; gender: string | null;
 }
-/** Nombres confirmados en NutritionFoodItem.cs; ruta del catálogo aún pendiente. */
+/** GET /nutrition/foods: NutritionFoodDto; distinto de la entidad persistida. */
 export interface NutritionFoodWire {
-  id: string; name: string; foodGroup: string;
-  calories100: number; carbs100: number; protein100: number; fat100: number; fiber100: number;
-  unitSingular: string | null; unitPlural: string | null;
-  gramsPerUnit: number | null; unitStep: number | null;
+  code: string; name: string; group: string; role: "C" | "P" | "F" | "V";
+  kcal100: number; carbs100: number; protein100: number; fat100: number; fiber100: number;
+  householdEquivalent: { unitSingular: string; unitPlural: string; gramsPerUnit: number; unitStep: number } | null;
 }

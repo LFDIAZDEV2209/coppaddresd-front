@@ -134,7 +134,9 @@ test.describe("E1 sin plan provisional", () => {
       expect(await page.evaluate(() => document.querySelector("main")!.scrollWidth <= document.querySelector("main")!.clientWidth)).toBe(true);
       await page.screenshot({ path: "qa-reports/nutrition/wave3-e1-generation-mobile.png", animations: "disabled" });
     }
+    const generationResponse = live ? page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === `/api/v1/nutrition/patients/${encodeURIComponent(patientId)}/prescriptions`, { timeout: 125_000 }) : null;
     await page.getByRole("button", { name: "Generar propuesta con IA", exact: true }).click();
+    if (generationResponse) expect((await generationResponse).status(), "Generación real de la prescripción").toBe(201);
     await expect(page.getByRole("heading", { name: "Plan provisional", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Menú de 30 días", exact: true })).toBeVisible();
     await expect(page.getByLabel(/Gramos de/).first()).toBeVisible();

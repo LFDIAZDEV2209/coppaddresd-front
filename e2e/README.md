@@ -195,13 +195,16 @@ paciente usa la primera cabecera en el orden que devuelve la API. Las comidas
 se leen del detalle, nunca de las cabeceras vacías del listado. El GET móvil
 `/api/v1/me/nutrition-plan` queda solo como referencia al contrato congelado.
 
-La bandeja apunta a `/inbox`; el DTO observado en el backend en preparación es
+La bandeja apunta a `/inbox`; el DTO confirmado en el backend local es
 `{items:[{patientId,patientName,state,prescription}],total,page,pageSize}`.
 `prescription` incluye `k` y `revision`; no hay documento, contadores globales
 ni `totalPages`. Solo se calcula paginación y total del filtro consultado;
 los otros contadores no se muestran ni se solicitan por separado. Se omite
 `state` para Todos y `search` busca por nombre. Usar `NUTRITION_E2E_SEARCH="Test E2E"`,
-no el documento del fixture. `/foods` sigue pendiente de entrega HTTP.
+no el documento del fixture. `/foods` ya responde200 y usa el DTO público
+`{code,name,group,role,kcal100,carbs100,protein100,fat100,fiber100,householdEquivalent}`;
+la equivalencia es null u objeto `{unitSingular,unitPlural,gramsPerUnit,unitStep}`.
+No se confunde con la entidad (`id`, `foodGroup`, `calories100`).
 
 Demografía opcional: DTO existente `/api/v1/patients/{id}`. Su403/404 no bloquea
 una prescripción ya autorizada por Nutrition: se muestra error y UUID, sin
@@ -213,16 +216,28 @@ Regresiones: ProblemDetails.detail visible, recarga409 antes de nuevo envío,
 id nuevo/revision1 al versionar, y apply-day con
 `edit:{sourceDay,confirmManualEdits:true}`. La recarga también está dentro del
 diálogo para que el modal no impida resolver el conflicto. Suite simulada final:
-**15 aprobadas y1 sonda real omitida**,40,8s; incluye identidad403/404 opcional.
+**15 aprobadas y1 sonda real omitida**,38,0s; incluye identidad403/404 opcional.
 
-Spec con modo live: **6 aprobadas,1 fallida**,20,1s. Son **5 regresiones simuladas**,
-**1 sonda real aprobada** y **E1 real fallido** (`GET /inbox`404). La sonda verifica
-GET de prescripciones200 tanto en API5122 como gateway5080. Artefactos reales
-en `qa-reports/nutrition/wave4b-live/`; simulados en `wave4b-simulated/`.
+Spec con modo live final: **7 aprobadas**,45,5s: **5 regresiones simuladas**,
+**1 sonda real** y **E1 real completo**. Al entregar backend inbox/catalogo se
+compiló y recargó solamente API5122. E1 duró29,8s: paciente sin plan → generación201
+→ editor con ítems/metas → submit → críticas confirmadas → approve → reload
+con publicado v1. DB verifica120 comidas, revision3, provisional=true,
+una crítica confirmada, autoApproved=true y `narrativeSource=llm`.
+La sonda verifica prescripciones200 tanto en API5122 como gateway5080. Artefactos
+reales en `qa-reports/nutrition/wave4b-live/`; simulados en `wave4b-simulated/`.
+La generación real espera su respuesta hasta125s, dentro del timeout del journey;
+no se aplica la aserción genérica10s al tiempo del proveedor.
 
 Health: Api/Auth/Telemedicine Unhealthy, Community Healthy. Los logs registran
 `HttpClient.Timeout` de2s en las sondas; HTTP directo responde200 en aproximadamente
 2,5–3s. No se determinó la causa final de esa latencia ni se modificó el gateway.
-Cuatro capturas reales renovadas documentan /inbox404 y /foods404. Editor y
-aprobación siguen inaccesibles y no se sustituyen con capturas simuladas.
+Las ocho capturas reales del recorrido están en el directorio screenshots de
+OpenSpec: bandeja/ficha/editor/aprobacion y sus variantes-mobile. Las imágenes
+anteriores de404 fueron sustituidas al desbloquearse backend.
+
+El paciente QA Test E2E ya quedó aprobado con prescripción
+`132e81a7-c290-49df-a482-3724716f4311`. Para repetir E1 completo se necesita otro
+fixture sin plan/tests o un reset coordinado del seed; el test no borra planes,
+no devuelve un aprobado a borrador ni realiza limpieza destructiva automática.
 
