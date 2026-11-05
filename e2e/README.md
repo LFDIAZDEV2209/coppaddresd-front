@@ -123,3 +123,34 @@ asignar profesional ni reservar un slot. El contrato requiere `organizationId`
 en este modo. Los UUID y el token se inyectan por entorno y no se almacenan en
 el repositorio.
 
+### Nutrición ERP: HTTP simulado y E1 real
+
+El producto usa exclusivamente `lib/api/http.ts`. Las fixtures sintéticas viven
+en `e2e/fixtures/`; Playwright intercepta HTTP explícitamente, sin activar mocks
+en la aplicación. La suite de cierre ejecutó 14/14 casos sobre build de producción
+local. Cubre E1, permisos, ausencia de N+1, errores 404/contrato/409, revisiones,
+edición, publicación, devolución y agua nullable. No certifica persistencia real
+ni cálculo clínico del motor.
+
+Con el frontend servido en background y disponible en el puerto elegido:
+
+```powershell
+$env:E2E_BASE_URL = "http://localhost:3107"
+$env:NUTRITION_E2E_MODE = "mock"
+corepack yarn playwright test e2e/nutrition-queue.spec.ts e2e/nutrition-editor.spec.ts --project chromium-desktop
+```
+
+Para E1 real, configurar `NUTRITION_E2E_MODE=live` y ejecutar la spec de bandeja
+con `--grep "E1 sin plan provisional"`. Ese caso no intercepta peticiones.
+Requiere `NUTRITION_E2E_STORAGE_STATE` (archivo de sesión fuera del repositorio),
+`NUTRITION_E2E_PATIENT_ID`, `NUTRITION_E2E_SEARCH`, `NUTRITION_E2E_WEIGHT`,
+`NUTRITION_E2E_HEIGHT`, `NUTRITION_E2E_BIRTH_DATE` (YYYY-MM-DD) y
+`NUTRITION_E2E_SEX` (female/male). Usar un paciente QA sin plan ni tests, con
+alertas críticas previstas; el caso genera y aprueba una prescripción.
+
+Al cierre no había backend local en 5080/5122. Las lecturas agregadas
+`GET /api/v1/nutrition/patients`, `GET /api/v1/nutrition/patients/{patientId}`
+y `GET /api/v1/nutrition/foods` siguen pendientes de confirmación del backend;
+su ausencia muestra error explícito. Contratos y evidencia en
+`../openspec/changes/plan-nutricional-erp/NOTES-frontend.md` del workspace.
+
