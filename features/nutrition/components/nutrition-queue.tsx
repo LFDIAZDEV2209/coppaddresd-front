@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, ArrowRight, ClipboardCheck, RefreshCw, Search, ShieldAlert, Stethoscope, Users } from "lucide-react";
+import { Activity, Check, ArrowRight, ClipboardCheck, RefreshCw, Search, ShieldAlert, Stethoscope, Users } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +65,7 @@ export function NutritionQueue({ initialPatientId, initialPrescriptionId }: { in
           {loading ? <NutritionSkeleton /> : error ? <NutritionError retry={retry} issue={error} /> : data?.items.length ? <ul aria-label={t("Planes de pacientes")}>
             {data.items.map((patient) => <li key={patient.patientId} className="nutrition-patient-option" data-selected={selection?.patientId === patient.patientId}>
               <Link aria-label={patient.patientName} href={`/nutrition/${encodeURIComponent(patient.patientId)}${patient.plan ? `?prescriptionId=${encodeURIComponent(patient.plan.id)}` : ""}`} aria-current={selection?.patientId === patient.patientId ? "true" : undefined} aria-disabled={locked} onClick={(event) => { if (event.ctrlKey || event.metaKey || event.shiftKey) return; event.preventDefault(); select(patient.patientId, patient.plan?.id); }}>
-                <span className="nutrition-patient-name">{patient.patientName}</span>
+                <span className="nutrition-patient-name">{patient.patientName}{selection?.patientId === patient.patientId && <Check className="size-4 shrink-0" aria-label={t("Paciente seleccionado")} />}</span>
                 <span className="flex flex-wrap items-center justify-between gap-2"><NutritionStateChip state={patient.plan?.queueState ?? "sin_plan"} /><span className="nutrition-measure text-xs">{patient.plan?.dailyKcal != null ? `${patient.plan.dailyKcal.toLocaleString()} kcal` : t("Sin definir")}</span></span>
                 <span className="flex items-center justify-between gap-2 text-xs text-muted-foreground"><span>{patient.plan ? t("Versión {version}", { version: String(patient.plan.version) }) : t("Plan aún no creado")}</span>{!!patient.plan?.criticalAlertCount && <span className="nutrition-critical-count"><ShieldAlert className="size-3" aria-hidden="true" />{patient.plan.criticalAlertCount}</span>}</span>
               </Link>

@@ -4965,5 +4965,10 @@
   "4 comidas por día": "4 meals per day",
   "Alimentos y cantidades": "Foods and quantities",
   "Validación del borrador": "Draft validation",
-  "Correcto": "Passed"
+  "Correcto": "Passed",
+  "Consultar día": "Inspect day",
+  "{kcal} kcal · meta {target} kcal · desviación {difference} kcal": "{kcal} kcal · target {target} kcal · difference {difference} kcal",
+  "Plan en revisión. Devuélvelo con comentario para solicitar ajustes.": "Plan under review. Return it with a comment to request changes.",
+  "Plan de solo lectura con tus permisos actuales.": "Read-only plan with your current permissions.",
+  "Paciente seleccionado": "Selected patient"
 }

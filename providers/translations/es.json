@@ -4966,5 +4966,10 @@
   "4 comidas por día": "4 comidas por día",
   "Alimentos y cantidades": "Alimentos y cantidades",
   "Validación del borrador": "Validación del borrador",
-  "Correcto": "Correcto"
+  "Correcto": "Correcto",
+  "Consultar día": "Consultar día",
+  "{kcal} kcal · meta {target} kcal · desviación {difference} kcal": "{kcal} kcal · meta {target} kcal · desviación {difference} kcal",
+  "Plan en revisión. Devuélvelo con comentario para solicitar ajustes.": "Plan en revisión. Devuélvelo con comentario para solicitar ajustes.",
+  "Plan de solo lectura con tus permisos actuales.": "Plan de solo lectura con tus permisos actuales.",
+  "Paciente seleccionado": "Paciente seleccionado"
 }
