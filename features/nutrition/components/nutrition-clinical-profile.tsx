@@ -9,6 +9,8 @@ export function NutritionClinicalHeader({ profile }: { profile: NutritionClinica
   const t = useT();
   const format = useNutritionNumber();
   const fields = [
+    { label: "Peso", value: profile.weightKg == null ? null : `${format(profile.weightKg)} ${t("kg")}`, measure: true },
+    { label: "Talla", value: profile.heightCm == null ? null : `${format(profile.heightCm)} ${t("cm")}`, measure: true },
     { label: "Edad", value: profile.age == null ? null : t("{age} años", { age: String(profile.age) }) },
     { label: "Sexo", value: profile.sex === "female" ? t("Mujer") : profile.sex === "male" ? t("Hombre") : null },
     { label: "IMC", value: profile.bmi == null ? null : format(profile.bmi) },
@@ -18,7 +20,7 @@ export function NutritionClinicalHeader({ profile }: { profile: NutritionClinica
     { label: "Riesgo cardiometabólico", value: profile.cardiometabolicRisk },
     { label: "Batería de tests", value: profile.completedTests === null ? null : t("{count} de 9 completados", { count: String(profile.completedTests) }) },
   ];
-  return <section className="nutrition-section" aria-labelledby="nutrition-profile-title"><h2 id="nutrition-profile-title" className="nutrition-display text-xl font-semibold">{t("Perfil clínico")}</h2><dl className="nutrition-profile-grid mt-5">{fields.map(({ label, value }) => <div key={label}><dt className="text-sm text-muted-foreground">{t(label)}</dt><dd className="mt-1.5 break-words font-medium">{value ?? t("Sin dato registrado")}</dd></div>)}</dl>{profile.provisionalFields.length > 0 && <p className="mt-5 text-sm text-muted-foreground">{t("Datos pendientes: {fields}", { fields: profile.provisionalFields.join(", ") })}</p>}</section>;
+  return <section className="nutrition-section" aria-labelledby="nutrition-profile-title"><h2 id="nutrition-profile-title" className="nutrition-display text-xl font-semibold">{t("Perfil clínico")}</h2><dl className="nutrition-profile-grid mt-5">{fields.map(({ label, value, measure }) => <div key={label}><dt className="text-sm text-muted-foreground">{t(label)}</dt><dd className={`mt-1.5 break-words font-medium ${measure && value != null ? "nutrition-measure" : ""}`}>{value ?? t("Sin dato registrado")}</dd></div>)}</dl>{profile.provisionalFields.length > 0 && <p className="mt-5 text-sm text-muted-foreground">{t("Datos pendientes: {fields}", { fields: profile.provisionalFields.join(", ") })}</p>}</section>;
 }
 
 const categories = [

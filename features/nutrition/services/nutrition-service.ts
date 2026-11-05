@@ -27,15 +27,26 @@ async function request<T, R>(path: string, init: RequestInit, map: (wire: T) => 
   }
 }
 
-export function fetchNutritionQueue(query: NutritionQueueQuery, signal?: AbortSignal) {
+function fetchNutritionPage(query: NutritionQueueQuery, signal?: AbortSignal) {
   const params = new URLSearchParams({ page: String(query.page), pageSize: String(query.pageSize) });
   if (query.search.trim()) params.set("search", query.search.trim());
   if (query.state !== "all") params.set("state", query.state);
-  // Pendiente de confirmar en backend: una sola proyección global, jamás N+1.
+  // Una proyección de pacientes por página, nunca detalle por tarjeta.
   return request<NutritionQueueWire, ReturnType<typeof mapNutritionQueue>>(`${ROOT}/inbox?${params}`, { signal }, (wire) => mapNutritionQueue(wire, query.state));
 }
+export async function fetchNutritionQueue(query: NutritionQueueQuery, signal?: AbortSignal) {
+  const filters: NutritionQueueQuery["state"][] = ["all", "borrador_ia", "en_aprobacion", "aprobado", "devuelto", "por_renovar", "sin_plan"];
+  // El contrato no incluye counts. Lote fijo de agregados, independiente del
+  // número de pacientes; comparte búsqueda/alcance/cancelación con la página.
+  const [page, ...counts] = await Promise.all([
+    fetchNutritionPage(query, signal),
+    ...filters.filter((state) => state !== query.state).map(async (state) => ({ state, total: (await fetchNutritionPage({ ...query, state, page: 1, pageSize: 1 }, signal)).total })),
+  ] as const);
+  for (const count of counts) page.counts[count.state] = count.total;
+  return page;
+}
 export async function fetchNutritionPendingCount(signal?: AbortSignal) {
-  const queue = await fetchNutritionQueue({ search: "", state: "en_aprobacion", page: 1, pageSize: 1 }, signal);
+  const queue = await fetchNutritionPage({ search: "", state: "en_aprobacion", page: 1, pageSize: 1 }, signal);
   return { count: queue.total };
 }
 

@@ -2,6 +2,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // El indicador N de Next dev se superpone a controles móviles durante QA.
+  devIndicators: false,
   output: "standalone",
 
   // El root de Turbopack es este repo. Sin esto, Next autodetecta lockfiles

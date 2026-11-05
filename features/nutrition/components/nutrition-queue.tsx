@@ -46,7 +46,7 @@ function PatientRow({ patient }: { patient: NutritionPatientSummary }) {
       <div><dt className="text-xs text-muted-foreground">{t("Meta diaria")}</dt><dd className="nutrition-measure mt-1 text-sm">{plan?.dailyKcal != null ? t("{kcal} kcal", { kcal: new Intl.NumberFormat(lang === "en" ? "en-US" : "es-CO").format(plan.dailyKcal) }) : t("Sin definir")}</dd></div>
     </dl>
     <div className="flex flex-wrap items-center gap-2">
-      {plan && plan.criticalAlertCount > 0 ? <span className="nutrition-chip" data-status="critical"><ShieldAlert aria-hidden="true" className="size-3.5" />{t("{count} alertas críticas", { count: String(plan.criticalAlertCount) })}</span> : <span className="text-xs text-muted-foreground">{plan ? t("Sin alertas críticas") : t("Plan aún no creado")}</span>}
+      {plan && plan.criticalAlertCount > 0 ? <span className="nutrition-chip" data-status="critical"><ShieldAlert aria-hidden="true" className="size-3.5" />{plan.criticalAlertCount === 1 ? t("1 alerta crítica") : t("{count} alertas críticas", { count: String(plan.criticalAlertCount) })}</span> : <span className="text-xs text-muted-foreground">{plan ? t("Sin alertas críticas") : t("Plan aún no creado")}</span>}
       {plan?.aiAssisted && state !== "borrador_ia" && <span className="nutrition-chip" data-status="borrador_ia"><Sparkles aria-hidden="true" className="size-3.5" />{t("Asistido por IA")}</span>}
     </div>
   </li>;

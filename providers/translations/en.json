@@ -1,4 +1,8 @@
 {
+  "1 alerta crítica": "1 critical alert",
+  "Nutricionista actual": "Current nutritionist",
+  "Nutricionista externo": "External nutritionist",
+  "Revisé personalmente la alerta crítica de este plan.": "I personally reviewed this plan's critical alert.",
   "Al confirmar, el plan se devuelve para realizar ajustes. No se publica.": "Confirming returns the plan for changes. It is not published.",
   "Pendientes no disponibles": "Pending count unavailable",
   "Revisar siguiente pendiente": "Review next pending plan",

@@ -32,6 +32,13 @@ export function NutritionTargetsPanel({ targets, totals }: { targets: NutritionT
   const format = useNutritionNumber();
   return <dl className="nutrition-targets">{nutrientDefinitions.map(({ key, label, unit }) => {
     const value = totals?.[key];
-    return <div key={key} className="min-w-0"><dt className="text-sm text-muted-foreground">{t(label)}</dt><dd className="mt-2 nutrition-measure text-sm">{value === null ? t("Sin dato registrado") : value !== undefined ? t("{actual} de {target} {unit}", { actual: format(value), target: format(targets[key]), unit: t(unit) }) : `${format(targets[key])} ${t(unit)}`}</dd>{value !== null && value !== undefined && <><progress className="nutrition-progress mt-2" max={Math.max(1, targets[key])} value={Math.min(value, Math.max(1, targets[key]))} aria-label={t("{nutrient} respecto a la meta", { nutrient: t(label) })} />{value > targets[key] && <p className="mt-1 text-xs text-muted-foreground">{t("{amount} {unit} sobre la meta", { amount: format(value - targets[key]), unit: t(unit) })}</p>}</>}</div>;
+    const over = value != null && value > targets[key];
+    return <div key={key} className="min-w-0" data-over-target={over || undefined}><dt className="text-sm text-muted-foreground">{t(label)}</dt><dd className="mt-2 nutrition-measure text-sm">{value === null ? t("Sin dato registrado") : value !== undefined ? t("{actual} de {target} {unit}", { actual: format(value), target: format(targets[key]), unit: t(unit) }) : `${format(targets[key])} ${t(unit)}`}</dd>{value !== null && value !== undefined && <><progress className="nutrition-progress mt-2" max={Math.max(1, targets[key])} value={Math.min(value, Math.max(1, targets[key]))} aria-label={t("{nutrient} respecto a la meta", { nutrient: t(label) })} />{over && <p className="mt-1 text-xs text-muted-foreground">{t("{amount} {unit} sobre la meta", { amount: format(value - targets[key]), unit: t(unit) })}</p>}</>}</div>;
   })}</dl>;
+}
+
+/** Sin fechas completas no hay separador; nunca se representa una flecha vacía. */
+export function NutritionValidity({ start, end }: { start: string | null; end: string | null }) {
+  const t = useT();
+  return <span className="nutrition-measure inline-flex flex-wrap items-center gap-2"><span>{start || t("Sin definir")}</span>{start && end && <span aria-hidden="true">→</span>}<span>{end || t("Sin definir")}</span></span>;
 }
