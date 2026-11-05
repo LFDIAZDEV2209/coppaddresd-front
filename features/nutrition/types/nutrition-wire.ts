@@ -28,6 +28,7 @@ export interface NutritionEventWire {
   criticalCount: number; criticalConfirmed: boolean; autoApproved: boolean; snapshotJson: string;
 }
 export interface NutritionEditWire {
+  instructionsEn?: string;
   targets?: NutritionTargetsWire;
   meals?: NutritionMealWire[];
   instructions?: string;
@@ -36,20 +37,19 @@ export interface NutritionEditWire {
 }
 
 /**
- * Contratos de lectura pendientes de confirmar con backend Ola 3.
+ * Bandeja /inbox y catálogo /foods pendientes de confirmar en backend Ola 4B.
  * No se reconstruye la bandeja mediante una consulta de prescripciones por paciente.
  * Respuesta ausente o incompatible -> error visible, nunca fallback ni datos clínicos.
  */
 export interface NutritionQueueWire {
   items: {
-    patientId: string; patientName: string; patientDocument: string | null;
+    patientId: string; patientName: string; state: NutritionViewWire["state"] | "sin_plan";
     prescription: null | {
-      id: string; state: NutritionViewWire["state"]; version: number; dailyKcal: number | null;
-      criticalAlertCount: number; aiAssisted: boolean; provisional: boolean; endDate: string | null;
+      id: string; state: NutritionViewWire["state"]; version: number; revision: number; k: number | null;
+      criticalAlertCount: number; provisional: boolean; startDate: string | null; endDate: string | null; isPublished: boolean;
     };
   }[];
-  total: number; page: number; pageSize: number; totalPages: number;
-  counts: Record<"all" | "borrador_ia" | "en_aprobacion" | "aprobado" | "devuelto" | "por_renovar" | "sin_plan", number>;
+  total: number; page: number; pageSize: number;
 }
 export interface NutritionPatientWire {
   patientId: string; patientName: string; patientDocument: string | null;
@@ -63,6 +63,11 @@ export interface NutritionPatientWire {
   prescriptionId: string | null;
   publishedPrescriptionId: string | null;
   timeZone: string | null;
+}
+/** Proyección del DTO existente GET /api/v1/patients/{id}; no es ficha de Nutrition. */
+export interface NutritionIdentityWire {
+  id: string; firstName: string; middleName: string | null; lastName: string;
+  documentNumber: string | null; dateOfBirth: string | null; gender: string | null;
 }
 /** Nombres confirmados en NutritionFoodItem.cs; ruta del catálogo aún pendiente. */
 export interface NutritionFoodWire {

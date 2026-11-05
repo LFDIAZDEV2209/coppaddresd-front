@@ -1,7 +1,7 @@
 import { ApiError } from "@/lib/api/http";
 import { mealDefinitions, recalculateCycle } from "../lib/nutrition-calculations";
-import type { NutritionAuditEntry, NutritionCycle, NutritionFood, NutritionPatientDetail, NutritionQueueResponse } from "./nutrition";
-import type { NutritionEditWire, NutritionEventWire, NutritionFoodWire, NutritionMealWire, NutritionPatientWire, NutritionQueueWire, NutritionViewWire } from "./nutrition-wire";
+import type { NutritionAuditEntry, NutritionCycle, NutritionFilter, NutritionFood, NutritionPatientDetail, NutritionQueueResponse } from "./nutrition";
+import type { NutritionEditWire, NutritionEventWire, NutritionFoodWire, NutritionIdentityWire, NutritionMealWire, NutritionPatientWire, NutritionQueueWire, NutritionViewWire } from "./nutrition-wire";
 
 /** Única frontera wire ↔ UI. Un contrato incompleto se rechaza, no se rellena. */
 function requireField(condition: unknown): asserts condition {
@@ -59,15 +59,30 @@ export function mapNutritionCycle(row: NutritionViewWire, catalog: NutritionFood
   }, catalog);
 }
 
-export function mapNutritionQueue(row: NutritionQueueWire): NutritionQueueResponse {
-  requireField(row && Array.isArray(row.items) && [row.total, row.page, row.pageSize, row.totalPages].every(finite));
-  requireField(row.counts && ["all", ...states, "sin_plan"].every((state) => finite(row.counts[state as keyof typeof row.counts])));
-  return { ...row, items: row.items.map((item) => {
+export function mapNutritionQueue(row: NutritionQueueWire, filter: NutritionFilter = "all"): NutritionQueueResponse {
+  requireField(row && Array.isArray(row.items) && [row.total, row.page, row.pageSize].every(Number.isInteger) && row.total >= 0 && row.page >= 1 && row.pageSize >= 1);
+  const counts: NutritionQueueResponse["counts"] = { all: null, borrador_ia: null, en_aprobacion: null, aprobado: null, devuelto: null, por_renovar: null, sin_plan: null };
+  counts[filter] = row.total;
+  return { ...row, totalPages: Math.ceil(row.total / row.pageSize), counts, items: row.items.map((item) => {
     requireField(item && typeof item.patientId === "string" && typeof item.patientName === "string" && "prescription" in item);
     const plan = item.prescription;
-    if (plan) requireField(states.includes(plan.state) && typeof plan.id === "string" && finite(plan.version) && finite(plan.criticalAlertCount) && (plan.dailyKcal === null || finite(plan.dailyKcal)) && typeof plan.aiAssisted === "boolean" && typeof plan.provisional === "boolean");
-    return { patientId: item.patientId, patientName: item.patientName, patientDocument: item.patientDocument, plan: plan ? { ...plan, state: plan.state === "por_renovar" ? "aprobado" as const : plan.state, queueState: plan.state } : null };
+    requireField(plan ? states.includes(item.state) && item.state === plan.state : item.state === "sin_plan");
+    if (plan) requireField(typeof plan.id === "string" && Number.isInteger(plan.revision) && plan.revision > 0 && finite(plan.version) && finite(plan.criticalAlertCount) && (plan.k === null || finite(plan.k)) && typeof plan.provisional === "boolean");
+    return { patientId: item.patientId, patientName: item.patientName, patientDocument: null, plan: plan ? { ...plan, dailyKcal: plan.k, aiAssisted: plan.state === "borrador_ia", state: plan.state === "por_renovar" ? "aprobado" as const : plan.state, queueState: plan.state } : null };
   }) };
+}
+
+/** El DTO de prescripción no incluye demografía ni resultados de tests. */
+export function mapNutritionIdentity(patientId: string, identity: NutritionIdentityWire | null, current: NutritionViewWire | null, published: NutritionViewWire | null): NutritionPatientWire {
+  if (identity) requireField(identity.id === patientId && typeof identity.firstName === "string" && typeof identity.lastName === "string");
+  return {
+    patientId, patientName: identity ? [identity.firstName, identity.middleName, identity.lastName].filter(Boolean).join(" ") : patientId,
+    patientDocument: identity?.documentNumber ?? null, prescriptionId: current?.id ?? null, publishedPrescriptionId: published?.id ?? null,
+    nextPendingPatientId: null, timeZone: null,
+    profile: { age: null, sex: identity?.gender === "Femenino" ? "female" : identity?.gender === "Masculino" ? "male" : null,
+      bmi: null, hba1c: null, movement: null, adherence: null, cardiometabolicRisk: null, completedTests: null,
+      birthDate: identity?.dateOfBirth ?? null, weightKg: null, heightCm: null, provisionalFields: current?.missingData ?? [], programPatientId: null },
+  };
 }
 
 export function mapNutritionPatient(row: NutritionPatientWire, cycle: NutritionCycle | null, publishedCycle: NutritionCycle | null, revision: number): NutritionPatientDetail {

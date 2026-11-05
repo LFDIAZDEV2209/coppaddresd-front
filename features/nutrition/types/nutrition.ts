@@ -108,8 +108,8 @@ export interface NutritionQueueResponse {
   page: number;
   pageSize: number;
   totalPages: number;
-  /** Contadores sobre la búsqueda, antes de aplicar estado y paginación. */
-  counts: Record<NutritionFilter, number>;
+  /** /inbox solo devuelve total del filtro actual; los otros contadores son desconocidos. */
+  counts: Record<NutritionFilter, number | null>;
 }
 
 export interface NutritionPendingCount { count: number }
@@ -146,6 +146,7 @@ export interface NutritionAuditEntry {
 }
 
 export interface NutritionPatientDetail {
+  identityIssue?: NutritionServiceIssue;
   patientId: string;
   patientName: string;
   patientDocument: string | null;
@@ -165,18 +166,25 @@ export interface NutritionWorkspace {
   catalog: NutritionFood[];
 }
 
-export type NutritionAction = "submit" | "approve" | "return" | "new-version" | "create" | "regenerate";
+export type NutritionAction = "submit" | "approve" | "return" | "new-version" | "create" | "regenerate" | "apply-day";
 export interface NutritionGenerateInput {
   birthDate?: string;
-  manual?: { peso: number; talla: number; edad: number; sexo: "F" | "M"; imc?: number };
+  manual?: { peso: number; talla: number; edad: number; sexo: "F" | "M"; imc?: number;
+    hba1c?: number | null; mov?: string | null; objetivo?: string | null; objFijo?: boolean;
+    nutRiesgo?: string | null; sleepRF?: number | null; sleepNivel?: string | null; adh?: string | null;
+    riesgoNum?: number | null; estres?: string | null; deficit?: number | null; kcal?: number | null;
+    carbPct?: number | null; protG?: number | null; fiber?: number | null; vasos?: number | null; birthDate?: string | null };
   preserveConfirmedEdits?: boolean;
 }
 export interface NutritionActionOptions {
+  startDate?: string;
+  sourceDay?: number;
   comment?: string;
   criticalConfirmed?: boolean;
   generate?: NutritionGenerateInput;
 }
 export interface NutritionServiceIssue {
+  detail?: string;
   kind: "endpoint" | "contract" | "conflict" | "request";
   endpoint: string;
   status: number;

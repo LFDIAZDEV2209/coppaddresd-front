@@ -1,8 +1,8 @@
 import { apiFetch, ApiError } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type { NutritionAction, NutritionActionOptions, NutritionCycle, NutritionFood, NutritionPatientDetail, NutritionQueueQuery, NutritionServiceIssue, NutritionWorkspace } from "../types/nutrition";
-import type { NutritionEventWire, NutritionFoodWire, NutritionPatientWire, NutritionQueueWire, NutritionViewWire } from "../types/nutrition-wire";
-import { mapNutritionCycle, mapNutritionFoods, mapNutritionHistory, mapNutritionPatient, mapNutritionQueue, toNutritionEdit } from "../types/nutrition-mappers";
+import type { NutritionEventWire, NutritionFoodWire, NutritionIdentityWire, NutritionQueueWire, NutritionViewWire } from "../types/nutrition-wire";
+import { mapNutritionCycle, mapNutritionFoods, mapNutritionHistory, mapNutritionIdentity, mapNutritionPatient, mapNutritionQueue, toNutritionEdit } from "../types/nutrition-mappers";
 
 const ROOT = "/api/v1/nutrition";
 const prescriptions = (patientId: string) => `${ROOT}/patients/${encodeURIComponent(patientId)}/prescriptions`;
@@ -10,7 +10,7 @@ export class NutritionRequestError extends Error {
   constructor(readonly issue: NutritionServiceIssue) { super("nutrition-request-failed"); }
 }
 export function nutritionIssue(error: unknown): NutritionServiceIssue {
-  return error instanceof NutritionRequestError ? error.issue : { kind: "request", endpoint: ROOT, status: error instanceof ApiError ? error.status : 0 };
+  return error instanceof NutritionRequestError ? error.issue : { kind: "request", endpoint: ROOT, status: error instanceof ApiError ? error.status : 0, detail: error instanceof ApiError ? error.message : undefined };
 }
 
 /** Cliente único: Bearer/refresh/clínica se mantienen en apiFetch. */
@@ -23,36 +23,54 @@ async function request<T, R>(path: string, init: RequestInit, map: (wire: T) => 
   } catch (error) {
     if (error instanceof NutritionRequestError) throw error;
     const status = error instanceof ApiError ? error.status : 0;
-    throw new NutritionRequestError({ kind: [404, 501, 503].includes(status) ? "endpoint" : [409, 412].includes(status) ? "conflict" : "request", endpoint, status });
+    throw new NutritionRequestError({ kind: [404, 501, 503].includes(status) ? "endpoint" : [409, 412].includes(status) ? "conflict" : "request", endpoint, status, detail: error instanceof ApiError ? error.message : undefined });
   }
 }
 
 export function fetchNutritionQueue(query: NutritionQueueQuery, signal?: AbortSignal) {
-  const params = new URLSearchParams({ search: query.search, state: query.state, page: String(query.page), pageSize: String(query.pageSize) });
+  const params = new URLSearchParams({ page: String(query.page), pageSize: String(query.pageSize) });
+  if (query.search.trim()) params.set("search", query.search.trim());
+  if (query.state !== "all") params.set("state", query.state);
   // Pendiente de confirmar en backend: una sola proyección global, jamás N+1.
-  return request<NutritionQueueWire, ReturnType<typeof mapNutritionQueue>>(`${ROOT}/patients?${params}`, { signal }, mapNutritionQueue);
+  return request<NutritionQueueWire, ReturnType<typeof mapNutritionQueue>>(`${ROOT}/inbox?${params}`, { signal }, (wire) => mapNutritionQueue(wire, query.state));
 }
 export async function fetchNutritionPendingCount(signal?: AbortSignal) {
   const queue = await fetchNutritionQueue({ search: "", state: "en_aprobacion", page: 1, pageSize: 1 }, signal);
   return { count: queue.total };
 }
 
-export async function fetchNutritionWorkspace(patientId: string, signal: AbortSignal): Promise<NutritionWorkspace> {
-  // Rutas agregadas de ficha y catálogo pendientes; ausencia => error visible.
-  const path = `${ROOT}/patients/${encodeURIComponent(patientId)}`;
-  const profile = await request<NutritionPatientWire, NutritionPatientWire>(path, { signal }, (wire) => {
-    if (wire?.patientId !== patientId || !("prescriptionId" in wire) || !("publishedPrescriptionId" in wire)) throw new Error("nutrition-patient-contract");
+export async function fetchNutritionWorkspace(patientId: string, signal: AbortSignal, prescriptionId?: string): Promise<NutritionWorkspace> {
+  // CONTRACT §4/§5: cabeceras de UN paciente, luego detalle con id explícito.
+  // No existe GET /nutrition/patients/{id} ni alias current. No se usa para la bandeja.
+  const path = prescriptions(patientId);
+  const headers = await request<NutritionViewWire[], NutritionViewWire[]>(`${path}?page=1&pageSize=100`, { signal }, (wire) => {
+    if (!Array.isArray(wire) || wire.some((row) => row?.patientId !== patientId || typeof row.id !== "string" || typeof row.cycleId !== "string" || !Number.isInteger(row.revision) || row.revision < 1 || typeof row.isPublished !== "boolean")) throw new Error("nutrition-list-contract");
+    // La API no incluye total; no asumir que una página llena es el historial entero.
+    if (wire.length === 100) throw new Error("nutrition-history-pagination-required");
     return wire;
   });
   const catalog = await request<NutritionFoodWire[], NutritionFood[]>(`${ROOT}/foods`, { signal }, mapNutritionFoods);
+  let identityIssue: NutritionServiceIssue | undefined;
+  const identity = await request<NutritionIdentityWire, NutritionIdentityWire>(`/api/v1/patients/${encodeURIComponent(patientId)}`, { signal }, (wire) => {
+    if (wire?.id !== patientId) throw new Error("patient-identity-contract");
+    return wire;
+  }).catch((error) => {
+    // Demografía opcional: Nutrition.* no concede Patients.View. No inventar datos.
+    if (nutritionIssue(error).status !== 403) throw error;
+    identityIssue = nutritionIssue(error);
+    return null;
+  });
   const read = (id: string) => request<NutritionViewWire, { cycle: NutritionCycle; revision: number }>(`${prescriptions(patientId)}/${encodeURIComponent(id)}`, { signal }, (wire) => {
-    if (wire?.patientId !== patientId) throw new Error("nutrition-patient-mismatch");
+    if (wire?.patientId !== patientId || wire.id !== id) throw new Error("nutrition-patient-mismatch");
     return { cycle: mapNutritionCycle(wire, catalog), revision: wire.revision };
   });
-  const current = profile.prescriptionId ? await read(profile.prescriptionId) : null;
-  const published = profile.publishedPrescriptionId ? profile.publishedPrescriptionId === profile.prescriptionId ? current : await read(profile.publishedPrescriptionId) : null;
+  const head = prescriptionId ? headers.find((row) => row.id === prescriptionId) ?? null : headers[0] ?? null;
+  if (prescriptionId && !head) throw new NutritionRequestError({ kind: "endpoint", endpoint: `GET ${path}/${encodeURIComponent(prescriptionId)}`, status: 404 });
+  const publishedHead = head ? headers.find((row) => row.isPublished && row.cycleId === head.cycleId) ?? null : null;
+  const current = head ? await read(head.id) : null;
+  const published = publishedHead ? publishedHead.id === head?.id ? current : await read(publishedHead.id) : null;
   let patient: NutritionPatientDetail;
-  try { patient = mapNutritionPatient(profile, current?.cycle ?? null, published?.cycle ?? null, current?.revision ?? 0); }
+  try { patient = { ...mapNutritionPatient(mapNutritionIdentity(patientId, identity, head, publishedHead), current?.cycle ?? null, published?.cycle ?? null, current?.revision ?? 0), identityIssue }; }
   catch { throw new NutritionRequestError({ kind: "contract", endpoint: `GET ${path}`, status: 502 }); }
   if (patient.cycle) return { patient: await withHistory(patient, signal), catalog };
   return { patient, catalog };
@@ -79,11 +97,17 @@ async function mutate(patient: NutritionPatientDetail, catalog: NutritionFood[],
   const cycle = { ...result.cycle, patientTimeZone: patient.timeZone ?? patient.cycle?.patientTimeZone ?? "", publishedVersionId: result.published ? result.cycle.id : patient.publishedCycle?.id ?? null };
   const publishedCycle = result.published ? cycle : patient.publishedCycle;
   const updated = { ...patient, cycle, publishedCycle, revision: result.revision };
+  const url = new URL(window.location.href);
+  if (url.pathname === `/nutrition/${encodeURIComponent(patient.patientId)}`) {
+    url.searchParams.set("prescriptionId", cycle.id);
+    window.history.replaceState(null, "", url);
+  }
   window.dispatchEvent(new Event("nutrition-changed"));
   return withHistory(updated, signal);
 }
 
 export function saveNutritionDraft(patient: NutritionPatientDetail, cycle: NutritionCycle, previous: NutritionCycle, revision: number, catalog: NutritionFood[], signal?: AbortSignal) {
+  if (!Number.isInteger(revision) || revision < 1) throw new NutritionRequestError({ kind: "contract", endpoint: `POST ${prescriptions(patient.patientId)}/${encodeURIComponent(cycle.id)}/save`, status: 422 });
   return mutate(patient, catalog, `${prescriptions(patient.patientId)}/${encodeURIComponent(cycle.id)}/save`, { revision, edit: toNutritionEdit(cycle, previous) }, signal, cycle);
 }
 
@@ -92,7 +116,12 @@ export function performNutritionAction(patient: NutritionPatientDetail, action: 
   if (action === "create") return mutate(patient, catalog, base, options.generate ?? {}, signal);
   if (!patient.cycle) throw new NutritionRequestError({ kind: "contract", endpoint: `POST ${base}`, status: 422 });
   const verb = action === "new-version" ? "create-version" : action;
-  const body = { revision, ...(action === "approve" ? { criticalConfirmed: options.criticalConfirmed === true, comment: options.comment?.trim() || undefined } : {}), ...(action === "return" ? { comment: options.comment?.trim() } : {}), ...(action === "regenerate" ? { generate: options.generate ?? { preserveConfirmedEdits: true } } : {}) };
+  if (!Number.isInteger(revision) || revision < 1 || action === "apply-day" && (!Number.isInteger(options.sourceDay) || options.sourceDay! < 1 || options.sourceDay! > 30)) throw new NutritionRequestError({ kind: "contract", endpoint: `POST ${base}/${patient.cycle.id}/${verb}`, status: 422 });
+  const body = { revision, ...(action === "apply-day" ? { edit: { sourceDay: options.sourceDay, confirmManualEdits: true } } : {}), ...(action === "approve" ? { criticalConfirmed: options.criticalConfirmed === true, ...(options.startDate ? { startDate: options.startDate } : {}) } : {}), ...(action === "return" ? { comment: options.comment?.trim() } : {}), ...(action === "regenerate" ? { generate: options.generate ?? { preserveConfirmedEdits: true } } : {}) };
+  // Comment pertenece al request común (§3); conservar la nota opcional de revisión.
+  if (action === "approve" && options.comment?.trim()) Object.assign(body, { comment: options.comment.trim() });
   // Actor y capacidades se resuelven en el backend desde JWT; no viajan en el cuerpo.
   return mutate(patient, catalog, `${base}/${encodeURIComponent(patient.cycle.id)}/${verb}`, body, signal);
 }
+// GET /api/v1/me/nutrition-plan: DTO móvil congelado; solo referencia CONTRACT §14.
+// El ERP no lo consume ni lo utiliza como alias de la ficha profesional.

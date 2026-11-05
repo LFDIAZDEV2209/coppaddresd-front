@@ -16,7 +16,7 @@ export function NutritionSkeleton() {
 export function NutritionIssueMessage({ issue }: { issue: NutritionServiceIssue }) {
   const t = useT();
   const labels = { endpoint: "El endpoint o recurso de Nutrición no está disponible. No se muestran datos de demostración.", contract: "La respuesta de Nutrición no coincide con el contrato esperado. No se muestran datos incompletos.", conflict: "El plan cambió en el servidor. Recarga la ficha antes de continuar.", request: "No se pudo completar la solicitud de Nutrición. Revisa la conexión y vuelve a intentarlo." };
-  return <div role="alert" className="space-y-2 text-sm"><p>{t(labels[issue.kind])}</p><p className="break-all font-mono text-xs">{issue.endpoint} · {issue.status || t("Sin respuesta HTTP")}</p></div>;
+  return <div role="alert" className="space-y-2 text-sm"><p>{t(labels[issue.kind])}</p>{issue.detail && <p className="whitespace-pre-wrap break-words">{issue.detail}</p>}<p className="break-all font-mono text-xs">{issue.endpoint} · {issue.status || t("Sin respuesta HTTP")}</p></div>;
 }
 
 export function NutritionError({ retry, issue }: { retry: () => void; issue?: NutritionServiceIssue | null }) {

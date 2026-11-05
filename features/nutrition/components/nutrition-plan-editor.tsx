@@ -9,7 +9,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useT } from "@/providers/i18n-provider";
 import type { NutritionCycle, NutritionFood, NutritionTargets } from "../types/nutrition";
-import { dayTotals, itemTotals, mealDefinitions, mealTotals, nutrientDefinitions, replicateDay } from "../lib/nutrition-calculations";
+import { dayTotals, itemTotals, mealDefinitions, mealTotals, nutrientDefinitions } from "../lib/nutrition-calculations";
 import { NutritionNutrients, NutritionTargetsPanel } from "./nutrition-shared";
 import { NutritionFoodPicker } from "./nutrition-food-picker";
 
@@ -19,9 +19,10 @@ interface EditorProps {
   editable: boolean;
   update: (transform: (cycle: NutritionCycle) => NutritionCycle) => void;
   regenerate: () => void;
+  applyDay: (day: number) => Promise<boolean>;
 }
 
-export function NutritionPlanEditor({ cycle, catalog, editable, update, regenerate }: EditorProps) {
+export function NutritionPlanEditor({ cycle, catalog, editable, update, regenerate, applyDay }: EditorProps) {
   const t = useT();
   const [day, setDay] = useState(1);
   const [addingTo, setAddingTo] = useState<string | null>(null);
@@ -54,6 +55,6 @@ export function NutritionPlanEditor({ cycle, catalog, editable, update, regenera
     <details className="mt-7 border-t border-border pt-5"><summary className="cursor-pointer rounded-md text-sm font-semibold focus-visible:outline-2 focus-visible:outline-ring">{t("Editar metas del borrador")}</summary><p className="my-4 text-sm text-muted-foreground">{t("Cambiar metas marca los menús como desactualizados. Regenera la propuesta antes de enviar a aprobación.")}</p><form key={`${cycle.id}-${JSON.stringify(cycle.targets)}`} onSubmit={(event) => { event.preventDefault(); const form = new FormData(event.currentTarget); const targets = Object.fromEntries(nutrientDefinitions.map(({ key }) => [key, Number(form.get(key))])) as unknown as NutritionTargets; update((draft) => ({ ...draft, targets, menusOutdated: true })); }}><fieldset disabled={!editable} className="grid gap-4 sm:grid-cols-3">{nutrientDefinitions.map(({ key, label, unit }) => <div key={key}><label htmlFor={`target-${key}`} className="nutrition-label">{t(label)} ({t(unit)})</label><Input id={`target-${key}`} name={key} type="number" min={1} max={key === "kcal" ? 6000 : key === "waterGlasses" ? 20 : 1000} step="0.1" required defaultValue={cycle.targets[key]} /></div>)}<Button type="submit" variant="outline" className="sm:col-span-3 justify-self-start">{t("Guardar metas")}</Button></fieldset></form></details>
     {cycle.menusOutdated && <div role="status" className="nutrition-notice mt-5"><p>{t("Menús desactualizados: las metas cambiaron.")}</p><Button className="nutrition-ai-button mt-3" disabled={!editable} variant="outline" onClick={regenerate}><Sparkles aria-hidden="true" className="size-4" />{t("Regenerar propuesta")}</Button></div>}
     {addingTo && editable && <NutritionFoodPicker catalog={catalog} onClose={() => setAddingTo(null)} onAdd={(foodId, grams) => update((draft) => ({ ...draft, meals: draft.meals.map((meal) => meal.id === addingTo ? { ...meal, items: [...meal.items, { id: crypto.randomUUID(), foodId, grams, notes: null }] } : meal) }))} />}
-    <AlertDialog open={confirmCopy && editable} onOpenChange={setConfirmCopy}><AlertDialogContent className="nutrition-module"><AlertDialogHeader><AlertDialogTitle className="nutrition-display">{t("¿Reemplazar los 30 días?")}</AlertDialogTitle><AlertDialogDescription>{t("Se copiarán las cuatro comidas, cantidades y agua del día {day} a todos los días. Se reemplazarán los menús actuales del borrador.", { day: String(day) })}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel><AlertDialogAction onClick={() => { update((draft) => replicateDay(draft, day)); setConfirmCopy(false); }}>{t("Confirmar copia a 30 días")}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+    <AlertDialog open={confirmCopy && editable} onOpenChange={setConfirmCopy}><AlertDialogContent className="nutrition-module"><AlertDialogHeader><AlertDialogTitle className="nutrition-display">{t("¿Reemplazar los 30 días?")}</AlertDialogTitle><AlertDialogDescription>{t("Se copiarán las cuatro comidas, cantidades y agua del día {day} a todos los días. Se reemplazarán los menús actuales del borrador.", { day: String(day) })}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t("Cancelar")}</AlertDialogCancel><AlertDialogAction onClick={async () => { if (await applyDay(day)) setConfirmCopy(false); }}>{t("Confirmar copia a 30 días")}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </section>;
 }

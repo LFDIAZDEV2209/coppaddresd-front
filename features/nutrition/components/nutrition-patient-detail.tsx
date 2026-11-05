@@ -20,16 +20,16 @@ import { NutritionPlanEditor } from "./nutrition-plan-editor";
 import { NutritionReviewDialog } from "./nutrition-review-dialog";
 import "../nutrition.css";
 
-export function NutritionPatientDetail({ patientId }: { patientId: string }) {
+export function NutritionPatientDetail({ patientId, prescriptionId }: { patientId: string; prescriptionId?: string }) {
   const t = useT();
   const { can } = useAppContext();
-  const load = useCallback((signal: AbortSignal) => fetchNutritionWorkspace(patientId, signal), [patientId]);
+  const load = useCallback((signal: AbortSignal) => fetchNutritionWorkspace(patientId, signal, prescriptionId), [patientId, prescriptionId]);
   const { data, scope, loading, error, retry } = useNutritionResource(load);
   useBreadcrumbTitle(data?.patient?.patientName ?? null);
   if (loading) return <NutritionSkeleton />;
   if (error) return <div className="p-6"><NutritionError retry={retry} issue={error} /></div>;
   if (!data?.patient) return <div className="nutrition-module mx-auto max-w-7xl space-y-6 p-6"><h1 className="nutrition-display text-2xl font-semibold">{t("Paciente no encontrado")}</h1><p className="text-muted-foreground">{t("No hay datos disponibles para este paciente en el contexto actual.")}</p><Link className="nutrition-link" href="/nutrition">{t("Volver a la bandeja")}</Link></div>;
-  return <PatientWorkspace key={`${scope.userId}:${scope.clinicId}:${patientId}:${can("Nutrition.Manage")}:${can("Nutrition.Approve")}`} initial={data.patient} catalog={data.catalog} canManage={can("Nutrition.Manage")} canApprove={can("Nutrition.Approve")} canViewProgram={can("Program.View")} />;
+  return <PatientWorkspace key={`${scope.userId}:${scope.clinicId}:${patientId}:${prescriptionId ?? ""}:${can("Nutrition.Manage")}:${can("Nutrition.Approve")}`} initial={data.patient} catalog={data.catalog} canManage={can("Nutrition.Manage")} canApprove={can("Nutrition.Approve")} canViewProgram={can("Program.View")} />;
 }
 
 function PatientWorkspace({ initial, catalog, canManage, canApprove, canViewProgram }: { initial: PatientDetail; catalog: NutritionFood[]; canManage: boolean; canApprove: boolean; canViewProgram: boolean }) {
@@ -52,6 +52,7 @@ function PatientWorkspace({ initial, catalog, canManage, canApprove, canViewProg
     {saveError && <NutritionIssueMessage issue={saveError} />}
     {actionError && !review && <NutritionIssueMessage issue={actionError} />}
     {reloadRequired && <div className="nutrition-notice"><p className="text-sm">{t("No se pudo confirmar el resultado. Recarga la ficha antes de reintentar.")}</p><Button className="mt-3" variant="outline" onClick={() => window.location.reload()}>{t("Recargar ficha")}</Button></div>}
+    {patient.identityIssue && <NutritionIssueMessage issue={patient.identityIssue} />}
     <NutritionClinicalHeader profile={patient.profile} />
     {cycle?.provisional && <section className="nutrition-notice"><h2 className="font-semibold">{t("Plan provisional")}</h2><p className="mt-2 text-sm">{cycle.provisionalReason || t("Batería de tests pendiente.")}</p><p className="mt-2 text-sm">{t("Al completar los tests se podrá regenerar con el perfil medido. Conserva los ajustes para revisarlos antes de reemplazar el menú.")}</p>{cycle.canRegenerate && editable && <Button className="nutrition-ai-button mt-4" variant="outline" onClick={() => void act("regenerate")}><Sparkles aria-hidden="true" className="size-4" />{t("Regenerar propuesta")}</Button>}</section>}
     {returnComment && cycle?.state === "devuelto" && <section className="nutrition-notice"><h2 className="font-semibold">{t("Motivo de devolución")}</h2><p className="mt-2 whitespace-pre-wrap break-words text-sm">{returnComment}</p></section>}
@@ -59,7 +60,7 @@ function PatientWorkspace({ initial, catalog, canManage, canApprove, canViewProg
       <NutritionClinicalAlerts alerts={cycle.alerts} />
       <section className="nutrition-section" aria-labelledby="nutrition-targets-title"><h2 id="nutrition-targets-title" className="nutrition-display text-xl font-semibold">{t("Metas diarias del plan")}</h2><div className="mt-5"><NutritionTargetsPanel targets={cycle.targets} /></div><p className="mt-5 text-sm text-muted-foreground">{t("Vigencia: {start} a {end} · zona {zone}", { start: cycle.startDate ?? t("Sin definir"), end: cycle.endDate ?? t("Sin definir"), zone: cycle.patientTimeZone || t("Sin definir") })}</p></section>
       {patient.publishedCycle && <section className="nutrition-notice"><h2 className="font-semibold">{t("Versión publicada: v{version}", { version: String(patient.publishedCycle.version) })}</h2><p className="mt-2 text-sm">{t("El borrador no cambia esta copia hasta una nueva aprobación.")}</p><details className="mt-3"><summary className="cursor-pointer rounded text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">{t("Ver versión publicada")}</summary><div className="mt-4"><NutritionTargetsPanel targets={patient.publishedCycle.targets} /><p className="mt-4 whitespace-pre-wrap break-words text-sm">{patient.publishedCycle.instructions}</p></div></details></section>}
-      <NutritionPlanEditor cycle={cycle} catalog={catalog} editable={editable} update={updateCycle} regenerate={() => void act("regenerate")} />
+      <NutritionPlanEditor cycle={cycle} catalog={catalog} editable={editable} update={updateCycle} regenerate={() => void act("regenerate")} applyDay={(sourceDay) => act("apply-day", { sourceDay })} />
     </> : <section className="nutrition-section"><h2 className="nutrition-display mb-5 text-xl font-semibold">{t("Este paciente aún no tiene plan")}</h2>{canManage && <NutritionGenerateForm profile={patient.profile} busy={busy || reloadRequired} onGenerate={(generate) => act("create", { generate })} />}</section>}
     {patient.auditIssue && <section className="nutrition-notice"><p className="mb-3 font-semibold">{t("No se pudo actualizar la bitácora. La última acción confirmada conserva su resultado.")}</p><NutritionIssueMessage issue={patient.auditIssue} /></section>}
     <section className="nutrition-section" aria-labelledby="nutrition-audit-title"><h2 id="nutrition-audit-title" className="nutrition-display text-xl font-semibold">{t("Bitácora del plan")}</h2>{patient.audit.length ? <ol className="mt-5 divide-y divide-border">{patient.audit.map((entry) => <li key={entry.id} className="flex flex-wrap items-start justify-between gap-3 py-4"><div className="min-w-0"><p className="font-medium">{t(labels[entry.action])} · {t("v{version}", { version: String(entry.version) })}</p><p className="mt-1 text-sm text-muted-foreground">{entry.actorName} · <time dateTime={entry.occurredAt}>{new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.occurredAt))}</time></p>{entry.comment && <p className="mt-2 whitespace-pre-wrap break-words text-sm">{entry.comment}</p>}{entry.criticalAlertsConfirmed > 0 && <p className="mt-2 text-sm text-muted-foreground">{t("{count} alertas críticas confirmadas", { count: String(entry.criticalAlertsConfirmed) })}</p>}</div>{entry.autoApproved && <span className="nutrition-chip" data-status="aprobado">{t("Auto-aprobado")}</span>}</li>)}</ol> : <p className="mt-4 text-sm text-muted-foreground">{t("Sin acciones registradas")}</p>}</section>

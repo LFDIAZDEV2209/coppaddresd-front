@@ -34,8 +34,8 @@ function PatientRow({ patient }: { patient: NutritionPatientSummary }) {
   const state = plan?.queueState ?? "sin_plan";
   return <li className="nutrition-patient">
     <div className="min-w-0">
-      <h3 className="break-words text-base font-semibold"><Link className="nutrition-link" href={`/nutrition/${encodeURIComponent(patient.patientId)}`}>{patient.patientName}</Link></h3>
-      <p className="mt-1 break-words text-sm text-muted-foreground">{patient.patientDocument ?? t("Sin documento")}</p>
+      <h3 className="break-words text-base font-semibold"><Link className="nutrition-link" href={`/nutrition/${encodeURIComponent(patient.patientId)}${plan ? `?prescriptionId=${encodeURIComponent(plan.id)}` : ""}`}>{patient.patientName}</Link></h3>
+      {patient.patientDocument && <p className="mt-1 break-words text-sm text-muted-foreground">{patient.patientDocument}</p>}
     </div>
     <div className="flex min-w-0 flex-wrap items-center gap-2">
       <span className="nutrition-chip" data-status={state}>{state === "borrador_ia" && <Sparkles aria-hidden="true" className="size-3.5" />}{t(stateLabels[state])}</span>
@@ -65,12 +65,12 @@ export function NutritionQueue() {
       <div className="space-y-5 border-b border-border p-4 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div><h2 id="nutrition-queue-title" className="nutrition-display text-xl font-semibold">{t("Planes de pacientes")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("Filtra por estado y encuentra a tu paciente.")}</p></div>
-          <div className="w-full sm:w-80"><label htmlFor="nutrition-search" className="mb-2 block text-sm font-medium">{t("Buscar paciente")}</label><div className="relative"><Search aria-hidden="true" className="absolute left-3 top-3 size-4 text-muted-foreground" /><Input id="nutrition-search" type="search" maxLength={200} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("Nombre o documento")} className="h-10 pl-9" /></div></div>
+          <div className="w-full sm:w-80"><label htmlFor="nutrition-search" className="mb-2 block text-sm font-medium">{t("Buscar paciente")}</label><div className="relative"><Search aria-hidden="true" className="absolute left-3 top-3 size-4 text-muted-foreground" /><Input id="nutrition-search" type="search" maxLength={200} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("Nombre")} className="h-10 pl-9" /></div></div>
         </div>
         <ToggleGroup aria-label={t("Filtrar planes por estado")} value={[query.state]} onValueChange={(values) => { const selected = filters.find((filter) => filter.value === values[0]); if (selected) setState(selected.value); }} className="nutrition-filters max-w-full flex-wrap justify-start" variant="outline">
           {filters.map((filter) => <ToggleGroupItem key={filter.value} value={filter.value} className="nutrition-filter min-h-10 gap-2 rounded-full px-3" data-status={filter.value}>
             {filter.value === "borrador_ia" && <Sparkles aria-hidden="true" className="size-3.5" />}{t(filter.label)}
-            {data && <span className="nutrition-measure text-xs">{data.counts[filter.value]}</span>}
+            {data?.counts[filter.value] != null && <span className="nutrition-measure text-xs">{data.counts[filter.value]}</span>}
           </ToggleGroupItem>)}
         </ToggleGroup>
       </div>
