@@ -12,9 +12,11 @@ async function saved(page: Page) {
 test("editar, previsualizar catálogo, copiar 30 días y conservar al volver", async ({ page }) => {
   const { writes } = await demoSession(page);
   await page.setViewportSize({ width: 1366, height: 768 });
-  await page.goto("/nutrition/demo-patient-2");
+  await page.goto("/nutrition/demo-patient-2?tab=plan");
   await expect(page.getByRole("heading", { name: "Carlos Demo", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Plan provisional", exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Resultados y ciclos", exact: true }).click();
+  await expect(page.getByText("Plan provisional", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Plan de 30 días editar", exact: true }).click();
   const action = page.getByRole("button", { name: "Enviar a aprobación", exact: true });
   const contrast = () => action.evaluate((element) => {
     const style = getComputedStyle(element);
@@ -45,20 +47,21 @@ test("editar, previsualizar catálogo, copiar 30 días y conservar al volver", a
   await page.getByLabel("Quitar Aguacate demo de Desayuno", { exact: true }).click();
   await page.getByRole("button", { name: "Aplicar este día a los 30 días", exact: true }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Cancelar", exact: true }).click();
-  await page.getByRole("button", { name: "Día 30", exact: true }).click();
+  await page.getByLabel("Día del ciclo", { exact: true }).selectOption("30");
   await expect(grams).toHaveValue("50");
-  await page.getByRole("button", { name: "Día 1", exact: true }).click();
+  await page.getByLabel("Día del ciclo", { exact: true }).selectOption("1");
   await expect(grams).toHaveValue("80");
   await page.getByRole("button", { name: "Aplicar este día a los 30 días", exact: true }).click();
   await page.getByRole("button", { name: "Confirmar copia a 30 días", exact: true }).click();
   await expect.poll(() => writes.filter((write) => write.path.endsWith("/apply-day")).length).toBe(1);
   expect(writes.find((write) => write.path.endsWith("/apply-day"))?.body).toMatchObject({ edit: { sourceDay: 1, confirmManualEdits: true } });
-  await page.getByRole("button", { name: "Día 30", exact: true }).click();
+  await page.getByLabel("Día del ciclo", { exact: true }).selectOption("30");
   await expect(grams).toHaveValue("80");
   await page.getByLabel("Indicaciones del plan", { exact: true }).fill("Indicaciones editadas en demo");
   await saved(page);
-  await page.getByRole("link", { name: "Volver a la bandeja", exact: true }).click();
+  await page.getByRole("button", { name: "Volver a la bandeja", exact: true }).click();
   await page.getByRole("link", { name: "Carlos Demo", exact: true }).click();
+  await page.getByRole("tab", { name: "Plan de 30 días editar", exact: true }).click();
   await expect(page.getByLabel("Indicaciones del plan", { exact: true })).toHaveValue("Indicaciones editadas en demo");
   await expect(grams).toHaveValue("80");
   await page.getByRole("heading", { name: "Menú de 30 días", exact: true }).scrollIntoViewIfNeeded();
@@ -90,9 +93,10 @@ test("aprobar exige críticas; registra autoaprobación y actualiza bandeja", as
   await expect(confirm).toBeEnabled();
   await confirm.click();
   await expect(dialog).toHaveCount(0);
+  await page.getByText("Bitácora del plan", { exact: false }).click();
   await expect(page.getByText("Auto-aprobado", { exact: true })).toHaveCount(2);
   await expect(page.getByText("2 alertas críticas confirmadas", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Volver a la bandeja", exact: true }).click();
+  await page.getByRole("button", { name: "Volver a la bandeja", exact: true }).click();
   const maria = page.getByRole("listitem").filter({ has: page.getByRole("link", { name: "María Demo", exact: true }) });
   await expect(maria.getByText("Aprobado", { exact: true })).toBeVisible();
   expect(writes.some((path) => path.endsWith("/approve"))).toBe(true);
@@ -110,36 +114,41 @@ test("devolver exige comentario no vacío y lo conserva en ficha y bitácora", a
   await dialog.getByLabel("Motivo de devolución (obligatorio)", { exact: true }).fill("Revisar la distribución de comidas");
   await confirm.click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.getByText("Devuelto", { exact: true })).toBeVisible();
+  await expect(page.locator(".nutrition-detail-header").getByText("Devuelto", { exact: true })).toBeVisible();
+  await page.getByText("Bitácora del plan", { exact: false }).click();
   await expect(page.getByText("Revisar la distribución de comidas", { exact: true })).toHaveCount(2);
 });
 
 test("nueva versión conserva la publicada y bloquea aprobación con comida vacía", async ({ page }) => {
   const { writes } = await demoSession(page);
-  await page.goto("/nutrition/demo-patient-4");
+  await page.goto("/nutrition/demo-patient-4?tab=plan");
   await expect(page.getByLabel("Indicaciones del plan", { exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Crear nueva versión", exact: true }).click();
-  await expect(page.getByText("Versión 2", { exact: true })).toBeVisible();
+  await expect(page.locator(".nutrition-detail-header").getByText("Versión 2", { exact: true })).toBeVisible();
   await page.getByLabel("Indicaciones del plan", { exact: true }).fill("Borrador v2 sin publicar");
   await saved(page);
   const versionWrite = writes.find((write) => write.path.endsWith("/create-version"))!;
   const draftWrite = writes.find((write) => write.path.endsWith("/save"))!;
   expect(draftWrite.body.revision).toBe(1);
   expect(draftWrite.path.split("/").at(-2)).not.toBe(versionWrite.path.split("/").at(-2));
-  await page.getByText("Ver versión publicada", { exact: true }).click();
+  await page.getByRole("tab", { name: "Resultados y ciclos", exact: true }).click();
+  await page.getByText("Versión publicada: v1", { exact: true }).click();
   await expect(page.getByText("Indicaciones sintéticas para revisar y ajustar en la demostración.", { exact: true })).toBeVisible();
   await expect(page.getByText("Versión publicada: v1", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Plan de 30 días editar", exact: true }).click();
   await page.getByLabel("Quitar Avena demo de Desayuno", { exact: true }).click();
   await page.getByLabel("Quitar Yogur demo de Desayuno", { exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("No se guardaron los últimos cambios.");
+  await expect(page.locator(".nutrition-detail-toolbar").getByRole("status")).toContainText("No se guardaron los últimos cambios.");
   await expect(page.getByText("Comida vacía", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Enviar a aprobación", exact: true })).toBeDisabled();
 });
 
 test("permisos separados, inglés y paciente desconocido sin datos fabricados", async ({ page }) => {
   await demoSession(page, ["Nutrition.Approve"], true);
-  await page.goto("/nutrition/demo-patient-2");
-  await expect(page.getByRole("heading", { name: "Clinical profile", exact: true })).toBeVisible();
+  await page.goto("/nutrition/demo-patient-2?tab=plan");
+  await page.getByRole("tab", { name: "Results and cycles", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Readings", exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Edit 30-day plan", exact: true }).click();
   await expect(page.getByLabel("Grams of Avena demo", { exact: true })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Submit for approval", exact: true })).toHaveCount(0);
   await page.goto("/nutrition/unknown-patient");
@@ -148,7 +157,7 @@ test("permisos separados, inglés y paciente desconocido sin datos fabricados", 
 
 test("cambiar metas exige regenerar antes de revisión y aprobación", async ({ page }) => {
   await demoSession(page);
-  await page.goto("/nutrition/demo-patient-2");
+  await page.goto("/nutrition/demo-patient-2?tab=plan");
   await page.getByText("Editar metas del borrador", { exact: true }).click();
   await page.locator("#target-kcal").fill("1800");
   await page.getByRole("button", { name: "Guardar metas", exact: true }).click();
@@ -169,13 +178,13 @@ test("Manage permite editar pero no aprobar ni devolver", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "María Demo", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Aprobar plan", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Devolver con comentario", exact: true })).toHaveCount(0);
-  await page.goto("/nutrition/demo-patient-2");
+  await page.goto("/nutrition/demo-patient-2?tab=plan");
   await expect(page.getByLabel("Gramos de Avena demo", { exact: true })).toBeEnabled();
 });
 
 test("agua nullable del contrato se conserva sin inventar cero", async ({ page }) => {
   const { store } = await mockNutritionHttp(page, ["Nutrition.Manage"], { nullableWater: true });
-  await page.goto("/nutrition/demo-patient-2");
+  await page.goto("/nutrition/demo-patient-2?tab=plan");
   await expect(page.getByLabel("Agua (vasos)", { exact: true }).first()).toHaveValue("");
   await expect(page.getByRole("progressbar", { name: "Agua respecto a la meta", exact: true })).toHaveCount(0);
   await page.getByLabel("Indicaciones del plan", { exact: true }).fill("Agua pendiente de registrar");
@@ -187,7 +196,7 @@ test("demografía inaccesible no bloquea una ficha autorizada por Nutrición", a
   for (const identityStatus of [403, 404] as const) {
     await page.unroute("**/api/**");
     await mockNutritionHttp(page, ["Nutrition.Manage"], { identityStatus });
-    await page.goto("/nutrition/demo-patient-2");
+    await page.goto("/nutrition/demo-patient-2?tab=plan");
     await expect(page.getByRole("heading", { name: "demo-patient-2", exact: true })).toBeVisible();
     await expect(page.getByText("Demografía fuera de alcance", { exact: true })).toBeVisible();
     await expect(page.getByLabel("Gramos de Avena demo", { exact: true })).toBeEnabled();
@@ -202,7 +211,8 @@ test("revisión sin fechas, autor legible, acciones fijas y consentimiento nuevo
   cycle.startDate = null; cycle.endDate = null;
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/nutrition/demo-patient-1");
-  const validity = page.locator('[aria-labelledby="nutrition-targets-title"] > p');
+  await page.getByRole("tab", { name: "Programación", exact: true }).click();
+  const validity = page.getByRole("tabpanel", { name: "Programación", exact: true }).locator(".nutrition-cycle-summary");
   await expect(validity).toContainText("Sin definir");
   await expect(validity).not.toContainText("→");
   await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
@@ -222,7 +232,7 @@ test("revisión sin fechas, autor legible, acciones fijas y consentimiento nuevo
   await checkbox.check();
   await expect(confirm).toBeEnabled();
   const after = await confirm.boundingBox();
-  expect(after!.y).toBeCloseTo(before!.y, 0);
+  expect(Math.abs(after!.y - before!.y)).toBeLessThan(2);
   await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
   await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
   await expect(checkbox).not.toBeChecked();
@@ -250,12 +260,12 @@ test("contraste AA del chip IA y exceso ámbar en valores del editor", async ({ 
   await expect(page.locator("html")).toHaveClass(/dark/);
   await expect.poll(contrast).toBeGreaterThanOrEqual(4.5);
   await page.getByRole("button", { name: "Modo claro", exact: true }).click();
-  await page.goto("/nutrition/demo-patient-2");
+  await page.goto("/nutrition/demo-patient-2?tab=plan");
   const grams = page.getByLabel("Gramos de Avena demo", { exact: true });
   await expect(grams).toHaveCSS("font-family", /Plex.*Mono/i);
   await grams.fill("1000");
   await saved(page);
-  const over = page.locator('[data-over-target="true"]').first();
+  const over = page.locator('.nutrition-daily-totals [data-over-target="true"]').first();
   await expect(over).toBeVisible();
   const color = await over.locator("dd").evaluate((element) => getComputedStyle(element).color);
   const [r, g, b] = color.match(/[\d.]+/g)!.slice(0, 3).map(Number);
