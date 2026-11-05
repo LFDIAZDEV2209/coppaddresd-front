@@ -29,7 +29,6 @@ import { ProgramControlesTab } from "./program-controles-tab";
 import { fetchEnrollmentById } from "../services/program-enrollments-service";
 import type { ProgramEnrollment } from "../types";
 import { cn } from "@/lib/utils";
-import { PatientAssignmentBlock } from "./patient-assignment-block";
 import { NutritionPatientLink } from "@/features/nutrition/components/nutrition-patient-link";
 
 interface ProgramPatientProfile360Props {
@@ -146,7 +145,6 @@ export function ProgramPatientProfile360({
         <PatientResumenHero data={data} biometria={biometriaData ?? null} />
       ) : null}
 
-      {!loading && data && <PatientAssignmentBlock patientId={patientId} patientName={data.patient_name ?? ""} />}
       {!loading && data && <NutritionPatientLink patientId={patientId} />}
 
       {/* Fila: tabs + lupa/actualizar en la misma línea */}

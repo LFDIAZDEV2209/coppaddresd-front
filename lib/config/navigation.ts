@@ -477,13 +477,6 @@ export const navModules: NavModule[] = [
     color: "#D97706",
     items: [
       {
-        label: "Asignación",
-        href: "/program/asignacion",
-        icon: ClipboardList,
-        color: "#123B63",
-        permission: "Program.Enroll",
-      },
-      {
         label: "Dashboard General",
         href: "/program/dashboard",
         icon: BarChart3,
