@@ -33,7 +33,7 @@ export interface SplitPhone {
  */
 export function splitE164(
   value: string | null | undefined,
-  countries: CountryOption[],
+  countries: Pick<CountryOption, "phoneCode">[],
   fallbackPhoneCode = ""
 ): SplitPhone {
   const raw = (value ?? "").trim();

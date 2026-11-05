@@ -106,6 +106,7 @@ export interface PatientVitalSign {
  * legacy puede traerlo como texto libre (string).
  */
 export interface EmergencyContact {
+  secondary?: Omit<EmergencyContact, "secondary"> | null;
   name: string | null;
   relationship: string | null;
   phone: string | null;
