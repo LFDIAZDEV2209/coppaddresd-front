@@ -50,7 +50,7 @@ Indicadores futuros: IMC, glicemia, grasa y adherencia con valor/unidad/fecha/fu
 
 ### Bandeja: proceso IA y vigencia son ejes independientes
 
-Firma prevista (TODO comentado en wire, sin ampliar mapper hasta integración): `generationState: "pending" | "generating" | "ready" | "failed" | null`, `generationFallback: boolean`, `generationReason: string | null`, `generationUpdatedAt: string | null`, `hasPublishedToday: boolean`, `publishedCycleStart: string | null`, `publishedCycleEnd: string | null`, `latestDraftState: NutritionViewWire["state"] | null`, `hasFutureDraft: boolean`. Los cuatro primeros están documentados en §4/20.1. Los últimos cinco son la firma solicitada por el owner; en el corte leído §20 aún no los publica: confirmar nesting/nullabilidad literal con builder antes de integrar.
+Firma prevista (TODO comentado en wire, sin ampliar mapper hasta integración): `generationState: "pending" | "generating" | "ready" | "failed" | null`, `generationFallback: boolean`, `generationReason: string | null`, `generationUpdatedAt: string | null`, `hasPublishedToday: boolean`, `publishedCycleStart: string | null`, `publishedCycleEnd: string | null`, `latestDraftState: "borrador_ia" | "en_aprobacion" | "devuelto" | null`, `hasFutureDraft: boolean`. Los cuatro primeros están documentados en §4/20.1. El builder añadió §20.2 durante esta misión: la lectura final confirma los últimos cinco por fila, fechas null sin vigente y latestDraftState limitado a borrador_ia/en_aprobacion/devuelto. Se actualizó el TODO exacto; su consumo sigue reservado a la integración posterior.
 
 | Campo | Copy es / en | Regla |
 |---|---|---|
@@ -72,4 +72,39 @@ Reutilizar Button, Tabs, Dialog/Header/Body/Footer, Input y SectionHeader Base U
 
 ## Frontera de implementación
 
-Se conectan solo las cabeceras de GET prescriptions ya usado y el detalle/history existente. No hay nueva petición por tarjeta de bandeja ni carga de 30 días por cada ciclo. Decisiones de programa en componentes exploratorios y fixtures de E2E, sin importarlos desde app. No se agregan rutas de demo accesibles en producción, ni mutaciones nuevas. Snapshot versionado de este documento en `coppaddresd-front/docs/nutrition/CYCLES-DESIGN.md`, porque openspec está fuera de Git.
+Se conectan solo las cabeceras de GET prescriptions ya usado y el detalle/history existente. No hay nueva petición por tarjeta de bandeja ni carga de 30 días por cada ciclo. Decisiones en `features/nutrition/exploration`, accesibles únicamente por `/nutrition/cycles-preview` en Development y host loopback, sin enlaces desde la ficha. Los fixtures HTTP de E2E no se importan desde app. Proxy con matcher exclusivo de esa ruta responde 404 antes del stream en producción o host remoto; la página conserva una segunda guarda. No hay mutaciones nuevas. Snapshot versionado de este documento en `coppaddresd-front/docs/nutrition/CYCLES-DESIGN.md`, porque openspec está fuera de Git.
+
+## C. Implementación entregada
+
+- Cabeceras existentes conservadas como `NutritionCycleHeader[]`: ciclo/versión, publicación, fechas y cuatro metas. Se actualiza la cabecera tras guardar/crear versión/aprobar para evitar un resumen obsoleto. Se mantiene el rechazo de página llena de 100 cabeceras: no afirmar historial completo cuando no se conoce el total.
+- Calendario y tabla conectados en Resultados y ciclos; seleccionar calendario destaca su fila. Ver abre Plan de 30 días; Ver historial abre y enfoca la bitácora de la prescripción correcta. Navegación bloqueada durante guardado/conflicto. Las cabeceras no descargan menús para renderizar filas.
+- Cinco diálogos Base UI exploratorios con validación nativa, validaciones cruzadas y feedback explícitamente local; mediciones incluyen fecha/hora/origen y seis campos opcionales. Recalcular expone objetivo; mantenimiento y cierre requieren confirmación desmarcada. No se usa el motor demo.
+- Bandeja mantiene estados clínicos actuales; los nueve campos nuevos quedan comentados con firma TODO, sin asumir null como false ni hacer llamadas al endpoint nuevo.
+
+## D. Autocrítica y verificación
+
+La entrega es pre-work P1; **no completa 8.6**. Las decisiones de programa, series de mediciones, narrativa longitudinal y estados nuevos requieren integrar contratos tras el merge del builder. No se simula persistencia en la ficha real.
+
+| Severidad / fallo encontrado | Corrección o límite | Evidencia |
+|---|---|---|
+| P1: cada versión podía convertirse visualmente en otro ciclo | Agrupar por cycleId y ordenar versiones dentro | Dos ciclos con tres cabeceras en E2E |
+| P1: historial abría sin desplegar contenido | Ref real del disclosure, apertura y foco de summary | Prueba consulta evento aprobado del ciclo anterior |
+| P1: confundir publicado con vigente hoy | Eje temporal separado, requiere fecha local de zona conocida | Ficha sin zona informa límite; fixture fijo muestra día 17 |
+| P1: fixture podía servirse como HTTP 200 tras notFound por streaming | Guarda anterior al stream en proxy con matcher exclusivo | Host remoto 404; verificación de build de producción |
+| P1: selector de origen con asociación implícita poco robusta | id/htmlFor explícitos | Formulario de mediciones validado por etiqueta |
+| P1: éxito de maqueta podía parecer escritura real | Copy local y ausencia de cliente API en exploración | Cero POST Nutrition durante cinco decisiones |
+| P1: tabla podía exceder el panel aunque viewport fuera ancho | Container query, filas apiladas y etiquetas DOM | Medidas 1440/1366/390 sin overflow |
+| P2: fecha desconocida duplicada en calendario | Mostrar chip clínico junto a fecha sin definir | Captura C3 por aprobar |
+| P2: cabecera podía quedar obsoleta después de mutación existente | Actualizar snapshot local de cabeceras con resultado confirmado | Regresión de edición/aprobación/nueva versión |
+| P2: caracteres acentuados se corrompían al pasar script por PowerShell | Script UTF-8 en archivo y adiciones puntuales sin reserializar diccionarios heredados | i18n 0 faltantes, sin claves nuevas con interrogación corrupta |
+| P2: captura escritorio recortaba título por scroll interno | Restablecer scroll del panel antes de captura de ficha | Captura ficha-ciclos desktop |
+| P2: footer de mediciones podía perderse en móvil | Cuerpo con scroll, header/footer fuera del scroll | Revisar mediciones visible en 390×844 |
+| Pendiente: línea base/delta y resultados clínicos | Sin endpoint de serie real no se implementan indicadores ficticios | Celdas «Sin dato registrado» y especificación B |
+
+Verificación local con HTTP sintético; no acredita backend ni producción clínica. Lint, i18n y build/TypeScript ejecutados con corepack yarn. Regresión bandeja/editor/ciclos: 20 aprobadas, 1 sonda de gateway omitida por modo; luego suite nueva ampliada a cuatro casos (incluye vacío y host remoto) con capturas regeneradas. Capturas de ficha, calendario exploratorio, cinco decisiones, vacío y variante inglés/oscuro en `screenshots/cycles-design/`; pares desktop 1440×900 / móvil 390×844 y medidas de overflow en JSON. Se conserva copia versionada en docs/nutrition/screenshots/cycles-design.
+
+No se certifica auditoría completa WCAG ni uso con lector de pantalla. Teclado, Escape, retorno de foco, footer visible, es/en, claro/oscuro y contraste IA heredado se comprobaron en el lote automatizado. El launcher local de Impeccable devolvió exit 1 sin diagnóstico: se aplicó crítica manual apoyada en capturas y mediciones, sin afirmar un detector verde.
+
+Bloqueos concretos para merge/integración: conectar generación y vigencia confirmadas en §20.1/20.2; consumir workspace §19 con zona y perfil medido; conectar recuperación §20.1; definir y exponer repetición/variación/recalcular/mantenimiento/cierre y mediciones/lecturas longitudinales. Mantener revisión profesional y publicación actual hasta una aprobación real. Sin push, deploy, servicios backend, Docker ni cambios de otros repos.
+
+Cierre QA: suite ampliada 4/4 verde; caso de capturas de decisiones repetido tras añadir vistas enfocadas de tabla (1/1 verde). Total: **19 PNG**, con ambos tamaños solicitados y una variante inglés/oscuro. Build/TypeScript y lint finales verdes, i18n 0 claves ausentes. Prueba HTTP del build de producción en loopback: `/nutrition/cycles-preview` responde **404**. Los procesos frontend de QA se retiran al cierre; no se arrancaron ni reiniciaron servicios backend.
