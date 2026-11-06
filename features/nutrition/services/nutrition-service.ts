@@ -83,6 +83,10 @@ export async function fetchNutritionWorkspace(patientId: string, signal: AbortSi
   let patient: NutritionPatientDetail;
   try { patient = { ...mapNutritionPatient(mapNutritionIdentity(patientId, identity, head, publishedHead), current?.cycle ?? null, published?.cycle ?? null, current?.revision ?? 0), identityIssue }; }
   catch { throw new NutritionRequestError({ kind: "contract", endpoint: `GET ${path}`, status: 502 }); }
+  patient.cycleHeaders = headers.map((row) => {
+    if (!row.targets || ![row.targets.k, row.targets.c, row.targets.p, row.targets.f].every(Number.isFinite)) throw new NutritionRequestError({ kind: "contract", endpoint: `GET ${path}`, status: 502 });
+    return { id: row.id, cycleId: row.cycleId, version: row.version, state: row.state, isPublished: row.isPublished, startDate: row.startDate, endDate: row.endDate, targets: { kcal: row.targets.k, carbsG: row.targets.c, proteinG: row.targets.p, fatG: row.targets.f } };
+  });
   if (patient.cycle) return { patient: await withHistory(patient, signal), catalog };
   return { patient, catalog };
 }
@@ -101,13 +105,14 @@ async function withHistory(patient: NutritionPatientDetail, signal?: AbortSignal
 }
 
 async function mutate(patient: NutritionPatientDetail, catalog: NutritionFood[], path: string, body: unknown, signal?: AbortSignal, identity?: NutritionCycle) {
-  const result = await request<NutritionViewWire, { cycle: NutritionCycle; revision: number; published: boolean }>(path, { method: "POST", body: JSON.stringify(body), signal }, (wire) => {
+  const result = await request<NutritionViewWire, { cycle: NutritionCycle; revision: number; published: boolean; cycleId: string }>(path, { method: "POST", body: JSON.stringify(body), signal }, (wire) => {
     if (wire?.patientId !== patient.patientId) throw new Error("nutrition-patient-mismatch");
-    return { cycle: mapNutritionCycle(wire, catalog, identity), revision: wire.revision, published: wire.isPublished };
+    return { cycle: mapNutritionCycle(wire, catalog, identity), revision: wire.revision, published: wire.isPublished, cycleId: wire.cycleId };
   });
   const cycle = { ...result.cycle, patientTimeZone: patient.timeZone ?? patient.cycle?.patientTimeZone ?? "", publishedVersionId: result.published ? result.cycle.id : patient.publishedCycle?.id ?? null };
   const publishedCycle = result.published ? cycle : patient.publishedCycle;
-  const updated = { ...patient, cycle, publishedCycle, revision: result.revision };
+  const cycleHeaders = [{ id: cycle.id, cycleId: result.cycleId, version: cycle.version, state: cycle.state, isPublished: result.published, startDate: cycle.startDate, endDate: cycle.endDate, targets: cycle.targets }, ...(patient.cycleHeaders ?? []).filter((header) => header.id !== cycle.id)];
+  const updated = { ...patient, cycle, publishedCycle, cycleHeaders, revision: result.revision };
   const url = new URL(window.location.href);
   if (url.pathname === `/nutrition/${encodeURIComponent(patient.patientId)}`) {
     url.searchParams.set("prescriptionId", cycle.id);

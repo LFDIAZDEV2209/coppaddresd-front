@@ -42,6 +42,16 @@ export interface NutritionEditWire {
  * Respuesta ausente o incompatible -> error visible, nunca fallback ni datos clínicos.
  */
 export interface NutritionQueueWire {
+  // TODO(backend 8.3/8.4): integrar solo tras confirmar respuesta y nesting.
+  // generationState: "pending" | "generating" | "ready" | "failed" | null;
+  // generationFallback: boolean;
+  // generationReason: string | null;
+  // generationUpdatedAt: string | null;
+  // hasPublishedToday: boolean;
+  // publishedCycleStart: string | null;
+  // publishedCycleEnd: string | null;
+  // latestDraftState: NutritionViewWire["state"] | null;
+  // hasFutureDraft: boolean;
   items: {
     patientId: string; patientName: string; state: NutritionViewWire["state"] | "sin_plan";
     prescription: null | {

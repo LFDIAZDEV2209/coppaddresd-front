@@ -109,6 +109,52 @@
 }
 
 /* Mesa clínica: superficies, cabeceras y escala del ERP; cada panel tiene su recorrido. */
+.nutrition-program { container-type: inline-size; }
+.nutrition-program-calendar { display: grid; gap: .625rem; margin-top: 1rem; }
+.nutrition-program-period { display: block; width: 100%; min-height: 44px; text-align: start; border: 1px solid var(--border); border-radius: .5rem; padding: .75rem; cursor: pointer; }
+.nutrition-program-period:hover { background: var(--muted); }
+.nutrition-program-period[aria-pressed="true"] { background: var(--info-soft); border-color: var(--info-soft-foreground); }
+.nutrition-program-period:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.nutrition-program-period:disabled { opacity: .6; cursor: wait; }
+.nutrition-program-period-title { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .75rem; font-size: .8125rem; }
+.nutrition-program-period-title > :last-child { margin-inline-start: auto; }
+.nutrition-program-track { position: relative; display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 2px; height: 14px; margin-top: .625rem; }
+.nutrition-program-track > span { background: var(--muted-foreground); opacity: .3; border-radius: 1px; }
+.nutrition-program-track[data-published="true"] > span { background: var(--info-soft-foreground); opacity: .6; }
+.nutrition-program-track > i { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--nutrition-ai-foreground); outline: 2px solid var(--nutrition-ai-background); }
+.nutrition-program-today { display: block; margin-top: .625rem; font-size: .75rem; font-weight: 600; color: var(--nutrition-ai-foreground); }
+.nutrition-program-legend { margin-top: .75rem; font-size: .75rem; line-height: 1.8; color: var(--muted-foreground); }
+.nutrition-cycles-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .75rem; margin-top: .75rem; }
+.nutrition-cycles-table th, .nutrition-cycles-table td { text-align: start; vertical-align: top; padding: .75rem .5rem; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.nutrition-cycles-table thead th { font-weight: 500; color: var(--muted-foreground); }
+.nutrition-cycles-table th:first-child { width: 12%; }
+.nutrition-cycles-table th:nth-child(2) { width: 25%; }
+.nutrition-cycles-table th:nth-child(3) { width: 25%; }
+.nutrition-cycles-table tr[data-selected="true"] { background: var(--muted); }
+.nutrition-cycle-cell-label { display: none; }
+.nutrition-cycle-macros { margin-top: .5rem; }
+.nutrition-cycle-macros > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem; margin-top: .25rem; }
+.nutrition-cycle-row-actions { display: flex; flex-wrap: wrap; gap: .25rem; }
+.nutrition-cycle-versions summary { min-height: 44px; align-content: center; cursor: pointer; }
+.nutrition-cycle-versions summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.nutrition-cycle-versions button { width: 100%; justify-content: start; }
+@container (max-width: 650px) {
+  .nutrition-cycles-table thead { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+  .nutrition-cycles-table, .nutrition-cycles-table tbody { display: block; }
+  .nutrition-cycles-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .5rem; margin-top: .75rem; border: 1px solid var(--border); border-radius: .5rem; }
+  .nutrition-cycles-table th, .nutrition-cycles-table td { display: block; width: auto !important; border: 0; padding: .5rem; }
+  .nutrition-cycles-table tbody th { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+  .nutrition-cycles-table td:last-child { grid-column: 1 / -1; border-top: 1px solid var(--border); }
+  .nutrition-cycle-cell-label { display: block; font-weight: 600; margin-bottom: .5rem; }
+}
+@container (max-width: 360px) {
+  .nutrition-cycles-table tr { grid-template-columns: minmax(0, 1fr); }
+  .nutrition-program-period-title > :last-child { width: 100%; margin: 0; }
+}
+@media (forced-colors: active) {
+  .nutrition-program-track > i { background: Highlight; outline-color: Canvas; }
+  .nutrition-program-period[aria-pressed="true"] { outline: 2px solid Highlight; }
+}
 .nutrition-rework { --nutrition-action-background: var(--brand-navy-deep); --ring: var(--brand-navy-deep); padding: 1.5rem; min-width: 0; }
 .dark .nutrition-rework { --nutrition-action-background: #7dd3fc; --ring: #7dd3fc; }
 .nutrition-rework h1, .nutrition-rework h2, .nutrition-rework h3 { font-family: var(--nutrition-display); }
@@ -229,3 +275,6 @@
   .nutrition-detail-toolbar > span { font-size: .6875rem; }
   .nutrition-module .nutrition-rail-pagination [data-slot="button"] { min-height: 44px; }
 }
+
+.nutrition-cycle-dialog > form { max-height: calc(100dvh - 2rem); }
+.nutrition-cycle-dialog input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); flex-shrink: 0; }

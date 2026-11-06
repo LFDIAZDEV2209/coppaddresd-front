@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Activity, ArrowLeft, BookOpen, CalendarDays, ClipboardCheck, Clock, FileText, Flame, Layers, ShieldAlert, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,12 +23,13 @@ import { NutritionClinicalAlerts, NutritionClinicalHeader } from "./nutrition-cl
 import { NutritionPlanEditor } from "./nutrition-plan-editor";
 import { NutritionReviewDialog } from "./nutrition-review-dialog";
 import { NutritionMonthEnergy, NutritionVerification } from "./nutrition-plan-verification";
+import { NutritionProgramCycles } from "./nutrition-program-cycles";
 import "../nutrition.css";
 
 type DetailTab = "resultados" | "programacion" | "plan";
-interface DetailProps { patientId: string; prescriptionId?: string; onBack?: () => void; onNavigationLock?: (locked: boolean) => void; onPlanChanged?: () => void }
+interface DetailProps { patientId: string; prescriptionId?: string; onBack?: () => void; onNavigationLock?: (locked: boolean) => void; onPlanChanged?: () => void; onOpenPrescription?: (id: string, history: boolean) => void }
 
-export function NutritionPatientDetail({ patientId, prescriptionId, onBack, onNavigationLock, onPlanChanged }: DetailProps) {
+export function NutritionPatientDetail({ patientId, prescriptionId, onBack, onNavigationLock, onPlanChanged, onOpenPrescription }: DetailProps) {
   const { can } = useAppContext();
   const load = useCallback((signal: AbortSignal) => fetchNutritionWorkspace(patientId, signal, prescriptionId), [patientId, prescriptionId]);
   const { data, scope, loading, error, retry } = useNutritionResource(load);
@@ -36,16 +37,36 @@ export function NutritionPatientDetail({ patientId, prescriptionId, onBack, onNa
   if (loading) return <NutritionSkeleton />;
   if (error) return <div className="p-5"><NutritionError retry={retry} issue={error} /></div>;
   if (!data?.patient) return <NutritionError retry={retry} />;
-  return <PatientWorkspace key={`${scope.userId}:${scope.clinicId}:${patientId}:${prescriptionId ?? ""}`} initial={data.patient} catalog={data.catalog} canManage={can("Nutrition.Manage")} canApprove={can("Nutrition.Approve")} onBack={onBack} onNavigationLock={onNavigationLock} onPlanChanged={onPlanChanged} />;
+  return <PatientWorkspace key={`${scope.userId}:${scope.clinicId}:${patientId}:${prescriptionId ?? ""}`} initial={data.patient} catalog={data.catalog} canManage={can("Nutrition.Manage")} canApprove={can("Nutrition.Approve")} onBack={onBack} onNavigationLock={onNavigationLock} onPlanChanged={onPlanChanged} onOpenPrescription={onOpenPrescription} />;
 }
 
-function PatientWorkspace({ initial, catalog, canManage, canApprove, onBack, onNavigationLock, onPlanChanged }: { initial: PatientDetail; catalog: NutritionFood[]; canManage: boolean; canApprove: boolean; onBack?: () => void; onNavigationLock?: (locked: boolean) => void; onPlanChanged?: () => void }) {
+function PatientWorkspace({ initial, catalog, canManage, canApprove, onBack, onNavigationLock, onPlanChanged, onOpenPrescription }: { initial: PatientDetail; catalog: NutritionFood[]; canManage: boolean; canApprove: boolean; onBack?: () => void; onNavigationLock?: (locked: boolean) => void; onPlanChanged?: () => void; onOpenPrescription?: (id: string, history: boolean) => void }) {
   const t = useT();
   const { lang } = useI18n();
   const { patient, editable, updateCycle, saveStatus, saveError, busy, actionError, reloadRequired, act, retrySave } = useNutritionEditor(initial, catalog, canManage, canApprove);
   const [review, setReview] = useState<"approve" | "return" | null>(null);
   const [tab, setTab] = useState<DetailTab>(() => { const value = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null; return value === "plan" || value === "programacion" ? value : "resultados"; });
+  const auditRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("history") === "1" && auditRef.current) {
+      auditRef.current.open = true;
+      auditRef.current.scrollIntoView({ block: "start" });
+      auditRef.current.querySelector("summary")?.focus();
+    }
+  }, []);
   const cycle = patient.cycle;
+  // La zona no se deduce del ordenador; el workspace nuevo la aportará.
+  const today = patient.timeZone ? (() => { try { return new Intl.DateTimeFormat("en-CA", { timeZone: patient.timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); } catch { return null; } })() : null;
+  const headers = (patient.cycleHeaders ?? []).map((header) => header.id === cycle?.id ? { ...header, version: cycle.version, state: cycle.state, startDate: cycle.startDate, endDate: cycle.endDate, isPublished: cycle.publishedVersionId === cycle.id, targets: cycle.targets } : header);
+  function openPrescription(id: string, history = false) {
+    if (locked) return;
+    if (id !== cycle?.id) { onOpenPrescription?.(id, history); return; }
+    changeTab(history ? "resultados" : "plan");
+    if (history && auditRef.current) {
+      auditRef.current.open = true;
+      requestAnimationFrame(() => { auditRef.current?.scrollIntoView({ block: "start" }); auditRef.current?.querySelector("summary")?.focus(); });
+    }
+  }
   const criticalCount = cycle?.alerts.filter((alert) => alert.severity === "critical").length ?? 0;
   const locked = busy || saveStatus !== "saved" || reloadRequired;
   useEffect(() => { onNavigationLock?.(locked); return () => onNavigationLock?.(false); }, [locked, onNavigationLock]);
@@ -86,6 +107,7 @@ function PatientWorkspace({ initial, catalog, canManage, canApprove, onBack, onN
       <TabsList variant="line" aria-label={t("Secciones de la ficha nutricional")} className="nutrition-tab-list"><TabsTrigger value="resultados"><Activity className="size-4" aria-hidden="true" />{t("Resultados y ciclos")}</TabsTrigger><TabsTrigger value="programacion"><CalendarDays className="size-4" aria-hidden="true" />{t("Programación")}</TabsTrigger><TabsTrigger value="plan"><FileText className="size-4" aria-hidden="true" />{t("Plan de 30 días editar")}</TabsTrigger></TabsList>
       <TabsContent value="resultados" keepMounted>
         <div className="nutrition-tab-body">
+          <NutritionProgramCycles headers={headers} selectedId={cycle?.id} today={today} locked={locked} onOpen={openPrescription} onCreate={canManage && !cycle ? () => changeTab("plan") : undefined} />
           {cycle && <div className="nutrition-overview-stats"><StatCard label={t("Meta diaria")} value={cycle.targets.kcal} suffix=" kcal" icon={Flame} variant="primary" /><StatCard label={t("Versión")} value={String(cycle.version)} icon={Layers} variant="info" /><StatCard label={t("Alertas críticas")} value={String(criticalCount)} icon={ShieldAlert} variant={criticalCount ? "destructive" : "success"} /></div>}
           <NutritionReadings patient={patient} />
           {cycle ? <>
@@ -96,7 +118,7 @@ function PatientWorkspace({ initial, catalog, canManage, canApprove, onBack, onN
             </section>
           </> : <div className="nutrition-empty-plan"><ClipboardCheck className="size-7 text-muted-foreground" aria-hidden="true" /><h3>{t("Sin plan nutricional")}</h3><p>{t("Revisa las lecturas y prepara la primera propuesta para este paciente.")}</p>{canManage && <Button variant="outline" onClick={() => changeTab("plan")}>{t("Crear propuesta")}</Button>}</div>}
           <details className="nutrition-disclosure nutrition-section"><summary>{t("Perfil clínico completo")}</summary><NutritionClinicalHeader profile={patient.profile} /></details>
-          <details className="nutrition-disclosure nutrition-section"><summary>{t("Bitácora del plan")} <span className="nutrition-measure">({patient.audit.length})</span></summary>
+          <details ref={auditRef} className="nutrition-disclosure nutrition-section"><summary>{t("Bitácora del plan")} <span className="nutrition-measure">({patient.audit.length})</span></summary>
             {patient.auditIssue && <NutritionIssueMessage issue={patient.auditIssue} />}
             {patient.audit.length ? <Table className="table-fixed"><TableHeader><TableRow><TableHead>{t("Fecha")}</TableHead><TableHead>{t("Acción")}</TableHead><TableHead>{t("Versión")}</TableHead></TableRow></TableHeader><TableBody>{patient.audit.map((entry) => <TableRow key={entry.id}><TableCell className="whitespace-normal text-xs"><time dateTime={entry.occurredAt}>{new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-CO", { dateStyle: "short" }).format(new Date(entry.occurredAt))}</time></TableCell><TableCell className="whitespace-normal text-xs">{t(labels[entry.action])}{entry.comment && <p className="mt-1 break-words text-muted-foreground">{entry.comment}</p>}{entry.criticalAlertsConfirmed > 0 && <p className="mt-1 text-muted-foreground">{t("{count} alertas críticas confirmadas", { count: String(entry.criticalAlertsConfirmed) })}</p>}{entry.autoApproved && <span className="nutrition-chip mt-1" data-status="aprobado">{t("Auto-aprobado")}</span>}</TableCell><TableCell className="nutrition-measure">v{entry.version}</TableCell></TableRow>)}</TableBody></Table> : <p className="mt-3 text-sm text-muted-foreground">{t("Sin acciones registradas")}</p>}
           </details>

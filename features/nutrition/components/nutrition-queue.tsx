@@ -75,7 +75,13 @@ export function NutritionQueue({ initialPatientId, initialPrescriptionId }: { in
         <nav className="nutrition-rail-pagination" aria-label={t("Paginación de nutrición")}><p role="status">{data ? t("Página {page} de {pages} · {total} pacientes", { page: String(data.page), pages: String(Math.max(1, data.totalPages)), total: String(data.total) }) : "—"}</p><div className="flex gap-2"><Button size="sm" variant="outline" disabled={loading || !data || query.page <= 1} onClick={() => setPage(query.page - 1)}>{t("Anterior")}</Button><Button size="sm" variant="outline" disabled={loading || !data || query.page >= data.totalPages} onClick={() => setPage(query.page + 1)}>{t("Siguiente")}</Button></div></nav>
       </aside>
       <section className="nutrition-detail-panel" aria-label={t("Ficha nutricional")}>
-        {selection ? <NutritionPatientDetail patientId={selection.patientId} prescriptionId={selection.prescriptionId} onBack={() => select()} onNavigationLock={setLocked} onPlanChanged={retry} /> : <div className="nutrition-workbench-empty">
+        {selection ? <NutritionPatientDetail patientId={selection.patientId} prescriptionId={selection.prescriptionId} onBack={() => select()} onNavigationLock={setLocked} onPlanChanged={retry} onOpenPrescription={(id, history) => {
+          select(selection.patientId, id);
+          const url = new URL(window.location.href);
+          url.searchParams.set("tab", history ? "resultados" : "plan");
+          if (history) url.searchParams.set("history", "1");
+          window.history.replaceState(null, "", url);
+        }} /> : <div className="nutrition-workbench-empty">
           <SectionHeader title={t("Tu bandeja de trabajo")} description={t("Selecciona un paciente para revisar su plan.")} icon={ClipboardCheck} />
           <div className="nutrition-overview-stats"><StatCard label={t("Pacientes")} value={data?.counts.all ?? "—"} icon={Users} variant="primary" /><StatCard label={t("Por aprobar")} value={data?.counts.en_aprobacion ?? "—"} icon={ClipboardCheck} variant="warning" /><StatCard label={t("Sin plan")} value={data?.counts.sin_plan ?? "—"} icon={Activity} variant="info" /></div>
           <div className="nutrition-selection-guide"><Stethoscope className="size-10 text-primary" aria-hidden="true" /><h2>{t("Una revisión, tres pasos")}</h2><p>{t("Consulta los resultados, revisa la programación y ajusta el plan de 30 días.")}</p><span className="flex items-center gap-2 text-sm text-muted-foreground"><ArrowRight className="size-4" aria-hidden="true" />{t("Elige un paciente de la bandeja")}</span></div>
