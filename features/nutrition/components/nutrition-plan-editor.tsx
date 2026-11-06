@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useT } from "@/providers/i18n-provider";
 import type { NutritionCycle, NutritionFood, NutritionTargets } from "../types/nutrition";
@@ -31,8 +30,8 @@ export function NutritionPlanEditor({ cycle, catalog, editable, update, regenera
   const totals = dayTotals(meals, catalog);
 
   return <section className="nutrition-section" aria-labelledby="nutrition-editor-title">
-    <div className="flex flex-wrap items-start justify-between gap-4"><div><h2 id="nutrition-editor-title" className="nutrition-display text-2xl font-semibold">{t("Menú de 30 días")}</h2><p className="mt-2 text-sm text-muted-foreground">{editable ? t("Ajusta las cantidades. Los cambios se guardan automáticamente.") : t("Plan de solo lectura. Para editar un aprobado, crea una nueva versión.")}</p></div><Button variant="outline" disabled={!editable} onClick={() => setConfirmCopy(true)}>{t("Aplicar este día a los 30 días")}</Button></div>
-    <div className="my-6"><p id="nutrition-day-label" className="nutrition-label">{t("Día del ciclo")}</p><ToggleGroup aria-labelledby="nutrition-day-label" className="nutrition-days max-w-full flex-wrap" value={[String(day)]} onValueChange={(values) => { const value = Number(values[0]); if (Number.isInteger(value) && value >= 1 && value <= 30) setDay(value); }} variant="outline">{Array.from({ length: 30 }, (_, index) => index + 1).map((value) => <ToggleGroupItem className="nutrition-measure min-h-11 min-w-11" key={value} value={String(value)} aria-label={t("Día {day}", { day: String(value) })}>{value}</ToggleGroupItem>)}</ToggleGroup></div>
+    <div className="flex flex-wrap items-start justify-between gap-4"><div><h2 id="nutrition-editor-title" className="nutrition-display text-2xl font-semibold">{t("Menú de 30 días")}</h2><p className="mt-2 text-sm text-muted-foreground">{editable ? t("Ajusta las cantidades. Los cambios se guardan automáticamente.") : t(cycle.state === "en_aprobacion" ? "Plan en revisión. Devuélvelo con comentario para solicitar ajustes." : cycle.state === "aprobado" ? "Plan de solo lectura. Para editar un aprobado, crea una nueva versión." : "Plan de solo lectura con tus permisos actuales.")}</p></div><Button variant="outline" disabled={!editable} onClick={() => setConfirmCopy(true)}>{t("Aplicar este día a los 30 días")}</Button></div>
+    <div className="nutrition-day-toolbar"><label htmlFor="nutrition-day" className="text-sm font-semibold">{t("Día del ciclo")}</label><div className="flex items-center gap-2"><Button variant="outline" size="icon" disabled={day === 1} aria-label={t("Día anterior")} onClick={() => setDay((value) => value - 1)}><ChevronLeft className="size-4" /></Button><select id="nutrition-day" className="nutrition-select nutrition-measure" value={day} onChange={(event) => setDay(Number(event.target.value))}>{Array.from({ length: 30 }, (_, index) => index + 1).map((value) => <option key={value} value={value}>{t("Día {day}", { day: String(value) })} / 30</option>)}</select><Button variant="outline" size="icon" disabled={day === 30} aria-label={t("Día siguiente")} onClick={() => setDay((value) => value + 1)}><ChevronRight className="size-4" /></Button></div></div>
     <section aria-labelledby="nutrition-day-totals" className="nutrition-daily-totals"><h3 id="nutrition-day-totals" className="nutrition-display text-lg font-semibold">{t("Totales del día {day}", { day: String(day) })}</h3><p className="mt-2 mb-5 text-sm text-muted-foreground">{t("Vista previa por catálogo. La revisión clínica y las validaciones del servidor determinan la aprobación.")}</p><NutritionTargetsPanel targets={cycle.targets} totals={totals} /></section>
     <fieldset disabled={!editable} className="min-w-0">
       <legend className="sr-only">{t("Comidas del día {day}", { day: String(day) })}</legend>

@@ -146,6 +146,8 @@ export interface NutritionAuditEntry {
 }
 
 export interface NutritionPatientDetail {
+  /** Cabeceras ya descargadas, sin menús; opcional para consumidores anteriores. */
+  cycleHeaders?: NutritionCycleHeader[];
   identityIssue?: NutritionServiceIssue;
   patientId: string;
   patientName: string;
@@ -159,6 +161,17 @@ export interface NutritionPatientDetail {
   revision: number;
   audit: NutritionAuditEntry[];
   auditIssue?: NutritionServiceIssue | null;
+}
+
+export interface NutritionCycleHeader {
+  id: string;
+  cycleId: string;
+  version: number;
+  state: NutritionQueueState;
+  isPublished: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  targets: Pick<NutritionTargets, "kcal" | "carbsG" | "proteinG" | "fatG">;
 }
 
 export interface NutritionWorkspace {

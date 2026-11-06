@@ -1,0 +1,200 @@
+{
+  "data": "HTTP sintético y fixtures de exploración; no acredita backend real",
+  "metrics": [
+    {
+      "name": "exploracion-calendario",
+      "width": 1440,
+      "document": 1440,
+      "overflow": [
+        {
+          "width": 1154,
+          "scroll": 1154
+        }
+      ]
+    },
+    {
+      "name": "exploracion-calendario",
+      "width": 390,
+      "document": 390,
+      "overflow": [
+        {
+          "width": 364,
+          "scroll": 364
+        }
+      ]
+    },
+    {
+      "name": "plan-por-ciclo",
+      "width": 1440,
+      "document": 1440,
+      "overflow": [
+        {
+          "width": 1154,
+          "scroll": 1154
+        }
+      ]
+    },
+    {
+      "name": "plan-por-ciclo",
+      "width": 390,
+      "document": 390,
+      "overflow": [
+        {
+          "width": 364,
+          "scroll": 364
+        }
+      ]
+    },
+    {
+      "name": "decision-1",
+      "width": 1440,
+      "document": 1440,
+      "overflow": [
+        {
+          "width": 1154,
+          "scroll": 1154
+        },
+        {
+          "width": 670,
+          "scroll": 670
+        }
+      ]
+    },
+    {
+      "name": "decision-1",
+      "width": 390,
+      "document": 390,
+      "overflow": [
+        {
+          "width": 364,
+          "scroll": 364
+        },
+        {
+          "width": 648,
+          "scroll": 648
+        }
+      ]
+    },
+    {
+      "name": "decision-2",
+      "width": 1440,
+      "document": 1440,
+      "overflow": [
+        {
+          "width": 1154,
+          "scroll": 1154
+        },
+        {
+          "width": 670,
+          "scroll": 670
+        }
+      ]
+    },
+    {
+      "name": "decision-2",
+      "width": 390,
+      "document": 390,
+      "overflow": [
+        {
+          "width": 364,
+          "scroll": 364
+        },
+        {
+          "width": 648,
+          "scroll": 648
+        }
+      ]
+    },
+    {
+      "name": "decision-3",
+      "width": 1440,
+      "document": 1440,
+      "overflow": [
+        {
+          "width": 1154,
+          "scroll": 1154
+        },
+        {
+          "width": 670,
+          "scroll": 670
+        }
+      ]
+    },
+    {
+      "name": "decision-3",
+      "width": 390,
+      "document": 390,
+      "overflow": [
+        {
+          "width": 364,
+          "scroll": 364
+        },
+        {
+          "width": 489,
+          "scroll": 489
+        }
+      ]
+    },
+    {
+      "name": "decision-4",
+      "width": 1440,
+      "document": 1440,
+      "overflow": [
+        {
+          "width": 1154,
+          "scroll": 1154
+        },
+        {
+          "width": 670,
+          "scroll": 670
+        }
+      ]
+    },
+    {
+      "name": "decision-4",
+      "width": 390,
+      "document": 390,
+      "overflow": [
+        {
+          "width": 364,
+          "scroll": 364
+        },
+        {
+          "width": 648,
+          "scroll": 648
+        }
+      ]
+    },
+    {
+      "name": "decision-5",
+      "width": 1440,
+      "document": 1440,
+      "overflow": [
+        {
+          "width": 1154,
+          "scroll": 1154
+        },
+        {
+          "width": 670,
+          "scroll": 670
+        }
+      ]
+    },
+    {
+      "name": "decision-5",
+      "width": 390,
+      "document": 390,
+      "overflow": [
+        {
+          "width": 364,
+          "scroll": 364
+        },
+        {
+          "width": 542,
+          "scroll": 542
+        }
+      ]
+    }
+  ],
+  "writes": []
+}

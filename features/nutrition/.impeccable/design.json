@@ -1,0 +1,442 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T21:08:41.499357+00:00",
+  "title": "Design System: Nutricionista ERP CoppAddresd",
+  "extensions": {
+    "colorMeta": {
+      "action": {
+        "role": "primary",
+        "displayName": "Action",
+        "canonical": "#023467",
+        "tonalRamp": [
+          "oklch(15% 0.1021 254.12)",
+          "oklch(26% 0.1021 254.12)",
+          "oklch(38% 0.1021 254.12)",
+          "oklch(49% 0.1021 254.12)",
+          "oklch(61% 0.1021 254.12)",
+          "oklch(72% 0.1021 254.12)",
+          "oklch(84% 0.1021 254.12)",
+          "oklch(95% 0.1021 254.12)"
+        ]
+      },
+      "brand-teal": {
+        "role": "secondary",
+        "displayName": "Brand teal",
+        "canonical": "#035d4d",
+        "tonalRamp": [
+          "oklch(15% 0.0793 175.47)",
+          "oklch(26% 0.0793 175.47)",
+          "oklch(38% 0.0793 175.47)",
+          "oklch(49% 0.0793 175.47)",
+          "oklch(61% 0.0793 175.47)",
+          "oklch(72% 0.0793 175.47)",
+          "oklch(84% 0.0793 175.47)",
+          "oklch(95% 0.0793 175.47)"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Background",
+        "canonical": "#eff2f7",
+        "tonalRamp": [
+          "oklch(15% 0.0074 260.73)",
+          "oklch(26% 0.0074 260.73)",
+          "oklch(38% 0.0074 260.73)",
+          "oklch(49% 0.0074 260.73)",
+          "oklch(61% 0.0074 260.73)",
+          "oklch(72% 0.0074 260.73)",
+          "oklch(84% 0.0074 260.73)",
+          "oklch(95% 0.0074 260.73)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Foreground",
+        "canonical": "#1a1d2e",
+        "tonalRamp": [
+          "oklch(15% 0.0330 275.89)",
+          "oklch(26% 0.0330 275.89)",
+          "oklch(38% 0.0330 275.89)",
+          "oklch(49% 0.0330 275.89)",
+          "oklch(61% 0.0330 275.89)",
+          "oklch(72% 0.0330 275.89)",
+          "oklch(84% 0.0330 275.89)",
+          "oklch(95% 0.0330 275.89)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#e2e8f0",
+        "tonalRamp": [
+          "oklch(15% 0.0126 255.51)",
+          "oklch(26% 0.0126 255.51)",
+          "oklch(38% 0.0126 255.51)",
+          "oklch(49% 0.0126 255.51)",
+          "oklch(61% 0.0126 255.51)",
+          "oklch(72% 0.0126 255.51)",
+          "oklch(84% 0.0126 255.51)",
+          "oklch(95% 0.0126 255.51)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Muted foreground",
+        "canonical": "#475569",
+        "tonalRamp": [
+          "oklch(15% 0.0374 257.28)",
+          "oklch(26% 0.0374 257.28)",
+          "oklch(38% 0.0374 257.28)",
+          "oklch(49% 0.0374 257.28)",
+          "oklch(61% 0.0374 257.28)",
+          "oklch(72% 0.0374 257.28)",
+          "oklch(84% 0.0374 257.28)",
+          "oklch(95% 0.0374 257.28)"
+        ]
+      },
+      "info-soft": {
+        "role": "neutral",
+        "displayName": "Info soft",
+        "canonical": "#e0f2fe",
+        "tonalRamp": [
+          "oklch(15% 0.0250 236.82)",
+          "oklch(26% 0.0250 236.82)",
+          "oklch(38% 0.0250 236.82)",
+          "oklch(49% 0.0250 236.82)",
+          "oklch(61% 0.0250 236.82)",
+          "oklch(72% 0.0250 236.82)",
+          "oklch(84% 0.0250 236.82)",
+          "oklch(95% 0.0250 236.82)"
+        ]
+      },
+      "info-foreground": {
+        "role": "neutral",
+        "displayName": "Info foreground",
+        "canonical": "#075985",
+        "tonalRamp": [
+          "oklch(15% 0.1000 240.79)",
+          "oklch(26% 0.1000 240.79)",
+          "oklch(38% 0.1000 240.79)",
+          "oklch(49% 0.1000 240.79)",
+          "oklch(61% 0.1000 240.79)",
+          "oklch(72% 0.1000 240.79)",
+          "oklch(84% 0.1000 240.79)",
+          "oklch(95% 0.1000 240.79)"
+        ]
+      },
+      "success-soft": {
+        "role": "neutral",
+        "displayName": "Success soft",
+        "canonical": "#d1fae5",
+        "tonalRamp": [
+          "oklch(15% 0.0507 163.05)",
+          "oklch(26% 0.0507 163.05)",
+          "oklch(38% 0.0507 163.05)",
+          "oklch(49% 0.0507 163.05)",
+          "oklch(61% 0.0507 163.05)",
+          "oklch(72% 0.0507 163.05)",
+          "oklch(84% 0.0507 163.05)",
+          "oklch(95% 0.0507 163.05)"
+        ]
+      },
+      "success-foreground": {
+        "role": "neutral",
+        "displayName": "Success foreground",
+        "canonical": "#065f46",
+        "tonalRamp": [
+          "oklch(15% 0.0865 166.91)",
+          "oklch(26% 0.0865 166.91)",
+          "oklch(38% 0.0865 166.91)",
+          "oklch(49% 0.0865 166.91)",
+          "oklch(61% 0.0865 166.91)",
+          "oklch(72% 0.0865 166.91)",
+          "oklch(84% 0.0865 166.91)",
+          "oklch(95% 0.0865 166.91)"
+        ]
+      },
+      "warning-soft": {
+        "role": "neutral",
+        "displayName": "Warning soft",
+        "canonical": "#fef3c7",
+        "tonalRamp": [
+          "oklch(15% 0.0580 95.62)",
+          "oklch(26% 0.0580 95.62)",
+          "oklch(38% 0.0580 95.62)",
+          "oklch(49% 0.0580 95.62)",
+          "oklch(61% 0.0580 95.62)",
+          "oklch(72% 0.0580 95.62)",
+          "oklch(84% 0.0580 95.62)",
+          "oklch(95% 0.0580 95.62)"
+        ]
+      },
+      "warning-foreground": {
+        "role": "neutral",
+        "displayName": "Warning foreground",
+        "canonical": "#92400e",
+        "tonalRamp": [
+          "oklch(15% 0.1247 46.20)",
+          "oklch(26% 0.1247 46.20)",
+          "oklch(38% 0.1247 46.20)",
+          "oklch(49% 0.1247 46.20)",
+          "oklch(61% 0.1247 46.20)",
+          "oklch(72% 0.1247 46.20)",
+          "oklch(84% 0.1247 46.20)",
+          "oklch(95% 0.1247 46.20)"
+        ]
+      },
+      "destructive-soft": {
+        "role": "neutral",
+        "displayName": "Destructive soft",
+        "canonical": "#fee2e2",
+        "tonalRamp": [
+          "oklch(15% 0.0309 17.72)",
+          "oklch(26% 0.0309 17.72)",
+          "oklch(38% 0.0309 17.72)",
+          "oklch(49% 0.0309 17.72)",
+          "oklch(61% 0.0309 17.72)",
+          "oklch(72% 0.0309 17.72)",
+          "oklch(84% 0.0309 17.72)",
+          "oklch(95% 0.0309 17.72)"
+        ]
+      },
+      "destructive-foreground": {
+        "role": "neutral",
+        "displayName": "Destructive foreground",
+        "canonical": "#991b1b",
+        "tonalRamp": [
+          "oklch(15% 0.1613 26.90)",
+          "oklch(26% 0.1613 26.90)",
+          "oklch(38% 0.1613 26.90)",
+          "oklch(49% 0.1613 26.90)",
+          "oklch(61% 0.1613 26.90)",
+          "oklch(72% 0.1613 26.90)",
+          "oklch(84% 0.1613 26.90)",
+          "oklch(95% 0.1613 26.90)"
+        ]
+      },
+      "ai-soft": {
+        "role": "neutral",
+        "displayName": "Ai soft",
+        "canonical": "#fff5d6",
+        "tonalRamp": [
+          "oklch(15% 0.0418 92.20)",
+          "oklch(26% 0.0418 92.20)",
+          "oklch(38% 0.0418 92.20)",
+          "oklch(49% 0.0418 92.20)",
+          "oklch(61% 0.0418 92.20)",
+          "oklch(72% 0.0418 92.20)",
+          "oklch(84% 0.0418 92.20)",
+          "oklch(95% 0.0418 92.20)"
+        ]
+      },
+      "ai-foreground": {
+        "role": "neutral",
+        "displayName": "Ai foreground",
+        "canonical": "#694500",
+        "tonalRamp": [
+          "oklch(15% 0.0887 75.16)",
+          "oklch(26% 0.0887 75.16)",
+          "oklch(38% 0.0887 75.16)",
+          "oklch(49% 0.0887 75.16)",
+          "oklch(61% 0.0887 75.16)",
+          "oklch(72% 0.0887 75.16)",
+          "oklch(84% 0.0887 75.16)",
+          "oklch(95% 0.0887 75.16)"
+        ]
+      },
+      "renew-soft": {
+        "role": "neutral",
+        "displayName": "Renew soft",
+        "canonical": "#f3eafb",
+        "tonalRamp": [
+          "oklch(15% 0.0245 309.37)",
+          "oklch(26% 0.0245 309.37)",
+          "oklch(38% 0.0245 309.37)",
+          "oklch(49% 0.0245 309.37)",
+          "oklch(61% 0.0245 309.37)",
+          "oklch(72% 0.0245 309.37)",
+          "oklch(84% 0.0245 309.37)",
+          "oklch(95% 0.0245 309.37)"
+        ]
+      },
+      "renew-foreground": {
+        "role": "neutral",
+        "displayName": "Renew foreground",
+        "canonical": "#6b3aa0",
+        "tonalRamp": [
+          "oklch(15% 0.1596 302.69)",
+          "oklch(26% 0.1596 302.69)",
+          "oklch(38% 0.1596 302.69)",
+          "oklch(49% 0.1596 302.69)",
+          "oklch(61% 0.1596 302.69)",
+          "oklch(72% 0.1596 302.69)",
+          "oklch(84% 0.1596 302.69)",
+          "oklch(95% 0.1596 302.69)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Paciente",
+        "purpose": "Identidad compacta del paciente."
+      },
+      "body": {
+        "displayName": "Lectura",
+        "purpose": "Texto operativo."
+      },
+      "label": {
+        "displayName": "Metadatos",
+        "purpose": "Lectura secundaria."
+      },
+      "measure": {
+        "displayName": "Cantidad",
+        "purpose": "Kcal, gramos, fechas y versiones."
+      }
+    },
+    "shadows": [
+      {
+        "name": "button-hover",
+        "value": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        "purpose": "Sombra compartida de Button; paneles locales sin sombra."
+      }
+    ],
+    "motion": [
+      {
+        "name": "shared-control-transition",
+        "value": "200ms",
+        "purpose": "Button e Input compartidos; sin movimiento mensual propio."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "food-row-columns",
+        "value": "640px"
+      },
+      {
+        "name": "workbench-two-panels",
+        "value": "1024px"
+      },
+      {
+        "name": "rail-304",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Acción principal",
+      "kind": "button",
+      "description": "Button del ERP con altura mínima local de 44px.",
+      "html": "<button class=\"ds-button ds-primary\">Aprobar plan</button>",
+      "css": ".ds-button{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 10px;border:1px solid transparent;border-radius:12px;font-weight:500;white-space:normal;transition:all 200ms;cursor:pointer}.ds-button:focus-visible{outline:2px solid var(--ring,#023467);outline-offset:3px;}.ds-button:active{transform:translateY(1px)}.ds-button:disabled{background:var(--muted,#e2e8f0);color:var(--muted-foreground,#475569);border-color:var(--border,#e2e8f0);cursor:not-allowed;transform:none;box-shadow:none}.ds-primary{background:var(--nutrition-action-background,var(--brand-navy-deep,#023467));color:var(--nutrition-action-foreground,#fff)}.ds-primary:hover{background:color-mix(in srgb,var(--nutrition-action-background,var(--brand-navy-deep,#023467)) 90%,black);box-shadow:0 1px 3px #0000001a}:host-context(.dark) .ds-primary{background:var(--nutrition-action-background,#7dd3fc);color:var(--nutrition-action-foreground,#082f49)}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Acción secundaria",
+      "kind": "button",
+      "description": "Acción con borde neutral.",
+      "html": "<button class=\"ds-button ds-outline\">Devolver con comentario</button>",
+      "css": ".ds-button{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 10px;border:1px solid transparent;border-radius:12px;font-weight:500;white-space:normal;transition:all 200ms;cursor:pointer}.ds-button:focus-visible{outline:2px solid var(--ring,#023467);outline-offset:3px;}.ds-button:active{transform:translateY(1px)}.ds-button:disabled{background:var(--muted,#e2e8f0);color:var(--muted-foreground,#475569);border-color:var(--border,#e2e8f0);cursor:not-allowed;transform:none;box-shadow:none}.ds-outline{background:var(--background,#eff2f7);border-color:var(--border,#e2e8f0)}.ds-outline:hover{background:var(--muted,#e2e8f0);box-shadow:0 1px 3px #0000001a}",
+      "refersTo": "button-outline"
+    },
+    {
+      "name": "Buscar paciente",
+      "kind": "input",
+      "description": "Input compartido con altura mínima del rail.",
+      "html": "<label class=\"ds-label\">Buscar paciente<input class=\"ds-search\" type=\"search\" placeholder=\"Buscar paciente\"></label>",
+      "css": ".ds-label{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);display:grid;gap:8px}.ds-search{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);min-height:44px;min-width:0;padding:4px 10px;border:1px solid var(--input,#e2e8f0);border-radius:12px;background:transparent;transition:all 200ms}.ds-search::placeholder{color:var(--muted-foreground,#475569)}.ds-search:hover{border-color:var(--muted-foreground,#475569)}.ds-search:focus-visible{outline:2px solid var(--ring,#023467);outline-offset:3px;box-shadow:0 0 0 3px #3b82f61a}.ds-search:disabled{opacity:.5;cursor:not-allowed;background:var(--input,#e2e8f0)}"
+    },
+    {
+      "name": "Selector de día",
+      "kind": "input",
+      "description": "Equivalente táctil del inspector mensual.",
+      "html": "<label class=\"ds-label\">Consultar día<select class=\"ds-select\"><option>Día 1</option><option>Día 2</option><option>Día 30</option></select></label>",
+      "css": ".ds-label{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);display:grid;gap:8px}.ds-select{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);height:44px;min-height:44px;max-width:100%;padding:8px 12px;border:1px solid var(--border,#e2e8f0);border-radius:6px;background:var(--background,#eff2f7);font-family:var(--font-plex-mono),monospace}.ds-select:focus-visible{outline:2px solid var(--ring,#023467);outline-offset:3px;}.ds-select:hover{border-color:var(--muted-foreground,#475569)}",
+      "refersTo": "select"
+    },
+    {
+      "name": "Estado por aprobar",
+      "kind": "chip",
+      "description": "Metadato textual de estado.",
+      "html": "<span class=\"ds-chip\">Por aprobar</span>",
+      "css": ".ds-chip{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:6px 10px;border-radius:999px;background:var(--info-soft,#e0f2fe);color:var(--info-soft-foreground,#075985);font-size:12px;font-weight:600}",
+      "refersTo": "chip-review"
+    },
+    {
+      "name": "Sección clínica",
+      "kind": "card",
+      "description": "Superficie local sin sombra propia.",
+      "html": "<section class=\"ds-panel\"><h3 class=\"ds-title\">Revisión del plan</h3><p class=\"ds-copy\">Verificación estructural antes de la decisión clínica.</p></section>",
+      "css": ".ds-panel{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);min-width:0;padding:16px;border:1px solid var(--border,#e2e8f0);border-radius:12px;background:var(--card,#fff)}.ds-title{margin:0;font-size:14px;font-weight:600}.ds-copy{margin:12px 0 0;color:var(--muted-foreground,#475569);font-size:13px;line-height:1.6}",
+      "refersTo": "panel"
+    },
+    {
+      "name": "Pestañas de ficha",
+      "kind": "nav",
+      "description": "Muestra visual del patrón line; la aplicación usa Base UI.",
+      "html": "<nav class=\"ds-tabs\" aria-label=\"Tareas del paciente\"><button class=\"ds-tab\" aria-current=\"page\">Resultados y ciclos</button><button class=\"ds-tab\">Programación</button><button class=\"ds-tab\">Plan de 30 días editar</button></nav>",
+      "css": ".ds-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;border-bottom:1px solid var(--border,#e2e8f0);background:var(--card,#fff)}.ds-tab{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);min-width:0;min-height:52px;padding:12px 8px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted-foreground,#475569);font-size:13px;line-height:1.35;white-space:normal;cursor:pointer}.ds-tab[aria-current]{color:var(--foreground,#1a1d2e);border-bottom-color:var(--foreground,#1a1d2e)}.ds-tab:hover{color:var(--foreground,#1a1d2e)}.ds-tab:focus-visible{outline:2px solid var(--ring,#023467);outline-offset:3px;}@media(max-width:1023px){.ds-tab{min-height:68px;padding:8px 4px;font-size:12px}}"
+    },
+    {
+      "name": "Comprobación estructural",
+      "kind": "custom",
+      "description": "Icono y resultado explícito; no certificación clínica.",
+      "html": "<div class=\"ds-check\"><span class=\"ds-check-label\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m8 12 3 3 5-6\"/></svg>30 días del ciclo</span><strong>Correcto</strong></div>",
+      "css": ".ds-check{font-family:var(--font-plex),sans-serif;font-size:14px;color:var(--foreground,#1a1d2e);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border,#e2e8f0);border-radius:6px;background:var(--success-soft,#d1fae5);color:var(--success-soft-foreground,#065f46);font-size:12px}.ds-check-label{display:flex;align-items:center;gap:8px}.ds-check strong{font-size:11px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Mesa clínica del ERP existente",
+    "overview": "Este documento registra el módulo construido, con la dirección ya fijada por el owner. Su identidad procede del ERP CoppAddresd: cabecera navy hacia teal, superficies claras y jerarquía compacta. La continuidad entre bandeja y ficha permite revisar un paciente sin perder el contexto de trabajo.\n\nEl contenido clínico tiene prioridad sobre la decoración. La interfaz distingue datos, estados y acciones con texto, iconos y color; las verificaciones estructurales apoyan la revisión profesional sin certificar seguridad clínica. Su alcance es `features/nutrition`, no redefine el sistema global.",
+    "keyCharacteristics": [
+      "Dos paneles en escritorio y recorrido lista→ficha en móvil.",
+      "Tres tareas accesibles mediante pestañas compartidas del ERP.",
+      "IBM Plex Sans para lectura; IBM Plex Mono para cantidades tabulares.",
+      "Superficies delimitadas y color semántico localizado."
+    ],
+    "rules": [
+      {
+        "name": "Estado explícito",
+        "body": "El color acompaña una etiqueta, resultado o icono; una advertencia no adopta el violeta de renovación.",
+        "section": "colors"
+      },
+      {
+        "name": "Cantidad legible",
+        "body": "Una cifra conserva su unidad visible; la meta diaria y el inspector mensual muestran kcal.",
+        "section": "typography"
+      },
+      {
+        "name": "Contexto continuo",
+        "body": "La selección no elimina la bandeja de escritorio; el móvil cambia de vista para preservar espacio legible.",
+        "section": "layout"
+      }
+    ],
+    "dos": [
+      "**Do** reutilizar PageHeader, SectionHeader, StatCard, Tabs y los estados semánticos del ERP.",
+      "**Do** preservar unidades, cifras tabulares, desconocidos explícitos y errores visibles.",
+      "**Do** conservar foco visible y controles operativos de al menos 44px, incluido el selector equivalente de las barras.",
+      "**Do** usar las variantes CSS de tema en lugar de fijar los colores claros dentro de componentes."
+    ],
+    "donts": [
+      "**Don't** convertir la validación estructural o el color de una barra en una decisión clínica.",
+      "**Don't** añadir nuevas fuentes, emojis, paletas decorativas o servicios para reproducir esta presentación.",
+      "**Don't** reemplazar el selector compacto de día por una matriz de treinta controles.",
+      "**Don't** generalizar los tamaños excepcionales de 10–11px de ejes y microdatos de bandeja como texto operativo del módulo."
+    ]
+  }
+}

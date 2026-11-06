@@ -89,7 +89,7 @@ for(const source of ['manual','youtube','wger'].filter(s=>!process.env.COP_E2E_S
   }
   assert(writes.every(w=>w.status<400),JSON.stringify(writes));
   results.push({source,routineId:routine.id,readBackFromRealApi:true,writes});console.log('PASS real persistence',source);
- }catch(e){await page.screenshot({path:out+'/failure-'+source+'.png',fullPage:true});console.error(source,e);process.exitCode=1;}finally{await page.close();}
+ }catch(e){await page.screenshot({path:out+'/failure-'+source+'.png',fullPage:true}).catch(()=>{});console.error(source,e);process.exitCode=1;}finally{await page.close();}
 }
 await writeFile(out+'/results.json',JSON.stringify({database:'isolated PostgreSQL',storage:config.Storage__Provider==='S3'?'S3 adapter (endpoint recorded by the QA environment)':'local QA provider (production requires S3)',results},null,2));
 await browser.close();
