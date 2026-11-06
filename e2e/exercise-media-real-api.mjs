@@ -56,7 +56,18 @@ for(const source of ['manual','youtube','wger'].filter(s=>!process.env.COP_E2E_S
   if(source!=='youtube') {
    // La biblioteca usa preload=none para ahorrar tráfico. Cargar explícitamente
    // desde la prueba verifica el archivo real sin activar reproducción automática.
-   await expect(page.locator('video')).toHaveAttribute('src',/\/api\/v1\/storage\//);
+   if(config.Storage__Provider==='S3') {
+    await expect(page.locator('video')).toHaveAttribute('src',/X-Amz-Signature=/);
+    const playback=new URL(await page.locator('video').getAttribute('src'));
+    if(process.env.COP_E2E_STORAGE_ORIGIN) assert.equal(playback.origin,process.env.COP_E2E_STORAGE_ORIGIN);
+    const range=await page.request.get(playback.href,{headers:{range:'bytes=0-63'}});
+    assert.equal(range.status(),206);assert.match(range.headers()['content-type'],/video\/mp4/);
+    assert.match(range.headers()['content-range'],/^bytes 0-63\//);assert.equal((await range.body()).length,64);
+    const unsigned=new URL(playback);unsigned.search='';
+    assert.equal((await page.request.get(unsigned.href)).status(),403,'The uploaded object must remain private');
+    const tampered=new URL(playback);tampered.searchParams.set('X-Amz-Signature','0'.repeat(64));
+    assert.equal((await page.request.get(tampered.href)).status(),403,'Invalid signatures must be rejected');
+   } else await expect(page.locator('video')).toHaveAttribute('src',/\/api\/v1\/storage\//);
    await page.locator('video').evaluate(video=>video.load());
    await page.waitForFunction(()=>document.querySelector('video')?.readyState>=1);
   }
@@ -80,5 +91,5 @@ for(const source of ['manual','youtube','wger'].filter(s=>!process.env.COP_E2E_S
   results.push({source,routineId:routine.id,readBackFromRealApi:true,writes});console.log('PASS real persistence',source);
  }catch(e){await page.screenshot({path:out+'/failure-'+source+'.png',fullPage:true});console.error(source,e);process.exitCode=1;}finally{await page.close();}
 }
-await writeFile(out+'/results.json',JSON.stringify({database:'isolated PostgreSQL',storage:'local QA provider (production requires S3)',results},null,2));
+await writeFile(out+'/results.json',JSON.stringify({database:'isolated PostgreSQL',storage:config.Storage__Provider==='S3'?'S3 adapter (endpoint recorded by the QA environment)':'local QA provider (production requires S3)',results},null,2));
 await browser.close();
