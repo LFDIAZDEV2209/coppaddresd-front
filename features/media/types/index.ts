@@ -20,7 +20,15 @@ export interface MediaChapter {
 }
 
 /** Espejo del MediaItemDto del backend (CoppAddresd.Api /api/v1/media). */
+export interface MediaProvenance {
+  derivativeSourceUrl?: string | null;
+  provider: string; externalId: string; title: string; author: string; authorUrl?: string | null;
+  sourceUrl: string; licenseName: string; licenseUrl: string; changes: string;
+  originalMediaUrl: string; originalMetadata: string; retrievedAt: string;
+}
+
 export interface MediaItem {
+  provenance?: MediaProvenance | null;
   id: string;
   title: string;
   description: string | null;

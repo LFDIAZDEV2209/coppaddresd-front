@@ -8,6 +8,8 @@ import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, Dia
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { getMediaItemById } from "@/features/media/services/media-service";
+import { ExerciseMediaCredits } from "./exercise-media-credits";
+import { ExerciseYouTubePlayer } from "./exercise-youtube-player";
 import { MediaPlayer } from "@/features/media/components/media-player";
 import type { MediaItem } from "@/features/media/types";
 import type { ExerciseRoutine, RoutineExercise } from "../types";
@@ -109,11 +111,12 @@ function ExercisePreview({ exercise }: { exercise: RoutineExercise }) {
     }).catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; };
   }, [exercise.mediaId, attempt]);
+  if (exercise.youTubeUrl) return <ExerciseYouTubePlayer url={exercise.youTubeUrl} title={exercise.name} />;
   if (exercise.mediaId) {
     if (failed) return <div role="alert" className="space-y-3 rounded-xl border p-4"><p>{t("No se pudo cargar la demostración.")}</p><Button variant="outline" onClick={() => { setFailed(false); setAttempt(n => n + 1); }}>{t("Reintentar")}</Button></div>;
     if (!media) return <Skeleton className="aspect-video w-full rounded-xl" />;
     if (media.status !== "Published" || (media.mediaType !== "Video" && media.mediaType !== "Image")) return <p className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">{t("Publica una imagen o un vídeo para que el paciente pueda verlo.")}</p>;
-    return <figure className="overflow-hidden rounded-xl border"><MediaPlayer storageKey={media.storageKey} mediaType={media.mediaType} alt={exercise.name} className="aspect-video max-h-none" /><figcaption className="bg-muted/30 px-4 py-2 text-xs text-muted-foreground">{t("Demostración de tu equipo clínico")}</figcaption></figure>;
+    return <figure className="overflow-hidden rounded-xl border"><MediaPlayer storageKey={media.storageKey} thumbnailKey={media.thumbnailKey} mediaType={media.mediaType} alt={exercise.name} className="aspect-video max-h-none" /><figcaption className="bg-muted/30 px-4 py-2 text-xs text-muted-foreground">{media.provenance ? <ExerciseMediaCredits provenance={media.provenance} /> : t("Demostración de tu equipo clínico")}</figcaption></figure>;
   }
   const reference = exercise.referenceVideo;
   if (!reference) return <div className="rounded-xl border border-dashed bg-muted/30 p-5"><p className="font-medium">{t("Demostración no disponible")}</p><p className="mt-1 text-sm text-muted-foreground">{t("Añade una imagen o un vídeo al editar este ejercicio.")}</p></div>;

@@ -9,6 +9,7 @@ import { useT } from "@/providers/i18n-provider";
 
 interface MediaPlayerProps {
   storageKey: string;
+  thumbnailKey?: string | null;
   mediaType: MediaItem["mediaType"];
   className?: string;
   preload?: "none" | "metadata" | "auto";
@@ -23,6 +24,7 @@ interface MediaPlayerProps {
  */
 export function MediaPlayer({
   storageKey,
+  thumbnailKey,
   mediaType,
   className = "",
   preload = "metadata",
@@ -31,11 +33,13 @@ export function MediaPlayer({
 }: MediaPlayerProps) {
   const t = useT();
   const [url, setUrl] = useState<string | null>(null);
+  const [poster, setPoster] = useState<string | undefined>(undefined);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
+    if (thumbnailKey) getMediaStreamUrl(thumbnailKey).then(value => { if (!cancelled) setPoster(value); }).catch(() => {});
     getMediaStreamUrl(storageKey)
       .then((signedUrl) => {
         if (!cancelled) setUrl(signedUrl);
@@ -47,7 +51,7 @@ export function MediaPlayer({
     return () => {
       cancelled = true;
     };
-  }, [storageKey]);
+  }, [storageKey, thumbnailKey]);
 
   if (error) {
     return (
@@ -76,6 +80,8 @@ export function MediaPlayer({
     return (
       <video
         src={url}
+        poster={poster}
+        onError={() => setError(true)}
         controls
         onLoadedMetadata={(event) => {
           const seconds = event.currentTarget.duration;

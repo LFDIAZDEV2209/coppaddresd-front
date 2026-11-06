@@ -152,7 +152,7 @@ export async function apiFetch<T>(
     if (activeClinicId && !headers.has("X-Clinic-Id")) {
       headers.set("X-Clinic-Id", activeClinicId);
     }
-    if (fetchInit.body && !headers.has("Content-Type")) {
+    if (fetchInit.body && !(typeof FormData !== "undefined" && fetchInit.body instanceof FormData) && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
 

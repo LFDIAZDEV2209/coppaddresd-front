@@ -47,7 +47,7 @@ import {
   generatePlan,
   mapExercisePayloadToForm,
 } from "../services/generate-plan-service";
-import { ExerciseMediaPicker } from "./exercise-media-picker";
+import { ExerciseSourcesPicker } from "./exercise-sources-picker";
 
 interface ExerciseRoutineFormDialogProps {
   open: boolean;
@@ -95,6 +95,7 @@ interface ExerciseFormData {
   tips: string;
   notes: string;
   mediaId: string;
+  youTubeUrl: string;
 }
 
 const EMPTY_EXERCISE: ExerciseFormData = {
@@ -112,6 +113,7 @@ const EMPTY_EXERCISE: ExerciseFormData = {
   tips: "",
   notes: "",
   mediaId: "",
+  youTubeUrl: "",
 };
 
 export function ExerciseRoutineFormFields({
@@ -225,6 +227,7 @@ export function ExerciseRoutineFormFields({
                 tips: e.tips ?? "",
                 notes: "",
                 mediaId: e.mediaId ?? "",
+                youTubeUrl: e.youTubeUrl ?? "",
               })),
           );
         } else setDetailError(true);
@@ -304,7 +307,7 @@ export function ExerciseRoutineFormFields({
       setEquipment(values.equipment);
       setWarmupNotes(values.warmupNotes);
       setCooldownNotes(values.cooldownNotes);
-      setExercises(values.exercises.map((exercise) => ({ ...exercise, mediaId: "" })));
+      setExercises(values.exercises.map((exercise) => ({ ...exercise, mediaId: "", youTubeUrl: "" })));
     } catch (err) {
       setGenerateError(
         err instanceof ApiError
@@ -335,6 +338,7 @@ export function ExerciseRoutineFormFields({
         rpe: ex.rpe ? parseInt(ex.rpe, 10) : null,
         tips: ex.tips.trim() || null,
         mediaId: ex.mediaId || null,
+        youTubeUrl: ex.youTubeUrl || null,
         sortOrder: idx,
       }));
 
@@ -778,8 +782,8 @@ export function ExerciseRoutineFormFields({
                       className="min-h-11 text-sm sm:col-span-2"
                     />
                    </div>
-                   <ExerciseMediaPicker value={exercise.mediaId} exerciseName={exercise.name} disabled={saving || generating}
-                     onChange={(id) => updateExercise(index, "mediaId", id)}
+                   <ExerciseSourcesPicker value={exercise.mediaId} youTubeUrl={exercise.youTubeUrl} exerciseName={exercise.name} disabled={saving || generating}
+                     onChange={(id, url) => setExercises(items => items.map((item, i) => i === index ? { ...item, mediaId: id, youTubeUrl: url } : item))}
                      onBusyChange={(busy) => setMediaUploads((count) => Math.max(0, count + (busy ? 1 : -1)))} />
                  </div>
                ))}

@@ -1,3 +1,4 @@
+import type { MediaProvenance } from "@/features/media/types";
 // --- Nutrition Plan Types ---
 
 export type NutritionPlanStatus = "Draft" | "Active" | "Completed" | "Archived";
@@ -165,6 +166,8 @@ export type RoutineCategory = "Fuerza" | "Cardio" | "Flexibilidad" | "Mixta";
 
 /** Ejercicio individual de una rutina. */
 export interface RoutineExercise {
+  youTubeUrl?: string | null;
+  provenance?: MediaProvenance | null;
   id: string;
   name: string;
   description: string | null;
@@ -220,6 +223,7 @@ export interface ExerciseRoutineListItem {
 
 /** Payload para crear/actualizar ejercicio. */
 export interface RoutineExerciseInput {
+  youTubeUrl?: string | null;
   name: string;
   description: string | null;
   sets: number | null;
