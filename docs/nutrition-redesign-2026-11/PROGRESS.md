@@ -59,3 +59,9 @@ Al finalizar cada ciclo se entrega resumen de hasta tres líneas y se espera ins
 - N05: formato civil compartido con año, UTC→UTC en calendario, selector y vigencia; valores nulos siguen sin definir. N06: inspector y nombres accesibles con un decimal; diferencias subdecimales conservan su signo mediante texto explícito, sin umbral clínico nuevo.
 - Lint, tsc e i18n completos: exit 0. Specs cycles/plan-review/rework y caso de desviaciones: 10 passed. Tres aserciones nuevas usaban abreviación de fecha/traducción distinta al locale existente; ajustadas al español colombiano y al diccionario vigente, sin cambiar producto para satisfacerlas. Repetición de formatting: **4 passed**, incluidas dos zonas horarias, cambio de año, ausencia de fechas y es/en.
 - QA real: inspector `1.850,3 kcal · meta 1.850 kcal · desviación +0,3 kcal`; rango del 5 de noviembre al 4 de diciembre de 2026 y zona del paciente visibles. Sin cambios de fórmulas, payloads, persistencia ni datos QA.
+
+### Etapa 3 — breadcrumb compartido aislado
+
+- N03: último segmento flexible con min-width 0 y nav contenido; nombre completo permanece en DOM y header. Sin cambios del provider, rutas ni búsqueda.
+- `nutrition-ux-capture.spec.ts`: **4 passed**; caso nuevo comprueba no solapamiento con búsqueda a 1440/1280/1024 y nombre clínico íntegro a 390. lint/tsc/i18n completos: exit 0.
+- Smoke Playwright MCP en Programas, Tests y Citas a 1440/1024/390: sin overflow; breadcrumb desktop y ocultación móvil conservados. Citas sigue con h1 de ancho 0 a 390, defecto previo documentado en Ciclo 1, ajeno a Topbar; no se amplía alcance. Sin mutaciones.

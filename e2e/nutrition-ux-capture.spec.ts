@@ -15,6 +15,27 @@ async function demo(page: Page) {
   await mockNutritionHttp(page, ["Nutrition.Manage", "Nutrition.Approve"]);
 }
 
+test("breadcrumb largo cede espacio al buscador sin perder nombre clínico", async ({ page }) => {
+  const { store } = await mockNutritionHttp(page);
+  const name = "Paciente QA con nombre clínico deliberadamente largo para revisar orientación y búsqueda";
+  store.get("demo-patient-2")!.patientName = name;
+  await page.goto("/nutrition/demo-patient-2");
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+  for (const width of [1440, 1280, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb", exact: true });
+    await expect(breadcrumb).toContainText(name);
+    const bounds = await breadcrumb.boundingBox();
+    const search = await page.getByRole("textbox", { name: "Buscar...", exact: true }).boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(search).not.toBeNull();
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(search!.x);
+  }
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test("bandeja: filtros neutros, filas densas y selección visible", async ({
   page,
 }) => {
