@@ -10,12 +10,18 @@
 - Límites: sin lector de pantalla/certificación WCAG, sin comparación C1/C2 por falta de datos multiciclo, sin generación IA nueva, sin publicación de v2. Se preserva evidencia de un recorte transitorio al redimensionar un modal; apertura directa móvil correcta.
 - Próximo paso: instrucción del orquestador para Ciclo 2 (clasificar problemas). Prioridades candidatas: nutrientes truncados, objetivos táctiles, densidad vertical, ambigüedad Auto-aprobado/Borrador y precisión del exceso energético.
 
+## Ciclo 2 — completado / idle
+
+- [DIAGNOSTICO.md](DIAGNOSTICO.md): 11 hallazgos (2 de severidad 1, 8 de severidad 2, 1 de severidad 3), con frecuencia condicionada a la evidencia, impacto, captura/medición y soluciones UX + token/componente. HTTP 500 registrado aparte como bloqueante histórico recuperado; ninguno activo acreditado al cierre.
+- Cubre bandeja, header, resultados/ciclos, programación, editor y estados IA. Incluye patrones sin defecto observado y excluye del recuento discrepancias posiblemente transitorias de contadores, subrayados y modal, además de límites del tema oscuro y datos multiciclo.
+- Solo documentación sobre evidencia del Ciclo 1; sin cambios de producto, nuevas pruebas/mutaciones clínicas, push ni deploy. Próximo paso: instrucción del orquestador para Ciclo 3, propuesta; no implementación autorizada todavía.
+
 ## Ciclos previstos (estimaciones)
 
 | Ciclo | Duración de trabajo | Estado |
 |---|---|---|
 | 1. Exploración | 30–45 min, excluye espera de acceso | Completado |
-| 2. Diagnóstico | 15–25 min | Pendiente |
+| 2. Diagnóstico | 15–25 min | Completado |
 | 3. Propuesta | 20–30 min | Pendiente |
 | 4. Implementación | 60–120 min | Pendiente |
 | 5. Verificación | 30–45 min | Pendiente |

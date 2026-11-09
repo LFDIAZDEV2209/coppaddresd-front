@@ -1,5 +1,7 @@
 # Exploración UX de Nutrición — noviembre de 2026
 
+El diagnóstico consolidado del Ciclo 2 está en [DIAGNOSTICO.md](DIAGNOSTICO.md): severidades, frecuencia, impacto, propuestas UX/componentes y patrones a conservar. Las observaciones preliminares de este README se mantienen como registro del Ciclo 1; la clasificación del diagnóstico las sustituye.
+
 ## Estado y alcance
 
 Ciclo 1 iniciado y completado el 9 de noviembre de 2026, tras resolver acceso y disponibilidad local. Se recorrieron Programas, Tests de salud, Citas y los flujos de Nutrición detallados abajo. No equivale a certificación WCAG ni validación clínica. Base comprobada: `c6410d6`, checkout inicialmente limpio; rama: `feature/nutrition-ux-premium`.
