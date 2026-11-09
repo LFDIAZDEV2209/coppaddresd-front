@@ -16,14 +16,21 @@
 - Cubre bandeja, header, resultados/ciclos, programación, editor y estados IA. Incluye patrones sin defecto observado y excluye del recuento discrepancias posiblemente transitorias de contadores, subrayados y modal, además de límites del tema oscuro y datos multiciclo.
 - Solo documentación sobre evidencia del Ciclo 1; sin cambios de producto, nuevas pruebas/mutaciones clínicas, push ni deploy. Próximo paso: instrucción del orquestador para Ciclo 3, propuesta; no implementación autorizada todavía.
 
+## Ciclo 3 — completado / idle
+
+- [PROPUESTA.md](PROPUESTA.md): los 11 hallazgos quedan vinculados a decisiones visuales, funcionales y técnicas; se separan ajustes de retorno rápido, formato, breadcrumb compartido, bandeja/header y editor estructural.
+- El contrato aclara que autoaprobación significa coincidencia de creador/aprobador, no aprobación por IA. Se propone trasladar esa información a su evento histórico y conservar estado clínico y publicación actuales.
+- Etapas del Ciclo 4 con archivos estimados, criterios medibles, riesgo y contención; fronteras explícitas sobre contratos, cálculos, estados/permisos y persistencia. Matriz Playwright de cinco anchos y comandos lint/i18n/tsc/build documentados, todavía no ejecutados para esta propuesta documental.
+- Solo documentación; sin cambios de producto ni mutaciones de datos. Referencias locales y diff revisados. Pendiente de revisión del orquestador y autorización del Ciclo 4.
+
 ## Ciclos previstos (estimaciones)
 
 | Ciclo | Duración de trabajo | Estado |
 |---|---|---|
 | 1. Exploración | 30–45 min, excluye espera de acceso | Completado |
 | 2. Diagnóstico | 15–25 min | Completado |
-| 3. Propuesta | 20–30 min | Pendiente |
-| 4. Implementación | 60–120 min | Pendiente |
+| 3. Propuesta | 20–30 min | Completado |
+| 4. Implementación | Estimación desglosada por etapas en PROPUESTA.md | Pendiente de revisión/autorización |
 | 5. Verificación | 30–45 min | Pendiente |
 | 6. Refinamiento | 20–30 min | Pendiente |
 

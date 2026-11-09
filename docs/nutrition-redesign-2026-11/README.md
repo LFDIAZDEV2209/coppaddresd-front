@@ -1,5 +1,7 @@
 # Exploración UX de Nutrición — noviembre de 2026
 
+La propuesta del Ciclo 3 está en [PROPUESTA.md](PROPUESTA.md): prioridades, decisiones de diseño, límites, etapas de implementación y validación prevista. Pendiente de revisión del orquestador antes del Ciclo 4; sin cambios de producto.
+
 El diagnóstico consolidado del Ciclo 2 está en [DIAGNOSTICO.md](DIAGNOSTICO.md): severidades, frecuencia, impacto, propuestas UX/componentes y patrones a conservar. Las observaciones preliminares de este README se mantienen como registro del Ciclo 1; la clasificación del diagnóstico las sustituye.
 
 ## Estado y alcance
