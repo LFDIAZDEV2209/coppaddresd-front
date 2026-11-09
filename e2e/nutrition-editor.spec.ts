@@ -213,7 +213,7 @@ test("aprobar exige críticas; registra autoaprobación y actualiza bandeja", as
   await confirm.click();
   await expect(dialog).toHaveCount(0);
   await page.getByText("Bitácora del plan", { exact: false }).click();
-  await expect(page.getByText("Auto-aprobado", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Aprobado por el mismo profesional que creó la versión", { exact: true })).toHaveCount(1);
   await expect(
     page.getByText("2 alertas críticas confirmadas", { exact: true }),
   ).toBeVisible();
@@ -379,7 +379,7 @@ test("cambiar metas exige regenerar antes de revisión y aprobación", async ({
   await page
     .getByRole("button", { name: "Aprobar y publicar", exact: true })
     .click();
-  await expect(page.getByText("Auto-aprobado", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Aprobado por el mismo profesional que creó la versión", { exact: true })).toHaveCount(1);
 });
 
 test("Manage permite editar pero no aprobar ni devolver", async ({ page }) => {

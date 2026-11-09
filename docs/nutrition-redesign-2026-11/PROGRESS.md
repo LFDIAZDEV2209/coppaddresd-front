@@ -36,13 +36,20 @@
 
 Al finalizar cada ciclo se entrega resumen de hasta tres líneas y se espera instrucción del orquestador. La propuesta se revisa antes de implementación. El registro no contiene credenciales.
 
-## Ciclo 4 ? autorizado, en ejecuci?n
+## Ciclo 4 — autorizado, en ejecución
 
-### Etapa 0 ? baseline completado
+### Etapa 0 — baseline completado
 
-- Base `b379672`, rama `feature/nutrition-ux-premium`, checkout inicialmente limpio. Front/API/gateway HTTP 200. QA local v2 contin?a Devuelto; sin mutaciones nuevas. A 390?900 no hay overflow y se reproduce N04 tras reload asentado. Las hip?tesis transitorias del diagn?stico siguen excluidas; no se elevan a defectos.
-- `corepack yarn lint`, `corepack yarn tsc --noEmit` y `corepack yarn i18n:check`: exit 0 (0 claves literales faltantes; advertencias informativas de claves din?micas/hu?rfanas).
-- `corepack yarn e2e --project=chromium-desktop e2e/nutrition --reporter=list`: 29 passed, 1 skipped, 1,8 min. Suite con fixtures HTTP; la sonda live requiere configuraci?n expl?cita y no se presenta como ejecutada.
-- Tres specs de capturas escrib?an en OpenSpec: rutas trasladadas a `test-results/nutrition-captures/` para respetar escrituras exclusivamente dentro del front. Sin cambios de producto.
-- Skills frontend/i18n y documentaci?n local Next consultadas. Modern Web Guidance devuelve gu?a responsive; advierte versi?n de skill antigua, sin modificar herramientas del workspace. El fallo previo de impeccable context permanece documentado; detector se intentar? en pre-ship.
-- Siguiente: etapa 1, sem?ntica hist?rica, unidades, blancos t?ctiles y error sin alertas anidadas. Autorizadas todas las etapas, no se espera nueva aprobaci?n.
+- Base `b379672`, rama `feature/nutrition-ux-premium`, checkout inicialmente limpio. Front/API/gateway HTTP 200. QA local v2 continúa Devuelto; sin mutaciones nuevas. A 390×900 no hay overflow y se reproduce N04 tras reload asentado. Las hipótesis transitorias del diagnóstico siguen excluidas; no se elevan a defectos.
+- `corepack yarn lint`, `corepack yarn tsc --noEmit` y `corepack yarn i18n:check`: exit 0 (0 claves literales faltantes; advertencias informativas de claves dinámicas/huérfanas).
+- `corepack yarn e2e --project=chromium-desktop e2e/nutrition --reporter=list`: 29 passed, 1 skipped, 1,8 min. Suite con fixtures HTTP; la sonda live requiere configuración explícita y no se presenta como ejecutada.
+- Tres specs de capturas escribían en OpenSpec: rutas trasladadas a `test-results/nutrition-captures/` para respetar escrituras exclusivamente dentro del front. Sin cambios de producto.
+- Skills frontend/i18n y documentación local Next consultadas. Modern Web Guidance devuelve guía responsive; advierte versión de skill antigua, sin modificar herramientas del workspace. El fallo previo de impeccable context permanece documentado; detector se intentará en pre-ship.
+- Siguiente: etapa 1, semántica histórica, unidades, blancos táctiles y error sin alertas anidadas. Autorizadas todas las etapas, no se espera nueva aprobación.
+
+### Etapa 1 — ajustes de retorno rápido
+
+- N04: retirado chip de autoaprobación del header; evento aprobado conserva explicación histórica de creador/aprobador. N08: sufijo g visible sin alterar inputs. N10: anterior/siguiente/actualizar/agua/acciones de ciclo con mínimos táctiles locales. N11: una alerta de carga con detalle desplegable; errores de guardado y motivos clínicos siguen directamente visibles.
+- Playwright MCP real: 390×900 y 1440×900 sin overflow, 17 sufijos g, chip ausente; anterior/siguiente/actualizar 44×44, agua ≥50×44 en móvil. Sin mutaciones QA.
+- Specs editor/queue/cycles: 20 passed y 1 skipped en la segunda corrida, un fallo detectó detalle de guardado oculto. Corregido restringiendo disclosure a carga; repetición focalizada de nueva versión/comida vacía, endpoint y conflicto: **3 passed**. El resto de escenarios de las specs pasó; no se ignora el fallo inicial.
+- i18n, tsc y lint completos: exit 0. Corregida también codificación de acentos del registro de etapa 0, introducida por la tubería de PowerShell; escrituras posteriores UTF-8 explícito. Prettier no está instalado, no se añadió dependencia.

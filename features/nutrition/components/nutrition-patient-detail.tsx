@@ -273,12 +273,6 @@ function PatientWorkspace({
   const returnComment = patient.audit.find(
     (entry) => entry.action === "returned" && entry.version === cycle?.version,
   )?.comment;
-  const autoApproved = patient.audit.some(
-    (entry) =>
-      entry.action === "approved" &&
-      entry.version === cycle?.version &&
-      entry.autoApproved,
-  );
   const labels = {
     created: "Borrador creado",
     saved: "Borrador guardado",
@@ -332,11 +326,6 @@ function PatientWorkspace({
             {cycle?.provisional && (
               <span className="nutrition-chip" data-status="informational">
                 {t("Provisional")}
-              </span>
-            )}
-            {autoApproved && (
-              <span className="nutrition-chip" data-status="aprobado">
-                {t("Auto-aprobado")}
               </span>
             )}
           </div>
@@ -612,12 +601,11 @@ function PatientWorkspace({
                               })}
                             </p>
                           )}
-                          {entry.autoApproved && (
+                          {entry.action === "approved" && entry.autoApproved && (
                             <span
-                              className="nutrition-chip mt-1"
-                              data-status="aprobado"
+                              className="mt-1 block text-xs text-muted-foreground"
                             >
-                              {t("Auto-aprobado")}
+                              {t("Aprobado por el mismo profesional que creó la versión")}
                             </span>
                           )}
                         </TableCell>

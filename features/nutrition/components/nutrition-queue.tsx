@@ -127,6 +127,7 @@ export function NutritionQueue({
             disabled={loading}
             onClick={retry}
             aria-label={t("Actualizar bandeja")}
+            className="min-h-11 min-w-11"
           >
             <RefreshCw className="size-4" aria-hidden="true" />
             <span className="hidden sm:inline">{t("Actualizar")}</span>

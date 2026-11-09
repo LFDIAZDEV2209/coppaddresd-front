@@ -105,6 +105,7 @@ export function NutritionPlanEditor({
           <Button
             variant="outline"
             size="icon"
+            className="min-h-11 min-w-11"
             disabled={day === 1}
             aria-label={t("Día anterior")}
             onClick={() => setDay((value) => value - 1)}
@@ -128,6 +129,7 @@ export function NutritionPlanEditor({
           <Button
             variant="outline"
             size="icon"
+            className="min-h-11 min-w-11"
             disabled={day === 30}
             aria-label={t("Día siguiente")}
             onClick={() => setDay((value) => value + 1)}
@@ -187,7 +189,7 @@ export function NutritionPlanEditor({
                   </label>
                   <Input
                     id={`water-${meal.id}`}
-                    className="nutrition-measure w-20"
+                    className="nutrition-measure min-h-11 w-20"
                     type="number"
                     min={0}
                     max={8}
@@ -285,6 +287,7 @@ export function NutritionPlanEditor({
                               }));
                           }}
                         />
+                        <span aria-hidden="true">{t("g")}</span>
                       </div>
                       <Button
                         variant="ghost"

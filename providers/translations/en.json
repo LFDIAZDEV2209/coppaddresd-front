@@ -5148,5 +5148,8 @@
   "Motivo de la decisión": "Reason for the decision",
   "Revisé el impacto sobre el ciclo vigente y los próximos ciclos.": "I reviewed the impact on the active cycle and upcoming cycles.",
   "Exploración local de ciclos": "Local cycle exploration",
-  "Datos sintéticos · hoy fijo: 6 de noviembre de 2026 · sin conexión clínica": "Synthetic data · fixed date: November 6, 2026 · no clinical connection"
+  "Datos sintéticos · hoy fijo: 6 de noviembre de 2026 · sin conexión clínica": "Synthetic data · fixed date: November 6, 2026 · no clinical connection",
+  "Aprobado por el mismo profesional que creó la versión": "Approved by the same professional who created the version",
+  "Detalles del error": "Error details",
+  "Los datos no están disponibles. Intenta actualizar; si el problema continúa, vuelve más tarde.": "Data is unavailable. Try refreshing; if the problem persists, come back later."
 }

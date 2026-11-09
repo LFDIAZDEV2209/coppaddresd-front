@@ -165,6 +165,8 @@ test("endpoint ausente y contrato incompatible no producen datos demo", async ({
   await expect(
     page.getByRole("list", { name: "Planes de pacientes" }),
   ).toHaveCount(0);
+  await expect(page.locator(".nutrition-module").getByRole("alert")).toHaveCount(1);
+  await page.getByText("Detalles del error", { exact: true }).click();
   await expect(
     page.getByText("Endpoint pendiente de backend", { exact: true }),
   ).toBeVisible();

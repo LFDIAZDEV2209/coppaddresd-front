@@ -1276,3 +1276,14 @@
   line-height: 1.5;
   color: var(--muted-foreground);
 }
+
+/* Controles clínicos: unidades visibles y blancos táctiles locales. */
+.nutrition-food-grams {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.nutrition-cycle-row-actions button {
+  min-width: 44px;
+  min-height: 44px;
+}
