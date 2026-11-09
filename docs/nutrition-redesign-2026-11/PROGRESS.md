@@ -53,3 +53,9 @@ Al finalizar cada ciclo se entrega resumen de hasta tres líneas y se espera ins
 - Playwright MCP real: 390×900 y 1440×900 sin overflow, 17 sufijos g, chip ausente; anterior/siguiente/actualizar 44×44, agua ≥50×44 en móvil. Sin mutaciones QA.
 - Specs editor/queue/cycles: 20 passed y 1 skipped en la segunda corrida, un fallo detectó detalle de guardado oculto. Corregido restringiendo disclosure a carga; repetición focalizada de nueva versión/comida vacía, endpoint y conflicto: **3 passed**. El resto de escenarios de las specs pasó; no se ignora el fallo inicial.
 - i18n, tsc y lint completos: exit 0. Corregida también codificación de acentos del registro de etapa 0, introducida por la tubería de PowerShell; escrituras posteriores UTF-8 explícito. Prettier no está instalado, no se añadió dependencia.
+
+### Etapa 2 — fechas y precisión
+
+- N05: formato civil compartido con año, UTC→UTC en calendario, selector y vigencia; valores nulos siguen sin definir. N06: inspector y nombres accesibles con un decimal; diferencias subdecimales conservan su signo mediante texto explícito, sin umbral clínico nuevo.
+- Lint, tsc e i18n completos: exit 0. Specs cycles/plan-review/rework y caso de desviaciones: 10 passed. Tres aserciones nuevas usaban abreviación de fecha/traducción distinta al locale existente; ajustadas al español colombiano y al diccionario vigente, sin cambiar producto para satisfacerlas. Repetición de formatting: **4 passed**, incluidas dos zonas horarias, cambio de año, ausencia de fechas y es/en.
+- QA real: inspector `1.850,3 kcal · meta 1.850 kcal · desviación +0,3 kcal`; rango del 5 de noviembre al 4 de diciembre de 2026 y zona del paciente visibles. Sin cambios de fórmulas, payloads, persistencia ni datos QA.

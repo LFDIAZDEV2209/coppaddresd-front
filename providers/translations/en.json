@@ -5151,5 +5151,9 @@
   "Datos sintéticos · hoy fijo: 6 de noviembre de 2026 · sin conexión clínica": "Synthetic data · fixed date: November 6, 2026 · no clinical connection",
   "Aprobado por el mismo profesional que creó la versión": "Approved by the same professional who created the version",
   "Detalles del error": "Error details",
-  "Los datos no están disponibles. Intenta actualizar; si el problema continúa, vuelve más tarde.": "Data is unavailable. Try refreshing; if the problem persists, come back later."
+  "Los datos no están disponibles. Intenta actualizar; si el problema continúa, vuelve más tarde.": "Data is unavailable. Try refreshing; if the problem persists, come back later.",
+  "Menos de {amount} kcal sobre la meta": "Less than {amount} kcal above target",
+  "Menos de {amount} kcal bajo la meta": "Less than {amount} kcal below target",
+  "Menos de {amount} {unit} sobre la meta": "Less than {amount} {unit} above target",
+  "{kcal} kcal · meta {target} kcal · desviación {difference}": "{kcal} kcal · target {target} kcal · deviation {difference}"
 }
