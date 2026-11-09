@@ -5,7 +5,7 @@ import { mockNutritionHttp } from "./fixtures/nutrition-http";
 import type { NutritionViewWire } from "../features/nutrition/types/nutrition-wire";
 
 const captures = path.resolve(
-  "../openspec/changes/plan-nutricional-erp/screenshots/cycles-design",
+  "test-results/nutrition-captures/cycles-design",
 );
 
 test("ciclos: agrupar versiones, abrir plan e historial y conservar bandeja", async ({
@@ -420,7 +420,7 @@ test("sin ciclos conserva creación existente y la exploración rechaza host rem
 }) => {
   await mockNutritionHttp(page);
   await page.goto("/nutrition");
-  await page.getByRole("button", { name: /Sin plan/ }).click();
+  await page.getByRole("combobox", { name: "Estado del plan", exact: true }).selectOption("sin_plan");
   await page.getByRole("link", { name: "Diego Demo", exact: true }).click();
   await expect(
     page.getByText("Aún no hay ciclos para mostrar.", { exact: true }),

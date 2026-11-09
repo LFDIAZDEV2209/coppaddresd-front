@@ -176,6 +176,7 @@ function PatientWorkspace({
     return value === "plan" || value === "programacion" ? value : "resultados";
   });
   const auditRef = useRef<HTMLDetailsElement>(null);
+  const [toolbarHost, setToolbarHost] = useState<HTMLDivElement | null>(null);
   useEffect(() => {
     if (
       new URLSearchParams(window.location.search).get("history") === "1" &&
@@ -273,12 +274,6 @@ function PatientWorkspace({
   const returnComment = patient.audit.find(
     (entry) => entry.action === "returned" && entry.version === cycle?.version,
   )?.comment;
-  const autoApproved = patient.audit.some(
-    (entry) =>
-      entry.action === "approved" &&
-      entry.version === cycle?.version &&
-      entry.autoApproved,
-  );
   const labels = {
     created: "Borrador creado",
     saved: "Borrador guardado",
@@ -313,16 +308,17 @@ function PatientWorkspace({
         </span>
       </div>
       <header className="nutrition-detail-header">
-        <div className="min-w-0">
+        <div className="nutrition-header-identity min-w-0">
           <h2 className="nutrition-display nutrition-patient-title">
             {patient.patientName}
           </h2>
           <p className="nutrition-measure mt-1 text-xs text-muted-foreground">
             {patient.patientDocument ?? t("Sin documento")}
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+        </div>
+          <div className="nutrition-header-state flex flex-wrap items-center gap-2">
             <NutritionStateChip state={cycle?.state ?? "sin_plan"} />
-            {cycle && (
+            {cycle && headers.length < 2 && (
               <span className="nutrition-measure text-xs">
                 {t("Versión {version}", { version: String(cycle.version) })}
                 {cycleNumber &&
@@ -334,13 +330,7 @@ function PatientWorkspace({
                 {t("Provisional")}
               </span>
             )}
-            {autoApproved && (
-              <span className="nutrition-chip" data-status="aprobado">
-                {t("Auto-aprobado")}
-              </span>
-            )}
           </div>
-        </div>
         <div className="nutrition-detail-actions">
           {!cycle && canManage && (
             <Button onClick={() => changeTab("plan")}>
@@ -423,6 +413,7 @@ function PatientWorkspace({
         onValueChange={(value) => changeTab(value as DetailTab)}
         className="nutrition-detail-tabs"
       >
+        <div className="nutrition-context-bar">
         <TabsList
           variant="line"
           aria-label={t("Secciones de la ficha nutricional")}
@@ -441,6 +432,8 @@ function PatientWorkspace({
             {t("Plan de 30 días")}
           </TabsTrigger>
         </TabsList>
+        <div ref={setToolbarHost} hidden={tab !== "plan" || !cycle} />
+        </div>
         <TabsContent value="resultados" keepMounted>
           <div className="nutrition-tab-body">
             <NutritionProgramCycles
@@ -612,12 +605,11 @@ function PatientWorkspace({
                               })}
                             </p>
                           )}
-                          {entry.autoApproved && (
+                          {entry.action === "approved" && entry.autoApproved && (
                             <span
-                              className="nutrition-chip mt-1"
-                              data-status="aprobado"
+                              className="mt-1 block text-xs text-muted-foreground"
                             >
-                              {t("Auto-aprobado")}
+                              {t("Aprobado por el mismo profesional que creó la versión")}
                             </span>
                           )}
                         </TableCell>
@@ -702,6 +694,8 @@ function PatientWorkspace({
             {cycle ? (
               <NutritionPlanEditor
                 cycle={cycle}
+                toolbarHost={toolbarHost}
+                context={<div className="nutrition-editor-context"><span className="nutrition-context-patient">{patient.patientName}</span><span>{t(saveStatus === "saving" ? "Guardando borrador…" : saveStatus === "error" ? "No se guardaron los últimos cambios." : "Todos los cambios guardados")}</span></div>}
                 catalog={catalog}
                 editable={editable}
                 update={updateCycle}

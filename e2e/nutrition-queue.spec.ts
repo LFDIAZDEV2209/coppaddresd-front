@@ -102,17 +102,13 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
     .getByRole("button", { name: "Expandir sidebar", exact: true })
     .focus();
   await page.keyboard.press("Enter");
-  const filters = page.getByRole("group", {
-    name: "Filtrar planes por estado",
-  });
-  await expect(filters.locator("button > span:last-child")).toHaveCount(7);
-  for (const counter of await filters.locator("button > span:last-child").all())
-    await expect(counter).toHaveText(/^\d+$/);
-  await filters.getByRole("button", { name: /Por aprobar/ }).click();
+  const filters = page.getByRole("combobox", { name: "Estado del plan", exact: true });
+  await expect(filters.locator("option")).toHaveCount(7);
+  for (const option of await filters.locator("option").all())
+    await expect(option).toHaveText(/.+ \(\d+\)$/);
+  await filters.selectOption("en_aprobacion");
   await expect(list.getByRole("listitem")).toHaveCount(3);
-  await expect(
-    filters.getByRole("button", { name: /Por aprobar/ }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(filters).toHaveValue("en_aprobacion");
   await page.getByLabel("Buscar paciente", { exact: true }).fill("Maria");
   await expect(list.getByRole("listitem")).toHaveCount(1);
   await expect(list).toContainText("María Demo");
@@ -124,13 +120,13 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
   await expect(list.getByRole("listitem")).toHaveCount(10);
   await page.getByRole("button", { name: "Siguiente", exact: true }).click();
   await expect(list.getByRole("listitem")).toHaveCount(6);
-  await filters.getByRole("button", { name: /Sin plan/ }).click();
+  await filters.selectOption("sin_plan");
   await expect(list.getByRole("listitem")).toHaveCount(2);
   await expect(
     page.getByRole("button", { name: "Anterior", exact: true }),
   ).toBeDisabled();
   await page.setViewportSize({ width: 390, height: 844 });
-  await filters.getByRole("button", { name: /Todos/ }).click();
+  await filters.selectOption("all");
   await expect(list.getByRole("listitem")).toHaveCount(10);
   expect(
     await page.evaluate(
@@ -165,6 +161,8 @@ test("endpoint ausente y contrato incompatible no producen datos demo", async ({
   await expect(
     page.getByRole("list", { name: "Planes de pacientes" }),
   ).toHaveCount(0);
+  await expect(page.locator(".nutrition-module").getByRole("alert")).toHaveCount(1);
+  await page.getByText("Detalles del error", { exact: true }).click();
   await expect(
     page.getByText("Endpoint pendiente de backend", { exact: true }),
   ).toBeVisible();
@@ -310,9 +308,8 @@ test.describe("E1 sin plan provisional", () => {
       ).toBe(200);
     await page.getByLabel("Buscar paciente", { exact: true }).fill(search);
     await page
-      .getByRole("group", { name: "Filtrar planes por estado" })
-      .getByRole("button", { name: /Sin plan/ })
-      .click();
+      .getByRole("combobox", { name: "Estado del plan", exact: true })
+      .selectOption("sin_plan");
     const patientLink = page.locator(
       `a[href="/nutrition/${encodeURIComponent(patientId)}"]`,
     );
@@ -471,7 +468,9 @@ test("Nutrition.Approve basta y los textos cambian a inglés", async ({
   await expect(
     page.getByRole("list", { name: "Patient plans" }).getByRole("listitem"),
   ).toHaveCount(10);
-  await expect(page.getByRole("button", { name: /AI drafts/ })).toBeVisible();
+  const state = page.getByRole("combobox", { name: "Plan status", exact: true });
+  await expect(state).toBeVisible();
+  await expect(state.locator("option").filter({ hasText: /AI drafts/ })).toHaveCount(1);
 });
 
 test("sin permisos Nutrition no hay bandeja, enlace ni peticiones de datos", async ({

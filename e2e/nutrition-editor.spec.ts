@@ -213,7 +213,7 @@ test("aprobar exige críticas; registra autoaprobación y actualiza bandeja", as
   await confirm.click();
   await expect(dialog).toHaveCount(0);
   await page.getByText("Bitácora del plan", { exact: false }).click();
-  await expect(page.getByText("Auto-aprobado", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Aprobado por el mismo profesional que creó la versión", { exact: true })).toHaveCount(1);
   await expect(
     page.getByText("2 alertas críticas confirmadas", { exact: true }),
   ).toBeVisible();
@@ -273,10 +273,8 @@ test("nueva versión conserva la publicada y bloquea aprobación con comida vac�
     .getByRole("button", { name: "Crear nueva versión", exact: true })
     .click();
   await expect(
-    page
-      .locator(".nutrition-detail-header")
-      .getByText("Versión 2", { exact: false }),
-  ).toBeVisible();
+    page.getByLabel("Ciclo y versión", { exact: true }),
+  ).toContainText("Versión 2");
   await page
     .getByLabel("Indicaciones del plan", { exact: true })
     .fill("Borrador v2 sin publicar");
@@ -379,7 +377,7 @@ test("cambiar metas exige regenerar antes de revisión y aprobación", async ({
   await page
     .getByRole("button", { name: "Aprobar y publicar", exact: true })
     .click();
-  await expect(page.getByText("Auto-aprobado", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Aprobado por el mismo profesional que creó la versión", { exact: true })).toHaveCount(1);
 });
 
 test("Manage permite editar pero no aprobar ni devolver", async ({ page }) => {
@@ -510,7 +508,7 @@ test("contraste AA del chip IA y exceso ámbar en valores del editor", async ({
   await demoSession(page);
   await page.goto("/nutrition");
   // El chip IA vive en las filas de la bandeja; los filtros inactivos son neutros.
-  await page.getByRole("button", { name: /Borradores IA/ }).click();
+  await page.getByRole("combobox", { name: "Estado del plan", exact: true }).selectOption("borrador_ia");
   const ai = page
     .locator(
       '.nutrition-patient-option .nutrition-chip[data-status="borrador_ia"]',

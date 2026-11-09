@@ -125,13 +125,16 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </button>
 
         <nav
-          className="hidden items-center gap-1.5 text-[13px] sm:flex min-w-0"
+          className="hidden min-w-0 overflow-hidden items-center gap-1.5 text-[13px] sm:flex"
           aria-label="Breadcrumb"
         >
           {resolvedSegments.map((segment, i) => (
             <span
               key={`${segment.label}-${i}`}
-              className="flex items-center gap-1.5 shrink-0"
+              className={cn(
+                "flex items-center gap-1.5",
+                i === resolvedSegments.length - 1 ? "min-w-0 shrink" : "shrink-0",
+              )}
             >
               {i > 0 && (
                 <ChevronRight

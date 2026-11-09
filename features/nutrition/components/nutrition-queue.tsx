@@ -15,7 +15,6 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
 import { StatCard } from "@/components/feedback/stat-card";
@@ -127,6 +126,7 @@ export function NutritionQueue({
             disabled={loading}
             onClick={retry}
             aria-label={t("Actualizar bandeja")}
+            className="min-h-11 min-w-11"
           >
             <RefreshCw className="size-4" aria-hidden="true" />
             <span className="hidden sm:inline">{t("Actualizar")}</span>
@@ -167,30 +167,22 @@ export function NutritionQueue({
                 className="pl-9"
               />
             </div>
-            <ToggleGroup
-              aria-label={t("Filtrar planes por estado")}
-              value={[query.state]}
-              onValueChange={(values) => {
-                const filter = filters.find((item) => item.value === values[0]);
+            <label htmlFor="nutrition-state" className="nutrition-state-label">{t("Estado del plan")}</label>
+            <select
+              id="nutrition-state"
+              className="nutrition-select nutrition-rail-state"
+              value={query.state}
+              onChange={(event) => {
+                const filter = filters.find((item) => item.value === event.target.value);
                 if (filter) setState(filter.value);
               }}
-              variant="outline"
-              className="nutrition-filters nutrition-rail-filters"
             >
               {filters.map((filter) => (
-                <ToggleGroupItem
-                  key={filter.value}
-                  value={filter.value}
-                  data-status={filter.value}
-                  className="nutrition-filter"
-                >
-                  <span>{t(filter.label)}</span>
-                  <span className="nutrition-measure">
-                    {data?.counts[filter.value] ?? "—"}
-                  </span>
-                </ToggleGroupItem>
+                <option key={filter.value} value={filter.value}>
+                  {t(filter.label)} ({data?.counts[filter.value] ?? "—"})
+                </option>
               ))}
-            </ToggleGroup>
+            </select>
           </div>
           <div className="nutrition-patient-list" aria-busy={loading}>
             {loading ? (

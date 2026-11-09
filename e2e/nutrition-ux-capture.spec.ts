@@ -8,12 +8,57 @@ import path from "node:path";
  * aviso de copia publicada). El HTML sintético alimenta la app; nada toca prod.
  */
 const captures = path.resolve(
-  "../openspec/changes/plan-nutricional-erp/screenshots/ux-rail-2026-11-09",
+  "test-results/nutrition-captures/ux-rail-2026-11-09",
 );
 
 async function demo(page: Page) {
   await mockNutritionHttp(page, ["Nutrition.Manage", "Nutrition.Approve"]);
 }
+
+test("bandeja compacta conserva siete estados y espacio útil", async ({ page }) => {
+  await demo(page);
+  await page.goto("/nutrition");
+  const state = page.getByRole("combobox", { name: "Estado del plan", exact: true });
+  await expect(state.locator("option")).toHaveCount(7);
+  await expect(page.locator(".nutrition-patient-option")).toHaveCount(10);
+  for (const width of [1440, 1280, 1024, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const geometry = await page.evaluate(() => ({
+      list: document.querySelector(".nutrition-patient-list")!.clientHeight,
+      first: document.querySelector(".nutrition-patient-option")!.getBoundingClientRect().top,
+      overflow: document.documentElement.scrollWidth > innerWidth,
+    }));
+    expect(geometry.overflow).toBe(false);
+    if (width >= 1024) expect(geometry.list).toBeGreaterThanOrEqual(400);
+    if (width === 390) expect(geometry.first).toBeLessThan(450);
+  }
+  await state.focus();
+  await state.press("End");
+  await state.press("Enter");
+  await expect(state).toHaveValue("sin_plan");
+  await expect(page.locator(".nutrition-patient-option")).toHaveCount(2);
+});
+
+test("breadcrumb largo cede espacio al buscador sin perder nombre clínico", async ({ page }) => {
+  const { store } = await mockNutritionHttp(page);
+  const name = "Paciente QA con nombre clínico deliberadamente largo para revisar orientación y búsqueda";
+  store.get("demo-patient-2")!.patientName = name;
+  await page.goto("/nutrition/demo-patient-2");
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+  for (const width of [1440, 1280, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb", exact: true });
+    await expect(breadcrumb).toContainText(name);
+    const bounds = await breadcrumb.boundingBox();
+    const search = await page.getByRole("textbox", { name: "Buscar...", exact: true }).boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(search).not.toBeNull();
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(search!.x);
+  }
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
 
 test("bandeja: filtros neutros, filas densas y selección visible", async ({
   page,

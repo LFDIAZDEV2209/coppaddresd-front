@@ -1,7 +1,8 @@
 "use client";
 
+import { useNutritionDate } from "./nutrition-shared";
 import { CalendarDays } from "lucide-react";
-import { useI18n, useT } from "@/providers/i18n-provider";
+import { useT } from "@/providers/i18n-provider";
 import { groupNutritionCycles } from "./nutrition-program-cycles";
 import type {
   NutritionCycle,
@@ -40,7 +41,7 @@ export function NutritionCycleSwitcher({
   onOpen,
 }: Props) {
   const t = useT();
-  const { lang } = useI18n();
+  const date = useNutritionDate();
   const groups = groupNutritionCycles(headers);
   // Con una sola opción el control sobra: la ficha ya muestra ciclo y versión.
   if (
@@ -48,12 +49,6 @@ export function NutritionCycleSwitcher({
     (groups.length < 2 && groups.every((group) => group.versions.length < 2))
   )
     return null;
-  const date = (value: string) =>
-    new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-CO", {
-      day: "numeric",
-      month: "short",
-      timeZone: "UTC",
-    }).format(new Date(`${value}T00:00:00Z`));
   const publishedCopy = headers.find((header) => header.id === publishedId);
 
   return (
@@ -79,7 +74,7 @@ export function NutritionCycleSwitcher({
           >
             {group.versions.map((version) => (
               <option key={version.id} value={version.id}>
-                {t("Versión {version}", { version: String(version.version) })} —{" "}
+                {t("Ciclo {cycle}", { cycle: String(group.number) })} · {t("Versión {version}", { version: String(version.version) })} —{" "}
                 {t(stateLabels[version.state])}
                 {version.isPublished ? ` · ${t("Publicada")}` : ""}
               </option>

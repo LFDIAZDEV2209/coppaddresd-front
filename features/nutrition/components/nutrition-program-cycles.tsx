@@ -4,9 +4,9 @@ import { useState } from "react";
 import { CalendarDays, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/layout/section-header";
-import { useI18n, useT } from "@/providers/i18n-provider";
+import { useT } from "@/providers/i18n-provider";
 import type { NutritionCycleHeader } from "../types/nutrition";
-import { NutritionStateChip, NutritionValidity, useNutritionNumber } from "./nutrition-shared";
+import { NutritionStateChip, NutritionValidity, useNutritionDate, useNutritionNumber } from "./nutrition-shared";
 
 interface Props {
   headers: NutritionCycleHeader[];
@@ -36,11 +36,10 @@ function dayInCycle(start: string, today: string) {
 export function NutritionProgramCycles({ headers, selectedId, today, locked, onOpen, onCreate }: Props) {
   const t = useT();
   const format = useNutritionNumber();
-  const { lang } = useI18n();
+  const date = useNutritionDate();
   const groups = groupNutritionCycles(headers);
   const [selection, setSelection] = useState<string | null>(null);
   const active = groups.some((group) => group.id === selection) ? selection : groups.find((group) => group.versions.some((row) => row.id === selectedId))?.id ?? groups[0]?.id;
-  const date = (value: string) => new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-CO", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
   const temporalLabel = (row: NutritionCycleHeader) => {
     if (!row.startDate || !row.endDate) return t("Sin vigencia definida");
     if (!row.isPublished) return t("Sin publicación");

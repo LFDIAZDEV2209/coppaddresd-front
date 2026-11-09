@@ -1,0 +1,344 @@
+{
+  "environment": "localhost real, QA v2 Devuelto",
+  "measurements": [
+    {
+      "view": "bandeja",
+      "width": 1440,
+      "overflow": false,
+      "listHeight": 409,
+      "firstPatientY": 405
+    },
+    {
+      "view": "bandeja",
+      "width": 1280,
+      "overflow": false,
+      "listHeight": 409,
+      "firstPatientY": 405
+    },
+    {
+      "view": "bandeja",
+      "width": 1024,
+      "overflow": false,
+      "listHeight": 409,
+      "firstPatientY": 405
+    },
+    {
+      "view": "bandeja",
+      "width": 768,
+      "overflow": false,
+      "listHeight": 711,
+      "firstPatientY": 389
+    },
+    {
+      "view": "bandeja",
+      "width": 390,
+      "overflow": false,
+      "listHeight": 711,
+      "firstPatientY": 407
+    },
+    {
+      "view": "resultados",
+      "width": 1440,
+      "overflow": false,
+      "panelWidth": 834,
+      "panelScrollWidth": 834,
+      "panelHeight": 694,
+      "panelScrollHeight": 2063,
+      "contextHeight": 56,
+      "contentY": 616
+    },
+    {
+      "view": "resultados",
+      "width": 1280,
+      "overflow": false,
+      "panelWidth": 674,
+      "panelScrollWidth": 674,
+      "panelHeight": 694,
+      "panelScrollHeight": 2345,
+      "contextHeight": 56,
+      "contentY": 637
+    },
+    {
+      "view": "resultados",
+      "width": 1024,
+      "overflow": false,
+      "panelWidth": 442,
+      "panelScrollWidth": 442,
+      "panelHeight": 694,
+      "panelScrollHeight": 2570,
+      "contextHeight": 57.09375,
+      "contentY": 656.09375
+    },
+    {
+      "view": "resultados",
+      "width": 768,
+      "overflow": false,
+      "panelWidth": 742,
+      "panelScrollWidth": 742,
+      "panelHeight": 2213,
+      "panelScrollHeight": 2213,
+      "contextHeight": 56,
+      "contentY": 613
+    },
+    {
+      "view": "resultados",
+      "width": 390,
+      "overflow": false,
+      "panelWidth": 364,
+      "panelScrollWidth": 364,
+      "panelHeight": 2941,
+      "panelScrollHeight": 2941,
+      "contextHeight": 56,
+      "contentY": 693
+    },
+    {
+      "view": "programacion",
+      "width": 1440,
+      "overflow": false,
+      "panelWidth": 834,
+      "panelScrollWidth": 834,
+      "panelHeight": 694,
+      "panelScrollHeight": 1216,
+      "contextHeight": 56,
+      "contentY": 616
+    },
+    {
+      "view": "programacion",
+      "width": 1280,
+      "overflow": false,
+      "panelWidth": 674,
+      "panelScrollWidth": 674,
+      "panelHeight": 694,
+      "panelScrollHeight": 1237,
+      "contextHeight": 56,
+      "contentY": 637
+    },
+    {
+      "view": "programacion",
+      "width": 1024,
+      "overflow": false,
+      "panelWidth": 442,
+      "panelScrollWidth": 442,
+      "panelHeight": 694,
+      "panelScrollHeight": 1383,
+      "contextHeight": 57.09375,
+      "contentY": 656.09375
+    },
+    {
+      "view": "programacion",
+      "width": 768,
+      "overflow": false,
+      "panelWidth": 742,
+      "panelScrollWidth": 742,
+      "panelHeight": 1422,
+      "panelScrollHeight": 1422,
+      "contextHeight": 56,
+      "contentY": 613
+    },
+    {
+      "view": "programacion",
+      "width": 390,
+      "overflow": false,
+      "panelWidth": 364,
+      "panelScrollWidth": 364,
+      "panelHeight": 1608,
+      "panelScrollHeight": 1608,
+      "contextHeight": 56,
+      "contentY": 693
+    },
+    {
+      "view": "plan",
+      "width": 1440,
+      "overflow": false,
+      "panelWidth": 834,
+      "panelScrollWidth": 834,
+      "panelHeight": 694,
+      "panelScrollHeight": 3866,
+      "contextHeight": 134.5,
+      "contentY": 694.5
+    },
+    {
+      "view": "comidas",
+      "width": 1440,
+      "contextHeight": 134.5,
+      "contextY": 185,
+      "nutrientEllipsis": false
+    },
+    {
+      "view": "plan",
+      "width": 1280,
+      "overflow": false,
+      "panelWidth": 674,
+      "panelScrollWidth": 674,
+      "panelHeight": 694,
+      "panelScrollHeight": 4421,
+      "contextHeight": 134.5,
+      "contentY": 715.5
+    },
+    {
+      "view": "comidas",
+      "width": 1280,
+      "contextHeight": 134.5,
+      "contextY": 185,
+      "nutrientEllipsis": false
+    },
+    {
+      "view": "plan",
+      "width": 1024,
+      "overflow": false,
+      "panelWidth": 442,
+      "panelScrollWidth": 442,
+      "panelHeight": 694,
+      "panelScrollHeight": 4825,
+      "contextHeight": 135.59375,
+      "contentY": 734.59375
+    },
+    {
+      "view": "comidas",
+      "width": 1024,
+      "contextHeight": 135.59375,
+      "contextY": 185,
+      "nutrientEllipsis": false
+    },
+    {
+      "view": "plan",
+      "width": 768,
+      "overflow": false,
+      "panelWidth": 742,
+      "panelScrollWidth": 742,
+      "panelHeight": 4478,
+      "panelScrollHeight": 4478,
+      "contextHeight": 134.5,
+      "contentY": 691.5
+    },
+    {
+      "view": "comidas",
+      "width": 768,
+      "contextHeight": 134.5,
+      "contextY": 76,
+      "nutrientEllipsis": false
+    },
+    {
+      "view": "plan",
+      "width": 390,
+      "overflow": false,
+      "panelWidth": 364,
+      "panelScrollWidth": 364,
+      "panelHeight": 5008,
+      "panelScrollHeight": 5008,
+      "contextHeight": 134.5,
+      "contentY": 771.5
+    },
+    {
+      "view": "comidas",
+      "width": 390,
+      "contextHeight": 134.5,
+      "contextY": 76,
+      "nutrientEllipsis": false
+    }
+  ],
+  "network": [
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/foods",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/inbox",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/workspace",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/61bb9874-d51b-4214-90f7-3427b12e8c89",
+      "status": 200
+    }
+  ],
+  "pageErrors": [],
+  "console": []
+}

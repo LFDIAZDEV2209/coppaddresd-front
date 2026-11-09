@@ -1,0 +1,297 @@
+81. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+130. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+186. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+243. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+287. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+288. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [500] Internal Server Error
+289. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [500] Internal Server Error
+290. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+291. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [500] Internal Server Error
+292. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [500] Internal Server Error
+293. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [500] Internal Server Error
+294. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [500] Internal Server Error
+295. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&state=en_aprobacion => [500] Internal Server Error
+296. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1 => [500] Internal Server Error
+297. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [500] Internal Server Error
+298. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [500] Internal Server Error
+299. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [500] Internal Server Error
+300. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [500] Internal Server Error
+301. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [500] Internal Server Error
+350. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+407. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+463. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+507. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+508. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [500] Internal Server Error
+509. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [500] Internal Server Error
+510. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+511. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [500] Internal Server Error
+512. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [500] Internal Server Error
+513. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [500] Internal Server Error
+514. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [500] Internal Server Error
+515. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [500] Internal Server Error
+516. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [500] Internal Server Error
+517. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+518. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [500] Internal Server Error
+519. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [500] Internal Server Error
+520. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [500] Internal Server Error
+521. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [500] Internal Server Error
+570. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [500] Internal Server Error
+626. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+683. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+691. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+746. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+791. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+837. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+838. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions?page=1&pageSize=100 => [200] OK
+839. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+840. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+841. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+842. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+843. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+844. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+845. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+846. [GET] http://localhost:3000/api/v1/nutrition/foods => [200] OK
+847. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/workspace?historyPage=1&historyPageSize=50 => [200] OK
+848. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+850. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=2&pageSize=10 => [200] OK
+851. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+852. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+853. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+854. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+855. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+856. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+857. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+858. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+859. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+860. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+861. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+862. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+863. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [200] OK
+864. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA-UX-sin-coincidencias => [200] OK
+865. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=borrador_ia => [200] OK
+866. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=en_aprobacion => [200] OK
+867. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=aprobado => [200] OK
+868. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=devuelto => [200] OK
+869. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=por_renovar => [200] OK
+870. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=sin_plan => [200] OK
+871. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA-UX-sin-coincidencias => [200] OK
+872. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=borrador_ia => [200] OK
+873. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=en_aprobacion => [200] OK
+874. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=aprobado => [200] OK
+875. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=devuelto => [200] OK
+876. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=por_renovar => [200] OK
+877. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=sin_plan => [200] OK
+878. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA-UX-sin-coincidencias&state=sin_plan => [200] OK
+879. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias => [200] OK
+880. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=borrador_ia => [200] OK
+881. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=en_aprobacion => [200] OK
+882. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=aprobado => [200] OK
+883. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=devuelto => [200] OK
+884. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA-UX-sin-coincidencias&state=por_renovar => [200] OK
+885. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&state=sin_plan => [200] OK
+886. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1 => [200] OK
+887. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+888. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+889. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+890. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+891. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+892. [GET] http://localhost:3000/api/v1/nutrition/patients/73045c17-73da-451e-992e-a0807579f928/prescriptions?page=1&pageSize=100 => [FAILED] net::ERR_ABORTED
+893. [GET] http://localhost:3000/api/v1/nutrition/patients/73045c17-73da-451e-992e-a0807579f928/prescriptions?page=1&pageSize=100 => [200] OK
+894. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+896. [GET] http://localhost:3000/api/v1/nutrition/foods => [200] OK
+897. [GET] http://localhost:3000/api/v1/nutrition/patients/73045c17-73da-451e-992e-a0807579f928/workspace?historyPage=1&historyPageSize=50 => [200] OK
+898. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+899. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+900. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+901. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+902. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+903. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+904. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+905. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+906. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+907. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+908. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+909. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+910. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+911. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [200] OK
+912. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions?page=1&pageSize=100 => [200] OK
+913. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+915. [GET] http://localhost:3000/api/v1/nutrition/foods => [200] OK
+916. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/workspace?historyPage=1&historyPageSize=50&prescriptionId=61bb9874-d51b-4214-90f7-3427b12e8c89 => [200] OK
+917. [POST] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/61bb9874-d51b-4214-90f7-3427b12e8c89/create-version => [200] OK
+918. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/history => [200] OK
+919. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+920. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+921. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+922. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+923. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+924. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+925. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+926. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [FAILED] net::ERR_ABORTED
+928. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions?page=1&pageSize=100 => [200] OK
+929. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+930. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+931. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+932. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+933. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+934. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+935. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [200] OK
+937. [GET] http://localhost:3000/api/v1/nutrition/foods => [200] OK
+938. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/workspace?historyPage=1&historyPageSize=50&prescriptionId=c5002aaa-28ce-4ea6-982c-96e28b59a35a => [200] OK
+939. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/61bb9874-d51b-4214-90f7-3427b12e8c89 => [200] OK
+940. [POST] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/save => [200] OK
+941. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/history => [200] OK
+942. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+943. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+944. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+945. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+946. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+947. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+948. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+949. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [200] OK
+950. [POST] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/save => [200] OK
+951. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/history => [200] OK
+952. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+953. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+954. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+955. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+956. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+957. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+958. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+959. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [200] OK
+960. [POST] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/save => [200] OK
+961. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/history => [200] OK
+962. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+963. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+964. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+965. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+966. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+967. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+968. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+969. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [200] OK
+970. [POST] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/apply-day => [200] OK
+971. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/history => [200] OK
+972. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+973. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+974. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+975. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+976. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+977. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+978. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+979. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [200] OK
+980. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+981. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+982. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+983. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+984. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+985. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+986. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [200] OK
+1032. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1033. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions?page=1&pageSize=100 => [200] OK
+1034. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+1035. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+1036. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1037. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+1038. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+1039. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+1040. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+1041. [GET] http://localhost:3000/api/v1/nutrition/foods => [200] OK
+1042. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/workspace?historyPage=1&historyPageSize=50&prescriptionId=c5002aaa-28ce-4ea6-982c-96e28b59a35a => [200] OK
+1043. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/61bb9874-d51b-4214-90f7-3427b12e8c89 => [200] OK
+1060. [POST] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/submit => [200] OK
+1061. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/history => [200] OK
+1062. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1063. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+1064. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+1065. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1066. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+1067. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+1068. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+1069. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+1070. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+1071. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+1072. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1073. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+1074. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+1075. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+1076. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+1078. [POST] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/return => [200] OK
+1079. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/history => [200] OK
+1080. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1081. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+1082. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+1083. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1084. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+1085. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+1086. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+1087. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+1088. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+1089. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+1090. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1091. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+1092. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+1093. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+1094. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+1095. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions?page=1&pageSize=100 => [200] OK
+1097. [GET] http://localhost:3000/api/v1/nutrition/foods => [200] OK
+1098. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/workspace?historyPage=1&historyPageSize=50&prescriptionId=61bb9874-d51b-4214-90f7-3427b12e8c89 => [200] OK
+1099. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions?page=1&pageSize=100 => [200] OK
+1101. [GET] http://localhost:3000/api/v1/nutrition/foods => [200] OK
+1102. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/workspace?historyPage=1&historyPageSize=50&prescriptionId=c5002aaa-28ce-4ea6-982c-96e28b59a35a => [200] OK
+1103. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/61bb9874-d51b-4214-90f7-3427b12e8c89 => [200] OK
+1107. [POST] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/submit => [200] OK
+1108. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/history => [200] OK
+1109. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1110. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+1111. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+1112. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1113. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+1114. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+1115. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+1116. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+1117. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+1118. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+1119. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1120. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+1121. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+1122. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+1123. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+1125. [POST] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/return => [200] OK
+1126. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/c5002aaa-28ce-4ea6-982c-96e28b59a35a/history => [200] OK
+1127. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1128. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+1129. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+1130. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1131. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+1132. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+1133. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+1134. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+1135. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10 => [200] OK
+1136. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=borrador_ia => [200] OK
+1137. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1138. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=aprobado => [200] OK
+1139. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=devuelto => [200] OK
+1140. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=por_renovar => [200] OK
+1141. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=sin_plan => [200] OK
+1143. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1145. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=10&search=QA => [200] OK
+1146. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=borrador_ia => [200] OK
+1147. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=en_aprobacion => [200] OK
+1148. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=aprobado => [200] OK
+1149. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=devuelto => [200] OK
+1150. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=por_renovar => [200] OK
+1151. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&search=QA&state=sin_plan => [200] OK
+1152. [GET] http://localhost:3000/api/v1/nutrition/patients/05900dde-45ce-40f1-b1b6-e3b6a5a0830a/prescriptions?page=1&pageSize=100 => [FAILED] net::ERR_ABORTED
+1153. [GET] http://localhost:3000/api/v1/nutrition/patients/05900dde-45ce-40f1-b1b6-e3b6a5a0830a/prescriptions?page=1&pageSize=100 => [200] OK
+1154. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1156. [GET] http://localhost:3000/api/v1/nutrition/foods => [200] OK
+1157. [GET] http://localhost:3000/api/v1/nutrition/patients/05900dde-45ce-40f1-b1b6-e3b6a5a0830a/workspace?historyPage=1&historyPageSize=50&prescriptionId=1db63c97-d290-4a79-95e9-9be1c2ed0a29 => [200] OK
+1158. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1160. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions?page=1&pageSize=100 => [FAILED] net::ERR_ABORTED
+1161. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions?page=1&pageSize=100 => [200] OK
+1162. [GET] http://localhost:3000/api/v1/nutrition/inbox?page=1&pageSize=1&state=en_aprobacion => [200] OK
+1164. [GET] http://localhost:3000/api/v1/nutrition/foods => [200] OK
+1165. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/workspace?historyPage=1&historyPageSize=50&prescriptionId=c5002aaa-28ce-4ea6-982c-96e28b59a35a => [200] OK
+1166. [GET] http://localhost:3000/api/v1/nutrition/patients/ef59c692-d01a-4105-b3ea-05c07ff76279/prescriptions/61bb9874-d51b-4214-90f7-3427b12e8c89 => [200] OK
+
+Note: 666 static requests not shown, run with "static" option to see them.
