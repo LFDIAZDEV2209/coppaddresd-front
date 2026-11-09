@@ -30,13 +30,13 @@
 | 1. Exploración | 30–45 min, excluye espera de acceso | Completado |
 | 2. Diagnóstico | 15–25 min | Completado |
 | 3. Propuesta | 20–30 min | Completado |
-| 4. Implementación | Estimación desglosada por etapas en PROPUESTA.md | Pendiente de revisión/autorización |
+| 4. Implementación | Estimación desglosada por etapas en PROPUESTA.md | Completado; etapas 0–5 autorizadas |
 | 5. Verificación | 30–45 min | Pendiente |
 | 6. Refinamiento | 20–30 min | Pendiente |
 
 Al finalizar cada ciclo se entrega resumen de hasta tres líneas y se espera instrucción del orquestador. La propuesta se revisa antes de implementación. El registro no contiene credenciales.
 
-## Ciclo 4 — autorizado, en ejecución
+## Ciclo 4 — completado / idle
 
 ### Etapa 0 — baseline completado
 
@@ -73,3 +73,26 @@ Al finalizar cada ciclo se entrega resumen de hasta tres líneas y se espera ins
 - Cinco anchos sin overflow. Lista visible escritorio **409px** frente a 283; primer paciente móvil **y407** frente a ~550. Header QA **142px** frente a 201 durante esta etapa; nombre sin truncar, estado y acción juntos.
 - Excepción explícita al objetivo y650: fixture Devuelto con comentario largo y dos versiones empieza contenido en **y708**, preservando el motivo completo (110px). La meta geométrica se subordina a legibilidad según propuesta. Evidencia inspeccionada: [header móvil](screenshots/despues/etapa4-header-390.png). No se oculta información para lograr la cifra.
 - Chrome DevTools en local sin sesión: redirección a login por refresh 401 y warning de preload CSS; no se confunden con errores de la sesión QA autenticada de Playwright. Continúa etapa 5.
+
+### Etapa 5 — editor y cierre completados
+
+- N07/N09: NutritionFoodRow presentacional reutiliza NutritionNutrients; columnas según contenedor o disclosure accesible, resumen por comida antes de alimentos, mismos inputs/callbacks. Una banda sticky integra pestañas, paciente, guardado y navegación del día mediante portal; estado del editor preservado, sin duplicar anuncio vivo.
+- Se corrigieron durante desarrollo un import faltante y una banda inicial de 147,6px: altura final 134,5px (135,59px a 1024), dentro del máximo 144px. La corrida final estable sustituye los fallos intermedios; no quedaron tests fallidos omitidos.
+- `corepack yarn lint`, `corepack yarn tsc --noEmit`, `corepack yarn i18n:check`: exit 0. Cero claves literales faltantes; avisos informativos de claves dinámicas y 721 huérfanas. `corepack yarn build`: exit 0, Next 16.3, 91 rutas generadas.
+- Después del build, suite completa `corepack yarn e2e --project=chromium-desktop e2e/nutrition --reporter=list`: **38 passed, 1 skipped**, 1,8 min. Skip de sonda live que necesita configuración explícita. Nuevos casos incluyen cinco anchos, identidad/foco del input tras resize, teclado/disclosure, contexto sticky, es/en, oscuro, movimiento reducido y zoom 2×. No se afirma que fixtures equivalgan a integración backend real.
+- QA real sobre v2 existente: 55→56→55g con reload, alta/baja de Manzana, copia a 30 días y verificación de cada día, envío/revisión cancelada/devolución. V1 publicada intacta; v2 Devuelto, avena 55g en los 30 días, Manzana retirada. Sin nueva versión, generación IA ni publicación.
+- Red de mutaciones C4: 111 solicitudes registradas, todas 200. Ronda final de evidencia: 20 GET 200, cero errores/warnings de consola y cero pageErrors en esa ventana. Ningún endpoint falló durante el recorrido final autenticado. Los 500 históricos permanecen en la evidencia anterior.
+- 41 PNG después (32 reales y nueve sintéticos), 25 mediciones y red saneada en `screenshots/despues/`. [COMPARATIVA.md](COMPARATIVA.md) enlaza cada N01–N11 y declara compromisos: resultados móvil y693 con comentario completo; contenido vertical del editor aumenta al mostrar nutrientes legibles.
+- Pre-ship impeccable detect: exit **127**, sin salida; detector no disponible, no se declara limpio. Inspección manual de claro/oscuro, comidas, error y revisión completada; diálogo móvil contenido y publicación deshabilitada. Sin certificación WCAG/lector de pantalla ni validación clínica.
+- Diff contra baseline conserva servicios, tipos, hooks de negocio y cálculos. Sin push/deploy ni escritura fuera del front. README y comparativa constituyen handoff; no se ejecuta cierre de workspace que escribe `.ai/`. Ciclo 4 terminado, idle para revisión del orquestador.
+
+### Commits por etapa
+
+| Etapa | Commit | Alcance |
+|---|---|---|
+| 0 | `2e04d5e` | Baseline y capturas E2E dentro del front |
+| 1 | `e53f5c0` | Estado histórico, gramos, blancos táctiles, errores |
+| 2 | `29c268c` | Fechas y precisión de presentación |
+| 3 | `a8df6da` | Breadcrumb compartido |
+| 4 | `e12103b` | Bandeja y cabecera |
+| 5 | Este commit | Editor, evidencia final y cierre |

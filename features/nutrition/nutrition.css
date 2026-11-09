@@ -851,11 +851,12 @@
   line-height: 1.35;
   font-size: 0.8125rem;
 }
-.nutrition-detail-panel .nutrition-tab-list {
+.nutrition-context-bar {
   position: sticky;
   top: 0;
   z-index: 2;
   background: var(--card);
+  border-bottom: 1px solid var(--border);
 }
 .nutrition-tab-body {
   display: flex;
@@ -1011,8 +1012,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 1rem 0;
+  gap: 0.375rem;
+  padding: 0.375rem 0;
 }
 .nutrition-select {
   height: 44px;
@@ -1319,4 +1320,123 @@
 .nutrition-cycle-row-actions button {
   min-width: 44px;
   min-height: 44px;
+}
+
+/* Contexto y filas adaptados al ancho real de la ficha, sin duplicar inputs. */
+.nutrition-editor {
+  container-type: inline-size;
+  container-name: nutrition-editor;
+}
+.nutrition-editor-context {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding-top: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+.nutrition-context-patient {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.nutrition-context-kcal {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.nutrition-context-bar #nutrition-day {
+  width: 7.5rem;
+  padding-inline: 0.375rem;
+}
+.nutrition-context-bar .nutrition-tab-list {
+  position: static;
+}
+.nutrition-context-bar .nutrition-tab-list [role="tab"] {
+  min-height: 48px;
+  padding-block: 0.375rem;
+}
+.nutrition-detail-panel :is(input, textarea, button, select, summary, h2, h3) {
+  scroll-margin-block: 10rem 2rem;
+}
+.nutrition-detail-body > .nutrition-notice {
+  margin-bottom: 0.5rem;
+}
+.nutrition-editor .nutrition-food-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.nutrition-food-energy {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+.nutrition-food-wide {
+  display: none;
+}
+.nutrition-food-detail {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.nutrition-food-detail summary {
+  min-height: 44px;
+  padding-block: 0.625rem;
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+.nutrition-editor .nutrition-nutrient-strip {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+}
+.nutrition-editor .nutrition-nutrient-strip > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.nutrition-editor .nutrition-meal-total {
+  margin-top: 0.75rem;
+  padding-block: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.nutrition-editor .nutrition-food-list {
+  margin-top: 0;
+}
+.nutrition-editor .nutrition-food-grams input {
+  width: 5rem;
+}
+@container nutrition-editor (min-width: 720px) {
+  .nutrition-food-detail,
+  .nutrition-food-energy {
+    display: none;
+  }
+  .nutrition-food-wide {
+    display: block;
+    grid-column: 1 / -1;
+  }
+  .nutrition-editor .nutrition-nutrient-strip {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1023px) {
+  .nutrition-context-bar {
+    top: 0.75rem;
+  }
+  .nutrition-context-bar .nutrition-tab-list [role="tab"] {
+    min-height: 48px;
+    flex-direction: row;
+    padding-block: 0.25rem;
+  }
+  .nutrition-context-bar .nutrition-tab-list svg {
+    display: none;
+  }
+  .nutrition-context-bar .nutrition-editor-context > :last-child {
+    max-width: 58%;
+  }
 }

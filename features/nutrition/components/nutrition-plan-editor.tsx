@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronLeft,
   ChevronRight,
@@ -34,7 +35,8 @@ import {
   mealTotals,
   nutrientDefinitions,
 } from "../lib/nutrition-calculations";
-import { NutritionTargetsPanel, useNutritionNumber } from "./nutrition-shared";
+import { NutritionFoodRow } from "./nutrition-food-row";
+import { NutritionNutrients, NutritionTargetsPanel, useNutritionNumber } from "./nutrition-shared";
 import { NutritionFoodPicker } from "./nutrition-food-picker";
 
 interface EditorProps {
@@ -44,6 +46,8 @@ interface EditorProps {
   update: (transform: (cycle: NutritionCycle) => NutritionCycle) => void;
   regenerate: () => void;
   applyDay: (day: number) => Promise<boolean>;
+  toolbarHost?: HTMLElement | null;
+  context?: ReactNode;
 }
 
 export function NutritionPlanEditor({
@@ -53,6 +57,8 @@ export function NutritionPlanEditor({
   update,
   regenerate,
   applyDay,
+  toolbarHost,
+  context,
 }: EditorProps) {
   const t = useT();
   const format = useNutritionNumber();
@@ -62,46 +68,13 @@ export function NutritionPlanEditor({
   const meals = cycle.meals.filter((meal) => meal.dayNumber === day);
   const totals = dayTotals(meals, catalog);
 
-  return (
-    <section
-      className="nutrition-section"
-      aria-labelledby="nutrition-editor-title"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2
-            id="nutrition-editor-title"
-            className="nutrition-display text-2xl font-semibold"
-          >
-            {t("Menú de 30 días")}
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {editable
-              ? t(
-                  "Ajusta las cantidades. Los cambios se guardan automáticamente.",
-                )
-              : t(
-                  cycle.state === "en_aprobacion"
-                    ? "Plan en revisión. Devuélvelo con comentario para solicitar ajustes."
-                    : cycle.state === "aprobado"
-                      ? "Plan de solo lectura. Para editar un aprobado, crea una nueva versión."
-                      : "Plan de solo lectura con tus permisos actuales.",
-                )}
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          disabled={!editable}
-          onClick={() => setConfirmCopy(true)}
-        >
-          {t("Aplicar este día a los 30 días")}
-        </Button>
-      </div>
-      <div className="nutrition-day-toolbar">
-        <label htmlFor="nutrition-day" className="text-sm font-semibold">
+  const toolbar = <>
+    {context}
+    <div className="nutrition-day-toolbar">
+        <label htmlFor="nutrition-day" className="sr-only">
           {t("Día del ciclo")}
         </label>
-        <div className="flex items-center gap-2">
+        <div className="nutrition-day-controls flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"
@@ -137,7 +110,46 @@ export function NutritionPlanEditor({
             <ChevronRight className="size-4" />
           </Button>
         </div>
+        <span className="nutrition-measure nutrition-context-kcal">{format(totals.kcal)} {t("kcal")}</span>
       </div>
+  </>;
+
+  return (
+    <section
+      className="nutrition-section nutrition-editor"
+      aria-labelledby="nutrition-editor-title"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2
+            id="nutrition-editor-title"
+            className="nutrition-display text-2xl font-semibold"
+          >
+            {t("Menú de 30 días")}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {editable
+              ? t(
+                  "Ajusta las cantidades. Los cambios se guardan automáticamente.",
+                )
+              : t(
+                  cycle.state === "en_aprobacion"
+                    ? "Plan en revisión. Devuélvelo con comentario para solicitar ajustes."
+                    : cycle.state === "aprobado"
+                      ? "Plan de solo lectura. Para editar un aprobado, crea una nueva versión."
+                      : "Plan de solo lectura con tus permisos actuales.",
+                )}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          disabled={!editable}
+          onClick={() => setConfirmCopy(true)}
+        >
+          {t("Aplicar este día a los 30 días")}
+        </Button>
+      </div>
+      {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
       <section
         aria-labelledby="nutrition-day-totals"
         className="nutrition-daily-totals"
@@ -224,6 +236,12 @@ export function NutritionPlanEditor({
                   </Button>
                 </div>
               </div>
+              {meal.items.length > 0 && (
+                <div className="nutrition-meal-total">
+                  <span className="text-sm font-semibold">{t("Total de {meal}", { meal: t(label) })}</span>
+                  <NutritionNutrients totals={mealTotals(meal, catalog)} />
+                </div>
+              )}
               <ul role="list" className="nutrition-food-list mt-5">
                 {meal.items.map((item) => {
                   const food = catalog.find(
@@ -237,19 +255,7 @@ export function NutritionPlanEditor({
                     );
                   const totals = itemTotals(food, item.grams);
                   return (
-                    <li key={item.id} className="nutrition-food-row">
-                      <div className="nutrition-food-name">
-                        <p className="break-words">{food.name}</p>
-                        <span className="nutrition-measure nutrition-food-nutrients">
-                          {nutrientDefinitions
-                            .filter(({ key }) => key !== "waterGlasses")
-                            .map(
-                              ({ key, label, unit }) =>
-                                `${t(label)} ${format(totals[key] ?? 0)} ${t(unit)}`,
-                            )
-                            .join(" · ")}
-                        </span>
-                      </div>
+                    <NutritionFoodRow key={item.id} name={food.name} totals={totals}>
                       <div className="nutrition-food-grams">
                         <label htmlFor={`grams-${item.id}`} className="sr-only">
                           {t("Gramos de {food}", { food: food.name })}
@@ -315,7 +321,7 @@ export function NutritionPlanEditor({
                       >
                         <Trash2 aria-hidden="true" className="size-4" />
                       </Button>
-                    </li>
+                    </NutritionFoodRow>
                   );
                 })}
               </ul>
@@ -326,22 +332,7 @@ export function NutritionPlanEditor({
                   )}
                 </p>
               )}
-              {meal.items.length > 0 && (
-                <div className="nutrition-meal-total">
-                  <span className="text-sm font-semibold">
-                    {t("Total de {meal}", { meal: t(label) })}
-                  </span>
-                  <span className="nutrition-measure nutrition-food-nutrients">
-                    {nutrientDefinitions
-                      .filter(({ key }) => key !== "waterGlasses")
-                      .map(
-                        ({ key, label, unit }) =>
-                          `${t(label)} ${format(mealTotals(meal, catalog)[key] ?? 0)} ${t(unit)}`,
-                      )
-                      .join(" · ")}
-                  </span>
-                </div>
-              )}
+
             </section>
           );
         })}

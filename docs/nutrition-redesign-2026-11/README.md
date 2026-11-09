@@ -1,6 +1,16 @@
 # Exploración UX de Nutrición — noviembre de 2026
 
-La propuesta del Ciclo 3 está en [PROPUESTA.md](PROPUESTA.md): prioridades, decisiones de diseño, límites, etapas de implementación y validación prevista. Pendiente de revisión del orquestador antes del Ciclo 4; sin cambios de producto.
+## Estado final — Ciclo 4 completado
+
+Etapas 0–5 implementadas y validadas en `feature/nutrition-ux-premium`, un commit por etapa, sin push ni deploy. [COMPARATIVA.md](COMPARATIVA.md) presenta los 11 hallazgos antes/después, métricas y límites; [PROGRESS.md](PROGRESS.md) registra commits y validación por etapa. [PROPUESTA.md](PROPUESTA.md) conserva el plan aprobado.
+
+Lint, TypeScript, i18n y build pasan. Suite completa de Nutrición después del build: **38 passed, 1 skipped** (sonda live sin configuración). Recorrido real QA local completado; v1 publicada intacta y v2 existente Devuelto, sin nueva publicación. Red final y consola autenticada sin errores en las ventanas registradas. Contratos, cálculos, permisos y persistencia conservados.
+
+Evidencia final: **41 PNG** en `screenshots/despues/` (32 reales, nueve sintéticos identificados), 25 mediciones y registro de red sin credenciales. Excepciones explícitas: contenido móvil bajo y650 con comentario largo y mayor altura total del editor a cambio de nutrientes completos/contexto persistente. Pre-ship impeccable detect terminó 127 sin salida; no se declara detector limpio ni certificación WCAG. Sin aprobación clínica ni generación IA nueva. Detalle de cobertura y límites en la comparativa.
+
+## Registro histórico — ciclos 1 a 3
+
+Las secciones siguientes preservan observaciones y disponibilidad de aquellos ciclos; sus estados pendientes y ausencia de cambios/pruebas corresponden a ese momento, no al cierre de Ciclo 4.
 
 El diagnóstico consolidado del Ciclo 2 está en [DIAGNOSTICO.md](DIAGNOSTICO.md): severidades, frecuencia, impacto, propuestas UX/componentes y patrones a conservar. Las observaciones preliminares de este README se mantienen como registro del Ciclo 1; la clasificación del diagnóstico las sustituye.
 

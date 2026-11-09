@@ -176,6 +176,7 @@ function PatientWorkspace({
     return value === "plan" || value === "programacion" ? value : "resultados";
   });
   const auditRef = useRef<HTMLDetailsElement>(null);
+  const [toolbarHost, setToolbarHost] = useState<HTMLDivElement | null>(null);
   useEffect(() => {
     if (
       new URLSearchParams(window.location.search).get("history") === "1" &&
@@ -412,6 +413,7 @@ function PatientWorkspace({
         onValueChange={(value) => changeTab(value as DetailTab)}
         className="nutrition-detail-tabs"
       >
+        <div className="nutrition-context-bar">
         <TabsList
           variant="line"
           aria-label={t("Secciones de la ficha nutricional")}
@@ -430,6 +432,8 @@ function PatientWorkspace({
             {t("Plan de 30 días")}
           </TabsTrigger>
         </TabsList>
+        <div ref={setToolbarHost} hidden={tab !== "plan" || !cycle} />
+        </div>
         <TabsContent value="resultados" keepMounted>
           <div className="nutrition-tab-body">
             <NutritionProgramCycles
@@ -690,6 +694,8 @@ function PatientWorkspace({
             {cycle ? (
               <NutritionPlanEditor
                 cycle={cycle}
+                toolbarHost={toolbarHost}
+                context={<div className="nutrition-editor-context"><span className="nutrition-context-patient">{patient.patientName}</span><span>{t(saveStatus === "saving" ? "Guardando borrador…" : saveStatus === "error" ? "No se guardaron los últimos cambios." : "Todos los cambios guardados")}</span></div>}
                 catalog={catalog}
                 editable={editable}
                 update={updateCycle}
