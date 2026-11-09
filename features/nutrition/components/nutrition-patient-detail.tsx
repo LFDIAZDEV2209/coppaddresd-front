@@ -64,7 +64,10 @@ import {
   NutritionMonthEnergy,
   NutritionVerification,
 } from "./nutrition-plan-verification";
-import { NutritionProgramCycles } from "./nutrition-program-cycles";
+import {
+  groupNutritionCycles,
+  NutritionProgramCycles,
+} from "./nutrition-program-cycles";
 import { NutritionCycleSwitcher } from "./nutrition-cycle-switcher";
 import "../nutrition.css";
 
@@ -216,6 +219,10 @@ function PatientWorkspace({
         }
       : header,
   );
+  // La etiqueta C1/C2/C3 es presentación; la identidad persistida es cycleId.
+  const cycleNumber = groupNutritionCycles(headers).find((group) =>
+    group.versions.some((version) => version.id === cycle?.id),
+  )?.number;
   function openPrescription(id: string, history = false, keepTab?: DetailTab) {
     if (locked) return;
     if (id !== cycle?.id) {
@@ -318,6 +325,8 @@ function PatientWorkspace({
             {cycle && (
               <span className="nutrition-measure text-xs">
                 {t("Versión {version}", { version: String(cycle.version) })}
+                {cycleNumber &&
+                  ` · ${t("Ciclo {cycle}", { cycle: String(cycleNumber) })}`}
               </span>
             )}
             {cycle?.provisional && (

@@ -67,6 +67,127 @@ test("ciclos: agrupar versiones, abrir plan e historial y conservar bandeja", as
             : older,
       }),
   );
+  // §19: el workspace queda igualmente interceptado para las vistas sintéticas.
+  await page.route(
+    "**/nutrition/patients/demo-patient-1/workspace?*",
+    (route) => {
+      const url = new URL(route.request().url());
+      const id = url.searchParams.get("prescriptionId") ?? "";
+      if (!id.startsWith("synthetic-")) return route.fallback();
+      const reviewed = id === old.id ? old : older;
+      return route.fulfill({
+        json: {
+          patientId: "demo-patient-1",
+          patientName: "María Demo",
+          patientDocument: "DEMO-0001",
+          timezone: "America/Bogota",
+          today: new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Bogota",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(new Date()),
+          profile: {
+            hasMeasuredProfile: true,
+            canGenerateWithoutManual: true,
+            fields: {
+              birthDate: {
+                value: "1982-04-10",
+                unit: null,
+                source: "patient_profile",
+              },
+              age: {
+                value: 44,
+                unit: "years",
+                source: "derived_from_birth_date",
+              },
+              sex: { value: "F", unit: null, source: "patient_profile" },
+              weightKg: {
+                value: 74.5,
+                unit: "kg",
+                source: "health_test_response",
+              },
+              heightCm: {
+                value: 168,
+                unit: "cm",
+                source: "health_test_response",
+              },
+              bmi: {
+                value: 26.4,
+                unit: "kg/m2",
+                source: "health_test_response",
+              },
+              hba1c: { value: 5.6, unit: "%", source: "health_test_response" },
+              glucose: { value: null, unit: "mg/dl", source: "missing" },
+              bodyFatPercent: { value: null, unit: "%", source: "missing" },
+              movement: {
+                value: "FLUJO",
+                unit: null,
+                source: "health_test_result",
+              },
+              nutritionRisk: {
+                value: "bajo",
+                unit: null,
+                source: "health_test_result",
+              },
+              sleepLevel: {
+                value: "consolidado",
+                unit: null,
+                source: "health_test_result",
+              },
+              sleepRiskFlags: { value: null, unit: "count", source: "missing" },
+              testAdherence: {
+                value: "A2",
+                unit: null,
+                source: "health_test_result",
+              },
+              cardiometabolicRisk: {
+                value: "2",
+                unit: null,
+                source: "health_test_result",
+              },
+              stress: { value: null, unit: null, source: "missing" },
+            },
+            missingData: [
+              "glucose",
+              "bodyFatPercent",
+              "sleepRiskFlags",
+              "stress",
+            ],
+          },
+          missingData: [
+            "glucose",
+            "bodyFatPercent",
+            "sleepRiskFlags",
+            "stress",
+          ],
+          generation: null,
+          toReview: reviewed,
+          currentPublished: old,
+          history: {
+            items: [
+              {
+                id: "synthetic-history",
+                prescriptionId: old.id,
+                actorUserId: "synthetic-actor",
+                occurredAt: "2026-09-01T14:00:00Z",
+                action: "approve",
+                revision: 2,
+                comment: null,
+                criticalCount: 0,
+                criticalConfirmed: false,
+                autoApproved: false,
+                snapshotJson: '{"version":2}',
+              },
+            ],
+            total: 1,
+            page: 1,
+            pageSize: 50,
+          },
+        },
+      });
+    },
+  );
   await page.reload();
   const calendar = page.getByRole("list", {
     name: "Ciclos del programa",
@@ -78,10 +199,14 @@ test("ciclos: agrupar versiones, abrir plan e historial y conservar bandeja", as
       .getByRole("table", { name: "Planes y versiones por ciclo", exact: true })
       .locator("tbody tr"),
   ).toHaveCount(2);
+  // La zona llega del workspace (§19): el "hoy" solo se representa dentro del período.
   await expect(
     page.getByText("Zona del paciente pendiente: hoy no se representa.", {
       exact: true,
     }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Período finalizado", { exact: true }).first(),
   ).toBeVisible();
   for (const width of [1440, 1366, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
@@ -126,11 +251,9 @@ test("ciclos: agrupar versiones, abrir plan e historial y conservar bandeja", as
     .getByRole("button", { name: "Ver historial C1", exact: true })
     .click();
   await expect(
-    page
-      .locator("details")
-      .filter({
-        has: page.locator("summary", { hasText: "Bitácora del plan" }),
-      }),
+    page.locator("details").filter({
+      has: page.locator("summary", { hasText: "Bitácora del plan" }),
+    }),
   ).toHaveAttribute("open", "");
   await expect(
     page.locator("details[open]").getByText("Plan aprobado", { exact: true }),

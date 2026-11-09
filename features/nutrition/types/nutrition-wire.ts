@@ -1,8 +1,20 @@
 /** Contratos confirmados en NutritionCaseContracts.cs / NutritionController.cs. */
 export interface NutritionTargetsWire {
-  k: number; c: number; p: number; f: number; fi: number; vasos: number;
-  bmr: number; tdee: number; deficit: number; floor: number; fase: string;
-  metaKg: number; kgLeft: number; wkKg: number; semanas: number;
+  k: number;
+  c: number;
+  p: number;
+  f: number;
+  fi: number;
+  vasos: number;
+  bmr: number;
+  tdee: number;
+  deficit: number;
+  floor: number;
+  fase: string;
+  metaKg: number;
+  kgLeft: number;
+  wkKg: number;
+  semanas: number;
 }
 export interface NutritionMealWire {
   dayNumber: number;
@@ -13,19 +25,43 @@ export interface NutritionMealWire {
   waterMl: number | null;
 }
 export interface NutritionViewWire {
-  id: string; patientId: string; cycleId: string; version: number; revision: number;
-  state: "borrador_ia" | "en_aprobacion" | "aprobado" | "devuelto" | "por_renovar";
-  provisional: boolean; isPublished: boolean; menusOutdated: boolean; manualEditsConfirmed: boolean;
-  startDate: string | null; endDate: string | null; targets: NutritionTargetsWire;
-  instructions: string | null; instructionsEn: string | null; narrativeSource: string;
-  missingData: string[]; alerts: { s: "crit" | "warn" | "info"; m: string; tec: boolean }[];
-  meals: NutritionMealWire[]; canRegenerate: boolean;
-  createdBy: string; approvedBy: string | null; approvedAt: string | null;
+  id: string;
+  patientId: string;
+  cycleId: string;
+  version: number;
+  revision: number;
+  state:
+    "borrador_ia" | "en_aprobacion" | "aprobado" | "devuelto" | "por_renovar";
+  provisional: boolean;
+  isPublished: boolean;
+  menusOutdated: boolean;
+  manualEditsConfirmed: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  targets: NutritionTargetsWire;
+  instructions: string | null;
+  instructionsEn: string | null;
+  narrativeSource: string;
+  missingData: string[];
+  alerts: { s: "crit" | "warn" | "info"; m: string; tec: boolean }[];
+  meals: NutritionMealWire[];
+  canRegenerate: boolean;
+  createdBy: string;
+  approvedBy: string | null;
+  approvedAt: string | null;
 }
 export interface NutritionEventWire {
-  id: string; prescriptionId: string; actorUserId: string; occurredAt: string;
-  action: string; revision: number; comment: string | null;
-  criticalCount: number; criticalConfirmed: boolean; autoApproved: boolean; snapshotJson: string;
+  id: string;
+  prescriptionId: string;
+  actorUserId: string;
+  occurredAt: string;
+  action: string;
+  revision: number;
+  comment: string | null;
+  criticalCount: number;
+  criticalConfirmed: boolean;
+  autoApproved: boolean;
+  snapshotJson: string;
 }
 export interface NutritionEditWire {
   instructionsEn?: string;
@@ -42,33 +78,90 @@ export interface NutritionEditWire {
  * Respuesta ausente o incompatible -> error visible, nunca fallback ni datos clínicos.
  */
 export interface NutritionQueueWire {
-  // TODO(integración 8.3/8.4): campos por fila items[n], CONTRACT §20.
-  // generationState: "pending" | "generating" | "ready" | "failed" | null;
-  // generationFallback: boolean;
-  // generationReason: string | null;
-  // generationUpdatedAt: string | null;
-  // hasPublishedToday: boolean;
-  // publishedCycleStart: string | null;
-  // publishedCycleEnd: string | null;
-  // latestDraftState: "borrador_ia" | "en_aprobacion" | "devuelto" | null;
-  // hasFutureDraft: boolean;
+  /** TODO(integración 8.3/8.4): campos por fila items[n], CONTRACT §20. */
   items: {
-    patientId: string; patientName: string; state: NutritionViewWire["state"] | "sin_plan";
+    patientId: string;
+    patientName: string;
+    state: NutritionViewWire["state"] | "sin_plan";
     prescription: null | {
-      id: string; state: NutritionViewWire["state"]; version: number; revision: number; k: number | null;
-      criticalAlertCount: number; provisional: boolean; startDate: string | null; endDate: string | null; isPublished: boolean;
+      id: string;
+      state: NutritionViewWire["state"];
+      version: number;
+      revision: number;
+      k: number | null;
+      criticalAlertCount: number;
+      provisional: boolean;
+      startDate: string | null;
+      endDate: string | null;
+      isPublished: boolean;
     };
   }[];
-  total: number; page: number; pageSize: number;
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+/** §19: campo medido con procedencia declarada; la ficha muestra origen y fecha. */
+export interface NutritionMeasuredFieldWire {
+  value: unknown;
+  unit: string | null;
+  source: string;
+  sourceCode?: string | null;
+  evaluationId?: string | null;
+  observedAt?: string | null;
+}
+/** §19 Ola 6 — workspace consolidado: identidad legible, perfil medido, faltantes, vista y bitácora. */
+export interface NutritionWorkspaceWire {
+  patientId: string;
+  patientName: string;
+  patientDocument: string | null;
+  timezone: string;
+  today: string;
+  profile: {
+    hasMeasuredProfile: boolean;
+    canGenerateWithoutManual: boolean;
+    fields: Record<string, NutritionMeasuredFieldWire>;
+    missingData: string[];
+  };
+  missingData: string[];
+  generation: {
+    reservationId: string;
+    batteryAssignmentId: string;
+    state: string;
+    reason: string | null;
+    attempts: number;
+    fallback: boolean;
+    prescriptionId: string | null;
+    updatedAt: string;
+  } | null;
+  toReview: NutritionViewWire | null;
+  currentPublished: NutritionViewWire | null;
+  history: {
+    items: NutritionEventWire[];
+    total: number;
+    page: number;
+    pageSize: number;
+  };
 }
 export interface NutritionPatientWire {
-  patientId: string; patientName: string; patientDocument: string | null;
+  patientId: string;
+  patientName: string;
+  patientDocument: string | null;
   nextPendingPatientId: string | null;
   profile: {
-    age: number | null; sex: "female" | "male" | null; bmi: number | null; hba1c: number | null;
-    movement: string | null; adherence: string | null; cardiometabolicRisk: string | null;
-    completedTests: number | null; provisionalFields: string[]; programPatientId: string | null;
-    weightKg?: number | null; heightCm?: number | null; birthDate?: string | null;
+    age: number | null;
+    sex: "female" | "male" | null;
+    bmi: number | null;
+    hba1c: number | null;
+    movement: string | null;
+    adherence: string | null;
+    cardiometabolicRisk: string | null;
+    completedTests: number | null;
+    provisionalFields: string[];
+    programPatientId: string | null;
+    weightKg?: number | null;
+    heightCm?: number | null;
+    birthDate?: string | null;
   };
   prescriptionId: string | null;
   publishedPrescriptionId: string | null;
@@ -76,12 +169,29 @@ export interface NutritionPatientWire {
 }
 /** Proyección del DTO existente GET /api/v1/patients/{id}; no es ficha de Nutrition. */
 export interface NutritionIdentityWire {
-  id: string; firstName: string; middleName: string | null; lastName: string;
-  documentNumber: string | null; dateOfBirth: string | null; gender: string | null;
+  id: string;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  documentNumber: string | null;
+  dateOfBirth: string | null;
+  gender: string | null;
 }
 /** GET /nutrition/foods: NutritionFoodDto; distinto de la entidad persistida. */
 export interface NutritionFoodWire {
-  code: string; name: string; group: string; role: "C" | "P" | "F" | "V";
-  kcal100: number; carbs100: number; protein100: number; fat100: number; fiber100: number;
-  householdEquivalent: { unitSingular: string; unitPlural: string; gramsPerUnit: number; unitStep: number } | null;
+  code: string;
+  name: string;
+  group: string;
+  role: "C" | "P" | "F" | "V";
+  kcal100: number;
+  carbs100: number;
+  protein100: number;
+  fat100: number;
+  fiber100: number;
+  householdEquivalent: {
+    unitSingular: string;
+    unitPlural: string;
+    gramsPerUnit: number;
+    unitStep: number;
+  } | null;
 }

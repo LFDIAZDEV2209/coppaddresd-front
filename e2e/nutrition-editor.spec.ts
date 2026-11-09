@@ -275,7 +275,7 @@ test("nueva versión conserva la publicada y bloquea aprobación con comida vac�
   await expect(
     page
       .locator(".nutrition-detail-header")
-      .getByText("Versión 2", { exact: true }),
+      .getByText("Versión 2", { exact: false }),
   ).toBeVisible();
   await page
     .getByLabel("Indicaciones del plan", { exact: true })
@@ -426,16 +426,18 @@ test("agua nullable del contrato se conserva sin inventar cero", async ({
 test("demografía inaccesible no bloquea una ficha autorizada por Nutrición", async ({
   page,
 }) => {
+  // §19: la identidad del workspace alimenta la ficha; la demanda opcional de
+  // Patients API desapareció, y aun sin Patients.View la ficha es operable.
   for (const identityStatus of [403, 404] as const) {
     await page.unroute("**/api/**");
     await mockNutritionHttp(page, ["Nutrition.Manage"], { identityStatus });
     await page.goto("/nutrition/demo-patient-2?tab=plan");
     await expect(
-      page.getByRole("heading", { name: "demo-patient-2", exact: true }),
+      page.getByRole("heading", { name: "Carlos Demo", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByText("Demografía fuera de alcance", { exact: true }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await expect(
       page.getByLabel("Gramos de Avena demo", { exact: true }),
     ).toBeEnabled();
