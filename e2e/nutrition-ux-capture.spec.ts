@@ -1,0 +1,101 @@
+import { test, expect, type Page } from "@playwright/test";
+import { mockNutritionHttp } from "./fixtures/nutrition-http";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
+
+/**
+ * Capturación UX del rediseño de bandeja y ficha (espaciado, selector de ciclo,
+ * aviso de copia publicada). El HTML sintético alimenta la app; nada toca prod.
+ */
+const captures = path.resolve(
+  "../openspec/changes/plan-nutricional-erp/screenshots/ux-rail-2026-11-09",
+);
+
+async function demo(page: Page) {
+  await mockNutritionHttp(page, ["Nutrition.Manage", "Nutrition.Approve"]);
+}
+
+test("bandeja: filtros neutros, filas densas y selección visible", async ({
+  page,
+}) => {
+  await demo(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/nutrition");
+  const list = page.getByRole("list", { name: "Planes de pacientes" });
+  await expect(list.getByRole("listitem")).toHaveCount(10);
+  await mkdir(captures, { recursive: true });
+  await page.screenshot({
+    path: path.join(captures, "bandeja-desktop.png"),
+    animations: "disabled",
+  });
+  // Entrar a la ficha y volver: la fila del paciente activo queda a la vista.
+  await page.getByRole("link", { name: "María Demo", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "María Demo", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".nutrition-patient-option[data-selected='true']"),
+  ).toBeInViewport({ ratio: 0.5 });
+});
+
+test("ficha: selector de ciclo visible con borrador sobre publicado", async ({
+  page,
+}) => {
+  await demo(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/nutrition");
+  // Crear versión sobre un plan aprobado: publicado v1 + borrador v2.
+  await page.getByRole("link", { name: "Andrés Demo", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Crear nueva versión", exact: true })
+    .click();
+  const switcher = page.getByLabel("Selector de ciclo y versión");
+  await expect(switcher).toBeVisible();
+  await expect(switcher.locator("option")).toHaveCount(2);
+  await expect(
+    page.getByText(/La copia publicada v\d+ sigue vigente/),
+  ).toBeVisible();
+  await page.screenshot({
+    path: path.join(captures, "ficha-switcher-desktop.png"),
+    animations: "disabled",
+  });
+  // Cambiar a la copia publicada recarga el workspace y deja la vista de solo lectura.
+  await switcher.locator("select").selectOption({ index: 1 });
+  await expect(
+    page.getByText("Plan de solo lectura", { exact: false }),
+  ).toBeVisible({ timeout: 15_000 });
+  await page.screenshot({
+    path: path.join(captures, "ficha-publicada-desktop.png"),
+    animations: "disabled",
+  });
+});
+
+test("móvil: ficha y bandeja sin desbordes", async ({ page }) => {
+  await demo(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/nutrition");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: path.join(captures, "bandeja-mobile.png"),
+    animations: "disabled",
+    fullPage: true,
+  });
+  await page.getByRole("link", { name: "Andrés Demo", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Crear nueva versión", exact: true })
+    .click();
+  await expect(page.getByLabel("Selector de ciclo y versión")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: path.join(captures, "ficha-switcher-mobile.png"),
+    animations: "disabled",
+  });
+});

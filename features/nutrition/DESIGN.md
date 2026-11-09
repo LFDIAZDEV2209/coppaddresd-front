@@ -171,7 +171,7 @@ Rail y ficha comparten fondo card, borde neutral y radio `panel`. Las secciones 
 
 ### Navigation
 
-Tres Tabs de variante line: Resultados y ciclos, Programación y Plan de 30 días editar. La pestaña activa tiene subrayado e identidad textual; Base UI proporciona la interacción de teclado. En escritorio permanecen sticky dentro del scroll de la ficha. El paciente seleccionado tiene check y fondo informativo, hover muted y foco interior visible.
+Tres Tabs de variante line: Resultados y ciclos, Programación y Plan de 30 días. La pestaña activa tiene subrayado e identidad textual; Base UI proporciona la interacción de teclado. En escritorio permanecen sticky dentro del scroll de la ficha. El paciente seleccionado tiene check y fondo informativo, hover muted y foco interior visible.
 
 ### Verificación y energía mensual
 

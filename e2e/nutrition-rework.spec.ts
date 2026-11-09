@@ -3,84 +3,192 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { mockNutritionHttp } from "./fixtures/nutrition-http";
 
-const captures = path.resolve("../openspec/changes/plan-nutricional-erp/screenshots/rework");
+const captures = path.resolve(
+  "../openspec/changes/plan-nutricional-erp/screenshots/rework",
+);
 
-test("mesa clínica: dos paneles, tres pestañas, 30 barras y revisión accesible", async ({ page }, testInfo) => {
-  testInfo.annotations.push({ type: "data", description: "Contrato HTTP simulado explícito para revisión visual reproducible; no acredita backend real." });
+test("mesa clínica: dos paneles, tres pestañas, 30 barras y revisión accesible", async ({
+  page,
+}, testInfo) => {
+  testInfo.annotations.push({
+    type: "data",
+    description:
+      "Contrato HTTP simulado explícito para revisión visual reproducible; no acredita backend real.",
+  });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await mockNutritionHttp(page);
   await mkdir(captures, { recursive: true });
   const capture = async (name: string, selector?: string) => {
     for (const mobile of [false, true]) {
-      await page.setViewportSize(mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 });
-      if (selector) await page.locator(selector).first().scrollIntoViewIfNeeded();
-      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.querySelector("main")!.scrollWidth <= document.querySelector("main")!.clientWidth)).toBe(true);
-      await page.screenshot({ path: path.join(captures, `${name}${mobile ? "-mobile" : ""}.png`), animations: "disabled" });
+      await page.setViewportSize(
+        mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },
+      );
+      if (selector)
+        await page.locator(selector).first().scrollIntoViewIfNeeded();
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              document.documentElement.scrollWidth <= innerWidth &&
+              document.querySelector("main")!.scrollWidth <=
+                document.querySelector("main")!.clientWidth,
+          ),
+        )
+        .toBe(true);
+      await page.screenshot({
+        path: path.join(captures, `${name}${mobile ? "-mobile" : ""}.png`),
+        animations: "disabled",
+      });
     }
     await page.setViewportSize({ width: 1440, height: 900 });
   };
   await page.goto("/nutrition");
-  await expect(page.getByRole("link", { name: "María Demo", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "María Demo", exact: true }),
+  ).toBeVisible();
   await capture("bandeja");
   await page.getByRole("link", { name: "María Demo", exact: true }).click();
-  const tabs = page.getByRole("tablist", { name: "Secciones de la ficha nutricional" });
+  const tabs = page.getByRole("tablist", {
+    name: "Secciones de la ficha nutricional",
+  });
   await expect(tabs.getByRole("tab")).toHaveCount(3);
-  await expect(page.getByRole("heading", { name: "Lecturas", exact: true })).toBeVisible();
-  const geometry = await page.locator(".nutrition-workbench").evaluate(element => ({ columns: getComputedStyle(element).gridTemplateColumns, gap: getComputedStyle(element).gap }));
+  await expect(
+    page.getByRole("heading", { name: "Lecturas", exact: true }),
+  ).toBeVisible();
+  const geometry = await page
+    .locator(".nutrition-workbench")
+    .evaluate((element) => ({
+      columns: getComputedStyle(element).gridTemplateColumns,
+      gap: getComputedStyle(element).gap,
+    }));
   const measurements = await page.evaluate(() => {
     const rail = document.querySelector(".nutrition-patient-rail")!;
     const title = document.querySelector(".nutrition-patient-title")!;
-    const number = document.querySelector(".nutrition-detail-header .nutrition-measure")!;
-    return { railWidth: rail.getBoundingClientRect().width, titleFont: getComputedStyle(title).fontFamily, numberFont: getComputedStyle(number).fontFamily, filters: document.querySelectorAll(".nutrition-rail-filters button").length, tabs: document.querySelectorAll('[role="tab"]').length };
+    const number = document.querySelector(
+      ".nutrition-detail-header .nutrition-measure",
+    )!;
+    return {
+      railWidth: rail.getBoundingClientRect().width,
+      titleFont: getComputedStyle(title).fontFamily,
+      numberFont: getComputedStyle(number).fontFamily,
+      filters: document.querySelectorAll(".nutrition-rail-filters button")
+        .length,
+      tabs: document.querySelectorAll('[role="tab"]').length,
+    };
   });
-  await writeFile(path.join(captures, "measurements.json"), JSON.stringify({ data: "HTTP sintético explícito; E1 real ejecutado por separado", desktop: { viewport: [1440, 900], ...geometry, ...measurements }, fallback: { viewport: [1280, 900], assertion: "dos paneles visibles, sin scroll horizontal" }, mobile: { viewport: [390, 844], assertion: "lista o ficha, retorno accesible, sin scroll horizontal" }, checks: 4, energyBars: 30 }, null, 2) + "\n", "utf8");
-  await testInfo.attach("desktop-layout", { body: JSON.stringify(geometry), contentType: "application/json" });
+  await writeFile(
+    path.join(captures, "measurements.json"),
+    JSON.stringify(
+      {
+        data: "HTTP sintético explícito; E1 real ejecutado por separado",
+        desktop: { viewport: [1440, 900], ...geometry, ...measurements },
+        fallback: {
+          viewport: [1280, 900],
+          assertion: "dos paneles visibles, sin scroll horizontal",
+        },
+        mobile: {
+          viewport: [390, 844],
+          assertion: "lista o ficha, retorno accesible, sin scroll horizontal",
+        },
+        checks: 4,
+        energyBars: 30,
+      },
+      null,
+      2,
+    ) + "\n",
+    "utf8",
+  );
+  await testInfo.attach("desktop-layout", {
+    body: JSON.stringify(geometry),
+    contentType: "application/json",
+  });
   await capture("resultados-ciclos", ".nutrition-detail-header");
   await tabs.getByRole("tab", { name: "Programación", exact: true }).click();
-  await expect(page.getByRole("list", { name: "Verificación automática" }).getByRole("listitem")).toHaveCount(4);
+  await expect(
+    page
+      .getByRole("list", { name: "Verificación automática" })
+      .getByRole("listitem"),
+  ).toHaveCount(4);
   await expect(page.locator(".nutrition-month-plot li")).toHaveCount(30);
   const dayInspector = page.getByLabel("Consultar día", { exact: true });
   await dayInspector.selectOption("20");
-  await expect(page.locator(".nutrition-month-inspector output")).toContainText(/kcal · meta .*kcal · desviación/);
-  await page.locator('.nutrition-month-plot button[aria-pressed="true"]').press("End");
+  await expect(page.locator(".nutrition-month-inspector output")).toContainText(
+    /kcal · meta .*kcal · desviación/,
+  );
+  await page
+    .locator('.nutrition-month-plot button[aria-pressed="true"]')
+    .press("End");
   await expect(dayInspector).toHaveValue("30");
-  await page.locator('.nutrition-month-plot button[aria-pressed="true"]').press("Home");
+  await page
+    .locator('.nutrition-month-plot button[aria-pressed="true"]')
+    .press("Home");
   await expect(dayInspector).toHaveValue("1");
   await capture("programacion", ".nutrition-meal-schedule");
-  await tabs.getByRole("tab", { name: "Plan de 30 días editar", exact: true }).click();
-  await expect(page.getByLabel("Día del ciclo", { exact: true })).toHaveValue("1");
+  await tabs.getByRole("tab", { name: "Plan de 30 días", exact: true }).click();
+  await expect(page.getByLabel("Día del ciclo", { exact: true })).toHaveValue(
+    "1",
+  );
   await page.getByLabel("Día del ciclo", { exact: true }).selectOption("30");
-  await expect(page.getByRole("button", { name: "Día siguiente", exact: true })).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Día siguiente", exact: true }),
+  ).toBeDisabled();
   await page.getByLabel("Día del ciclo", { exact: true }).selectOption("1");
   await capture("plan-30-dias", "#nutrition-editor-title");
-  await expect(page.getByText("Plan en revisión. Devuélvelo con comentario para solicitar ajustes.", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(
+      "Plan en revisión. Devuélvelo con comentario para solicitar ajustes.",
+      { exact: true },
+    ),
+  ).toBeVisible();
   await page.getByRole("link", { name: "Carlos Demo", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Carlos Demo", exact: true })).toBeVisible();
-  await tabs.getByRole("tab", { name: "Plan de 30 días editar", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Carlos Demo", exact: true }),
+  ).toBeVisible();
+  await tabs.getByRole("tab", { name: "Plan de 30 días", exact: true }).click();
   const grams = page.getByLabel("Gramos de Avena demo", { exact: true });
   await expect(grams).toBeEnabled();
   await grams.fill("80");
-  await expect(page.locator(".nutrition-detail-toolbar").getByRole("status")).toHaveText("Todos los cambios guardados");
+  await expect(
+    page.locator(".nutrition-detail-toolbar").getByRole("status"),
+  ).toHaveText("Todos los cambios guardados");
   await capture("editor", ".nutrition-meal");
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(page.locator(".nutrition-patient-rail")).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole("link", { name: "María Demo", exact: true }).click();
   await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
   const dialog = page.getByRole("dialog");
-  const checkbox = dialog.getByRole("checkbox", { name: /Revisé personalmente/ });
+  const checkbox = dialog.getByRole("checkbox", {
+    name: /Revisé personalmente/,
+  });
   await expect(checkbox).not.toBeChecked();
-  await expect(dialog.getByRole("button", { name: "Aprobar y publicar", exact: true })).toBeDisabled();
+  await expect(
+    dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }),
+  ).toBeDisabled();
   await expect(dialog.locator(".nutrition-month-plot li")).toHaveCount(30);
   await capture("aprobacion", '[role="dialog"]');
-  await expect(dialog.getByRole("button", { name: "Aprobar y publicar", exact: true })).toBeInViewport();
+  await expect(
+    dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }),
+  ).toBeInViewport();
   await checkbox.check();
-  await dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }).click();
+  await dialog
+    .getByRole("button", { name: "Aprobar y publicar", exact: true })
+    .click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.locator(".nutrition-detail-header").getByText("Aprobado", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .locator(".nutrition-detail-header")
+      .getByText("Aprobado", { exact: true }),
+  ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Volver a la bandeja", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Volver a la bandeja", exact: true })
+    .click();
   await expect(page.locator(".nutrition-patient-rail")).toBeVisible();
   await expect(page.locator(".nutrition-detail-panel")).toBeHidden();
 });
