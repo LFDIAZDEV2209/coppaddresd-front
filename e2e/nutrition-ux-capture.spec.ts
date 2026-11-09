@@ -8,7 +8,7 @@ import path from "node:path";
  * aviso de copia publicada). El HTML sintético alimenta la app; nada toca prod.
  */
 const captures = path.resolve(
-  "../openspec/changes/plan-nutricional-erp/screenshots/ux-rail-2026-11-09",
+  "test-results/nutrition-captures/ux-rail-2026-11-09",
 );
 
 async function demo(page: Page) {

@@ -35,3 +35,14 @@
 | 6. Refinamiento | 20–30 min | Pendiente |
 
 Al finalizar cada ciclo se entrega resumen de hasta tres líneas y se espera instrucción del orquestador. La propuesta se revisa antes de implementación. El registro no contiene credenciales.
+
+## Ciclo 4 ? autorizado, en ejecuci?n
+
+### Etapa 0 ? baseline completado
+
+- Base `b379672`, rama `feature/nutrition-ux-premium`, checkout inicialmente limpio. Front/API/gateway HTTP 200. QA local v2 contin?a Devuelto; sin mutaciones nuevas. A 390?900 no hay overflow y se reproduce N04 tras reload asentado. Las hip?tesis transitorias del diagn?stico siguen excluidas; no se elevan a defectos.
+- `corepack yarn lint`, `corepack yarn tsc --noEmit` y `corepack yarn i18n:check`: exit 0 (0 claves literales faltantes; advertencias informativas de claves din?micas/hu?rfanas).
+- `corepack yarn e2e --project=chromium-desktop e2e/nutrition --reporter=list`: 29 passed, 1 skipped, 1,8 min. Suite con fixtures HTTP; la sonda live requiere configuraci?n expl?cita y no se presenta como ejecutada.
+- Tres specs de capturas escrib?an en OpenSpec: rutas trasladadas a `test-results/nutrition-captures/` para respetar escrituras exclusivamente dentro del front. Sin cambios de producto.
+- Skills frontend/i18n y documentaci?n local Next consultadas. Modern Web Guidance devuelve gu?a responsive; advierte versi?n de skill antigua, sin modificar herramientas del workspace. El fallo previo de impeccable context permanece documentado; detector se intentar? en pre-ship.
+- Siguiente: etapa 1, sem?ntica hist?rica, unidades, blancos t?ctiles y error sin alertas anidadas. Autorizadas todas las etapas, no se espera nueva aprobaci?n.

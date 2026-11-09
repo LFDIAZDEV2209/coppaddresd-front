@@ -5,7 +5,7 @@ import { mockNutritionHttp } from "./fixtures/nutrition-http";
 import type { NutritionViewWire } from "../features/nutrition/types/nutrition-wire";
 
 const captures = path.resolve(
-  "../openspec/changes/plan-nutricional-erp/screenshots/cycles-design",
+  "test-results/nutrition-captures/cycles-design",
 );
 
 test("ciclos: agrupar versiones, abrir plan e historial y conservar bandeja", async ({
