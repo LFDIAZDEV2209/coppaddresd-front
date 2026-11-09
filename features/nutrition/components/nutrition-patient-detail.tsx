@@ -307,16 +307,17 @@ function PatientWorkspace({
         </span>
       </div>
       <header className="nutrition-detail-header">
-        <div className="min-w-0">
+        <div className="nutrition-header-identity min-w-0">
           <h2 className="nutrition-display nutrition-patient-title">
             {patient.patientName}
           </h2>
           <p className="nutrition-measure mt-1 text-xs text-muted-foreground">
             {patient.patientDocument ?? t("Sin documento")}
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+        </div>
+          <div className="nutrition-header-state flex flex-wrap items-center gap-2">
             <NutritionStateChip state={cycle?.state ?? "sin_plan"} />
-            {cycle && (
+            {cycle && headers.length < 2 && (
               <span className="nutrition-measure text-xs">
                 {t("Versión {version}", { version: String(cycle.version) })}
                 {cycleNumber &&
@@ -329,7 +330,6 @@ function PatientWorkspace({
               </span>
             )}
           </div>
-        </div>
         <div className="nutrition-detail-actions">
           {!cycle && canManage && (
             <Button onClick={() => changeTab("plan")}>

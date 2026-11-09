@@ -273,10 +273,8 @@ test("nueva versión conserva la publicada y bloquea aprobación con comida vac�
     .getByRole("button", { name: "Crear nueva versión", exact: true })
     .click();
   await expect(
-    page
-      .locator(".nutrition-detail-header")
-      .getByText("Versión 2", { exact: false }),
-  ).toBeVisible();
+    page.getByLabel("Ciclo y versión", { exact: true }),
+  ).toContainText("Versión 2");
   await page
     .getByLabel("Indicaciones del plan", { exact: true })
     .fill("Borrador v2 sin publicar");
@@ -510,7 +508,7 @@ test("contraste AA del chip IA y exceso ámbar en valores del editor", async ({
   await demoSession(page);
   await page.goto("/nutrition");
   // El chip IA vive en las filas de la bandeja; los filtros inactivos son neutros.
-  await page.getByRole("button", { name: /Borradores IA/ }).click();
+  await page.getByRole("combobox", { name: "Estado del plan", exact: true }).selectOption("borrador_ia");
   const ai = page
     .locator(
       '.nutrition-patient-option .nutrition-chip[data-status="borrador_ia"]',

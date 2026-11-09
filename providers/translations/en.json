@@ -5155,5 +5155,6 @@
   "Menos de {amount} kcal sobre la meta": "Less than {amount} kcal above target",
   "Menos de {amount} kcal bajo la meta": "Less than {amount} kcal below target",
   "Menos de {amount} {unit} sobre la meta": "Less than {amount} {unit} above target",
-  "{kcal} kcal · meta {target} kcal · desviación {difference}": "{kcal} kcal · target {target} kcal · deviation {difference}"
+  "{kcal} kcal · meta {target} kcal · desviación {difference}": "{kcal} kcal · target {target} kcal · deviation {difference}",
+  "Estado del plan": "Plan status"
 }

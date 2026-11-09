@@ -65,3 +65,11 @@ Al finalizar cada ciclo se entrega resumen de hasta tres líneas y se espera ins
 - N03: último segmento flexible con min-width 0 y nav contenido; nombre completo permanece en DOM y header. Sin cambios del provider, rutas ni búsqueda.
 - `nutrition-ux-capture.spec.ts`: **4 passed**; caso nuevo comprueba no solapamiento con búsqueda a 1440/1280/1024 y nombre clínico íntegro a 390. lint/tsc/i18n completos: exit 0.
 - Smoke Playwright MCP en Programas, Tests y Citas a 1440/1024/390: sin overflow; breadcrumb desktop y ocultación móvil conservados. Citas sigue con h1 de ancho 0 a 390, defecto previo documentado en Ciclo 1, ajeno a Topbar; no se amplía alcance. Sin mutaciones.
+
+### Etapa 4 — bandeja y cabecera completadas
+
+- N01: selector nativo etiquetado con siete estados/counts, mismo setter y consultas; búsqueda/selección/paginación conservadas. N02: identidad completa, estado y acción ordenados en grid; selector muestra ciclo/versión sin badge duplicado; comentario de devolución íntegro.
+- Validación final sin editar durante la corrida: **27 passed, 1 skipped** en queue/cycles/rework/editor/ux-capture; lint, tsc e i18n completos exit 0. La primera corrida encontró una aserción inglesa del botón de filtro retirado y una captura interrumpida por HMR; actualizada la aserción al selector y repetida la suite con código estable.
+- Cinco anchos sin overflow. Lista visible escritorio **409px** frente a 283; primer paciente móvil **y407** frente a ~550. Header QA **142px** frente a 201 durante esta etapa; nombre sin truncar, estado y acción juntos.
+- Excepción explícita al objetivo y650: fixture Devuelto con comentario largo y dos versiones empieza contenido en **y708**, preservando el motivo completo (110px). La meta geométrica se subordina a legibilidad según propuesta. Evidencia inspeccionada: [header móvil](screenshots/despues/etapa4-header-390.png). No se oculta información para lograr la cifra.
+- Chrome DevTools en local sin sesión: redirección a login por refresh 401 y warning de preload CSS; no se confunden con errores de la sesión QA autenticada de Playwright. Continúa etapa 5.

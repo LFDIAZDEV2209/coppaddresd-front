@@ -71,7 +71,7 @@ test("mesa clínica: dos paneles, tres pestañas, 30 barras y revisión accesibl
       railWidth: rail.getBoundingClientRect().width,
       titleFont: getComputedStyle(title).fontFamily,
       numberFont: getComputedStyle(number).fontFamily,
-      filters: document.querySelectorAll(".nutrition-rail-filters button")
+      filters: document.querySelectorAll("#nutrition-state option")
         .length,
       tabs: document.querySelectorAll('[role="tab"]').length,
     };

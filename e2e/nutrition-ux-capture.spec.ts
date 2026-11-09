@@ -15,6 +15,30 @@ async function demo(page: Page) {
   await mockNutritionHttp(page, ["Nutrition.Manage", "Nutrition.Approve"]);
 }
 
+test("bandeja compacta conserva siete estados y espacio útil", async ({ page }) => {
+  await demo(page);
+  await page.goto("/nutrition");
+  const state = page.getByRole("combobox", { name: "Estado del plan", exact: true });
+  await expect(state.locator("option")).toHaveCount(7);
+  await expect(page.locator(".nutrition-patient-option")).toHaveCount(10);
+  for (const width of [1440, 1280, 1024, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const geometry = await page.evaluate(() => ({
+      list: document.querySelector(".nutrition-patient-list")!.clientHeight,
+      first: document.querySelector(".nutrition-patient-option")!.getBoundingClientRect().top,
+      overflow: document.documentElement.scrollWidth > innerWidth,
+    }));
+    expect(geometry.overflow).toBe(false);
+    if (width >= 1024) expect(geometry.list).toBeGreaterThanOrEqual(400);
+    if (width === 390) expect(geometry.first).toBeLessThan(450);
+  }
+  await state.focus();
+  await state.press("End");
+  await state.press("Enter");
+  await expect(state).toHaveValue("sin_plan");
+  await expect(page.locator(".nutrition-patient-option")).toHaveCount(2);
+});
+
 test("breadcrumb largo cede espacio al buscador sin perder nombre clínico", async ({ page }) => {
   const { store } = await mockNutritionHttp(page);
   const name = "Paciente QA con nombre clínico deliberadamente largo para revisar orientación y búsqueda";

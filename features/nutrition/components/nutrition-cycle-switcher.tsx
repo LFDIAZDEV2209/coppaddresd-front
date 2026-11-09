@@ -74,7 +74,7 @@ export function NutritionCycleSwitcher({
           >
             {group.versions.map((version) => (
               <option key={version.id} value={version.id}>
-                {t("Versión {version}", { version: String(version.version) })} —{" "}
+                {t("Ciclo {cycle}", { cycle: String(group.number) })} · {t("Versión {version}", { version: String(version.version) })} —{" "}
                 {t(stateLabels[version.state])}
                 {version.isPublished ? ` · ${t("Publicada")}` : ""}
               </option>
