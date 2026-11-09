@@ -1,0 +1,708 @@
+[
+  {
+    "width": 1440,
+    "tab": "Resultados y ciclos",
+    "scrollWidth": 1440,
+    "panelWidth": 834,
+    "panelScrollWidth": 834,
+    "scrollContainers": [
+      {
+        "class": "nutrition-patient-list",
+        "height": 283,
+        "scroll": 711
+      },
+      {
+        "class": "nutrition-detail-panel",
+        "height": 694,
+        "scroll": 2013
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Ver plan C1",
+        "w": 41.625,
+        "h": 44
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "tab": "Programación",
+    "scrollWidth": 1440,
+    "panelWidth": 834,
+    "panelScrollWidth": 834,
+    "scrollContainers": [
+      {
+        "class": "nutrition-patient-list",
+        "height": 283,
+        "scroll": 711
+      },
+      {
+        "class": "nutrition-detail-panel",
+        "height": 694,
+        "scroll": 1167
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Día 1: 1.850 kcal",
+        "w": 22.421875,
+        "h": 99
+      },
+      {
+        "label": "Día 2: 1.850 kcal",
+        "w": 22.4375,
+        "h": 99
+      },
+      {
+        "label": "Día 3: 1.850 kcal",
+        "w": 22.4375,
+        "h": 99
+      },
+      {
+        "label": "Día 4: 1.850 kcal",
+        "w": 22.421875,
+        "h": 99
+      },
+      {
+        "label": "Día 5: 1.850 kcal",
+        "w": 22.4375,
+        "h": 99
+      },
+      {
+        "label": "Día 6: 1.850 kcal",
+        "w": 22.4375,
+        "h": 99
+      },
+      {
+        "label": "Día 7: 1.850 kcal",
+        "w": 22.4375,
+        "h": 99
+      },
+      {
+        "label": "Día 8: 1.850 kcal",
+        "w": 22.421875,
+        "h": 99
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "tab": "Plan de 30 días",
+    "scrollWidth": 1440,
+    "panelWidth": 834,
+    "panelScrollWidth": 834,
+    "scrollContainers": [
+      {
+        "class": "nutrition-patient-list",
+        "height": 283,
+        "scroll": 711
+      },
+      {
+        "class": "nutrition-detail-panel",
+        "height": 694,
+        "scroll": 2861
+      },
+      {
+        "class": "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-y",
+        "height": 116,
+        "scroll": 236
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Día anterior",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "Día siguiente",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 242.671875,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 242.671875,
+        "h": 32
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "tab": "Resultados y ciclos",
+    "scrollWidth": 1280,
+    "panelWidth": 674,
+    "panelScrollWidth": 674,
+    "scrollContainers": [
+      {
+        "class": "nutrition-patient-list",
+        "height": 283,
+        "scroll": 711
+      },
+      {
+        "class": "nutrition-detail-panel",
+        "height": 694,
+        "scroll": 2275
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Ver plan C1",
+        "w": 41.625,
+        "h": 44
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "tab": "Programación",
+    "scrollWidth": 1280,
+    "panelWidth": 674,
+    "panelScrollWidth": 674,
+    "scrollContainers": [
+      {
+        "class": "nutrition-patient-list",
+        "height": 283,
+        "scroll": 711
+      },
+      {
+        "class": "nutrition-detail-panel",
+        "height": 694,
+        "scroll": 1167
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Día 1: 1.850 kcal",
+        "w": 17.09375,
+        "h": 99
+      },
+      {
+        "label": "Día 2: 1.850 kcal",
+        "w": 17.09375,
+        "h": 99
+      },
+      {
+        "label": "Día 3: 1.850 kcal",
+        "w": 17.109375,
+        "h": 99
+      },
+      {
+        "label": "Día 4: 1.850 kcal",
+        "w": 17.09375,
+        "h": 99
+      },
+      {
+        "label": "Día 5: 1.850 kcal",
+        "w": 17.109375,
+        "h": 99
+      },
+      {
+        "label": "Día 6: 1.850 kcal",
+        "w": 17.09375,
+        "h": 99
+      },
+      {
+        "label": "Día 7: 1.850 kcal",
+        "w": 17.09375,
+        "h": 99
+      },
+      {
+        "label": "Día 8: 1.850 kcal",
+        "w": 17.109375,
+        "h": 99
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "tab": "Plan de 30 días",
+    "scrollWidth": 1280,
+    "panelWidth": 674,
+    "panelScrollWidth": 674,
+    "scrollContainers": [
+      {
+        "class": "nutrition-patient-list",
+        "height": 283,
+        "scroll": 711
+      },
+      {
+        "class": "nutrition-detail-panel",
+        "height": 694,
+        "scroll": 3029
+      },
+      {
+        "class": "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-y",
+        "height": 116,
+        "scroll": 276
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Día anterior",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "Día siguiente",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 189.328125,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 189.328125,
+        "h": 32
+      }
+    ]
+  },
+  {
+    "width": 1024,
+    "tab": "Resultados y ciclos",
+    "scrollWidth": 1024,
+    "panelWidth": 442,
+    "panelScrollWidth": 442,
+    "scrollContainers": [
+      {
+        "class": "nutrition-patient-list",
+        "height": 283,
+        "scroll": 711
+      },
+      {
+        "class": "nutrition-detail-panel",
+        "height": 694,
+        "scroll": 2615
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Ver plan C1",
+        "w": 41.625,
+        "h": 44
+      }
+    ]
+  },
+  {
+    "width": 1024,
+    "tab": "Programación",
+    "scrollWidth": 1024,
+    "panelWidth": 442,
+    "panelScrollWidth": 442,
+    "scrollContainers": [
+      {
+        "class": "nutrition-patient-list",
+        "height": 283,
+        "scroll": 711
+      },
+      {
+        "class": "nutrition-detail-panel",
+        "height": 694,
+        "scroll": 1380
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Día 1: 1.850 kcal",
+        "w": 9.359375,
+        "h": 99
+      },
+      {
+        "label": "Día 2: 1.850 kcal",
+        "w": 9.359375,
+        "h": 99
+      },
+      {
+        "label": "Día 3: 1.850 kcal",
+        "w": 9.375,
+        "h": 99
+      },
+      {
+        "label": "Día 4: 1.850 kcal",
+        "w": 9.359375,
+        "h": 99
+      },
+      {
+        "label": "Día 5: 1.850 kcal",
+        "w": 9.375,
+        "h": 99
+      },
+      {
+        "label": "Día 6: 1.850 kcal",
+        "w": 9.359375,
+        "h": 99
+      },
+      {
+        "label": "Día 7: 1.850 kcal",
+        "w": 9.375,
+        "h": 99
+      },
+      {
+        "label": "Día 8: 1.850 kcal",
+        "w": 9.359375,
+        "h": 99
+      }
+    ]
+  },
+  {
+    "width": 1024,
+    "tab": "Plan de 30 días",
+    "scrollWidth": 1024,
+    "panelWidth": 442,
+    "panelScrollWidth": 442,
+    "scrollContainers": [
+      {
+        "class": "nutrition-patient-list",
+        "height": 283,
+        "scroll": 711
+      },
+      {
+        "class": "nutrition-detail-panel",
+        "height": 694,
+        "scroll": 3399
+      },
+      {
+        "class": "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-y",
+        "height": 116,
+        "scroll": 456
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Día anterior",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "Día siguiente",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 112,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 112,
+        "h": 32
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "tab": "Resultados y ciclos",
+    "scrollWidth": 768,
+    "panelWidth": 742,
+    "panelScrollWidth": 742,
+    "scrollContainers": [],
+    "smallControls": [
+      {
+        "label": "Ver plan C1",
+        "w": 41.625,
+        "h": 44
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "tab": "Programación",
+    "scrollWidth": 768,
+    "panelWidth": 742,
+    "panelScrollWidth": 742,
+    "scrollContainers": [],
+    "smallControls": [
+      {
+        "label": "Día 1: 1.850 kcal",
+        "w": 19.765625,
+        "h": 99
+      },
+      {
+        "label": "Día 2: 1.850 kcal",
+        "w": 19.765625,
+        "h": 99
+      },
+      {
+        "label": "Día 3: 1.850 kcal",
+        "w": 19.765625,
+        "h": 99
+      },
+      {
+        "label": "Día 4: 1.850 kcal",
+        "w": 19.765625,
+        "h": 99
+      },
+      {
+        "label": "Día 5: 1.850 kcal",
+        "w": 19.765625,
+        "h": 99
+      },
+      {
+        "label": "Día 6: 1.850 kcal",
+        "w": 19.765625,
+        "h": 99
+      },
+      {
+        "label": "Día 7: 1.850 kcal",
+        "w": 19.765625,
+        "h": 99
+      },
+      {
+        "label": "Día 8: 1.850 kcal",
+        "w": 19.765625,
+        "h": 99
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "tab": "Plan de 30 días",
+    "scrollWidth": 768,
+    "panelWidth": 742,
+    "panelScrollWidth": 742,
+    "scrollContainers": [
+      {
+        "class": "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-y",
+        "height": 116,
+        "scroll": 236
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Día anterior",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "Día siguiente",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 80,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 216,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 216,
+        "h": 32
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "tab": "Resultados y ciclos",
+    "scrollWidth": 390,
+    "panelWidth": 364,
+    "panelScrollWidth": 364,
+    "scrollContainers": [],
+    "smallControls": [
+      {
+        "label": "Actualizar bandeja",
+        "w": 38,
+        "h": 44
+      },
+      {
+        "label": "Ver plan C1",
+        "w": 41.625,
+        "h": 44
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "tab": "Programación",
+    "scrollWidth": 390,
+    "panelWidth": 364,
+    "panelScrollWidth": 364,
+    "scrollContainers": [],
+    "smallControls": [
+      {
+        "label": "Actualizar bandeja",
+        "w": 38,
+        "h": 44
+      },
+      {
+        "label": "Día 1: 1.850 kcal",
+        "w": 7.15625,
+        "h": 99
+      },
+      {
+        "label": "Día 2: 1.850 kcal",
+        "w": 7.171875,
+        "h": 99
+      },
+      {
+        "label": "Día 3: 1.850 kcal",
+        "w": 7.15625,
+        "h": 99
+      },
+      {
+        "label": "Día 4: 1.850 kcal",
+        "w": 7.171875,
+        "h": 99
+      },
+      {
+        "label": "Día 5: 1.850 kcal",
+        "w": 7.171875,
+        "h": 99
+      },
+      {
+        "label": "Día 6: 1.850 kcal",
+        "w": 7.15625,
+        "h": 99
+      },
+      {
+        "label": "Día 7: 1.850 kcal",
+        "w": 7.171875,
+        "h": 99
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "tab": "Plan de 30 días",
+    "scrollWidth": 390,
+    "panelWidth": 364,
+    "panelScrollWidth": 364,
+    "scrollContainers": [
+      {
+        "class": "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-y",
+        "height": 136,
+        "scroll": 808
+      }
+    ],
+    "smallControls": [
+      {
+        "label": "Actualizar bandeja",
+        "w": 38,
+        "h": 44
+      },
+      {
+        "label": "Día anterior",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "Día siguiente",
+        "w": 32,
+        "h": 44
+      },
+      {
+        "label": "",
+        "w": 50.09375,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 50.09375,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 50.09375,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 50.09375,
+        "h": 32
+      },
+      {
+        "label": "",
+        "w": 302,
+        "h": 32
+      }
+    ]
+  }
+]

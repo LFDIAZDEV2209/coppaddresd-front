@@ -1,16 +1,20 @@
 # Progreso de la misión
 
-## Ciclo 1 — exploración parcial / blocked
+## Ciclo 1 — completado / idle
 
-- Base `c6410d6` limpia; rama `feature/nutrition-ux-premium` creada. Misión/Anexo 0, reglas y antecedentes leídos; inventario inicial y discrepancias de referencias documentados en README.
-- Aplicación real: localhost:3000 rechaza conexión; producción redirige a login. Chrome DevTools sin sesión y Playwright con pestaña vacía. Se necesita login humano o sesión autenticada disponible para completar la exploración.
-- Sin código de producto modificado, mutaciones clínicas, push ni deploy. No se declara Ciclo 1 completo. Reanudar con recorrido de Programas, Tests de salud, Citas y Nutrición; guardar capturas y medidas antes de clasificar problemas.
+- Base `c6410d6`; rama `feature/nutrition-ux-premium`. Onboarding y misión leídos; inventario, recorrido y candidatos al diagnóstico documentados en README.
+- Acceso local resuelto. Inbox devolvió 500 inicialmente y se recuperó durante la sesión, sin cambios de producto de este agente. Recorridos reales de Programas, Tests de salud, Citas y Nutrición; 56 PNG, 15 mediciones responsive y registro de red. No fue necesario restaurar backup de producción.
+- Nutrición: búsqueda/vacío/filtros/paginación, cambio de paciente, resultados/historial, v1↔v2, programación, 30 días, cantidades, agregar/quitar, copia masiva, guardado con reload, envío y devolución comprobados en QA local. Revisión de aprobación abierta/cancelada, sin publicar.
+- Fixture existente `ef59c692-d01a-4105-b3ea-05c07ff76279`: nueva v2 `c5002aaa-28ce-4ea6-982c-96e28b59a35a`, estado final Devuelto con comentario QA; v1 publicada intacta. Avena 55g en los 30 días; alimento de prueba añadido y retirado. Segundo fixture consultado sin editar.
+- Sin cambios de código de producto, push, deploy ni mutaciones en producción. Sin suite lint/build/e2e de regresión en este ciclo documental. Verificación interactiva realizada con Playwright MCP, servicios y datos locales reales.
+- Límites: sin lector de pantalla/certificación WCAG, sin comparación C1/C2 por falta de datos multiciclo, sin generación IA nueva, sin publicación de v2. Se preserva evidencia de un recorte transitorio al redimensionar un modal; apertura directa móvil correcta.
+- Próximo paso: instrucción del orquestador para Ciclo 2 (clasificar problemas). Prioridades candidatas: nutrientes truncados, objetivos táctiles, densidad vertical, ambigüedad Auto-aprobado/Borrador y precisión del exceso energético.
 
 ## Ciclos previstos (estimaciones)
 
 | Ciclo | Duración de trabajo | Estado |
 |---|---|---|
-| 1. Exploración | 30–45 min, excluye espera de acceso | Parcial; bloqueado por autenticación |
+| 1. Exploración | 30–45 min, excluye espera de acceso | Completado |
 | 2. Diagnóstico | 15–25 min | Pendiente |
 | 3. Propuesta | 20–30 min | Pendiente |
 | 4. Implementación | 60–120 min | Pendiente |
