@@ -716,6 +716,7 @@ function PatientWorkspace({
           </div>
         </TabsContent>
       </Tabs>
+      {cycle && <NutritionDisclaimer />}
       {review && cycle && canApprove && (
         <NutritionReviewDialog
           key={`${cycle.id}:${review}`}
