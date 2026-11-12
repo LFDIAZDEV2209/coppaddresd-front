@@ -2,19 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
 import { getBreadcrumbSegments } from "@/lib/config/navigation";
 import { useTheme } from "@/providers/theme-provider";
 import { useAuth } from "@/providers/auth-provider";
 import { useAppContext } from "@/providers/context-provider";
 import {
-  Search,
   Sun,
   Moon,
   ChevronDown,
@@ -38,34 +30,22 @@ import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { NotificationsMenu } from "@/features/notifications/components/notifications-menu";
 import { useT } from "@/providers/i18n-provider";
 import { useBreadcrumbOverride } from "@/components/layout/breadcrumb-provider";
+import { GlobalSearch } from "./global-search";
 import { cn } from "@/lib/utils";
 
 interface TopbarProps {
   onMenuClick: () => void;
+  mobileOpen: boolean;
 }
 
-/**
- * Topbar flotante: blanco en reposo (integra con el sidebar claro) y
- * transición al gradiente de marca al hacer scroll (azul → teal del logo).
- */
-export function Topbar({ onMenuClick }: TopbarProps) {
+/** Barra estable: el contexto y las acciones conservan su contraste al desplazar. */
+export function Topbar({ onMenuClick, mobileOpen }: TopbarProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { context, activeClinic, setActiveClinic } = useAppContext();
   const t = useT();
   const breadcrumbOverride = useBreadcrumbOverride();
-  // F8: detección de plataforma hydration-safe (useSyncExternalStore evalúa
-  // post-hidratación; el servidor responde vacía → "Ctrl+K" por defecto).
-  // F8: macOS muestra ⌘K; Windows/Linux Ctrl+K.
-  const noopSubscribe = useCallback(() => () => {}, []);
-  const isApple = useSyncExternalStore(
-    noopSubscribe,
-    () => /Mac|iPhone|iPad|iPod/.test(window.navigator.userAgent),
-    () => false,
-  );
-  const kbdLabel = isApple ? t("⌘K") : t("Ctrl+K");
-
   // Breadcrumb: la hoja genérica la sustituye el título dinámico registrado
   // por la page de detalle (F9: "Profesionales > {nombre}").
   const segments = getBreadcrumbSegments(pathname);
@@ -76,39 +56,14 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           label: breadcrumbOverride,
         })
       : segments;
-  const [scrolled, setScrolled] = useState(false);
-  const headerRef = useRef<HTMLElement>(null);
-
-  // El scroll vive en el <main> del shell (hermano del topbar, overflow-y-auto);
-  // fallback a window si la estructura cambia.
-  useEffect(() => {
-    const header = headerRef.current;
-    if (!header) return;
-    const scroller: HTMLElement | Window =
-      (header.parentElement?.querySelector(":scope > main") as HTMLElement) ??
-      window;
-    const target: HTMLElement | Window = scroller;
-    const onScroll = () =>
-      setScrolled(
-        (target instanceof Window ? window.scrollY : target.scrollTop) > 12,
-      );
-    onScroll();
-    target.addEventListener("scroll", onScroll, { passive: true });
-    return () => target.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const iconBtn = scrolled
-    ? "text-white/70 hover:bg-white/10 hover:text-white"
-    : "text-slate-500 hover:bg-slate-100 hover:text-brand-navy";
+  const iconBtn =
+    "text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2";
 
   return (
     <header
-      ref={headerRef}
       className={cn(
-        "sticky top-3 z-30 mx-3 flex h-16 items-center gap-3 rounded-2xl border px-4 transition-[background-color,border-color,box-shadow] duration-300 lg:px-6",
-        scrolled
-          ? "border-transparent bg-brand-gradient shadow-lg shadow-brand-navy/25"
-          : "border-border bg-white shadow-[0_1px_3px_rgba(15,30,60,0.06)]",
+        "relative z-30 flex h-[72px] shrink-0 items-center gap-3 border-b px-4 lg:px-6",
+        "border-border bg-card",
       )}
     >
       {/* Left: Mobile menu + Breadcrumb */}
@@ -116,16 +71,19 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <button
           onClick={onMenuClick}
           className={cn(
-            "flex items-center justify-center transition-colors lg:hidden",
+            "flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors lg:hidden",
             iconBtn,
           )}
+          id="navigation-menu-trigger"
+          aria-expanded={mobileOpen}
+          aria-controls={mobileOpen ? "mobile-navigation" : undefined}
           aria-label={t("Abrir menú")}
         >
           <Menu className="size-5" />
         </button>
 
         <nav
-          className="hidden min-w-0 overflow-hidden items-center gap-1.5 text-[13px] sm:flex"
+          className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[13px]"
           aria-label="Breadcrumb"
         >
           {resolvedSegments.map((segment, i) => (
@@ -133,14 +91,15 @@ export function Topbar({ onMenuClick }: TopbarProps) {
               key={`${segment.label}-${i}`}
               className={cn(
                 "flex items-center gap-1.5",
-                i === resolvedSegments.length - 1 ? "min-w-0 shrink" : "shrink-0",
+                i === resolvedSegments.length - 1
+                  ? "min-w-0 shrink"
+                  : "hidden shrink-0 sm:flex",
               )}
             >
               {i > 0 && (
                 <ChevronRight
                   className={cn(
-                    "size-3 shrink-0",
-                    scrolled ? "text-white/40" : "text-slate-300",
+                    "hidden size-3 shrink-0 text-muted-foreground sm:block",
                   )}
                 />
               )}
@@ -149,19 +108,14 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                   href={segment.href}
                   className={cn(
                     "font-medium transition-colors",
-                    scrolled
-                      ? "text-white/55 hover:text-white/85"
-                      : "text-slate-500 hover:text-brand-navy",
+                    "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {t(segment.label)}
                 </Link>
               ) : (
                 <span
-                  className={cn(
-                    "truncate font-semibold",
-                    scrolled ? "text-white" : "text-brand-navy",
-                  )}
+                  className={cn("truncate font-semibold", "text-foreground")}
                 >
                   {t(segment.label)}
                 </span>
@@ -173,41 +127,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
       {/* Right: Actions + Profile */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        {/* Search */}
-        <div className="relative hidden md:block">
-          <Search
-            className={cn(
-              "absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2",
-              scrolled ? "text-white/55" : "text-slate-400",
-            )}
-          />
-          <input
-            type="text"
-            placeholder={t("Buscar...")}
-            className={cn(
-              "h-9 w-64 rounded-full border pl-9 pr-12 text-[12.5px] transition-all focus:outline-none focus:ring-2 focus:ring-brand-teal/25",
-              scrolled
-                ? "border-white/10 bg-white/[0.06] text-white placeholder:text-white/45 focus:border-brand-teal/40 focus:bg-white/10"
-                : "border-border bg-slate-100/70 text-foreground placeholder:text-slate-400 focus:border-brand-teal/40 focus:bg-white",
-            )}
-          />
-          <kbd
-            className={cn(
-              "absolute right-3 top-1/2 -translate-y-1/2 rounded-md border px-1.5 py-0.5 text-xs",
-              scrolled
-                ? "border-white/20 bg-white/10 text-white/60"
-                : "border-border bg-white text-slate-400",
-            )}
-          >
-            {kbdLabel}
-          </kbd>
-        </div>
+        <GlobalSearch />
 
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           className={cn(
-            "flex size-9 items-center justify-center rounded-full transition-colors",
+            "flex size-11 sm:size-10 items-center justify-center rounded-full transition-colors",
             iconBtn,
           )}
           aria-label={theme === "light" ? t("Modo oscuro") : t("Modo claro")}
@@ -222,13 +148,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         {/* Language Toggle */}
         <LanguageToggle
           className={cn(
-            "flex h-9 items-center gap-1.5 rounded-full px-2.5 transition-colors",
+            "flex h-11 sm:h-10 items-center gap-1.5 rounded-full px-2.5 transition-colors",
             iconBtn,
           )}
         />
 
         {/* Notifications */}
-        <NotificationsMenu scrolled={scrolled} />
+        <NotificationsMenu scrolled={false} />
 
         {/* Contexto organizacional (switcher de clínica) */}
         {context && context.clinics.length > 0 && (
@@ -236,31 +162,24 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             <DropdownMenuTrigger
               className={cn(
                 "flex items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-colors",
-                scrolled
-                  ? "border-white/10 bg-white/8 hover:bg-white/12"
-                  : "border-border bg-slate-50 hover:bg-slate-100",
+                "border-border bg-background hover:bg-muted",
               )}
-              aria-label="Cambiar clínica activa"
+              aria-label={t("Cambiar clínica activa")}
             >
-              <Building2
-                className={cn(
-                  "size-4",
-                  scrolled ? "text-brand-blue-soft" : "text-brand-teal",
-                )}
-              />
+              <Building2 className={cn("size-4", "text-brand-teal")} />
               <span className="hidden max-w-[160px] flex-col gap-px sm:flex">
                 <span
                   className={cn(
                     "truncate text-[11.5px] font-semibold leading-tight",
-                    scrolled ? "text-white" : "text-brand-navy",
+                    "text-foreground",
                   )}
                 >
-                  {activeClinic?.name ?? "Sin clínica"}
+                  {activeClinic?.name ?? t("Sin clínica")}
                 </span>
                 <span
                   className={cn(
                     "truncate text-[9.5px] leading-tight",
-                    scrolled ? "text-white/60" : "text-slate-400",
+                    "text-muted-foreground",
                   )}
                 >
                   {context.organization?.name ?? "ERP"}
@@ -269,14 +188,14 @@ export function Topbar({ onMenuClick }: TopbarProps) {
               <ChevronDown
                 className={cn(
                   "hidden size-3 sm:block",
-                  scrolled ? "text-white/60" : "text-slate-400",
+                  "text-muted-foreground",
                 )}
               />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60">
               <div className="px-2 py-1.5 border-b border-border">
                 <p className="text-[12px] font-semibold text-foreground truncate">
-                  {context.organization?.name ?? "Contexto"}
+                  {context.organization?.name ?? t("Contexto")}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">
                   {context.clinics.length} clínica
@@ -328,49 +247,41 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         )}
 
         {/* Divider */}
-        <div
-          className={cn(
-            "hidden h-6 w-px sm:block",
-            scrolled ? "bg-white/15" : "bg-border",
-          )}
-        />
+        <div className={cn("hidden h-6 w-px sm:block", "bg-border")} />
 
         {/* User Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger
             className={cn(
-              "flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors",
-              scrolled ? "hover:bg-white/12" : "hover:bg-slate-100",
+              "flex min-h-11 items-center gap-2 rounded-lg px-1.5 py-1 transition-colors focus-visible:outline-2 focus-visible:outline-ring",
+              "hover:bg-muted",
             )}
           >
-            <Avatar className="size-8 ring-2 ring-brand-teal/40">
+            <Avatar className="size-9 ring-2 ring-brand-teal/40">
               <AvatarFallback className="bg-gradient-to-br from-brand-navy to-brand-teal text-[10px] font-bold text-white">
                 {user?.initials ?? "CA"}
               </AvatarFallback>
             </Avatar>
-            <div className="hidden flex-col gap-px text-left md:flex">
+            <div className="hidden max-w-36 flex-col gap-px text-left 2xl:flex">
               <span
                 className={cn(
-                  "text-[12px] font-semibold leading-tight",
-                  scrolled ? "text-white" : "text-foreground",
+                  "truncate text-[13px] font-semibold leading-tight",
+                  "text-foreground",
                 )}
               >
-                {user?.name ?? "Usuario"}
+                {user?.name ?? t("Usuario")}
               </span>
               <span
                 className={cn(
-                  "text-[10px] leading-tight",
-                  scrolled ? "text-white/65" : "text-muted-foreground",
+                  "truncate text-[11px] leading-tight",
+                  "text-muted-foreground",
                 )}
               >
-                {user?.roles[0] ?? "Sin rol"}
+                {user?.roles[0] ?? t("Sin rol")}
               </span>
             </div>
             <ChevronDown
-              className={cn(
-                "hidden size-3 md:block",
-                scrolled ? "text-white/60" : "text-slate-400",
-              )}
+              className={cn("hidden size-3 md:block", "text-muted-foreground")}
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">

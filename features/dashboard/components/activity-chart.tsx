@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useT } from "@/providers/i18n-provider";
+import { RAINBOW_GRADIENTS } from "@/lib/ui/rainbow";
+
+import { useState } from "react";
+import { useI18n } from "@/providers/i18n-provider";
 import { ChartTooltip } from "@/components/brand/chart-tooltip";
 import { cn } from "@/lib/utils";
 import type { ActivityDataPoint } from "../types";
@@ -10,66 +12,45 @@ interface ActivityChartProps {
   data: ActivityDataPoint[];
 }
 
-/**
- * Abreviaturas de día (keys i18n): la serie del backend termina HOY
- * (DashboardController: to = DateTime.Today), así que la fecha de cada punto
- * se puede derivar del índice para etiquetas legibles del eje X ("Lun 5").
- */
-const DAY_SHORT_KEYS: readonly string[] = [
-  "Dom", // getDay() = 0
-  "Lun",
+const BAR_COLORS = RAINBOW_GRADIENTS;
+
+const MONTHS = [
+  "Jan",
+  "Feb",
   "Mar",
-  "Mié",
-  "Jue",
-  "Vie",
-  "Sáb",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
-const DAY_FULL_KEYS: Record<string, string> = {
-  Lun: "Lunes",
-  Mar: "Martes",
-  Mié: "Miércoles",
-  Jue: "Jueves",
-  Vie: "Viernes",
-  Sáb: "Sábado",
-  Dom: "Domingo",
-};
+// El API entrega «MMM d» sin año. Localizamos mes/día sin inventar el día de semana.
+function formatDay(day: string, formatter: Intl.DateTimeFormat) {
+  const match = /^([A-Za-z]{3}) (\d{1,2})$/.exec(day);
+  if (!match) return day;
+  const month = MONTHS.indexOf(match[1]);
+  const date = new Date(Date.UTC(2000, month, Number(match[2])));
+  if (month < 0 || date.getUTCMonth() !== month) return day;
+  return formatter.format(date);
+}
 
-/**
- * Paleta multi-color con degradados: cada día tiene su propio tono
- * (el pico conserva el gradiente de marca como acento héroe).
- */
-const BAR_GRADIENTS: (readonly [string, string] | null)[] = [
-  ["#38bdf8", "#0369a1"], // Lun · cielo
-  ["#2dd4bf", "#0f766e"], // Mar · teal
-  ["#a78bfa", "#6d28d9"], // Mié · violeta
-  null, // Jue · pico → gradiente de marca
-  ["#fbbf24", "#b45309"], // Vie · ámbar
-  ["#f472b6", "#be185d"], // Sáb · rosa
-  ["#94a3b8", "#475569"], // Dom · pizarra
-];
-
-/**
- * Actividad diaria: barras con degradado, pico en gradiente de marca,
- * línea de promedio punteada, eje X con "abreviatura + número del día"
- * (tarea 2.1/F3: nada de caracteres truncados), leyenda debajo y escala Y
- * con padding del 20 % (design.md §2) para que un pico no domine y las
- * barras pequeñas sigan visibles.
- */
 export function ActivityChart({ data }: ActivityChartProps) {
-  const t = useT();
+  const { t, lang } = useI18n();
   const [hovered, setHovered] = useState<number | null>(null);
-
-  // Congelar "hoy" por render derivable (la serie del backend termina hoy).
-  const today = useMemo(() => new Date(), []);
-  const dates = useMemo<Date[]>(() => {
-    const len = data.length;
-    return data.map((_, index): Date => {
-      const date = new Date(today);
-      date.setDate(today.getDate() - (len - 1 - index));
-      return date;
-    });
-  }, [data, today]);
+  const [focused, setFocused] = useState<number | null>(null);
+  const active = hovered ?? focused;
+  const locale = lang === "en" ? "en-US" : "es-ES";
+  const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+  const date = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 
   if (data.length === 0) {
     return (
@@ -79,165 +60,222 @@ export function ActivityChart({ data }: ActivityChartProps) {
     );
   }
 
-  // Escala con 20 % de padding arriba (design.md decision 2).
-  const rawMax = Math.max(...data.map((d) => d.value), 1);
-  const maxScale = Math.max(Math.ceil(rawMax * 1.2), 4);
-  const avg = Math.round(
-    data.reduce((s, d) => s + d.value, 0) / Math.max(data.length, 1),
-  );
-  const avgPx = (avg / maxScale) * 180;
   const peakIndex = data.reduce(
-    (best, d, i) => (d.value > data[best].value ? i : best),
+    (best, point, index) => (point.value > data[best].value ? index : best),
     0,
   );
-  // ~8 etiquetas visibles como máximo: cada una con espacio suficiente para
-  // "Lun 5" sin truncar (legibilidad del eje X con 30 barras).
-  const labelEvery = data.length > 8 ? Math.ceil(data.length / 8) : 1;
-  // Altura mínima perceptible para barras bajas (visible en la escala).
-  const MIN_HEIGHT_PX = 4;
+  const paddedMax = Math.max(...data.map((point) => point.value * 1.15), 4);
+  const roughStep = paddedMax / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+  const step =
+    ([1, 2, 5, 10].find((value) => value >= roughStep / magnitude) ?? 10) *
+    magnitude;
+  const maxScale = Math.ceil(paddedMax / step) * step;
+  const ticks = Array.from(
+    { length: Math.round(maxScale / step) + 1 },
+    (_, index) => index * step,
+  );
+  const average =
+    data.reduce((sum, point) => sum + point.value, 0) / data.length;
+  const days = data.map((point) => formatDay(point.day, date));
+  const columns = {
+    gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))`,
+  };
+  const showLabel = (index: number, count: number) =>
+    index === 0 ||
+    index === data.length - 1 ||
+    index % Math.ceil(data.length / count) === 0;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-end gap-0">
-        {/* Eje con escala real (0 → max con padding del 20 %) */}
-        <div className="flex w-10 shrink-0 flex-col-reverse items-end justify-between pb-8 text-[10px] text-muted-foreground">
-          {[0, Math.round(maxScale / 2), maxScale].map((v, i) => (
-            <span key={i}>{v}</span>
-          ))}
-        </div>
-
-        <div className="relative flex flex-1 items-end gap-2">
-          {/* Línea de promedio con etiqueta integrada */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 z-10 flex items-center"
-            style={{ bottom: avgPx }}
-          >
-            <span className="h-px flex-1 border-t border-dashed border-brand-teal/40" />
-            <span className="ml-1 rounded-full bg-brand-teal/10 px-1.5 py-px text-[9px] font-semibold text-brand-teal">
-              {t("Promedio del período")} {avg}
-            </span>
-          </div>
-
-          {data.map((point, index) => {
-            const heightPercent = (point.value / maxScale) * 100;
-            const isPeak = index === peakIndex;
-            const isHovered = hovered === index;
-            const align =
-              index === 0
-                ? "start"
-                : index === data.length - 1
-                  ? "end"
-                  : "center";
-            const date = dates[index];
-            const shortKey = DAY_SHORT_KEYS[date.getDay()];
-            const previous = index > 0 ? dates[index - 1] : null;
-            const prevShortKey = previous
-              ? DAY_SHORT_KEYS[previous.getDay()]
-              : null;
-            let delta: { value: string; up: boolean; vs: string } | undefined;
-            if (previous && prevShortKey) {
-              const prevValue = data[index - 1].value;
-              const pct = Math.round(
-                ((point.value - prevValue) / Math.max(prevValue, 1)) * 100,
-              );
-              delta = {
-                value: `${pct > 0 ? "+" : ""}${pct}%`,
-                up: pct >= 0,
-                vs: `vs. ${t(DAY_FULL_KEYS[prevShortKey] ?? prevShortKey)}`,
-              };
-            }
-
-            const isLabelVisible = index % labelEvery === 0;
-
-            return (
-              <div
-                key={`${point.day}-${index}`}
-                className="relative z-20 flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-2"
-                onMouseEnter={() => setHovered(index)}
-                onMouseLeave={() => setHovered(null)}
-              >
-                <div
-                  className="relative flex w-full items-end justify-center"
-                  style={{ height: 180 }}
-                >
-                  <ChartTooltip
-                    visible={isHovered}
-                    align={align}
-                    title={`${t(DAY_FULL_KEYS[shortKey] ?? shortKey)} ${date.getDate()}`}
-                    label={t("Registros")}
-                    value={String(point.value)}
-                    delta={delta}
-                    style={{
-                      bottom: Math.min((heightPercent / 100) * 180 + 8, 96),
-                    }}
-                  />
-                  <div
-                    className="relative w-full"
-                    style={{
-                      height: `${Math.max(heightPercent, (MIN_HEIGHT_PX / 180) * 100)}%`,
-                    }}
-                  >
-                    <div
-                      className={cn(
-                        "bar-grow-y mx-auto w-full max-w-[30px] rounded-t-[10px] transition-[opacity,filter,transform] duration-200",
-                        isPeak && "bg-brand-gradient",
-                        isHovered && !isPeak && "brightness-110",
-                        hovered !== null && !isHovered && "opacity-50",
-                      )}
-                      style={{
-                        height: "100%",
-                        animationDelay: `${index * 60}ms`,
-                        background: isPeak
-                          ? undefined
-                          : `linear-gradient(180deg, ${BAR_GRADIENTS[index % BAR_GRADIENTS.length]?.[0] ?? "#2dd4bf"}, ${BAR_GRADIENTS[index % BAR_GRADIENTS.length]?.[1] ?? "#0f766e"})`,
-                        boxShadow:
-                          isHovered || isPeak
-                            ? "0 6px 16px -4px rgba(3,93,77,0.35)"
-                            : "0 4px 10px -4px rgba(15,30,60,0.25)",
-                      }}
-                    />
-                  </div>
-                </div>
-                <span
-                  aria-hidden={!isLabelVisible}
-                  className={cn(
-                    "text-center text-[10.5px] leading-tight tabular-nums transition-colors duration-200 sm:text-[11px]",
-                    isHovered || isPeak
-                      ? "font-bold text-brand-teal"
-                      : "font-medium text-muted-foreground",
-                  )}
-                >
-                  {isLabelVisible
-                    ? `${t(DAY_SHORT_KEYS[date.getDay()] ?? "")} ${date.getDate()}`
-                    : "\u200B"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Leyenda debajo del gráfico (criterio 2.1) */}
-      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-1.5">
+    <figure
+      className="@container/activity flex min-w-0 flex-1 flex-col gap-4 [--activity-peak-gradient:var(--brand-gradient)] dark:[--activity-peak-gradient:linear-gradient(180deg,#38bdf8,#0f766e)]"
+      aria-label={t("Actividad (30 días)")}
+    >
+      <figcaption className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-xs text-muted-foreground">
+        <span className="flex items-center gap-2">
           <span
             aria-hidden="true"
-            className="h-2.5 w-4 rounded-t-[3px]"
+            className="h-2.5 w-5 rounded-sm"
             style={{
-              background: "linear-gradient(180deg, #38bdf8, #0369a1)",
+              backgroundImage:
+                "linear-gradient(90deg, #0369a1, #0f766e, #6d28d9, #b45309, #be185d)",
             }}
           />
           {t("Registros del día")}
         </span>
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-2">
           <span
             aria-hidden="true"
-            className="h-0 w-4 border-t border-dashed border-brand-teal"
+            className="w-4 border-t border-dashed border-brand-teal dark:border-brand-blue-soft"
           />
           {t("Promedio del período")}
+          <span className="font-semibold tabular-nums text-foreground">
+            {number.format(average)}
+          </span>
         </span>
+      </figcaption>
+
+      <div className="grid min-h-[240px] min-w-0 flex-1 grid-cols-[2rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_2rem] gap-x-3 pt-2">
+        <div
+          className="relative min-h-[200px] text-right text-[11px] tabular-nums text-muted-foreground"
+          aria-hidden="true"
+        >
+          {ticks.map((tick) => (
+            <span
+              key={tick}
+              data-slot="activity-y-tick"
+              data-value={tick}
+              className="absolute right-0 -translate-y-1/2"
+              style={{ top: `${100 - (tick / maxScale) * 100}%` }}
+            >
+              {number.format(tick)}
+            </span>
+          ))}
+        </div>
+
+        <div
+          data-slot="activity-plot"
+          className="relative min-h-[200px] min-w-0"
+        >
+          {ticks.map((tick) => (
+            <div
+              key={tick}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 border-t border-border/60"
+              style={{ top: `${100 - (tick / maxScale) * 100}%` }}
+            />
+          ))}
+          <div
+            data-slot="activity-average"
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 z-10 border-t border-dashed border-brand-teal dark:border-brand-blue-soft"
+            style={{ top: `${100 - (average / maxScale) * 100}%` }}
+          />
+          <div
+            className="absolute inset-0 grid gap-px @min-[440px]/activity:gap-1"
+            style={columns}
+          >
+            {data.map((point, index) => (
+              <div
+                key={`${point.day}-${index}`}
+                className={cn("relative min-w-0", active === index && "z-20")}
+                onMouseEnter={() => setHovered(index)}
+                onMouseLeave={() => setHovered(null)}
+              >
+                <button
+                  type="button"
+                  className="flex h-full w-full items-end justify-center rounded-sm p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label={t("{day}: {count} registros", {
+                    day: days[index],
+                    count: number.format(point.value),
+                  })}
+                  onFocus={() => setFocused(index)}
+                  onBlur={() => setFocused(null)}
+                  onClick={() => setFocused(index)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      setHovered(null);
+                      setFocused(null);
+                    }
+                  }}
+                >
+                  <span
+                    data-slot="activity-bar"
+                    aria-hidden="true"
+                    className={cn(
+                      "bar-grow-y block w-full max-w-7 rounded-t-sm transition-opacity motion-reduce:transition-none",
+                      active !== null && active !== index && "opacity-65",
+                    )}
+                    style={{
+                      height: `${(point.value / maxScale) * 100}%`,
+                      backgroundImage:
+                        index === peakIndex
+                          ? "var(--activity-peak-gradient)"
+                          : `linear-gradient(180deg, ${BAR_COLORS[index % BAR_COLORS.length][0]}, ${BAR_COLORS[index % BAR_COLORS.length][1]})`,
+                    }}
+                  />
+                </button>
+                <ChartTooltip
+                  visible={active === index}
+                  title={days[index]}
+                  label={t("Registros")}
+                  value={number.format(point.value)}
+                  align={
+                    index < data.length / 4
+                      ? "start"
+                      : index > (data.length * 3) / 4
+                        ? "end"
+                        : "center"
+                  }
+                  style={{
+                    bottom: `${Math.min((point.value / maxScale) * 100 + 4, 70)}%`,
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div />
+        <div
+          className="grid h-8 min-w-0 pt-2"
+          style={columns}
+          aria-hidden="true"
+        >
+          {days.map((day, index) => (
+            <div
+              key={`${day}-${index}`}
+              className="relative min-w-0 text-[10px] tabular-nums text-muted-foreground @min-[440px]/activity:text-[11px]"
+            >
+              <span
+                className={cn(
+                  "absolute whitespace-nowrap",
+                  index === 0
+                    ? "left-0"
+                    : index === days.length - 1
+                      ? "right-0"
+                      : "left-1/2 -translate-x-1/2",
+                )}
+              >
+                <span className="@min-[440px]/activity:hidden">
+                  {showLabel(index, 3) ? day : null}
+                </span>
+                <span className="hidden @min-[440px]/activity:inline">
+                  {showLabel(index, 6) ? day : null}
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+
+      <table className="sr-only" aria-label={t("Registros del día")}>
+        <thead className="sticky top-0 bg-card text-muted-foreground">
+          <tr>
+            <th scope="col" className="px-2 py-2 font-medium">
+              {t("Fecha")}
+            </th>
+            <th scope="col" className="px-2 py-2 text-right font-medium">
+              {t("Registros")}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((point, index) => (
+            <tr
+              key={`${point.day}-${index}`}
+              className="border-t border-border/60"
+            >
+              <th scope="row" className="px-2 py-2 font-normal">
+                {days[index]}
+              </th>
+              <td className="px-2 py-2 text-right">
+                {number.format(point.value)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </figure>
   );
 }

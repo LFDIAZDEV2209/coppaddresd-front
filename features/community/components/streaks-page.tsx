@@ -98,7 +98,7 @@ export function StreaksPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Rachas y logros")}
         description={monthLabel}
@@ -130,7 +130,7 @@ export function StreaksPage() {
       {/* Ranking + chart */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Ranking table — paginada */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Ranking de rachas")}
             description={t("Puedes premiar desde aquí")}
@@ -225,7 +225,7 @@ export function StreaksPage() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           {/* Streak distribution chart */}
-          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Distribución de rachas")}
               description={t("Miembros activos según días de racha actual")}
@@ -238,7 +238,7 @@ export function StreaksPage() {
           </div>
 
           {/* Hitos alcanzados hoy */}
-          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Hitos recientes")}
               description={t("Logros y rachas publicados en el feed")}

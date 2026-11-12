@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { AccentProvider } from "@/providers/accent-provider";
 import { I18nProvider } from "@/providers/i18n-provider";
+import { ChartPaints } from "@/components/brand/chart-paints";
 import "./globals.css";
 
 /* Línea visual COPP-ADRESD: Plus Jakarta Sans para display/headings, Inter
@@ -172,6 +173,7 @@ export default async function RootLayout({
 })();`,
           }}
         />
+        <ChartPaints />
         <ThemeProvider>
           <AuthProvider>
             <AccentProvider>

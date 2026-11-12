@@ -290,7 +290,7 @@ export function ProgramPerfil360Page({
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Perfil 360"
         description="Busca un paciente para ver su vista integral"

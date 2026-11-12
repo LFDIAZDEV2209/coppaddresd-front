@@ -1,5 +1,9 @@
 "use client";
 
+import { chartGradient } from "@/lib/ui/rainbow";
+
+import { colorTint, RAINBOW_SERIES } from "@/lib/ui/rainbow";
+
 import { useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
@@ -75,7 +79,7 @@ export function ProgramPatientOverviewPage({
   const { data, loading, error, retry } = usePatientOverview(patientId);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Perfil 360 del paciente"
         description="Vista integral de progreso, adherencia y salud"
@@ -232,7 +236,7 @@ export function PatientResumenBody({
     <>
       {/* 6 Mission Progress Rings (as bars) — oculto cuando se embebe en el box de biometría */}
       {!hideMisiones && (
-        <section className="rounded-2xl border border-border bg-card p-5">
+        <section className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
           <SectionHeader
             title="Misiones de hoy"
             description="Estado actual de cada misión"
@@ -296,7 +300,7 @@ export function PatientResumenBody({
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Adherencia semanal - Radar chart */}
-        <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
           <SectionHeader
             title="Adherencia semanal"
             description="Por misión esta semana"
@@ -330,8 +334,8 @@ export function PatientResumenBody({
                   <Radar
                     name="Adherencia"
                     dataKey="pct"
-                    stroke="var(--primary)"
-                    fill="var(--primary)"
+                    stroke="var(--spectrum-sky-chart)"
+                    fill="var(--spectrum-sky-chart)"
                     fillOpacity={0.2}
                   />
                   <Tooltip
@@ -358,7 +362,7 @@ export function PatientResumenBody({
       {data.scores && (
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {data.scores.health && (
-            <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
               <SectionHeader
                 title="Índice de Salud"
                 icon={Stethoscope}
@@ -393,16 +397,22 @@ export function PatientResumenBody({
                     label: "Ejercicio",
                     value: data.scores.health.score_exercise,
                   },
-                ].map((dim) => (
+                ].map((dim, index) => (
                   <div key={dim.label} className="flex items-center gap-3">
                     <span className="w-24 text-xs text-muted-foreground">
                       {dim.label}
                     </span>
                     <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-primary transition-all"
+                        className="h-full rounded-full transition-all"
                         style={{
                           width: `${Math.min(100, Math.max(0, dim.value))}%`,
+                          backgroundColor:
+                            RAINBOW_SERIES[index % RAINBOW_SERIES.length],
+                          backgroundImage: chartGradient(
+                            RAINBOW_SERIES[index % RAINBOW_SERIES.length],
+                            "horizontal",
+                          ),
                         }}
                       />
                     </div>
@@ -415,7 +425,7 @@ export function PatientResumenBody({
             </div>
           )}
           {data.scores.transformation && (
-            <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
               <SectionHeader
                 title="Índice de Transformación"
                 icon={TrendingUp}
@@ -628,7 +638,7 @@ function ClinicalMetricsTilesInner({
               <div className="flex items-center gap-2">
                 <div
                   className="flex size-9 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: `${item.color}20` }}
+                  style={{ backgroundColor: colorTint(item.color, 12.549) }}
                 >
                   <item.icon className="size-5" style={{ color: item.color }} />
                 </div>
@@ -638,7 +648,7 @@ function ClinicalMetricsTilesInner({
                     variant="outline"
                     className="ml-auto text-[10px]"
                     style={{
-                      borderColor: `${item.color}40`,
+                      borderColor: colorTint(item.color, 25.098),
                       color: item.color,
                     }}
                   >
@@ -743,7 +753,7 @@ export function PatientClinicaBottom({
       {/* Weaknesses + Interventions + Clinical Reviews — same PAGE_SIZE so cards always fit */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Weaknesses */}
-        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title="Debilidades"
             icon={ShieldAlert}
@@ -791,7 +801,7 @@ export function PatientClinicaBottom({
         </div>
 
         {/* Interventions */}
-        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title="Intervenciones"
             icon={ClipboardPenLine}
@@ -834,7 +844,7 @@ export function PatientClinicaBottom({
         </div>
 
         {/* Clinical Reviews */}
-        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title="Revisiones clínicas"
             icon={Stethoscope}
@@ -882,7 +892,7 @@ export function PatientClinicaBottom({
       </section>
 
       {/* Acciones clínicas */}
-      <section className="rounded-2xl border border-border bg-card p-5">
+      <section className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
         <SectionHeader
           title="Acciones clínicas"
           description="Enlaces rápidos a acciones disponibles"
@@ -948,7 +958,7 @@ export function ClinicalEvolutionCard({
   const hasChartData = chartData.length > 0;
   if (!hasChartData) {
     return (
-      <div className="flex h-full min-h-[320px] flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex h-full min-h-[320px] flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <div className="px-4 pt-4">
           <SectionHeader
             title="Evolución 12 semanas"
@@ -964,7 +974,7 @@ export function ClinicalEvolutionCard({
     );
   }
   return (
-    <div className="flex h-full min-h-[340px] flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="flex h-full min-h-[340px] flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <div className="px-4 pt-4">
         <SectionHeader
           title="Evolución 12 semanas"
@@ -1120,7 +1130,7 @@ function PatientEvolucionCard({
                   type="monotone"
                   dataKey="pct"
                   name="Adherencia %"
-                  stroke="var(--primary)"
+                  stroke="var(--spectrum-sky-chart)"
                   strokeWidth={2}
                   dot={false}
                 />
@@ -1129,7 +1139,7 @@ function PatientEvolucionCard({
                   type="monotone"
                   dataKey="xp"
                   name="XP ganado"
-                  stroke="var(--success)"
+                  stroke="var(--spectrum-green-chart)"
                   strokeWidth={2}
                   dot={false}
                 />
@@ -1190,7 +1200,7 @@ function PatientEvolucionCard({
                     type="monotone"
                     dataKey="value"
                     name={item?.label ?? tab}
-                    stroke={item?.color ?? "var(--primary)"}
+                    stroke={item?.color ?? "var(--spectrum-sky-chart)"}
                     strokeWidth={2}
                     dot={{ r: 3 }}
                     connectNulls
@@ -1275,7 +1285,7 @@ function ClinicalMetricsSection({
               <div className="flex items-center gap-2">
                 <div
                   className="flex size-9 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: `${item.color}20` }}
+                  style={{ backgroundColor: colorTint(item.color, 12.549) }}
                 >
                   <item.icon className="size-5" style={{ color: item.color }} />
                 </div>
@@ -1285,7 +1295,7 @@ function ClinicalMetricsSection({
                     variant="outline"
                     className="ml-auto text-[10px]"
                     style={{
-                      borderColor: `${item.color}40`,
+                      borderColor: colorTint(item.color, 25.098),
                       color: item.color,
                     }}
                   >
@@ -1343,7 +1353,7 @@ function ClinicalMetricsSection({
 
       {/* 12-week evolution chart */}
       {hasChartData ? (
-        <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
           <SectionHeader
             title="Evolución 12 semanas"
             description="BMI, HbA1c y % grasa corporal"

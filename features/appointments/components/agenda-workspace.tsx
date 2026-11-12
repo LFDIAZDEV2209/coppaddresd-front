@@ -1,10 +1,13 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/page-header";
 import { useState } from "react";
 import { Users } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 import { useAppContext } from "@/providers/context-provider";
 import { hasAppointmentPermission } from "@/lib/config/appointment-permissions";
+import { useProfessionalOptions } from "../hooks/use-professional-options";
+import { AgendaEmptyState } from "./agenda-empty-state";
 import { ProfessionalSelector } from "./professional-selector";
 import { ProfessionalAgenda } from "./professional-agenda";
 import { ProfessionalCalendar } from "./professional-calendar";
@@ -27,38 +30,47 @@ export function AgendaWorkspace({
   const isAdmin = hasAppointmentPermission(can, "Appointments.AdminView");
   const [view, setView] = useState<AgendaCalendarView>("agenda");
   const [professionalId, setProfessionalId] = useState("");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const catalog = useProfessionalOptions(null, isAdmin);
 
   return (
     <div className="flex flex-col gap-4">
       {isAdmin && (
-        <div className="px-6 pt-6">
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-brand-gradient px-4 py-3 shadow-sm">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--sidebar)] shadow-sm">
-              <Users className="size-4.5" />
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <p className="text-[13px] font-semibold text-white">
-                {view === "agenda"
-                  ? t("Agenda de profesionales")
-                  : t("Calendario de profesionales")}
-              </p>
-              <p className="text-[11.5px] text-white/75">
-                {view === "agenda"
-                  ? t(
-                      "Seleccioná un profesional para ver y gestionar sus citas.",
-                    )
-                  : t(
-                      "Seleccioná un profesional para ver y gestionar sus citas en el calendario.",
-                    )}
-              </p>
-            </div>
-            <div className="w-full shrink-0 sm:w-72">
-              <ProfessionalSelector
-                value={professionalId}
-                onChange={setProfessionalId}
-              />
-            </div>
-          </div>
+        <div className="px-4 pt-4 sm:px-6 sm:pt-6">
+          <PageHeader
+            title={
+              view === "agenda"
+                ? t("Agenda de profesionales")
+                : t("Calendario de profesionales")
+            }
+            description={
+              view === "agenda"
+                ? t("Seleccioná un profesional para ver y gestionar sus citas.")
+                : t(
+                    "Seleccioná un profesional para ver y gestionar sus citas en el calendario.",
+                  )
+            }
+            icon={Users}
+            actions={
+              <div className="w-full sm:w-72">
+                <ProfessionalSelector
+                  catalog={catalog}
+                  open={pickerOpen}
+                  onOpenChange={setPickerOpen}
+                  value={professionalId}
+                  onChange={setProfessionalId}
+                />
+              </div>
+            }
+          />
+        </div>
+      )}
+      {isAdmin && !professionalId && (
+        <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+          <AgendaEmptyState
+            catalog={catalog}
+            onChoose={() => setPickerOpen(true)}
+          />
         </div>
       )}
       {(!isAdmin || professionalId) && (

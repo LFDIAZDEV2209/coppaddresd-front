@@ -1,5 +1,7 @@
 "use client";
 
+import { colorTint } from "@/lib/ui/rainbow";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
@@ -135,9 +137,11 @@ export function AlertsPage() {
   const t = useT();
   const { hasPermission } = useAuth();
   const canReview = hasPermission("HealthTests.Review");
-  const { data, loading, error, reload, changeStatus, statusError } = useAlerts({
-    requirePatientDirectory: false,
-  });
+  const { data, loading, error, reload, changeStatus, statusError } = useAlerts(
+    {
+      requirePatientDirectory: false,
+    },
+  );
 
   const [search, setSearch] = useState("");
   const [severity, setSeverity] = useState<AlertSeverity | "all">("all");
@@ -188,7 +192,9 @@ export function AlertsPage() {
           }
         }
         if (term) {
-          const patient = data?.patients.find((item) => item.id === alert.patientId);
+          const patient = data?.patients.find(
+            (item) => item.id === alert.patientId,
+          );
           const haystack =
             `${alertPatientName(alert, patient)} ${alert.indicatorName}`.toLowerCase();
           if (!haystack.includes(term)) {
@@ -203,7 +209,9 @@ export function AlertsPage() {
       );
   }, [alerts, data?.patients, search, severity, status, indicator, from, to]);
 
-  const filterKey = [search, severity, status, indicator, from, to].join("\u0000");
+  const filterKey = [search, severity, status, indicator, from, to].join(
+    "\u0000",
+  );
   const pageCount = Math.max(1, Math.ceil(filtered.length / ALERT_PAGE_SIZE));
   const alertPage = pageState.key === filterKey ? pageState.page : 1;
   const currentPage = Math.min(alertPage, pageCount);
@@ -366,7 +374,7 @@ export function AlertsPage() {
 
       <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-12">
         <div className="order-2 flex flex-col gap-5 xl:order-1 xl:col-span-8">
-          <section className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+          <section className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm transition-shadow hover:shadow-md">
             <SectionHeader
               title={t("Gestión de alertas")}
               description={t("Filtra por severidad, estado o paciente")}
@@ -387,7 +395,9 @@ export function AlertsPage() {
               </div>
               <Select
                 value={severity}
-                onValueChange={(value) => setSeverity(value as AlertSeverity | "all")}
+                onValueChange={(value) =>
+                  setSeverity(value as AlertSeverity | "all")
+                }
                 items={{
                   all: t("Toda severidad"),
                   critica: t("Crítica"),
@@ -409,7 +419,9 @@ export function AlertsPage() {
               </Select>
               <Select
                 value={status}
-                onValueChange={(value) => setStatus(value as AlertStatus | "all")}
+                onValueChange={(value) =>
+                  setStatus(value as AlertStatus | "all")
+                }
                 items={{ all: t("Todo estado"), ...STATUS_LABELS }}
               >
                 <SelectTrigger className="h-9 w-32">
@@ -455,14 +467,18 @@ export function AlertsPage() {
                         onValueChange={(value) => setIndicator(value ?? "all")}
                         items={{
                           all: t("Todo indicador"),
-                          ...Object.fromEntries(indicators.map((item) => [item, item])),
+                          ...Object.fromEntries(
+                            indicators.map((item) => [item, item]),
+                          ),
                         }}
                       >
                         <SelectTrigger className="h-9 w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">{t("Todo indicador")}</SelectItem>
+                          <SelectItem value="all">
+                            {t("Todo indicador")}
+                          </SelectItem>
                           {indicators.map((item) => (
                             <SelectItem key={item} value={item}>
                               {item}
@@ -543,7 +559,9 @@ export function AlertsPage() {
                       try {
                         window.sessionStorage.setItem(
                           NOTIFY_SELECTION_KEY,
-                          JSON.stringify(selectedAlerts.map((alert) => alert.id)),
+                          JSON.stringify(
+                            selectedAlerts.map((alert) => alert.id),
+                          ),
                         );
                       } catch {
                         // Sin sessionStorage la página de notificación permite elegir alertas.
@@ -608,7 +626,8 @@ export function AlertsPage() {
                 {pageCount > 1 && (
                   <div className="mt-auto flex items-center justify-between gap-3 border-t border-border px-4 py-2.5">
                     <span className="text-[11.5px] text-muted-foreground">
-                      {t("Página")} {currentPage} {t("de")} {pageCount} · {filtered.length} {t("alertas")}
+                      {t("Página")} {currentPage} {t("de")} {pageCount} ·{" "}
+                      {filtered.length} {t("alertas")}
                     </span>
                     <div className="flex items-center gap-1">
                       <Button
@@ -686,7 +705,8 @@ function AlertsTable({
 }: AlertsTableProps) {
   const t = useT();
   const allSelected =
-    alerts.length > 0 && alerts.every((alert) => selectedIds.includes(alert.id));
+    alerts.length > 0 &&
+    alerts.every((alert) => selectedIds.includes(alert.id));
 
   return (
     <div className="overflow-x-auto">
@@ -709,16 +729,24 @@ function AlertsTable({
               />
             </TableHead>
             <TableHead>{t("Paciente")}</TableHead>
-            <TableHead className="whitespace-nowrap">{t("Resultado")}</TableHead>
-            <TableHead className="whitespace-nowrap">{t("Severidad")}</TableHead>
+            <TableHead className="whitespace-nowrap">
+              {t("Resultado")}
+            </TableHead>
+            <TableHead className="whitespace-nowrap">
+              {t("Severidad")}
+            </TableHead>
             <TableHead className="whitespace-nowrap">{t("Fecha")}</TableHead>
             <TableHead className="whitespace-nowrap">{t("Estado")}</TableHead>
-            <TableHead className="whitespace-nowrap text-right">{t("Acciones")}</TableHead>
+            <TableHead className="whitespace-nowrap text-right">
+              {t("Acciones")}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {alerts.map((alert) => {
-            const patient = patients.find((item) => item.id === alert.patientId);
+            const patient = patients.find(
+              (item) => item.id === alert.patientId,
+            );
             const patientName = alertPatientName(alert, patient);
             const nameParts = patientName.split(/\s+/);
             const selected = selectedIds.includes(alert.id);
@@ -743,7 +771,10 @@ function AlertsTable({
                     <span
                       className="flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-medium"
                       style={{
-                        backgroundColor: `${severityHex(alert.severity)}1A`,
+                        backgroundColor: colorTint(
+                          severityHex(alert.severity),
+                          10.196,
+                        ),
                         color: severityHex(alert.severity),
                       }}
                     >
@@ -779,7 +810,11 @@ function AlertsTable({
                       nativeButton={false}
                       aria-label={t("Ver perfil del paciente")}
                       title={t("Perfil")}
-                      render={<Link href={`/health-tests/pacientes/${alert.patientId}`} />}
+                      render={
+                        <Link
+                          href={`/health-tests/pacientes/${alert.patientId}`}
+                        />
+                      }
                     >
                       <Eye className="size-3.5" />
                     </Button>
@@ -798,11 +833,15 @@ function AlertsTable({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuGroup>
-                            <DropdownMenuLabel>{t("Cambiar estado")}</DropdownMenuLabel>
+                            <DropdownMenuLabel>
+                              {t("Cambiar estado")}
+                            </DropdownMenuLabel>
                             {STATUS_NEXT[alert.status].map((next) => (
                               <DropdownMenuItem
                                 key={next}
-                                onClick={() => void onChangeStatus(alert.id, next)}
+                                onClick={() =>
+                                  void onChangeStatus(alert.id, next)
+                                }
                               >
                                 {STATUS_LABELS[next]}
                               </DropdownMenuItem>

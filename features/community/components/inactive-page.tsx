@@ -63,7 +63,7 @@ export function InactivePage() {
   const [awardOpen, setAwardOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Sin publicar")}
         description={`${inactive.length} ${t("miembros sin actividad reciente")}`}
@@ -102,7 +102,7 @@ export function InactivePage() {
 
       {/* Table + Chart */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Plan de acción")}
             description={`${inactive.length} ${t("miembros requieren atención")}`}
@@ -239,7 +239,7 @@ export function InactivePage() {
         )}
 
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Patrones de inactividad")}
               description={t("Miembros activos según días sin actividad")}
@@ -254,7 +254,7 @@ export function InactivePage() {
               />
             </div>
           </div>
-          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Miembros por nivel de riesgo")}
               description={t(

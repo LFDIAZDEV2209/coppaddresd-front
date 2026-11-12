@@ -28,6 +28,8 @@ interface CatalogComboboxProps<T extends { id?: string }> {
   emptyText?: string;
   ariaLabel?: string;
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   allowClear?: boolean;
   className?: string;
   /** Longitud mínima del texto para disparar la búsqueda remota (default 1). */
@@ -55,6 +57,8 @@ function CatalogComboboxInner<T extends { id?: string }>({
   emptyText = "Sin resultados.",
   ariaLabel,
   disabled = false,
+  open,
+  onOpenChange,
   allowClear = false,
   className,
   minChars = 1,
@@ -90,15 +94,23 @@ function CatalogComboboxInner<T extends { id?: string }>({
       return (
         <span className="flex items-center gap-2 text-muted-foreground">
           <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
-          {t('Buscando…')}
+          {t("Buscando…")}
         </span>
       );
     }
     if (failed) {
-      return <span className="text-destructive">{t('No se pudo buscar. Reintenta.')}</span>;
+      return (
+        <span className="text-destructive">
+          {t("No se pudo buscar. Reintenta.")}
+        </span>
+      );
     }
     if (isRemote && !searchValue.trim()) {
-      return <span className="text-muted-foreground">{t('Escribe para buscar…')}</span>;
+      return (
+        <span className="text-muted-foreground">
+          {t("Escribe para buscar…")}
+        </span>
+      );
     }
     return null;
   }, [failed, isRemote, loading, searchValue, t]);
@@ -144,6 +156,8 @@ function CatalogComboboxInner<T extends { id?: string }>({
 
   return (
     <Combobox.Root
+      open={open}
+      onOpenChange={onOpenChange}
       items={displayItems}
       itemToStringLabel={getLabel}
       filter={isRemote ? null : contains}
@@ -186,7 +200,10 @@ function CatalogComboboxInner<T extends { id?: string }>({
         setLoading(true);
         setFailed(false);
         const query = next;
-        debounceRef.current = setTimeout(() => runRemoteSearch(query), debounceMs);
+        debounceRef.current = setTimeout(
+          () => runRemoteSearch(query),
+          debounceMs,
+        );
       }}
     >
       <Combobox.Trigger
@@ -225,7 +242,7 @@ function CatalogComboboxInner<T extends { id?: string }>({
                 <button
                   type="button"
                   onClick={clearSelection}
-                  aria-label={t('Quitar selección')}
+                  aria-label={t("Quitar selección")}
                   className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
                   <XIcon className="size-3.5" />
@@ -233,9 +250,7 @@ function CatalogComboboxInner<T extends { id?: string }>({
               )}
             </div>
             <Combobox.Status>
-              {status && (
-                <div className="px-3 py-1.5 text-xs">{status}</div>
-              )}
+              {status && <div className="px-3 py-1.5 text-xs">{status}</div>}
             </Combobox.Status>
             <Combobox.Empty>
               {emptyMessage && (
@@ -285,6 +300,8 @@ function areCatalogComboboxPropsEqual<T extends { id?: string }>(
     prev.searchPlaceholder === next.searchPlaceholder &&
     prev.emptyText === next.emptyText &&
     prev.disabled === next.disabled &&
+    prev.open === next.open &&
+    prev.onOpenChange === next.onOpenChange &&
     prev.allowClear === next.allowClear &&
     prev.className === next.className &&
     prev.minChars === next.minChars &&

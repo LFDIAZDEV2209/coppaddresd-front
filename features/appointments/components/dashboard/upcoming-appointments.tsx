@@ -44,7 +44,9 @@ export function UpcomingAppointments({
         <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
           <CalendarDays className="size-5 text-muted-foreground" />
         </div>
-        <p className="text-[13px] font-medium text-foreground">{emptyMessage}</p>
+        <p className="text-[13px] font-medium text-foreground">
+          {emptyMessage}
+        </p>
       </div>
     );
   }
@@ -63,11 +65,11 @@ export function UpcomingAppointments({
               </div>
               <div className="flex min-w-0 flex-col gap-px">
                 <span className="truncate text-[13px] font-semibold text-foreground">
-                  {appointment.patientName ?? t('Paciente')}
+                  {appointment.patientName ?? t("Paciente")}
                 </span>
                 <span className="truncate text-[11.5px] text-muted-foreground">
-                  {appointment.professionalName ?? t('Profesional')} ·{" "}
-                  {appointment.specialtyName ?? t('Especialidad')}
+                  {appointment.professionalName ?? t("Profesional")} ·{" "}
+                  {appointment.specialtyName ?? t("Especialidad")}
                 </span>
               </div>
             </div>

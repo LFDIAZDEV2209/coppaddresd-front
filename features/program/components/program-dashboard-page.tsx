@@ -62,11 +62,11 @@ import { useT } from "@/providers/i18n-provider";
 
 // --- Biometría colors (no hardcoded hex — use CSS vars where possible) ---
 const GLUCOSA_COLORS: Record<string, string> = {
-  Normal: "var(--success)",
-  Atención: "#D4AF37",
-  Prediabetes: "#E87B2B",
-  Elevada: "var(--destructive)",
-  "Sin dato": "var(--muted)",
+  Normal: "var(--spectrum-green-chart)",
+  Atención: "var(--spectrum-amber-chart)",
+  Prediabetes: "var(--spectrum-orange-chart)",
+  Elevada: "var(--spectrum-rose-chart)",
+  "Sin dato": "var(--spectrum-slate-chart)",
 };
 
 // --- Componente principal ---
@@ -127,7 +127,7 @@ export function ProgramDashboardPage() {
   const clearGeoFilter = () => setGeoFilter(null);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Dashboard General"
         description="Vista de salud comunitaria del programa"
@@ -245,7 +245,7 @@ function BiometriaMapRow({
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
       {/* Map */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="rounded-2xl border border-brand-blue-soft/40 bg-card overflow-hidden shadow-xs">
         <SectionHeader
           title="Mapa de calor IMC"
           description="Distribución geográfica de pacientes"
@@ -264,7 +264,7 @@ function BiometriaMapRow({
       {/* Sidebar: Top 5 + Alertas */}
       <div className="flex flex-col gap-4">
         {/* Top 3 ciudades */}
-        <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
           <SectionHeader
             title="Top ciudades"
             description="Por número de pacientes"
@@ -327,7 +327,7 @@ function BiometriaDistributionRow({
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* IMC distribution bar */}
-      <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
         <SectionHeader
           title="Distribución IMC"
           description="Categorías de IMC"
@@ -352,20 +352,20 @@ function BiometriaDistributionRow({
                 tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
               />
               <Tooltip {...CHART_TOOLTIP} cursor={{ fill: "var(--muted)" }} />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="count" radius={[8, 8, 0, 0]}>
                 {data.imc_distribution.map((b, i) => (
                   <Cell
                     key={b.label}
                     fill={
                       i === 0
-                        ? "var(--info)"
+                        ? "var(--spectrum-sky-chart)"
                         : i === 1
-                          ? "var(--success)"
+                          ? "var(--spectrum-green-chart)"
                           : i === 2
-                            ? "#D4AF37"
+                            ? "var(--spectrum-amber-chart)"
                             : i === 3
-                              ? "#E87B2B"
-                              : "var(--destructive)"
+                              ? "var(--spectrum-orange-chart)"
+                              : "var(--spectrum-rose-chart)"
                     }
                   />
                 ))}
@@ -376,7 +376,7 @@ function BiometriaDistributionRow({
       </div>
 
       {/* Grasa % por sexo (grouped bar) */}
-      <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
         <SectionHeader
           title="% Grasa por sexo"
           description="Distribución hombre / mujer"
@@ -402,11 +402,15 @@ function BiometriaDistributionRow({
               />
               <Tooltip {...CHART_TOOLTIP} cursor={{ fill: "var(--muted)" }} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="Hombre" fill="var(--info)" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="Hombre"
+                fill="var(--spectrum-sky-chart)"
+                radius={[8, 8, 0, 0]}
+              />
               <Bar
                 dataKey="Mujer"
-                fill="var(--primary)"
-                radius={[4, 4, 0, 0]}
+                fill="var(--spectrum-sky-chart)"
+                radius={[8, 8, 0, 0]}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -414,7 +418,7 @@ function BiometriaDistributionRow({
       </div>
 
       {/* Glucosa donut */}
-      <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
         <SectionHeader
           title="Glucosa"
           description="Distribución por categoría"
@@ -493,7 +497,7 @@ function BiometriaPatientListCard({
   }, [geoCityId, geoStateAbbr]);
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden">
+    <div className="rounded-2xl border border-brand-blue-soft/40 bg-card overflow-hidden shadow-xs">
       <SectionHeader
         title="Listado biometría"
         description="Pacientes con indicadores de salud"
@@ -513,7 +517,11 @@ function BiometriaPatientListCard({
         }
       />
 
-      {exportError && <p role="alert" className="px-5 py-3 text-sm text-destructive">{t("No se pudo exportar el CSV. Intenta de nuevo.")}</p>}
+      {exportError && (
+        <p role="alert" className="px-5 py-3 text-sm text-destructive">
+          {t("No se pudo exportar el CSV. Intenta de nuevo.")}
+        </p>
+      )}
 
       {/* Geo active filter chip */}
       {geoFilter && (

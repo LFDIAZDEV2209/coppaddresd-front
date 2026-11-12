@@ -57,6 +57,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  rainbowStyle,
+  rainbowToneFromClassName,
+  type RainbowTone,
+} from "@/lib/ui/rainbow";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/providers/context-provider";
 import { useT } from "@/providers/i18n-provider";
@@ -71,17 +76,17 @@ import type {
   PatientFollowUp,
 } from "../types";
 
-const RISK_STYLES: Record<PatientBoardRisk, string> = {
-  low: "bg-success-soft text-success-soft-foreground",
-  moderate: "bg-warning-soft text-warning-soft-foreground",
-  high: "bg-destructive-soft text-destructive",
-  critical: "bg-destructive text-white",
+const RISK_TONES: Record<PatientBoardRisk, RainbowTone> = {
+  low: "green",
+  moderate: "amber",
+  high: "orange",
+  critical: "rose",
 };
 
-const FOLLOW_UP_STYLES: Record<PatientFollowUp, string> = {
-  "al-dia": "bg-success-soft text-success-soft-foreground",
-  vencido: "bg-destructive-soft text-destructive",
-  "sin-asignacion": "bg-muted text-muted-foreground",
+const FOLLOW_UP_TONES: Record<PatientFollowUp, RainbowTone> = {
+  "al-dia": "green",
+  vencido: "rose",
+  "sin-asignacion": "slate",
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> =
@@ -149,34 +154,42 @@ function SummaryTile({
   onClick,
 }: SummaryTileProps) {
   const className = cn(
-    "flex flex-col gap-1 rounded-2xl border bg-card p-3.5 text-left transition-colors",
-    onClick && "cursor-pointer hover:border-primary/60",
-    active ? "border-primary bg-primary-soft/50" : "border-border",
+    "spectrum-card flex min-h-[92px] min-w-0 flex-col gap-1 rounded-2xl border border-brand-blue-soft/40 px-3.5 py-3.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-ring",
+    onClick && "cursor-pointer hover:bg-muted/40",
+    active
+      ? "bg-primary-soft ring-1 ring-inset ring-primary/30"
+      : "bg-primary-soft/25",
   );
+  const style = rainbowStyle(rainbowToneFromClassName(iconClassName) ?? "sky");
   const content = (
     <>
-      <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
         <Icon
           className={cn("size-3.5 shrink-0", iconClassName)}
           aria-hidden="true"
         />
-        <span className="truncate">{label}</span>
+        <span className="min-w-0 leading-snug">{label}</span>
       </span>
-      <span className="text-2xl font-bold tabular-nums">
-        {value ?? "—"}
-      </span>
-      {sub ? <span className="text-[11px] text-muted-foreground">{sub}</span> : null}
+      <span className="text-2xl font-bold tabular-nums">{value ?? "—"}</span>
+      {sub ? (
+        <span className="text-[11px] text-muted-foreground">{sub}</span>
+      ) : null}
     </>
   );
 
   if (!onClick) {
-    return <div className={className}>{content}</div>;
+    return (
+      <div style={style} className={className}>
+        {content}
+      </div>
+    );
   }
 
   return (
     <button
       type="button"
       aria-pressed={active}
+      style={style}
       onClick={onClick}
       className={className}
     >
@@ -299,10 +312,10 @@ export function ClinicalBoardView({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="@container/clinical-board flex min-w-0 flex-col gap-4">
       <section
         aria-label={t("Resumen clínico")}
-        className="grid grid-cols-2 gap-3 xl:grid-cols-6"
+        className="grid grid-cols-2 gap-3 @min-[600px]/clinical-board:grid-cols-3 @min-[1100px]/clinical-board:grid-cols-6"
       >
         <SummaryTile
           label={t("Riesgo alto")}
@@ -362,35 +375,40 @@ export function ClinicalBoardView({
         />
       </section>
 
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section
+        aria-label={t("Directorio clínico")}
+        className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
+      >
         <SectionHeader
           title={t("Estado clínico por paciente")}
           description={t("Directorio clínico · riesgo, alertas y seguimiento")}
           icon={ShieldAlert}
-          variant="primary"
+          variant="surface"
           actions={
             <Button
               variant="outline"
-              size="sm"
+              size="comfortable"
               onClick={retry}
               disabled={loading}
-              className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
             >
               <RefreshCw
                 data-icon="inline-start"
-                className={cn(loading && "animate-spin motion-reduce:animate-none")}
+                className={cn(
+                  loading && "animate-spin motion-reduce:animate-none",
+                )}
               />
               {t("Actualizar")}
             </Button>
           }
         />
-        <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_160px_160px_160px_150px_190px_auto]">
-          <div className="relative">
+        <div className="grid min-w-0 grid-cols-2 gap-3 border-y border-border bg-background/35 p-4 @min-[700px]/clinical-board:grid-cols-3 @min-[1100px]/clinical-board:grid-cols-6">
+          <div className="relative col-span-2 @min-[1100px]/clinical-board:col-span-3">
             <Search
-              className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground"
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
               aria-hidden="true"
             />
             <Input
+              density="comfortable"
               value={filters.search}
               onChange={(event) => setFilters({ search: event.target.value })}
               placeholder={t("Buscar por nombre, MRN o documento...")}
@@ -404,7 +422,10 @@ export function ClinicalBoardView({
               setFilters({ risk: value as ClinicalBoardFilters["risk"] })
             }
           >
-            <SelectTrigger aria-label={t("Filtrar por riesgo")}>
+            <SelectTrigger
+              size="comfortable"
+              aria-label={t("Filtrar por riesgo")}
+            >
               <SelectValue>
                 {filters.risk === "all"
                   ? t("Todos los riesgos")
@@ -425,7 +446,10 @@ export function ClinicalBoardView({
               setFilters({ alerts: value as ClinicalBoardFilters["alerts"] })
             }
           >
-            <SelectTrigger aria-label={t("Filtrar por alertas")}>
+            <SelectTrigger
+              size="comfortable"
+              aria-label={t("Filtrar por alertas")}
+            >
               <SelectValue>
                 {filters.alerts === "with"
                   ? t("Con alertas activas")
@@ -445,7 +469,10 @@ export function ClinicalBoardView({
               })
             }
           >
-            <SelectTrigger aria-label={t("Filtrar por seguimiento")}>
+            <SelectTrigger
+              size="comfortable"
+              aria-label={t("Filtrar por seguimiento")}
+            >
               <SelectValue>
                 {filters.followUp === "all"
                   ? t("Todo el seguimiento")
@@ -467,7 +494,11 @@ export function ClinicalBoardView({
               setFilters({ status: value as ClinicalBoardFilters["status"] })
             }
           >
-            <SelectTrigger aria-label={t("Filtrar por estado del paciente")}>
+            <SelectTrigger
+              size="comfortable"
+              className="@min-[1100px]/clinical-board:col-span-2"
+              aria-label={t("Filtrar por estado del paciente")}
+            >
               <SelectValue>
                 {filters.status === "all"
                   ? t("Todos los estados")
@@ -485,7 +516,11 @@ export function ClinicalBoardView({
             value={filters.insurerId}
             onValueChange={(value) => setFilters({ insurerId: value ?? "all" })}
           >
-            <SelectTrigger aria-label={t("Filtrar por aseguradora")}>
+            <SelectTrigger
+              size="comfortable"
+              className="@min-[700px]/clinical-board:col-span-2 @min-[1100px]/clinical-board:col-span-3"
+              aria-label={t("Filtrar por aseguradora")}
+            >
               <SelectValue>{selectedInsurerName}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -499,96 +534,119 @@ export function ClinicalBoardView({
           </Select>
           <Button
             variant="outline"
+            size="comfortable"
             onClick={clearAll}
             disabled={!hasFilters}
-            className="justify-self-start"
+            className="justify-self-start @min-[700px]/clinical-board:w-full"
           >
             <FilterX data-icon="inline-start" />
             {t("Limpiar")}
           </Button>
         </div>
-      </div>
 
-      {error && !result ? (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
-          <p className="text-base font-semibold text-foreground">
-            {t("No pudimos cargar el tablero clínico")}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">{error}</p>
-          <Button variant="outline" className="mt-4" onClick={retry}>
-            <RefreshCw data-icon="inline-start" />
-            {t("Reintentar")}
-          </Button>
-        </div>
-      ) : loading && !result ? (
-        <div className="rounded-2xl border border-border bg-card p-5">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-4 border-b border-border py-4 last:border-0"
-            >
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-5 w-20 rounded-full" />
-              <Skeleton className="hidden h-4 w-32 md:block" />
-              <Skeleton className="ml-auto h-4 w-24" />
-            </div>
-          ))}
-        </div>
-      ) : result && result.data.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-16 text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
-            <ClipboardList className="size-6" aria-hidden="true" />
-          </div>
-          <p className="mt-4 text-base font-semibold text-foreground">
-            {hasFilters
-              ? t("Sin resultados con los filtros")
-              : t("Sin pacientes en el alcance")}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {hasFilters
-              ? t("Prueba con otros términos o quita algún filtro.")
-              : t("No hay pacientes para mostrar todavía.")}
-          </p>
-          {hasFilters ? (
-            <Button variant="outline" className="mt-4" onClick={clearAll}>
-              <FilterX data-icon="inline-start" />
-              {t("Limpiar filtros")}
+        {error && !result ? (
+          <div
+            role="alert"
+            className="bg-destructive-soft/30 px-5 py-14 text-center"
+          >
+            <p className="text-base font-semibold text-foreground">
+              {t("No pudimos cargar el tablero clínico")}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+            <Button variant="outline" className="mt-4" onClick={retry}>
+              <RefreshCw data-icon="inline-start" />
+              {t("Reintentar")}
             </Button>
-          ) : null}
-        </div>
-      ) : result ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
-          <SectionHeader
-            title={`${result.total} ${t("pacientes en seguimiento")}`}
-            description={t("Directorio clínico · riesgo, alertas y seguimiento")}
-            icon={ClipboardList}
-            variant="primary"
-          />
-          <div className="overflow-x-auto">
-            <Table>
+          </div>
+        ) : loading && !result ? (
+          <div
+            aria-label={t("Cargando pacientes")}
+            aria-busy="true"
+            className="bg-card p-5"
+          >
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-4 border-b border-border py-4 last:border-0"
+              >
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="hidden h-4 w-32 md:block" />
+                <Skeleton className="ml-auto h-4 w-24" />
+              </div>
+            ))}
+          </div>
+        ) : result && result.data.length === 0 ? (
+          <div className="bg-card px-5 py-16 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
+              <ClipboardList className="size-6" aria-hidden="true" />
+            </div>
+            <p className="mt-4 text-base font-semibold text-foreground">
+              {hasFilters
+                ? t("Sin resultados con los filtros")
+                : t("Sin pacientes en el alcance")}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {hasFilters
+                ? t("Prueba con otros términos o quita algún filtro.")
+                : t("No hay pacientes para mostrar todavía.")}
+            </p>
+            {hasFilters ? (
+              <Button variant="outline" className="mt-4" onClick={clearAll}>
+                <FilterX data-icon="inline-start" />
+                {t("Limpiar filtros")}
+              </Button>
+            ) : null}
+          </div>
+        ) : result ? (
+          <div className="flex min-w-0 flex-col">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <p
+                role="status"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                {result.total} {t("pacientes en seguimiento")}
+              </p>
+              {loading && (
+                <span className="text-xs text-muted-foreground">
+                  {t("Actualizando...")}
+                </span>
+              )}
+            </div>
+            <Table
+              density="comfortable"
+              aria-label={t("Estado clínico por paciente")}
+              containerProps={{
+                tabIndex: 0,
+                role: "region",
+                "aria-label": t("Tabla de pacientes"),
+                className:
+                  "outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              }}
+            >
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("Paciente")}</TableHead>
-                  <TableHead className="hidden 2xl:table-cell">
+                  <TableHead className="hidden @min-[1300px]/clinical-board:table-cell">
                     {t("Diagnóstico")}
                   </TableHead>
-                  <TableHead className="hidden 2xl:table-cell">
+                  <TableHead className="hidden @min-[1300px]/clinical-board:table-cell">
                     {t("Ubicación")}
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">
+                  <TableHead className="hidden @min-[900px]/clinical-board:table-cell">
                     {t("Aseguradora")}
                   </TableHead>
                   <TableHead>{t("Riesgo")}</TableHead>
                   <TableHead>{t("Alertas")}</TableHead>
-                  <TableHead className="hidden md:table-cell">
+                  <TableHead className="hidden @min-[700px]/clinical-board:table-cell">
                     {t("Última evaluación")}
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">
+                  <TableHead className="hidden @min-[1300px]/clinical-board:table-cell">
                     {t("Próxima evaluación")}
                   </TableHead>
                   <TableHead>{t("Seguimiento")}</TableHead>
                   {fullScope ? (
-                    <TableHead className="hidden 2xl:table-cell">
+                    <TableHead className="hidden @min-[1300px]/clinical-board:table-cell">
                       {t("Profesional")}
                     </TableHead>
                   ) : null}
@@ -602,7 +660,7 @@ export function ClinicalBoardView({
                 {result.data.map((item) => (
                   <TableRow key={item.patientId}>
                     <TableCell>
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-3">
                         <span
                           className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary-soft-foreground"
                           aria-hidden="true"
@@ -614,12 +672,12 @@ export function ClinicalBoardView({
                           onClick={() =>
                             router.push(`/patients/${item.patientId}`)
                           }
-                          className="flex min-w-0 flex-col text-left"
+                          className="flex w-56 min-w-0 flex-col gap-1 rounded text-left focus-visible:outline-2 focus-visible:outline-ring"
                         >
-                          <span className="truncate text-sm font-semibold text-foreground hover:text-primary">
+                          <span className="whitespace-normal break-words text-sm font-semibold leading-snug text-foreground hover:text-primary">
                             {item.firstName} {item.lastName}
                           </span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="max-w-full whitespace-normal break-all text-xs leading-snug text-muted-foreground">
                             {item.medicalRecordNumber ??
                               item.documentNumber ??
                               "—"}
@@ -627,25 +685,26 @@ export function ClinicalBoardView({
                         </button>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden 2xl:table-cell">
+                    <TableCell className="hidden @min-[1300px]/clinical-board:table-cell">
                       <span className="block max-w-48 truncate">
                         {item.primaryDiagnosisDescription ??
                           item.primaryDiagnosisCode ??
                           t("Sin diagnóstico")}
                       </span>
                     </TableCell>
-                    <TableCell className="hidden 2xl:table-cell">
+                    <TableCell className="hidden @min-[1300px]/clinical-board:table-cell">
                       {item.stateName ?? item.stateCode ?? t("Sin asignar")}
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell className="hidden @min-[900px]/clinical-board:table-cell">
                       {item.insurerName ?? t("Sin aseguradora")}
                     </TableCell>
                     <TableCell>
                       {item.riskLevel ? (
                         <span
+                          style={rainbowStyle(RISK_TONES[item.riskLevel])}
                           className={cn(
                             "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                            RISK_STYLES[item.riskLevel],
+                            "spectrum-tag",
                           )}
                         >
                           {riskLabel(item.riskLevel)}
@@ -673,7 +732,7 @@ export function ClinicalBoardView({
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell className="hidden @min-[700px]/clinical-board:table-cell">
                       <div className="flex min-w-0 flex-col">
                         <span className="text-sm">
                           {formatDate(item.lastEvaluationAt)}
@@ -685,7 +744,7 @@ export function ClinicalBoardView({
                         ) : null}
                       </div>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell className="hidden @min-[1300px]/clinical-board:table-cell">
                       <span
                         className={cn(
                           "inline-flex items-center gap-1 text-sm",
@@ -702,16 +761,24 @@ export function ClinicalBoardView({
                     </TableCell>
                     <TableCell>
                       <span
+                        style={rainbowStyle(
+                          FOLLOW_UP_TONES[item.followUpState],
+                        )}
                         className={cn(
                           "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                          FOLLOW_UP_STYLES[item.followUpState],
+                          "spectrum-tag",
                         )}
                       >
                         {followUpLabel(item.followUpState)}
                       </span>
+                      {item.nextEvaluationDueAt && (
+                        <span className="mt-1 block text-xs text-muted-foreground @min-[1300px]/clinical-board:hidden">
+                          {formatDate(item.nextEvaluationDueAt)}
+                        </span>
+                      )}
                     </TableCell>
                     {fullScope ? (
-                      <TableCell className="hidden 2xl:table-cell">
+                      <TableCell className="hidden @min-[1300px]/clinical-board:table-cell">
                         <span className="block max-w-40 truncate">
                           {item.professionalNames.length > 0
                             ? item.professionalNames.join(", ")
@@ -777,9 +844,7 @@ export function ClinicalBoardView({
                           {canEdit ? (
                             <DropdownMenuItem
                               onClick={() =>
-                                router.push(
-                                  `/patients/${item.patientId}/edit`,
-                                )
+                                router.push(`/patients/${item.patientId}/edit`)
                               }
                             >
                               <Pencil aria-hidden="true" />
@@ -805,32 +870,32 @@ export function ClinicalBoardView({
                 ))}
               </TableBody>
             </Table>
-          </div>
-          <div className="flex flex-col gap-2 border-t border-border px-4 py-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              {t("Página")} {result.page} {t("de")} {result.totalPages}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={result.page <= 1 || loading}
-                onClick={() => setPage(result.page - 1)}
-              >
-                {t("Anterior")}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={result.page >= result.totalPages || loading}
-                onClick={() => setPage(result.page + 1)}
-              >
-                {t("Siguiente")}
-              </Button>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4 text-sm text-muted-foreground">
+              <span>
+                {t("Página")} {result.page} {t("de")} {result.totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="comfortable"
+                  disabled={result.page <= 1 || loading}
+                  onClick={() => setPage(result.page - 1)}
+                >
+                  {t("Anterior")}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="comfortable"
+                  disabled={result.page >= result.totalPages || loading}
+                  onClick={() => setPage(result.page + 1)}
+                >
+                  {t("Siguiente")}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </section>
 
       <AlertDialog
         open={Boolean(deleting)}

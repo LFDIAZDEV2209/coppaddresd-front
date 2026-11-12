@@ -102,7 +102,7 @@ export function ProgramTemplatesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Plantillas de programa"
         description="Gestiona las plantillas del programa de gamificación"
@@ -173,7 +173,7 @@ export function ProgramTemplatesPage() {
       ) : error ? (
         <TemplatesErrorState message={error} onRetry={retry} />
       ) : result && result.data.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={`${result.total} ${result.total === 1 ? "plantilla" : "plantillas"} disponibles`}
             description="Vista de tabla"
@@ -299,7 +299,7 @@ export function ProgramTemplatesPage() {
           <span>
             Página {result.page} de {result.totalPages}
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
             <select
               className="h-8 rounded-md border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={result.pageSize}

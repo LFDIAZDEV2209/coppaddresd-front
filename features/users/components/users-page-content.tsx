@@ -311,7 +311,7 @@ export function UsersPageContent() {
 
   return (
     <BulkRolesProvider roles={catalog?.roles ?? []}>
-      <div className="stagger-children flex flex-col gap-5 p-6">
+      <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
         <PageHeader
           title={t("Usuarios")}
           description={t(
@@ -383,7 +383,7 @@ export function UsersPageContent() {
         ) : error ? (
           <UsersErrorState message={error} onRetry={retry} />
         ) : result && result.data.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-border/50 bg-card">
+          <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
             <SectionHeader
               title={`${result.total} ${result.total === 1 ? t("usuario") : t("usuarios")} ${result.total === 1 ? t("encontrado") : t("encontrados")}`}
               description={t("Administra los usuarios de la plataforma")}

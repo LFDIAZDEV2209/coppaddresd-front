@@ -519,7 +519,7 @@ export function ModerationPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Moderación")}
         description={t("Publicaciones reportadas por incumplimiento de normas")}
@@ -543,7 +543,7 @@ export function ModerationPage() {
 
       {/* Búsqueda de miembros */}
       {canModerate && (
-        <div className="flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-3 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card p-4 shadow-xs">
           <SectionHeader
             title={t("Buscar miembro")}
             description={t("Buscar miembros para moderar")}

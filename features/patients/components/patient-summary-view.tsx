@@ -1,5 +1,7 @@
 "use client";
 
+import { RAINBOW_SERIES } from "@/lib/ui/rainbow";
+
 import { useState } from "react";
 import {
   Activity,
@@ -67,47 +69,12 @@ import type {
   PatientDashboard,
 } from "../types";
 
-const GENDER_COLORS = ["#0e7490", "#123b63", "#7fb5e6", "#d4af37", "#64748b"];
-const AGE_COLORS = [
-  "#7fb5e6",
-  "#3f81c2",
-  "#0e7490",
-  "#123b63",
-  "#d4af37",
-  "#64748b",
-];
-const MARITAL_COLORS = [
-  "#0e7490",
-  "#3f81c2",
-  "#7fb5e6",
-  "#d4af37",
-  "#c83237",
-  "#7c3aed",
-  "#64748b",
-];
-const DIAGNOSIS_COLORS = [
-  "#c83237",
-  "#e06b3c",
-  "#d4af37",
-  "#7c3aed",
-  "#3f81c2",
-];
-const INSURER_COLORS = [
-  "#059669",
-  "#0e7490",
-  "#3f81c2",
-  "#7c3aed",
-  "#d4af37",
-  "#64748b",
-];
-const PROFESSIONAL_COLORS = [
-  "#7c3aed",
-  "#3f81c2",
-  "#0e7490",
-  "#059669",
-  "#d4af37",
-  "#64748b",
-];
+const GENDER_COLORS = RAINBOW_SERIES;
+const AGE_COLORS = RAINBOW_SERIES;
+const MARITAL_COLORS = RAINBOW_SERIES;
+const DIAGNOSIS_COLORS = RAINBOW_SERIES;
+const INSURER_COLORS = RAINBOW_SERIES;
+const PROFESSIONAL_COLORS = RAINBOW_SERIES;
 
 const MARITAL_LABELS: Record<string, string> = {
   Single: "Soltero/a",
@@ -445,7 +412,7 @@ export function PatientSummaryView({
       </section>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("Crecimiento de pacientes")}
             description={`${t("Nuevos registros por mes")} · ${growthTotal} ${t("en el período")}`}
@@ -526,12 +493,12 @@ export function PatientSummaryView({
                         >
                           <stop
                             offset="0%"
-                            stopColor="#0e7490"
+                            stopColor="var(--spectrum-teal-chart)"
                             stopOpacity={0.35}
                           />
                           <stop
                             offset="100%"
-                            stopColor="#0e7490"
+                            stopColor="var(--spectrum-teal-chart)"
                             stopOpacity={0.02}
                           />
                         </linearGradient>
@@ -569,7 +536,7 @@ export function PatientSummaryView({
                       <Area
                         type="monotone"
                         dataKey="value"
-                        stroke="#0e7490"
+                        stroke="var(--spectrum-teal-chart)"
                         strokeWidth={2}
                         fill="url(#patients-growth)"
                         animationDuration={650}
@@ -612,8 +579,8 @@ export function PatientSummaryView({
                       />
                       <Bar
                         dataKey="value"
-                        fill="#0e7490"
-                        radius={[6, 6, 0, 0]}
+                        fill="var(--spectrum-teal-chart)"
+                        radius={[8, 8, 0, 0]}
                         maxBarSize={34}
                         animationDuration={650}
                       />
@@ -626,6 +593,7 @@ export function PatientSummaryView({
         </section>
 
         <PatientDistributionChart
+          accent="sky"
           title={t("Por sexo")}
           description={t("Distribución del alcance")}
           icon={UserRound}
@@ -636,54 +604,54 @@ export function PatientSummaryView({
         />
 
         <PatientDistributionChart
+          accent="teal"
           title={t("Rangos de edad")}
           icon={Users}
           items={ageItems}
           colors={AGE_COLORS}
-          barColor="#0e7490"
           emptyLabel={t("Sin fechas de nacimiento registradas.")}
         />
 
         <PatientDistributionChart
+          accent="violet"
           title={t("Estado civil")}
           icon={ShieldCheck}
           items={maritalItems}
           colors={MARITAL_COLORS}
-          barColor="#0e7490"
           emptyLabel={t("Sin estado civil registrado.")}
         />
 
         <PatientDistributionChart
+          accent="amber"
           title={t("Diagnósticos principales")}
           icon={HeartPulse}
           items={diagnosisItems}
           colors={DIAGNOSIS_COLORS}
-          barColor="#c83237"
           emptyLabel={t("Sin diagnósticos registrados.")}
         />
 
         <PatientDistributionChart
+          accent="pink"
           title={t("Aseguradora")}
           icon={Stethoscope}
           items={insurerItems}
           colors={INSURER_COLORS}
-          barColor="#059669"
           emptyLabel={t("Sin aseguradoras registradas.")}
         />
 
         {professionalItems.length > 0 && (
           <PatientDistributionChart
+            accent="green"
             title={t("Profesionales con más pacientes")}
             description={t("Asignaciones activas")}
             icon={Award}
             items={professionalItems}
             colors={PROFESSIONAL_COLORS}
-            barColor="#7c3aed"
             emptyLabel={t("Sin asignaciones activas.")}
           />
         )}
 
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("Contacto de emergencia")}
             description={t("Cobertura del alcance")}
@@ -699,7 +667,7 @@ export function PatientSummaryView({
             </p>
             <div className="h-2.5 w-full max-w-xs overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-success transition-[width] duration-700 ease-out motion-reduce:transition-none"
+                className="h-full rounded-full bg-[var(--spectrum-green-chart)] transition-[width] duration-700 ease-out motion-reduce:transition-none"
                 style={{ width: `${Math.min(data.emergencyContactPct, 100)}%` }}
                 role="img"
                 aria-label={`${data.emergencyContactPct.toFixed(1)}%`}

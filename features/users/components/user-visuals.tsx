@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, ShieldAlert, ShieldCheck, XCircle } from "lucide-react";
+import { rainbowStyle } from "@/lib/ui/rainbow";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/i18n-provider";
@@ -31,18 +32,24 @@ export function UserAvatar({
 }
 
 /**
- * Badge de estado con contraste alto: Activo = sólido verde (destaca),
- * Inactivo = pizarra sólida (visible, no pastel). Siempre icono + texto.
+ * Badge semántico con superficie suave y contraste AA en ambos temas.
+ * Activo conserva verde; inactivo conserva pizarra. Siempre icono + texto.
  */
 export function UserStatusBadge({ isActive }: { isActive: boolean }) {
   const t = useT();
   return isActive ? (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-success px-2.5 py-[5px] text-[11.5px] font-semibold text-success-foreground shadow-sm">
+    <span
+      className="spectrum-tag inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] leading-4 font-semibold"
+      style={rainbowStyle("green")}
+    >
       <CheckCircle2 className="size-3.5" />
       {t("Activo")}
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-2.5 py-[5px] text-[11.5px] font-semibold text-slate-700 shadow-sm">
+    <span
+      className="spectrum-tag inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] leading-4 font-semibold"
+      style={rainbowStyle("slate")}
+    >
       <XCircle className="size-3.5" />
       {t("Inactivo")}
     </span>
@@ -85,7 +92,10 @@ export function RoleChips({
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)}>
       {hasNoRoles && (
-        <span className="inline-flex items-center gap-1 rounded-md bg-warning px-2 py-0.5 text-[10.5px] font-semibold text-warning-foreground shadow-sm">
+        <span
+          className="spectrum-tag inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
+          style={rainbowStyle("amber")}
+        >
           <ShieldAlert className="size-3" />
           {t("Sin roles")}
         </span>
@@ -94,17 +104,19 @@ export function RoleChips({
         chip.scoped ? (
           <span
             key={chip.label}
-            className="inline-flex items-center gap-1 rounded-md border border-dashed border-primary/40 bg-primary/[0.06] px-2 py-0.5 text-[11px] font-medium text-primary"
+            className="spectrum-tag inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+            style={rainbowStyle("teal")}
           >
-            <ShieldCheck className="size-3 text-primary/70" />
+            <ShieldCheck className="size-3" />
             {chip.label}
           </span>
         ) : (
           <span
             key={chip.label}
-            className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"
+            className="spectrum-tag inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+            style={rainbowStyle("violet")}
           >
-            <ShieldCheck className="size-3 text-primary" />
+            <ShieldCheck className="size-3" />
             {chip.label}
           </span>
         ),

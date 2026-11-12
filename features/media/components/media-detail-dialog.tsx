@@ -85,13 +85,17 @@ export function MediaDetailDialog({
   );
 }
 
-function MediaDetailContent({
+export function MediaDetailContent({
   media,
   onAction,
   actionLoading,
   onShowReferences,
+  fullPage = false,
+  allowedActions,
 }: {
   media: MediaItem;
+  fullPage?: boolean;
+  allowedActions?: MediaDetailAction[];
   onAction?: (action: MediaDetailAction) => void;
   actionLoading?: boolean;
   onShowReferences?: () => void;
@@ -106,15 +110,29 @@ function MediaDetailContent({
   const [fileDuration, setFileDuration] = useState<number | null>(null);
 
   return (
-    <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-      <div className="flex min-w-0 items-start gap-3 rounded-xl border border-border bg-card p-4 md:col-span-2">
+    <div
+      className={
+        fullPage
+          ? "grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]"
+          : "grid min-w-0 gap-5 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"
+      }
+    >
+      <div
+        className={
+          fullPage
+            ? "hidden"
+            : "flex min-w-0 items-start gap-3 rounded-xl border border-border bg-card p-4 md:col-span-2"
+        }
+      >
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${type.tone}`}
         >
           <TypeIcon className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="break-words text-lg font-semibold leading-snug">{media.title}</p>
+          <p className="break-words text-lg font-semibold leading-snug">
+            {media.title}
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {type.label} · {status.label}
           </p>
@@ -125,7 +143,11 @@ function MediaDetailContent({
         {isPlaceholder && (
           <div className="flex gap-2 rounded-xl border border-warning/30 bg-warning-soft p-3 text-sm text-warning-soft-foreground">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-            <p>{t("Este archivo es un marcador de demostración. Carga la grabación aprobada antes de publicarlo o asignarlo a pacientes.")}</p>
+            <p>
+              {t(
+                "Este archivo es un marcador de demostración. Carga la grabación aprobada antes de publicarlo o asignarlo a pacientes.",
+              )}
+            </p>
           </div>
         )}
         {media.thumbnailKey && media.mediaType !== "Video" && (
@@ -142,55 +164,62 @@ function MediaDetailContent({
               key={media.storageKey}
               storageKey={media.storageKey}
               mediaType={media.mediaType}
+              className={fullPage ? "aspect-video max-h-none!" : undefined}
               onDuration={setFileDuration}
             />
           </div>
         )}
 
         {/* Acciones semánticas + "dónde se usa" (REQ-PCA-03/07) */}
-        {onAction && (
+        {(onAction || onShowReferences) && (
           <div className="flex flex-wrap items-center gap-2 [&_button]:min-h-10">
-            {media.status === "Draft" && (
-              <Button
-                size="sm"
-                disabled={actionLoading || !publishable}
-                title={
-                  !publishable
-                    ? t(
-                        isPlaceholder
-                          ? "El archivo de demostración debe reemplazarse antes de publicar."
-                          : "Faltan metadatos para publicar (duración o Content-Type).",
-                      )
-                    : undefined
-                }
-                onClick={() => onAction("publish")}
-              >
-                <Send data-icon="inline-start" />
-                {t("Publicar")}
-              </Button>
-            )}
-            {media.status === "Published" && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={actionLoading}
-                onClick={() => onAction("unpublish")}
-              >
-                <Undo2 data-icon="inline-start" />
-                {t("Despublicar")}
-              </Button>
-            )}
-            {media.status !== "Archived" && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={actionLoading}
-                onClick={() => onAction("archive")}
-              >
-                <Archive data-icon="inline-start" />
-                {t("Archivar")}
-              </Button>
-            )}
+            {onAction &&
+              (!allowedActions || allowedActions.includes("publish")) &&
+              media.status === "Draft" && (
+                <Button
+                  size="sm"
+                  disabled={actionLoading || !publishable}
+                  title={
+                    !publishable
+                      ? t(
+                          isPlaceholder
+                            ? "El archivo de demostración debe reemplazarse antes de publicar."
+                            : "Faltan metadatos para publicar (duración o Content-Type).",
+                        )
+                      : undefined
+                  }
+                  onClick={() => onAction("publish")}
+                >
+                  <Send data-icon="inline-start" />
+                  {t("Publicar")}
+                </Button>
+              )}
+            {onAction &&
+              (!allowedActions || allowedActions.includes("unpublish")) &&
+              media.status === "Published" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={actionLoading}
+                  onClick={() => onAction("unpublish")}
+                >
+                  <Undo2 data-icon="inline-start" />
+                  {t("Despublicar")}
+                </Button>
+              )}
+            {onAction &&
+              (!allowedActions || allowedActions.includes("archive")) &&
+              media.status !== "Archived" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={actionLoading}
+                  onClick={() => onAction("archive")}
+                >
+                  <Archive data-icon="inline-start" />
+                  {t("Archivar")}
+                </Button>
+              )}
             {onShowReferences && (
               <Button
                 size="sm"
@@ -205,13 +234,12 @@ function MediaDetailContent({
             )}
           </div>
         )}
-
       </div>
-      <div className="min-w-0 space-y-5 rounded-xl border border-border bg-background p-4 sm:p-5">
+      <div className="min-w-0 space-y-5 rounded-2xl border border-border bg-card p-4 sm:p-6">
         <div className="grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
           <Detail
             label={t("Tipo de medio")}
-            value={type.label}
+            value={t(type.label)}
             icon={<TypeIcon className="size-3.5" />}
           />
           <Detail
@@ -221,7 +249,7 @@ function MediaDetailContent({
           />
           <Detail
             label={t("Categoría")}
-            value={category.label}
+            value={t(category.label)}
             icon={<Tag className="size-3.5" />}
           />
           <Detail
@@ -231,7 +259,7 @@ function MediaDetailContent({
           />
           <Detail
             label={t("Estado")}
-            value={status.label}
+            value={t(status.label)}
             icon={<Hash className="size-3.5" />}
           />
           <Detail
@@ -256,17 +284,29 @@ function MediaDetailContent({
           />
         </div>
 
-        {fileDuration !== null && media.durationSecs != null && Math.abs(fileDuration - media.durationSecs) > 1 && (
-          <p className="rounded-lg bg-warning-soft px-3 py-2 text-xs text-warning-soft-foreground">
-            {t("Duración registrada: {duration}", { duration: formatDuration(media.durationSecs) })}
-          </p>
-        )}
+        {fileDuration !== null &&
+          media.durationSecs != null &&
+          Math.abs(fileDuration - media.durationSecs) > 1 && (
+            <p className="rounded-lg bg-warning-soft px-3 py-2 text-xs text-warning-soft-foreground">
+              {t("Duración registrada: {duration}", {
+                duration: formatDuration(media.durationSecs),
+              })}
+            </p>
+          )}
 
-        <div className="rounded-lg border border-border p-3">
+        <div
+          className={
+            fullPage
+              ? "border-t border-border pt-5"
+              : "rounded-lg border border-border p-3"
+          }
+        >
           <p className="mb-1 text-xs font-semibold text-muted-foreground">
             {t("Descripción")}
           </p>
-          <p className="text-sm">{media.description || t("Sin descripción.")}</p>
+          <p className="text-sm">
+            {media.description || t("Sin descripción.")}
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
@@ -279,7 +319,9 @@ function MediaDetailContent({
           <div>
             <p>{t("Actualizado")}</p>
             <p className="mt-0.5 font-medium text-foreground">
-              {media.updatedAt ? new Date(media.updatedAt).toLocaleString() : "—"}
+              {media.updatedAt
+                ? new Date(media.updatedAt).toLocaleString()
+                : "—"}
             </p>
           </div>
         </div>

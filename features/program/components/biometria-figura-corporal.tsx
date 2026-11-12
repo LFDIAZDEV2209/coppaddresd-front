@@ -1,5 +1,7 @@
 "use client";
 
+import { chartColor, MAP_NO_DATA } from "@/lib/ui/rainbow";
+
 // --- Biometria Figura Corporal (react-muscle-highlighter) ---
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -50,30 +52,30 @@ function bodyFatColor(
   gender: "male" | "female",
   pctGrasa: number | null,
 ): string {
-  if (pctGrasa == null) return "#D1D5DB"; // muted gray
+  if (pctGrasa == null) return MAP_NO_DATA; // muted gray
   if (gender === "male") {
-    if (pctGrasa >= 30) return "#E87B2B";
-    if (pctGrasa >= 25) return "#D4AF37";
-    return "#10B981";
+    if (pctGrasa >= 30) return chartColor("orange");
+    if (pctGrasa >= 25) return chartColor("amber");
+    return chartColor("green");
   }
   // female
-  if (pctGrasa >= 38) return "#E87B2B";
-  if (pctGrasa >= 32) return "#D4AF37";
-  return "#10B981";
+  if (pctGrasa >= 38) return chartColor("orange");
+  if (pctGrasa >= 32) return chartColor("amber");
+  return chartColor("green");
 }
 
 function abdColor(iccAlto: boolean, imc: number | null): string {
-  if (iccAlto) return "var(--destructive)";
-  if (imc != null && imc >= 30) return "#E87B2B";
-  return "#10B981";
+  if (iccAlto) return chartColor("rose");
+  if (imc != null && imc >= 30) return chartColor("orange");
+  return chartColor("green");
 }
 
 function hipColor(imc: number | null, pctGrasa: number | null): string {
-  if (pctGrasa == null && imc == null) return "#D1D5DB";
+  if (pctGrasa == null && imc == null) return MAP_NO_DATA;
   const val = pctGrasa ?? (imc != null ? imc * 2.5 : 0);
-  if (val >= 35) return "#E87B2B";
-  if (val >= 28) return "#D4AF37";
-  return "#10B981";
+  if (val >= 35) return chartColor("orange");
+  if (val >= 28) return chartColor("amber");
+  return chartColor("green");
 }
 
 function getGrasaCategory(
@@ -148,15 +150,12 @@ export function BiometriaFiguraCorporal({
     };
   }, []);
 
-  const updateTipPos = useCallback(
-    (e: React.MouseEvent) => {
-      const rect = wrapperRef.current?.getBoundingClientRect();
-      if (rect) {
-        setTipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-      }
-    },
-    [],
-  );
+  const updateTipPos = useCallback((e: React.MouseEvent) => {
+    const rect = wrapperRef.current?.getBoundingClientRect();
+    if (rect) {
+      setTipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    }
+  }, []);
 
   const handleMouseOver = useCallback(
     (e: React.MouseEvent) => {
@@ -196,7 +195,7 @@ export function BiometriaFiguraCorporal({
   }, []);
 
   const highlight: { stroke: string; strokeWidth: number } | undefined =
-    activeZone ? { stroke: "var(--primary)", strokeWidth: 1.5 } : undefined;
+    activeZone ? { stroke: chartColor("sky"), strokeWidth: 1.5 } : undefined;
 
   const data: ExtendedBodyPart[] = [];
 
@@ -213,7 +212,7 @@ export function BiometriaFiguraCorporal({
   });
 
   // Cadera: gluteal fill by hColor + quadriceps (upper thigh) as cadera hit-area
-  if (hColor !== "#D1D5DB")
+  if (hColor !== MAP_NO_DATA)
     data.push({
       slug: "gluteal",
       color: hColor,
@@ -226,14 +225,14 @@ export function BiometriaFiguraCorporal({
 
   // Chest / upper body reflects body-fat tier
   if (pctGrasa != null || imc != null) {
-    if (bColor !== "#D1D5DB")
+    if (bColor !== MAP_NO_DATA)
       data.push({
         slug: "chest",
         color: bColor,
         ...(activeZone === "torso" ? { styles: highlight } : {}),
       });
     else if (activeZone === "torso")
-      data.push({ slug: "chest", color: "#D1D5DB", styles: highlight });
+      data.push({ slug: "chest", color: MAP_NO_DATA, styles: highlight });
   } else if (activeZone === "torso") {
     data.push({ slug: "chest", styles: highlight });
   }
@@ -262,7 +261,7 @@ export function BiometriaFiguraCorporal({
   const clampedY = Math.max(tipPos.y + 12, 4);
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div data-slot="chart-map" className="flex flex-col items-center gap-2">
       <div
         ref={wrapperRef}
         onMouseOver={handleMouseOver}

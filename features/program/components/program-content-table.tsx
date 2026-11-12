@@ -251,7 +251,7 @@ export function ContentTable({
   }, []);
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <div className="flex flex-wrap items-center justify-between gap-3 p-5">
         <SectionHeader
           title={`Días del programa (${content.totalWeeks} días)`}

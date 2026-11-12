@@ -63,14 +63,14 @@ export function GroupsPage() {
   }, [groups, page, pageSize]);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Grupos/Chats")}
         description={t("Gestión de grupos y chats de Copp Adresd")}
         icon={MessageCircle}
       />
 
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Grupos")}
           description={`${communityGroups.length} ${t("grupos activos")}`}

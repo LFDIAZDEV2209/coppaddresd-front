@@ -1,5 +1,7 @@
 "use client";
 
+import { colorTint } from "@/lib/ui/rainbow";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -77,11 +79,7 @@ import { ScoreBar } from "../shared/progress";
 import { ChartCard, StatSkeleton } from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
 import { healthTestsApi } from "../../services/health-tests-service";
-import type {
-  Battery,
-  HealthTest,
-  PatientEvaluation,
-} from "../../types";
+import type { Battery, HealthTest, PatientEvaluation } from "../../types";
 
 const EVALUATION_STATES: Record<
   PatientEvaluation["status"],
@@ -300,8 +298,12 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
 
   const { patient, alerts, evaluations } = data;
   const typification = typifyPatient(patient);
-  const completed = patient.results.filter((result) => result.state === "completado").length;
-  const pending = patient.results.filter((result) => result.state === "en-progreso").length;
+  const completed = patient.results.filter(
+    (result) => result.state === "completado",
+  ).length;
+  const pending = patient.results.filter(
+    (result) => result.state === "en-progreso",
+  ).length;
   const patientAlerts = alerts.filter((a) => a.patientId === patient.id);
   const totalTests = patient.results.length;
 
@@ -318,7 +320,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
   const evolutionData = buildEvolution(patient);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={fullName(patient.firstName, patient.lastName)}
         description={t("Perfil individual de evaluación de salud")}
@@ -371,7 +373,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
       {/* Ficha del paciente — header azul */}
       <section
         id="ficha"
-        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+        className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm scroll-mt-6"
       >
         <SectionHeader
           title={t("Ficha del paciente")}
@@ -451,7 +453,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
 
       <section
         id="resumen"
-        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+        className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm scroll-mt-6"
       >
         <SectionHeader
           title={t("Resumen de batería")}
@@ -496,13 +498,15 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
       <section id="analisis-ia" className="scroll-mt-6">
         <ModuleEmptyState
           title={t("Análisis IA no disponible")}
-          description={t("No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial.")}
+          description={t(
+            "No hay un análisis IA guardado para este paciente. Consulta los resultados registrados y las respuestas de cada evaluación en el historial.",
+          )}
         />
       </section>
 
       <section
         id="visual"
-        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+        className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm scroll-mt-6"
       >
         <SectionHeader
           title={t("Visualización clínica")}
@@ -512,6 +516,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
         />
         <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-2">
           <ChartCard
+            accent="sky"
             title={t("Perfil de indicadores")}
             description={t("Scores de los tests completados (0-100)")}
             icon={Activity}
@@ -543,8 +548,8 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
                     />
                     <Radar
                       dataKey="score"
-                      stroke="var(--primary)"
-                      fill="var(--primary)"
+                      stroke="var(--spectrum-sky-chart)"
+                      fill="var(--spectrum-sky-chart)"
                       fillOpacity={0.22}
                       strokeWidth={2}
                     />
@@ -564,6 +569,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
           </ChartCard>
 
           <ChartCard
+            accent="violet"
             title={t("Evolución de scores")}
             description={t("Evaluaciones repetidas en el tiempo")}
             icon={HeartPulse}
@@ -630,7 +636,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
       {/* Historial de evaluaciones (hub) — ahora con filtros por batería y por test */}
       <section
         id="historial"
-        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+        className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm scroll-mt-6"
       >
         <SectionHeader
           title={t("Historial de evaluaciones")}
@@ -751,13 +757,13 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
                   <SelectValue>
                     {testFilter === "todos"
                       ? t("Todos")
-                      : (activeTestOption
+                      : activeTestOption
                         ? `${activeTestOption[1]} · ${activeTestOption[0]}`
-                        : testFilter)}
+                        : testFilter}
                   </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="min-w-[280px]">
-                    <SelectItem value="todos">{t("Todos")}</SelectItem>
+                </SelectTrigger>
+                <SelectContent className="min-w-[280px]">
+                  <SelectItem value="todos">{t("Todos")}</SelectItem>
                   {testOptions.map(([code, name]) => (
                     <SelectItem key={code} value={code}>
                       {name} · {code}
@@ -826,9 +832,9 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
                     <span
                       className="flex size-10 shrink-0 items-center justify-center rounded-xl text-[13px] ring-1 ring-inset"
                       style={{
-                        backgroundColor: `${accent}14`,
+                        backgroundColor: colorTint(accent, 7.843),
                         color: accent,
-                        borderColor: `${accent}26`,
+                        borderColor: colorTint(accent, 14.902),
                       }}
                     >
                       <IconCat className="size-[18px]" />
@@ -904,7 +910,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
       {/* Tests de la batería — ahora con iconografía por categoría y estado visual */}
       <section
         id="bateria"
-        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+        className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm scroll-mt-6"
       >
         <SectionHeader
           title={t("Tests de la batería")}
@@ -931,9 +937,9 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
                     <span
                       className="flex size-10 shrink-0 items-center justify-center rounded-xl text-base ring-1 ring-inset transition-transform duration-200 group-hover:scale-105"
                       style={{
-                        backgroundColor: `${accent}14`,
+                        backgroundColor: colorTint(accent, 7.843),
                         color: accent,
-                        borderColor: `${accent}26`,
+                        borderColor: colorTint(accent, 14.902),
                       }}
                     >
                       <IconCat className="size-5" />
@@ -1022,7 +1028,7 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
       {/* Alertas del paciente */}
       <section
         id="alertas"
-        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm scroll-mt-6"
+        className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm scroll-mt-6"
       >
         <SectionHeader
           title={t("Alertas del paciente")}
@@ -1050,8 +1056,14 @@ export function PatientProfilePage({ patientId }: { patientId: string }) {
                   <span
                     className="flex size-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset"
                     style={{
-                      backgroundColor: `${riskHex(severityToRisk(alert.severity))}14`,
-                      borderColor: `${riskHex(severityToRisk(alert.severity))}26`,
+                      backgroundColor: colorTint(
+                        riskHex(severityToRisk(alert.severity)),
+                        7.843,
+                      ),
+                      borderColor: colorTint(
+                        riskHex(severityToRisk(alert.severity)),
+                        14.902,
+                      ),
                     }}
                   >
                     <ShieldAlert
@@ -1104,7 +1116,7 @@ function testNameFor(
 }
 
 function riskFromEvaluation(ev: PatientEvaluation) {
-  return ev.status === "completed" ? ev.risk ?? "sin-evaluar" : "sin-evaluar";
+  return ev.status === "completed" ? (ev.risk ?? "sin-evaluar") : "sin-evaluar";
 }
 
 function severityToRisk(

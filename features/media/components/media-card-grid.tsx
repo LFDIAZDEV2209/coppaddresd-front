@@ -18,7 +18,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { MediaItem } from "../types";
-import { mediaTypeMeta, mediaStatusMeta, getMediaCategoryMeta } from "./media-meta";
+import {
+  mediaTypeMeta,
+  mediaStatusMeta,
+  getMediaCategoryMeta,
+} from "./media-meta";
 import { formatDuration } from "../services/media-service";
 import { MediaThumb } from "./media-thumb";
 import { useT } from "@/providers/i18n-provider";
@@ -48,12 +52,12 @@ export function MediaCardGrid({
         return (
           <article
             key={item.id}
-            className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
+            className="group flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
           >
             {item.thumbnailKey && (
               <MediaThumb
                 storageKey={item.thumbnailKey}
-                alt={t('Miniatura de {title}', { title: item.title })}
+                alt={t("Miniatura de {title}", { title: item.title })}
                 className="h-36 w-full rounded-xl object-cover"
               />
             )}
@@ -69,7 +73,9 @@ export function MediaCardGrid({
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={t('Acciones de {title}', { title: item.title })}
+                      aria-label={t("Acciones de {title}", {
+                        title: item.title,
+                      })}
                     />
                   }
                 >
@@ -78,11 +84,11 @@ export function MediaCardGrid({
                 <DropdownMenuContent align="end" className="w-44">
                   <DropdownMenuItem onClick={() => onDetails(item)}>
                     <Eye />
-                    {t('Ver detalles')}
+                    {t("Ver detalles")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onEdit(item)}>
                     <Pencil />
-                    {t('Editar')}
+                    {t("Editar")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -90,21 +96,21 @@ export function MediaCardGrid({
                     onClick={() => onDelete(item)}
                   >
                     <Trash2 />
-                    {t('Eliminar')}
+                    {t("Eliminar")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
 
             <div className="flex min-w-0 flex-col gap-1">
-              <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
+              <h3 className="text-sm font-semibold leading-5 text-foreground [overflow-wrap:anywhere]">
                 {item.title}
               </h3>
               <p className="line-clamp-1 text-xs font-medium text-primary/80">
                 {item.author}
               </p>
               <p className="line-clamp-2 text-xs text-muted-foreground">
-                {item.description || t('Sin descripción.')}
+                {item.description || t("Sin descripción.")}
               </p>
             </div>
 
@@ -116,7 +122,7 @@ export function MediaCardGrid({
               <span
                 className={`rounded-full px-2.5 py-[5px] text-[11.5px] font-semibold ${category.tone}`}
               >
-                {category.label}
+                {t(category.label)}
               </span>
             </div>
 
@@ -129,10 +135,12 @@ export function MediaCardGrid({
                   className="size-1.5 rounded-full"
                   style={{ backgroundColor: status.dot }}
                 />
-                {status.label}
+                {t(status.label)}
               </span>
               <span className="text-xs text-muted-foreground">
-                {t('Lección #{sortOrder}', { sortOrder: String(item.sortOrder) })}
+                {t("Lección #{sortOrder}", {
+                  sortOrder: String(item.sortOrder),
+                })}
               </span>
             </div>
           </article>
@@ -142,11 +150,7 @@ export function MediaCardGrid({
   );
 }
 
-export function MediaGridEmpty({
-  onCreate,
-}: {
-  onCreate: () => void;
-}) {
+export function MediaGridEmpty({ onCreate }: { onCreate: () => void }) {
   const t = useT();
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card py-16 text-center">
@@ -154,14 +158,14 @@ export function MediaGridEmpty({
         <FileArchive className="size-6" />
       </span>
       <div>
-        <h3 className="text-sm font-semibold">{t('No encontramos medios')}</h3>
+        <h3 className="text-sm font-semibold">{t("No encontramos medios")}</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          {t('Prueba con otros filtros o sube un nuevo medio.')}
+          {t("Prueba con otros filtros o sube un nuevo medio.")}
         </p>
       </div>
       <Button size="sm" onClick={onCreate}>
         <Plus data-icon="inline-start" />
-        {t('Nuevo medio')}
+        {t("Nuevo medio")}
       </Button>
     </div>
   );

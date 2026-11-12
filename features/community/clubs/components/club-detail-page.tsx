@@ -99,7 +99,7 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 p-4 sm:p-6">
+      <div className="flex min-w-0 flex-col gap-5 p-4 sm:p-6">
         <Skeleton className="h-40 w-full rounded-2xl" />
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-64 w-full rounded-2xl" />
@@ -125,7 +125,7 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex min-w-0 flex-col gap-5 p-4 sm:p-6">
       <Link
         href="/community/clubs"
         className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -135,7 +135,7 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
       </Link>
 
       {/* Cabecera del club */}
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="min-w-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <div
           className="h-36 sm:h-44"
           style={
@@ -150,16 +150,16 @@ export function ClubDetailPage({ clubId }: { clubId: string }) {
           </div>
         )}
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex items-end gap-4">
+          <div className="flex min-w-0 items-end gap-4">
             <span
               className="flex size-16 shrink-0 items-center justify-center rounded-2xl border-4 border-card text-lg font-black text-white shadow-lg"
               style={clubCoverStyle(club.category)}
             >
               {initials(club.name)}
             </span>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex min-w-0 flex-col gap-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-extrabold tracking-tight">
+                <h1 className="text-2xl leading-tight font-bold tracking-tight">
                   {club.name}
                 </h1>
                 <StatusBadge

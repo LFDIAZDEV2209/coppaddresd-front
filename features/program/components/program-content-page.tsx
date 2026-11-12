@@ -193,7 +193,7 @@ export function ProgramContentPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Contenido del programa"
         description="Configura el plan nutricional y la rutina de ejercicio de cada semana para una inscripción de paciente"

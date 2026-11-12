@@ -112,7 +112,7 @@ export function BiometriaHeroSections({
   return (
     <div className="flex flex-col gap-5">
       {/* Único box: figura + zonas + mediciones exactas */}
-      <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
         <SectionHeader
           title="Figura y zonas corporales"
           description="Distribución antropométrica"
@@ -341,7 +341,7 @@ export function BiometriaHistorySections({
   return (
     <div className="flex flex-col gap-5">
       {hasHistorial && (
-        <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <div className="p-5 pb-0">
             <SectionHeader
               title="Historial semanal"

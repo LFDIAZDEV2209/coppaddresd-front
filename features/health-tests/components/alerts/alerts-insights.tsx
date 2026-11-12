@@ -73,7 +73,7 @@ function statusTone(key: string) {
 
 function toPoints(
   record: Record<string, number> | undefined,
-  labels: Record<string, string>
+  labels: Record<string, string>,
 ) {
   return Object.entries(record ?? {})
     .filter(([, value]) => value > 0)
@@ -97,11 +97,11 @@ export function AlertsInsightsRail({
 
   const severities = useMemo(
     () => toPoints(data?.alertsBySeverity, SEVERITY_LABEL),
-    [data?.alertsBySeverity]
+    [data?.alertsBySeverity],
   );
   const statuses = useMemo(
     () => toPoints(data?.alertsByStatus, STATUS_LABEL),
-    [data?.alertsByStatus]
+    [data?.alertsByStatus],
   );
   const trend = useMemo(
     () =>
@@ -109,7 +109,7 @@ export function AlertsInsightsRail({
         label: point.label,
         value: point.value,
       })),
-    [data?.alertsByDay]
+    [data?.alertsByDay],
   );
 
   const severityTotal = severities.reduce((acc, item) => acc + item.value, 0);
@@ -237,7 +237,10 @@ export function AlertsInsightsRail({
                 <linearGradient id="ht-trend-line" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor={tones.emerald.solid} />
                   <stop offset="55%" stopColor={tones.sky.solid} />
-                  <stop offset="100%" stopColor="#4F46E5" />
+                  <stop
+                    offset="100%"
+                    stopColor="var(--spectrum-violet-chart)"
+                  />
                 </linearGradient>
                 <linearGradient id="ht-trend-fill" x1="0" y1="0" x2="0" y2="1">
                   <stop

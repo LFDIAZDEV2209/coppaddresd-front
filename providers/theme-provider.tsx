@@ -67,7 +67,7 @@ function applyAccent(accent: string, theme: Theme) {
   el.style.setProperty("--primary-soft", colors.soft);
   el.style.setProperty("--primary-foreground", colors.foreground);
   el.style.setProperty("--ring", colors.primary);
-  el.style.setProperty("--chart-1", colors.primary);
+  el.style.removeProperty("--chart-1");
   el.style.setProperty("--sidebar", colors.sidebar);
   el.style.setProperty("--sidebar-foreground", colors.sidebarForeground);
   el.style.setProperty("--sidebar-active-border", colors.primary);

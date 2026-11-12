@@ -118,7 +118,7 @@ export function ControlesTimeline({
   const current = controls.current_control;
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         title={t("Hitos del programa")}
         description={t("Estado de cada control por día de hito")}

@@ -1,3 +1,4 @@
+import { chartColor } from "@/lib/ui/rainbow";
 // --- Chart Tooltip Config ---
 export const CHART_TOOLTIP = {
   contentStyle: {
@@ -13,20 +14,20 @@ export const CHART_TOOLTIP = {
 // Colores y etiquetas de las 6 misiones del programa, usados en charts y chips.
 
 export const MISSION_COLORS: Record<string, string> = {
-  podcast: "#7C3AED",
-  vitals: "#E24B4A",
-  nut: "#1D9E75",
-  ejercicio: "#1B6CA8",
-  nutraceutico: "#E87B2B",
-  emocional: "#D4AF37",
+  podcast: chartColor("violet"),
+  vitals: chartColor("rose"),
+  nut: chartColor("green"),
+  ejercicio: chartColor("sky"),
+  nutraceutico: chartColor("orange"),
+  emocional: chartColor("amber"),
 };
 
 // --- Clinical Metric Colors ---
 export const CLINICAL_COLORS = {
-  bmi: "#1D9E75",
-  hba1c: "#E24B4A",
-  body_fat: "#E87B2B",
-  glucose: "#0E7490",
+  bmi: chartColor("green"),
+  hba1c: chartColor("rose"),
+  body_fat: chartColor("orange"),
+  glucose: chartColor("teal"),
 } as const;
 
 export const MISSION_LABELS: Record<string, string> = {
@@ -84,33 +85,33 @@ export const XP_CATEGORY_LABELS: Record<string, string> = {
 
 /** Paleta por familia de origen del XP (misión/bonus/cofres/clínico/…). */
 export const XP_CATEGORY_COLORS: Record<string, string> = {
-  TaskCompletion: "#7C3AED",
-  DailyBonus: "#10B981",
-  AdaptationCorrection: "#64748B",
-  CLINICAL_IMPROVE: "#E24B4A",
-  CLINICAL_SIGNIFICANT: "#DC2626",
-  CLINICAL_STABLE: "#F87171",
-  CLINICAL_WEEKLY_ALL_UP: "#B91C1C",
-  STREAK_7: "#D4AF37",
-  STREAK_11: "#C9A227",
-  STREAK_22: "#B8901F",
-  STREAK_50: "#9A751A",
-  NUTRITION_MEAL_COMPLETE: "#1D9E75",
-  NUTRITION_HYDRATION: "#34C99B",
-  NUTRITION_WEEK_85: "#14855F",
-  NUTRITION_RECOVERY: "#0E6B4E",
-  NB_STREAK_7: "#E87B2B",
-  NB_STREAK_14: "#D96D1F",
-  NB_STREAK_30: "#C55F17",
-  NB_STREAK_60: "#A94F10",
-  NB_STREAK_90: "#8C410B",
-  WEAKNESS_ASSESS: "#1B6CA8",
-  INTERV_ACCEPT: "#175786",
-  TELE_SCHEDULE: "#0E7490",
-  TELE_ATTEND: "#0C637D",
-  TELE_COMPLY: "#0A5269",
-  INTERV_COMPLETE: "#134556",
-  RECOVERY_MISSION: "#123B63",
+  TaskCompletion: chartColor("violet"),
+  DailyBonus: chartColor("green"),
+  AdaptationCorrection: chartColor("slate"),
+  CLINICAL_IMPROVE: chartColor("rose"),
+  CLINICAL_SIGNIFICANT: chartColor("rose"),
+  CLINICAL_STABLE: chartColor("rose"),
+  CLINICAL_WEEKLY_ALL_UP: chartColor("rose"),
+  STREAK_7: chartColor("amber"),
+  STREAK_11: chartColor("amber"),
+  STREAK_22: chartColor("amber"),
+  STREAK_50: chartColor("amber"),
+  NUTRITION_MEAL_COMPLETE: chartColor("green"),
+  NUTRITION_HYDRATION: chartColor("green"),
+  NUTRITION_WEEK_85: chartColor("green"),
+  NUTRITION_RECOVERY: chartColor("green"),
+  NB_STREAK_7: chartColor("orange"),
+  NB_STREAK_14: chartColor("orange"),
+  NB_STREAK_30: chartColor("orange"),
+  NB_STREAK_60: chartColor("orange"),
+  NB_STREAK_90: chartColor("orange"),
+  WEAKNESS_ASSESS: chartColor("sky"),
+  INTERV_ACCEPT: chartColor("sky"),
+  TELE_SCHEDULE: chartColor("teal"),
+  TELE_ATTEND: chartColor("teal"),
+  TELE_COMPLY: chartColor("teal"),
+  INTERV_COMPLETE: chartColor("teal"),
+  RECOVERY_MISSION: chartColor("sky"),
 };
 
 /** Etiqueta amigable para una categoría XP (fallback: código crudo). */
@@ -120,7 +121,7 @@ export function xpCategoryLabel(category: string): string {
 
 /** Color de la familia XP (fallback: gris neutro del sistema). */
 export function xpCategoryColor(category: string): string {
-  return XP_CATEGORY_COLORS[category] ?? "#6B7280";
+  return XP_CATEGORY_COLORS[category] ?? chartColor("slate");
 }
 
 /** Clase CSS de chip según porcentaje de adherencia (ANTARES mission tiers). */

@@ -607,7 +607,7 @@ export function UserWizard({ mode, userId, embedded, onBackToSelector }: UserWiz
           </Button>
         </div>
       ) : (
-        <div className="flex flex-col gap-5 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-5 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           {submitErrors && submitErrors.length > 0 && (
             <div
               className="mx-5 mt-5 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive sm:mx-6 sm:mt-6"

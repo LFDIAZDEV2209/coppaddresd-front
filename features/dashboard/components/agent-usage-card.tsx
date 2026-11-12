@@ -1,107 +1,73 @@
 "use client";
 
-import { useState } from "react";
-import { useT } from "@/providers/i18n-provider";
-import { ChartTooltip } from "@/components/brand/chart-tooltip";
-import { cn } from "@/lib/utils";
+import { RAINBOW_GRADIENTS } from "@/lib/ui/rainbow";
+
+import { useI18n } from "@/providers/i18n-provider";
 import type { AgentUsage } from "../types";
 
 interface AgentUsageCardProps {
   data: AgentUsage[];
 }
 
-/** Degradado multi-color: cada agente tiene su propio tono. */
-const AGENT_GRADIENTS: [string, string][] = [
-  ["#38bdf8", "#0369a1"], // cielo
-  ["#2dd4bf", "#0f766e"], // teal
-  ["#a78bfa", "#6d28d9"], // violeta
-  ["#fbbf24", "#b45309"], // ámbar
-  ["#f472b6", "#be185d"], // rosa
-  ["#94a3b8", "#475569"], // pizarra
-];
+const AGENT_GRADIENTS = RAINBOW_GRADIENTS;
 
-/**
- * Ranking de consumo por agente: badge de posición (#1 en teal), barra
- * que crece al cargar, hover acentúa + atenúa el resto, tooltip con
- * porcentaje y ranking.
- */
 export function AgentUsageCard({ data }: AgentUsageCardProps) {
-  const t = useT();
-  const [hovered, setHovered] = useState<number | null>(null);
-  const ranking = [...data]
-    .sort((a, b) => b.usage - a.usage)
-    .map((a) => a.name);
+  const { t, lang } = useI18n();
+  const number = new Intl.NumberFormat(lang === "en" ? "en-US" : "es-CO");
+  const ranked = [...data].sort((a, b) => b.usage - a.usage);
+
+  if (ranked.length === 0) {
+    return (
+      <p className="flex flex-1 items-center justify-center py-6 text-center text-sm text-muted-foreground">
+        {t("Sin ejecuciones de agentes")}
+      </p>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-3.5 py-1">
-      {data.map((agent, index) => {
-        const percent = Math.min((agent.usage / agent.max) * 100, 100);
-        const isHovered = hovered === index;
-        const rank = ranking.indexOf(agent.name) + 1;
-
+    <ol className="flex flex-1 flex-col justify-between gap-4">
+      {ranked.map((agent, index) => {
+        const max = Math.max(1, agent.max, agent.usage);
+        const colors = AGENT_GRADIENTS[index % AGENT_GRADIENTS.length];
         return (
-          <div
+          <li
             key={agent.name}
-            className="relative flex cursor-default items-center gap-2.5"
-            onMouseEnter={() => setHovered(index)}
-            onMouseLeave={() => setHovered(null)}
+            className="grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-start gap-x-2.5 gap-y-2"
           >
-            <ChartTooltip
-              visible={isHovered}
-              align="center"
-              placement={index < 3 ? "bottom" : "top"}
-              title={agent.name}
-              label={t("de uso")}
-              value={String(agent.usage)}
-              extra={t("{rank}º en uso", { rank: String(rank) })}
-            />
             <span
-              className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold transition-colors duration-200",
-                rank === 1
-                  ? "bg-brand-teal text-white"
-                  : "bg-muted text-muted-foreground",
-              )}
+              aria-hidden="true"
+              className="flex size-5 items-center justify-center rounded-md bg-muted text-[10px] font-semibold text-muted-foreground"
             >
-              {rank}
+              {index + 1}
             </span>
-            <span
-              className={cn(
-                "w-16 shrink-0 truncate text-[12px] transition-colors duration-200",
-                isHovered
-                  ? "font-semibold text-foreground"
-                  : "font-medium text-foreground/85",
-              )}
-            >
+            <span className="min-w-0 text-xs leading-5 font-medium text-foreground [overflow-wrap:anywhere]">
               {agent.name}
             </span>
-            <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted">
+            <span className="text-right text-xs leading-5 font-semibold tabular-nums text-foreground">
+              {number.format(agent.usage)}
+            </span>
+            <div
+              role="meter"
+              aria-label={agent.name}
+              aria-valuemin={0}
+              aria-valuemax={max}
+              aria-valuenow={agent.usage}
+              aria-valuetext={t("{count} ejecuciones", {
+                count: number.format(agent.usage),
+              })}
+              className="col-start-2 col-end-4 h-2 overflow-hidden rounded-full bg-muted"
+            >
               <div
-                className={cn(
-                  "bar-grow-x rounded-full transition-all duration-200",
-                  isHovered && "brightness-110",
-                  hovered !== null && !isHovered && "opacity-35",
-                )}
+                className="bar-grow-x h-full rounded-full"
                 style={{
-                  width: `${percent}%`,
-                  animationDelay: `${index * 70}ms`,
-                  background: `linear-gradient(90deg, ${AGENT_GRADIENTS[index % AGENT_GRADIENTS.length][0]}, ${AGENT_GRADIENTS[index % AGENT_GRADIENTS.length][1]})`,
+                  width: `${(agent.usage / max) * 100}%`,
+                  backgroundImage: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`,
                 }}
               />
             </div>
-            <span
-              className={cn(
-                "w-10 shrink-0 text-right text-[11px] tabular-nums transition-colors duration-200",
-                isHovered
-                  ? "font-bold text-foreground"
-                  : "font-semibold text-muted-foreground",
-              )}
-            >
-              {agent.usage}
-            </span>
-          </div>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }

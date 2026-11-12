@@ -6,6 +6,11 @@ import {
 import { loginAsAdmin } from "./fixtures/auth";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
+import { tmpdir } from "node:os";
+
+const captures =
+  process.env.E2E_CAPTURE_DIR ??
+  path.join(tmpdir(), "copp-erp-nutrition-queue");
 
 // API HTTP simulada de forma explícita: la aplicación usa siempre apiFetch.
 async function session(page: Page, permissions: string[], english = false) {
@@ -80,7 +85,7 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
     page.getByText("Vista de demostración", { exact: false }),
   ).toHaveCount(0);
   await page.screenshot({
-    path: "qa-reports/nutrition/desktop.png",
+    path: path.join(captures, "desktop.png"),
     fullPage: true,
   });
   expect(
@@ -88,21 +93,26 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page
-    .getByRole("button", { name: "Colapsar sidebar", exact: true })
-    .click();
+  const sidebar = page
+    .locator("aside")
+    .filter({
+      has: page.getByRole("link", { name: "Copp Adresd", exact: true }),
+    });
+  await page.mouse.move(700, 200);
+  await expect(sidebar).toHaveCSS("width", "80px");
   await expect(
     page.getByRole("link", {
       name: "Nutrición 3 planes por aprobar",
       exact: true,
     }),
   ).toBeVisible();
-  // El indicador de Next dev puede superponerse al botón inferior; validar teclado.
-  await page
-    .getByRole("button", { name: "Expandir sidebar", exact: true })
-    .focus();
-  await page.keyboard.press("Enter");
-  const filters = page.getByRole("combobox", { name: "Estado del plan", exact: true });
+  await sidebar.getByRole("link", { name: "Copp Adresd", exact: true }).focus();
+  await page.keyboard.press("Tab");
+  await expect(sidebar).toHaveCSS("width", "256px");
+  const filters = page.getByRole("combobox", {
+    name: "Estado del plan",
+    exact: true,
+  });
   await expect(filters.locator("option")).toHaveCount(7);
   for (const option of await filters.locator("option").all())
     await expect(option).toHaveText(/.+ \(\d+\)$/);
@@ -134,7 +144,7 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
     ),
   ).toBe(true);
   await page.screenshot({
-    path: "qa-reports/nutrition/mobile.png",
+    path: path.join(captures, "mobile.png"),
     fullPage: true,
   });
   expect(nutritionRequests.length).toBeGreaterThan(0);
@@ -161,7 +171,9 @@ test("endpoint ausente y contrato incompatible no producen datos demo", async ({
   await expect(
     page.getByRole("list", { name: "Planes de pacientes" }),
   ).toHaveCount(0);
-  await expect(page.locator(".nutrition-module").getByRole("alert")).toHaveCount(1);
+  await expect(
+    page.locator(".nutrition-module").getByRole("alert"),
+  ).toHaveCount(1);
   await page.getByText("Detalles del error", { exact: true }).click();
   await expect(
     page.getByText("Endpoint pendiente de backend", { exact: true }),
@@ -468,9 +480,14 @@ test("Nutrition.Approve basta y los textos cambian a inglés", async ({
   await expect(
     page.getByRole("list", { name: "Patient plans" }).getByRole("listitem"),
   ).toHaveCount(10);
-  const state = page.getByRole("combobox", { name: "Plan status", exact: true });
+  const state = page.getByRole("combobox", {
+    name: "Plan status",
+    exact: true,
+  });
   await expect(state).toBeVisible();
-  await expect(state.locator("option").filter({ hasText: /AI drafts/ })).toHaveCount(1);
+  await expect(
+    state.locator("option").filter({ hasText: /AI drafts/ }),
+  ).toHaveCount(1);
 });
 
 test("sin permisos Nutrition no hay bandeja, enlace ni peticiones de datos", async ({

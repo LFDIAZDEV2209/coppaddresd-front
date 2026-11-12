@@ -79,7 +79,7 @@ export function MembersPage() {
   const membersError = table.error;
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Miembros")}
         description={`${table.total} ${t("miembros en Copp Adresd Comunidad ADRED")}`}
@@ -89,7 +89,7 @@ export function MembersPage() {
 
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Select value={diagFilter} onValueChange={(v) => { if (v !== null) { setDiagFilter(v); setCardsPage(1); setTablePage(1); } }}>
             <SelectTrigger className="h-8 w-auto min-w-[180px] text-xs">
               <span className="flex flex-1 truncate text-left text-xs">
@@ -135,7 +135,7 @@ export function MembersPage() {
       </div>
 
       {/* Active member cards — paginadas */}
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <SectionHeader title={t("Miembros activos")} description={`${cards.total} ${t("miembros")}`} icon={Users} variant="primary" />
         <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {paginatedCards.map((m) => (
@@ -229,7 +229,7 @@ export function MembersPage() {
       </div>
 
       {/* Engagement table — paginada */}
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Participación")}
           description={t("Tabla de engagement detallada")}

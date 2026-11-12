@@ -292,7 +292,7 @@ export function ProfessionalDirectory() {
       employees={result?.data ?? []}
       onChanged={retry}
     >
-      <div className="professional-directory flex flex-col gap-6 p-4 sm:p-6">
+      <div className="professional-directory flex flex-col gap-5 p-4 sm:p-6 min-w-0">
         <PageHeader
           className="professional-directory-header"
           leadingVisual={

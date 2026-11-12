@@ -1,8 +1,10 @@
 "use client";
 
 import { useT } from "@/providers/i18n-provider";
-import { DirectoryIcon, type DirectoryIconKind } from "./directory-icon";
+import { type DirectoryIconKind } from "./directory-icon";
+import { rainbowStyle, type RainbowTone } from "@/lib/ui/rainbow";
 import { cn } from "@/lib/utils";
+import { Users, UserCheck, UserPlus, UserX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /** Definición de cada tarjeta de estadísticas. */
@@ -38,6 +40,18 @@ export function DirectoryStats({
   onStatFilter: (partial: { status: string }) => void;
 }) {
   const t = useT();
+  const tones: Record<string, RainbowTone> = {
+    total: "sky",
+    active: "green",
+    invited: "violet",
+    inactive: "slate",
+  };
+  const icons = {
+    team: Users,
+    active: UserCheck,
+    invited: UserPlus,
+    inactive: UserX,
+  };
   const defs: StatDef[] = [
     {
       key: "total",
@@ -78,38 +92,45 @@ export function DirectoryStats({
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 @min-[420px]/workspace:grid-cols-2 @min-[1000px]/workspace:grid-cols-4">
       {defs.map((def) => {
         const value = stats ? def.getValue(stats) : null;
         const active = def.isActive(filters);
+        const Icon = icons[def.icon];
         return (
           <button
-            data-icon-motion
+            data-slot="stat-card"
+            style={rainbowStyle(tones[def.key])}
             key={def.key}
             type="button"
             disabled={!stats}
             onClick={() => onStatFilter(def.filter)}
             aria-pressed={active}
             className={cn(
-              "directory-stat group relative flex items-center gap-3 rounded-2xl border bg-card p-4 text-left disabled:pointer-events-none",
+              "spectrum-card group relative flex min-h-[92px] min-w-0 items-center gap-3 rounded-2xl border bg-primary-soft/25 p-3.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none",
               active
                 ? "border-primary ring-1 ring-primary"
-                : "border-border hover:border-border",
+                : "border-brand-blue-soft/40 hover:border-brand-blue-soft",
             )}
           >
-            <DirectoryIcon kind={def.icon} />
+            <span
+              aria-hidden="true"
+              className="spectrum-icon flex size-9 shrink-0 items-center justify-center rounded-full text-white"
+            >
+              <Icon className="size-4" />
+            </span>
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-xs font-semibold text-foreground">
+              <span className="text-[11px] leading-3.5 font-semibold uppercase tracking-[0.02em] text-muted-foreground">
                 {t(def.label)}
               </span>
               {stats ? (
-                <span className="text-3xl leading-tight font-bold tabular-nums text-foreground">
+                <span className="text-2xl leading-7 font-bold tabular-nums text-primary-soft-foreground">
                   {value}
                 </span>
               ) : (
                 <Skeleton className="h-5 w-10" />
               )}
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[11px] leading-3.5 text-muted-foreground">
                 {stats ? t(def.context) : "—"}
               </span>
             </span>

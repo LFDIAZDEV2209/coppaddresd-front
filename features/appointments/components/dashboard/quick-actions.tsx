@@ -28,7 +28,9 @@ export function QuickActions({ actions }: { actions: QuickAction[] }) {
               <Icon className="size-4 text-muted-foreground transition-colors group-hover:text-primary" />
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-px">
-              <span className="text-[13px] font-medium text-foreground">{action.label}</span>
+              <span className="text-[13px] font-medium text-foreground">
+                {action.label}
+              </span>
               {action.description && (
                 <span className="truncate text-[11px] text-muted-foreground">
                   {action.description}

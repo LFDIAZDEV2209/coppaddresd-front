@@ -60,7 +60,7 @@ export function ClubLivesTab({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         title={t("Transmisiones en vivo")}
         description={`${lives.length} ${t("lives")}`}

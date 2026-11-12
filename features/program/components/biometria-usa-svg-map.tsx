@@ -1,15 +1,23 @@
 "use client";
 
+import { chartGradient } from "@/lib/ui/rainbow";
+
+import { chartColor, MAP_NO_DATA } from "@/lib/ui/rainbow";
+
 import { useState, useRef, useCallback } from "react";
 import type { BiometriaCityPoint } from "../types/erp";
-import { USA_STATE_PATHS, USA_VIEWBOX, STATE_NAMES } from "@/lib/geo/usa-states-paths";
+import {
+  USA_STATE_PATHS,
+  USA_VIEWBOX,
+  STATE_NAMES,
+} from "@/lib/geo/usa-states-paths";
 
 // IMC color bands
 function getImcColor(avgImc: number | null): string {
-  if (avgImc == null) return "#e5e7eb";
-  if (avgImc < 25) return "#10B981";
-  if (avgImc < 30) return "#D4AF37";
-  return "#ef4444";
+  if (avgImc == null) return MAP_NO_DATA;
+  if (avgImc < 25) return chartColor("green");
+  if (avgImc < 30) return chartColor("amber");
+  return chartColor("rose");
 }
 
 interface StateAgg {
@@ -18,7 +26,9 @@ interface StateAgg {
   cities: BiometriaCityPoint[];
 }
 
-function aggregateByState(cities: BiometriaCityPoint[]): Record<string, StateAgg> {
+function aggregateByState(
+  cities: BiometriaCityPoint[],
+): Record<string, StateAgg> {
   const map: Record<string, StateAgg> = {};
   for (const c of cities) {
     if (!c.state_abbr) continue;
@@ -45,10 +55,17 @@ interface BiometriaUsaSvgMapProps {
   onStateSelect?: (stateAbbr: string | null, stateName?: string) => void;
 }
 
-export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: BiometriaUsaSvgMapProps) {
+export function BiometriaUsaSvgMap({
+  cities,
+  onCitySelect,
+  onStateSelect,
+}: BiometriaUsaSvgMapProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
   const svgRef = useRef<SVGSVGElement>(null);
 
   const stateData = aggregateByState(cities);
@@ -96,6 +113,7 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: Biom
   return (
     <div className="relative w-full rounded-xl">
       <svg
+        data-slot="chart-map"
         ref={svgRef}
         viewBox={USA_VIEWBOX}
         className="h-[320px] w-full rounded-xl"
@@ -105,7 +123,7 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: Biom
       >
         {Object.entries(USA_STATE_PATHS).map(([abbr, d]) => {
           const agg = stateData[abbr];
-          const fillColor = agg ? getImcColor(agg.avgImc) : "#e5e7eb";
+          const fillColor = agg ? getImcColor(agg.avgImc) : MAP_NO_DATA;
           const isHovered = hovered === abbr;
           const isSelected = selected === abbr;
 
@@ -114,12 +132,14 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: Biom
               key={abbr}
               d={d}
               fill={fillColor}
-              stroke="#fff"
+              stroke="var(--card)"
               strokeWidth={0.8}
               className="cursor-pointer transition-[fill] duration-200"
               style={{
                 filter: isHovered ? "brightness(0.92)" : undefined,
-                stroke: isSelected ? "#1e293b" : "#fff",
+                stroke: isSelected
+                  ? "var(--spectrum-sky-chart)"
+                  : "var(--card)",
                 strokeWidth: isSelected ? 1.5 : 0.8,
               }}
               onMouseEnter={() => setHovered(abbr)}
@@ -127,7 +147,8 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: Biom
               onClick={() => handlePathClick(abbr)}
             >
               <title>
-                {STATE_NAMES[abbr] ?? abbr} — IMC {agg?.avgImc?.toFixed(1) ?? "sin datos"}{" "}
+                {STATE_NAMES[abbr] ?? abbr} — IMC{" "}
+                {agg?.avgImc?.toFixed(1) ?? "sin datos"}{" "}
                 {agg ? `(${agg.totalCount} pacientes)` : ""}
               </title>
             </path>
@@ -144,14 +165,20 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: Biom
             top: tooltipPos.y - 10,
           }}
         >
-          <p className="font-semibold text-foreground">{STATE_NAMES[hovered] ?? hovered}</p>
+          <p className="font-semibold text-foreground">
+            {STATE_NAMES[hovered] ?? hovered}
+          </p>
           {hoveredData ? (
             <>
               <p className="text-muted-foreground">
-                IMC promedio: <span className="tabular-nums font-medium">{hoveredData.avgImc?.toFixed(1) ?? "—"}</span>
+                IMC promedio:{" "}
+                <span className="tabular-nums font-medium">
+                  {hoveredData.avgImc?.toFixed(1) ?? "—"}
+                </span>
               </p>
               <p className="text-muted-foreground">
-                {hoveredData.totalCount} paciente{hoveredData.totalCount !== 1 ? "s" : ""}
+                {hoveredData.totalCount} paciente
+                {hoveredData.totalCount !== 1 ? "s" : ""}
               </p>
             </>
           ) : (
@@ -162,14 +189,13 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: Biom
 
       {/* City popover when a state is selected */}
       {selected && selectedData && (
-        <div
-          className="absolute left-1/2 top-1/2 z-50 w-56 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-3 shadow-xl"
-        >
+        <div className="absolute left-1/2 top-1/2 z-50 w-56 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-3 shadow-xl">
           <p className="mb-2 text-sm font-semibold text-foreground">
             {STATE_NAMES[selected] ?? selected}
           </p>
           <p className="mb-2 text-[11px] text-muted-foreground">
-            IMC prom: {selectedData.avgImc?.toFixed(1) ?? "—"} · {selectedData.totalCount} pacientes
+            IMC prom: {selectedData.avgImc?.toFixed(1) ?? "—"} ·{" "}
+            {selectedData.totalCount} pacientes
           </p>
           <div className="flex flex-col gap-1">
             {selectedData.cities
@@ -182,7 +208,9 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: Biom
                   className="flex items-center justify-between rounded-md px-2 py-1 text-left text-xs hover:bg-muted transition-colors"
                 >
                   <span className="truncate">{c.name}</span>
-                  <span className="ml-2 shrink-0 tabular-nums text-muted-foreground">{c.count}</span>
+                  <span className="ml-2 shrink-0 tabular-nums text-muted-foreground">
+                    {c.count}
+                  </span>
                 </button>
               ))}
           </div>
@@ -211,28 +239,40 @@ export function BiometriaUsaSvgMap({ cities, onCitySelect, onStateSelect }: Biom
         <span className="flex items-center gap-1">
           <span
             className="inline-block size-2.5 rounded-full"
-            style={{ backgroundColor: "#10B981" }}
+            style={{
+              backgroundColor: chartColor("green"),
+              backgroundImage: chartGradient(chartColor("green")),
+            }}
           />
           &lt;25
         </span>
         <span className="flex items-center gap-1">
           <span
             className="inline-block size-2.5 rounded-full"
-            style={{ backgroundColor: "#D4AF37" }}
+            style={{
+              backgroundColor: chartColor("amber"),
+              backgroundImage: chartGradient(chartColor("amber")),
+            }}
           />
           25–29.9
         </span>
         <span className="flex items-center gap-1">
           <span
             className="inline-block size-2.5 rounded-full"
-            style={{ backgroundColor: "#ef4444" }}
+            style={{
+              backgroundColor: chartColor("rose"),
+              backgroundImage: chartGradient(chartColor("rose")),
+            }}
           />
           ≥30
         </span>
         <span className="flex items-center gap-1">
           <span
             className="inline-block size-2.5 rounded-full"
-            style={{ backgroundColor: "#e5e7eb" }}
+            style={{
+              backgroundColor: MAP_NO_DATA,
+              backgroundImage: chartGradient(MAP_NO_DATA),
+            }}
           />
           sin datos
         </span>

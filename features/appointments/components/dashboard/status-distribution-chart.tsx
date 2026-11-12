@@ -36,7 +36,7 @@ export function StatusDistributionChart({
   if (data.length === 0) {
     return (
       <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-border text-[12.5px] text-muted-foreground">
-        {t('Sin datos de citas')}
+        {t("Sin datos de citas")}
       </div>
     );
   }
@@ -44,12 +44,12 @@ export function StatusDistributionChart({
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="flex h-56 flex-col items-center justify-center gap-4">
-      <div className="relative h-40 w-40">
+    <div className="flex min-h-[266px] min-w-0 flex-1 flex-col gap-3">
+      <div className="relative min-h-[216px] min-w-0 flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Tooltip
-              formatter={(value) => [String(value), t('Citas')]}
+              formatter={(value) => [String(value), t("Citas")]}
               contentStyle={{
                 borderRadius: 12,
                 border: "1px solid var(--border)",
@@ -61,8 +61,8 @@ export function StatusDistributionChart({
               data={data}
               dataKey="value"
               nameKey="name"
-              innerRadius={52}
-              outerRadius={76}
+              innerRadius="64%"
+              outerRadius="94%"
               paddingAngle={2}
               strokeWidth={0}
             >
@@ -73,17 +73,20 @@ export function StatusDistributionChart({
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-bold tracking-tight text-foreground">
+          <span className="text-[28px] leading-8 font-bold tracking-tight text-foreground">
             {total}
           </span>
           <span className="text-[10.5px] uppercase tracking-wider text-muted-foreground">
-            {t('citas')}
+            {t("citas")}
           </span>
         </div>
       </div>
-      <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+      <ul className="flex shrink-0 flex-wrap justify-center gap-x-4 gap-y-1.5">
         {data.map((entry) => (
-          <li key={entry.name} className="flex items-center gap-1.5 text-[11.5px]">
+          <li
+            key={entry.name}
+            className="flex items-center gap-1.5 text-[11.5px]"
+          >
             <span
               className="size-2 rounded-full"
               style={{ backgroundColor: entry.color }}

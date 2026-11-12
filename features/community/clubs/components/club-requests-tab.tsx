@@ -58,7 +58,7 @@ export function ClubRequestsTab({ clubId }: { clubId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <SectionHeader
           title={t("Solicitudes de ingreso")}
           description={`${requests.length} ${t("pendientes")}`}

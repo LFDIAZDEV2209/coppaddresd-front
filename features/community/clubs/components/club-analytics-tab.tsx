@@ -79,7 +79,7 @@ export function ClubAnalyticsTab({ clubId }: { clubId: string }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("Publicaciones más exitosas")}
             description={t("Por reacciones y comentarios")}
@@ -126,7 +126,7 @@ export function ClubAnalyticsTab({ clubId }: { clubId: string }) {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("Participación por evento")}
             description={t("Asistentes confirmados")}

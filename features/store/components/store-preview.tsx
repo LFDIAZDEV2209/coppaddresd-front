@@ -43,7 +43,7 @@ export function StorePreviewPage() {
   const rest = items.filter((i) => !i.featured);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t('Previsualización del paciente')}
         description={t('Así verán los productos los pacientes en la app móvil Copp Adresd')}

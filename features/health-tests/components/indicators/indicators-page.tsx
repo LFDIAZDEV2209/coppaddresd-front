@@ -1,5 +1,7 @@
 "use client";
 
+import { colorTint } from "@/lib/ui/rainbow";
+
 import {
   Activity,
   ArrowUpRight,
@@ -78,7 +80,8 @@ export function IndicatorsPage() {
     aggregates.reduce((acc, a) => acc + a.average, 0) /
       Math.max(1, aggregates.length),
   );
-  const affected = new Set(aggregates.flatMap(a => a.affectedPatientIds)).size;
+  const affected = new Set(aggregates.flatMap((a) => a.affectedPatientIds))
+    .size;
   const evaluated = aggregates.reduce((acc, a) => acc + a.evaluationCount, 0);
   const improving = aggregates.filter(
     (a) =>
@@ -115,7 +118,7 @@ export function IndicatorsPage() {
         />
         <StatCard
           label={t("Categorías con menor prevalencia")}
-          value={`${improving}/${aggregates.filter(a => a.trend.length >= 2).length}`}
+          value={`${improving}/${aggregates.filter((a) => a.trend.length >= 2).length}`}
           icon={ArrowUpRight}
           variant="success"
           context={t("Comparación entre meses con evaluaciones")}
@@ -153,11 +156,11 @@ function IndicatorCard({ aggregate }: { aggregate: IndicatorAggregate }) {
     <article className="flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div
         className="flex items-center gap-3 px-4 py-3"
-        style={{ backgroundColor: `${accent}14` }}
+        style={{ backgroundColor: colorTint(accent, 7.843) }}
       >
         <span
           className="flex size-9 shrink-0 items-center justify-center rounded-xl text-base"
-          style={{ backgroundColor: `${accent}22` }}
+          style={{ backgroundColor: colorTint(accent, 13.333) }}
         >
           {indicator.icon}
         </span>
@@ -175,9 +178,7 @@ function IndicatorCard({ aggregate }: { aggregate: IndicatorAggregate }) {
         <ScoreBar
           value={average}
           label={t("Pacientes con riesgo alto/crítico (%)")}
-          color={scoreBarColor(
-            average === 0 ? "bajo" : "alto",
-          )}
+          color={scoreBarColor(average === 0 ? "bajo" : "alto")}
         />
 
         {riskRows.length > 0 ? (
@@ -187,7 +188,7 @@ function IndicatorCard({ aggregate }: { aggregate: IndicatorAggregate }) {
                 key={row.risk}
                 className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
                 style={{
-                  backgroundColor: `${riskHex(row.risk)}1A`,
+                  backgroundColor: colorTint(riskHex(row.risk), 10.196),
                   color: riskHex(row.risk),
                 }}
               >
@@ -223,7 +224,10 @@ function IndicatorCard({ aggregate }: { aggregate: IndicatorAggregate }) {
               }`}
             >
               <TrendingUp className="size-3.5" />
-              {trend[trend.length - 1].value - trend[trend.length - 2].value >= 0 ? "+" : ""}
+              {trend[trend.length - 1].value - trend[trend.length - 2].value >=
+              0
+                ? "+"
+                : ""}
               {trend[trend.length - 1].value - trend[trend.length - 2].value}
             </span>
           )}

@@ -50,7 +50,10 @@ import {
 } from "../services/program-erp-constants";
 import { ChartTabs, usePersistedTab } from "./chart-tabs";
 import { PagedListFooter } from "./paged-list-footer";
-import type { ProgramErpCofresDto, PaginatedErpCofresTabla } from "../types/erp";
+import type {
+  ProgramErpCofresDto,
+  PaginatedErpCofresTabla,
+} from "../types/erp";
 
 const MILESTONE_KEYS = [7, 11, 22, 50] as const;
 
@@ -85,13 +88,18 @@ export function ProgramCofresPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Cofres & XP"
         description="Hitos de racha, distribución de XP y progreso de pacientes"
         icon={Gift}
         actions={
-          <Button variant="outline" size="sm" onClick={retry} disabled={loading}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={retry}
+            disabled={loading}
+          >
             <RefreshCw
               data-icon="inline-start"
               className={loading ? "animate-spin" : undefined}
@@ -200,7 +208,7 @@ function CofresContent({
         <CofresHitosCard data={data} totalPatients={totalPatients} />
 
         {/* XP por categoría (standalone) */}
-        <div className="flex flex-col rounded-2xl border border-border bg-card p-5">
+        <div className="flex flex-col rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
           <SectionHeader
             title="XP por categoría"
             description="Total de experiencia por origen de XP"
@@ -248,12 +256,15 @@ function CofresContent({
                 <Bar
                   dataKey="total"
                   name="XP"
-                  radius={[6, 6, 0, 0]}
+                  radius={[8, 8, 0, 0]}
                   barSize={38}
                   maxBarSize={52}
                 >
                   {xp_por_categoria.map((entry) => (
-                    <Cell key={entry.category} fill={xpCategoryColor(entry.category)} />
+                    <Cell
+                      key={entry.category}
+                      fill={xpCategoryColor(entry.category)}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -319,7 +330,8 @@ function CofresTablaPaginada({
         <div>
           <h2 className="text-sm font-semibold">{tabla.total} pacientes</h2>
           <p className="text-xs text-muted-foreground">
-            Progreso individual de cofres y XP · Página {tabla.page} de {tabla.totalPages}
+            Progreso individual de cofres y XP · Página {tabla.page} de{" "}
+            {tabla.totalPages}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -388,7 +400,10 @@ function CofresTablaPaginada({
           <TableBody>
             {tabla.data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={9}
+                  className="py-10 text-center text-sm text-muted-foreground"
+                >
                   No hay datos de cofres disponibles.
                 </TableCell>
               </TableRow>
@@ -541,18 +556,24 @@ function CofresHitosCard({
               milestones[`streak_${days}` as keyof typeof milestones];
             const pct = totalPatients > 0 ? (count / totalPatients) * 100 : 0;
             return (
-              <div key={days} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
+              <div
+                key={days}
+                className="flex items-center gap-4 rounded-xl border border-border bg-card p-4"
+              >
                 <span className="w-20 text-sm font-semibold text-foreground">
                   {days}+ días
                 </span>
                 <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-primary transition-all"
+                    className="h-full rounded-full bg-[var(--spectrum-amber-chart)] transition-all"
                     style={{ width: `${Math.min(100, pct)}%` }}
                   />
                 </div>
                 <span className="w-16 text-right text-sm font-bold tabular-nums">
-                  {count} <span className="text-xs font-normal text-muted-foreground">({pct.toFixed(0)}%)</span>
+                  {count}{" "}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    ({pct.toFixed(0)}%)
+                  </span>
                 </span>
               </div>
             );

@@ -216,7 +216,7 @@ export function CatalogManagement() {
 
   return (
     <section
-      className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card"
+      className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
       aria-label={t("Gestión de catálogos profesionales")}
     >
       <SectionHeader

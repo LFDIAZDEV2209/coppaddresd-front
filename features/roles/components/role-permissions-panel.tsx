@@ -284,7 +284,7 @@ export function RolePermissionsPanel({
   const showSkeleton = loading || permissionsFor !== role.id;
 
   return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card shadow-sm">
+    <div className="flex flex-col rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
       <div className="overflow-hidden rounded-t-2xl">
         <SectionHeader
           title={`Permisos de ${role.name}`}

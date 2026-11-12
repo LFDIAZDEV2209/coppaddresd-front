@@ -1,5 +1,7 @@
 "use client";
 
+import {PageHeader} from "@/components/layout/page-header";
+import {Stethoscope} from "lucide-react";
 import { useState } from "react";
 import { NutritionProgramCycles } from "../components/nutrition-program-cycles";
 import { NutritionCycleDecisions } from "./nutrition-cycle-decisions";
@@ -19,8 +21,7 @@ export function NutritionCyclesPreview() {
   const t = useT();
   const [status, setStatus] = useState("");
   return <div className="nutrition-module nutrition-rework space-y-4">
-    <h1 className="text-xl font-semibold">{t("Exploración local de ciclos")}</h1>
-    <p className="text-sm text-muted-foreground">{t("Datos sintéticos · hoy fijo: 6 de noviembre de 2026 · sin conexión clínica")}</p>
+    <PageHeader title={t("Exploración local de ciclos")} description={t("Datos sintéticos · hoy fijo: 6 de noviembre de 2026 · sin conexión clínica")} icon={Stethoscope}/>
     <NutritionProgramCycles headers={headers} today="2026-11-06" selectedId="preview-c2" locked={false} onOpen={() => setStatus("Vista previa local. No se guardaron cambios.")} />
     {status && <p role="status">{t(status)}</p>}
     <NutritionCycleDecisions />

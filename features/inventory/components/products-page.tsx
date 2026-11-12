@@ -214,7 +214,7 @@ export function ProductsPage() {
   );
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Productos")}
         description={t("Catálogo y control de existencias del inventario")}
@@ -406,7 +406,7 @@ function ProductTable({
 }) {
   const t = useT();
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         title={t("{count} productos", { count: String(products.length) })}
         description={t("Existencias y alertas por producto")}

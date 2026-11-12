@@ -446,7 +446,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
 
   if (!employee) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="mx-auto max-w-5xl px-4 py-6 min-w-0">
         <PageHeader
           title={t("Profesional")}
           description={t("No se encontró el profesional.")}
@@ -464,7 +464,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
   }
 
   return (
-    <div className="stagger-children mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto max-w-5xl px-4 py-6 min-w-0">
       <PageHeader
         title={t("Profesional")}
         description={t("Equipo clínico del ERP")}
@@ -601,7 +601,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
         {/* Columna principal: asignaciones por clínica */}
         <div className="min-w-0 space-y-5 lg:col-span-2">
-          <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <section className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
             <SectionHeader
               title={
                 PROFESSIONAL_CLINICS_ENABLED
@@ -771,7 +771,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
 
         {/* Columna lateral: invitación + profesión */}
         <div className="min-w-0 space-y-5">
-          <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <section className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
             <SectionHeader
               title={t("Invitación y acceso")}
               description={t("Primer acceso del profesional al ERP")}
@@ -836,7 +836,7 @@ export function ProfessionalDetail({ id }: { id: string }) {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <section className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
             <SectionHeader
               title={t("Profesión")}
               description={t("Tipo de profesional y perfil clínico")}

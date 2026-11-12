@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { CatalogCombobox } from "@/features/patients/components/catalog-combobox";
 import { useT } from "@/providers/i18n-provider";
-import { fetchProfessionalsCatalog } from "../services/reference-service";
+import {
+  useProfessionalOptions,
+  type ProfessionalOptions,
+} from "../hooks/use-professional-options";
 
 export interface ProfessionalOption {
   id: string;
@@ -30,52 +32,37 @@ export function ProfessionalSelector({
   onChange,
   specialtyId,
   ariaLabel,
+  catalog,
+  open,
+  onOpenChange,
 }: {
   value: string;
   onChange: (professionalId: string) => void;
   specialtyId?: string | null;
   ariaLabel?: string;
+  catalog?: ProfessionalOptions;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const t = useT();
-  const [professionals, setProfessionals] = useState<ProfessionalOption[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    void fetchProfessionalsCatalog({ pageSize: 100, status: "Active" })
-      .then((result) => {
-        if (!active) return;
-        const filtered = specialtyId
-          ? result.data.filter((professional) =>
-              professional.specialties.some(
-                (specialty) => specialty.id === specialtyId,
-              ),
-            )
-          : result.data;
-        setProfessionals(filtered);
-      })
-      .catch(() => {
-        if (active) setProfessionals([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [specialtyId]);
+  const fallback = useProfessionalOptions(specialtyId, !catalog);
+  const { items: professionals, loading } = catalog ?? fallback;
 
   const selected = professionals.find((p) => p.id === value) ?? null;
   const disabled = loading || professionals.length === 0;
 
   return (
     <CatalogCombobox<ProfessionalOption>
+      open={open}
+      onOpenChange={onOpenChange}
       value={selected}
       onSelect={(item) => onChange(item?.id ?? "")}
       items={professionals}
       getLabel={professionalLabel}
-      placeholder={loading ? t('Cargando profesionales…') : t('Buscar profesional…')}
-      searchPlaceholder={t('Buscar por nombre…')}
+      placeholder={
+        loading ? t("Cargando profesionales…") : t("Buscar profesional…")
+      }
+      searchPlaceholder={t("Buscar por nombre…")}
       ariaLabel={ariaLabel ?? t("Profesional")}
       emptyText={
         specialtyId

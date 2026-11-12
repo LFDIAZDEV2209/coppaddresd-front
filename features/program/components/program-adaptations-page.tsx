@@ -126,7 +126,7 @@ export function ProgramAdaptationsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Adaptaciones"
         description="Recomendaciones de ajuste del programa que requieren decisión clínica"
@@ -186,7 +186,7 @@ export function ProgramAdaptationsPage() {
       ) : error ? (
         <AdaptationsErrorState message={error} onRetry={retry} />
       ) : result && result.data.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={`${result.total} ${result.total === 1 ? "recomendación" : "recomendaciones"}`}
             description="Vista de tabla"

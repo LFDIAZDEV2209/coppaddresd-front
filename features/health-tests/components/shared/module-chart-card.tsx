@@ -1,6 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
+import { rainbowStyle, type RainbowTone } from "@/lib/ui/rainbow";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/layout/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +18,7 @@ export function ChartCard({
   children,
   className,
   bodyClassName,
+  accent = "sky",
 }: {
   title: string;
   description?: string;
@@ -25,11 +27,14 @@ export function ChartCard({
   children: React.ReactNode;
   className?: string;
   bodyClassName?: string;
+  accent?: RainbowTone;
 }) {
   return (
     <section
+      data-slot="chart-card"
+      style={rainbowStyle(accent)}
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border border-border bg-card",
+        "spectrum-panel flex flex-col overflow-hidden rounded-2xl border border-border bg-card",
         className,
       )}
     >
@@ -38,6 +43,7 @@ export function ChartCard({
         description={description}
         icon={Icon}
         variant="primary"
+        accent={accent}
         actions={actions}
       />
       <div className={cn("p-5", bodyClassName)}>{children}</div>

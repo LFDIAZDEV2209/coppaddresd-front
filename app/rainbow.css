@@ -1,0 +1,120 @@
+/* Paleta compartida: series y superficies mantienen los mismos matices en todo el ERP. */
+:root {
+  --spectrum-sky-bright: #38bdf8;
+  --spectrum-sky-chart: #0284c7;
+  --spectrum-sky-deep: #0369a1;
+  --spectrum-sky-soft: #e0f2fe;
+  --spectrum-sky-fg: #075985;
+  --spectrum-sky-border: #7dd3fc;
+  --spectrum-teal-bright: #2dd4bf;
+  --spectrum-teal-chart: #0d9488;
+  --spectrum-teal-deep: #0f766e;
+  --spectrum-teal-soft: #ccfbf1;
+  --spectrum-teal-fg: #115e59;
+  --spectrum-teal-border: #5eead4;
+  --spectrum-violet-bright: #a78bfa;
+  --spectrum-violet-chart: #8b5cf6;
+  --spectrum-violet-deep: #6d28d9;
+  --spectrum-violet-soft: #ede9fe;
+  --spectrum-violet-fg: #5b21b6;
+  --spectrum-violet-border: #c4b5fd;
+  --spectrum-amber-bright: #fbbf24;
+  --spectrum-amber-chart: #d97706;
+  --spectrum-amber-deep: #b45309;
+  --spectrum-amber-soft: #fef3c7;
+  --spectrum-amber-fg: #78350f;
+  --spectrum-amber-border: #fcd34d;
+  --spectrum-pink-bright: #f472b6;
+  --spectrum-pink-chart: #db2777;
+  --spectrum-pink-deep: #be185d;
+  --spectrum-pink-soft: #fce7f3;
+  --spectrum-pink-fg: #9d174d;
+  --spectrum-pink-border: #f9a8d4;
+  --spectrum-green-bright: #4ade80;
+  --spectrum-green-chart: #16a34a;
+  --spectrum-green-deep: #15803d;
+  --spectrum-green-soft: #dcfce7;
+  --spectrum-green-fg: #166534;
+  --spectrum-green-border: #86efac;
+  --spectrum-slate-bright: #94a3b8;
+  --spectrum-slate-chart: #64748b;
+  --spectrum-slate-deep: #475569;
+  --spectrum-slate-soft: #f1f5f9;
+  --spectrum-slate-fg: #334155;
+  --spectrum-slate-border: #cbd5e1;
+  --spectrum-rose-bright: #fb7185;
+  --spectrum-rose-chart: #e11d48;
+  --spectrum-rose-deep: #be123c;
+  --spectrum-rose-soft: #ffe4e6;
+  --spectrum-rose-fg: #9f1239;
+  --spectrum-rose-border: #fda4af;
+  --spectrum-orange-bright: #fb923c;
+  --spectrum-orange-chart: #ea580c;
+  --spectrum-orange-deep: #c2410c;
+  --spectrum-orange-soft: #ffedd5;
+  --spectrum-orange-fg: #9a3412;
+  --spectrum-orange-border: #fdba74;
+}
+.dark {
+  --spectrum-sky-soft: #082f49;
+  --spectrum-sky-fg: #bae6fd;
+  --spectrum-sky-border: #075985;
+  --spectrum-teal-soft: #042f2e;
+  --spectrum-teal-fg: #99f6e4;
+  --spectrum-teal-border: #115e59;
+  --spectrum-violet-soft: #2e1065;
+  --spectrum-violet-fg: #ddd6fe;
+  --spectrum-violet-border: #6d28d9;
+  --spectrum-amber-soft: #451a03;
+  --spectrum-amber-fg: #fde68a;
+  --spectrum-amber-border: #92400e;
+  --spectrum-pink-soft: #500724;
+  --spectrum-pink-fg: #fbcfe8;
+  --spectrum-pink-border: #9d174d;
+  --spectrum-green-soft: #052e16;
+  --spectrum-green-fg: #bbf7d0;
+  --spectrum-green-border: #166534;
+  --spectrum-slate-soft: #172033;
+  --spectrum-slate-fg: #cbd5e1;
+  --spectrum-slate-border: #475569;
+  --spectrum-rose-soft: #4c0519;
+  --spectrum-rose-fg: #fecdd3;
+  --spectrum-rose-border: #9f1239;
+  --spectrum-orange-soft: #431407;
+  --spectrum-orange-fg: #fed7aa;
+  --spectrum-orange-border: #9a3412;
+}
+.spectrum-card {
+  background-color: color-mix(in srgb, var(--rainbow-soft) 65%, var(--card));
+  border-color: var(--rainbow-border);
+}
+.spectrum-icon {
+  color: #fff;
+  background-color: var(--rainbow-deep);
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--rainbow-deep) 90%, white),
+    var(--rainbow-deep)
+  );
+}
+.spectrum-tag {
+  color: var(--rainbow-fg);
+  background-color: var(--rainbow-soft);
+  border: 1px solid var(--rainbow-border);
+  box-shadow: none;
+}
+.spectrum-panel {
+  border-color: var(--rainbow-border);
+}
+
+.spectrum-card[aria-pressed="true"] {
+  border-color: var(--rainbow-deep);
+  box-shadow: inset 0 0 0 1px var(--rainbow-deep);
+}
+
+:root {
+  --spectrum-map-empty: #e2e8f0;
+}
+.dark {
+  --spectrum-map-empty: #334155;
+}

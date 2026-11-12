@@ -987,7 +987,7 @@ export function VirtualRoom() {
         <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center gap-6 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(20rem,0.85fr)] lg:gap-8">
-            <main className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+            <main className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
               <div className="border-b border-border bg-primary/[0.04] px-5 py-8 sm:px-10 sm:py-10">
                 <div className="flex items-start gap-4">
                   <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 ring-8 ring-primary/[0.04]">
@@ -1057,7 +1057,7 @@ export function VirtualRoom() {
             </main>
 
             <aside className="flex flex-col gap-5">
-              <section className="rounded-[1.75rem] border border-primary/20 bg-primary/[0.04] p-5 shadow-sm sm:p-6">
+              <section className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-5 shadow-sm sm:p-6">
                 <div className="flex items-start gap-3">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <ShieldCheck className="size-5" />
@@ -1133,7 +1133,7 @@ export function VirtualRoom() {
                 )}
               </section>
 
-              <section className="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm sm:p-6">
+              <section className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-sm sm:p-6">
                 <div className="flex items-start gap-3">
                   <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-primary">
                     <ClipboardCheck className="size-4" />

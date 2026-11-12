@@ -35,22 +35,14 @@ import {
   publishMediaItem,
   unpublishMediaItem,
 } from "../services/media-service";
-import {
-  requestUploadIntent,
-  uploadToPresignedUrl,
-} from "../services/upload-service";
 import { MediaToolbar } from "./media-toolbar";
 import { MediaCardGrid, MediaGridEmpty } from "./media-card-grid";
 import { MediaTable } from "./media-table";
-import { MediaFormDialog } from "./media-form-dialog";
-import {
-  MediaDetailDialog,
-  type MediaDetailAction,
-} from "./media-detail-dialog";
+import { type MediaDetailAction } from "./media-detail-dialog";
 import { MediaReferencesDialog } from "./media-references-dialog";
 import { MediaDeleteBlockedDialog } from "./media-delete-blocked-dialog";
 import { MediaCleanupAdminDialog } from "./media-cleanup-admin-dialog";
-import type { MediaItem, MediaInput } from "../types";
+import type { MediaItem } from "../types";
 
 /** Aviso efímero de la biblioteca (resultados de acciones semánticas). */
 interface MediaToast {
@@ -77,15 +69,11 @@ export function MediaPage() {
     setFilters,
     setPage,
     setPageSize,
-    save,
     remove,
     retry,
   } = useMedia();
 
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  /** Medio en edición: el modal ya solo abre para editar; crear → /media/new. */
-  const [editing, setEditing] = useState<MediaItem | undefined>();
-  const [details, setDetails] = useState<MediaItem | undefined>();
   const [deleting, setDeleting] = useState<MediaItem | undefined>();
   const [pageSize, setPageSizeLocal] = useState(10);
   /** Feedback tras crear en /media/new (query ?creado=1). */
@@ -127,67 +115,24 @@ export function MediaPage() {
     router.push("/media/new");
   };
   const openEdit = (media: MediaItem) => {
-    setEditing(media);
+    router.push(`/media/${media.id}/edit`);
   };
-  const submit = async (
-    input: MediaInput,
-    file?: File,
-    thumbnailFile?: File | null,
-    onProgress?: (percent: number) => void,
-  ) => {
-    let storageKey = input.storageKey;
-    let thumbnailKey = input.thumbnailKey ?? null;
-
-    if (file) {
-      onProgress?.(1);
-      const intent = await requestUploadIntent(
-        file.name,
-        input.contentType ?? "application/octet-stream",
-      );
-      onProgress?.(3);
-      await uploadToPresignedUrl(intent.presignedUrl, file, onProgress);
-      storageKey = intent.storageKey;
-    }
-
-    // Miniatura: si hay archivo nuevo se sube a storage y la metadata apunta
-    // a la clave nueva; si no, se conserva lo que trae el input (null si se
-    // quitó). El objeto viejo lo limpia el back al detectar el cambio de clave.
-    if (thumbnailFile) {
-      const thumbIntent = await requestUploadIntent(
-        thumbnailFile.name,
-        thumbnailFile.type,
-        "thumbnail",
-      );
-      await uploadToPresignedUrl(thumbIntent.presignedUrl, thumbnailFile);
-      thumbnailKey = thumbIntent.storageKey;
-    }
-
-    await save({ ...input, storageKey, thumbnailKey }, editing?.id);
-    setEditing(undefined);
-  };
-
   /**
    * Acción semántica confirmada (REQ-PCA-03): llama al endpoint dedicado,
-   * refleja el nuevo estado en la fila y en el detalle abierto, y avisa con
+   * refresca el estado de la biblioteca y avisa con
    * toast. Un 422 de validación técnica muestra el ProblemDetails del back.
    */
   const runSemanticAction = async (action: MediaDetailAction) => {
-    const target = pendingAction?.item ?? details;
+    const target = pendingAction?.item;
     if (!target) return;
     setPendingAction(null);
     try {
-      let updated: MediaItem;
       if (action === "publish") {
-        const res = await publishMediaItem(target.id);
-        updated = {
-          ...target,
-          status: res.status,
-          publishedAt: res.publishedAt,
-        };
+        await publishMediaItem(target.id);
       } else if (action === "unpublish") {
-        updated = await unpublishMediaItem(target.id);
+        await unpublishMediaItem(target.id);
       } else {
-        updated = await archiveMediaItem(target.id);
+        await archiveMediaItem(target.id);
       }
       toast(
         action === "publish"
@@ -197,8 +142,6 @@ export function MediaPage() {
             : t("Medio archivado: sale de las nuevas asignaciones."),
         "success",
       );
-      // Reflejar el nuevo estado en el detalle abierto y refrescar la lista.
-      setDetails((prev) => (prev?.id === updated.id ? updated : prev));
       retry();
     } catch (err) {
       toast(
@@ -241,7 +184,7 @@ export function MediaPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Contenido multimedia")}
         description={t(
@@ -325,7 +268,7 @@ export function MediaPage() {
       ) : error ? (
         <MediaErrorState message={error} onRetry={retry} />
       ) : result && result.data.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={
               result.total === 1
@@ -344,7 +287,7 @@ export function MediaPage() {
             <div className="p-4 sm:p-5">
               <MediaCardGrid
                 items={result.data}
-                onDetails={setDetails}
+                onDetails={(item) => router.push(`/media/${item.id}`)}
                 onEdit={openEdit}
                 onDelete={setDeleting}
               />
@@ -352,7 +295,7 @@ export function MediaPage() {
           ) : (
             <MediaTable
               items={result.data}
-              onDetails={setDetails}
+              onDetails={(item) => router.push(`/media/${item.id}`)}
               onEdit={openEdit}
               onDelete={setDeleting}
               onPublish={
@@ -422,25 +365,6 @@ export function MediaPage() {
         </div>
       )}
 
-      <MediaFormDialog
-        key={editing?.id ?? "edit"}
-        open={Boolean(editing)}
-        media={editing}
-        saving={actionLoading}
-        onOpenChange={(open) => !open && setEditing(undefined)}
-        onSubmit={submit}
-      />
-      <MediaDetailDialog
-        media={details}
-        onClose={() => setDetails(undefined)}
-        actionLoading={actionLoading}
-        onAction={(action) => {
-          if (!details) return;
-          setPendingAction({ action, item: details });
-        }}
-        onShowReferences={() => setReferencesFor(details)}
-      />
-
       {/* Confirmación de acción semántica (REQ-PCA-03) */}
       <AlertDialog
         open={Boolean(pendingAction)}
@@ -508,9 +432,9 @@ export function MediaPage() {
       <MediaDeleteBlockedDialog
         media={blockedFor}
         onClose={() => setBlockedFor(undefined)}
-        onArchived={(updated) => {
+        onArchived={() => {
           toast(t("Medio archivado: sale de las nuevas asignaciones."));
-          setDetails((prev) => (prev?.id === updated.id ? updated : prev));
+
           retry();
         }}
       />

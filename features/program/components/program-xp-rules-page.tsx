@@ -73,7 +73,7 @@ export function ProgramXpRulesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Reglas de XP"
         description="Configura las reglas de experiencia del programa de gamificación"
@@ -113,7 +113,7 @@ export function ProgramXpRulesPage() {
       ) : error ? (
         <XpRulesErrorState message={error} onRetry={retry} />
       ) : rules.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={`${rules.length} ${rules.length === 1 ? "regla" : "reglas"} configuradas`}
             description="Catálogo completo"

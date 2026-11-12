@@ -268,7 +268,7 @@ export function NotifyPage() {
 
   if (error && !data) {
     return (
-      <div className="flex flex-col gap-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
         <PageHeader
           title={t("Notificar a pacientes")}
           description={t("Envía el resultado de las alertas seleccionadas por comunidad o SMS.")}
@@ -285,7 +285,7 @@ export function NotifyPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Notificar a pacientes")}
         description={t("Envía el resultado de las alertas seleccionadas por comunidad o SMS.")}
@@ -404,7 +404,7 @@ export function NotifyPage() {
         </div>
 
         <div className="flex flex-col gap-5 xl:sticky xl:top-4 xl:col-span-4 xl:self-start">
-          <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
             <SectionHeader
               title={t("Canales")}
               description={t("Cómo se entrega la notificación")}
@@ -500,7 +500,7 @@ export function NotifyPage() {
             </div>
           </section>
 
-          <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
             <SectionHeader
               title={t("Alertas incluidas")}
               description={`${selectedAlerts.length} ${t("pacientes")}`}
@@ -547,7 +547,7 @@ export function NotifyPage() {
             </div>
           </section>
 
-          <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
             <SectionHeader
               title={t("Últimos envíos")}
               description={t("Actividad reciente")}
@@ -814,7 +814,7 @@ function StepCompose({
     (body.trim() === "" ? t("El mensaje aparecerá aquí mientras escribes.") : body);
 
   return (
-    <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
       <SectionHeader
         title={t("Mensaje")}
         description={t("Elige plantilla, idioma y ajusta el texto")}
@@ -965,7 +965,7 @@ function StepReview({
   const finalBody = results?.[0]?.renderedBody ?? previewItems?.[0]?.renderedBody ?? null;
 
   return (
-    <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
       <SectionHeader
         title={t("Envío")}
         description={t("Revisa y confirma el envío")}

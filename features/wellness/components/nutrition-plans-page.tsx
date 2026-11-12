@@ -125,7 +125,7 @@ export function NutritionPlansPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Planes de alimentación")}
         description={t("Gestiona los planes nutricionales para tus pacientes")}
@@ -229,7 +229,7 @@ export function NutritionPlansPage() {
       ) : error ? (
         <PlansErrorState message={error} onRetry={retry} />
       ) : result && result.data.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("{count} planes disponibles", { count: String(result.total) })}
             description={t("Vista de tabla")}

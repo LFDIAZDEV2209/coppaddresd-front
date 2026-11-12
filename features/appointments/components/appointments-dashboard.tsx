@@ -93,7 +93,7 @@ function StaffDashboard() {
   }>;
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t('Citas')}
         description={t('Módulos disponibles para tu rol')}

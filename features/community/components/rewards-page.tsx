@@ -59,7 +59,7 @@ export function RewardsPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Reconocimientos")}
         description={t("Gestión de XP, cofres y mensajes desde el ERP")}
@@ -69,7 +69,7 @@ export function RewardsPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
         {/* Individual recognitions */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Otorgar reconocimiento individual")}
             icon={Award}
@@ -138,7 +138,7 @@ export function RewardsPage() {
         </div>
 
         {/* Mass messages */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Mensajes masivos enviados")}
             icon={Send}
@@ -176,7 +176,7 @@ export function RewardsPage() {
       </div>
 
       {/* XP chart — más alto */}
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("XP entregados desde el ERP este mes")}
           icon={TrendingUp}

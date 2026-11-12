@@ -1,5 +1,14 @@
 "use client";
 
+import { chartGradient } from "@/lib/ui/rainbow";
+
+import {
+  VOLUME_MAP_SCALE,
+  MAP_NO_DATA,
+  volumeMapColor,
+  rainbowStyle,
+} from "@/lib/ui/rainbow";
+
 import { useMemo, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -12,17 +21,8 @@ import {
 } from "@/lib/geo/usa-states-paths";
 import type { AppointmentStateCountDto } from "../../types";
 
-const SCALE = ["#e8f1fa", "#bcd9f2", "#7fb5e6", "#3f81c2", "#123b63"];
-
-function colorFor(count: number, max: number): string {
-  if (max <= 0) return SCALE[0];
-  const ratio = count / max;
-  if (ratio <= 0.15) return SCALE[0];
-  if (ratio <= 0.4) return SCALE[1];
-  if (ratio <= 0.7) return SCALE[2];
-  if (ratio < 1) return SCALE[3];
-  return SCALE[4];
-}
+const SCALE = VOLUME_MAP_SCALE;
+const colorFor = volumeMapColor;
 
 /**
  * Mapa coroplético display-only de citas por estado de EE. UU. (paleta de
@@ -71,12 +71,16 @@ export function AppointmentsGeoMap({
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section
+        style={rainbowStyle("teal")}
+        className="spectrum-panel flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
+      >
         <SectionHeader
           title={t("Mapa de calor — Citas")}
           description={t("Citas por estado del paciente en el rango")}
           icon={MapPin}
           variant="primary"
+          accent="teal"
           actions={
             <ToggleGroup
               value={[mode]}
@@ -103,6 +107,7 @@ export function AppointmentsGeoMap({
         />
         <div ref={containerRef} className="relative p-4">
           <svg
+            data-slot="chart-map"
             viewBox={USA_VIEWBOX}
             role="img"
             aria-label={t("Mapa de citas por estado de EE. UU.")}
@@ -146,8 +151,8 @@ export function AppointmentsGeoMap({
                 >
                   <path
                     d={d}
-                    fill={state ? colorFor(state.count, max) : "#e5e7eb"}
-                    stroke="#ffffff"
+                    fill={state ? colorFor(state.count, max) : MAP_NO_DATA}
+                    stroke="var(--card)"
                     strokeWidth={0.8}
                     style={{
                       filter: isHovered ? "brightness(0.93)" : undefined,
@@ -193,7 +198,10 @@ export function AppointmentsGeoMap({
                 <span
                   key={color}
                   className="size-3.5 border border-white/70"
-                  style={{ backgroundColor: color }}
+                  style={{
+                    backgroundColor: color,
+                    backgroundImage: chartGradient(color),
+                  }}
                   aria-hidden
                 />
               ))}
@@ -203,12 +211,16 @@ export function AppointmentsGeoMap({
         </div>
       </section>
 
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section
+        style={rainbowStyle("teal")}
+        className="spectrum-panel flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
+      >
         <SectionHeader
           title={t("Top estados")}
           description={t("Por volumen de citas")}
           icon={MapPin}
           variant="primary"
+          accent="teal"
         />
         <div className="flex flex-col gap-1 p-4">
           {top.length === 0 ? (

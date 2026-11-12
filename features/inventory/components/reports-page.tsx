@@ -1,5 +1,9 @@
 "use client";
 
+import { chartGradient } from "@/lib/ui/rainbow";
+
+import { RAINBOW_SERIES } from "@/lib/ui/rainbow";
+
 import { useEffect, useState } from "react";
 import {
   ArrowDownToLine,
@@ -33,13 +37,7 @@ import { useT } from "@/providers/i18n-provider";
 import { fetchAnalytics } from "../services/inventory-service";
 import type { InventoryAnalytics, ProductListItem } from "../types";
 
-const CHART_COLORS = [
-  "bg-primary",
-  "bg-info",
-  "bg-warning",
-  "bg-success",
-  "bg-destructive",
-];
+const CHART_COLORS = RAINBOW_SERIES;
 
 export function ReportsPage() {
   const t = useT();
@@ -97,8 +95,12 @@ export function ReportsPage() {
       }
       setSuccess(
         format === "Excel"
-          ? t("{reportType} descargado en formato CSV.", { reportType: t(reportType) })
-          : t("{reportType} listo para guardar como PDF.", { reportType: t(reportType) }),
+          ? t("{reportType} descargado en formato CSV.", {
+              reportType: t(reportType),
+            })
+          : t("{reportType} listo para guardar como PDF.", {
+              reportType: t(reportType),
+            }),
       );
     } catch {
       setError(t("No pudimos generar el reporte. Intenta nuevamente."));
@@ -108,23 +110,31 @@ export function ReportsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Reportes")}
-        description={t("Convierte el inventario en decisiones de reposición y control")}
+        description={t(
+          "Convierte el inventario en decisiones de reposición y control",
+        )}
         icon={FileBarChart}
         actions={
-          <Button size="sm" onClick={() => void exportReport()} disabled={exporting}>
+          <Button
+            size="sm"
+            onClick={() => void exportReport()}
+            disabled={exporting}
+          >
             <Download data-icon="inline-start" />
             {exporting ? t("Generando...") : t("Exportar reporte")}
           </Button>
         }
       />
 
-      <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+      <section className="flex flex-col gap-4 rounded-2xl border border-brand-blue-soft/40 bg-card p-4 sm:p-5 shadow-xs">
         <SectionHeader
           title={t("Periodo del reporte")}
-          description={t("Filtra los datos para descargar un reporte operativo")}
+          description={t(
+            "Filtra los datos para descargar un reporte operativo",
+          )}
           icon={CalendarDays}
           variant="secondary"
         />
@@ -140,7 +150,9 @@ export function ReportsPage() {
             <option value="Últimos 30 días">{t("Últimos 30 días")}</option>
             <option value="Este mes">{t("Este mes")}</option>
             <option value="Mes anterior">{t("Mes anterior")}</option>
-            <option value="Rango personalizado">{t("Rango personalizado")}</option>
+            <option value="Rango personalizado">
+              {t("Rango personalizado")}
+            </option>
           </select>
           <input
             type="date"
@@ -172,10 +184,18 @@ export function ReportsPage() {
             onChange={(event) => setReportType(event.target.value)}
             aria-label={t("Tipo de reporte")}
           >
-            <option value="Reporte de movimientos">{t("Reporte de movimientos")}</option>
-            <option value="Existencias actuales">{t("Existencias actuales")}</option>
-            <option value="Productos por vencer">{t("Productos por vencer")}</option>
-            <option value="Valorización de inventario">{t("Valorización de inventario")}</option>
+            <option value="Reporte de movimientos">
+              {t("Reporte de movimientos")}
+            </option>
+            <option value="Existencias actuales">
+              {t("Existencias actuales")}
+            </option>
+            <option value="Productos por vencer">
+              {t("Productos por vencer")}
+            </option>
+            <option value="Valorización de inventario">
+              {t("Valorización de inventario")}
+            </option>
           </select>
           <div className="flex gap-2">
             <Button
@@ -231,7 +251,8 @@ export function ReportsPage() {
               value={String(analytics.unitsEntered)}
               context={t("{count} {operation} de entrada", {
                 count: String(analytics.entries),
-                operation: analytics.entries === 1 ? t("operación") : t("operaciones"),
+                operation:
+                  analytics.entries === 1 ? t("operación") : t("operaciones"),
               })}
               icon={ArrowDownToLine}
               variant="success"
@@ -241,7 +262,8 @@ export function ReportsPage() {
               value={String(analytics.unitsExited)}
               context={t("{count} {operation} de salida", {
                 count: String(analytics.exits),
-                operation: analytics.exits === 1 ? t("operación") : t("operaciones"),
+                operation:
+                  analytics.exits === 1 ? t("operación") : t("operaciones"),
               })}
               icon={ArrowUpFromLine}
               variant="destructive"
@@ -299,7 +321,7 @@ function MovimientosReport({ analytics }: { analytics: InventoryAnalytics }) {
 
   return (
     <div className="grid gap-5">
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <SectionHeader
           title={t("Entradas vs. salidas")}
           description={t("Unidades movidas por fecha de operación")}
@@ -314,13 +336,21 @@ function MovimientosReport({ analytics }: { analytics: InventoryAnalytics }) {
             >
               <div className="flex h-full w-full items-end justify-center gap-1">
                 <div
-                  className="w-3 rounded-t bg-primary/80"
-                  style={{ height: `${(day.entries / maxValue) * 100}%` }}
+                  className="w-3 rounded-t bg-[var(--spectrum-sky-chart)]"
+                  style={{
+                    height: `${(day.entries / maxValue) * 100}%`,
+                    backgroundImage: chartGradient("var(--spectrum-sky-chart)"),
+                  }}
                   title={`${t("Entradas")}: ${day.entries}`}
                 />
                 <div
-                  className="w-3 rounded-t bg-destructive/70"
-                  style={{ height: `${(day.exits / maxValue) * 100}%` }}
+                  className="w-3 rounded-t bg-[var(--spectrum-rose-chart)]"
+                  style={{
+                    height: `${(day.exits / maxValue) * 100}%`,
+                    backgroundImage: chartGradient(
+                      "var(--spectrum-rose-chart)",
+                    ),
+                  }}
                   title={`${t("Salidas")}: ${day.exits}`}
                 />
               </div>
@@ -332,11 +362,11 @@ function MovimientosReport({ analytics }: { analytics: InventoryAnalytics }) {
         </div>
         <div className="flex gap-4 px-5 py-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <i className="size-2 rounded-full bg-primary" />
+            <i className="size-2 rounded-full bg-[var(--spectrum-sky-chart)]" />
             {t("Entradas")}
           </span>
           <span className="flex items-center gap-1.5">
-            <i className="size-2 rounded-full bg-destructive" />
+            <i className="size-2 rounded-full bg-[var(--spectrum-rose-chart)]" />
             {t("Salidas")}
           </span>
         </div>
@@ -364,7 +394,7 @@ function ExistenciasReport({ analytics }: { analytics: InventoryAnalytics }) {
     .sort((a, b) => b.stock * b.unitCost - a.stock * a.unitCost);
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         title={t("Existencias actuales")}
         description={t("Inventario disponible en almacén al día de hoy")}
@@ -377,7 +407,9 @@ function ExistenciasReport({ analytics }: { analytics: InventoryAnalytics }) {
             <TableRow>
               <TableHead>{t("Producto")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("SKU")}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t("Ubicación")}</TableHead>
+              <TableHead className="hidden lg:table-cell">
+                {t("Ubicación")}
+              </TableHead>
               <TableHead>{t("Stock")}</TableHead>
               <TableHead>{t("Valor")}</TableHead>
             </TableRow>
@@ -422,10 +454,12 @@ function VencimientoReport({ analytics }: { analytics: InventoryAnalytics }) {
       state: expirationState(product.expirationDate),
     }))
     .filter((product) => product.state !== null)
-    .sort((a, b) => (a.expirationDate ?? "").localeCompare(b.expirationDate ?? ""));
+    .sort((a, b) =>
+      (a.expirationDate ?? "").localeCompare(b.expirationDate ?? ""),
+    );
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         title={t("Productos por vencer")}
         description={t("Vencidos y próximos a vencer (90 días)")}
@@ -437,7 +471,9 @@ function VencimientoReport({ analytics }: { analytics: InventoryAnalytics }) {
           <TableHeader>
             <TableRow>
               <TableHead>{t("Producto")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("Lote")}</TableHead>
+              <TableHead className="hidden md:table-cell">
+                {t("Lote")}
+              </TableHead>
               <TableHead>{t("Vencimiento")}</TableHead>
               <TableHead>{t("Stock")}</TableHead>
               <TableHead>{t("Estado")}</TableHead>
@@ -492,13 +528,17 @@ function ValorizacionReport({ analytics }: { analytics: InventoryAnalytics }) {
         <span className="text-xs text-muted-foreground">
           {t("Valor total del inventario")}
         </span>
-        <p className="text-3xl font-bold">{formatCurrency(analytics.totalValue)}</p>
+        <p className="text-3xl font-bold">
+          {formatCurrency(analytics.totalValue)}
+        </p>
         <span className="text-xs text-muted-foreground">
-          {analytics.activeProducts} {t("productos activos")} · {analytics.lowStock} {t("con stock bajo")} · {analytics.outOfStock} {t("sin stock")}
+          {analytics.activeProducts} {t("productos activos")} ·{" "}
+          {analytics.lowStock} {t("con stock bajo")} · {analytics.outOfStock}{" "}
+          {t("sin stock")}
         </span>
       </div>
 
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <SectionHeader
           title={t("Valor por categoría")}
           description={t("Distribución del inventario actual")}
@@ -516,8 +556,15 @@ function ValorizacionReport({ analytics }: { analytics: InventoryAnalytics }) {
               </div>
               <div className="h-2 rounded-full bg-muted">
                 <div
-                  className={`h-2 rounded-full ${CHART_COLORS[index % CHART_COLORS.length]}`}
-                  style={{ width: `${(item.value / maxValue) * 100}%` }}
+                  className="h-2 rounded-full"
+                  style={{
+                    width: `${(item.value / maxValue) * 100}%`,
+                    backgroundColor: CHART_COLORS[index % CHART_COLORS.length],
+                    backgroundImage: chartGradient(
+                      CHART_COLORS[index % CHART_COLORS.length],
+                      "horizontal",
+                    ),
+                  }}
                 />
               </div>
             </div>
@@ -531,16 +578,24 @@ function ValorizacionReport({ analytics }: { analytics: InventoryAnalytics }) {
 function EstadoActual({ analytics }: { analytics: InventoryAnalytics }) {
   const t = useT();
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <section className="flex flex-col gap-4 rounded-2xl border border-brand-blue-soft/40 bg-card p-4 sm:p-5 shadow-xs">
       <SectionHeader
         title={t("Estado actual del inventario")}
-        description={t("Snapshot del catálogo, independiente del periodo seleccionado")}
+        description={t(
+          "Snapshot del catálogo, independiente del periodo seleccionado",
+        )}
         icon={Package}
         variant="secondary"
       />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MiniStat label={t("Valor total")} value={formatCurrency(analytics.totalValue)} />
-        <MiniStat label={t("Productos activos")} value={String(analytics.activeProducts)} />
+        <MiniStat
+          label={t("Valor total")}
+          value={formatCurrency(analytics.totalValue)}
+        />
+        <MiniStat
+          label={t("Productos activos")}
+          value={String(analytics.activeProducts)}
+        />
         <MiniStat label={t("Stock bajo")} value={String(analytics.lowStock)} />
         <MiniStat label={t("Sin stock")} value={String(analytics.outOfStock)} />
       </div>
@@ -572,7 +627,7 @@ function ReportList({
 }) {
   const t = useT();
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         title={title}
         description={description}
@@ -598,7 +653,9 @@ function ReportList({
                 </span>
               )}
               <span className="flex-1 font-medium">{item.name}</span>
-              <span className="text-xs text-muted-foreground">{item.detail}</span>
+              <span className="text-xs text-muted-foreground">
+                {item.detail}
+              </span>
             </div>
           ))
         ) : (
@@ -620,7 +677,9 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-function expirationState(expirationDate: string | null): "Vencido" | "Próximo a vencer" | null {
+function expirationState(
+  expirationDate: string | null,
+): "Vencido" | "Próximo a vencer" | null {
   if (!expirationDate) return null;
   const date = new Date(`${expirationDate}T00:00:00`);
   const today = new Date();
@@ -686,7 +745,11 @@ function rangeForPreset(preset: string): { from: string; to: string } | null {
       const now = new Date();
       const firstOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastOfPrevMonth = new Date(firstOfThisMonth.getTime() - 1);
-      const firstOfPrevMonth = new Date(lastOfPrevMonth.getFullYear(), lastOfPrevMonth.getMonth(), 1);
+      const firstOfPrevMonth = new Date(
+        lastOfPrevMonth.getFullYear(),
+        lastOfPrevMonth.getMonth(),
+        1,
+      );
       return {
         from: toDateString(firstOfPrevMonth),
         to: toDateString(lastOfPrevMonth),
@@ -726,7 +789,15 @@ function downloadCsv(
       String(day.exits),
     ]),
     [],
-    [t("SKU"), t("Producto"), t("Categoría"), t("Stock"), t("Ubicación"), t("Valor"), t("Vencimiento")],
+    [
+      t("SKU"),
+      t("Producto"),
+      t("Categoría"),
+      t("Stock"),
+      t("Ubicación"),
+      t("Valor"),
+      t("Vencimiento"),
+    ],
     ...analytics.products.map((product: ProductListItem) => [
       product.sku,
       product.name,
@@ -755,7 +826,8 @@ function printReport(
   to: string,
 ) {
   const printWindow = window.open("", "_blank", "width=900,height=700");
-  if (!printWindow) throw new Error("No se pudo abrir la ventana de impresión.");
+  if (!printWindow)
+    throw new Error("No se pudo abrir la ventana de impresión.");
 
   const productRows = analytics.products
     .map(
@@ -793,9 +865,11 @@ function csvCell(value: string): string {
 }
 
 function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-      character
-    ] ?? character,
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        character
+      ] ?? character,
   );
 }

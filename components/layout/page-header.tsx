@@ -7,19 +7,12 @@ interface PageHeaderProps {
   icon: LucideIcon;
   leadingVisual?: React.ReactNode;
   actions?: React.ReactNode;
-  /**
-   * Tono del fondo: "brand" (default) usa el token ÚNICO --brand-gradient
-   * (ajustable en app/globals.css → todas las cabeceras cambian juntas).
-   * "primary" se reserva como acento con el azul primario.
-   */
   tone?: "brand" | "primary";
+  /** Se conserva para compatibilidad; ambas composiciones comparten el lenguaje aprobado. */
+  layout?: "attached" | "workspace";
   className?: string;
 }
 
-/**
- * Cabecera de página. El fondo SIEMPRE sale del token --brand-gradient
- * (globals.css): un solo lugar para ajustar el degradado de la plataforma.
- */
 export function PageHeader({
   title,
   description,
@@ -27,32 +20,37 @@ export function PageHeader({
   leadingVisual,
   actions,
   tone = "brand",
+  layout = "workspace",
   className,
 }: PageHeaderProps) {
   return (
     <div
+      data-slot="page-header"
+      data-layout={layout}
       className={cn(
-        "flex items-center gap-4 rounded-t-xl rounded-b-none px-6 py-4 shadow-sm",
+        "flex min-w-0 flex-wrap items-center gap-4 rounded-2xl px-5 py-4 text-white shadow-sm",
         tone === "primary" ? "bg-primary" : "bg-brand-gradient",
         className,
       )}
     >
       {leadingVisual ?? (
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--sidebar)] shadow-sm">
+        <span
+          aria-hidden="true"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10"
+        >
           <Icon className="size-5" />
-        </div>
+        </span>
       )}
-
-      <div className="flex flex-1 flex-col gap-0.5 overflow-hidden min-w-0">
-        <h1 className="text-lg font-bold text-white tracking-tight truncate">
+      <div className="flex min-w-0 basis-40 flex-1 flex-col gap-1">
+        <h1 className="font-heading text-2xl leading-tight font-bold tracking-tight [overflow-wrap:anywhere]">
           {title}
         </h1>
-        {/* Copy fijo: wrap en vez de truncate (F4). */}
-        <p className="text-[12px] text-white/80 line-clamp-2">{description}</p>
+        <p className="text-sm leading-5 text-white/85">{description}</p>
       </div>
-
       {actions && (
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+        <div className="flex min-w-0 w-full flex-wrap items-center gap-2 @min-[640px]/workspace:w-auto [&>div]:flex-wrap">
+          {actions}
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { rainbowStyle, type RainbowTone } from "@/lib/ui/rainbow";
 import { useT } from "@/providers/i18n-provider";
 import { createElement, useMemo, useState } from "react";
 import Link from "next/link";
@@ -202,7 +203,7 @@ export function AlertsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Alertas")}
         description={
@@ -552,166 +553,128 @@ function AlertCard({
   onRead: () => void;
 }) {
   const t = useT();
-  const severity = severityMeta[alert.severity];
   const type = alertTypeMeta[alert.type] ?? alertTypeMeta.System;
   const unreadAlert = alert.readAt === null;
-  const criticalUnread = unreadAlert && alert.severity === "Critical";
-
+  const tone: RainbowTone =
+    alert.severity === "Critical"
+      ? "rose"
+      : alert.severity === "Warning"
+        ? "amber"
+        : "sky";
+  const panelId = `alert-detail-${alert.id}`;
   return (
     <li
-      className={cn(
-        "group relative overflow-hidden rounded-2xl border bg-card p-4 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2",
-        unreadAlert
-          ? "border-border/80 shadow-sm hover:-translate-y-0.5 hover:shadow-md"
-          : "border-border/60 hover:shadow-sm",
-        unreadAlert && severity.softBg,
-      )}
-      style={{
-        borderLeft: `4px solid ${severity.accent}`,
-        animationDelay: `${Math.min(index, 10) * 45}ms`,
-      }}
+      data-slot="appointment-alert-card"
+      data-unread={unreadAlert}
+      className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/25 sm:p-5"
+      style={{ animationDelay: `${Math.min(index, 10) * 30}ms` }}
     >
-      <div className="flex items-start gap-3">
-        <div
-          aria-hidden
-          className={cn(
-            "relative flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105",
-            severity.iconBg,
-            severity.iconColor,
-          )}
+      <div className="flex items-start gap-3 sm:gap-4">
+        <span
+          aria-hidden="true"
+          style={rainbowStyle(tone)}
+          className="spectrum-tag flex size-10 shrink-0 items-center justify-center rounded-xl"
         >
-          {createElement(type.icon, {
-            className: "size-5",
-            "aria-hidden": true,
-          })}
-          {criticalUnread && (
-            <span className="absolute -right-1 -top-1 flex size-2.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-destructive opacity-75" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-destructive" />
-            </span>
-          )}
-        </div>
-
-        <button
-          type="button"
-          onClick={onToggle}
-          className="flex min-w-0 flex-1 flex-col gap-1 text-left"
-          aria-expanded={expanded}
-          aria-label={
-            unreadAlert
-              ? t("Alerta sin leer: {title}", { title: alert.title })
-              : t("Alerta: {title}", { title: alert.title })
-          }
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[13.5px] font-semibold text-foreground">
-              {alert.title}
-            </span>
-            {unreadAlert && (
-              <Badge className="bg-[var(--sidebar)] text-white">{t("Nueva")}</Badge>
-            )}
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
-              style={{
-                backgroundColor: `${severity.accent}1A`,
-                color: severity.textColor,
-              }}
+          {createElement(type.icon, { className: "size-4.5" })}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-expanded={expanded}
+              aria-controls={expanded ? panelId : undefined}
+              aria-label={
+                unreadAlert
+                  ? t("Alerta sin leer: {title}", { title: alert.title })
+                  : t("Alerta: {title}", { title: alert.title })
+              }
+              className="flex min-w-0 items-start gap-2 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {t(severity.label)}
-            </span>
+              <span
+                className={cn(
+                  "text-sm leading-5 text-foreground [overflow-wrap:anywhere]",
+                  unreadAlert ? "font-semibold" : "font-medium",
+                )}
+              >
+                {alert.title}
+              </span>
+              {unreadAlert && (
+                <span
+                  role="img"
+                  aria-label={t("Sin leer")}
+                  className="mt-1.5 size-1.5 shrink-0 rounded-full bg-sky-500"
+                />
+              )}
+              <ChevronDown
+                aria-hidden="true"
+                className={cn(
+                  "mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform",
+                  expanded && "rotate-180",
+                )}
+              />
+            </button>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {unreadAlert && (
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={onRead}
+                  aria-label={t("Marcar como leída: {title}", {
+                    title: alert.title,
+                  })}
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  <CheckCheck aria-hidden="true" className="size-4" />
+                </Button>
+              )}
+            </div>
           </div>
-
           <p
             className={cn(
-              "text-[12.5px] leading-snug text-muted-foreground",
+              "mt-1.5 text-[13px] leading-5 text-muted-foreground [overflow-wrap:anywhere]",
               !expanded && "line-clamp-2",
             )}
           >
             {alert.body ?? t("Sin detalle adicional.")}
           </p>
-
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground/70">
-            <span className="inline-flex items-center gap-1">
-              {createElement(type.icon, {
-                className: "size-3",
-                "aria-hidden": true,
-              })}
-              {t(type.label)}
-            </span>
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
             <span
-              className="inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1.5"
               title={formatDateTime(alert.createdAt)}
             >
-              <Clock className="size-3" aria-hidden />
+              <Clock aria-hidden="true" className="size-3" />
               {timeAgo(alert.createdAt)}
             </span>
-          </div>
-
-          {/* Detalle expandible */}
-          <div
-            className={cn(
-              "grid transition-[grid-template-rows] duration-200 ease-out",
-              expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+            {alert.severity !== "Info" && (
+              <Badge tone={tone} className="h-5 px-2 text-[10px]">
+                {t(severityMeta[alert.severity].label)}
+              </Badge>
             )}
-          >
-            <div className="overflow-hidden">
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border/60 pt-2.5 text-[11.5px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <CalendarCheck
-                    className="size-3.5 text-[var(--sidebar)]"
-                    aria-hidden
-                  />
-                  {formatDateTime(alert.createdAt)}
-                </span>
-                {alert.relatedAppointmentId && (
-                  <Link
-                    href={`/appointments/citas/${alert.relatedAppointmentId}`}
-                    className="inline-flex items-center gap-1 font-medium text-[var(--sidebar)] underline-offset-2 hover:underline"
-                    aria-label={t("Abrir cita relacionada")}
-                  >
-                    <Eye className="size-3.5" aria-hidden />
-                    {t("Ver cita relacionada")}
-                  </Link>
-                )}
-              </div>
-            </div>
           </div>
-        </button>
-
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          {unreadAlert && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="gap-1.5 text-muted-foreground hover:text-[var(--sidebar)]"
-              onClick={onRead}
-              aria-label={t("Marcar como leída: {title}", {
-                title: alert.title,
-              })}
-            >
-              <CheckCheck className="size-3.5" aria-hidden />
-              {t("Leída")}
-            </Button>
-          )}
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            onClick={onToggle}
-            aria-label={
-              expanded ? t("Contraer detalle") : t("Expandir detalle")
-            }
-            className="text-muted-foreground hover:text-[var(--sidebar)]"
-          >
-            <ChevronDown
-              className={cn(
-                "size-4 transition-transform duration-200",
-                expanded && "rotate-180",
-              )}
-              aria-hidden
-            />
-          </Button>
         </div>
       </div>
+      {expanded && (
+        <div
+          id={panelId}
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted-foreground"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarCheck className="size-3.5" aria-hidden="true" />
+            {formatDateTime(alert.createdAt)}
+          </span>
+          {alert.relatedAppointmentId && (
+            <Link
+              href={`/appointments/citas/${alert.relatedAppointmentId}`}
+              className="inline-flex items-center gap-1.5 rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+              aria-label={t("Abrir cita relacionada")}
+            >
+              <Eye aria-hidden="true" className="size-3.5" />
+              {t("Ver cita relacionada")}
+            </Link>
+          )}
+        </div>
+      )}
     </li>
   );
 }

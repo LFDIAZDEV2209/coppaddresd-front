@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppContext } from "@/providers/context-provider";
 import { useT } from "@/providers/i18n-provider";
 import { useClinicalBoardSummary } from "../hooks/use-clinical-board-summary";
@@ -114,26 +114,28 @@ export function PatientsPage() {
   }
 
   return (
-    <div className="flex animate-fade-in flex-col gap-6 p-4 sm:p-6">
+    <div className="flex min-w-0 flex-col gap-5 p-4 sm:p-6">
       <PageHeader
         title={fullScope ? t("Pacientes") : t("Mis pacientes")}
         description={t(
           "Gestión completa · seguimiento clínico · mapa geográfico EE. UU.",
         )}
         icon={UserRound}
+        layout="workspace"
         actions={
           canCreate ? (
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <Button
                 variant="outline"
-                size="sm"
+                size="comfortable"
                 onClick={() => router.push("/people/importar?from=/patients")}
               >
                 <FileUp data-icon="inline-start" />
                 {t("Importar CSV")}
               </Button>
               <Button
-                size="sm"
+                variant="default"
+                size="comfortable"
                 onClick={() => router.push("/people/new?context=patient")}
               >
                 <Plus data-icon="inline-start" />
@@ -161,42 +163,33 @@ export function PatientsPage() {
         </div>
       )}
 
-      <nav
-        role="tablist"
-        aria-label={t("Secciones de pacientes")}
-        className="no-scrollbar flex gap-1 overflow-x-auto border-b border-border"
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as PatientTab)}
+        className="min-w-0 gap-5"
       >
-        {PATIENT_TABS.map((item) => {
-          const Icon = item.icon;
-          const active = tab === item.value;
-          return (
-            <button
-              key={item.value}
-              role="tab"
-              type="button"
-              aria-selected={active}
-              onClick={() => setTab(item.value)}
-              className={cn(
-                "-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "border-[var(--sidebar)] text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Icon aria-hidden className="size-4" />
-              {t(item.label)}
-            </button>
-          );
-        })}
-      </nav>
-
-      <div
-        role="tabpanel"
-        aria-label={t(
-          PATIENT_TABS.find((item) => item.value === tab)?.label ?? "",
-        )}
-      >
-        {tab === "resumen" && (
+        <TabsList
+          variant="line"
+          aria-label={t("Secciones de pacientes")}
+          className="h-auto w-full justify-start border-b border-border px-0 py-1"
+        >
+          {PATIENT_TABS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <TabsTrigger
+                key={item.value}
+                value={item.value}
+                className="min-h-14 min-w-0 flex-1 flex-col px-1 text-xs sm:min-h-11 sm:flex-none sm:flex-row sm:px-4 sm:text-sm data-active:text-primary-soft-foreground after:bg-primary-soft-foreground"
+              >
+                <Icon aria-hidden className="size-4" />
+                <span className="whitespace-normal text-center">
+                  {t(item.label)}
+                </span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+        <TabsContent value="resumen">
           <PatientSummaryView
             data={dashboard.data}
             loading={dashboard.loading}
@@ -207,23 +200,23 @@ export function PatientsPage() {
             clinicalSummary={clinicalSummary}
             onOpenClinical={openClinical}
           />
-        )}
-        {tab === "mapa" && (
+        </TabsContent>
+        <TabsContent value="mapa">
           <PatientGeoView
             states={dashboard.data?.states ?? []}
             selected={stateCode}
             onSelect={setStateCode}
             loading={dashboard.loading && !dashboard.data}
           />
-        )}
-        {tab === "estado-clinico" && (
+        </TabsContent>
+        <TabsContent value="estado-clinico">
           <ClinicalBoardView
             stateCode={stateCode}
             initialFilters={clinicalIntent ?? undefined}
             onClearState={() => setStateCode(null)}
           />
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

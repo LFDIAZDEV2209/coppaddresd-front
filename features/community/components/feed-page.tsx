@@ -68,7 +68,7 @@ export function FeedPage() {
   }, [feed, feedPage, feedPageSize]);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Feed en vivo")}
         description={t("Actividad en tiempo real de Copp Adresd Comunidad ADRED")}
@@ -77,7 +77,7 @@ export function FeedPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Feed list — paginada */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Actividad reciente")}
             description={t("Actividad más reciente de la comunidad")}
@@ -133,7 +133,7 @@ export function FeedPage() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           {/* Hoy en números — grid compacto 2×3 */}
-          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Actividad de las últimas 24 horas")}
               icon={Zap}
@@ -157,7 +157,7 @@ export function FeedPage() {
           </div>
 
           {/* Conteos acumulados por grupo; no se presentan como actividad diaria. */}
-          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Grupos con más mensajes")}
               description={t("Mensajes acumulados por grupo")}

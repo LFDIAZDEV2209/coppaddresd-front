@@ -100,7 +100,7 @@ export function ProgramWeaknessesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Debilidades abiertas"
         description="Cola clínica de hallazgos que requieren decisión"
@@ -141,7 +141,7 @@ export function ProgramWeaknessesPage() {
       ) : error ? (
         <WeaknessesErrorState message={error} onRetry={retry} />
       ) : result && result.data.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={`${result.total} ${result.total === 1 ? "debilidad" : "debilidades"} abiertas`}
             description="Vista de tabla"

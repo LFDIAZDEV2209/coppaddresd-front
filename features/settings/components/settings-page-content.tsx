@@ -122,7 +122,7 @@ export function SettingsPageContent() {
     settingsNav[0];
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Configuración")}
         description={t("Personaliza tu experiencia en la plataforma")}
@@ -164,13 +164,13 @@ export function SettingsPageContent() {
           })}
         </nav>
 
-        <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           {/* key={effectiveSection}: re-mount animado en cada cambio de sección */}
           <div key={effectiveSection} className="animate-slide-up">
             {effectiveSection === "Documentación" ? (
               <LegalDocumentsSection />
             ) : effectiveSection === "General" ? (
-              <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+              <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
                 <SectionHeader
                   title={t("General")}
                   description={t("Preferencias generales de la plataforma")}

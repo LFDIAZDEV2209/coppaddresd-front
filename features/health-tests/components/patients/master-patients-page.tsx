@@ -1,5 +1,7 @@
 "use client";
 
+import { colorTint } from "@/lib/ui/rainbow";
+
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -72,7 +74,12 @@ const VIEW_KEY = "health-tests-view-mode";
 type ViewMode = "table" | "cards";
 type SortKey = "name" | "risk" | "progress" | "alerts" | "lastEvaluation";
 type RiskFilter =
-  "all" | "bajo" | "moderado" | "alto" | "critico" | "sin-evaluar";
+  | "all"
+  | "bajo"
+  | "moderado"
+  | "alto"
+  | "critico"
+  | "sin-evaluar";
 
 const PAGE_SIZE = 8;
 
@@ -360,7 +367,7 @@ export function MasterPatientsPage() {
         />
       )}
 
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <SectionHeader
           title={t("Listado de pacientes")}
           description={t(
@@ -1079,7 +1086,7 @@ function MasterCards({
                     className="h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${row.progressPercent}%`,
-                      backgroundColor: "var(--primary)",
+                      backgroundColor: "var(--spectrum-sky-chart)",
                     }}
                   />
                 </div>
@@ -1227,7 +1234,7 @@ function ExpandedPanel({
                   <span
                     className="flex size-8 shrink-0 items-center justify-center rounded-lg text-sm"
                     style={{
-                      backgroundColor: `${accent}1A`,
+                      backgroundColor: colorTint(accent, 10.196),
                       color: accent,
                     }}
                   >
@@ -1464,7 +1471,7 @@ function CategorySummaryCard({
   }, [rows, tests]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         title={t("Estado por categoría — pacientes filtrados")}
         description={t(
@@ -1488,7 +1495,10 @@ function CategorySummaryCard({
             <div key={d.category} className="flex items-center gap-3">
               <span
                 className="flex size-7 shrink-0 items-center justify-center rounded-lg text-xs"
-                style={{ backgroundColor: `${d.color}1A`, color: d.color }}
+                style={{
+                  backgroundColor: colorTint(d.color, 10.196),
+                  color: d.color,
+                }}
               >
                 {tests.find((x) => x.category === d.category)?.icon ?? "●"}
               </span>
@@ -1547,7 +1557,9 @@ function RowActions({ row }: { row: PatientMasterRow }) {
         </DropdownMenuItem>
         <DropdownMenuItem
           render={
-            <Link href={`/health-tests/pacientes/${row.patient.id}#historial`} />
+            <Link
+              href={`/health-tests/pacientes/${row.patient.id}#historial`}
+            />
           }
         >
           <ClipboardCheck />

@@ -82,7 +82,7 @@ export function ProgramTodayPage() {
   }, [autoRefresh, retry]);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Actividad de hoy"
         description="Misiones completadas, feed en vivo y pendientes críticos"
@@ -198,7 +198,7 @@ function TodayContent({
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Feed en vivo */}
-        <div className="flex min-w-0 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card lg:col-span-2">
+        <div className="flex min-w-0 flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card lg:col-span-2 shadow-xs">
           <SectionHeader
             title="Feed en vivo"
             description="Últimas acciones de los pacientes"
@@ -327,7 +327,7 @@ function TodayContent({
         {/* Columna derecha: heatmap + pendientes críticos */}
         <div className="flex min-w-0 flex-col gap-4">
         {/* Heatmap */}
-        <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
           <SectionHeader
             title="Heatmap semanal"
             description="Comunidad · % completado vs programado · L–D"
@@ -392,7 +392,7 @@ function TodayContent({
         </div>
 
         {/* Pendientes críticos */}
-        <section className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <section className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title="Pendientes críticos"
           description="Pacientes con 0 misiones completadas hoy"

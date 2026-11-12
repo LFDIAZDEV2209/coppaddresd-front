@@ -1,5 +1,7 @@
 "use client";
 
+import { chartGradient } from "@/lib/ui/rainbow";
+
 import { useState, useMemo, useCallback } from "react";
 import { MousePointerClick } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
@@ -13,7 +15,7 @@ import { mapRiskColor, mapRiskPalette } from "../shared/colors";
 
 /** Hover y selección comparten el mismo anillo doble (halo + contorno
  * primary): el hover es apenas más fino y tenue, casi idéntico. */
-const RING_STROKE = "var(--primary)";
+const RING_STROKE = "var(--spectrum-sky-chart)";
 const HOVER_RING_WIDTH = 2.25;
 const HOVER_HALO_OPACITY = 0.1;
 const SELECTED_RING_WIDTH = 2.5;
@@ -156,6 +158,7 @@ export function HealthTestsUsaMap({
   return (
     <div className="relative flex w-full flex-col items-center rounded-xl">
       <svg
+        data-slot="chart-map"
         viewBox={USA_VIEWBOX}
         className="h-[360px] w-full rounded-xl"
         role="img"
@@ -175,7 +178,7 @@ export function HealthTestsUsaMap({
           // conserva la elevación sutil para sentirse interactivo.
           // El relleno usa fillOpacity (no opacity) para suavizar el color
           // sin atenuar trazo ni anillo.
-          const stroke = "#FFFFFF";
+          const stroke = "var(--card)";
           const strokeWidth = isHovered || isSelected ? 1.5 : 0.9;
           const fillOpacity = dimmed
             ? DIMMED_FILL_OPACITY
@@ -236,41 +239,43 @@ export function HealthTestsUsaMap({
             anima con un pop sutil al pasar o estrenar la selección. */}
         {(hasSelection || hovered) && (
           <g pointerEvents="none" aria-hidden="true">
-            {[
-              ...new Set([...selected, ...(hovered ? [hovered] : [])]),
-            ].map((abbr) => {
-              const d = USA_STATE_PATHS[abbr];
-              if (!d) return null;
-              const isSel = selected.has(abbr);
-              return (
-                <g
-                  key={abbr}
-                  className="animate-select-ring-in motion-reduce:animate-none"
-                  style={{
-                    transformBox: "fill-box",
-                    transformOrigin: "center",
-                  }}
-                >
-                  <path
-                    d={d}
-                    fill="none"
-                    stroke={RING_STROKE}
-                    strokeWidth={6}
-                    strokeLinejoin="round"
-                    opacity={
-                      isSel ? SELECTED_HALO_OPACITY : HOVER_HALO_OPACITY
-                    }
-                  />
-                  <path
-                    d={d}
-                    fill="none"
-                    stroke={RING_STROKE}
-                    strokeWidth={isSel ? SELECTED_RING_WIDTH : HOVER_RING_WIDTH}
-                    strokeLinejoin="round"
-                  />
-                </g>
-              );
-            })}
+            {[...new Set([...selected, ...(hovered ? [hovered] : [])])].map(
+              (abbr) => {
+                const d = USA_STATE_PATHS[abbr];
+                if (!d) return null;
+                const isSel = selected.has(abbr);
+                return (
+                  <g
+                    key={abbr}
+                    className="animate-select-ring-in motion-reduce:animate-none"
+                    style={{
+                      transformBox: "fill-box",
+                      transformOrigin: "center",
+                    }}
+                  >
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={RING_STROKE}
+                      strokeWidth={6}
+                      strokeLinejoin="round"
+                      opacity={
+                        isSel ? SELECTED_HALO_OPACITY : HOVER_HALO_OPACITY
+                      }
+                    />
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={RING_STROKE}
+                      strokeWidth={
+                        isSel ? SELECTED_RING_WIDTH : HOVER_RING_WIDTH
+                      }
+                      strokeLinejoin="round"
+                    />
+                  </g>
+                );
+              },
+            )}
           </g>
         )}
       </svg>
@@ -288,6 +293,9 @@ export function HealthTestsUsaMap({
               className="size-2.5 shrink-0 rounded-full ring-1 ring-border"
               style={{
                 backgroundColor: mapRiskColor(hoveredData?.highRiskPct ?? null),
+                backgroundImage: chartGradient(
+                  mapRiskColor(hoveredData?.highRiskPct ?? null),
+                ),
               }}
             />
           </div>
@@ -333,28 +341,40 @@ export function HealthTestsUsaMap({
           <span className="flex items-center gap-1.5">
             <span
               className="inline-block size-2.5 rounded-full ring-1 ring-black/5"
-              style={{ backgroundColor: mapRiskPalette.low }}
+              style={{
+                backgroundColor: mapRiskPalette.low,
+                backgroundImage: chartGradient(mapRiskPalette.low),
+              }}
             />
             &lt;20%
           </span>
           <span className="flex items-center gap-1.5">
             <span
               className="inline-block size-2.5 rounded-full ring-1 ring-black/5"
-              style={{ backgroundColor: mapRiskPalette.medium }}
+              style={{
+                backgroundColor: mapRiskPalette.medium,
+                backgroundImage: chartGradient(mapRiskPalette.medium),
+              }}
             />
             20–40%
           </span>
           <span className="flex items-center gap-1.5">
             <span
               className="inline-block size-2.5 rounded-full ring-1 ring-black/5"
-              style={{ backgroundColor: mapRiskPalette.high }}
+              style={{
+                backgroundColor: mapRiskPalette.high,
+                backgroundImage: chartGradient(mapRiskPalette.high),
+              }}
             />
             &gt;40%
           </span>
           <span className="flex items-center gap-1.5">
             <span
               className="inline-block size-2.5 rounded-full ring-1 ring-black/5"
-              style={{ backgroundColor: mapRiskPalette.none }}
+              style={{
+                backgroundColor: mapRiskPalette.none,
+                backgroundImage: chartGradient(mapRiskPalette.none),
+              }}
             />
             {t("Sin datos")}
           </span>

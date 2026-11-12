@@ -1,5 +1,7 @@
 "use client";
 
+import { RAINBOW_SERIES, sharedChartColor } from "@/lib/ui/rainbow";
+
 import {
   Area,
   AreaChart,
@@ -24,13 +26,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
 
-export const CHART_COLORS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-];
+export const CHART_COLORS = RAINBOW_SERIES;
 
 const axisProps = {
   tick: { fontSize: 10.5, fill: "var(--muted-foreground)" },
@@ -275,7 +271,7 @@ export function PeakHoursBar({
           dataKey="valor"
           name={t("Actividad")}
           fill="url(#cpBar-hora)"
-          radius={[5, 5, 0, 0]}
+          radius={[8, 8, 0, 0]}
           maxBarSize={32}
         />
       </BarChart>
@@ -364,8 +360,8 @@ export function GroupedBarChart({
             key={b.key}
             dataKey={b.key}
             name={b.name}
-            fill={b.color}
-            radius={[4, 4, 0, 0]}
+            fill={sharedChartColor(b.color)}
+            radius={[8, 8, 0, 0]}
             maxBarSize={34}
           />
         ))}
@@ -409,7 +405,7 @@ export function XpLineChart({
             type="monotone"
             dataKey={l.key}
             name={l.name}
-            stroke={l.color}
+            stroke={sharedChartColor(l.color)}
             strokeWidth={2}
             dot={false}
           />
@@ -452,12 +448,12 @@ export function SimpleBarChart({
         <Bar
           dataKey="value"
           name={t("Valor")}
-          fill={color}
-          radius={[4, 4, 0, 0]}
+          fill={sharedChartColor(color)}
+          radius={[8, 8, 0, 0]}
           maxBarSize={36}
         >
           {colors?.map((c, i) => (
-            <Cell key={i} fill={c} />
+            <Cell key={i} fill={sharedChartColor(c)} />
           ))}
         </Bar>
       </BarChart>
@@ -481,7 +477,7 @@ export function ChartLegend({
           >
             <span
               className="size-2.5 rounded-full"
-              style={{ backgroundColor: item.color }}
+              style={{ backgroundColor: sharedChartColor(item.color) }}
             />
             {Icon ? <Icon className="size-3.5" /> : null}
             {item.label}

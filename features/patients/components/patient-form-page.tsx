@@ -973,7 +973,7 @@ export function PatientFormPage({ patientId }: { patientId?: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-8 p-4 sm:p-6">
+    <div className="flex flex-col gap-8 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={isEdit ? "Editar paciente" : "Nuevo paciente"}
         description={
@@ -2085,7 +2085,7 @@ function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-card">
+    <section className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         icon={Icon}
         title={legend}

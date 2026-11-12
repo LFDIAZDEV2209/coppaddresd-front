@@ -74,10 +74,10 @@ export function ProfessionalDashboard() {
   const professional = context?.professional;
   if (!professional) {
     return (
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
         <PageHeader
-          title={t('Citas')}
-          description={t('Dashboard del profesional')}
+          title={t("Citas")}
+          description={t("Dashboard del profesional")}
           icon={Stethoscope}
         />
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-16 text-center">
@@ -85,10 +85,12 @@ export function ProfessionalDashboard() {
             <Stethoscope className="size-6 text-muted-foreground" />
           </div>
           <p className="text-sm font-medium text-foreground">
-            {t('El usuario autenticado no es un profesional clínico')}
+            {t("El usuario autenticado no es un profesional clínico")}
           </p>
           <p className="text-[12.5px] text-muted-foreground">
-            {t('El dashboard de Citas está disponible para profesionales con asignación clínica en el ERP.')}
+            {t(
+              "El dashboard de Citas está disponible para profesionales con asignación clínica en el ERP.",
+            )}
           </p>
         </div>
       </div>
@@ -108,35 +110,37 @@ export function ProfessionalDashboard() {
     {
       href: "/appointments/agenda",
       icon: CalendarDays,
-      label: t('Mi agenda'),
-      description: t('Agenda y calendario'),
+      label: t("Mi agenda"),
+      description: t("Agenda y calendario"),
     },
     {
       href: "/appointments/solicitudes",
       icon: Inbox,
-      label: t('Bandeja'),
-      description: t('Solicitudes de los pacientes'),
+      label: t("Bandeja"),
+      description: t("Solicitudes de los pacientes"),
     },
     {
       href: "/appointments/alertas",
       icon: Bell,
-      label: t('Alertas'),
+      label: t("Alertas"),
       description:
-        unread > 0 ? t('{count} sin leer', { count: String(unread) }) : t('Bandeja de notificaciones'),
+        unread > 0
+          ? t("{count} sin leer", { count: String(unread) })
+          : t("Bandeja de notificaciones"),
     },
     {
       href: "/appointments/citas",
       icon: ClipboardList,
-      label: t('Citas'),
-      description: t('Historial de mis citas'),
+      label: t("Citas"),
+      description: t("Historial de mis citas"),
     },
   ];
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
-        title={t('Citas')}
-        description={`${t('Bienvenido')}, ${professional.fullName}`}
+        title={t("Citas")}
+        description={`${t("Bienvenido")}, ${professional.fullName}`}
         icon={Stethoscope}
         actions={
           <>
@@ -153,7 +157,7 @@ export function ProfessionalDashboard() {
               className={buttonVariants({ size: "sm" })}
             >
               <CalendarDays className="size-4" />
-              {t('Mi agenda')}
+              {t("Mi agenda")}
             </Link>
           </>
         }
@@ -171,7 +175,7 @@ export function ProfessionalDashboard() {
       {/* Stats cards en UNA línea (xl) — mis KPIs. */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label={t('Mis citas de hoy')}
+          label={t("Mis citas de hoy")}
           value={kpis ? String(kpis.appointmentsToday) : "—"}
           icon={CalendarCheck}
           variant="primary"
@@ -181,32 +185,44 @@ export function ProfessionalDashboard() {
           })}
         />
         <StatCard
-          label={t('Próximos 7 días')}
+          label={t("Próximos 7 días")}
           value={kpis ? String(kpis.upcomingAppointments) : "—"}
           icon={CalendarPlus}
           variant="info"
-          context={kpis ? t('{count} confirmadas pendientes', { count: String(kpis.pending) }) : undefined}
+          context={
+            kpis
+              ? t("{count} confirmadas pendientes", {
+                  count: String(kpis.pending),
+                })
+              : undefined
+          }
         />
         <StatCard
-          label={t('Completadas (rango)')}
+          label={t("Completadas (rango)")}
           value={kpis ? String(kpis.completed) : "—"}
           icon={Clock}
           variant="success"
           context={
             completedRate !== null
-              ? t('Tasa de finalización {rate}%', { rate: String(completedRate) })
+              ? t("Tasa de finalización {rate}%", {
+                  rate: String(completedRate),
+                })
               : undefined
           }
         />
         <StatCard
-          label={t('Canceladas / No asistieron')}
+          label={t("Canceladas / No asistieron")}
           value={kpis ? String(kpis.cancelled + kpis.noShow) : "—"}
           icon={CalendarX}
           variant={
             kpis && kpis.cancelled + kpis.noShow > 0 ? "destructive" : "default"
           }
           context={
-            kpis ? t('{count} pacientes atendidos', { count: String(kpis.uniquePatients) }) : undefined
+            kpis
+              ? t("{count} pacientes atendidos", {
+                  count: String(kpis.uniquePatients),
+                })
+              : undefined
           }
         />
       </div>
@@ -214,8 +230,9 @@ export function ProfessionalDashboard() {
       {/* Gráficas: mi tendencia + mi distribución por estado. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <DashboardChartCard
-          title={t('Mi actividad')}
-          description={`${t('Mis citas en el rango seleccionado')} (${t(rangeOptions.find((o) => o.key === range)!.label)})`}
+          accent="sky"
+          title={t("Mi actividad")}
+          description={`${t("Mis citas en el rango seleccionado")} (${t(rangeOptions.find((o) => o.key === range)!.label)})`}
           icon={Activity}
           className="xl:col-span-2"
         >
@@ -226,8 +243,9 @@ export function ProfessionalDashboard() {
         </DashboardChartCard>
 
         <DashboardChartCard
-          title={t('Distribución por estado')}
-          description={t('Mis citas por estado en el rango')}
+          accent="violet"
+          title={t("Distribución por estado")}
+          description={t("Mis citas por estado en el rango")}
           icon={PieChart}
         >
           <StatusDistributionChart
@@ -240,8 +258,9 @@ export function ProfessionalDashboard() {
       {/* Franjas horarias + próximas citas + accesos rápidos. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <DashboardChartCard
-          title={t('Franjas de mayor demanda')}
-          description={t('Mis citas por hora del día en el rango')}
+          accent="teal"
+          title={t("Franjas de mayor demanda")}
+          description={t("Mis citas por hora del día en el rango")}
           icon={Clock}
           className="xl:col-span-1"
         >
@@ -251,17 +270,17 @@ export function ProfessionalDashboard() {
           />
         </DashboardChartCard>
 
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card xl:col-span-2">
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card xl:col-span-2 shadow-xs">
           <SectionHeader
-            title={t('Mis próximas citas')}
-            description={t('Próximas citas de tu agenda')}
+            title={t("Mis próximas citas")}
+            description={t("Próximas citas de tu agenda")}
             icon={CalendarDays}
             actions={
               <Link
                 href="/appointments/agenda"
                 className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-white/20"
               >
-                {t('Ver agenda')}
+                {t("Ver agenda")}
                 <ArrowRight data-icon="inline-end" />
               </Link>
             }
@@ -270,17 +289,17 @@ export function ProfessionalDashboard() {
             <UpcomingAppointments
               appointments={analytics?.upcomingAppointments ?? []}
               loading={loading}
-              emptyMessage={t('Sin citas próximas en tu agenda')}
+              emptyMessage={t("Sin citas próximas en tu agenda")}
               hrefBase="/appointments/citas"
             />
           </div>
         </section>
       </div>
 
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <SectionHeader
-          title={t('Accesos rápidos')}
-          description={t('Accesos directos del módulo')}
+          title={t("Accesos rápidos")}
+          description={t("Accesos directos del módulo")}
           icon={UserCog}
         />
         <div className="p-5 pt-4">

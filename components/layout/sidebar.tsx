@@ -1,9 +1,17 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronDown, LogOut, Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   visibleNavItems,
@@ -14,13 +22,7 @@ import {
 import { useAuth } from "@/providers/auth-provider";
 import { useAppContext } from "@/providers/context-provider";
 import { useT } from "@/providers/i18n-provider";
-import { ChevronDown, ChevronsLeft, LogOut, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,42 +30,83 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { NutritionPendingBadge } from "@/features/nutrition/components/nutrition-pending-badge";
 
 interface SidebarProps {
-  collapsed: boolean;
-  onToggleCollapse: () => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
 }
 
-export function Sidebar({
-  collapsed,
-  onToggleCollapse,
-  mobileOpen,
-  onCloseMobile,
-}: SidebarProps) {
+const HOVER_QUERY = "(hover: hover) and (pointer: fine)";
+function subscribeHover(callback: () => void) {
+  const query = window.matchMedia(HOVER_QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+const hasHover = () => window.matchMedia(HOVER_QUERY).matches;
+const serverHasHover = () => true;
+
+// El centro de cada icono permanece en x=40 al abrir y cerrar el rail.
+const navRow =
+  "relative flex min-h-11 w-full items-center gap-3 rounded-xl px-[18px] py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring";
+const quietRow =
+  "text-muted-foreground hover:bg-muted/60 hover:text-primary-soft-foreground";
+const selectedRow =
+  "bg-brand-gradient font-semibold text-white focus-visible:outline-white";
+
+/** Rail automático en escritorio; Sheet conserva el control táctil en móvil. */
+export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { can } = useAppContext();
   const t = useT();
+  const id = useId();
+  const desktopRef = useRef<HTMLElement>(null);
+  const supportsHover = useSyncExternalStore(
+    subscribeHover,
+    hasHover,
+    serverHasHover,
+  );
+  const [hovered, setHovered] = useState(false);
+  const [keyboardWithin, setKeyboardWithin] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [touchOpen, setTouchOpen] = useState(false);
+  const expanded =
+    !supportsHover || hovered || keyboardWithin || accountOpen || touchOpen;
   const navModules = visibleNavModules(can);
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(() => {
-    const activeModule = navModules.find((m) =>
-      m.items.some((item) => item.href === pathname),
-    );
-    return activeModule ? new Set([activeModule.label]) : new Set();
-  });
-
-  /* Accordion: abre un módulo y cierra los demás */
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(
+    new Set(),
+  );
   const toggleModule = useCallback((label: string) => {
-    setExpandedModules((prev) => {
-      const next = new Set<string>();
-      if (!prev.has(label)) next.add(label);
-      return next;
-    });
+    setExpandedModules((prev) =>
+      prev.has(label) ? new Set() : new Set([label]),
+    );
   }, []);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const resetDesktopInteraction = () => {
+      setAccountOpen(false);
+      setHovered(false);
+      setKeyboardWithin(false);
+      setTouchOpen(false);
+    };
+    desktop.addEventListener("change", resetDesktopInteraction);
+    return () => desktop.removeEventListener("change", resetDesktopInteraction);
+  }, []);
+
+  useEffect(() => {
+    if (!touchOpen) return;
+    const dismissOutside = (event: PointerEvent) => {
+      if (!desktopRef.current?.contains(event.target as Node))
+        setTouchOpen(false);
+    };
+    document.addEventListener("pointerdown", dismissOutside, true);
+    return () =>
+      document.removeEventListener("pointerdown", dismissOutside, true);
+  }, [touchOpen]);
 
   const exactItem = navModules
     .flatMap((module) => module.items)
@@ -71,300 +114,280 @@ export function Sidebar({
   const isActive = (item: NavItem) =>
     pathname === item.href ||
     (!exactItem && pathname.startsWith(`${item.href}/`));
-  const isModuleActive = (mod: NavModule) =>
-    mod.items.some((item) => isActive(item));
+  const isModuleActive = (mod: NavModule) => mod.items.some(isActive);
 
-  return (
-    <>
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden animate-in fade-in duration-200"
-          onClick={onCloseMobile}
-          aria-hidden="true"
-        />
-      )}
-
-      <aside
-        className={cn(
-          "flex flex-col bg-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] relative shrink-0 h-screen overflow-hidden border-r border-border shadow-[4px_0_24px_-16px_rgba(15,30,60,0.12)]",
-          collapsed ? "w-[68px]" : "w-[236px]",
-          mobileOpen ? "fixed inset-y-0 left-0 z-50" : "hidden lg:flex",
-        )}
-        role="navigation"
-        aria-label="Navegación principal"
-      >
-        {/* Glow decorativo de marca (motivo teal de la identidad) */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-24 -left-16 size-64 rounded-full bg-brand-teal/10 blur-[80px]"
-        />
-        {/* Brand Header */}
-        <div
-          className={cn(
-            "flex items-center justify-center px-3.5 border-b border-border/70 relative shrink-0 h-16",
-          )}
-        >
+  function content(open: boolean, mobile = false) {
+    const labelClass = open ? "min-w-0 flex-1 truncate text-left" : "sr-only";
+    return (
+      <>
+        <div className="flex h-[72px] shrink-0 items-center gap-2 border-b border-border px-4">
           <Link
             href="/dashboard"
-            className="flex items-center justify-center gap-2 w-full transition-transform duration-200 hover:scale-[1.02]"
-            onClick={collapsed ? onToggleCollapse : undefined}
+            onClick={onCloseMobile}
+            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-ring"
+            aria-label="Copp Adresd"
           >
-            <Image
-              src="/LogoIndividual.png"
-              alt="Copp Adresd"
-              loading="eager"
-              width={197}
-              height={197}
-              className="size-8 shrink-0 object-contain"
-            />
-            {!collapsed && (
-              <span className="font-heading text-[14px] font-bold tracking-tight text-brand-navy">
-                COPP-ADRESD
-              </span>
-            )}
-          </Link>
-
-          {!collapsed && (
-            <button
-              onClick={onToggleCollapse}
-              className="absolute right-2 top-1/2 flex size-[26px] -translate-y-1/2 items-center justify-center rounded-lg border border-border bg-white text-slate-400 hover:bg-slate-100 hover:text-brand-navy transition-all duration-200"
-              aria-label={t("Colapsar sidebar")}
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white">
+              <Image
+                src="/LogoIndividual.png"
+                alt=""
+                loading="eager"
+                width={197}
+                height={197}
+                className="size-14 max-w-none shrink-0 object-contain"
+              />
+            </span>
+            <span
+              className={cn(
+                "font-heading text-sm font-bold tracking-tight text-primary-soft-foreground",
+                !open && "sr-only",
+              )}
             >
-              <ChevronsLeft className="size-[15px]" />
+              COPP ADRESD
+            </span>
+          </Link>
+          {mobile && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-ring"
+              aria-label={t("Cerrar menú")}
+            >
+              <X className="size-5" />
             </button>
           )}
         </div>
-
-        {/* Navigation Modules — scroll sutil: thumb blanca translúcida, solo visible al hover/scroll */}
-        <ScrollArea className="flex-1 min-h-0 px-3 py-3">
-          <nav className="flex flex-col gap-1 pb-3">
-            {navModules.map((mod) => {
+        <ScrollArea className="min-h-0 flex-1 px-3 py-5">
+          <nav
+            aria-label={t("Navegación principal")}
+            className="flex flex-col gap-1.5 pb-3"
+          >
+            {navModules.map((mod, index) => {
               const active = isModuleActive(mod);
-              const single = visibleNavItems(mod, can).length === 1;
-              const expanded = expandedModules.has(mod.label) || active;
+              const items = visibleNavItems(mod, can);
+              const moduleOpen =
+                open && (expandedModules.has(mod.label) || active);
               const Icon = mod.icon;
-
-              if (collapsed) {
-                const firstItem = visibleNavItems(mod, can)[0];
-                return (
-                  <Tooltip key={mod.label}>
-                    <TooltipTrigger
-                      className={cn(
-                        "flex items-center justify-center rounded-lg p-2.5 my-0.5 transition-all duration-200 border",
-                        active
-                          ? "bg-brand-gradient text-white border-transparent shadow-[0_6px_16px_-6px_rgba(3,93,77,0.5)] [&_svg]:text-white"
-                          : "text-slate-600 hover:bg-slate-100 hover:text-brand-navy hover:scale-105 border-transparent",
-                      )}
-                      onClick={() => {
-                        if (firstItem) onCloseMobile();
-                      }}
-                      render={<Link href={firstItem?.href ?? "#"} />}
-                      aria-label={firstItem?.href === "/nutrition" ? undefined : t(mod.label)}
-                    >
-                      <span className="relative"><Icon className="size-[18px]" />{firstItem?.href === "/nutrition" && <><span className="sr-only">{t(mod.label)}</span><NutritionPendingBadge collapsed /></>}</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" sideOffset={8}>
-                      {t(mod.label)}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              }
-
-              if (single) {
-                const onlyItem = visibleNavItems(mod, can)[0];
-                const onlyActive = isActive(onlyItem);
+              const panelId = `${id}-${mobile ? "mobile" : "desktop"}-${index}`;
+              if (items.length === 1) {
+                const item = items[0];
                 return (
                   <Link
                     key={mod.label}
-                    href={onlyItem.href}
+                    href={item.href}
                     onClick={onCloseMobile}
+                    aria-current={isActive(item) ? "page" : undefined}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-all duration-200 border group relative",
-                      onlyActive
-                        ? "bg-brand-gradient text-white border-transparent shadow-[0_6px_16px_-6px_rgba(3,93,77,0.5)] [&_svg]:text-white"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-brand-navy hover:scale-[1.01] border-transparent",
+                      navRow,
+                      isActive(item) ? selectedRow : quietRow,
                     )}
                   >
-                    <Icon
-                      className={cn(
-                        "size-[18px] shrink-0 transition-transform duration-200",
-                        onlyActive && "scale-110",
-                      )}
-                    />
-                    <span className="flex-1 text-left tracking-wide">
-                      {t(mod.label)}
-                    </span>
-                    {onlyItem.href === "/nutrition" && <NutritionPendingBadge />}
+                    <Icon aria-hidden className="size-5 shrink-0" />
+                    <span className={labelClass}>{t(mod.label)}</span>
+                    {item.href === "/nutrition" && (
+                      <NutritionPendingBadge collapsed={!open} />
+                    )}
                   </Link>
                 );
               }
-
               return (
                 <div key={mod.label} className="flex flex-col">
                   <button
+                    type="button"
                     onClick={() => toggleModule(mod.label)}
+                    aria-expanded={moduleOpen}
+                    aria-controls={panelId}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition-all duration-200 border group",
-                      active
-                        ? "bg-slate-100 text-brand-navy border-transparent [&_svg]:text-brand-teal"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-brand-navy hover:scale-[1.01] border-transparent",
+                      navRow,
+                      active && !open ? selectedRow : quietRow,
+                      active &&
+                        open &&
+                        "bg-muted/60 text-primary-soft-foreground",
                     )}
                   >
-                    <Icon
-                      className={cn(
-                        "size-[18px] shrink-0 transition-transform duration-200",
-                        active && "scale-110",
-                      )}
-                    />
-                    <span className="flex-1 text-left tracking-wide">
-                      {t(mod.label)}
-                    </span>
+                    <Icon aria-hidden className="size-5 shrink-0" />
+                    <span className={labelClass}>{t(mod.label)}</span>
                     <ChevronDown
+                      aria-hidden
                       className={cn(
-                        "size-3.5 text-slate-400 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                        expanded && "rotate-180",
+                        "size-4 shrink-0 transition-transform motion-reduce:transition-none",
+                        moduleOpen && "rotate-180",
+                        !open && "hidden",
                       )}
                     />
                   </button>
-
-                  {/* Panel animado con grid transition */}
                   <div
-                    className={cn(
-                      "grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                      expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-                    )}
+                    id={panelId}
+                    hidden={!moduleOpen}
+                    className="ml-5 mt-1 border-l border-border pl-3"
                   >
-                    <div className="overflow-hidden">
-                      <div className="mt-1 ml-5 flex flex-col gap-0.5 border-l border-border pl-3 py-0.5">
-                        {
-                          // Pre-compute visible items so we can track section transitions
-                          (() => {
-                            const items = visibleNavItems(mod, can);
-                            let lastSection: string | undefined;
-                            return items.flatMap<React.ReactNode>(
-                              (item, idx) => {
-                                const ItemIcon = item.icon;
-                                const itemActive = isActive(item);
-                                const elements: React.ReactNode[] = [];
-
-                                // Insert section label when section changes
-                                if (
-                                  item.section &&
-                                  item.section !== lastSection
-                                ) {
-                                  lastSection = item.section;
-                                  elements.push(
-                                    <p
-                                      key={`section-${item.section}`}
-                                      className="px-2.5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400"
-                                    >
-                                      {t(item.section)}
-                                    </p>,
-                                  );
-                                } else if (item.section) {
-                                  lastSection = item.section;
-                                }
-
-                                elements.push(
-                                  <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    onClick={onCloseMobile}
-                                    className={cn(
-                                      "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[12.5px] transition-all duration-200 border",
-                                      itemActive
-                                        ? "bg-brand-gradient font-semibold text-white border-transparent shadow-[0_6px_14px_-6px_rgba(3,93,77,0.4)] [&_svg]:text-white"
-                                        : "text-slate-600 hover:bg-slate-100 hover:text-brand-navy border-transparent",
-                                    )}
-                                    style={{
-                                      animationDelay: expanded
-                                        ? `${idx * 40}ms`
-                                        : undefined,
-                                    }}
-                                  >
-                                    <ItemIcon className="size-[16px] shrink-0" />
-                                    <span className="truncate">
-                                      {t(item.label)}
-                                    </span>
-                                  </Link>,
-                                );
-
-                                return elements;
-                              },
-                            );
-                          })()
-                        }
-                      </div>
-                    </div>
+                    {items.map((item, itemIndex) => {
+                      const ItemIcon = item.icon;
+                      return (
+                        <React.Fragment key={item.href}>
+                          {item.section &&
+                            item.section !== items[itemIndex - 1]?.section && (
+                              <p className="px-3 pb-1 pt-4 text-xs font-medium text-muted-foreground">
+                                {t(item.section)}
+                              </p>
+                            )}
+                          <Link
+                            href={item.href}
+                            onClick={onCloseMobile}
+                            aria-current={isActive(item) ? "page" : undefined}
+                            className={cn(
+                              navRow,
+                              "my-1 px-3 text-[13px]",
+                              isActive(item) ? selectedRow : quietRow,
+                            )}
+                          >
+                            <ItemIcon aria-hidden className="size-4 shrink-0" />
+                            <span className="min-w-0 flex-1 truncate">
+                              {t(item.label)}
+                            </span>
+                            {isActive(item) && (
+                              <span
+                                aria-hidden
+                                className="size-1.5 shrink-0 rounded-full bg-white"
+                              />
+                            )}
+                          </Link>
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })}
           </nav>
         </ScrollArea>
-
-        {/* Perfil (account menu) — integrado, separado por hairline sutil */}
-        <div className="relative mt-auto shrink-0 border-t border-border/70 px-3 pb-3 pt-2.5">
-          {collapsed ? (
-            <div className="relative flex flex-col gap-2">
-              <button
-                onClick={onToggleCollapse}
-                className="flex items-center justify-center rounded-xl border border-white/25 bg-brand-gradient p-2 text-white/90 shadow-sm transition-all duration-200 hover:border-white/45 hover:shadow-md hover:text-white"
-                aria-label={t("Expandir sidebar")}
+        <div className="mt-auto shrink-0 border-t border-border p-3">
+          <DropdownMenu
+            open={mobile ? undefined : accountOpen}
+            onOpenChange={
+              mobile
+                ? undefined
+                : (nextOpen) => {
+                    setAccountOpen(nextOpen);
+                    if (!nextOpen)
+                      setHovered(
+                        desktopRef.current?.matches(":hover") ?? false,
+                      );
+                  }
+            }
+          >
+            <DropdownMenuTrigger
+              aria-label={t("Mi perfil")}
+              className={cn(
+                navRow,
+                "gap-2.5 bg-brand-gradient px-2.5 text-left text-white focus-visible:outline-white",
+              )}
+            >
+              <Avatar className="size-9 shrink-0">
+                <AvatarFallback className="bg-white/15 text-xs font-semibold text-white">
+                  {user?.initials ?? "CA"}
+                </AvatarFallback>
+              </Avatar>
+              <span
+                className={cn(
+                  "flex min-w-0 flex-1 flex-col gap-0.5",
+                  !open && "sr-only",
+                )}
               >
-                <ChevronDown className="size-4 -rotate-90" />
-              </button>
-              <Tooltip>
-                <TooltipTrigger
-                  className="flex items-center justify-center rounded-xl border border-white/25 bg-brand-gradient p-2 text-white/90 shadow-sm transition-all duration-200 hover:border-white/45 hover:shadow-md hover:text-white"
-                  render={<Link href="/settings" />}
-                  onClick={onCloseMobile}
-                  aria-label={t("Configuración")}
-                />
-                <TooltipContent side="right" sideOffset={8}>
-                  {t("Configuración")}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          ) : (
-            <DropdownMenu>
-              {/* Toda la fila es clicable (menú de cuenta) */}
-              <DropdownMenuTrigger className="group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-white/25 bg-brand-gradient p-2 pr-2.5 text-left shadow-md shadow-brand-navy/20 transition-all duration-200 hover:border-white/45 hover:shadow-lg hover:shadow-brand-navy/30">
-                {/* Brillo sutil sobre el gradiente */}
-                <div className="pointer-events-none absolute -top-8 -right-6 size-20 rounded-full bg-white/12 blur-xl" />
-                <Avatar className="relative size-9 ring-2 ring-white/40 transition-transform duration-200 group-hover:scale-105">
-                  <AvatarFallback className="bg-gradient-to-br from-[#023467] to-brand-teal text-[11px] font-bold text-white">
-                    {user?.initials ?? "CA"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="relative flex flex-1 flex-col gap-px overflow-hidden min-w-0">
-                  <span className="text-[13px] font-semibold text-white truncate">
-                    {user?.name ?? "Usuario"}
-                  </span>
-                  <span className="text-[11px] text-white/70 truncate">
-                    {user?.roles[0] ?? "Sin rol"}
-                  </span>
-                </div>
-                <ChevronDown className="relative size-4 shrink-0 text-white/80 transition-transform duration-200 group-hover:translate-y-0.5 group-hover:text-white" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem render={<Link href="/settings" />}>
-                  <Settings className="size-4" />
-                  {t("Configuración")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => logout()}
-                  className="text-destructive"
-                >
-                  <LogOut className="size-4" />
-                  {t("Cerrar sesión")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+                <span className="truncate text-[13px] font-semibold text-white">
+                  {user?.name ?? t("Usuario")}
+                </span>
+                <span className="truncate text-xs text-white/80">
+                  {user?.roles[0] ?? t("Sin rol")}
+                </span>
+              </span>
+              <ChevronDown
+                aria-hidden
+                className={cn("size-4 shrink-0", !open && "hidden")}
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                render={<Link href="/settings" />}
+                onClick={onCloseMobile}
+              >
+                <Settings />
+                {t("Configuración")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => logout()}
+                className="text-destructive"
+              >
+                <LogOut />
+                {t("Cerrar sesión")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/* El rail participa en el layout: el contenido se adapta a su ancho. */}
+      <aside
+        ref={desktopRef}
+        onPointerEnter={(event) => {
+          if (event.pointerType !== "touch") {
+            setHovered(true);
+            setTouchOpen(false);
+          }
+        }}
+        onPointerLeave={() => setHovered(false)}
+        onPointerDownCapture={(event) => {
+          setKeyboardWithin(false);
+          setTouchOpen(event.pointerType === "touch");
+        }}
+        onKeyDownCapture={() => {
+          setKeyboardWithin(true);
+          setTouchOpen(false);
+        }}
+        onFocusCapture={(event) => {
+          if (event.currentTarget.contains(event.target))
+            setKeyboardWithin(event.target.matches(":focus-visible"));
+        }}
+        onBlurCapture={(event) => {
+          if (
+            !event.currentTarget.contains(event.relatedTarget as Node | null)
+          ) {
+            setKeyboardWithin(false);
+            setTouchOpen(false);
+          }
+        }}
+        className={cn(
+          "hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-border bg-card text-foreground transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex",
+          expanded ? "w-64" : "w-20",
+        )}
+      >
+        {content(expanded)}
       </aside>
+      <Sheet
+        open={mobileOpen}
+        onOpenChange={(open) => {
+          if (!open) onCloseMobile();
+        }}
+      >
+        <SheetContent
+          id="mobile-navigation"
+          side="left"
+          showCloseButton={false}
+          aria-describedby={undefined}
+          finalFocus={() => document.getElementById("navigation-menu-trigger")}
+          className="w-72 max-w-[calc(100vw-32px)] gap-0 border-border bg-card text-foreground"
+        >
+          <SheetTitle className="sr-only">
+            {t("Navegación principal")}
+          </SheetTitle>
+          {content(true, true)}
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

@@ -110,7 +110,7 @@ export function NutritionQueue({
 
   return (
     <div
-      className="nutrition-module nutrition-rework"
+      className="nutrition-module nutrition-rework min-w-0"
       data-has-patient={!!selection}
     >
       <PageHeader

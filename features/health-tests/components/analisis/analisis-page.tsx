@@ -29,7 +29,7 @@ export function AnalisisPage() {
     useState<(typeof TABS)[number]["value"]>("cobertura");
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5 min-w-0">
       <div className="px-4 sm:px-6 pt-4 sm:pt-6">
         <PageHeader
           title={t("Análisis")}

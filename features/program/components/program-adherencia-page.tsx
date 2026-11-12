@@ -123,7 +123,7 @@ export function ProgramAdherenciaPage() {
 const totalPages = data?.tabla.totalPages ?? 1;
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Adherencia & Rachas"
         description="Tendencia semanal, ranking de rachas y tabla detallada por paciente"
@@ -151,7 +151,7 @@ const totalPages = data?.tabla.totalPages ?? 1;
           {/* Charts Row: Tendencia (standalone) + Rachas (tabbed) */}
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Tendencia 8 semanas — standalone */}
-            <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
               <SectionHeader
                 title="Tendencia 8 semanas"
                 description="Evolución por misión"
@@ -333,7 +333,7 @@ function AdherenciaRachasCard({
   const top10 = data.ranking_rachas.slice(0, 10);
 
   return (
-    <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         title="Rachas"
         description="Top 10 pacientes por racha actual"

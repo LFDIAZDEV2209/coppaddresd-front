@@ -42,7 +42,7 @@ export function ControlesHistory({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader
         title={t("Historial de controles")}
         description={t("Detalle de cada control enviado")}

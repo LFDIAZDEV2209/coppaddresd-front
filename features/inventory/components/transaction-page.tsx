@@ -221,7 +221,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={isEntry ? t("Entradas") : t("Salidas")}
         description={
@@ -267,6 +267,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
           </Field>
           <Field label={t("Tipo de operación")}>
             <select
+              className="h-10 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-ring"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
             >
@@ -300,7 +301,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
             />
           </Field>
         </div>
-        <div className="flex items-center justify-between border-t border-border pt-5">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
           <div>
             <h2 className="text-base font-bold">{t("Productos de la operación")}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -394,7 +395,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
             </span>
             <p className="text-xl font-bold">{formatCurrency(total)}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex min-w-0 flex-wrap gap-2">
             <Link href="/inventory/movements">
               <Button variant="outline">{t("Ver movimientos")}</Button>
             </Link>
@@ -433,7 +434,7 @@ export function TransactionPage({ mode }: { mode: TransactionMode }) {
             <Skeleton className="h-8 w-full" />
           </div>
         ) : history.length ? (
-          <div className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
             <SectionHeader
               title={t("{count} registros", { count: String(history.length) })}
               description={t("Historial de {type}", { type: isEntry ? t("entradas") : t("salidas") })}
@@ -647,7 +648,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col gap-1.5">
       <Label className="text-xs">{label}</Label>
       {children}
     </div>

@@ -1,11 +1,14 @@
 "use client";
 
+import { chartGradient } from "@/lib/ui/rainbow";
+
 import { useEffect, useState } from "react";
 import { BarChart3, ChartPie, Inbox } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { SectionHeader } from "@/components/layout/section-header";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { rainbowStyle, type RainbowTone } from "@/lib/ui/rainbow";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/i18n-provider";
 
@@ -72,7 +75,8 @@ export function PatientDistributionChart({
   icon,
   items,
   colors,
-  barColor = "var(--primary)",
+  barColor,
+  accent = "sky",
   defaultMode = "bars",
   emptyLabel,
 }: {
@@ -82,6 +86,7 @@ export function PatientDistributionChart({
   items: DistributionItem[];
   colors: string[];
   barColor?: string;
+  accent?: RainbowTone;
   defaultMode?: "bars" | "donut";
   emptyLabel: string;
 }) {
@@ -93,12 +98,17 @@ export function PatientDistributionChart({
   const max = Math.max(...items.map((item) => item.value), 1);
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <section
+      data-slot="chart-card"
+      style={rainbowStyle(accent)}
+      className="spectrum-panel flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
+    >
       <SectionHeader
         title={title}
         description={description}
         icon={icon}
         variant="primary"
+        accent={accent}
         actions={
           <ToggleGroup
             value={[mode]}
@@ -254,7 +264,12 @@ export function PatientDistributionChart({
                     )}
                     style={{
                       width: `${(item.value / max) * 100}%`,
-                      backgroundColor: barColor,
+                      backgroundColor:
+                        barColor ?? colors[index % colors.length],
+                      backgroundImage: chartGradient(
+                        barColor ?? colors[index % colors.length],
+                        "horizontal",
+                      ),
                     }}
                     role="img"
                     aria-label={`${item.label}: ${item.value} ${t("pacientes")}`}

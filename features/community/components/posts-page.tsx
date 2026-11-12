@@ -314,7 +314,7 @@ export function PostsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Publicaciones")}
         description={t("Gestión de publicaciones de Copp Adresd Comunidad ADRED")}
@@ -561,7 +561,7 @@ export function PostsPage() {
       {/* Publicaciones fijadas + Todas las publicaciones — lado a lado */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Pinned posts — paginados */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Publicaciones fijadas")}
             description={`${pinnedPosts.length} ${t("publicaciones fijadas activas")}`}
@@ -753,7 +753,7 @@ export function PostsPage() {
         </div>
 
         {/* Todas las publicaciones — mismo layout que fijadas, solo no fijadas */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
           <SectionHeader
             title={t("Todas las publicaciones")}
             description={t("{count} publicaciones en el intervalo seleccionado", { count: String(nonPinnedPosts.length) })}

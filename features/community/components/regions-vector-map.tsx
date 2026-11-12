@@ -1,5 +1,7 @@
 "use client";
 
+import { regionChartColor, MAP_NO_DATA } from "@/lib/ui/rainbow";
+
 import { USA_STATE_PATHS } from "@/lib/geo/usa-states-paths";
 
 // Coordenadas lat/lng de las 12 metrópolis — misma tabla que regions-map leaflet.
@@ -13,24 +15,9 @@ const REGION_LATLNG: Record<string, [number, number]> = {
   atlanta: [33.749, -84.388],
   seattle: [47.6062, -122.3321],
   denver: [39.7392, -104.9903],
-  "bogotá": [4.711, -74.0721],
+  bogotá: [4.711, -74.0721],
   bogota: [4.711, -74.0721],
   cdmx: [19.4326, -99.1332],
-};
-
-const REGION_COLOR_HEX: Record<string, string> = {
-  miami: "#3B82F6",
-  ny: "#059669",
-  barranquilla: "#92400E",
-  orlando: "#D97706",
-  houston: "#7C3AED",
-  dallas: "#DC2626",
-  atlanta: "#0E7490",
-  seattle: "#0EA5E9",
-  denver: "#F59E0B",
-  "bogotá": "#0E7490",
-  bogota: "#0E7490",
-  cdmx: "#DC2626",
 };
 
 /* ── Proyección lineal lat/lng → SVG ──────────────────────────────────────
@@ -59,19 +46,30 @@ function normKey(s: string): string {
 
 /* ── Componente ─────────────────────────────────────────────────────────── */
 
-export function RegionsMap({ regions }: { regions: { region: string; members: number }[] }) {
+export function RegionsMap({
+  regions,
+}: {
+  regions: { region: string; members: number }[];
+}) {
   const maxMembers = Math.max(...regions.map((r) => r.members), 1);
 
   return (
     <svg
+      data-slot="chart-map"
       viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-      className="h-[320px] w-full rounded-xl border bg-[#EFF2F7]"
+      className="h-[320px] w-full rounded-xl border bg-background"
       preserveAspectRatio="xMidYMid meet"
     >
       {/* Estados US — fondo neutro */}
       <g>
         {Object.entries(USA_STATE_PATHS).map(([state, d]) => (
-          <path key={state} d={d} fill="#e5e7eb" stroke="#fff" strokeWidth={1} />
+          <path
+            key={state}
+            d={d}
+            fill={MAP_NO_DATA}
+            stroke="var(--card)"
+            strokeWidth={1}
+          />
         ))}
       </g>
 
@@ -81,21 +79,27 @@ export function RegionsMap({ regions }: { regions: { region: string; members: nu
           const key = normKey(r.region);
           const latlng = REGION_LATLNG[key];
           if (!latlng) return null;
-          const color = REGION_COLOR_HEX[key] ?? "#64748B";
+          const color = regionChartColor(r.region);
           const [cx, cy] = latLngToSvg(latlng[0], latlng[1]);
           const radius = 6 + Math.sqrt(r.members / maxMembers) * 16;
 
           return (
             <g key={r.region}>
               {/* Halo translúcido — amplifica percepción de tamaño */}
-              <circle cx={cx} cy={cy} r={radius * 1.7} fill={color} opacity={0.18} />
+              <circle
+                cx={cx}
+                cy={cy}
+                r={radius * 1.7}
+                fill={color}
+                opacity={0.18}
+              />
               {/* Círculo principal */}
               <circle
                 cx={cx}
                 cy={cy}
                 r={radius}
                 fill={color}
-                stroke="#fff"
+                stroke="var(--card)"
                 strokeWidth={1.5}
                 opacity={0.85}
                 className="cursor-pointer hover:opacity-100"

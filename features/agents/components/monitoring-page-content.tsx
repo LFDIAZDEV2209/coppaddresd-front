@@ -77,7 +77,7 @@ export function MonitoringPageContent() {
   const withFeedback = monitoring.executions.filter((e) => e.feedbackRating !== null).length;
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t('Monitoreo')}
         description={t('Ejecuciones de agentes: latencia, tokens, errores y calidad')}

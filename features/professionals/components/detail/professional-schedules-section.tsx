@@ -94,7 +94,7 @@ export function ProfessionalSchedulesSection({
 
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-border bg-card"
+      className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
       aria-label={t("Horarios")}
     >
       <SectionHeader

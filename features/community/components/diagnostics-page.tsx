@@ -40,7 +40,7 @@ export function DiagnosticsPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-4 p-4 sm:p-6">
+    <div className="flex flex-col gap-4 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Por diagnóstico")}
         description={t("Participación y adherencia por condición clínica")}
@@ -64,7 +64,7 @@ export function DiagnosticsPage() {
       {/* Row 2: chart + table */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Participación vs Adherencia — 2/3, gráfico ocupa todo el alto */}
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5 lg:col-span-2">
           <SectionHeader
             title={t("Participación vs Adherencia por diagnóstico")}
             icon={TrendingUp}
@@ -102,7 +102,7 @@ export function DiagnosticsPage() {
 
         {/* Columna derecha — desglose + resumen para llenar hueco */}
         <div className="flex flex-col gap-4 lg:col-span-1 self-stretch">
-          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader
               title={t("Desglose detallado")}
               icon={Stethoscope}
@@ -137,7 +137,7 @@ export function DiagnosticsPage() {
           </div>
 
           {/* Adherencia por diagnóstico — detalle por condición, llena el hueco */}
-          <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+          <div className="flex flex-1 flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
             <SectionHeader title={t("Adherencia por diagnóstico")} icon={TrendingUp} variant="secondary" />
             <div className="flex flex-1 flex-col gap-3 p-4">
               {(diagnosticsLoading ? [] : diagnostics).map((d) => (

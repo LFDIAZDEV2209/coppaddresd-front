@@ -255,7 +255,7 @@ export function RolesPageContent() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Roles y permisos")}
         description={t("Administración de roles y permisos del sistema")}
@@ -301,7 +301,7 @@ export function RolesPageContent() {
       )}
 
       {/* Mobile: selector horizontal de roles, sticky bajo el topbar. */}
-      <div className="sticky top-0 z-10 -mx-6 bg-background/90 px-6 py-2 backdrop-blur lg:hidden">
+      <div className="sticky top-0 z-10 -mx-4 bg-background/90 px-4 sm:-mx-6 sm:px-6 py-2 backdrop-blur lg:hidden">
         <div className="flex gap-2 overflow-x-auto pb-1">
           {(roles ?? []).map((role) => {
             const isSelected = role.id === selectedRoleId;

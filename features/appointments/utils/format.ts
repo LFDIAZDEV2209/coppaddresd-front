@@ -1,3 +1,4 @@
+import { rainbowTagColors } from "@/lib/ui/rainbow";
 import { getDateLocale } from "@/lib/i18n/date-locale";
 import type {
   AppointmentRequestStatus,
@@ -95,13 +96,13 @@ export const encounterStatusLabel: Record<EncounterStatus, string> = {
 type ColorSet = { bg: string; text: string; dot: string };
 
 const colors = {
-  blue: { bg: "var(--sidebar)", text: "#FFFFFF", dot: "#FFFFFF" },
-  green: { bg: "#E6F7EF", text: "#0E7A4D", dot: "#10B981" },
-  amber: { bg: "#FDF2E3", text: "#9A6A0A", dot: "#F59E0B" },
-  red: { bg: "#FCEBEC", text: "#B42318", dot: "#EF4444" },
-  gray: { bg: "#F1F3F5", text: "#4B5563", dot: "#9CA3AF" },
-  teal: { bg: "#E6F7FB", text: "#0E7490", dot: "#0E7490" },
-  purple: { bg: "#F1EAFB", text: "#6D28D9", dot: "#8B5CF6" },
+  blue: rainbowTagColors("sky"),
+  green: rainbowTagColors("green"),
+  amber: rainbowTagColors("amber"),
+  red: rainbowTagColors("rose"),
+  gray: rainbowTagColors("slate"),
+  teal: rainbowTagColors("teal"),
+  purple: rainbowTagColors("violet"),
 } as const;
 
 export function appointmentStatusColor(status: AppointmentStatus): ColorSet {
@@ -123,24 +124,10 @@ export function appointmentStatusColor(status: AppointmentStatus): ColorSet {
 
 /**
  * Punto de estado legible sobre fondos CLAROS (chips de filtro, KPIs).
- * `appointmentStatusColor` usa dot blanco para Confirmed (pensado para la
- * franja navy); aquí el punto debe contrastar con el fondo del chip.
+ * Comparte los mismos tonos semánticos que los badges, las gráficas y sus leyendas.
  */
 export function appointmentStatusDot(status: AppointmentStatus): string {
-  switch (status) {
-    case "Confirmed":
-      return "var(--primary)";
-    case "InProgress":
-      return "#0E7490";
-    case "Completed":
-      return "#10B981";
-    case "Cancelled":
-      return "#EF4444";
-    case "NoShow":
-      return "#F59E0B";
-    default:
-      return "#64748B";
-  }
+  return appointmentStatusColor(status).dot;
 }
 
 export function requestStatusColor(status: AppointmentRequestStatus): ColorSet {

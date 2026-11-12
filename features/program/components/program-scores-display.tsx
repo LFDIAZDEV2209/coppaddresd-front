@@ -1,5 +1,7 @@
 "use client";
 
+import { chartGradient } from "@/lib/ui/rainbow";
+
 // Componentes compartidos de visualización de scores del programa.
 // Extraídos de program-scores-page.tsx para reutilizarse en el panel del
 // paciente (EnrollmentScoresTab) y en la página de scores original.
@@ -29,11 +31,11 @@ export const DIMENSION_LABELS: Record<string, string> = {
 };
 
 export const DIMENSION_COLORS: Record<string, string> = {
-  adherence: "bg-blue-500",
-  clinical: "bg-green-500",
-  nutrition: "bg-amber-500",
-  psychology: "bg-purple-500",
-  exercise: "bg-rose-500",
+  adherence: "bg-[var(--spectrum-sky-chart)]",
+  clinical: "bg-[var(--spectrum-green-chart)]",
+  nutrition: "bg-[var(--spectrum-amber-chart)]",
+  psychology: "bg-[var(--spectrum-violet-chart)]",
+  exercise: "bg-[var(--spectrum-rose-chart)]",
 };
 
 // --- Sub-componentes ---
@@ -80,7 +82,14 @@ export function DimensionBar({
       <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
         <div
           className={`h-full rounded-full ${color} transition-all`}
-          style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+          style={{
+            width: `${Math.min(100, Math.max(0, value))}%`,
+            backgroundImage: chartGradient(
+              color.match(/var\(--spectrum-[^)]+\)/)?.[0] ??
+                "var(--spectrum-sky-chart)",
+              "horizontal",
+            ),
+          }}
         />
       </div>
       <span className="w-8 text-right text-xs font-medium">{value}</span>

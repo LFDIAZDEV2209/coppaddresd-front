@@ -433,7 +433,7 @@ export function TemplateStudio() {
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
         {/* Galería */}
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("Plantillas")}
             description={t("Selecciona una plantilla para editarla")}
@@ -566,7 +566,7 @@ export function TemplateStudio() {
         </section>
 
         {/* Editor */}
-        <section className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
+        <section className="flex flex-col gap-5 rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
           <SectionHeader
             title={isDraft ? t("Nueva plantilla") : langName || t("Plantilla")}
             description={

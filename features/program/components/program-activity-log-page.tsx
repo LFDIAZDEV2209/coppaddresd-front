@@ -141,7 +141,7 @@ export function ProgramActivityLogPage() {
     tableFilter || actionFilter || fromFilter || toFilter || actorSearch;
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Bitácora de actividad"
         description="Auditoría de las acciones sobre las tablas del programa"
@@ -244,7 +244,7 @@ export function ProgramActivityLogPage() {
       ) : error ? (
         <ActivityLogErrorState message={error} onRetry={retry} />
       ) : result && result.data.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={`${result.total} ${result.total === 1 ? "registro" : "registros"}`}
             description="La más reciente primero"

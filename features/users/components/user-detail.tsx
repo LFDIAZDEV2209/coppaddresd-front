@@ -281,7 +281,7 @@ export function UserDetail({ userId }: UserDetailProps) {
   const directCount = summary?.direct.length ?? 0;
 
   return (
-    <div className="stagger-children flex flex-col gap-5 p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Detalle de usuario")}
         description={t("Identidad, roles y mapa de permisos del usuario.")}
@@ -384,7 +384,7 @@ export function UserDetail({ userId }: UserDetailProps) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Información general */}
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card">
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("Información general")}
             icon={UserRound}
@@ -429,7 +429,7 @@ export function UserDetail({ userId }: UserDetailProps) {
         </section>
 
         {/* Roles */}
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card">
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("Roles asignados")}
             icon={ShieldCheck}
@@ -496,7 +496,7 @@ export function UserDetail({ userId }: UserDetailProps) {
       </div>
 
       {/* Permisos con origen — la banda queda a sangre: es el borde superior de la tarjeta */}
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <SectionHeader
           title={t("Permisos efectivos")}
           icon={KeyRound}

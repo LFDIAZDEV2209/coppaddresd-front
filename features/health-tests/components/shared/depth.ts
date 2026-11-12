@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { rainbowToneFromColor, rainbowTagColors } from "@/lib/ui/rainbow";
 import type { Tone } from "./colors";
 
 /**
@@ -22,13 +23,14 @@ export function pillStyle(tone: Tone): CSSProperties {
   };
 }
 
-/** Píldora plana para severidad/estado: color sólido, sin degradado. */
+/** Píldora semántica suave con contraste AA en ambos temas. */
 export function flatPillStyle(tone: Tone): CSSProperties {
+  const key = rainbowToneFromColor(tone.deep) ?? "slate",
+    color = rainbowTagColors(key);
   return {
-    color: tone.text,
-    backgroundColor: tone.solid,
-    border: `1px solid color-mix(in srgb, ${tone.darker} 58%, transparent)`,
-    boxShadow: "0 1px 2px rgba(16, 24, 40, 0.12)",
+    color: color.text,
+    backgroundColor: color.bg,
+    border: `1px solid var(--spectrum-${key}-border)`,
   };
 }
 
@@ -42,11 +44,7 @@ export function neonDotStyle(tone: Tone): CSSProperties {
 
 /** Píldora tenue para estados secundarios (fondo suave, texto oscuro). */
 export function softPillStyle(tone: Tone): CSSProperties {
-  return {
-    color: tone.softText,
-    backgroundColor: tone.soft,
-    border: `1px solid color-mix(in srgb, ${tone.darker} 28%, transparent)`,
-  };
+  return flatPillStyle(tone);
 }
 
 /**

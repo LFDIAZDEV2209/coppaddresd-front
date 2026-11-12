@@ -46,7 +46,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useNotificationCharts, useNotifications } from "../../hooks/use-notifications";
+import {
+  useNotificationCharts,
+  useNotifications,
+} from "../../hooks/use-notifications";
 import type {
   HealthNotification,
   NotificationChannel,
@@ -54,7 +57,11 @@ import type {
 } from "../../types";
 import { formatDate } from "../../lib/format";
 import { DeliveryStatusBadge } from "../shared/badges";
-import { ChartCard, ChartCardSkeleton, TableSkeleton } from "../shared/module-chart-card";
+import {
+  ChartCard,
+  ChartCardSkeleton,
+  TableSkeleton,
+} from "../shared/module-chart-card";
 import { ModuleEmptyState, ModuleErrorState } from "../shared/module-states";
 
 const PAGE_SIZE = 25;
@@ -73,7 +80,7 @@ const CHANNEL_LABELS: Record<NotificationChannel, string> = {
 
 const CHANNEL_COLORS: Record<string, string> = {
   community: "#8B5CF6",
-  sms: "#0EA5E9",
+  sms: "var(--spectrum-sky-chart)",
 };
 
 const KPI_TONES: Record<string, { accent: string; soft: string }> = {
@@ -244,7 +251,7 @@ export function NotificationsPage() {
 
       <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
         {/* Registro de entregas (izquierda en escritorio) */}
-        <section className="order-2 flex flex-col overflow-hidden rounded-2xl border border-border bg-card xl:order-1 xl:col-span-8">
+        <section className="order-2 flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card xl:order-1 xl:col-span-8 shadow-xs">
           <SectionHeader
             title={t("Registro de entregas")}
             description={t("Filtra por canal, estado o paciente")}
@@ -265,8 +272,14 @@ export function NotificationsPage() {
             </div>
             <Select
               value={channel}
-              onValueChange={(value) => setChannel(value as NotificationChannel | "all")}
-              items={{ all: t("Todo canal"), community: t("Comunidad"), sms: "SMS" }}
+              onValueChange={(value) =>
+                setChannel(value as NotificationChannel | "all")
+              }
+              items={{
+                all: t("Todo canal"),
+                community: t("Comunidad"),
+                sms: "SMS",
+              }}
             >
               <SelectTrigger className="h-9 w-32">
                 <SelectValue />
@@ -279,14 +292,15 @@ export function NotificationsPage() {
             </Select>
             <Select
               value={status}
-              onValueChange={(value) => setStatus(value as NotificationStatus | "all")}
+              onValueChange={(value) =>
+                setStatus(value as NotificationStatus | "all")
+              }
               items={{
                 all: t("Todo estado"),
                 ...Object.fromEntries(
-                  (Object.keys(STATUS_LABELS) as NotificationStatus[]).map((key) => [
-                    key,
-                    t(STATUS_LABELS[key]),
-                  ]),
+                  (Object.keys(STATUS_LABELS) as NotificationStatus[]).map(
+                    (key) => [key, t(STATUS_LABELS[key])],
+                  ),
                 ),
               }}
             >
@@ -295,11 +309,13 @@ export function NotificationsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("Todo estado")}</SelectItem>
-                {(Object.keys(STATUS_LABELS) as NotificationStatus[]).map((key) => (
-                  <SelectItem key={key} value={key}>
-                    {t(STATUS_LABELS[key])}
-                  </SelectItem>
-                ))}
+                {(Object.keys(STATUS_LABELS) as NotificationStatus[]).map(
+                  (key) => (
+                    <SelectItem key={key} value={key}>
+                      {t(STATUS_LABELS[key])}
+                    </SelectItem>
+                  ),
+                )}
               </SelectContent>
             </Select>
             <Input
@@ -317,7 +333,12 @@ export function NotificationsPage() {
               className="h-9 w-36"
             />
             {isFiltered && (
-              <Button type="button" size="sm" variant="ghost" onClick={clearFilters}>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={clearFilters}
+              >
                 {t("Limpiar filtros")}
               </Button>
             )}
@@ -326,163 +347,185 @@ export function NotificationsPage() {
             </span>
           </div>
 
-        {items.length === 0 ? (
-          <ModuleEmptyState
-            title={t("Sin notificaciones")}
-            description={
-              isFiltered
-                ? t("Ninguna notificación coincide con los filtros aplicados.")
-                : t("Aún no se han enviado notificaciones a pacientes.")
-            }
-            filtered={isFiltered}
-            onClear={clearFilters}
-            className="m-5"
-          />
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <Table className="w-full">
-                <TableHeader className="[&_th]:text-[var(--brand-navy)]">
-                  <TableRow>
-                    <TableHead>{t("Paciente")}</TableHead>
-                    <TableHead>{t("Canal")}</TableHead>
-                    <TableHead>{t("Destinatario")}</TableHead>
-                    <TableHead>{t("Plantilla")}</TableHead>
-                    <TableHead>{t("Estado")}</TableHead>
-                    <TableHead className="whitespace-nowrap">{t("Enviada")}</TableHead>
-                    <TableHead className="whitespace-nowrap text-right">
-                      {t("Detalle")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item: HealthNotification) => {
-                    const expanded = expandedId === item.id;
-                    return (
-                      <>
-                        <TableRow key={item.id}>
-                          <TableCell className="text-[12.5px]">
-                            {item.patientName ?? "—"}
-                          </TableCell>
-                          <TableCell>
-                            <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
-                              {item.channel === "sms" ? (
-                                <Send className="size-3.5" />
-                              ) : (
-                                <MailWarning className="size-3.5" />
-                              )}
-                              {t(CHANNEL_LABELS[item.channel])}
-                            </span>
-                          </TableCell>
-                          <TableCell className="max-w-[180px] truncate text-[12px] text-muted-foreground">
-                            {item.recipient}
-                          </TableCell>
-                          <TableCell className="max-w-[200px] truncate text-[12.5px]">
-                            {item.templateName ?? t("Sin plantilla (texto libre)")}
-                          </TableCell>
-                          <TableCell>
-                            <DeliveryStatusBadge
-                              status={item.status}
-                              label={t(STATUS_LABELS[item.status])}
-                            />
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap text-[12px] text-muted-foreground">
-                            {formatDate(item.sentAt ?? item.createdAt)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              type="button"
-                              size="icon-sm"
-                              variant="outline"
-                              aria-label={t("Ver detalle de la entrega")}
-                              onClick={() => setExpandedId(expanded ? null : item.id)}
-                            >
-                              <ChevronDown
-                                className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
+          {items.length === 0 ? (
+            <ModuleEmptyState
+              title={t("Sin notificaciones")}
+              description={
+                isFiltered
+                  ? t(
+                      "Ninguna notificación coincide con los filtros aplicados.",
+                    )
+                  : t("Aún no se han enviado notificaciones a pacientes.")
+              }
+              filtered={isFiltered}
+              onClear={clearFilters}
+              className="m-5"
+            />
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table className="w-full">
+                  <TableHeader className="[&_th]:text-[var(--brand-navy)]">
+                    <TableRow>
+                      <TableHead>{t("Paciente")}</TableHead>
+                      <TableHead>{t("Canal")}</TableHead>
+                      <TableHead>{t("Destinatario")}</TableHead>
+                      <TableHead>{t("Plantilla")}</TableHead>
+                      <TableHead>{t("Estado")}</TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        {t("Enviada")}
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap text-right">
+                        {t("Detalle")}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item: HealthNotification) => {
+                      const expanded = expandedId === item.id;
+                      return (
+                        <>
+                          <TableRow key={item.id}>
+                            <TableCell className="text-[12.5px]">
+                              {item.patientName ?? "—"}
+                            </TableCell>
+                            <TableCell>
+                              <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                                {item.channel === "sms" ? (
+                                  <Send className="size-3.5" />
+                                ) : (
+                                  <MailWarning className="size-3.5" />
+                                )}
+                                {t(CHANNEL_LABELS[item.channel])}
+                              </span>
+                            </TableCell>
+                            <TableCell className="max-w-[180px] truncate text-[12px] text-muted-foreground">
+                              {item.recipient}
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate text-[12.5px]">
+                              {item.templateName ??
+                                t("Sin plantilla (texto libre)")}
+                            </TableCell>
+                            <TableCell>
+                              <DeliveryStatusBadge
+                                status={item.status}
+                                label={t(STATUS_LABELS[item.status])}
                               />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                        {expanded && (
-                          <TableRow key={`${item.id}-detail`} className="bg-muted/30">
-                            <TableCell colSpan={7} className="whitespace-normal">
-                              <div className="flex flex-col gap-2 py-1 text-[12px]">
-                                <p className="text-foreground">{item.renderedBody}</p>
-                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-muted-foreground">
-                                  <span>
-                                    {t("Proveedor")}: {item.provider}
-                                  </span>
-                                  {item.providerMessageId && (
-                                    <span>
-                                      {t("Id del proveedor")}: {item.providerMessageId}
-                                    </span>
-                                  )}
-                                  <span>
-                                    {t("Idioma")}:{" "}
-                                    {item.language === "en" ? "English" : "Español"}
-                                  </span>
-                                  {item.error && (
-                                    <span className="text-destructive">
-                                      {t("Error")}: {item.error}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-[12px] text-muted-foreground">
+                              {formatDate(item.sentAt ?? item.createdAt)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                type="button"
+                                size="icon-sm"
+                                variant="outline"
+                                aria-label={t("Ver detalle de la entrega")}
+                                onClick={() =>
+                                  setExpandedId(expanded ? null : item.id)
+                                }
+                              >
+                                <ChevronDown
+                                  className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
+                                />
+                              </Button>
                             </TableCell>
                           </TableRow>
-                        )}
-                      </>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-2.5">
-              <span className="text-[11.5px] text-muted-foreground">
-                {t("Página")} {page} {t("de")} {totalPages} · {total} {t("registros")}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => downloadCsv()}
-                >
-                  <Download className="size-3.5" />
-                  {t("Descargar CSV")}
-                </Button>
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label={t("Anterior")}
-                  disabled={page <= 1}
-                  onClick={() =>
-                    setPageState({ key: filterKey, page: Math.max(1, page - 1) })
-                  }
-                >
-                  <ChevronLeft className="size-3.5" />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label={t("Siguiente")}
-                  disabled={page >= totalPages}
-                  onClick={() =>
-                    setPageState({
-                      key: filterKey,
-                      page: Math.min(totalPages, page + 1),
-                    })
-                  }
-                >
-                  <ChevronRight className="size-3.5" />
-                </Button>
+                          {expanded && (
+                            <TableRow
+                              key={`${item.id}-detail`}
+                              className="bg-muted/30"
+                            >
+                              <TableCell
+                                colSpan={7}
+                                className="whitespace-normal"
+                              >
+                                <div className="flex flex-col gap-2 py-1 text-[12px]">
+                                  <p className="text-foreground">
+                                    {item.renderedBody}
+                                  </p>
+                                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-muted-foreground">
+                                    <span>
+                                      {t("Proveedor")}: {item.provider}
+                                    </span>
+                                    {item.providerMessageId && (
+                                      <span>
+                                        {t("Id del proveedor")}:{" "}
+                                        {item.providerMessageId}
+                                      </span>
+                                    )}
+                                    <span>
+                                      {t("Idioma")}:{" "}
+                                      {item.language === "en"
+                                        ? "English"
+                                        : "Español"}
+                                    </span>
+                                    {item.error && (
+                                      <span className="text-destructive">
+                                        {t("Error")}: {item.error}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
-            </div>
-          </>
-        )}
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-2.5">
+                <span className="text-[11.5px] text-muted-foreground">
+                  {t("Página")} {page} {t("de")} {totalPages} · {total}{" "}
+                  {t("registros")}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => downloadCsv()}
+                  >
+                    <Download className="size-3.5" />
+                    {t("Descargar CSV")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={t("Anterior")}
+                    disabled={page <= 1}
+                    onClick={() =>
+                      setPageState({
+                        key: filterKey,
+                        page: Math.max(1, page - 1),
+                      })
+                    }
+                  >
+                    <ChevronLeft className="size-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={t("Siguiente")}
+                    disabled={page >= totalPages}
+                    onClick={() =>
+                      setPageState({
+                        key: filterKey,
+                        page: Math.min(totalPages, page + 1),
+                      })
+                    }
+                  >
+                    <ChevronRight className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </section>
 
         {/* Panel de indicadores (derecha en escritorio) */}
@@ -516,11 +559,18 @@ export function NotificationsPage() {
                   key={point.key}
                   className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium"
                   style={{
-                    borderColor: CHANNEL_COLORS[point.key] ?? "#94A3B8",
-                    color: CHANNEL_COLORS[point.key] ?? "#94A3B8",
+                    borderColor:
+                      CHANNEL_COLORS[point.key] ??
+                      "var(--spectrum-slate-chart)",
+                    color:
+                      CHANNEL_COLORS[point.key] ??
+                      "var(--spectrum-slate-chart)",
                   }}
                 >
-                  {t(CHANNEL_LABELS[point.key as NotificationChannel] ?? point.key)}
+                  {t(
+                    CHANNEL_LABELS[point.key as NotificationChannel] ??
+                      point.key,
+                  )}
                   <strong className="tabular-nums">{point.value}</strong>
                 </span>
               ))}
@@ -535,6 +585,7 @@ export function NotificationsPage() {
           ) : (
             <>
               <ChartCard
+                accent="sky"
                 title={t("Envíos por día (30 días)")}
                 description={t("Notificaciones entregadas en el periodo")}
                 icon={TrendingUp}
@@ -561,9 +612,23 @@ export function NotificationsPage() {
                     <ResponsiveContainer width="100%" height={140}>
                       <AreaChart data={dayPoints}>
                         <defs>
-                          <linearGradient id="notif-day-fill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.35} />
-                            <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.02} />
+                          <linearGradient
+                            id="notif-day-fill"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="var(--spectrum-sky-chart)"
+                              stopOpacity={0.35}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="var(--spectrum-sky-chart)"
+                              stopOpacity={0.02}
+                            />
                           </linearGradient>
                         </defs>
                         <XAxis
@@ -584,7 +649,7 @@ export function NotificationsPage() {
                         <Area
                           type="monotone"
                           dataKey="value"
-                          stroke="#0EA5E9"
+                          stroke="var(--spectrum-sky-chart)"
                           strokeWidth={2}
                           fill="url(#notif-day-fill)"
                         />
@@ -595,6 +660,7 @@ export function NotificationsPage() {
               </ChartCard>
 
               <ChartCard
+                accent="violet"
                 title={t("Por canal")}
                 description={t("Distribución de entregas por canal")}
                 icon={Send}
@@ -620,7 +686,10 @@ export function NotificationsPage() {
                           {channelPoints.map((point) => (
                             <Cell
                               key={point.key}
-                              fill={CHANNEL_COLORS[point.key] ?? "#94A3B8"}
+                              fill={
+                                CHANNEL_COLORS[point.key] ??
+                                "var(--spectrum-slate-chart)"
+                              }
                             />
                           ))}
                         </Pie>
@@ -637,11 +706,15 @@ export function NotificationsPage() {
                             className="size-2 rounded-full"
                             style={{
                               backgroundColor:
-                                CHANNEL_COLORS[point.key] ?? "#94A3B8",
+                                CHANNEL_COLORS[point.key] ??
+                                "var(--spectrum-slate-chart)",
                             }}
                             aria-hidden
                           />
-                          {t(CHANNEL_LABELS[point.key as NotificationChannel] ?? point.key)}
+                          {t(
+                            CHANNEL_LABELS[point.key as NotificationChannel] ??
+                              point.key,
+                          )}
                           <strong className="tabular-nums text-foreground">
                             {point.value}
                           </strong>

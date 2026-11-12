@@ -1,5 +1,7 @@
 "use client";
 
+import { colorTint } from "@/lib/ui/rainbow";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -166,11 +168,12 @@ export function CoveragePage() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <ChartCard
+          accent="sky"
           title={t("Evolución de la cobertura")}
           description={t("Porcentaje de tests completados · últimos 12 meses")}
           icon={CalendarRange}
         >
-          <div className="h-60 w-full">
+          <div data-chart-axis="horizontal" className="h-60 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={data.trend}
@@ -180,12 +183,12 @@ export function CoveragePage() {
                   <linearGradient id="covArea" x1="0" y1="0" x2="0" y2="1">
                     <stop
                       offset="0%"
-                      stopColor="var(--sidebar)"
+                      stopColor="var(--spectrum-sky-chart)"
                       stopOpacity={0.35}
                     />
                     <stop
                       offset="100%"
-                      stopColor="var(--sidebar)"
+                      stopColor="var(--spectrum-sky-chart)"
                       stopOpacity={0.02}
                     />
                   </linearGradient>
@@ -220,7 +223,7 @@ export function CoveragePage() {
                 <Area
                   type="monotone"
                   dataKey="coverage"
-                  stroke="var(--sidebar)"
+                  stroke="var(--spectrum-sky-chart)"
                   strokeWidth={2}
                   fill="url(#covArea)"
                 />
@@ -230,11 +233,12 @@ export function CoveragePage() {
         </ChartCard>
 
         <ChartCard
+          accent="violet"
           title={t("Cobertura por categoría")}
           description={t("Adherencia por dominio clínico de la batería")}
           icon={Filter}
         >
-          <div className="h-60 w-full">
+          <div data-chart-axis="horizontal" className="h-60 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data.byCategory.map((c) => ({
@@ -275,7 +279,7 @@ export function CoveragePage() {
                     boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
                   }}
                 />
-                <Bar dataKey="coverage" radius={[0, 5, 5, 0]} maxBarSize={18}>
+                <Bar dataKey="coverage" radius={[0, 8, 8, 0]} maxBarSize={18}>
                   {data.byCategory.map((c) => (
                     <Cell key={c.category} fill={categoryAccent(c.category)} />
                   ))}
@@ -286,7 +290,7 @@ export function CoveragePage() {
         </ChartCard>
       </div>
 
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <SectionHeader
           title={t("Cobertura por test")}
           description={t(
@@ -382,7 +386,10 @@ export function CoveragePage() {
                       <span
                         className="flex size-9 shrink-0 items-center justify-center rounded-xl text-base"
                         style={{
-                          backgroundColor: `${categoryAccent(row.test.category)}1A`,
+                          backgroundColor: colorTint(
+                            categoryAccent(row.test.category),
+                            10.196,
+                          ),
                         }}
                       >
                         {row.test.icon}
@@ -401,7 +408,10 @@ export function CoveragePage() {
                     <span
                       className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
                       style={{
-                        backgroundColor: `${categoryAccent(row.test.category)}1A`,
+                        backgroundColor: colorTint(
+                          categoryAccent(row.test.category),
+                          10.196,
+                        ),
                         color: categoryAccent(row.test.category),
                       }}
                     >

@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useI18n } from "@/providers/i18n-provider";
+import { rainbowStyle, type RainbowTone } from "@/lib/ui/rainbow";
 import { cn } from "@/lib/utils";
 
 type CardVariant =
@@ -24,6 +25,7 @@ interface StatCardProps {
   trend?: { value: string; direction: "up" | "down" };
   icon: LucideIcon;
   variant?: CardVariant;
+  tone?: RainbowTone;
   /** KPI héroe: relleno con el gradiente de marca (jerarquía principal). */
   filled?: boolean;
   /**
@@ -35,62 +37,50 @@ interface StatCardProps {
 
 const variantConfig: Record<
   CardVariant,
-  {
-    iconBg: string;
-    iconColor: string;
-    trendColor: string;
-    accent: string;
-  }
+  { trendColor: string; tone: RainbowTone }
 > = {
   default: {
-    iconBg: "bg-primary",
-    iconColor: "text-white",
+    tone: "sky",
     trendColor: "text-success",
-    accent: "var(--primary)",
   },
   primary: {
-    iconBg: "bg-primary",
-    iconColor: "text-white",
+    tone: "violet",
     trendColor: "text-primary",
-    accent: "var(--primary)",
   },
   success: {
-    iconBg: "bg-success",
-    iconColor: "text-success-foreground",
+    tone: "green",
     trendColor: "text-success",
-    accent: "#10B981",
   },
   warning: {
-    iconBg: "bg-warning",
-    iconColor: "text-warning-foreground",
+    tone: "amber",
     trendColor: "text-warning",
-    accent: "#F59E0B",
   },
   destructive: {
-    iconBg: "bg-destructive",
-    iconColor: "text-white",
+    tone: "rose",
     trendColor: "text-destructive",
-    accent: "#EF4444",
   },
   info: {
-    iconBg: "bg-info",
-    iconColor: "text-info-foreground",
+    tone: "sky",
     trendColor: "text-info",
-    accent: "#0EA5E9",
   },
   navy: {
-    iconBg: "bg-[var(--sidebar)]",
-    iconColor: "text-white",
-    trendColor: "text-[var(--sidebar)]",
-    accent: "var(--sidebar)",
+    tone: "teal",
+    trendColor: "text-primary-soft-foreground",
   },
 };
 
 /** Solo se animan números tipados; los textos formateados se conservan literalmente. */
-function useCountUp(target: string | number, decimals: number, suffix: string, locale: string): string {
-  const format = (value: number) => value.toLocaleString(locale, {
-    minimumFractionDigits: decimals, maximumFractionDigits: decimals,
-  }) + suffix;
+function useCountUp(
+  target: string | number,
+  decimals: number,
+  suffix: string,
+  locale: string,
+): string {
+  const format = (value: number) =>
+    value.toLocaleString(locale, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }) + suffix;
   const finalValue = typeof target === "number" ? format(target) : target;
   const [display, setDisplay] = useState(finalValue);
 
@@ -103,9 +93,12 @@ function useCountUp(target: string | number, decimals: number, suffix: string, l
     let raf = 0;
     const tick = (now: number) => {
       const progress = Math.min((now - start) / 750, 1);
-      setDisplay((target * (1 - Math.pow(1 - progress, 3))).toLocaleString(locale, {
-        minimumFractionDigits: decimals, maximumFractionDigits: decimals,
-      }) + suffix);
+      setDisplay(
+        (target * (1 - Math.pow(1 - progress, 3))).toLocaleString(locale, {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        }) + suffix,
+      );
       if (progress < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -115,9 +108,8 @@ function useCountUp(target: string | number, decimals: number, suffix: string, l
 }
 
 /**
- * Tarjeta de métrica con acento de color por variante. `filled` convierte
- * la card en KPI héroe (gradiente de marca) para jerarquía principal.
- * El valor hace count-up suave al montar.
+ * Métrica compacta con fondo semántico y el lenguaje del dashboard.
+ * Conserva formatos, contexto, tendencias y la variante de énfasis existente.
  */
 export function StatCard({
   label,
@@ -128,66 +120,67 @@ export function StatCard({
   trend,
   icon: Icon,
   variant = "default",
+  tone,
   filled = false,
   align = "left",
 }: StatCardProps) {
   const config = variantConfig[variant];
+  const accent = tone ?? config.tone;
   const { lang } = useI18n();
-  const displayValue = useCountUp(value, decimals, suffix, lang === "en" ? "en-US" : "es-CO");
+  const displayValue = useCountUp(
+    value,
+    decimals,
+    suffix,
+    lang === "en" ? "en-US" : "es-CO",
+  );
   const centered = align === "center";
 
   return (
     <div
+      data-slot="stat-card"
+      data-tone={accent}
+      style={rainbowStyle(accent)}
       className={cn(
-        "group relative flex items-center gap-4 overflow-hidden rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-        centered && "flex-col justify-center gap-3 text-center",
+        "group relative flex min-h-[92px] min-w-0 items-center gap-3 rounded-2xl border p-3.5",
+        centered && "flex-col justify-center text-center",
         filled
-          ? "border-transparent bg-brand-gradient shadow-lg shadow-brand-navy/25"
-          : "border-border/70 bg-card hover:border-border",
+          ? "border-transparent bg-brand-gradient text-white"
+          : "spectrum-card",
       )}
     >
-      {!filled && (
-        <span
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-1"
-          style={{ backgroundColor: config.accent }}
-        />
-      )}
-      <div
+      <span
+        aria-hidden="true"
         className={cn(
-          "flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105",
-          filled
-            ? "bg-white/15 text-white"
-            : cn(config.iconBg, config.iconColor),
+          "flex size-9 shrink-0 items-center justify-center rounded-full text-white",
+          filled ? "border border-white/20 bg-white/10" : "spectrum-icon",
         )}
       >
-        <Icon className="size-5" />
-      </div>
-
+        <Icon className="size-4" />
+      </span>
       <div
         className={cn(
-          "flex min-w-0 flex-col gap-0.5",
-          centered ? "w-full items-center" : "flex-1",
+          "flex min-w-0 flex-1 flex-col gap-0.5",
+          centered && "items-center",
         )}
       >
         <span
           className={cn(
-            "line-clamp-2 text-[11px] font-medium uppercase leading-4 tracking-wider",
-            filled ? "text-white/70" : "text-muted-foreground",
+            "text-[11px] leading-3.5 font-semibold uppercase tracking-[0.02em] [overflow-wrap:anywhere]",
+            filled ? "text-white/85" : "text-muted-foreground",
           )}
         >
           {label}
         </span>
         <div
           className={cn(
-            "flex items-baseline gap-2",
+            "flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1",
             centered && "justify-center",
           )}
         >
           <span
             className={cn(
-              "text-2xl leading-none font-bold tracking-tight tabular-nums",
-              filled ? "text-white" : "text-foreground",
+              "text-2xl leading-7 font-bold tracking-tight tabular-nums [overflow-wrap:anywhere]",
+              filled ? "text-white" : "text-primary-soft-foreground",
             )}
           >
             {displayValue}
@@ -196,13 +189,13 @@ export function StatCard({
             <span
               className={cn(
                 "flex items-center gap-0.5 text-[11px] font-semibold",
-                filled ? "text-teal-200" : config.trendColor,
+                filled ? "text-white/90" : config.trendColor,
               )}
             >
               {trend.direction === "up" ? (
-                <TrendingUp className="size-3" />
+                <TrendingUp aria-hidden="true" className="size-3" />
               ) : (
-                <TrendingDown className="size-3" />
+                <TrendingDown aria-hidden="true" className="size-3" />
               )}
               {trend.value}
             </span>
@@ -211,8 +204,8 @@ export function StatCard({
         {context && (
           <span
             className={cn(
-              "text-[11px]",
-              filled ? "text-white/70" : "text-muted-foreground",
+              "text-[11px] leading-3.5 [overflow-wrap:anywhere]",
+              filled ? "text-white/85" : "text-muted-foreground",
             )}
           >
             {context}

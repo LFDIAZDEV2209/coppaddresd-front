@@ -95,7 +95,7 @@ export function AssignmentsPage() {
     ASSIGNMENT_STATUS_COLORS[status] ?? "bg-gray-100 text-gray-800";
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Asignaciones")}
         description={t("Rutinas de ejercicio y planes de alimentación asignados a pacientes")}

@@ -32,11 +32,16 @@ export function InfoItem({
       </dt>
       <dd
         className={cn(
-          "flex items-center gap-1.5 truncate text-[13px] font-medium text-foreground",
+          "flex min-w-0 items-start gap-1.5 [overflow-wrap:anywhere] text-[13px] font-medium text-foreground",
           mono && "font-mono text-[12px]",
         )}
       >
-        {Icon && <Icon className="size-3.5 shrink-0 text-muted-foreground" />}
+        {Icon && (
+          <Icon
+            aria-hidden="true"
+            className="size-3.5 shrink-0 text-muted-foreground"
+          />
+        )}
         {value}
       </dd>
     </div>

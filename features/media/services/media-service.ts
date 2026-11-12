@@ -1,3 +1,4 @@
+import { normalizeMediaItem } from "./media-text";
 import { apiFetch } from "@/lib/api/http";
 import { env } from "@/lib/config/env";
 import type {
@@ -68,7 +69,7 @@ export async function fetchMediaItems(
     { signal },
   );
   return {
-    data: envelope.items,
+    data: envelope.items.map(normalizeMediaItem),
     total: envelope.totalCount,
     page: envelope.page,
     pageSize: envelope.pageSize,
@@ -78,7 +79,7 @@ export async function fetchMediaItems(
 
 /** Detalle de un medio por id (GET /api/v1/media/{id}). */
 export async function getMediaItemById(id: string): Promise<MediaItem> {
-  return apiFetch<MediaItem>(`${PATH}/${id}`);
+  return normalizeMediaItem(await apiFetch<MediaItem>(`${PATH}/${id}`));
 }
 
 /**
@@ -138,14 +139,19 @@ export async function cleanupOrphanedBlobs(input: {
 export function hasPublishableMetadata(item: MediaItem): boolean {
   return (
     !isPlaceholderMedia(item) &&
-    (item.mediaType === "Image" || (item.durationSecs !== null && item.durationSecs > 0)) &&
+    (item.mediaType === "Image" ||
+      (item.durationSecs !== null && item.durationSecs > 0)) &&
     Boolean(item.contentType)
   );
 }
 
 /** El dataset de demostración no equivale a una grabación aprobada. */
-export function isPlaceholderMedia(item: Pick<MediaItem, "storageKey">): boolean {
-  return item.storageKey.trim().toLowerCase() === "media/podcasts/demo-copp.mp3";
+export function isPlaceholderMedia(
+  item: Pick<MediaItem, "storageKey">,
+): boolean {
+  return (
+    item.storageKey.trim().toLowerCase() === "media/podcasts/demo-copp.mp3"
+  );
 }
 
 export async function createMediaItem(input: MediaInput): Promise<MediaItem> {

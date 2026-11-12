@@ -1,5 +1,7 @@
 "use client";
 
+import { colorTint } from "@/lib/ui/rainbow";
+
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -235,17 +237,17 @@ export function HealthTestsDashboard() {
     {
       name: t("Completados"),
       value: coverageMetrics.completed,
-      color: "#10B981",
+      color: "var(--spectrum-green-chart)",
     },
     {
       name: t("En progreso"),
       value: coverageMetrics.inProgress,
-      color: "#0EA5E9",
+      color: "var(--spectrum-sky-chart)",
     },
     {
       name: t("Pendientes"),
       value: coverageMetrics.pending,
-      color: "#94A3B8",
+      color: "var(--spectrum-slate-chart)",
     },
   ];
 
@@ -327,6 +329,7 @@ export function HealthTestsDashboard() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <ChartCard
+          accent="sky"
           title={t("Cobertura de la batería")}
           description={t("Estado de las evaluaciones")}
           icon={ClipboardCheck}
@@ -415,6 +418,7 @@ export function HealthTestsDashboard() {
         </ChartCard>
 
         <ChartCard
+          accent="violet"
           title={t("Distribución por nivel de riesgo")}
           description={t(
             "Riesgo poblacional según los resultados de la batería",
@@ -488,6 +492,7 @@ export function HealthTestsDashboard() {
         </ChartCard>
 
         <ChartCard
+          accent="teal"
           title={t("Cobertura por categoría")}
           description={t("Adherencia por dominio clínico")}
           icon={PieChartIcon}
@@ -500,6 +505,7 @@ export function HealthTestsDashboard() {
       </div>
 
       <ChartCard
+        accent="amber"
         title={t("Evolución de la cobertura")}
         description={t("Porcentaje de tests completados · últimos 12 meses")}
         icon={TrendingUp}
@@ -523,12 +529,12 @@ export function HealthTestsDashboard() {
                 <linearGradient id="covFill" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="0%"
-                    stopColor="var(--sidebar)"
+                    stopColor="var(--spectrum-sky-chart)"
                     stopOpacity={0.35}
                   />
                   <stop
                     offset="100%"
-                    stopColor="var(--sidebar)"
+                    stopColor="var(--spectrum-sky-chart)"
                     stopOpacity={0.02}
                   />
                 </linearGradient>
@@ -564,7 +570,7 @@ export function HealthTestsDashboard() {
               <Area
                 type="monotone"
                 dataKey="coverage"
-                stroke="var(--sidebar)"
+                stroke="var(--spectrum-sky-chart)"
                 strokeWidth={2}
                 fill="url(#covFill)"
               />
@@ -574,6 +580,7 @@ export function HealthTestsDashboard() {
       </ChartCard>
 
       <ChartCard
+        accent="pink"
         title={t("Alertas recientes")}
         description={t("Resultados que requieren atención")}
         icon={BellRing}
@@ -680,7 +687,7 @@ function HealthGeoMapRow({
 
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
-      <div className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col">
+      <div className="rounded-2xl border border-brand-blue-soft/40 bg-card overflow-hidden flex flex-col shadow-xs">
         <SectionHeader
           title={t("Mapa de calor — Riesgo alto")}
           description={t(
@@ -707,7 +714,7 @@ function HealthGeoMapRow({
         </div>
       </div>
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-brand-blue-soft/40 bg-card p-5 shadow-xs">
           <SectionHeader
             title={t("Top ciudades")}
             description={t("Por número de pacientes")}
@@ -922,7 +929,9 @@ function AlertRow({ alert }: { alert: HealthAlert }) {
     <li className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
       <span
         className="flex size-9 shrink-0 items-center justify-center rounded-xl"
-        style={{ backgroundColor: `${severityHex(alert.severity)}1A` }}
+        style={{
+          backgroundColor: colorTint(severityHex(alert.severity), 10.196),
+        }}
       >
         <BellRing
           className="size-4"
@@ -994,7 +1003,7 @@ function CategoryCoverageChart({
   }));
 
   return (
-    <div className="h-[280px] w-full">
+    <div data-chart-axis="horizontal" className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={chartData}
@@ -1031,7 +1040,7 @@ function CategoryCoverageChart({
               boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
             }}
           />
-          <Bar dataKey="coverage" radius={[0, 5, 5, 0]} maxBarSize={20}>
+          <Bar dataKey="coverage" radius={[0, 8, 8, 0]} maxBarSize={20}>
             {chartData.map((entry) => (
               <Cell key={entry.name} fill={entry.color} />
             ))}
@@ -1046,10 +1055,10 @@ function categoryColor(category: string): string {
   const map: Record<string, string> = {
     "historia-clinica": "#1B6CA8",
     nutricion: "#1D9E75",
-    movimiento: "#E87B2B",
+    movimiento: "var(--spectrum-orange-chart)",
     sueno: "#7C3AED",
-    adherencia: "#0EA5E9",
-    "salud-mental": "#4F46E5",
+    adherencia: "var(--spectrum-sky-chart)",
+    "salud-mental": "var(--spectrum-violet-chart)",
     cardiometabolico: "#E24B4A",
   };
   return map[category] ?? "#64748B";

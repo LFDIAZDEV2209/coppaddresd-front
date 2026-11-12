@@ -7,7 +7,7 @@ export function ProgressRing({
   value,
   size = 84,
   stroke = 8,
-  color = "var(--primary)",
+  color = "var(--spectrum-sky-chart)",
   track = "var(--muted)",
   label,
   className,

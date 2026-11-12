@@ -1,5 +1,7 @@
 "use client";
 
+import { colorTint } from "@/lib/ui/rainbow";
+
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -93,7 +95,7 @@ export function CatalogPage() {
   const ruleCount = data.rules.length;
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Catálogo de tests")}
         description={t(
@@ -146,7 +148,7 @@ export function CatalogPage() {
         />
       </div>
 
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
         <SectionHeader
           title={t("Catálogo")}
           description={t("Filtra por categoría o estado")}
@@ -206,7 +208,11 @@ export function CatalogPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((test) => (
-              <TestCatalogCard key={test.id} test={test} onEdit={() => setEditor({ id: test.id })} />
+              <TestCatalogCard
+                key={test.id}
+                test={test}
+                onEdit={() => setEditor({ id: test.id })}
+              />
             ))}
           </div>
         )}
@@ -214,8 +220,29 @@ export function CatalogPage() {
 
       <section className="grid gap-3 rounded-2xl border bg-card p-5">
         <h2 className="font-semibold">{t("Reglas de alerta activas")}</h2>
-        {data.rules.map(rule => <div key={rule.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"><span>{rule.name}</span><span className="rounded-full bg-warning-soft px-2 py-1 text-xs text-warning-soft-foreground">{t(({ low: "Baja", moderate: "Moderada", high: "Alta", critical: "Crítica" } as Record<string, string>)[rule.severity] ?? rule.severity)}</span></div>)}
-        {data.rules.length === 0 && <p className="text-muted-foreground">{t("Sin reglas activas")}</p>}
+        {data.rules.map((rule) => (
+          <div
+            key={rule.id}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"
+          >
+            <span>{rule.name}</span>
+            <span className="rounded-full bg-warning-soft px-2 py-1 text-xs text-warning-soft-foreground">
+              {t(
+                (
+                  {
+                    low: "Baja",
+                    moderate: "Moderada",
+                    high: "Alta",
+                    critical: "Crítica",
+                  } as Record<string, string>
+                )[rule.severity] ?? rule.severity,
+              )}
+            </span>
+          </div>
+        ))}
+        {data.rules.length === 0 && (
+          <p className="text-muted-foreground">{t("Sin reglas activas")}</p>
+        )}
       </section>
 
       <p className="flex items-center gap-2 rounded-xl bg-muted px-4 py-3 text-[11.5px] text-muted-foreground">
@@ -224,12 +251,24 @@ export function CatalogPage() {
           "Las versiones publicadas conservan los resultados históricos. Edita las preguntas en un borrador y publícalo para nuevas asignaciones.",
         )}
       </p>
-      {editor && <CatalogEditor id={editor.id} onClose={() => setEditor(null)} onSaved={reload} />}
+      {editor && (
+        <CatalogEditor
+          id={editor.id}
+          onClose={() => setEditor(null)}
+          onSaved={reload}
+        />
+      )}
     </div>
   );
 }
 
-function TestCatalogCard({ test, onEdit }: { test: HealthTest; onEdit: () => void }) {
+function TestCatalogCard({
+  test,
+  onEdit,
+}: {
+  test: HealthTest;
+  onEdit: () => void;
+}) {
   const t = useT();
   const accent = categoryAccent(test.category);
   return (
@@ -238,7 +277,7 @@ function TestCatalogCard({ test, onEdit }: { test: HealthTest; onEdit: () => voi
         <div className="flex min-w-0 items-center gap-2.5">
           <span
             className="flex size-10 shrink-0 items-center justify-center rounded-xl text-lg"
-            style={{ backgroundColor: `${accent}1A` }}
+            style={{ backgroundColor: colorTint(accent, 10.196) }}
           >
             {test.icon}
           </span>
@@ -269,7 +308,8 @@ function TestCatalogCard({ test, onEdit }: { test: HealthTest; onEdit: () => voi
           {test.required ? t("Obligatorio") : t("Opcional")}
         </span>
         <span className="flex items-center gap-1.5 text-muted-foreground">
-          <ListChecks className="size-3.5" style={{ color: accent }} /> {test.questionsCount} {t("preguntas")}
+          <ListChecks className="size-3.5" style={{ color: accent }} />{" "}
+          {test.questionsCount} {t("preguntas")}
         </span>
         <span className="flex items-center gap-1.5 text-muted-foreground">
           <Clock className="size-3.5" style={{ color: accent }} />
@@ -337,7 +377,13 @@ function TestCatalogCard({ test, onEdit }: { test: HealthTest; onEdit: () => voi
   );
 }
 
-function TestActions({ test, onEdit }: { test: HealthTest; onEdit: () => void }) {
+function TestActions({
+  test,
+  onEdit,
+}: {
+  test: HealthTest;
+  onEdit: () => void;
+}) {
   const t = useT();
   const { hasPermission } = useAuth();
   const hasManage = hasPermission("HealthTests.Manage");

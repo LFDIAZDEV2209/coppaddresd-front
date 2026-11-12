@@ -68,7 +68,7 @@ export function StorePage() {
   const { can } = useAppContext();
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t('Tienda de bienestar')}
         description={t('Administra los productos que se muestran en el marketplace del paciente')}
@@ -167,7 +167,7 @@ function StoreTable({
   const t = useT();
   const { can } = useAppContext();
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <SectionHeader title={`${items.length} ${t('productos')}`} description={t('Estado de la tienda')} icon={ShoppingBag} variant="primary" />
       <Table>
         <TableHeader>

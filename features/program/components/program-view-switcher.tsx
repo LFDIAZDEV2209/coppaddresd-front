@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 
 interface ViewOption {
@@ -18,11 +19,12 @@ export function ProgramViewSwitcher({
   options,
   onChange,
 }: ViewSwitcherProps) {
+  const t = useT();
   return (
     <div
       role="tablist"
-      aria-label="Vistas del programa"
-      className="inline-flex flex-wrap items-center gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-sm"
+      aria-label={t("Vistas del programa")}
+      className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl border border-brand-blue-soft/30 bg-secondary/60 p-1"
     >
       {options.map((option) => {
         const isActive = value === option.value;
@@ -34,13 +36,13 @@ export function ProgramViewSwitcher({
             aria-selected={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+              "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg px-4 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
               isActive
-                ? "bg-[#123B63] text-white shadow-md shadow-[#123B63]/25"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
+                ? "bg-brand-gradient text-white"
+                : "text-muted-foreground hover:bg-primary-soft hover:text-foreground",
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         );
       })}

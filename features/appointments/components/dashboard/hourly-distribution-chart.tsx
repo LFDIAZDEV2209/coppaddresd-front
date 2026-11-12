@@ -1,5 +1,7 @@
 "use client";
 
+import { RAINBOW_SERIES } from "@/lib/ui/rainbow";
+
 import {
   Bar,
   BarChart,
@@ -45,8 +47,6 @@ export function HourlyDistributionChart({
     );
   }
 
-  const max = data.reduce((top, d) => Math.max(top, d.citas), 0);
-
   return (
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -84,11 +84,11 @@ export function HourlyDistributionChart({
               boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
             }}
           />
-          <Bar dataKey="citas" radius={[5, 5, 0, 0]} maxBarSize={36}>
-            {data.map((d) => (
+          <Bar dataKey="citas" radius={[8, 8, 0, 0]} maxBarSize={36}>
+            {data.map((d, index) => (
               <Cell
                 key={d.label}
-                fill={d.citas === max ? "var(--primary)" : "var(--chart-2)"}
+                fill={RAINBOW_SERIES[index % RAINBOW_SERIES.length]}
               />
             ))}
           </Bar>

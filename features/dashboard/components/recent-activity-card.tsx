@@ -26,7 +26,7 @@ export function RecentActivityCard({ data }: RecentActivityCardProps) {
   const t = useT();
   const { lang } = useI18n();
   return (
-    <div className="flex flex-col">
+    <div className="@container/feed flex flex-col">
       {data.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border py-10 text-center">
           <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
@@ -43,20 +43,15 @@ export function RecentActivityCard({ data }: RecentActivityCardProps) {
         </div>
       ) : (
         <div className="relative flex flex-col">
-          {/* Línea de la timeline */}
-          <div
-            aria-hidden="true"
-            className="absolute top-4 bottom-4 left-[15px] w-px bg-border"
-          />
           {data.map((event) => {
             const EventIcon = inferIcon(event.action);
             return (
               <div
                 key={event.id}
-                className="group relative z-10 -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-200 hover:bg-muted/50"
+                className="group grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1 border-b border-border/60 py-3 first:pt-0 last:border-0 @min-[600px]/feed:grid-cols-[2rem_minmax(0,1fr)_auto]"
               >
                 <div className="relative shrink-0">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--sidebar)] to-brand-teal text-[10px] font-bold text-white shadow-sm ring-2 ring-card">
+                  <div className="bg-brand-gradient flex size-8 items-center justify-center rounded-full text-[10px] font-bold text-white">
                     {event.initials}
                   </div>
                   <span className="absolute -right-0.5 -bottom-0.5 flex size-3.5 items-center justify-center rounded-full border border-border bg-card">
@@ -66,17 +61,39 @@ export function RecentActivityCard({ data }: RecentActivityCardProps) {
                     />
                   </span>
                 </div>
-                <div className="flex min-w-0 flex-1 flex-col gap-px overflow-hidden">
-                  <span className="truncate text-[12.5px] font-medium text-foreground">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-[12.5px] [overflow-wrap:anywhere] font-medium text-foreground">
                     {event.user}
                   </span>
-                  <span className="truncate text-[11px] text-muted-foreground">
-                    {event.action}
+                  <span className="text-[11px] text-muted-foreground">
+                    {t(
+                      (
+                        {
+                          completado: "Completado",
+                          error: "Error",
+                          ejecutando: "En ejecución",
+                        } as Record<string, string>
+                      )[event.action] ?? event.action,
+                    )}
                   </span>
                 </div>
-                <span className="shrink-0 text-[10px] whitespace-nowrap text-muted-foreground transition-colors group-hover:text-foreground/70">
-                  {new Date(event.time).toLocaleString(lang === "en" ? "en-US" : "es-CO")}
-                </span>
+                <time
+                  dateTime={event.time}
+                  title={new Date(event.time).toLocaleString(
+                    lang === "en" ? "en-US" : "es-CO",
+                  )}
+                  className="col-start-2 text-[11px] text-muted-foreground @min-[600px]/feed:col-start-auto @min-[600px]/feed:text-right"
+                >
+                  {new Date(event.time).toLocaleString(
+                    lang === "en" ? "en-US" : "es-CO",
+                    {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    },
+                  )}
+                </time>
               </div>
             );
           })}
@@ -85,7 +102,7 @@ export function RecentActivityCard({ data }: RecentActivityCardProps) {
 
       <Link
         href="/agents/monitoring"
-        className="mt-2 text-center text-[12px] font-medium text-primary transition-colors hover:text-primary-strong"
+        className="mt-2 self-end rounded-md py-2 text-xs font-medium text-primary transition-colors hover:text-primary-strong focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         {t("Ver ejecuciones →")}
       </Link>

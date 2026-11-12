@@ -114,7 +114,7 @@ export function KnowledgePageContent() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t('Agente Global')}
         description={t('Knowledge bases globales y por agente con documentos indexados para RAG')}

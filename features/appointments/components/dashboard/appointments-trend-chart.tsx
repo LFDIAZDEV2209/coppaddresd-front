@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { RainbowAreaDefs } from "@/components/brand/rainbow-area-defs";
+
+import { RAINBOW_SERIES } from "@/lib/ui/rainbow";
+
+import { useId, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ReferenceDot,
   ResponsiveContainer,
   Tooltip,
@@ -45,6 +50,7 @@ export function AppointmentsTrendChart({
   loading: boolean;
 }) {
   const t = useT();
+  const chartId = useId();
   const [bucket, setBucket] = useState<Bucket>("day");
 
   const data = useMemo(() => {
@@ -82,12 +88,7 @@ export function AppointmentsTrendChart({
         data={data}
         margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
       >
-        <defs>
-          <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.35} />
-            <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.02} />
-          </linearGradient>
-        </defs>
+        <RainbowAreaDefs id={chartId} />
         <CartesianGrid
           strokeDasharray="3 3"
           stroke="var(--border)"
@@ -119,16 +120,16 @@ export function AppointmentsTrendChart({
         <Area
           type="monotone"
           dataKey="citas"
-          stroke="var(--chart-1)"
+          stroke={`url(#${chartId}-line)`}
           strokeWidth={2}
-          fill="url(#trendFill)"
+          fill={`url(#${chartId}-fill)`}
         />
         {bucket === "day" && peak && peak.citas > 0 && (
           <ReferenceDot
             x={peak.label}
             y={peak.citas}
             r={4}
-            fill="var(--primary)"
+            fill="var(--spectrum-sky-chart)"
             stroke="var(--card)"
             strokeWidth={2}
           />
@@ -167,9 +168,16 @@ export function AppointmentsTrendChart({
         <Bar
           dataKey="citas"
           fill="var(--chart-1)"
-          radius={[5, 5, 0, 0]}
+          radius={[8, 8, 0, 0]}
           maxBarSize={48}
-        />
+        >
+          {data.map((point, index) => (
+            <Cell
+              key={point.label}
+              fill={RAINBOW_SERIES[index % RAINBOW_SERIES.length]}
+            />
+          ))}
+        </Bar>
       </BarChart>
     );
 

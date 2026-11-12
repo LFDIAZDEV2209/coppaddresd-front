@@ -144,7 +144,7 @@ export function PatientDetailPage({ id }: { id: string }) {
   const emergencyContact = normalizeEmergencyContact(patient.emergencyContact);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <Button
         variant="ghost"
         size="sm"
@@ -476,7 +476,7 @@ function DetailCard({
 }) {
   return (
     <section
-      className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
+      className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
       aria-label={title}
     >
       <SectionHeader title={title} icon={icon} variant="primary" />
@@ -511,7 +511,7 @@ function DiagnosesSection({ patient }: { patient: Patient }) {
   const t = useT();
   return (
     <section
-      className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
+      className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
       aria-label={t("Diagnósticos")}
     >
       <SectionHeader
@@ -561,7 +561,7 @@ function MedicationsSection({ patient }: { patient: Patient }) {
   const t = useT();
   return (
     <section
-      className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
+      className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
       aria-label={t("Medicamentos")}
     >
       <SectionHeader
@@ -611,7 +611,7 @@ function AllergiesSection({ patient }: { patient: Patient }) {
   const t = useT();
   return (
     <section
-      className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
+      className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
       aria-label={t("Alergias")}
     >
       <SectionHeader
@@ -655,7 +655,7 @@ function VitalSignsSection({ patient }: { patient: Patient }) {
   const latest = patient.vitalSigns[0];
   return (
     <section
-      className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
+      className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs"
       aria-label={t("Signos vitales")}
     >
       <SectionHeader

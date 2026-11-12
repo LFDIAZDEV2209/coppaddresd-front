@@ -77,7 +77,7 @@ export function ClubsPage() {
   }, [clubs, page, pageSize]);
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Clubes")}
         description={t(
@@ -148,7 +148,7 @@ export function ClubsPage() {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-black/5">
+      <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card transition-all hover:shadow-lg hover:shadow-black/5">
         <SectionHeader
           title={t("Clubes de la comunidad")}
           description={`${clubs.length} ${t("clubes encontrados")}`}

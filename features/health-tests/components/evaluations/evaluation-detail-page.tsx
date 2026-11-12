@@ -1,5 +1,7 @@
 "use client";
 
+import { colorTint } from "@/lib/ui/rainbow";
+
 /* eslint-disable react-hooks/static-components -- iconos derivados de categoría/test son valores estables, no crean estado */
 import Link from "next/link";
 import {
@@ -95,7 +97,7 @@ export function EvaluationDetailPage({
   if (!detail) return null;
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={detail.testName}
         description={t("Detalle del resultado de la evaluación")}
@@ -148,9 +150,9 @@ function EvaluationSummary({ detail }: { detail: EvaluationDetail }) {
         <span
           className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-xl ring-1 ring-inset"
           style={{
-            backgroundColor: `${accent}14`,
+            backgroundColor: colorTint(accent, 7.843),
             color: accent,
-            borderColor: `${accent}20`,
+            borderColor: colorTint(accent, 12.549),
           }}
         >
           <IconCat className="size-6" />
@@ -303,7 +305,7 @@ function ResultSections({ detail }: { detail: EvaluationDetail }) {
 
   if (detail.results.length === 0) {
     return (
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
         <SectionHeader
           title={t("Resultados")}
           description={t("Resultados calculados de la evaluación")}
@@ -323,7 +325,7 @@ function ResultSections({ detail }: { detail: EvaluationDetail }) {
   }
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
       <SectionHeader
         title={t("Resultados")}
         description={t(
@@ -341,7 +343,7 @@ function ResultSections({ detail }: { detail: EvaluationDetail }) {
         >
           <span
             className="flex size-11 shrink-0 items-center justify-center rounded-xl text-lg ring-1 ring-inset"
-            style={{ backgroundColor: `${accent}14`, color: accent }}
+            style={{ backgroundColor: colorTint(accent, 7.843), color: accent }}
           >
             <Trophy className="size-5" />
           </span>
@@ -474,9 +476,9 @@ function ResultRow({
         <span
           className="flex size-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset"
           style={{
-            backgroundColor: `${accent}12`,
+            backgroundColor: colorTint(accent, 7.059),
             color: accent,
-            borderColor: `${accent}18`,
+            borderColor: colorTint(accent, 9.412),
           }}
         >
           <Icon className="size-4" />
@@ -533,7 +535,7 @@ function ResponsesSection({ detail }: { detail: EvaluationDetail }) {
   }
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
       <SectionHeader
         title={t("Respuestas")}
         description={t("Respuestas registradas por el paciente")}
@@ -587,7 +589,7 @@ function ResponsesSection({ detail }: { detail: EvaluationDetail }) {
 function CommentsSection({ detail }: { detail: EvaluationDetail }) {
   const t = useT();
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
       <SectionHeader
         title={t("Comentarios")}
         description={t("Historial de revisión de la evaluación")}
@@ -636,7 +638,7 @@ function AttemptsComparison({ detail }: { detail: EvaluationDetail }) {
   );
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-sm">
       <SectionHeader
         title={t("Historial de intentos")}
         description={t("Progresión del mismo test en el tiempo")}

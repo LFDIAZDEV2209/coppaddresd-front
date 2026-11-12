@@ -127,7 +127,7 @@ export function ProgramInterventionsPage() {
     date ? new Date(date).toLocaleDateString("es-CO") : "—";
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title="Cola de intervenciones"
         description="Gestiona las intervenciones abiertas de los pacientes"
@@ -168,7 +168,7 @@ export function ProgramInterventionsPage() {
       ) : error ? (
         <InterventionsErrorState message={error} onRetry={retry} />
       ) : result && result.data.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={`${result.total} ${result.total === 1 ? "intervención" : "intervenciones"} abiertas`}
             description="Vista de tabla"

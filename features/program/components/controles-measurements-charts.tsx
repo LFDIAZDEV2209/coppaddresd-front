@@ -50,7 +50,7 @@ function renderMeasurementDot(color: string) {
         cx={cx}
         cy={cy}
         r={isLab ? 5 : 3}
-        fill={isLab ? "var(--warning)" : color}
+        fill={isLab ? "var(--spectrum-amber-chart)" : color}
         stroke={isLab ? "var(--card)" : "none"}
         strokeWidth={isLab ? 2 : 0}
       />
@@ -113,11 +113,12 @@ export function ControlesMeasurementsCharts({
       .map((measurement) => ({
         date: formatControlDate(measurement.observedAt),
         value: measurement.value,
-        isLab: measurement.batchId !== null && labBatchIds.has(measurement.batchId),
+        isLab:
+          measurement.batchId !== null && labBatchIds.has(measurement.batchId),
       }));
   }, [measurements, selected, labBatchIds]);
 
-  const color = METRIC_COLORS[selected] ?? "var(--primary)";
+  const color = METRIC_COLORS[selected] ?? "var(--spectrum-sky-chart)";
 
   return (
     <div className="flex flex-col gap-4">

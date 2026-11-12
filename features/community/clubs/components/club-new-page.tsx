@@ -99,7 +99,7 @@ export function ClubNewPage() {
   const canManage = can("Community.Manage");
   if (!canManage) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6 min-w-0">
         <PageHeader
           title={t("Nuevo club")}
           description={t("Sin permiso")}
@@ -162,7 +162,7 @@ export function ClubNewPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Nuevo club")}
         description={t("Crea un club temático para la comunidad Copp Adresd")}

@@ -131,7 +131,7 @@ export function ClubModerationTab({ clubId }: { clubId: string }) {
       </TabsContent>
 
       <TabsContent value="log">
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("Historial")}
             description={`${log.length} ${t("acciones")}`}

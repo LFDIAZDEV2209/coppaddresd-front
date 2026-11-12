@@ -107,7 +107,7 @@ export function AdminDashboard() {
       : null;
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t("Citas · Administración")}
         description={t("Resumen operativo del módulo de citas")}
@@ -211,6 +211,7 @@ export function AdminDashboard() {
       {/* Gráficas: tendencia + distribución por estado en la fila principal. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <DashboardChartCard
+          accent="sky"
           title={t("Actividad de citas")}
           description={`${t("Serie temporal en el rango seleccionado")} (${t(rangeOptions.find((o) => o.key === range)!.label)})`}
           icon={Activity}
@@ -223,6 +224,7 @@ export function AdminDashboard() {
         </DashboardChartCard>
 
         <DashboardChartCard
+          accent="violet"
           title={t("Distribución por estado")}
           description={t("Citas agrupadas por estado en el rango")}
           icon={PieChart}
@@ -237,6 +239,7 @@ export function AdminDashboard() {
       {/* Fila secundaria: actividad por profesional + franjas horarias. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <DashboardChartCard
+          accent="teal"
           title={t("Actividad por profesional")}
           description={t(
             "Citas totales y completadas por profesional en el rango",
@@ -250,6 +253,7 @@ export function AdminDashboard() {
         </DashboardChartCard>
 
         <DashboardChartCard
+          accent="amber"
           title={t("Franjas de mayor demanda")}
           description={t("Citas por hora del día en el rango")}
           icon={Clock}
@@ -266,7 +270,7 @@ export function AdminDashboard() {
 
       {/* Próximas citas globales + accesos rápidos. */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card xl:col-span-2">
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card xl:col-span-2 shadow-xs">
           <SectionHeader
             title={t("Próximas citas")}
             description={t("Próximas citas en el sistema")}
@@ -291,7 +295,7 @@ export function AdminDashboard() {
           </div>
         </section>
 
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+        <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={t("Accesos rápidos")}
             description={t("Accesos directos del módulo")}

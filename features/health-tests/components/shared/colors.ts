@@ -1,3 +1,4 @@
+import { chartColor, MAP_NO_DATA, type RainbowTone } from "@/lib/ui/rainbow";
 import type {
   AlertSeverity,
   NotificationStatus,
@@ -8,7 +9,7 @@ import type {
 /**
  * Paleta semántica del módulo de Tests de Salud.
  *
- * Sigue la línea visual del dashboard: saturada y con relieve, no pastel.
+ * Comparte los tokens de gráficas, chips y mapas del ERP. Las rampas clínicas conservan su significado.
  * Cada tono expone:
  *  - solid   → relleno vivo (gráficas)
  *  - deep    → relleno profundo (píldoras/chips con texto encima)
@@ -26,55 +27,23 @@ export interface Tone {
 }
 
 /** Tonos base (mismos matices que la paleta de gráficas del dashboard). */
+function sharedTone(tone: RainbowTone): Tone {
+  return {
+    solid: chartColor(tone),
+    deep: `var(--spectrum-${tone}-deep)`,
+    darker: `var(--spectrum-${tone}-fg)`,
+    text: "#FFFFFF",
+    soft: `var(--spectrum-${tone}-soft)`,
+    softText: `var(--spectrum-${tone}-fg)`,
+  };
+}
 export const tones = {
-  red: {
-    solid: "#EF4444",
-    deep: "#DC2626",
-    darker: "#B91C1C",
-    text: "#FFFFFF",
-    soft: "#FEE2E2",
-    softText: "#B91C1C",
-  },
-  orange: {
-    solid: "#F97316",
-    deep: "#EA580C",
-    darker: "#C2410C",
-    text: "#FFFFFF",
-    soft: "#FFEDD5",
-    softText: "#C2410C",
-  },
-  amber: {
-    solid: "#FBBF24",
-    deep: "#F59E0B",
-    darker: "#D97706",
-    text: "#451A03",
-    soft: "#FEF3C7",
-    softText: "#92400E",
-  },
-  emerald: {
-    solid: "#10B981",
-    deep: "#047857",
-    darker: "#065F46",
-    text: "#FFFFFF",
-    soft: "#D1FAE5",
-    softText: "#047857",
-  },
-  sky: {
-    solid: "#0EA5E9",
-    deep: "#0369A1",
-    darker: "#075985",
-    text: "#FFFFFF",
-    soft: "#E0F2FE",
-    softText: "#0369A1",
-  },
-  slate: {
-    solid: "#94A3B8",
-    deep: "#64748B",
-    darker: "#475569",
-    text: "#FFFFFF",
-    soft: "#F1F5F9",
-    softText: "#475569",
-  },
+  red: sharedTone("rose"),
+  orange: sharedTone("orange"),
+  amber: sharedTone("amber"),
+  emerald: sharedTone("green"),
+  sky: sharedTone("sky"),
+  slate: sharedTone("slate"),
 } satisfies Record<string, Tone>;
 
 /** Tokens neutros heredados del paso anterior (texto/superficies/bordes). */
@@ -163,13 +132,13 @@ export function testStateColors(state: TestState) {
 /** Color de acento para una categoría de test (consistente con los emojis). */
 export function categoryAccent(category: string): string {
   const map: Record<string, string> = {
-    "historia-clinica": "#0369A1",
-    nutricion: "#047857",
-    movimiento: "#C2410C",
-    sueno: "#7C3AED",
-    adherencia: "#0284C7",
-    "salud-mental": "#4F46E5",
-    cardiometabolico: "#B91C1C",
+    "historia-clinica": chartColor("sky"),
+    nutricion: chartColor("green"),
+    movimiento: chartColor("orange"),
+    sueno: chartColor("violet"),
+    adherencia: chartColor("teal"),
+    "salud-mental": chartColor("pink"),
+    cardiometabolico: chartColor("rose"),
   };
   return map[category] ?? tones.slate.solid;
 }
@@ -194,7 +163,7 @@ export const mapRiskPalette = {
   low: tones.emerald.solid,
   medium: tones.amber.solid,
   high: tones.red.solid,
-  none: "#C6C6C6",
+  none: MAP_NO_DATA,
 } as const;
 
 /** Color de un estado según el % de pacientes de riesgo alto. */

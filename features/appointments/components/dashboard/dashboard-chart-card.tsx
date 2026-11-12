@@ -1,3 +1,4 @@
+import { rainbowStyle, type RainbowTone } from "@/lib/ui/rainbow";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ export function DashboardChartCard({
   toolbar,
   children,
   className,
+  accent = "sky",
 }: {
   title: string;
   description?: string;
@@ -23,21 +25,25 @@ export function DashboardChartCard({
   toolbar?: ReactNode;
   children: ReactNode;
   className?: string;
+  accent?: RainbowTone;
 }) {
   return (
     <section
+      data-slot="chart-card"
+      style={rainbowStyle(accent)}
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow duration-200 hover:shadow-md",
+        "spectrum-panel flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow duration-200 hover:shadow-md",
         className,
       )}
     >
       <SectionHeader
+        accent={accent}
         title={title}
         description={description}
         icon={Icon}
         actions={toolbar}
       />
-      <div className="p-5">{children}</div>
+      <div className="flex min-h-0 flex-1 flex-col p-5">{children}</div>
     </section>
   );
 }

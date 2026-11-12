@@ -61,7 +61,7 @@ export function StoreFeaturedPage() {
   const featuredCount = featured.length;
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
+    <div className="flex flex-col gap-5 p-4 sm:p-6 min-w-0">
       <PageHeader
         title={t('Productos destacados')}
         description={t('Selecciona qué productos resaltar en la tienda del paciente')}
@@ -83,7 +83,7 @@ export function StoreFeaturedPage() {
       {loading ? (
         <FeaturedSkeleton />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
           <SectionHeader
             title={`${items.length} ${t('productos visibles')}`}
             description={t('Activa o desactiva el estado destacado')}
