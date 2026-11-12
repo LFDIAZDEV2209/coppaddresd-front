@@ -1,5 +1,12 @@
 # Nutricionista ERP
 
+## Publicación automática (KAN-61, 2026-11-12)
+
+El flujo vigente ya no exige aprobación de nutricionista. El worker del backend publica las generaciones válidas y conserva ciclo, versiones y bitácora. El ERP muestra `Publicado`/`Por publicar`; un usuario con `Nutrition.Manage` puede publicar un borrador completo mediante `/publish`, con revisión vigente y sin afirmar haber revisado personalmente las alertas. El código de revisión anterior se conserva para compatibilidad, pero no es el paso obligatorio de este flujo. El aviso completo solicitado aparece en la ficha y en la app. Las secciones siguientes documentan el rediseño histórico.
+
+El calendario y el selector de ciclos usan también `Publicado / programado` y `Por publicar`. El gráfico mensual invita a comprobar porciones sin presentar la aprobación como requisito. Los estados del contrato (`aprobado`, `en_aprobacion`) se conservan por compatibilidad. La regresión `e2e/nutrition-publication-copy.spec.ts` comprueba calendario y programación mediante la UI con HTTP sintético.
+
+
 ## Revisión de diseño
 
 La documentación canónica del cambio está fuera del Git frontend, en el OpenSpec

@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   Check,
-  ArrowRight,
+  CalendarDays,
   ClipboardCheck,
+  FileText,
   RefreshCw,
   Search,
   ShieldAlert,
@@ -21,17 +22,17 @@ import { StatCard } from "@/components/feedback/stat-card";
 import { useT } from "@/providers/i18n-provider";
 import { useNutritionQueue } from "../hooks/use-nutrition-queue";
 import { NutritionPatientDetail } from "./nutrition-patient-detail";
-import { NutritionStateChip } from "./nutrition-shared";
+import { NutritionPatientAvatar, NutritionStateChip } from "./nutrition-shared";
 import type { NutritionFilter } from "../types/nutrition";
 import { NutritionError, NutritionSkeleton } from "./nutrition-feedback";
 import "../nutrition.css";
 
 const filters: { value: NutritionFilter; label: string }[] = [
   { value: "all", label: "Todos" },
-  { value: "en_aprobacion", label: "Por aprobar" },
+  { value: "en_aprobacion", label: "Por publicar" },
   { value: "borrador_ia", label: "Borradores IA" },
   { value: "devuelto", label: "Devueltos" },
-  { value: "aprobado", label: "Aprobados" },
+  { value: "aprobado", label: "Publicados" },
   { value: "por_renovar", label: "Por renovar" },
   { value: "sin_plan", label: "Sin plan" },
 ];
@@ -114,11 +115,10 @@ export function NutritionQueue({
       data-has-patient={!!selection}
     >
       <PageHeader
-        title={t("Nutricionista")}
-        description={t(
-          "Resultados, programación y planes en un mismo espacio.",
-        )}
+        title={t("Nutrición")}
+        description={t("Planes y seguimiento de tus pacientes.")}
         icon={Stethoscope}
+        className="nutrition-page-header"
         actions={
           <Button
             variant="secondary"
@@ -141,7 +141,7 @@ export function NutritionQueue({
           <SectionHeader
             title={t("Pacientes")}
             icon={Users}
-            variant="secondary"
+            variant="surface"
             description={
               data
                 ? t("{count} pacientes", { count: String(data.total) })
@@ -213,14 +213,10 @@ export function NutritionQueue({
                         select(patient.patientId, patient.plan?.id);
                       }}
                     >
+                      <NutritionPatientAvatar name={patient.patientName} />
+                      <span className="nutrition-patient-option-content">
                       <span className="nutrition-patient-name">
                         {patient.patientName}
-                        {selection?.patientId === patient.patientId && (
-                          <Check
-                            className="size-4 shrink-0"
-                            aria-label={t("Paciente seleccionado")}
-                          />
-                        )}
                       </span>
                       <span className="nutrition-patient-meta">
                         <NutritionStateChip
@@ -248,6 +244,8 @@ export function NutritionQueue({
                           </span>
                         )}
                       </span>
+                      </span>
+                      {selection?.patientId === patient.patientId && <Check className="nutrition-selected-check" aria-label={t("Paciente seleccionado")} />}
                     </Link>
                   </li>
                 ))}
@@ -347,6 +345,7 @@ export function NutritionQueue({
                 title={t("Tu bandeja de trabajo")}
                 description={t("Selecciona un paciente para revisar su plan.")}
                 icon={ClipboardCheck}
+                variant="tertiary"
               />
               <div className="nutrition-overview-stats">
                 <StatCard
@@ -354,9 +353,10 @@ export function NutritionQueue({
                   value={data?.counts.all ?? "—"}
                   icon={Users}
                   variant="primary"
+                  tone="teal"
                 />
                 <StatCard
-                  label={t("Por aprobar")}
+                  label={t("Por publicar")}
                   value={data?.counts.en_aprobacion ?? "—"}
                   icon={ClipboardCheck}
                   variant="warning"
@@ -366,23 +366,17 @@ export function NutritionQueue({
                   value={data?.counts.sin_plan ?? "—"}
                   icon={Activity}
                   variant="info"
+                  tone="slate"
                 />
               </div>
               <div className="nutrition-selection-guide">
-                <Stethoscope
-                  className="size-10 text-primary"
-                  aria-hidden="true"
-                />
-                <h2>{t("Una revisión, tres pasos")}</h2>
-                <p>
-                  {t(
-                    "Consulta los resultados, revisa la programación y ajusta el plan de 30 días.",
-                  )}
-                </p>
-                <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                  {t("Elige un paciente de la bandeja")}
-                </span>
+                <span className="nutrition-selection-icon"><Stethoscope aria-hidden="true" /></span>
+                <h2>{t("Selecciona un paciente")}</h2>
+                <div className="nutrition-workflow-preview">
+                  <div><Activity aria-hidden="true" /><strong>{t("Resultados")}</strong><span>{t("Lecturas y baterías")}</span></div>
+                  <div><CalendarDays aria-hidden="true" /><strong>{t("Programación")}</strong><span>{t("Ciclos y fechas")}</span></div>
+                  <div><FileText aria-hidden="true" /><strong>{t("Plan de 30 días")}</strong><span>{t("Menú y porciones")}</span></div>
+                </div>
               </div>
             </div>
           )}

@@ -134,9 +134,9 @@ export function NutritionPlanEditor({
                 )
               : t(
                   cycle.state === "en_aprobacion"
-                    ? "Plan en revisión. Devuélvelo con comentario para solicitar ajustes."
+                    ? "Plan de solo lectura."
                     : cycle.state === "aprobado"
-                      ? "Plan de solo lectura. Para editar un aprobado, crea una nueva versión."
+                      ? "Plan de solo lectura. Crea una versión para editar."
                       : "Plan de solo lectura con tus permisos actuales.",
                 )}
           </p>
@@ -160,11 +160,6 @@ export function NutritionPlanEditor({
         >
           {t("Totales del día {day}", { day: String(day) })}
         </h3>
-        <p className="mt-2 mb-5 text-sm text-muted-foreground">
-          {t(
-            "Vista previa por catálogo. La revisión clínica y las validaciones del servidor determinan la aprobación.",
-          )}
-        </p>
         <NutritionTargetsPanel targets={cycle.targets} totals={totals} />
       </section>
       <fieldset disabled={!editable} className="min-w-0">

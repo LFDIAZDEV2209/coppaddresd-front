@@ -429,9 +429,9 @@ export function performNutritionAction(
     ...(action === "apply-day"
       ? { edit: { sourceDay: options.sourceDay, confirmManualEdits: true } }
       : {}),
-    ...(action === "approve"
+    ...(action === "approve" || action === "publish"
       ? {
-          criticalConfirmed: options.criticalConfirmed === true,
+          ...(action === "approve" ? { criticalConfirmed: options.criticalConfirmed === true } : {}),
           ...(options.startDate ? { startDate: options.startDate } : {}),
         }
       : {}),

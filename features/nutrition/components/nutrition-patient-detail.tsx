@@ -50,6 +50,7 @@ import {
 } from "./nutrition-feedback";
 import {
   NutritionStateChip,
+  NutritionPatientAvatar,
   NutritionTargetsPanel,
   NutritionValidity,
 } from "./nutrition-shared";
@@ -59,6 +60,7 @@ import {
   NutritionClinicalHeader,
 } from "./nutrition-clinical-profile";
 import { NutritionPlanEditor } from "./nutrition-plan-editor";
+import { NutritionDisclaimer } from "./nutrition-disclaimer";
 import { NutritionReviewDialog } from "./nutrition-review-dialog";
 import {
   NutritionMonthEnergy,
@@ -277,8 +279,9 @@ function PatientWorkspace({
   const labels = {
     created: "Borrador creado",
     saved: "Borrador guardado",
-    submitted: "Enviado a aprobación",
+    submitted: "Preparado para publicar",
     approved: "Plan aprobado",
+    published: "Plan publicado",
     returned: "Plan devuelto",
     version_created: "Nueva versión creada",
     regenerated: "Propuesta regenerada",
@@ -309,28 +312,31 @@ function PatientWorkspace({
       </div>
       <header className="nutrition-detail-header">
         <div className="nutrition-header-identity min-w-0">
-          <h2 className="nutrition-display nutrition-patient-title">
-            {patient.patientName}
-          </h2>
-          <p className="nutrition-measure mt-1 text-xs text-muted-foreground">
-            {patient.patientDocument ?? t("Sin documento")}
-          </p>
-        </div>
-          <div className="nutrition-header-state flex flex-wrap items-center gap-2">
-            <NutritionStateChip state={cycle?.state ?? "sin_plan"} />
-            {cycle && headers.length < 2 && (
-              <span className="nutrition-measure text-xs">
-                {t("Versión {version}", { version: String(cycle.version) })}
-                {cycleNumber &&
-                  ` · ${t("Ciclo {cycle}", { cycle: String(cycleNumber) })}`}
-              </span>
-            )}
-            {cycle?.provisional && (
-              <span className="nutrition-chip" data-status="informational">
-                {t("Provisional")}
-              </span>
-            )}
+          <NutritionPatientAvatar name={patient.patientName} size="lg" />
+          <div className="nutrition-header-person">
+            <h2 className="nutrition-display nutrition-patient-title">
+              {patient.patientName}
+            </h2>
+            <p className="nutrition-measure mt-1 text-xs text-muted-foreground">
+              {patient.patientDocument ?? t("Sin documento")}
+            </p>
+            <div className="nutrition-header-state flex flex-wrap items-center gap-2">
+              <NutritionStateChip state={cycle?.state ?? "sin_plan"} />
+              {cycle && headers.length < 2 && (
+                <span className="nutrition-measure text-xs">
+                  {t("Versión {version}", { version: String(cycle.version) })}
+                  {cycleNumber &&
+                    ` · ${t("Ciclo {cycle}", { cycle: String(cycleNumber) })}`}
+                </span>
+              )}
+              {cycle?.provisional && (
+                <span className="nutrition-chip" data-status="informational">
+                  {t("Provisional")}
+                </span>
+              )}
+            </div>
           </div>
+        </div>
         <div className="nutrition-detail-actions">
           {!cycle && canManage && (
             <Button onClick={() => changeTab("plan")}>
@@ -347,13 +353,13 @@ function PatientWorkspace({
             </Button>
           )}
           {cycle &&
-            ["borrador_ia", "devuelto"].includes(cycle.state) &&
+            ["borrador_ia", "devuelto", "en_aprobacion"].includes(cycle.state) &&
             canManage && (
               <Button
                 disabled={locked || !cycleIsComplete(cycle, catalog)}
-                onClick={() => void run("submit")}
+                onClick={() => void run("publish")}
               >
-                {t("Enviar a aprobación")}
+                {t("Publicar plan")}
               </Button>
             )}
           {cycle?.state === "en_aprobacion" && canApprove && (
@@ -365,10 +371,7 @@ function PatientWorkspace({
               >
                 {t("Devolver con comentario")}
               </Button>
-              <Button disabled={locked} onClick={() => setReview("approve")}>
-                <ClipboardCheck className="size-4" aria-hidden="true" />
-                {t("Aprobar plan")}
-              </Button>
+
             </>
           )}
         </div>
@@ -415,7 +418,6 @@ function PatientWorkspace({
       >
         <div className="nutrition-context-bar">
         <TabsList
-          variant="line"
           aria-label={t("Secciones de la ficha nutricional")}
           className="nutrition-tab-list"
         >
@@ -436,16 +438,6 @@ function PatientWorkspace({
         </div>
         <TabsContent value="resultados" keepMounted>
           <div className="nutrition-tab-body">
-            <NutritionProgramCycles
-              headers={headers}
-              selectedId={cycle?.id}
-              today={today}
-              locked={locked}
-              onOpen={openPrescription}
-              onCreate={
-                canManage && !cycle ? () => changeTab("plan") : undefined
-              }
-            />
             {cycle && (
               <div className="nutrition-overview-stats">
                 <StatCard
@@ -470,6 +462,16 @@ function PatientWorkspace({
               </div>
             )}
             <NutritionReadings patient={patient} />
+            <NutritionProgramCycles
+              headers={headers}
+              selectedId={cycle?.id}
+              today={today}
+              locked={locked}
+              onOpen={openPrescription}
+              onCreate={
+                canManage && !cycle ? () => changeTab("plan") : undefined
+              }
+            />
             {cycle ? (
               <>
                 {cycle.provisional && (
@@ -522,7 +524,7 @@ function PatientWorkspace({
                       </summary>
                       <p className="my-3 text-xs text-muted-foreground">
                         {t(
-                          "El borrador no cambia esta copia hasta una nueva aprobación.",
+                          "El borrador no cambia esta copia hasta una nueva publicación.",
                         )}
                       </p>
                       <NutritionTargetsPanel
@@ -647,7 +649,7 @@ function PatientWorkspace({
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 {t(
-                  "La vigencia se confirma al aprobar. Cada ciclo comprende 30 días.",
+                  "La vigencia se confirma al publicar. Cada ciclo comprende 30 días.",
                 )}
               </p>
               <div className="nutrition-meal-schedule">
@@ -677,14 +679,7 @@ function PatientWorkspace({
                     "Esta comprobación estructural no sustituye la revisión clínica.",
                   )}
                 </p>
-                {cycle.state === "en_aprobacion" && canApprove && (
-                  <Button
-                    disabled={locked}
-                    onClick={() => setReview("approve")}
-                  >
-                    {t("Revisar aprobación del plan")}
-                  </Button>
-                )}
+
               </section>
             )}
           </div>
@@ -721,6 +716,7 @@ function PatientWorkspace({
           </div>
         </TabsContent>
       </Tabs>
+      {cycle && <NutritionDisclaimer />}
       {review && cycle && canApprove && (
         <NutritionReviewDialog
           key={`${cycle.id}:${review}`}
@@ -767,11 +763,6 @@ function NutritionReadings({ patient }: { patient: PatientDetail }) {
         ))}
       </dl>
       <div className="nutrition-readings-foot">
-        <span>
-          {t(
-            "Sin medición disponible se muestra un guion, no un resultado normal.",
-          )}
-        </span>
         {(can("HealthTests.View") || can("HealthTests.ViewPatients")) && (
           <Link
             className="nutrition-link"

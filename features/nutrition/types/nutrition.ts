@@ -135,7 +135,7 @@ export interface NutritionClinicalProfile {
 
 export interface NutritionAuditEntry {
   id: string;
-  action: "created" | "saved" | "submitted" | "approved" | "returned" | "version_created" | "regenerated" | "publication_replaced";
+  action: "created" | "saved" | "submitted" | "approved" | "published" | "returned" | "version_created" | "regenerated" | "publication_replaced";
   actorId: string;
   actorName: string;
   occurredAt: string;
@@ -179,7 +179,7 @@ export interface NutritionWorkspace {
   catalog: NutritionFood[];
 }
 
-export type NutritionAction = "submit" | "approve" | "return" | "new-version" | "create" | "regenerate" | "apply-day";
+export type NutritionAction = "publish" | "submit" | "approve" | "return" | "new-version" | "create" | "regenerate" | "apply-day";
 export interface NutritionGenerateInput {
   birthDate?: string;
   manual?: { peso: number; talla: number; edad: number; sexo: "F" | "M"; imc?: number;

@@ -1,19 +1,26 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useI18n, useT } from "@/providers/i18n-provider";
 import type { NutritionQueueState, NutritionTargets, NutritionTotals } from "../types/nutrition";
 import { formatNutritionDate } from "../lib/nutrition-formatters";
 import { nutrientDefinitions } from "../lib/nutrition-calculations";
 
+/** Identidad visual compartida por la bandeja y la ficha, sin fotos inventadas. */
+export function NutritionPatientAvatar({ name, size = "default" }: { name: string; size?: "default" | "lg" }) {
+  const initials = name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
+  return <Avatar size={size} className="nutrition-patient-avatar" aria-hidden="true"><AvatarFallback>{initials || "—"}</AvatarFallback></Avatar>;
+}
+
 export function NutritionServiceNotice() {
   const t = useT();
-  return <div className="nutrition-service-notice" role="note"><p>{t("El borrador conserva la versión publicada hasta que apruebes los cambios.")}</p></div>;
+  return <div className="nutrition-service-notice" role="note"><p>{t("El borrador conserva la versión publicada hasta que publiques los cambios.")}</p></div>;
 }
 
 export function NutritionStateChip({ state }: { state: NutritionQueueState }) {
   const t = useT();
-  const labels: Record<NutritionQueueState, string> = { en_aprobacion: "Por aprobar", borrador_ia: "Borrador IA", aprobado: "Aprobado", devuelto: "Devuelto", por_renovar: "Por renovar", sin_plan: "Sin plan" };
+  const labels: Record<NutritionQueueState, string> = { en_aprobacion: "Por publicar", borrador_ia: "Borrador IA", aprobado: "Publicado", devuelto: "Devuelto", por_renovar: "Por renovar", sin_plan: "Sin plan" };
   return <span className="nutrition-chip" data-status={state}>{state === "borrador_ia" && <Sparkles aria-hidden="true" className="size-3.5" />}{t(labels[state])}</span>;
 }
 

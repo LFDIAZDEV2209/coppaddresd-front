@@ -50,7 +50,7 @@ test("breadcrumb largo cede espacio al buscador sin perder nombre clínico", asy
     const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb", exact: true });
     await expect(breadcrumb).toContainText(name);
     const bounds = await breadcrumb.boundingBox();
-    const search = await page.getByRole("textbox", { name: "Buscar...", exact: true }).boundingBox();
+    const search = await page.getByRole("combobox", { name: "Buscar páginas o módulos", exact: true }).boundingBox();
     expect(bounds).not.toBeNull();
     expect(search).not.toBeNull();
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(search!.x);

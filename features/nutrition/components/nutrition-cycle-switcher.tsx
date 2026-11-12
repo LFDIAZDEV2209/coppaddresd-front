@@ -12,9 +12,9 @@ import type {
 
 /** Etiquetas clínicas del mismo vocabulario del ERP; la traducción vive en los diccionarios. */
 const stateLabels: Record<NutritionQueueState, string> = {
-  en_aprobacion: "Por aprobar",
+  en_aprobacion: "Por publicar",
   borrador_ia: "Borrador IA",
-  aprobado: "Aprobado",
+  aprobado: "Publicado",
   devuelto: "Devuelto",
   por_renovar: "Por renovar",
   sin_plan: "Sin plan",

@@ -77,7 +77,7 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
   await expect(page.getByRole("status")).toContainText("16 pacientes");
   await expect(
     page.getByRole("link", {
-      name: "Nutrición 3 planes por aprobar",
+      name: "Nutrición 3 planes por publicar",
       exact: true,
     }),
   ).toBeVisible();
@@ -102,7 +102,7 @@ test("bandeja HTTP: filtros, búsqueda, paginación y ausencia de N+1", async ({
   await expect(sidebar).toHaveCSS("width", "80px");
   await expect(
     page.getByRole("link", {
-      name: "Nutrición 3 planes por aprobar",
+      name: "Nutrición 3 planes por publicar",
       exact: true,
     }),
   ).toBeVisible();
@@ -198,35 +198,15 @@ test("conflicto de revisión bloquea reenvío y exige recarga", async ({
     { conflictOnce: true },
   );
   await page.goto("/nutrition/demo-patient-1");
-  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
-  const dialog = page.getByRole("dialog");
-  await dialog.getByRole("checkbox", { name: /Revisé personalmente/ }).check();
-  await dialog
-    .getByRole("button", { name: "Aprobar y publicar", exact: true })
-    .click();
-  await expect(
-    dialog.getByText(
-      "El plan cambió en el servidor. Recarga la ficha antes de continuar.",
-      { exact: true },
-    ),
-  ).toBeVisible();
-  await expect(
-    dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }),
-  ).toBeDisabled();
+  await page.getByRole("button", { name: "Publicar plan", exact: true }).click();
+  await expect(page.getByText("El plan cambió en el servidor. Recarga la ficha antes de continuar.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Publicar plan", exact: true })).toBeDisabled();
   expect(writes).toHaveLength(1);
   expect(writes[0].body).not.toHaveProperty("actor");
-  await expect(
-    dialog.getByText("Revisión obsoleta", { exact: true }),
-  ).toBeVisible();
-  await dialog
-    .getByRole("button", { name: "Recargar ficha", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
-  await dialog.getByRole("checkbox", { name: /Revisé personalmente/ }).check();
-  await dialog
-    .getByRole("button", { name: "Aprobar y publicar", exact: true })
-    .click();
-  await expect(dialog).toHaveCount(0);
+  await expect(page.getByText("Revisión obsoleta", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Recargar ficha", exact: true }).click();
+  await page.getByRole("button", { name: "Publicar plan", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(writes).toHaveLength(2);
   expect(writes[1].body.revision).toBe(Number(writes[0].body.revision) + 1);
 });
@@ -236,7 +216,7 @@ test.describe("E1 sin plan provisional", () => {
   test.use({
     storageState: live ? process.env.NUTRITION_E2E_STORAGE_STATE : undefined,
   });
-  test("buscar, generar, revisar y aprobar con críticas confirmadas", async ({
+  test("buscar, generar y publicar conservando alertas sin confirmación clínica", async ({
     page,
   }, testInfo) => {
     test.setTimeout(180_000);
@@ -333,7 +313,7 @@ test.describe("E1 sin plan provisional", () => {
     ).toBeVisible();
     await capture(
       "bandeja",
-      page.getByRole("heading", { name: "Nutricionista", exact: true }),
+      page.getByRole("heading", { name: "Nutrición", exact: true }),
     );
     await patientLink.click();
     await expect(
@@ -414,37 +394,14 @@ test.describe("E1 sin plan provisional", () => {
       "editor",
       page.getByRole("heading", { name: "Menú de 30 días", exact: true }),
     );
-    await page
-      .getByRole("button", { name: "Enviar a aprobación", exact: true })
-      .click();
-    await page
-      .getByRole("button", { name: "Aprobar plan", exact: true })
-      .click();
-    const dialog = page.getByRole("dialog");
-    await expect(
-      dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }),
-    ).toBeDisabled();
-    await expect(
-      dialog.getByRole("checkbox", { name: /Revisé personalmente/ }),
-    ).not.toBeChecked();
-    await capture("aprobacion", dialog);
-    await dialog
-      .getByRole("checkbox", { name: /Revisé personalmente/ })
-      .check();
-    await dialog
-      .getByRole("button", { name: "Aprobar y publicar", exact: true })
-      .click();
-    await expect(dialog).toHaveCount(0);
-    await expect(
-      page
-        .locator(".nutrition-detail-header")
-        .getByText("Aprobado", { exact: true }),
-    ).toBeVisible();
+    await page.getByRole("button", { name: "Publicar plan", exact: true }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator(".nutrition-detail-header").getByText("Publicado", { exact: true })).toBeVisible();
     await page.reload();
     await expect(
       page
         .locator(".nutrition-detail-header")
-        .getByText("Aprobado", { exact: true }),
+        .getByText("Publicado", { exact: true }),
     ).toBeVisible();
     await page
       .getByRole("tab", { name: "Resultados y ciclos", exact: true })
@@ -461,9 +418,10 @@ test.describe("E1 sin plan provisional", () => {
         manual: { peso: 92, talla: 160, sexo: "F" },
       });
       const approved = fixture.writes.find((write) =>
-        write.path.endsWith("/approve"),
+        write.path.endsWith("/publish"),
       );
-      expect(approved?.body.criticalConfirmed).toBe(true);
+      expect(approved).toBeDefined();
+      expect(approved?.body).not.toHaveProperty("criticalConfirmed");
       expect(approved?.body).not.toHaveProperty("actor");
     }
   });
