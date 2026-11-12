@@ -28,10 +28,10 @@ import "../nutrition.css";
 
 const filters: { value: NutritionFilter; label: string }[] = [
   { value: "all", label: "Todos" },
-  { value: "en_aprobacion", label: "Por aprobar" },
+  { value: "en_aprobacion", label: "Por publicar" },
   { value: "borrador_ia", label: "Borradores IA" },
   { value: "devuelto", label: "Devueltos" },
-  { value: "aprobado", label: "Aprobados" },
+  { value: "aprobado", label: "Publicados" },
   { value: "por_renovar", label: "Por renovar" },
   { value: "sin_plan", label: "Sin plan" },
 ];
@@ -356,7 +356,7 @@ export function NutritionQueue({
                   variant="primary"
                 />
                 <StatCard
-                  label={t("Por aprobar")}
+                  label={t("Por publicar")}
                   value={data?.counts.en_aprobacion ?? "—"}
                   icon={ClipboardCheck}
                   variant="warning"

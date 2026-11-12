@@ -44,7 +44,7 @@ export function NutritionProgramCycles({ headers, selectedId, today, locked, onO
     if (!row.startDate || !row.endDate) return t("Sin vigencia definida");
     if (!row.isPublished) return t("Sin publicación");
     if (!today) return t("Vigencia por confirmar");
-    return t(row.endDate < today ? "Período finalizado" : row.startDate > today ? "Aprobado / programado" : "En curso");
+    return t(row.endDate < today ? "Período finalizado" : row.startDate > today ? "Publicado / programado" : "En curso");
   };
 
   return <section className="nutrition-section nutrition-program">
@@ -63,7 +63,7 @@ export function NutritionProgramCycles({ headers, selectedId, today, locked, onO
           </button></li>;
         })}
       </ol>
-      <p className="nutrition-program-legend">{t("Período finalizado · En curso · Aprobado / programado · Por aprobar · Sin plan")}</p>
+      <p className="nutrition-program-legend">{t("Período finalizado · En curso · Publicado / programado · Por publicar · Sin plan")}</p>
       {!today && <p className="mt-2 text-xs text-muted-foreground">{t("Zona del paciente pendiente: hoy no se representa.")}</p>}
       <div className="mt-5"><SectionHeader title={t("Plan por ciclo")} icon={Layers} variant="tertiary" /></div>
       <div className="nutrition-cycles-table-container">

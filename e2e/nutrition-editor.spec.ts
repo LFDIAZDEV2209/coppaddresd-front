@@ -32,7 +32,7 @@ test("editar, previsualizar catálogo, copiar 30 días y conservar al volver", a
   ).toBeVisible();
   await page.getByRole("tab", { name: "Plan de 30 días", exact: true }).click();
   const action = page.getByRole("button", {
-    name: "Enviar a aprobación",
+    name: "Publicar plan",
     exact: true,
   });
   const contrast = () =>
@@ -171,60 +171,20 @@ test("editar, previsualizar catálogo, copiar 30 días y conservar al volver", a
   });
 });
 
-test("aprobar exige críticas; registra autoaprobación y actualiza bandeja", async ({
-  page,
-}) => {
-  await demoSession(page);
-  const writes: string[] = [];
-  page.on("request", (request) => {
-    if (request.url().includes("/api/v1/nutrition/"))
-      writes.push(request.url());
-  });
+test("publicar conserva las alertas sin afirmar revisión clínica y actualiza la bandeja", async ({ page }) => {
+  const { writes } = await demoSession(page, ["Nutrition.Manage"]);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/nutrition/demo-patient-1");
-  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
-  const dialog = page.getByRole("dialog");
-  const confirm = dialog.getByRole("button", {
-    name: "Aprobar y publicar",
-    exact: true,
-  });
-  await expect(
-    dialog.getByRole("heading", {
-      name: "Revisar aprobación del plan",
-      exact: true,
-    }),
-  ).toBeFocused();
-  await expect(confirm).toBeDisabled();
-  await expect(dialog).toHaveJSProperty(
-    "scrollWidth",
-    await dialog.evaluate((element) => element.clientWidth),
-  );
-  await page.screenshot({
-    path: "qa-reports/nutrition/wave2-review-mobile.png",
-    animations: "disabled",
-  });
-  await dialog
-    .getByRole("checkbox", {
-      name: "Revisé personalmente las 2 alertas críticas de este plan.",
-      exact: true,
-    })
-    .check();
-  await expect(confirm).toBeEnabled();
-  await confirm.click();
-  await expect(dialog).toHaveCount(0);
+  await page.getByRole("button", { name: "Publicar plan", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".nutrition-header-state")).toContainText("Publicado");
   await page.getByText("Bitácora del plan", { exact: false }).click();
-  await expect(page.getByText("Aprobado por el mismo profesional que creó la versión", { exact: true })).toHaveCount(1);
-  await expect(
-    page.getByText("2 alertas críticas confirmadas", { exact: true }),
-  ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Volver a la bandeja", exact: true })
-    .click();
-  const maria = page.getByRole("listitem").filter({
-    has: page.getByRole("link", { name: "María Demo", exact: true }),
-  });
-  await expect(maria.getByText("Aprobado", { exact: true })).toBeVisible();
-  expect(writes.some((path) => path.endsWith("/approve"))).toBe(true);
+  await expect(page.getByText("Plan publicado", { exact: true })).toBeVisible();
+  await expect(page.getByText("2 alertas críticas confirmadas", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Volver a la bandeja", exact: true }).click();
+  const maria = page.getByRole("listitem").filter({ has: page.getByRole("link", { name: "María Demo", exact: true }) });
+  await expect(maria.getByText("Publicado", { exact: true })).toBeVisible();
+  expect(writes.some(write => write.path.endsWith("/publish"))).toBe(true);
 });
 
 test("devolver exige comentario no vacío y lo conserva en ficha y bitácora", async ({
@@ -261,7 +221,7 @@ test("devolver exige comentario no vacío y lo conserva en ficha y bitácora", a
   ).toHaveCount(2);
 });
 
-test("nueva versión conserva la publicada y bloquea aprobación con comida vacía", async ({
+test("nueva versión conserva la publicada y bloquea publicación con comida vacía", async ({
   page,
 }) => {
   const { writes } = await demoSession(page);
@@ -312,7 +272,7 @@ test("nueva versión conserva la publicada y bloquea aprobación con comida vac�
   ).toContainText("No se guardaron los últimos cambios.");
   await expect(page.getByText("Comida vacía", { exact: true })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Enviar a aprobación", exact: true }),
+    page.getByRole("button", { name: "Publicar plan", exact: true }),
   ).toBeDisabled();
 });
 
@@ -343,7 +303,7 @@ test("permisos separados, inglés y paciente desconocido sin datos fabricados", 
   ).toBeVisible();
 });
 
-test("cambiar metas exige regenerar antes de revisión y aprobación", async ({
+test("cambiar metas exige regenerar antes de publicar", async ({
   page,
 }) => {
   await demoSession(page);
@@ -355,7 +315,7 @@ test("cambiar metas exige regenerar antes de revisión y aprobación", async ({
     .click();
   await saved(page);
   await expect(
-    page.getByRole("button", { name: "Enviar a aprobación", exact: true }),
+    page.getByRole("button", { name: "Publicar plan", exact: true }),
   ).toBeDisabled();
   await expect(
     page.getByText("Menús desactualizados: las metas cambiaron.", {
@@ -371,13 +331,9 @@ test("cambiar metas exige regenerar antes de revisión y aprobación", async ({
     }),
   ).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Enviar a aprobación", exact: true })
+    .getByRole("button", { name: "Publicar plan", exact: true })
     .click();
-  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Aprobar y publicar", exact: true })
-    .click();
-  await expect(page.getByText("Aprobado por el mismo profesional que creó la versión", { exact: true })).toHaveCount(1);
+  await expect(page.locator(".nutrition-header-state")).toContainText("Publicado");
 });
 
 test("Manage permite editar pero no aprobar ni devolver", async ({ page }) => {
@@ -446,60 +402,19 @@ test("demografía inaccesible no bloquea una ficha autorizada por Nutrición", a
   }
 });
 
-test("revisión sin fechas, autor legible, acciones fijas y consentimiento nuevo al reabrir", async ({
-  page,
-}) => {
-  const { store } = await demoSession(page);
+test("publicación muestra vigencia y aviso sin introducir consentimiento clínico", async ({ page }) => {
+  const { store } = await demoSession(page, ["Nutrition.Manage"]);
   const cycle = store.get("demo-patient-1")!.cycle!;
-  cycle.startDate = null;
-  cycle.endDate = null;
-  await page.setViewportSize({ width: 1440, height: 900 });
+  cycle.startDate = null; cycle.endDate = null;
   await page.goto("/nutrition/demo-patient-1");
   await page.getByRole("tab", { name: "Programación", exact: true }).click();
-  const validity = page
-    .getByRole("tabpanel", { name: "Programación", exact: true })
-    .locator(".nutrition-cycle-summary");
+  const validity = page.getByRole("tabpanel", { name: "Programación", exact: true }).locator(".nutrition-cycle-summary");
   await expect(validity).toContainText("Sin definir");
   await expect(validity).not.toContainText("→");
-  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
-  const dialog = page.getByRole("dialog");
-  const date = dialog
-    .getByText("Vigencia del ciclo", { exact: true })
-    .locator("..");
-  await expect(date.getByText("Sin definir", { exact: true })).toHaveCount(2);
-  await expect(date).not.toContainText("→");
-  await expect(
-    dialog.getByText("Nutricionista actual", { exact: true }),
-  ).toBeVisible();
-  const checkbox = dialog.getByRole("checkbox", {
-    name: /Revisé personalmente/,
-  });
-  const confirm = dialog.getByRole("button", {
-    name: "Aprobar y publicar",
-    exact: true,
-  });
-  await expect(checkbox).not.toBeChecked();
-  await expect(confirm).toBeDisabled();
-  const before = await confirm.boundingBox();
-  expect(before).not.toBeNull();
-  expect(before!.y).toBeGreaterThanOrEqual(0);
-  expect(before!.y + before!.height).toBeLessThanOrEqual(900);
-  await checkbox.check();
-  await expect(confirm).toBeEnabled();
-  const after = await confirm.boundingBox();
-  expect(Math.abs(after!.y - before!.y)).toBeLessThan(2);
-  await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
-  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
-  await expect(checkbox).not.toBeChecked();
-  await expect(confirm).toBeDisabled();
-  await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
-  cycle.createdBy = "00000000-0000-4000-8000-000000000042";
-  await page.reload();
-  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
-  await expect(
-    dialog.getByText("Nutricionista externo", { exact: true }),
-  ).toBeVisible();
-  await expect(dialog).not.toContainText(cycle.createdBy);
+  await expect(page.getByText("IMPORTANT DISCLAIMER – NUTRITIONAL RECOMMENDATIONS", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Publicar plan", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".nutrition-header-state")).toContainText("Publicado");
 });
 
 test("contraste AA del chip IA y exceso ámbar en valores del editor", async ({

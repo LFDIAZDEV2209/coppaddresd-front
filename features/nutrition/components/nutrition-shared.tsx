@@ -8,12 +8,12 @@ import { nutrientDefinitions } from "../lib/nutrition-calculations";
 
 export function NutritionServiceNotice() {
   const t = useT();
-  return <div className="nutrition-service-notice" role="note"><p>{t("El borrador conserva la versión publicada hasta que apruebes los cambios.")}</p></div>;
+  return <div className="nutrition-service-notice" role="note"><p>{t("El borrador conserva la versión publicada hasta que publiques los cambios.")}</p></div>;
 }
 
 export function NutritionStateChip({ state }: { state: NutritionQueueState }) {
   const t = useT();
-  const labels: Record<NutritionQueueState, string> = { en_aprobacion: "Por aprobar", borrador_ia: "Borrador IA", aprobado: "Aprobado", devuelto: "Devuelto", por_renovar: "Por renovar", sin_plan: "Sin plan" };
+  const labels: Record<NutritionQueueState, string> = { en_aprobacion: "Por publicar", borrador_ia: "Borrador IA", aprobado: "Publicado", devuelto: "Devuelto", por_renovar: "Por renovar", sin_plan: "Sin plan" };
   return <span className="nutrition-chip" data-status={state}>{state === "borrador_ia" && <Sparkles aria-hidden="true" className="size-3.5" />}{t(labels[state])}</span>;
 }
 

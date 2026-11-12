@@ -81,7 +81,7 @@ export function saveMockDraft(patientId: string, cycle: NutritionCycle, revision
   return mockPatient(patientId, scope)!;
 }
 
-export type NutritionMockAction = "submit" | "approve" | "return" | "new-version" | "create" | "regenerate";
+export type NutritionMockAction = "publish" | "submit" | "approve" | "return" | "new-version" | "create" | "regenerate";
 export function actOnMockPatient(patientId: string, action: NutritionMockAction, revision: number, actor: NutritionActor, scope: NutritionScope, options: { comment?: string; criticalConfirmed?: boolean } = {}): NutritionPatientDetail {
   const patient = mockWorkspace(scope).get(patientId);
   if (!patient || patient.revision !== revision) throw new Error("nutrition-conflict");
@@ -100,11 +100,11 @@ export function actOnMockPatient(patientId: string, action: NutritionMockAction,
       if (cycle.state !== "aprobado") throw new Error("nutrition-transition");
       cycle = { ...structuredClone(cycle), id: crypto.randomUUID(), version: cycle.version + 1, state: "borrador_ia", createdBy: actor.id, approvedBy: null, approvedAt: null };
       auditAction = "version_created";
-    } else if (action === "approve") {
-      if (cycle.state !== "en_aprobacion" || !cycleIsComplete(cycle, nutritionMockCatalog) || (cycle.alerts.some((alert) => alert.severity === "critical") && !options.criticalConfirmed)) throw new Error("nutrition-review-required");
+    } else if (action === "approve" || action === "publish") {
+      if ((action === "approve" && cycle.state !== "en_aprobacion") || !cycleIsComplete(cycle, nutritionMockCatalog) || (action === "approve" && cycle.alerts.some((alert) => alert.severity === "critical") && !options.criticalConfirmed)) throw new Error("nutrition-review-required");
       cycle.state = "aprobado"; cycle.approvedBy = actor.id; cycle.approvedAt = new Date().toISOString(); cycle.publishedVersionId = cycle.id;
       patient.publishedCycle = structuredClone(cycle);
-      auditAction = "approved";
+      auditAction = action === "publish" ? "published" : "approved";
     } else if (action === "return") {
       if (cycle.state !== "en_aprobacion" || !options.comment?.trim()) throw new Error("nutrition-comment-required");
       cycle.state = "devuelto"; auditAction = "returned";

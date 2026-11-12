@@ -514,6 +514,7 @@ export function mapNutritionHistory(
     createversion: "version_created",
     submit: "submitted",
     approve: "approved",
+    publish: "published",
     return: "returned",
     regenerate: "regenerated",
     publication_replaced: "publication_replaced",

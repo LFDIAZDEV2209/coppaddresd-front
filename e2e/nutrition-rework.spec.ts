@@ -161,30 +161,10 @@ test("mesa clínica: dos paneles, tres pestañas, 30 barras y revisión accesibl
   ).toBe(true);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole("link", { name: "María Demo", exact: true }).click();
-  await page.getByRole("button", { name: "Aprobar plan", exact: true }).click();
-  const dialog = page.getByRole("dialog");
-  const checkbox = dialog.getByRole("checkbox", {
-    name: /Revisé personalmente/,
-  });
-  await expect(checkbox).not.toBeChecked();
-  await expect(
-    dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }),
-  ).toBeDisabled();
-  await expect(dialog.locator(".nutrition-month-plot li")).toHaveCount(30);
-  await capture("aprobacion", '[role="dialog"]');
-  await expect(
-    dialog.getByRole("button", { name: "Aprobar y publicar", exact: true }),
-  ).toBeInViewport();
-  await checkbox.check();
-  await dialog
-    .getByRole("button", { name: "Aprobar y publicar", exact: true })
-    .click();
-  await expect(dialog).toHaveCount(0);
-  await expect(
-    page
-      .locator(".nutrition-detail-header")
-      .getByText("Aprobado", { exact: true }),
-  ).toBeVisible();
+  await capture("publicacion");
+  await page.getByRole("button", { name: "Publicar plan", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".nutrition-detail-header").getByText("Publicado", { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page
     .getByRole("button", { name: "Volver a la bandeja", exact: true })

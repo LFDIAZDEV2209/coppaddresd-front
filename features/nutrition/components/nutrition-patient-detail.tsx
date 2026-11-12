@@ -59,6 +59,7 @@ import {
   NutritionClinicalHeader,
 } from "./nutrition-clinical-profile";
 import { NutritionPlanEditor } from "./nutrition-plan-editor";
+import { NutritionDisclaimer } from "./nutrition-disclaimer";
 import { NutritionReviewDialog } from "./nutrition-review-dialog";
 import {
   NutritionMonthEnergy,
@@ -277,8 +278,9 @@ function PatientWorkspace({
   const labels = {
     created: "Borrador creado",
     saved: "Borrador guardado",
-    submitted: "Enviado a aprobación",
+    submitted: "Preparado para publicar",
     approved: "Plan aprobado",
+    published: "Plan publicado",
     returned: "Plan devuelto",
     version_created: "Nueva versión creada",
     regenerated: "Propuesta regenerada",
@@ -347,13 +349,13 @@ function PatientWorkspace({
             </Button>
           )}
           {cycle &&
-            ["borrador_ia", "devuelto"].includes(cycle.state) &&
+            ["borrador_ia", "devuelto", "en_aprobacion"].includes(cycle.state) &&
             canManage && (
               <Button
                 disabled={locked || !cycleIsComplete(cycle, catalog)}
-                onClick={() => void run("submit")}
+                onClick={() => void run("publish")}
               >
-                {t("Enviar a aprobación")}
+                {t("Publicar plan")}
               </Button>
             )}
           {cycle?.state === "en_aprobacion" && canApprove && (
@@ -365,14 +367,12 @@ function PatientWorkspace({
               >
                 {t("Devolver con comentario")}
               </Button>
-              <Button disabled={locked} onClick={() => setReview("approve")}>
-                <ClipboardCheck className="size-4" aria-hidden="true" />
-                {t("Aprobar plan")}
-              </Button>
+
             </>
           )}
         </div>
       </header>
+      {cycle && <NutritionDisclaimer />}
       {saveError && <NutritionIssueMessage issue={saveError} />}
       {saveStatus === "error" && !reloadRequired && (
         <Button variant="outline" onClick={retrySave}>
@@ -522,7 +522,7 @@ function PatientWorkspace({
                       </summary>
                       <p className="my-3 text-xs text-muted-foreground">
                         {t(
-                          "El borrador no cambia esta copia hasta una nueva aprobación.",
+                          "El borrador no cambia esta copia hasta una nueva publicación.",
                         )}
                       </p>
                       <NutritionTargetsPanel
@@ -647,7 +647,7 @@ function PatientWorkspace({
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 {t(
-                  "La vigencia se confirma al aprobar. Cada ciclo comprende 30 días.",
+                  "La vigencia se confirma al publicar. Cada ciclo comprende 30 días.",
                 )}
               </p>
               <div className="nutrition-meal-schedule">
@@ -677,14 +677,7 @@ function PatientWorkspace({
                     "Esta comprobación estructural no sustituye la revisión clínica.",
                   )}
                 </p>
-                {cycle.state === "en_aprobacion" && canApprove && (
-                  <Button
-                    disabled={locked}
-                    onClick={() => setReview("approve")}
-                  >
-                    {t("Revisar aprobación del plan")}
-                  </Button>
-                )}
+
               </section>
             )}
           </div>
