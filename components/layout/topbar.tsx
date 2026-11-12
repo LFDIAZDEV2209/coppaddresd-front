@@ -1,4 +1,5 @@
 "use client";
+import {APPOINTMENTS_ENABLED} from "@/lib/config/feature-visibility";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -154,7 +155,7 @@ export function Topbar({ onMenuClick, mobileOpen }: TopbarProps) {
         />
 
         {/* Notifications */}
-        <NotificationsMenu scrolled={false} />
+        {APPOINTMENTS_ENABLED && <NotificationsMenu scrolled={false} />}
 
         {/* Contexto organizacional (switcher de clínica) */}
         {context && context.clinics.length > 0 && (

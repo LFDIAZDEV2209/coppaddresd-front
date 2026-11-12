@@ -93,3 +93,9 @@ Si preferís no usar la auto-traducción, agregá las claves directamente a
 - `providers/translations/es.json` es opcional (fallback al texto fuente).
 - `MYMEMORY_EMAIL` en `.env` es opcional — sube la cuota diaria de 5k → 50k chars.
 - El endpoint `/api/i18n/missing` devuelve 404 en producción (safe).
+
+## Visibilidad de Citas
+
+Citas se oculta de la navegación, búsqueda y avisos de agenda por defecto. Sus URLs (incluidas las salas) redirigen al dashboard. Nutrición mantiene su acceso existente. El código y los datos no se eliminan. Para restaurar Citas, compilar con `NEXT_PUBLIC_APPOINTMENTS_ENABLED=true`.
+
+`yarn e2e` valida el módulo conservado con la opción activada. `yarn e2e:appointments-hidden` comprueba la navegación y las URLs con Citas desactivado. Usar un servidor que tenga la misma configuración si se reutiliza un servidor local existente.

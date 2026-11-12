@@ -138,8 +138,11 @@ jobs:
           cd coppAddresdBack/scripts && python3 seed_unified_credentials.py || true
           cd "$GITHUB_WORKSPACE" && yarn e2e:seed
 
-      - name: Suite Playwright
+      - name: Suite Playwright (módulo conservado habilitado)
         run: yarn e2e
+
+      - name: Citas ocultas por defecto
+        run: yarn e2e:appointments-hidden
 
       - name: Logs del backend en fallo
         if: failure()

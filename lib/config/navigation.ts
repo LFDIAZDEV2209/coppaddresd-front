@@ -1,3 +1,4 @@
+import {APPOINTMENTS_ENABLED} from "./feature-visibility";
 import type { LucideIcon } from "lucide-react";
 import { hasAppointmentPermission } from "./appointment-permissions";
 import {
@@ -66,6 +67,7 @@ export interface NavItem {
 }
 
 export interface NavModule {
+  hidden?: boolean;
   label: string;
   icon: LucideIcon;
   color: string;
@@ -102,7 +104,7 @@ export function visibleNavItems(
 export function visibleNavModules(can: (code: string) => boolean): NavModule[] {
   return navModules.filter(
     (module) =>
-      hasNavPermission(module.permission, can) &&
+      !module.hidden && hasNavPermission(module.permission, can) &&
       visibleNavItems(module, can).length > 0,
   );
 }
@@ -178,6 +180,7 @@ export const navModules: NavModule[] = [
   },
   {
     label: "Citas",
+    hidden: !APPOINTMENTS_ENABLED,
     icon: Video,
     color: "#0E7490",
     permission: [

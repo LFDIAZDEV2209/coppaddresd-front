@@ -11,6 +11,8 @@ import { defineConfig } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  // El módulo conservado se valida activado; la visibilidad por defecto tiene su propia configuración.
+  testIgnore: /appointments-hidden\.spec\.ts/,
   outputDir: "test-results",
   // Seed único + estado compartido en el backend: una sola corrida a la vez.
   fullyParallel: false,
@@ -56,6 +58,7 @@ export default defineConfig({
       NEXT_PUBLIC_GATEWAY_URL:
         process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5080",
       NEXT_PUBLIC_APPLICATION_CODE: "erp",
+      NEXT_PUBLIC_APPOINTMENTS_ENABLED: "true",
     },
   },
 });
