@@ -458,8 +458,8 @@ export const navModules: NavModule[] = [
     ],
   },
   {
-    label: "Bienestar",
-    icon: Apple,
+    label: "Rutinas",
+    icon: Dumbbell,
     color: "#059669",
     permission: "Wellness.View",
     items: [
@@ -472,7 +472,7 @@ export const navModules: NavModule[] = [
         hidden: !WELLNESS_NUTRITION_PLANS_ENABLED,
       },
       {
-        label: "Rutinas de ejercicio",
+        label: "Rutinas",
         href: "/wellness/exercise-routines",
         icon: Dumbbell,
         color: "#0891B2",
@@ -682,7 +682,12 @@ export function getBreadcrumbSegments(
   // Rutas anidadas del módulo de bienestar (creación en página dedicada).
   if (pathname.startsWith("/wellness/")) {
     const listHref = "/wellness/" + (pathname.split("/")[2] ?? "");
-    segments.push({ label: "Bienestar", href: listHref });
+    segments.push({
+      label: pathname.startsWith("/wellness/exercise-routines")
+        ? "Rutinas"
+        : "Bienestar",
+      href: listHref,
+    });
     if (pathname.endsWith("/new")) {
       if (pathname === "/wellness/nutrition-plans/new") {
         segments.push({ label: "Nuevo plan de alimentación" });
