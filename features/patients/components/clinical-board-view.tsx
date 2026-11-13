@@ -810,6 +810,7 @@ export function ClinicalBoardView({
                         <Button
                           variant="outline"
                           className="mr-2 min-h-11"
+                          role="link"
                           render={<Link href={`/patients/${encodeURIComponent(item.patientId)}/360`} />}
                           nativeButton={false}
                         >

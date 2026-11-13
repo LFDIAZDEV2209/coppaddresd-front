@@ -353,6 +353,7 @@ function PatientWorkspace({
               variant="outline"
               className="min-h-11"
               disabled={locked}
+              role={locked ? undefined : "link"}
               render={
                 locked ? undefined : (
                   <Link
