@@ -171,7 +171,7 @@ export function EnrollmentContentTab({ enrollment }: Props) {
             className="gap-1.5 text-xs"
           >
             <Layers className="size-3.5" />
-            Asignar en bloque
+            {t("Asignar en bloque")}
           </Button>
         </div>
       )}

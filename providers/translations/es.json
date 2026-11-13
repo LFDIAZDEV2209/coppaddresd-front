@@ -5241,5 +5241,11 @@
   "Error al cargar el perfil": "Error al cargar el perfil",
   "Este paciente no está disponible o no tienes acceso a su perfil.": "Este paciente no está disponible o no tienes acceso a su perfil.",
   "Este paciente no tiene una inscripción activa al programa. Inscríbelo desde el módulo de pacientes para ver el contenido y historial.": "Este paciente no tiene una inscripción activa al programa. Inscríbelo desde el módulo de pacientes para ver el contenido y historial.",
-  "Ocultar buscador": "Ocultar buscador"
+  "Ocultar buscador": "Ocultar buscador",
+  "Semanas del programa ({count})": "Semanas del programa ({count})",
+  "Consulta las rutinas y los podcasts de cada semana del paciente.": "Consulta las rutinas y los podcasts de cada semana del paciente.",
+  "Podcast de la semana": "Podcast de la semana",
+  "Esta inscripción no tiene semanas configuradas.": "Esta inscripción no tiene semanas configuradas.",
+  "Asignar en bloque": "Asignar en bloque",
+  "Cargando catálogo...": "Cargando catálogo..."
 }

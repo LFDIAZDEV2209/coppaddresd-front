@@ -5254,5 +5254,11 @@
   "Error al cargar el perfil": "Unable to load the profile",
   "Este paciente no está disponible o no tienes acceso a su perfil.": "This patient is unavailable or you do not have access to their profile.",
   "Este paciente no tiene una inscripción activa al programa. Inscríbelo desde el módulo de pacientes para ver el contenido y historial.": "This patient has no active program enrollment. Enroll them from the patients module to see their plan and history.",
-  "Ocultar buscador": "Hide patient search"
+  "Ocultar buscador": "Hide patient search",
+  "Semanas del programa ({count})": "Program weeks ({count})",
+  "Consulta las rutinas y los podcasts de cada semana del paciente.": "View the routines and podcasts for each week of the patient's program.",
+  "Podcast de la semana": "Weekly podcast",
+  "Esta inscripción no tiene semanas configuradas.": "This enrollment has no weeks configured.",
+  "Asignar en bloque": "Assign in bulk",
+  "Cargando catálogo...": "Loading catalog..."
 }

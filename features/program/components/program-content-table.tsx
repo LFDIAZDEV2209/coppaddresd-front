@@ -9,7 +9,6 @@ import {
   CalendarDays,
   Check,
   Loader2,
-  Salad,
   Dumbbell,
   Layers,
   Mic,
@@ -176,7 +175,6 @@ export function ContentTable({
   onSaveWeek,
   enrollmentId,
   availableRoutines,
-  availablePlans,
   loadingCatalog,
   podcastRefreshKey = 0,
   onPodcastUpdated,
@@ -254,8 +252,12 @@ export function ContentTable({
     <section className="flex flex-col overflow-hidden rounded-2xl border border-brand-blue-soft/40 bg-card shadow-xs">
       <div className="flex flex-wrap items-center justify-between gap-3 p-5">
         <SectionHeader
-          title={`Días del programa (${content.totalWeeks} días)`}
-          description="Asigna el plan nutricional y la rutina de ejercicio para cada día del paciente."
+          title={t("Semanas del programa ({count})", {
+            count: String(content.totalWeeks),
+          })}
+          description={t(
+            "Consulta las rutinas y los podcasts de cada semana del paciente.",
+          )}
           icon={Layers}
           variant="secondary"
           className="min-w-0 flex-1 border-none bg-transparent px-0 py-0"
@@ -263,7 +265,7 @@ export function ContentTable({
         {loadingCatalog && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Loader2 className="size-3.5 animate-spin text-primary" />
-            <span>Cargando catálogo...</span>
+            <span>{t("Cargando catálogo...")}</span>
           </div>
         )}
       </div>
@@ -272,20 +274,17 @@ export function ContentTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-[#0B2B4A] hover:bg-[#0B2B4A]">
-              <TableHead className="w-16 text-white">Día</TableHead>
-              <TableHead className="text-white">Fecha</TableHead>
-              <TableHead className="min-w-[240px] text-white">
-                Plan nutricional
-              </TableHead>
+              <TableHead className="w-16 text-white">{t("Semana")}</TableHead>
+              <TableHead className="text-white">{t("Fecha")}</TableHead>
               <TableHead className="min-w-[260px] text-white">
-                Rutina de ejercicio
+                {t("Rutina de ejercicio")}
               </TableHead>
               <TableHead className="min-w-[200px] text-white">
-                {t("Podcast del día")}
+                {t("Podcast de la semana")}
               </TableHead>
               {canEdit && (
                 <TableHead className="text-right text-white">
-                  Acciones
+                  {t("Acciones")}
                 </TableHead>
               )}
             </TableRow>
@@ -299,7 +298,6 @@ export function ContentTable({
                 onSave={onSaveWeek}
                 enrollmentId={enrollmentId}
                 availableRoutines={availableRoutines}
-                availablePlans={availablePlans}
                 podcast={podcastByWeek[week.weekNumber]}
                 podcastLoading={Boolean(loadingWeeks[week.weekNumber])}
                 onPodcastChange={canEdit ? handleChangeWeekPodcast : undefined}
@@ -311,7 +309,7 @@ export function ContentTable({
 
       {content.weeks.length === 0 ? (
         <p className="text-xs text-muted-foreground text-center py-4">
-          Esta inscripción no tiene días configurados.
+          {t("Esta inscripción no tiene semanas configuradas.")}
         </p>
       ) : (
         <PagedListFooter
@@ -335,7 +333,6 @@ export function WeekRow({
   onSave,
   enrollmentId,
   availableRoutines,
-  availablePlans,
   podcast,
   podcastLoading = false,
   onPodcastChange,
@@ -345,7 +342,6 @@ export function WeekRow({
   onSave: (weekNumber: number, input: SetWeekContentInput) => Promise<void>;
   enrollmentId: string;
   availableRoutines: ExerciseRoutineListItem[];
-  availablePlans: NutritionPlanListItem[];
   /** Podcast resuelto de la semana (null = la semana no programa podcast). */
   podcast?: WeekPodcastInfo | null;
   /** Carga del detalle de la semana para resolver el podcast. */
@@ -364,9 +360,6 @@ export function WeekRow({
   const [changingPodcast, setChangingPodcast] = useState(false);
   const [podcastError, setPodcastError] = useState<string | null>(null);
 
-  const [nutritionPlanId, setNutritionPlanId] = useState<string | null>(
-    week.nutritionPlan?.id ?? null,
-  );
   const [exerciseRoutineId, setExerciseRoutineId] = useState<string | null>(
     week.exerciseRoutine?.id ?? null,
   );
@@ -375,17 +368,16 @@ export function WeekRow({
     setSaving(true);
     try {
       await onSave(week.weekNumber, {
-        nutritionPlanId,
+        nutritionPlanId: week.nutritionPlan?.id ?? null,
         exerciseRoutineId,
       });
       setEditing(false);
     } finally {
       setSaving(false);
     }
-  }, [week.weekNumber, nutritionPlanId, exerciseRoutineId, onSave]);
+  }, [week.weekNumber, week.nutritionPlan?.id, exerciseRoutineId, onSave]);
 
   const startEdit = useCallback(() => {
-    setNutritionPlanId(week.nutritionPlan?.id ?? null);
     setExerciseRoutineId(week.exerciseRoutine?.id ?? null);
     setEditing(true);
   }, [week]);
@@ -412,19 +404,6 @@ export function WeekRow({
     [onPodcastChange, week.weekNumber, t],
   );
 
-  // Asegurar que el plan nutricional asignado esté en las opciones del desplegable
-  const allPlans = [...availablePlans];
-  if (
-    week.nutritionPlan &&
-    !allPlans.some((p) => p.id === week.nutritionPlan!.id)
-  ) {
-    allPlans.unshift({
-      id: week.nutritionPlan.id,
-      name: week.nutritionPlan.name,
-      durationDays: null,
-    } as unknown as NutritionPlanListItem);
-  }
-
   // Asegurar que la rutina asignada esté en las opciones del desplegable
   const allRoutines = [...availableRoutines];
   if (
@@ -439,14 +418,6 @@ export function WeekRow({
     } as unknown as ExerciseRoutineListItem);
   }
 
-  const selectedPlanName = nutritionPlanId
-    ? (allPlans.find((p) => p.id === nutritionPlanId)?.name ??
-      (nutritionPlanId === week.nutritionPlan?.id
-        ? week.nutritionPlan?.name
-        : null) ??
-      undefined)
-    : undefined;
-
   const selectedRoutineName = exerciseRoutineId
     ? (allRoutines.find((r) => r.id === exerciseRoutineId)?.name ??
       (exerciseRoutineId === week.exerciseRoutine?.id
@@ -459,50 +430,10 @@ export function WeekRow({
     return (
       <TableRow className="bg-primary/5">
         <TableCell className="font-bold text-sm tabular-nums">
-          Día {week.weekNumber}
+          {t("Semana {week}", { week: String(week.weekNumber) })}
         </TableCell>
         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
           {week.weekStartDateLocal} — {week.weekEndDateLocal}
-        </TableCell>
-
-        {/* Select Plan Nutricional */}
-        <TableCell>
-          <Select
-            value={nutritionPlanId ?? "none"}
-            onValueChange={(val) =>
-              setNutritionPlanId(val === "none" ? null : val)
-            }
-          >
-            <SelectTrigger className="w-full text-xs h-8 bg-card">
-              <SelectValue placeholder="Seleccionar plan...">
-                {selectedPlanName}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem
-                value="none"
-                label="Sin asignar"
-                className="text-xs text-muted-foreground italic"
-              >
-                Sin asignar (Ninguno)
-              </SelectItem>
-              {allPlans.map((p) => (
-                <SelectItem
-                  key={p.id}
-                  value={p.id}
-                  label={p.name}
-                  className="text-xs"
-                >
-                  <span className="font-semibold">{p.name}</span>
-                  {p.durationDays && (
-                    <span className="text-[10px] text-muted-foreground ml-1.5">
-                      ({p.durationDays}d)
-                    </span>
-                  )}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </TableCell>
 
         {/* Select Rutina de Ejercicio */}
@@ -592,21 +523,6 @@ export function WeekRow({
       </TableCell>
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
         {week.weekStartDateLocal} — {week.weekEndDateLocal}
-      </TableCell>
-      <TableCell>
-        {week.nutritionPlan ? (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
-            <Salad className="mr-1 size-3" />
-            {week.nutritionPlan.name}
-          </Badge>
-        ) : (
-          <Badge
-            variant="outline"
-            className="text-muted-foreground border-dashed"
-          >
-            Sin asignar
-          </Badge>
-        )}
       </TableCell>
       <TableCell>
         {week.exerciseRoutine ? (
