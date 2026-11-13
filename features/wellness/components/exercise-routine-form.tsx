@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, GripVertical, Search, Sparkles } from "lucide-react";
+import { Plus, Trash2, GripVertical, Library } from "lucide-react";
 import { useT } from "@/providers/i18n-provider";
-import { ApiError } from "@/lib/api/http";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,7 +30,7 @@ import type {
   NutritionPlanStatus,
   CreateExerciseRoutineInput,
   UpdateExerciseRoutineInput,
-  ExerciseGeneratedPayload,
+  RoutineExercise,
 } from "../types";
 import {
   DIFFICULTY_OPTIONS,
@@ -41,13 +40,9 @@ import {
 import {
   PLAN_STATUSES,
   PLAN_STATUS_LABELS,
-  fetchPatientsForPicker,
 } from "../services/nutrition-plans-service";
-import {
-  generatePlan,
-  mapExercisePayloadToForm,
-} from "../services/generate-plan-service";
 import { ExerciseMediaPicker } from "./exercise-media-picker";
+import { RoutineExerciseCatalog } from "./routine-exercise-catalog";
 
 interface ExerciseRoutineFormDialogProps {
   open: boolean;
@@ -58,7 +53,7 @@ interface ExerciseRoutineFormDialogProps {
     input: CreateExerciseRoutineInput | UpdateExerciseRoutineInput,
     id?: string,
   ) => Promise<void>;
-  /** Se invoca tras crear (no editar) una rutina vinculada a un paciente. */
+  /** Compatibilidad con contenedores anteriores; este formulario ya no asigna pacientes. */
   onCreated?: (patientName: string) => void;
 }
 
@@ -70,14 +65,8 @@ interface ExerciseRoutineFormFieldsProps {
     input: CreateExerciseRoutineInput | UpdateExerciseRoutineInput,
     id?: string,
   ) => Promise<void>;
-  /** Se invoca tras crear (no editar) una rutina vinculada a un paciente. */
+  /** Compatibilidad con contenedores anteriores; este formulario ya no asigna pacientes. */
   onCreated?: (patientName: string) => void;
-}
-
-interface PickerItem {
-  id: string;
-  label: string;
-  sublabel?: string;
 }
 
 interface ExerciseFormData {
@@ -114,12 +103,31 @@ const EMPTY_EXERCISE: ExerciseFormData = {
   mediaId: "",
 };
 
+/** Copia editable: conserva los valores del ejercicio y su demostración, sin reutilizar su identidad. */
+function exerciseToFormData(exercise: RoutineExercise): ExerciseFormData {
+  return {
+    name: exercise.name,
+    description: exercise.description ?? "",
+    sets: exercise.sets?.toString() ?? "",
+    repetitions: exercise.repetitions?.toString() ?? "",
+    restSeconds: exercise.restSeconds?.toString() ?? "",
+    durationSecs: exercise.durationSecs?.toString() ?? "",
+    weightKg: exercise.weightKg?.toString() ?? "",
+    targetMuscle: exercise.targetMuscle ?? "",
+    equipment: exercise.equipment ?? "",
+    tempo: exercise.tempo ?? "",
+    rpe: exercise.rpe?.toString() ?? "",
+    tips: exercise.tips ?? "",
+    notes: "",
+    mediaId: exercise.mediaId ?? "",
+  };
+}
+
 export function ExerciseRoutineFormFields({
   routine,
   saving,
   onCancel,
   onSubmit,
-  onCreated,
 }: ExerciseRoutineFormFieldsProps) {
   const isEditing = Boolean(routine);
   const t = useT();
@@ -149,41 +157,7 @@ export function ExerciseRoutineFormFields({
   const [routineMediaId, setRoutineMediaId] = useState<string | null>(null);
   const [mediaUploads, setMediaUploads] = useState(0);
 
-  // Estado del picker de paciente + generación con IA (solo en creación)
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
-    null,
-  );
-  const [selectedPatientLabel, setSelectedPatientLabel] = useState("");
-  const [patientSearch, setPatientSearch] = useState("");
-  const [patientResults, setPatientResults] = useState<PickerItem[]>([]);
-  const [loadingPatients, setLoadingPatients] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState("");
-
-  // Búsqueda de paciente con debounce (mismo patrón que assignment-form)
-  useEffect(() => {
-    if (patientSearch.trim().length < 2) return;
-
-    const timer = setTimeout(async () => {
-      setLoadingPatients(true);
-      try {
-        const result = await fetchPatientsForPicker(1, 10, patientSearch);
-        setPatientResults(
-          result.data.map((p) => ({
-            id: p.id,
-            label: `${p.firstName} ${p.lastName}`,
-            sublabel: p.email ?? p.medicalRecordNumber ?? undefined,
-          })),
-        );
-      } catch {
-        setPatientResults([]);
-      } finally {
-        setLoadingPatients(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [patientSearch]);
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
   useEffect(() => {
     if (!routine) return;
@@ -210,26 +184,13 @@ export function ExerciseRoutineFormFields({
           setExercises(
             full.exercises
               .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map((e) => ({
-                name: e.name,
-                description: e.description ?? "",
-                sets: e.sets?.toString() ?? "",
-                repetitions: e.repetitions?.toString() ?? "",
-                restSeconds: e.restSeconds?.toString() ?? "",
-                durationSecs: e.durationSecs?.toString() ?? "",
-                weightKg: e.weightKg?.toString() ?? "",
-                targetMuscle: e.targetMuscle ?? "",
-                equipment: e.equipment ?? "",
-                tempo: e.tempo ?? "",
-                rpe: e.rpe?.toString() ?? "",
-                tips: e.tips ?? "",
-                notes: "",
-                mediaId: e.mediaId ?? "",
-              })),
+              .map(exerciseToFormData),
           );
         } else setDetailError(true);
       })
-      .catch(() => { if (!cancelled) setDetailError(true); })
+      .catch(() => {
+        if (!cancelled) setDetailError(true);
+      })
       .finally(() => {
         if (!cancelled) setLoadingDetail(false);
       });
@@ -267,57 +228,9 @@ export function ExerciseRoutineFormFields({
     });
   };
 
-  const handleSelectPatient = (p: PickerItem) => {
-    setSelectedPatientId(p.id);
-    setSelectedPatientLabel(p.label);
-    setPatientSearch("");
-    setPatientResults([]);
-    setGenerateError("");
-    // Una rutina vinculada a un paciente nace activa y como asignación
-    // (mismo comportamiento que los planes personalizados).
-    setStatus("Active");
-  };
-
-  const handleClearPatient = () => {
-    setSelectedPatientId(null);
-    setSelectedPatientLabel("");
-    setGenerateError("");
-  };
-
-  // Genera la rutina con IA y pre-llena el form completo
-  const handleGenerate = async () => {
-    if (!selectedPatientId) return;
-
-    setGenerating(true);
-    setGenerateError("");
-    try {
-      const response = await generatePlan(selectedPatientId, "exercise");
-      const values = mapExercisePayloadToForm(
-        response.payload as unknown as ExerciseGeneratedPayload,
-      );
-      setName(values.name);
-      setDescription(values.description);
-      setDifficulty(values.difficulty);
-      setEstimatedMinutes(values.estimatedMinutes);
-      setCategory(values.category);
-      setTargetMuscles(values.targetMuscles);
-      setEquipment(values.equipment);
-      setWarmupNotes(values.warmupNotes);
-      setCooldownNotes(values.cooldownNotes);
-      setExercises(values.exercises.map((exercise) => ({ ...exercise, mediaId: "" })));
-    } catch (err) {
-      setGenerateError(
-        err instanceof ApiError
-          ? err.message
-          : t("No se pudo generar la rutina. Intenta nuevamente."),
-      );
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   const handleSubmit = async () => {
-    if (!name.trim() || loadingDetail || detailError || mediaUploads > 0) return;
+    if (!name.trim() || loadingDetail || detailError || mediaUploads > 0)
+      return;
 
     const exercisesInput: RoutineExerciseInput[] = exercises
       .filter((ex) => ex.name.trim())
@@ -353,121 +266,47 @@ export function ExerciseRoutineFormFields({
         warmupNotes: warmupNotes.trim() || null,
         cooldownNotes: cooldownNotes.trim() || null,
         mediaId: routineMediaId,
-        patientId: selectedPatientId ?? undefined,
         exercises: exercisesInput.length > 0 ? exercisesInput : null,
       },
       routine?.id,
     );
-
-    // Al crear con paciente, el backend crea la asignación en la misma
-    // transacción: notificar para confirmar el vínculo.
-    if (!routine && selectedPatientId) {
-      onCreated?.(selectedPatientLabel);
-    }
   };
 
   return (
     <div className="flex flex-col gap-6 px-4 py-5 sm:px-6">
       <div className="rounded-xl border border-border bg-primary-soft px-4 py-4">
-        <p className="text-sm font-semibold text-foreground">{t("Una rutina clara, ejercicio por ejercicio")}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{t("Define la técnica, la intensidad y una demostración visual para que el paciente sepa cómo moverse.")}</p>
+        <p className="text-sm font-semibold text-foreground">
+          {t("Una rutina clara, ejercicio por ejercicio")}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t(
+            "Define la técnica, la intensidad y una demostración visual para que el paciente sepa cómo moverse.",
+          )}
+        </p>
       </div>
-      {detailError && <div role="alert" className="flex flex-col gap-2 rounded-xl border border-destructive p-4">
-        <p className="text-sm text-destructive">{t("No se pudo cargar la rutina. Vuelve a intentarlo antes de guardar.")}</p>
-        <Button type="button" variant="outline" onClick={() => { setLoadingDetail(true); setDetailAttempt((value) => value + 1); }}>{t("Reintentar")}</Button>
-      </div>}
-      <div className="flex flex-col gap-4">
-        {/* Paciente (opcional) + generación con IA — solo en creación.
-            Al guardar con paciente, la rutina nace activa y se asigna
-            automáticamente (creación atómica en el backend). */}
-            {/* Paciente (opcional) + generación con IA — solo en creación.
-                Al guardar con paciente, la rutina nace activa y se asigna
-                automáticamente (creación atómica en el backend). */}
-            {!isEditing && (
-              <div className="flex flex-col gap-1.5">
-                <Label>{t("Paciente (opcional)")}</Label>
-                {selectedPatientId && selectedPatientLabel ? (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">
-                      {selectedPatientLabel}
-                      <button
-                        type="button"
-                        className="ml-auto text-muted-foreground hover:text-foreground"
-                        onClick={handleClearPatient}
-                        aria-label="Quitar paciente"
+      {detailError && (
+        <div
+          role="alert"
+          className="flex flex-col gap-2 rounded-xl border border-destructive p-4"
                       >
-                        ×
-                      </button>
-                    </div>
+          <p className="text-sm text-destructive">
+            {t(
+              "No se pudo cargar la rutina. Vuelve a intentarlo antes de guardar.",
+            )}
+          </p>
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
-                      className="w-fit"
-                      disabled={generating || saving}
-                      onClick={handleGenerate}
+            onClick={() => {
+              setLoadingDetail(true);
+              setDetailAttempt((value) => value + 1);
+            }}
                     >
-                      <Sparkles data-icon="inline-start" className="size-3" />
-                      {generating
-                        ? t("Generando...")
-                        : t("Generar rutina con IA")}
+            {t("Reintentar")}
                     </Button>
-                    {generateError && (
-                      <p className="text-xs text-destructive">
-                        {generateError}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                      <Input
-                        placeholder={t("Buscar paciente por nombre...")}
-                        value={patientSearch}
-                        onChange={(e) => {
-                          setPatientSearch(e.target.value);
-                          setGenerateError("");
-                        }}
-                        className="h-9 pl-8"
-                      />
-                    </div>
-                    {loadingPatients && (
-                      <p className="text-xs text-muted-foreground">
-                        {t("Buscando...")}
-                      </p>
-                    )}
-                    {patientResults.length > 0 && (
-                      <div className="max-h-40 overflow-y-auto rounded-md border border-border">
-                        {patientResults.map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            className="flex w-full flex-col px-3 py-2 text-left text-sm hover:bg-muted"
-                            onClick={() => handleSelectPatient(p)}
-                          >
-                            <span>{p.label}</span>
-                            {p.sublabel && (
-                              <span className="text-xs text-muted-foreground">
-                                {p.sublabel}
-                              </span>
-                            )}
-                          </button>
-                        ))}
                       </div>
                     )}
-                    {patientSearch.length >= 2 &&
-                      !loadingPatients &&
-                      patientResults.length === 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        {t("No se encontraron pacientes.")}
-                      </p>
-                      )}
-                  </>
-                )}
-              </div>
-            )}
-
+      <div className="flex flex-col gap-4">
             {/* Datos básicos */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5 sm:col-span-2">
@@ -600,22 +439,44 @@ export function ExerciseRoutineFormFields({
 
             {/* Ejercicios */}
             <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <Label>{t("Ejercicios ({count})", { count: String(exercises.length) })}</Label>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold">
+              {t("Ejercicios ({count})", { count: String(exercises.length) })}
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11"
+                disabled={
+                  saving || loadingDetail || detailError || mediaUploads > 0
+                }
+                onClick={() => setCatalogOpen(true)}
+              >
+                <Library data-icon="inline-start" />
+                {t("Elegir de la biblioteca")}
+              </Button>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={addExercise}
+                className="min-h-11"
+                disabled={
+                  saving || loadingDetail || detailError || mediaUploads > 0
+                }
                 >
                   <Plus data-icon="inline-start" className="size-3" />
                   {t("Agregar ejercicio")}
                 </Button>
               </div>
+          </div>
 
               {exercises.length === 0 && !loadingDetail && (
                 <p className="text-xs text-muted-foreground text-center py-4">
-                  {t('No hay ejercicios. Haz clic en "Agregar ejercicio" para comenzar.')}
+              {t(
+                'No hay ejercicios. Haz clic en "Agregar ejercicio" para comenzar.',
+              )}
                 </p>
               )}
 
@@ -778,14 +639,30 @@ export function ExerciseRoutineFormFields({
                       className="min-h-11 text-sm sm:col-span-2"
                     />
                    </div>
-                   <ExerciseMediaPicker value={exercise.mediaId} exerciseName={exercise.name} disabled={saving || generating}
+              <ExerciseMediaPicker
+                value={exercise.mediaId}
+                exerciseName={exercise.name}
+                disabled={saving}
                      onChange={(id) => updateExercise(index, "mediaId", id)}
-                     onBusyChange={(busy) => setMediaUploads((count) => Math.max(0, count + (busy ? 1 : -1)))} />
+                onBusyChange={(busy) =>
+                  setMediaUploads((count) =>
+                    Math.max(0, count + (busy ? 1 : -1)),
+                  )
+                }
+              />
                  </div>
                ))}
             </div>
       </div>
 
+      <RoutineExerciseCatalog
+        open={catalogOpen}
+        onOpenChange={setCatalogOpen}
+        onSelect={(exercise) => {
+          setExercises((current) => [...current, exerciseToFormData(exercise)]);
+          setCatalogOpen(false);
+        }}
+      />
       <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
         <Button
           type="button"
@@ -798,7 +675,13 @@ export function ExerciseRoutineFormFields({
         <Button
           type="button"
           onClick={handleSubmit}
-          disabled={saving || !name.trim() || loadingDetail || detailError || mediaUploads > 0}
+          disabled={
+            saving ||
+            !name.trim() ||
+            loadingDetail ||
+            detailError ||
+            mediaUploads > 0
+          }
         >
           {saving
             ? t("Guardando...")
