@@ -1,4 +1,11 @@
-import {APPOINTMENTS_ENABLED} from "./feature-visibility";
+import {
+  APPOINTMENTS_ENABLED,
+  INVENTORY_ENABLED,
+  STORE_ENABLED,
+  WELLNESS_NUTRITION_PLANS_ENABLED,
+  WELLNESS_ASSIGNMENTS_ENABLED,
+  PROGRAM_CLINICA_ENABLED,
+} from "./feature-visibility";
 import type { LucideIcon } from "lucide-react";
 import { hasAppointmentPermission } from "./appointment-permissions";
 import {
@@ -104,7 +111,8 @@ export function visibleNavItems(
 export function visibleNavModules(can: (code: string) => boolean): NavModule[] {
   return navModules.filter(
     (module) =>
-      !module.hidden && hasNavPermission(module.permission, can) &&
+      !module.hidden &&
+      hasNavPermission(module.permission, can) &&
       visibleNavItems(module, can).length > 0,
   );
 }
@@ -128,12 +136,14 @@ export const navModules: NavModule[] = [
     icon: Apple,
     color: "#035d4d",
     permission: ["Nutrition.Manage", "Nutrition.Approve"],
-    items: [{
-      label: "Nutrición",
-      href: "/nutrition",
-      icon: Apple,
-      permission: ["Nutrition.Manage", "Nutrition.Approve"],
-    }],
+    items: [
+      {
+        label: "Nutrición",
+        href: "/nutrition",
+        icon: Apple,
+        permission: ["Nutrition.Manage", "Nutrition.Approve"],
+      },
+    ],
   },
   {
     label: "Gestión",
@@ -308,6 +318,7 @@ export const navModules: NavModule[] = [
   },
   {
     label: "Inventario",
+    hidden: !INVENTORY_ENABLED,
     icon: Package,
     color: "#7C3AED",
     permission: "Inventory.View",
@@ -351,6 +362,7 @@ export const navModules: NavModule[] = [
   },
   {
     label: "Tienda de bienestar",
+    hidden: !STORE_ENABLED,
     icon: ShoppingBag,
     color: "#10B981",
     permission: "Store.View",
@@ -457,6 +469,7 @@ export const navModules: NavModule[] = [
         icon: Apple,
         color: "#059669",
         permission: "Wellness.View",
+        hidden: !WELLNESS_NUTRITION_PLANS_ENABLED,
       },
       {
         label: "Rutinas de ejercicio",
@@ -471,6 +484,7 @@ export const navModules: NavModule[] = [
         icon: ClipboardList,
         color: "#7C3AED",
         permission: "Wellness.View",
+        hidden: !WELLNESS_ASSIGNMENTS_ENABLED,
       },
     ],
   },
@@ -506,6 +520,7 @@ export const navModules: NavModule[] = [
         icon: ShieldAlert,
         color: "#DC2626",
         permission: ["Program.View", "Program.Adapt"],
+        hidden: !PROGRAM_CLINICA_ENABLED,
       },
     ],
   },
