@@ -2,6 +2,13 @@ export type MediaType = "Podcast" | "Video" | "Audio" | "Image";
 
 export type MediaStatus = "Draft" | "Published" | "Archived";
 
+/** Resultado por archivo de tasks.md 1.13; el estado pendiente solo pertenece a la cola local. */
+export interface MediaBulkResult {
+  nombre: string;
+  estado: "borrador" | "publicado" | "error";
+  error?: string;
+}
+
 /** Espejo del enum MediaCategory del backend (CoppAddresd.Domain). */
 export type MediaCategory =
   | "Biologia"
