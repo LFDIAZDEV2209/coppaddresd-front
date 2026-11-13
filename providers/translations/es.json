@@ -5289,5 +5289,10 @@
   "{count} inscripciones": "{count} inscripciones",
   "Guardar borradores": "Guardar borradores",
   "Publicar {count} listos": "Publicar {count} listos",
-  "Borrador listo": "Borrador listo"
+  "Borrador listo": "Borrador listo",
+  "Biblioteca de podcasts": "Biblioteca de podcasts",
+  "Explora por categoría y escucha sin salir de la biblioteca.": "Explora por categoría y escucha sin salir de la biblioteca.",
+  "Escuchar {title}": "Escuchar {title}",
+  "Reproduciendo ahora": "Reproduciendo ahora",
+  "Cerrar reproductor": "Cerrar reproductor"
 }

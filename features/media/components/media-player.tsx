@@ -14,6 +14,8 @@ interface MediaPlayerProps {
   preload?: "none" | "metadata" | "auto";
   onDuration?: (seconds: number) => void;
   alt?: string;
+  /** Opt-in para la escucha desde la biblioteca; conserva el comportamiento anterior por defecto. */
+  autoPlay?: boolean;
 }
 
 /**
@@ -28,20 +30,22 @@ export function MediaPlayer({
   preload = "metadata",
   onDuration,
   alt,
+  autoPlay = false,
 }: MediaPlayerProps) {
   const t = useT();
-  const [url, setUrl] = useState<string | null>(null);
-  const [error, setError] = useState(false);
+  const [source, setSource] = useState<{ key: string; url: string | null; error: boolean } | null>(null);
+  const url = source?.key === storageKey ? source.url : null;
+  const error = source?.key === storageKey && source.error;
 
   useEffect(() => {
     let cancelled = false;
 
     getMediaStreamUrl(storageKey)
       .then((signedUrl) => {
-        if (!cancelled) setUrl(signedUrl);
+        if (!cancelled) setSource({ key: storageKey, url: signedUrl, error: false });
       })
       .catch(() => {
-        if (!cancelled) setError(true);
+        if (!cancelled) setSource({ key: storageKey, url: null, error: true });
       });
 
     return () => {
@@ -69,7 +73,7 @@ export function MediaPlayer({
 
   if (mediaType === "Image") {
     return <Image src={url} alt={alt ?? t("Imagen del ejercicio")} width={960} height={540} unoptimized
-      onError={() => setError(true)} className={`h-auto max-h-80 w-full object-contain ${className}`} />;
+      onError={() => setSource({ key: storageKey, url: null, error: true })} className={`h-auto max-h-80 w-full object-contain ${className}`} />;
   }
 
   if (mediaType === "Video") {
@@ -77,6 +81,8 @@ export function MediaPlayer({
       <video
         src={url}
         controls
+        autoPlay={autoPlay}
+        aria-label={alt}
         onLoadedMetadata={(event) => {
           const seconds = event.currentTarget.duration;
           if (Number.isFinite(seconds) && seconds > 0) onDuration?.(seconds);
@@ -89,7 +95,7 @@ export function MediaPlayer({
   }
 
   return (
-    <audio src={url} controls onLoadedMetadata={(event) => {
+    <audio src={url} controls autoPlay={autoPlay} aria-label={alt} onLoadedMetadata={(event) => {
       const seconds = event.currentTarget.duration;
       if (Number.isFinite(seconds) && seconds > 0) onDuration?.(seconds);
     }} preload={preload} className={`block w-full min-w-0 max-w-full ${className}`} />

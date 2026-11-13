@@ -5302,5 +5302,10 @@
   "{count} inscripciones": "{count} enrollments",
   "Guardar borradores": "Save drafts",
   "Publicar {count} listos": "Publish {count} ready",
-  "Borrador listo": "Draft ready"
+  "Borrador listo": "Draft ready",
+  "Biblioteca de podcasts": "Podcast library",
+  "Explora por categoría y escucha sin salir de la biblioteca.": "Browse by category and listen without leaving the library.",
+  "Escuchar {title}": "Listen to {title}",
+  "Reproduciendo ahora": "Now playing",
+  "Cerrar reproductor": "Close player"
 }
