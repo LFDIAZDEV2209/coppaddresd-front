@@ -5248,5 +5248,11 @@
   "Completa los datos del paciente.": "Complete the patient details.",
   "Nutrientes": "Nutrients",
   "Totales": "Totals",
-  "{count} datos pendientes": "{count} missing fields"
+  "{count} datos pendientes": "{count} missing fields",
+  "Plan semanal": "Weekly plan",
+  "Vistas del perfil 360": "360 profile views",
+  "Error al cargar el perfil": "Unable to load the profile",
+  "Este paciente no está disponible o no tienes acceso a su perfil.": "This patient is unavailable or you do not have access to their profile.",
+  "Este paciente no tiene una inscripción activa al programa. Inscríbelo desde el módulo de pacientes para ver el contenido y historial.": "This patient has no active program enrollment. Enroll them from the patients module to see their plan and history.",
+  "Ocultar buscador": "Hide patient search"
 }

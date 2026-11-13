@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, Search, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, RefreshCw, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientOverview } from "../hooks/use-patient-overview";
@@ -28,7 +29,7 @@ import { EnrollmentXpLedgerTab } from "./enrollment-detail/tabs/enrollment-xp-le
 import { ProgramControlesTab } from "./program-controles-tab";
 import { fetchEnrollmentById } from "../services/program-enrollments-service";
 import type { ProgramEnrollment } from "../types";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { NutritionPatientLink } from "@/features/nutrition/components/nutrition-patient-link";
 
 interface ProgramPatientProfile360Props {
@@ -58,16 +59,25 @@ export function ProgramPatientProfile360({
   } = useBiometriaPatient(patientId);
 
   const tabs = [
-    { key: "resumen", label: "Resumen" },
-    { key: "gamificacion", label: t("Gamificación") },
-    { key: "clinica", label: "Clínica" },
-    { key: "controles", label: t("Controles") },
-    { key: "contenido", label: "Contenido" },
-    { key: "xp-ledger", label: "Historial XP" },
+    { key: "resumen", label: t("Resumen") },
+    { key: "plan-semanal", label: t("Plan semanal") },
+    { key: "nutricion", label: t("Nutrición") },
+    { key: "seguimiento", label: t("Seguimiento") },
+    { key: "progreso", label: t("Progreso") },
   ];
 
-  // Fallback when localStorage holds an old key (biometria/scores/baseline)
-  const safeTab = tabs.some((t) => t.key === activeTab) ? activeTab : "resumen";
+  // Conservar la selección de sesiones anteriores al reorganizar las pestañas.
+  const legacyTabs: Record<string, string> = {
+    contenido: "plan-semanal",
+    clinica: "seguimiento",
+    controles: "seguimiento",
+    gamificacion: "progreso",
+    "xp-ledger": "progreso",
+  };
+  const migratedTab = legacyTabs[activeTab] ?? activeTab;
+  const safeTab = tabs.some((tab) => tab.key === migratedTab)
+    ? migratedTab
+    : "resumen";
 
   const enrollmentId = data?.enrollment?.enrollment_id ?? null;
   const {
@@ -134,8 +144,30 @@ export function ProgramPatientProfile360({
       .finally(() => setEnrollmentLoading(false));
   };
 
+  if (!loading && !data) {
+    return (
+      <TabError
+        message={t(
+          "Este paciente no está disponible o no tienes acceso a su perfil.",
+        )}
+        onRetry={retry}
+      />
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-5">
+    <Tabs
+      value={safeTab}
+      onValueChange={(value) => setActiveTab(String(value))}
+      className="min-w-0 gap-5"
+    >
+      <Link
+        href="/patients"
+        className="inline-flex min-h-11 items-center gap-2 self-start rounded-lg px-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"
+      >
+        <ArrowLeft aria-hidden className="size-4" />
+        {t("Pacientes")}
+      </Link>
       {/* Hero azul — reemplaza al PageHeader "Perfil 360" cuando se ve un paciente específico */}
       {loading ? (
         <ResumenSkeleton />
@@ -145,44 +177,34 @@ export function ProgramPatientProfile360({
         <PatientResumenHero data={data} biometria={biometriaData ?? null} />
       ) : null}
 
-      {!loading && data && <NutritionPatientLink patientId={patientId} />}
-
       {/* Fila: tabs + lupa/actualizar en la misma línea */}
       <div className="flex flex-wrap items-center gap-3">
-        <div
-          role="tablist"
-          aria-label="Vistas del perfil 360"
-          className="inline-flex w-fit flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-sm"
+        <TabsList
+          aria-label={t("Vistas del perfil 360")}
+          className="h-auto flex-wrap justify-start"
         >
-          {tabs.map((tab) => {
-            const isActive = safeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActiveTab(tab.key)}
-                className={cn(
-                  "inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg px-5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.key}
+              value={tab.key}
+              className="min-h-11 px-4 text-muted-foreground"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
         <div className="ml-auto flex items-center gap-2">
           {onToggleSearch && (
             <Button
               variant="outline"
               size="icon-sm"
               onClick={onToggleSearch}
-              aria-label={isSearchOpen ? "Ocultar buscador" : "Buscar paciente"}
-              title={isSearchOpen ? "Ocultar buscador" : "Buscar paciente"}
+              aria-label={
+                isSearchOpen ? t("Ocultar buscador") : t("Buscar paciente")
+              }
+              title={
+                isSearchOpen ? t("Ocultar buscador") : t("Buscar paciente")
+              }
             >
               {isSearchOpen ? (
                 <X className="size-4" />
@@ -201,136 +223,111 @@ export function ProgramPatientProfile360({
               data-icon="inline-start"
               className={loading ? "animate-spin" : undefined}
             />
-            Actualizar
+            {t("Actualizar")}
           </Button>
         </div>
       </div>
 
-      {/* Tab content */}
-      <div>
-        {safeTab === "resumen" && (
-          <section
-            aria-label="Resumen del paciente"
-            className="flex flex-col gap-5"
-          >
-            {/* Biometría: figura + zonas + mediciones exactas en el mismo box */}
-            {biometriaLoading ? (
-              <BiometriaPerfilSkeleton />
-            ) : biometriaError ? (
-              <div className="rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-5 text-center">
-                <p className="text-sm font-semibold text-destructive">
-                  Error al cargar biometría
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {biometriaError}
-                </p>
+      <TabsContent value="resumen" className="flex flex-col gap-5">
+        {/* Biometría: figura + zonas + mediciones exactas en el mismo box */}
+        {biometriaLoading ? (
+          <BiometriaPerfilSkeleton />
+        ) : biometriaError ? (
+          <div className="rounded-2xl border border-destructive/20 bg-destructive-soft/40 p-5 text-center">
+            <p className="text-sm font-semibold text-destructive">
+              Error al cargar biometría
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {biometriaError}
+            </p>
+          </div>
+        ) : biometriaData ? (
+          <BiometriaHeroSections
+            data={biometriaData}
+            tareasHoy={data ? data.tareas_hoy : undefined}
+          />
+        ) : null}
+
+        {/* Resto del resumen sin hero (ya renderizado arriba) — Misiones ya va dentro del box de biometría para poblar el espacio en blanco */}
+        {loading ? null : error ? null : data ? (
+          <PatientResumenBody data={data} hideMisiones />
+        ) : null}
+
+        {/* Historial biometría: tabla semanal (el heatmap vive en Gamificación) */}
+        {biometriaLoading ? null : biometriaData ? (
+          <BiometriaHistorySections data={biometriaData} />
+        ) : null}
+      </TabsContent>
+      <TabsContent value="plan-semanal" className="flex flex-col gap-5">
+        <EnrollmentDetailTabWrapper
+          enrollmentId={enrollmentId}
+          enrollment={activeEnrollment}
+          loading={activeEnrollmentLoading || loading}
+          error={activeEnrollmentError}
+          onRetry={handleRetryEnrollment}
+        >
+          {(enr) => <EnrollmentContentTab enrollment={enr} />}
+        </EnrollmentDetailTabWrapper>
+      </TabsContent>
+      <TabsContent value="nutricion" className="flex flex-col gap-5">
+        <NutritionPatientLink patientId={patientId} />
+      </TabsContent>
+      <TabsContent value="seguimiento" className="flex flex-col gap-5">
+        {loading ? (
+          <ResumenSkeleton />
+        ) : error ? (
+          <TabError message={error} onRetry={retry} />
+        ) : data ? (
+          <>
+            <PatientClinicaTop data={data} />
+            <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr] items-start">
+              <div className="min-w-0">
+                <ClinicalEvolutionCard metrics={data.mediciones_clinicas} />
               </div>
-            ) : biometriaData ? (
-              <BiometriaHeroSections
-                data={biometriaData}
-                tareasHoy={data ? data.tareas_hoy : undefined}
-              />
-            ) : null}
+              <div className="min-w-0">
+                <EnrollmentDetailTabWrapper
+                  enrollmentId={enrollmentId}
+                  enrollment={activeEnrollment}
+                  loading={activeEnrollmentLoading || loading}
+                  error={activeEnrollmentError}
+                  onRetry={handleRetryEnrollment}
+                >
+                  {(enr) => <EnrollmentBaselineTab enrollment={enr} />}
+                </EnrollmentDetailTabWrapper>
+              </div>
+            </div>
+            <PatientClinicaBottom data={data} />
+          </>
+        ) : null}
 
-            {/* Resto del resumen sin hero (ya renderizado arriba) — Misiones ya va dentro del box de biometría para poblar el espacio en blanco */}
-            {loading ? null : error ? null : data ? (
-              <PatientResumenBody data={data} hideMisiones />
-            ) : null}
+        <ProgramControlesTab
+          patientId={patientId}
+          clinicalMetrics={data?.mediciones_clinicas ?? null}
+        />
+      </TabsContent>
+      <TabsContent value="progreso" className="flex flex-col gap-5">
+        <ProgramGamificacionTab
+          overview={data ?? null}
+          overviewLoading={loading}
+          snapshot={snapshot}
+          snapshotLoading={snapshotLoading}
+          snapshotError={snapshotError}
+          onRetrySnapshot={retrySnapshot}
+          heatmap={biometriaData?.adherence_heatmap ?? null}
+          heatmapLoading={biometriaLoading}
+        />
 
-            {/* Historial biometría: tabla semanal (el heatmap vive en Gamificación) */}
-            {biometriaLoading ? null : biometriaData ? (
-              <BiometriaHistorySections data={biometriaData} />
-            ) : null}
-          </section>
-        )}
-
-        {safeTab === "clinica" && (
-          <section
-            aria-label="Información clínica del paciente"
-            className="flex flex-col gap-5"
-          >
-            {loading ? (
-              <ResumenSkeleton />
-            ) : error ? (
-              <TabError message={error} onRetry={retry} />
-            ) : data ? (
-              <>
-                <PatientClinicaTop data={data} />
-                <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr] items-start">
-                  <div className="min-w-0">
-                    <ClinicalEvolutionCard metrics={data.mediciones_clinicas} />
-                  </div>
-                  <div className="min-w-0">
-                    <EnrollmentDetailTabWrapper
-                      enrollmentId={enrollmentId}
-                      enrollment={activeEnrollment}
-                      loading={activeEnrollmentLoading || loading}
-                      error={activeEnrollmentError}
-                      onRetry={handleRetryEnrollment}
-                    >
-                      {(enr) => <EnrollmentBaselineTab enrollment={enr} />}
-                    </EnrollmentDetailTabWrapper>
-                  </div>
-                </div>
-                <PatientClinicaBottom data={data} />
-              </>
-            ) : null}
-          </section>
-        )}
-
-        {safeTab === "controles" && (
-          <section aria-label="Controles del programa">
-            <ProgramControlesTab
-              patientId={patientId}
-              clinicalMetrics={data?.mediciones_clinicas ?? null}
-            />
-          </section>
-        )}
-
-        {safeTab === "gamificacion" && (
-          <section aria-label="Gamificación">
-            <ProgramGamificacionTab
-              overview={data ?? null}
-              overviewLoading={loading}
-              snapshot={snapshot}
-              snapshotLoading={snapshotLoading}
-              snapshotError={snapshotError}
-              onRetrySnapshot={retrySnapshot}
-              heatmap={biometriaData?.adherence_heatmap ?? null}
-              heatmapLoading={biometriaLoading}
-            />
-          </section>
-        )}
-
-        {safeTab === "contenido" && (
-          <section aria-label="Contenido">
-            <EnrollmentDetailTabWrapper
-              enrollmentId={enrollmentId}
-              enrollment={activeEnrollment}
-              loading={activeEnrollmentLoading || loading}
-              error={activeEnrollmentError}
-              onRetry={handleRetryEnrollment}
-            >
-              {(enr) => <EnrollmentContentTab enrollment={enr} />}
-            </EnrollmentDetailTabWrapper>
-          </section>
-        )}
-
-        {safeTab === "xp-ledger" && (
-          <section aria-label="Historial XP">
-            <EnrollmentDetailTabWrapper
-              enrollmentId={enrollmentId}
-              enrollment={activeEnrollment}
-              loading={activeEnrollmentLoading || loading}
-              error={activeEnrollmentError}
-              onRetry={handleRetryEnrollment}
-            >
-              {(enr) => <EnrollmentXpLedgerTab enrollment={enr} />}
-            </EnrollmentDetailTabWrapper>
-          </section>
-        )}
-      </div>
-    </div>
+        <EnrollmentDetailTabWrapper
+          enrollmentId={enrollmentId}
+          enrollment={activeEnrollment}
+          loading={activeEnrollmentLoading || loading}
+          error={activeEnrollmentError}
+          onRetry={handleRetryEnrollment}
+        >
+          {(enr) => <EnrollmentXpLedgerTab enrollment={enr} />}
+        </EnrollmentDetailTabWrapper>
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -349,13 +346,15 @@ function EnrollmentDetailTabWrapper({
   onRetry: () => void;
   children: (enrollment: ProgramEnrollment) => React.ReactNode;
 }) {
+  const t = useT();
   if (!enrollmentId) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-14 text-center">
-        <p className="text-sm font-semibold">Sin inscripción activa</p>
+        <p className="text-sm font-semibold">{t("Sin inscripción activa")}</p>
         <p className="max-w-sm text-xs text-muted-foreground">
-          Este paciente no tiene una inscripción activa al programa. Inscríbelo
-          desde el módulo de pacientes para ver el contenido y historial.
+          {t(
+            "Este paciente no tiene una inscripción activa al programa. Inscríbelo desde el módulo de pacientes para ver el contenido y historial.",
+          )}
         </p>
       </div>
     );
@@ -411,14 +410,18 @@ function TabError({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useT();
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center">
+    <div
+      role="alert"
+      className="flex flex-col items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive-soft/40 py-14 text-center"
+    >
       <p className="text-sm font-semibold text-destructive">
-        Error al cargar el perfil
+        {t("Error al cargar el perfil")}
       </p>
       <p className="max-w-sm text-xs text-muted-foreground">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
-        Reintentar
+        {t("Reintentar")}
       </Button>
     </div>
   );
