@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Weight, Ruler, CalendarDays, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/providers/i18n-provider";
@@ -18,13 +18,13 @@ export function NutritionGenerateForm({ profile, busy, onGenerate }: { profile: 
   let age = today.getFullYear() - birth.getFullYear();
   if (today.getMonth() < birth.getMonth() || today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate()) age--;
   const valid = Number(weight) > 0 && Number(height) > 0 && Number.isFinite(age) && age >= 18 && age <= 120 && ["male", "female"].includes(sex);
-  return <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); if (valid && !busy) void onGenerate({ birthDate, manual: { peso: Number(weight), talla: Number(height), edad: age, sexo: sex === "female" ? "F" : "M" }, preserveConfirmedEdits: true }); }}>
-    <p className="text-sm text-muted-foreground">{t("Confirma peso, talla, fecha de nacimiento y sexo. Los datos faltantes no se completan automáticamente.")}</p>
+  return <form className="nutrition-generate-form flex flex-col gap-5" onSubmit={(event) => { event.preventDefault(); if (valid && !busy) void onGenerate({ birthDate, manual: { peso: Number(weight), talla: Number(height), edad: age, sexo: sex === "female" ? "F" : "M" }, preserveConfirmedEdits: true }); }}>
+    <p className="text-sm text-muted-foreground">{t("Completa los datos del paciente.")}</p>
     <fieldset disabled={busy} className="grid gap-4 sm:grid-cols-2"><legend className="sr-only">{t("Datos mínimos para generar la propuesta")}</legend>
-      <div><label htmlFor="nutrition-weight" className="nutrition-label">{t("Peso (kg)")}</label><Input id="nutrition-weight" type="number" required min="1" max="500" step="0.1" value={weight} onChange={(event) => setWeight(event.target.value)} /></div>
-      <div><label htmlFor="nutrition-height" className="nutrition-label">{t("Talla (cm)")}</label><Input id="nutrition-height" type="number" required min="50" max="250" step="0.1" value={height} onChange={(event) => setHeight(event.target.value)} /></div>
-      <div><label htmlFor="nutrition-birth" className="nutrition-label">{t("Fecha de nacimiento")}</label><Input id="nutrition-birth" type="date" required value={birthDate} onChange={(event) => setBirthDate(event.target.value)} /></div>
-      <div><label htmlFor="nutrition-sex" className="nutrition-label">{t("Sexo")}</label><select id="nutrition-sex" required className="nutrition-select w-full" value={sex} onChange={(event) => setSex(event.target.value)}><option value="">{t("Selecciona una opción")}</option><option value="female">{t("Mujer")}</option><option value="male">{t("Hombre")}</option></select></div>
+      <div><label htmlFor="nutrition-weight" className="nutrition-label"><Weight className="size-4" aria-hidden="true" />{t("Peso (kg)")}</label><Input id="nutrition-weight" type="number" required min="1" max="500" step="0.1" value={weight} onChange={(event) => setWeight(event.target.value)} /></div>
+      <div><label htmlFor="nutrition-height" className="nutrition-label"><Ruler className="size-4" aria-hidden="true" />{t("Talla (cm)")}</label><Input id="nutrition-height" type="number" required min="50" max="250" step="0.1" value={height} onChange={(event) => setHeight(event.target.value)} /></div>
+      <div><label htmlFor="nutrition-birth" className="nutrition-label"><CalendarDays className="size-4" aria-hidden="true" />{t("Fecha de nacimiento")}</label><Input id="nutrition-birth" type="date" required value={birthDate} onChange={(event) => setBirthDate(event.target.value)} /></div>
+      <div><label htmlFor="nutrition-sex" className="nutrition-label"><UserRound className="size-4" aria-hidden="true" />{t("Sexo")}</label><select id="nutrition-sex" required className="nutrition-select w-full" value={sex} onChange={(event) => setSex(event.target.value)}><option value="">{t("Selecciona una opción")}</option><option value="female">{t("Mujer")}</option><option value="male">{t("Hombre")}</option></select></div>
     </fieldset><Button type="submit" variant="outline" className="nutrition-ai-button" disabled={busy || !valid}><Sparkles aria-hidden="true" className="size-4" />{t("Generar propuesta con IA")}</Button>
   </form>;
 }

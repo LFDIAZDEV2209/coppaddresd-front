@@ -5223,5 +5223,17 @@
   "Ciclos y fechas": "Ciclos y fechas",
   "Menú y porciones": "Menú y porciones",
   "Plan de solo lectura.": "Plan de solo lectura.",
-  "Plan de solo lectura. Crea una versión para editar.": "Plan de solo lectura. Crea una versión para editar."
+  "Plan de solo lectura. Crea una versión para editar.": "Plan de solo lectura. Crea una versión para editar.",
+  "{count} sobre la meta": "{count} sobre la meta",
+  "Esta comida está vacía. Agrega un alimento.": "Esta comida está vacía. Agrega un alimento.",
+  "Regenera la propuesta para aplicar las nuevas metas.": "Regenera la propuesta para aplicar las nuevas metas.",
+  "Sin alertas registradas": "Sin alertas registradas",
+  "Guardado automático": "Guardado automático",
+  "Copiar a 30 días": "Copiar a 30 días",
+  "Comidas del día": "Comidas del día",
+  "Vigencia": "Vigencia",
+  "Completa los datos del paciente.": "Completa los datos del paciente.",
+  "Nutrientes": "Nutrientes",
+  "Totales": "Totales",
+  "{count} datos pendientes": "{count} datos pendientes"
 }

@@ -5236,5 +5236,17 @@
   "Ciclos y fechas": "Cycles and dates",
   "Menú y porciones": "Menu and portions",
   "Plan de solo lectura.": "Read-only plan.",
-  "Plan de solo lectura. Crea una versión para editar.": "Read-only plan. Create a version to edit."
+  "Plan de solo lectura. Crea una versión para editar.": "Read-only plan. Create a version to edit.",
+  "{count} sobre la meta": "{count} above target",
+  "Esta comida está vacía. Agrega un alimento.": "This meal is empty. Add a food.",
+  "Regenera la propuesta para aplicar las nuevas metas.": "Regenerate the proposal to apply the new targets.",
+  "Sin alertas registradas": "No alerts recorded",
+  "Guardado automático": "Autosaved",
+  "Copiar a 30 días": "Copy to 30 days",
+  "Comidas del día": "Meals of the day",
+  "Vigencia": "Validity",
+  "Completa los datos del paciente.": "Complete the patient details.",
+  "Nutrientes": "Nutrients",
+  "Totales": "Totals",
+  "{count} datos pendientes": "{count} missing fields"
 }

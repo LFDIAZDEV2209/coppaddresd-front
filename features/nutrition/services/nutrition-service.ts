@@ -97,10 +97,61 @@ function fetchNutritionPage(query: NutritionQueueQuery, signal?: AbortSignal) {
     (wire) => mapNutritionQueue(wire, query.state),
   );
 }
+/** Ventana acotada de un estado: como máximo dos páginas, nunca el listado completo. */
+async function fetchNutritionWindow(
+  query: NutritionQueueQuery,
+  offset: number,
+  take: number,
+  signal?: AbortSignal,
+) {
+  const first = Math.floor(offset / query.pageSize) + 1;
+  const last = Math.floor((offset + take - 1) / query.pageSize) + 1;
+  const pages = await Promise.all(
+    Array.from({ length: last - first + 1 }, (_, index) =>
+      fetchNutritionPage({ ...query, page: first + index }, signal),
+    ),
+  );
+  const start = offset % query.pageSize;
+  return pages.flatMap(page => page.items).slice(start, start + take);
+}
+
 export async function fetchNutritionQueue(
   query: NutritionQueueQuery,
   signal?: AbortSignal,
 ) {
+  if (query.state === "all") {
+    // Compatible con la API desplegada que aún coloca sin_plan al principio.
+    // Se pagina sobre estados disjuntos; no se ordena una página ya recortada.
+    const priority = ["aprobado", "por_renovar", "en_aprobacion", "borrador_ia", "devuelto", "sin_plan"] as const;
+    const states = ["all", ...priority] as const;
+    const counts = await Promise.all(states.map(state =>
+      fetchNutritionPage({ ...query, state, page: 1, pageSize: 1 }, signal),
+    ));
+    const result = counts[0];
+    states.forEach((state, index) => { result.counts[state] = counts[index].total; });
+    let offset = (query.page - 1) * query.pageSize;
+    let remaining = query.pageSize;
+    const windows: ReturnType<typeof fetchNutritionWindow>[] = [];
+    for (const state of priority) {
+      const total = result.counts[state] ?? 0;
+      if (offset >= total) {
+        offset -= total;
+        continue;
+      }
+      const take = Math.min(remaining, total - offset);
+      windows.push(fetchNutritionWindow({ ...query, state }, offset, take, signal));
+      remaining -= take;
+      offset = 0;
+      if (remaining === 0) break;
+    }
+    return {
+      ...result,
+      items: (await Promise.all(windows)).flat(),
+      page: query.page,
+      pageSize: query.pageSize,
+      totalPages: Math.ceil(result.total / query.pageSize),
+    };
+  }
   const filters: NutritionQueueQuery["state"][] = [
     "all",
     "borrador_ia",

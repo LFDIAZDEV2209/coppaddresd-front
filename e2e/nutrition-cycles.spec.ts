@@ -250,13 +250,9 @@ test("ciclos: agrupar versiones, abrir plan e historial y conservar bandeja", as
   await page
     .getByRole("button", { name: "Ver historial C1", exact: true })
     .click();
+  await expect(page.locator("#nutrition-audit-title")).toBeFocused();
   await expect(
-    page.locator("details").filter({
-      has: page.locator("summary", { hasText: "Bitácora del plan" }),
-    }),
-  ).toHaveAttribute("open", "");
-  await expect(
-    page.locator("details[open]").getByText("Plan aprobado", { exact: true }),
+    page.locator(".nutrition-audit").getByText("Plan aprobado", { exact: true }),
   ).toBeVisible();
 });
 

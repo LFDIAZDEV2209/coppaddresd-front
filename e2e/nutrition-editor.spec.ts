@@ -178,7 +178,6 @@ test("publicar conserva las alertas sin afirmar revisión clínica y actualiza l
   await page.getByRole("button", { name: "Publicar plan", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator(".nutrition-header-state")).toContainText("Publicado");
-  await page.getByText("Bitácora del plan", { exact: false }).click();
   await expect(page.getByText("Plan publicado", { exact: true })).toBeVisible();
   await expect(page.getByText("2 alertas críticas confirmadas", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Volver a la bandeja", exact: true }).click();
@@ -215,7 +214,6 @@ test("devolver exige comentario no vacío y lo conserva en ficha y bitácora", a
       .locator(".nutrition-detail-header")
       .getByText("Devuelto", { exact: true }),
   ).toBeVisible();
-  await page.getByText("Bitácora del plan", { exact: false }).click();
   await expect(
     page.getByText("Revisar la distribución de comidas", { exact: true }),
   ).toHaveCount(2);
@@ -402,7 +400,7 @@ test("demografía inaccesible no bloquea una ficha autorizada por Nutrición", a
   }
 });
 
-test("publicación muestra vigencia y aviso sin introducir consentimiento clínico", async ({ page }) => {
+test("publicación muestra vigencia sin introducir consentimiento clínico", async ({ page }) => {
   const { store } = await demoSession(page, ["Nutrition.Manage"]);
   const cycle = store.get("demo-patient-1")!.cycle!;
   cycle.startDate = null; cycle.endDate = null;
@@ -411,7 +409,7 @@ test("publicación muestra vigencia y aviso sin introducir consentimiento clíni
   const validity = page.getByRole("tabpanel", { name: "Programación", exact: true }).locator(".nutrition-cycle-summary");
   await expect(validity).toContainText("Sin definir");
   await expect(validity).not.toContainText("→");
-  await expect(page.getByText("IMPORTANT DISCLAIMER – NUTRITIONAL RECOMMENDATIONS", { exact: true })).toBeVisible();
+  await expect(page.getByText("IMPORTANT DISCLAIMER – NUTRITIONAL RECOMMENDATIONS", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Publicar plan", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator(".nutrition-header-state")).toContainText("Publicado");
@@ -460,6 +458,7 @@ test("contraste AA del chip IA y exceso ámbar en valores del editor", async ({
   const over = page
     .locator('.nutrition-daily-totals [data-over-target="true"]')
     .first();
+  await page.locator(".nutrition-daily-totals > summary").click();
   await expect(over).toBeVisible();
   const color = await over
     .locator("dd")

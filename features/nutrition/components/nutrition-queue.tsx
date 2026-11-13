@@ -2,27 +2,28 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  Activity,
   Check,
-  CalendarDays,
-  ClipboardCheck,
-  FileText,
+  ArrowRight,
+  Flame,
+  SlidersHorizontal,
+  CircleCheck,
   RefreshCw,
   Search,
   ShieldAlert,
   Stethoscope,
   Users,
+  FilePlus2,
+  Clock3,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@/components/layout/section-header";
-import { StatCard } from "@/components/feedback/stat-card";
 import { useT } from "@/providers/i18n-provider";
 import { useNutritionQueue } from "../hooks/use-nutrition-queue";
 import { NutritionPatientDetail } from "./nutrition-patient-detail";
-import { NutritionPatientAvatar, NutritionStateChip } from "./nutrition-shared";
+import { NutritionPatientAvatar, NutritionStateChip, useNutritionDate, useNutritionNumber } from "./nutrition-shared";
 import type { NutritionFilter } from "../types/nutrition";
 import { NutritionError, NutritionSkeleton } from "./nutrition-feedback";
 import "../nutrition.css";
@@ -42,6 +43,8 @@ export function NutritionQueue({
   initialPrescriptionId,
 }: { initialPatientId?: string; initialPrescriptionId?: string } = {}) {
   const t = useT();
+  const date = useNutritionDate();
+  const format = useNutritionNumber();
   const {
     data,
     loading,
@@ -138,7 +141,7 @@ export function NutritionQueue({
           className="nutrition-patient-rail"
           aria-label={t("Bandeja de pacientes")}
         >
-          <SectionHeader
+          {selection && <SectionHeader
             title={t("Pacientes")}
             icon={Users}
             variant="surface"
@@ -147,8 +150,9 @@ export function NutritionQueue({
                 ? t("{count} pacientes", { count: String(data.total) })
                 : t("Bandeja de nutrición")
             }
-          />
+          />}
           <div className="nutrition-rail-tools">
+            {!selection && <div className="nutrition-directory-heading"><Users aria-hidden="true" /><h2>{t("Pacientes")}</h2>{data && <span className="nutrition-measure">{format(data.total, 0)}</span>}</div>}
             <label htmlFor="nutrition-search" className="sr-only">
               {t("Buscar paciente")}
             </label>
@@ -167,6 +171,8 @@ export function NutritionQueue({
                 className="pl-9"
               />
             </div>
+            <div className="nutrition-filter-field">
+            <SlidersHorizontal className="nutrition-filter-icon" aria-hidden="true" />
             <label htmlFor="nutrition-state" className="nutrition-state-label">{t("Estado del plan")}</label>
             <select
               id="nutrition-state"
@@ -179,10 +185,31 @@ export function NutritionQueue({
             >
               {filters.map((filter) => (
                 <option key={filter.value} value={filter.value}>
-                  {t(filter.label)} ({data?.counts[filter.value] ?? "—"})
+                  {t(filter.label)}{data?.counts[filter.value] != null ? ` (${data.counts[filter.value]})` : ""}
                 </option>
               ))}
             </select>
+            </div>
+          </div>
+      {!selection && data && !error && (
+        <nav className="nutrition-overview" aria-label={t("Estado del plan")}>
+          {([
+            { state: "all", label: "Todos", icon: Users, tone: "sky" },
+            { state: "aprobado", label: "Publicados", icon: CircleCheck, tone: "teal" },
+            { state: "por_renovar", label: "Por renovar", icon: Clock3, tone: "violet" },
+            { state: "sin_plan", label: "Sin plan", icon: FilePlus2, tone: "amber" },
+          ] as const).map(({ state, label, icon: Icon, tone }) => (
+            <button key={state} type="button" data-tone={tone} aria-pressed={query.state === state}
+              disabled={loading} onClick={() => setState(state)}>
+              <Icon aria-hidden="true" />
+              <span>{t(label)}</span>
+              <strong className="nutrition-measure">{data.counts[state] == null ? "—" : format(data.counts[state], 0)}</strong>
+            </button>
+          ))}
+        </nav>
+      )}
+          <div className="nutrition-directory-columns" aria-hidden="true">
+            <span>{t("Paciente")}</span><span>{t("Plan nutricional")}</span><span>{t("Vigencia")}</span><span />
           </div>
           <div className="nutrition-patient-list" aria-busy={loading}>
             {loading ? (
@@ -215,37 +242,20 @@ export function NutritionQueue({
                     >
                       <NutritionPatientAvatar name={patient.patientName} />
                       <span className="nutrition-patient-option-content">
-                      <span className="nutrition-patient-name">
-                        {patient.patientName}
+                        <span className="nutrition-patient-name">{patient.patientName}</span>
+                        {patient.patientDocument && <span className="nutrition-patient-document">{patient.patientDocument}</span>}
                       </span>
                       <span className="nutrition-patient-meta">
-                        <NutritionStateChip
-                          state={patient.plan?.queueState ?? "sin_plan"}
-                        />
-                        {!!patient.plan && (
-                          <span className="nutrition-measure nutrition-patient-version">
-                            {t("v{version}", {
-                              version: String(patient.plan.version),
-                            })}
-                          </span>
-                        )}
-                        {patient.plan?.dailyKcal != null && (
-                          <span className="nutrition-measure nutrition-patient-kcal">
-                            {`${patient.plan.dailyKcal.toLocaleString()} kcal`}
-                          </span>
-                        )}
-                        {!!patient.plan?.criticalAlertCount && (
-                          <span className="nutrition-critical-count">
-                            <ShieldAlert
-                              className="size-3"
-                              aria-hidden="true"
-                            />
-                            {patient.plan.criticalAlertCount}
-                          </span>
-                        )}
+                        <span className="nutrition-directory-plan-status"><NutritionStateChip state={patient.plan?.queueState ?? "sin_plan"} />
+                          {patient.plan && <span className="nutrition-measure nutrition-patient-version">{t("v{version}", { version: String(patient.plan.version) })}</span>}
+                          {!!patient.plan?.criticalAlertCount && <span className="nutrition-critical-count" aria-label={t("{count} alertas críticas", { count: String(patient.plan.criticalAlertCount) })}><ShieldAlert className="size-3" aria-hidden="true" />{patient.plan.criticalAlertCount}</span>}
+                        </span>
+                        {patient.plan?.dailyKcal != null && <span className="nutrition-directory-target nutrition-measure"><Flame aria-hidden="true" />{format(patient.plan.dailyKcal)} kcal</span>}
                       </span>
-                      </span>
-                      {selection?.patientId === patient.patientId && <Check className="nutrition-selected-check" aria-label={t("Paciente seleccionado")} />}
+                      <span className="nutrition-directory-validity">{patient.plan?.endDate ? date(patient.plan.endDate) : "—"}</span>
+                      {selection?.patientId === patient.patientId
+                        ? <Check className="nutrition-selected-check nutrition-row-arrow" aria-label={t("Paciente seleccionado")} />
+                        : <ArrowRight className="nutrition-row-arrow" aria-hidden="true" />}
                     </Link>
                   </li>
                 ))}
@@ -303,8 +313,9 @@ export function NutritionQueue({
         <section
           className="nutrition-detail-panel"
           aria-label={t("Ficha nutricional")}
+          hidden={!selection}
         >
-          {selection ? (
+          {selection && (
             <NutritionPatientDetail
               patientId={selection.patientId}
               prescriptionId={selection.prescriptionId}
@@ -339,46 +350,6 @@ export function NutritionQueue({
                 }
               }}
             />
-          ) : (
-            <div className="nutrition-workbench-empty">
-              <SectionHeader
-                title={t("Tu bandeja de trabajo")}
-                description={t("Selecciona un paciente para revisar su plan.")}
-                icon={ClipboardCheck}
-                variant="tertiary"
-              />
-              <div className="nutrition-overview-stats">
-                <StatCard
-                  label={t("Pacientes")}
-                  value={data?.counts.all ?? "—"}
-                  icon={Users}
-                  variant="primary"
-                  tone="teal"
-                />
-                <StatCard
-                  label={t("Por publicar")}
-                  value={data?.counts.en_aprobacion ?? "—"}
-                  icon={ClipboardCheck}
-                  variant="warning"
-                />
-                <StatCard
-                  label={t("Sin plan")}
-                  value={data?.counts.sin_plan ?? "—"}
-                  icon={Activity}
-                  variant="info"
-                  tone="slate"
-                />
-              </div>
-              <div className="nutrition-selection-guide">
-                <span className="nutrition-selection-icon"><Stethoscope aria-hidden="true" /></span>
-                <h2>{t("Selecciona un paciente")}</h2>
-                <div className="nutrition-workflow-preview">
-                  <div><Activity aria-hidden="true" /><strong>{t("Resultados")}</strong><span>{t("Lecturas y baterías")}</span></div>
-                  <div><CalendarDays aria-hidden="true" /><strong>{t("Programación")}</strong><span>{t("Ciclos y fechas")}</span></div>
-                  <div><FileText aria-hidden="true" /><strong>{t("Plan de 30 días")}</strong><span>{t("Menú y porciones")}</span></div>
-                </div>
-              </div>
-            </div>
           )}
         </section>
       </div>
