@@ -484,6 +484,14 @@ export interface PatientOverviewClinicalMetricsDto {
 }
 
 export interface PatientOverviewDto {
+  /** Resumen opcional del ciclo vigente (contrato de la tarea 0.9). */
+  currentCycle?: {
+    number: number;
+    day: number;
+    of: number;
+    startDate: string;
+    endDate: string;
+  } | null;
   patient_name: string | null;
   enrollment: PatientOverviewEnrollment | null;
   streak: PatientOverviewStreak | null;

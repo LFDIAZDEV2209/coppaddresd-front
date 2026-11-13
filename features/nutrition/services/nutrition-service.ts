@@ -9,6 +9,7 @@ import type {
   NutritionQueueQuery,
   NutritionServiceIssue,
   NutritionWorkspace,
+  NutritionCurrentSummary,
 } from "../types/nutrition";
 import type {
   NutritionEventWire,
@@ -186,6 +187,54 @@ export async function fetchNutritionPendingCount(signal?: AbortSignal) {
     signal,
   );
   return { count: queue.total };
+}
+
+/** El resumen consulta solo el workspace; nunca sustituye lo vigente por el borrador. */
+export function fetchNutritionCurrentSummary(
+  patientId: string,
+  signal: AbortSignal,
+): Promise<NutritionCurrentSummary> {
+  return request<NutritionWorkspaceWire, NutritionCurrentSummary>(
+    `${ROOT}/patients/${encodeURIComponent(patientId)}/workspace`,
+    { signal },
+    (wire) => {
+      const civilDate = (value: string) => {
+        if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value))
+          throw new Error("nutrition-date-contract");
+        const time = Date.parse(`${value}T00:00:00Z`);
+        if (!Number.isFinite(time) || new Date(time).toISOString().slice(0, 10) !== value)
+          throw new Error("nutrition-date-contract");
+        return time;
+      };
+      if (wire?.patientId !== patientId)
+        throw new Error("nutrition-patient-mismatch");
+      const today = civilDate(wire.today);
+      if (wire.currentPublished === null) return { current: null };
+      const current = wire.currentPublished;
+      if (
+        !current || current.patientId !== patientId || current.isPublished !== true ||
+        !current.startDate || !current.endDate || !current.targets
+      ) throw new Error("nutrition-current-contract");
+      const start = civilDate(current.startDate);
+      const end = civilDate(current.endDate);
+      const day = (today - start) / 86_400_000 + 1;
+      const of = (end - start) / 86_400_000 + 1;
+      const target = current.targets;
+      if (
+        of !== 30 || day < 1 || day > of ||
+        ![target.k, target.c, target.p, target.f, target.fi, target.vasos].every(
+          (value) => typeof value === "number" && Number.isFinite(value) && value >= 0,
+        ) || target.k <= 0
+      ) throw new Error("nutrition-current-contract");
+      return { current: {
+        startDate: current.startDate,
+        endDate: current.endDate,
+        day,
+        of,
+        targets: { kcal: target.k, carbsG: target.c, proteinG: target.p, fatG: target.f, fiberG: target.fi, waterGlasses: target.vasos },
+      } };
+    },
+  );
 }
 
 export async function fetchNutritionWorkspace(

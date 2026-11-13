@@ -7,12 +7,18 @@ Con el frontend ya levantado en segundo plano, ejecutar:
 
 ```powershell
 corepack yarn e2e bienestar-f0.spec.ts --project=chromium-desktop
+corepack yarn e2e bienestar-f0-nutrition.spec.ts --project=chromium-desktop
 corepack yarn e2e bienestar-f0-scope.spec.ts --project=chromium-desktop
 ```
 
 `bienestar-f0.spec.ts` usa HTTP sintético explícito para validar navegación,
 teclado, 390 px, inglés, compatibilidad de pestañas, botones y rótulos. No
 acredita la autorización real. No escribe datos clínicos.
+
+`bienestar-f0-nutrition.spec.ts` comparte la respuesta HTTP sintética con la ficha
+de Nutrición y comprueba la tarjeta vigente de 0.8: ciclo, día, metas, enlace,
+lectura, permisos, errores y ausencia de datos ajenos. Usa una zona de navegador
+distinta de la del paciente para detectar cálculos de día basados en el equipo.
 
 `bienestar-f0-scope.spec.ts` usa el backend real después de 0.10a y
 0.11c/0.11d. Requiere estas variables de entorno del proceso:

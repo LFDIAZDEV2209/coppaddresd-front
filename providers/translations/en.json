@@ -5260,5 +5260,15 @@
   "Podcast de la semana": "Weekly podcast",
   "Esta inscripción no tiene semanas configuradas.": "This enrollment has no weeks configured.",
   "Asignar en bloque": "Assign in bulk",
-  "Cargando catálogo...": "Loading catalog..."
+  "Cargando catálogo...": "Loading catalog...",
+  "No tienes permiso para consultar la nutrición de este paciente.": "You do not have permission to view nutrition for this patient.",
+  "Nutrición vigente": "Current nutrition",
+  "Metas del plan publicado. Los cambios se realizan en la ficha de Nutrición.": "Targets from the published plan. Make changes in the Nutrition workspace.",
+  "Ciclo {cycle} · día {day} de {total}": "Cycle {cycle} · day {day} of {total}",
+  "Día {day} de {total}": "Day {day} of {total}",
+  "Vigencia: {start} a {end}": "Effective: {start} to {end}",
+  "Este paciente no tiene un plan nutricional publicado vigente.": "This patient has no currently active published nutrition plan.",
+  "Abrir ficha de Nutrición": "Open Nutrition workspace",
+  "Cargando resumen de nutrición": "Loading nutrition summary",
+  "Proteínas": "Protein"
 }

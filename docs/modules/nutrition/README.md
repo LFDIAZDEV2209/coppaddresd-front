@@ -1,5 +1,28 @@
 # Nutricionista ERP
 
+## Perfil 360 · resumen de solo lectura (Fase 0, tarea 0.8)
+
+La pestaña Nutrición del Perfil 360 consulta exclusivamente
+`GET /api/v1/nutrition/patients/{id}/workspace`, con el Bearer y la clínica activa
+del cliente compartido. Presenta `currentPublished`, nunca `toReview`: las metas
+del borrador no sustituyen las publicadas. El día se calcula con `today` del
+servidor y las fechas civiles del ciclo de 30 días, sin usar la zona del navegador.
+El ordinal procede del `currentCycle` opcional del overview de 0.9 cuando coinciden
+las fechas; si no está disponible, no se inventa un número de ciclo.
+
+La tarjeta muestra kcal, carbohidratos, proteínas, grasas, fibra y vasos de agua.
+No contiene controles de edición ni realiza escrituras. Su enlace abre
+`/nutrition/{patientId}`. Incluye carga, ausencia de plan vigente y error con
+reintento; un 404 o una respuesta de otro paciente nunca muestra metas ni enlace.
+La lectura admite `Nutrition.View`, además de los permisos de gestión existentes;
+la ficha mantiene sus acciones de escritura sujetas a `Nutrition.Manage`/`Approve`.
+
+Regresión sintética: `e2e/bienestar-f0-nutrition.spec.ts` compara ciclo y metas con
+la ficha, comprueba solo lectura, estado vacío, permisos, 404, identidad del
+contrato, reintento, inglés y 390 px. La suite real
+`e2e/bienestar-f0-scope.spec.ts` contrasta también la tarjeta con el workspace
+protegido; sus credenciales y pacientes los aporta el orquestador mediante entorno.
+
 ## Publicación automática (KAN-61, 2026-11-12)
 
 El flujo vigente ya no exige aprobación de nutricionista. El worker del backend publica las generaciones válidas y conserva ciclo, versiones y bitácora. El ERP muestra `Publicado`/`Por publicar`; un usuario con `Nutrition.Manage` puede publicar un borrador completo mediante `/publish`, con revisión vigente y sin afirmar haber revisado personalmente las alertas. El código de revisión anterior se conserva para compatibilidad, pero no es el paso obligatorio de este flujo. El aviso completo solicitado aparece en la ficha y en la app. Las secciones siguientes documentan el rediseño histórico.

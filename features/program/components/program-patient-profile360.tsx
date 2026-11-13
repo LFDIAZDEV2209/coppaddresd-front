@@ -30,7 +30,7 @@ import { ProgramControlesTab } from "./program-controles-tab";
 import { fetchEnrollmentById } from "../services/program-enrollments-service";
 import type { ProgramEnrollment } from "../types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { NutritionPatientLink } from "@/features/nutrition/components/nutrition-patient-link";
+import { NutritionPatientSummary } from "@/features/nutrition/components/nutrition-patient-summary";
 
 interface ProgramPatientProfile360Props {
   patientId: string;
@@ -270,7 +270,7 @@ export function ProgramPatientProfile360({
         </EnrollmentDetailTabWrapper>
       </TabsContent>
       <TabsContent value="nutricion" className="flex flex-col gap-5">
-        <NutritionPatientLink patientId={patientId} />
+        <NutritionPatientSummary patientId={patientId} cycle={data?.currentCycle} />
       </TabsContent>
       <TabsContent value="seguimiento" className="flex flex-col gap-5">
         {loading ? (

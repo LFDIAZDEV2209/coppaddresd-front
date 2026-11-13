@@ -5247,5 +5247,15 @@
   "Podcast de la semana": "Podcast de la semana",
   "Esta inscripción no tiene semanas configuradas.": "Esta inscripción no tiene semanas configuradas.",
   "Asignar en bloque": "Asignar en bloque",
-  "Cargando catálogo...": "Cargando catálogo..."
+  "Cargando catálogo...": "Cargando catálogo...",
+  "No tienes permiso para consultar la nutrición de este paciente.": "No tienes permiso para consultar la nutrición de este paciente.",
+  "Nutrición vigente": "Nutrición vigente",
+  "Metas del plan publicado. Los cambios se realizan en la ficha de Nutrición.": "Metas del plan publicado. Los cambios se realizan en la ficha de Nutrición.",
+  "Ciclo {cycle} · día {day} de {total}": "Ciclo {cycle} · día {day} de {total}",
+  "Día {day} de {total}": "Día {day} de {total}",
+  "Vigencia: {start} a {end}": "Vigencia: {start} a {end}",
+  "Este paciente no tiene un plan nutricional publicado vigente.": "Este paciente no tiene un plan nutricional publicado vigente.",
+  "Abrir ficha de Nutrición": "Abrir ficha de Nutrición",
+  "Cargando resumen de nutrición": "Cargando resumen de nutrición",
+  "Proteínas": "Proteínas"
 }

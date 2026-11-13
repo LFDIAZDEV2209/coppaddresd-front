@@ -179,6 +179,17 @@ export interface NutritionWorkspace {
   catalog: NutritionFood[];
 }
 
+/** Proyección de solo lectura del plan publicado vigente en el workspace. */
+export interface NutritionCurrentSummary {
+  current: {
+    startDate: string;
+    endDate: string;
+    day: number;
+    of: number;
+    targets: NutritionTargets;
+  } | null;
+}
+
 export type NutritionAction = "publish" | "submit" | "approve" | "return" | "new-version" | "create" | "regenerate" | "apply-day";
 export interface NutritionGenerateInput {
   birthDate?: string;

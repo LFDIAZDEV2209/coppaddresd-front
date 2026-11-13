@@ -10,7 +10,7 @@ import { nutritionIssue } from "../services/nutrition-service";
 export function useNutritionResource<T>(load: (signal: AbortSignal, scope: NutritionScope) => Promise<T>, refreshKey = "", listenChanges = false) {
   const { user } = useAuth();
   const { activeClinicId, can, loading: contextLoading } = useAppContext();
-  const enabled = !contextLoading && (can("Nutrition.Manage") || can("Nutrition.Approve"));
+  const enabled = !contextLoading && (can("Nutrition.View") || can("Nutrition.Manage") || can("Nutrition.Approve"));
   const identity = `${user?.id ?? ""}:${activeClinicId ?? ""}`;
   const userId = user?.id ?? "";
   const [revision, setRevision] = useState(0);

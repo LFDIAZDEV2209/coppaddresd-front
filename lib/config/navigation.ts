@@ -135,13 +135,13 @@ export const navModules: NavModule[] = [
     label: "Nutrición",
     icon: Apple,
     color: "#035d4d",
-    permission: ["Nutrition.Manage", "Nutrition.Approve"],
+    permission: ["Nutrition.View", "Nutrition.Manage", "Nutrition.Approve"],
     items: [
       {
         label: "Nutrición",
         href: "/nutrition",
         icon: Apple,
-        permission: ["Nutrition.Manage", "Nutrition.Approve"],
+        permission: ["Nutrition.View", "Nutrition.Manage", "Nutrition.Approve"],
       },
     ],
   },
