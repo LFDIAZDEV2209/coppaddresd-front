@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   BellRing,
@@ -805,6 +806,17 @@ export function ClinicalBoardView({
                       )}
                     </TableCell>
                     <TableCell className="text-right">
+                      {can("Program.View") && (
+                        <Button
+                          variant="outline"
+                          className="mr-2 min-h-11"
+                          render={<Link href={`/patients/${encodeURIComponent(item.patientId)}/360`} />}
+                          nativeButton={false}
+                        >
+                          {t("Perfil 360")}
+                          <span className="sr-only"> · {item.firstName} {item.lastName}</span>
+                        </Button>
+                      )}
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={

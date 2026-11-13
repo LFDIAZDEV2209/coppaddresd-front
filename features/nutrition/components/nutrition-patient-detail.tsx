@@ -166,6 +166,7 @@ function PatientWorkspace({
   const t = useT();
   const { lang } = useI18n();
   const format = useNutritionNumber();
+  const { can } = useAppContext();
   const {
     patient,
     editable,
@@ -347,6 +348,23 @@ function PatientWorkspace({
           </div>
         </div>
         <div className="nutrition-detail-actions">
+          {can("Program.View") && (
+            <Button
+              variant="outline"
+              className="min-h-11"
+              disabled={locked}
+              render={
+                locked ? undefined : (
+                  <Link
+                    href={`/patients/${encodeURIComponent(patient.patientId)}/360`}
+                  />
+                )
+              }
+              nativeButton={locked}
+            >
+              {t("Perfil 360")}
+            </Button>
+          )}
           {!cycle && canManage && (
             <Button onClick={() => changeTab("plan")}>
               {t("Crear propuesta")}
@@ -358,17 +376,21 @@ function PatientWorkspace({
               disabled={locked}
               onClick={() => void run("new-version")}
             >
-              <CopyPlus className="size-4" aria-hidden="true" />{t("Crear nueva versión")}
+              <CopyPlus className="size-4" aria-hidden="true" />
+              {t("Crear nueva versión")}
             </Button>
           )}
           {cycle &&
-            ["borrador_ia", "devuelto", "en_aprobacion"].includes(cycle.state) &&
+            ["borrador_ia", "devuelto", "en_aprobacion"].includes(
+              cycle.state,
+            ) &&
             canManage && (
               <Button
                 disabled={locked || !cycleIsComplete(cycle, catalog)}
                 onClick={() => void run("publish")}
               >
-                <Send className="size-4" aria-hidden="true" />{t("Publicar plan")}
+                <Send className="size-4" aria-hidden="true" />
+                {t("Publicar plan")}
               </Button>
             )}
           {cycle?.state === "en_aprobacion" && canApprove && (
@@ -378,9 +400,9 @@ function PatientWorkspace({
                 disabled={locked}
                 onClick={() => setReview("return")}
               >
-                <MessageSquare className="size-4" aria-hidden="true" />{t("Devolver con comentario")}
+                <MessageSquare className="size-4" aria-hidden="true" />
+                {t("Devolver con comentario")}
               </Button>
-
             </>
           )}
         </div>
@@ -426,32 +448,46 @@ function PatientWorkspace({
         className="nutrition-detail-tabs"
       >
         <div className="nutrition-context-bar">
-        <TabsList
-          aria-label={t("Secciones de la ficha nutricional")}
-          className="nutrition-tab-list"
-        >
-          <TabsTrigger value="resultados">
-            <Activity className="size-4" aria-hidden="true" />
-            {t("Resultados y ciclos")}
-          </TabsTrigger>
-          <TabsTrigger value="programacion">
-            <CalendarDays className="size-4" aria-hidden="true" />
-            {t("Programación")}
-          </TabsTrigger>
-          <TabsTrigger value="plan">
-            <FileText className="size-4" aria-hidden="true" />
-            {t("Plan de 30 días")}
-          </TabsTrigger>
-        </TabsList>
-        <div ref={setToolbarHost} hidden={tab !== "plan" || !cycle} />
+          <TabsList
+            aria-label={t("Secciones de la ficha nutricional")}
+            className="nutrition-tab-list"
+          >
+            <TabsTrigger value="resultados">
+              <Activity className="size-4" aria-hidden="true" />
+              {t("Resultados y ciclos")}
+            </TabsTrigger>
+            <TabsTrigger value="programacion">
+              <CalendarDays className="size-4" aria-hidden="true" />
+              {t("Programación")}
+            </TabsTrigger>
+            <TabsTrigger value="plan">
+              <FileText className="size-4" aria-hidden="true" />
+              {t("Plan de 30 días")}
+            </TabsTrigger>
+          </TabsList>
+          <div ref={setToolbarHost} hidden={tab !== "plan" || !cycle} />
         </div>
         <TabsContent value="resultados" keepMounted>
           <div className="nutrition-tab-body">
             {cycle && (
               <dl className="nutrition-plan-facts">
-                <div><Flame aria-hidden="true" /><dt>{t("Meta diaria")}</dt><dd className="nutrition-measure">{format(cycle.targets.kcal)} kcal</dd></div>
-                <div><Layers aria-hidden="true" /><dt>{t("Versión")}</dt><dd className="nutrition-measure">{cycle.version}</dd></div>
-                <div data-attention={criticalCount > 0}><ShieldAlert aria-hidden="true" /><dt>{t("Alertas críticas")}</dt><dd className="nutrition-measure">{criticalCount}</dd></div>
+                <div>
+                  <Flame aria-hidden="true" />
+                  <dt>{t("Meta diaria")}</dt>
+                  <dd className="nutrition-measure">
+                    {format(cycle.targets.kcal)} kcal
+                  </dd>
+                </div>
+                <div>
+                  <Layers aria-hidden="true" />
+                  <dt>{t("Versión")}</dt>
+                  <dd className="nutrition-measure">{cycle.version}</dd>
+                </div>
+                <div data-attention={criticalCount > 0}>
+                  <ShieldAlert aria-hidden="true" />
+                  <dt>{t("Alertas críticas")}</dt>
+                  <dd className="nutrition-measure">{criticalCount}</dd>
+                </div>
               </dl>
             )}
             <NutritionReadings patient={patient} />
@@ -491,21 +527,23 @@ function PatientWorkspace({
                 )}
                 <NutritionClinicalAlerts alerts={cycle.alerts} />
                 <div className="nutrition-published-summary">
-                  {patient.publishedCycle && patient.publishedCycle.id !== cycle.id && (
-                    <section className="nutrition-published-copy">
-                      <h3 className="nutrition-support-heading"><FileCheck aria-hidden="true" />
-                        {t("Versión publicada: v{version}", {
-                          version: String(patient.publishedCycle.version),
-                        })}
-                      </h3>
-                      <NutritionTargetsPanel
-                        targets={patient.publishedCycle.targets}
-                      />
-                      <p className="mt-4 whitespace-pre-wrap text-sm">
-                        {patient.publishedCycle.instructions}
-                      </p>
-                    </section>
-                  )}
+                  {patient.publishedCycle &&
+                    patient.publishedCycle.id !== cycle.id && (
+                      <section className="nutrition-published-copy">
+                        <h3 className="nutrition-support-heading">
+                          <FileCheck aria-hidden="true" />
+                          {t("Versión publicada: v{version}", {
+                            version: String(patient.publishedCycle.version),
+                          })}
+                        </h3>
+                        <NutritionTargetsPanel
+                          targets={patient.publishedCycle.targets}
+                        />
+                        <p className="mt-4 whitespace-pre-wrap text-sm">
+                          {patient.publishedCycle.instructions}
+                        </p>
+                      </section>
+                    )}
                 </div>
               </>
             ) : (
@@ -528,78 +566,91 @@ function PatientWorkspace({
               </div>
             )}
             <div className="nutrition-support-grid">
-            <div className="nutrition-profile-section">
-              <NutritionClinicalHeader profile={patient.profile} showMeasurements={false} />
-            </div>
-            <section
-              ref={auditRef}
-              className="nutrition-audit nutrition-section"
-              aria-labelledby="nutrition-audit-title"
-            >
-              <h3 id="nutrition-audit-title" tabIndex={-1} className="nutrition-support-heading"><History aria-hidden="true" />
-                {t("Bitácora del plan")}{" "}
-                <span className="nutrition-measure">
-                  ({patient.audit.length})
-                </span>
-              </h3>
-              {patient.auditIssue && (
-                <NutritionIssueMessage issue={patient.auditIssue} />
-              )}
-              {patient.audit.length ? (
-                <Table className="nutrition-history-table">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t("Fecha")}</TableHead>
-                      <TableHead>{t("Acción")}</TableHead>
-                      <TableHead>{t("Versión")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {patient.audit.map((entry) => (
-                      <TableRow key={entry.id} data-action={entry.action}>
-                        <TableCell className="whitespace-normal text-xs">
-                          <time dateTime={entry.occurredAt}>
-                            {new Intl.DateTimeFormat(
-                              lang === "en" ? "en-US" : "es-CO",
-                              { dateStyle: "short" },
-                            ).format(new Date(entry.occurredAt))}
-                          </time>
-                        </TableCell>
-                        <TableCell className="whitespace-normal text-xs">
-                          <span className="nutrition-history-action">{t(labels[entry.action])}</span>
-                          {entry.comment && (
-                            <p className="mt-1 break-words text-muted-foreground">
-                              {entry.comment}
-                            </p>
-                          )}
-                          {entry.criticalAlertsConfirmed > 0 && (
-                            <p className="mt-1 text-muted-foreground">
-                              {t("{count} alertas críticas confirmadas", {
-                                count: String(entry.criticalAlertsConfirmed),
-                              })}
-                            </p>
-                          )}
-                          {entry.action === "approved" && entry.autoApproved && (
-                            <span
-                              className="mt-1 block text-xs text-muted-foreground"
-                            >
-                              {t("Aprobado por el mismo profesional que creó la versión")}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="nutrition-measure">
-                          <span className="nutrition-row-version">v{entry.version}</span>
-                        </TableCell>
+              <div className="nutrition-profile-section">
+                <NutritionClinicalHeader
+                  profile={patient.profile}
+                  showMeasurements={false}
+                />
+              </div>
+              <section
+                ref={auditRef}
+                className="nutrition-audit nutrition-section"
+                aria-labelledby="nutrition-audit-title"
+              >
+                <h3
+                  id="nutrition-audit-title"
+                  tabIndex={-1}
+                  className="nutrition-support-heading"
+                >
+                  <History aria-hidden="true" />
+                  {t("Bitácora del plan")}{" "}
+                  <span className="nutrition-measure">
+                    ({patient.audit.length})
+                  </span>
+                </h3>
+                {patient.auditIssue && (
+                  <NutritionIssueMessage issue={patient.auditIssue} />
+                )}
+                {patient.audit.length ? (
+                  <Table className="nutrition-history-table">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("Fecha")}</TableHead>
+                        <TableHead>{t("Acción")}</TableHead>
+                        <TableHead>{t("Versión")}</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  {t("Sin acciones registradas")}
-                </p>
-              )}
-            </section>
+                    </TableHeader>
+                    <TableBody>
+                      {patient.audit.map((entry) => (
+                        <TableRow key={entry.id} data-action={entry.action}>
+                          <TableCell className="whitespace-normal text-xs">
+                            <time dateTime={entry.occurredAt}>
+                              {new Intl.DateTimeFormat(
+                                lang === "en" ? "en-US" : "es-CO",
+                                { dateStyle: "short" },
+                              ).format(new Date(entry.occurredAt))}
+                            </time>
+                          </TableCell>
+                          <TableCell className="whitespace-normal text-xs">
+                            <span className="nutrition-history-action">
+                              {t(labels[entry.action])}
+                            </span>
+                            {entry.comment && (
+                              <p className="mt-1 break-words text-muted-foreground">
+                                {entry.comment}
+                              </p>
+                            )}
+                            {entry.criticalAlertsConfirmed > 0 && (
+                              <p className="mt-1 text-muted-foreground">
+                                {t("{count} alertas críticas confirmadas", {
+                                  count: String(entry.criticalAlertsConfirmed),
+                                })}
+                              </p>
+                            )}
+                            {entry.action === "approved" &&
+                              entry.autoApproved && (
+                                <span className="mt-1 block text-xs text-muted-foreground">
+                                  {t(
+                                    "Aprobado por el mismo profesional que creó la versión",
+                                  )}
+                                </span>
+                              )}
+                          </TableCell>
+                          <TableCell className="nutrition-measure">
+                            <span className="nutrition-row-version">
+                              v{entry.version}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {t("Sin acciones registradas")}
+                  </p>
+                )}
+              </section>
             </div>
           </div>
         </TabsContent>
@@ -643,8 +694,6 @@ function PatientWorkspace({
                 />
                 <NutritionVerification cycle={cycle} catalog={catalog} />
                 <NutritionMonthEnergy cycle={cycle} catalog={catalog} />
-
-
               </section>
             )}
           </div>
@@ -655,7 +704,22 @@ function PatientWorkspace({
               <NutritionPlanEditor
                 cycle={cycle}
                 toolbarHost={toolbarHost}
-                context={<div className="nutrition-editor-context"><span className="nutrition-context-patient">{patient.patientName}</span><span>{t(saveStatus === "saving" ? "Guardando borrador…" : saveStatus === "error" ? "No se guardaron los últimos cambios." : "Todos los cambios guardados")}</span></div>}
+                context={
+                  <div className="nutrition-editor-context">
+                    <span className="nutrition-context-patient">
+                      {patient.patientName}
+                    </span>
+                    <span>
+                      {t(
+                        saveStatus === "saving"
+                          ? "Guardando borrador…"
+                          : saveStatus === "error"
+                            ? "No se guardaron los últimos cambios."
+                            : "Todos los cambios guardados",
+                      )}
+                    </span>
+                  </div>
+                }
                 catalog={catalog}
                 editable={editable}
                 update={updateCycle}
@@ -710,15 +774,14 @@ function NutritionReadings({ patient }: { patient: PatientDetail }) {
   ];
   return (
     <section className="nutrition-section nutrition-readings">
-      <SectionHeader
-        title={t("Lecturas")}
-        icon={Activity}
-        variant="tertiary"
-      />
+      <SectionHeader title={t("Lecturas")} icon={Activity} variant="tertiary" />
       <dl>
         {readings.map(({ icon: Icon, ...reading }) => (
           <div key={reading.label}>
-            <dt><Icon aria-hidden="true" />{t(reading.label)}</dt>
+            <dt>
+              <Icon aria-hidden="true" />
+              {t(reading.label)}
+            </dt>
             <dd className="nutrition-measure">
               {reading.value == null ? "—" : `${reading.value} ${reading.unit}`}
             </dd>
