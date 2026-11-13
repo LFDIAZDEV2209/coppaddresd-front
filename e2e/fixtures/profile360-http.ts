@@ -126,6 +126,7 @@ export async function mockProfile360Http(
     ...options,
     permissions: options.permissions ?? [
       "Patients.View",
+      "Program.Profile360View",
       "Program.View",
       "Wellness.View",
     ],

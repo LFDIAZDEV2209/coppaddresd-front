@@ -107,7 +107,10 @@ test.describe("Fase 0 · navegación con HTTP sintético", () => {
   });
 
   test("0.5 · Nutrición enlaza el mismo id estable", async ({ page }) => {
-    await mockNutritionHttp(page, ["Nutrition.Manage", "Program.View"]);
+    await mockNutritionHttp(page, [
+      "Nutrition.Manage",
+      "Program.Profile360View",
+    ]);
     await mockProfileProgramHttp(page);
     await page.goto("/nutrition/demo-patient-2");
     const profile = page.getByRole("link", { name: "Perfil 360", exact: true });
@@ -180,11 +183,27 @@ test.describe("Fase 0 · navegación con HTTP sintético", () => {
     ).toHaveAttribute("href", "/wellness/exercise-routines");
   });
 
-  test("0.3 · sin Program.View se deniega antes de montar el perfil", async ({
+  test("0.3 · el permiso de Perfil 360 funciona sin abrir dashboards", async ({
+    page,
+  }) => {
+    await mockProfile360Http(page, { permissions: ["Program.Profile360View"] });
+    await page.goto(profileUrl);
+    await expect(
+      page.getByRole("heading", { name: "Paciente Perfil QA", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Dashboard General", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Gestión del programa", exact: true }),
+    ).toHaveCount(0);
+  });
+
+  test("0.3 · Program.View no concede acceso al Perfil 360", async ({
     page,
   }) => {
     const http = await mockProfile360Http(page, {
-      permissions: ["Patients.View"],
+      permissions: ["Patients.View", "Program.View"],
     });
     await page.goto(profileUrl);
     await expect(

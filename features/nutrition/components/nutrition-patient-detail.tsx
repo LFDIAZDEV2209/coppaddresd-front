@@ -348,7 +348,7 @@ function PatientWorkspace({
           </div>
         </div>
         <div className="nutrition-detail-actions">
-          {can("Program.View") && (
+          {can("Program.Profile360View") && (
             <Button
               variant="outline"
               className="min-h-11"

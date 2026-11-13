@@ -29,9 +29,9 @@ export function PermissionRouteGuard({ children }: { children: React.ReactNode }
   const item = navModule.items.find(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   );
-  // Lectura del Perfil 360: Program.View hasta alinear el seed de la tarea 0.10a.
+  // Lectura del Perfil 360 separada de los dashboards (seed 0.10a).
   const permission = /^\/patients\/[^/]+\/360\/?$/.test(pathname)
-    ? "Program.View"
+    ? "Program.Profile360View"
     : item?.permission ?? navModule.permission;
 
   if (!hasNavPermission(permission, can)) {

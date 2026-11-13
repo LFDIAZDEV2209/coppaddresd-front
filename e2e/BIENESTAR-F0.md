@@ -26,5 +26,5 @@ Los pacientes deben existir previamente; la prueba no crea asignaciones ni cambi
 planes. Las credenciales se inyectan al proceso, nunca se guardan en archivos.
 La suite falla expresamente si falta configuración; no omite el caso de alcance.
 
-Perfil 360 usa temporalmente `Program.View`, por indicación del coordinador.
-Alinear guard, botones y fixtures si 0.10a introduce un permiso de lectura separado.
+Perfil 360 usa `Program.Profile360View`, alineado con 0.10a del backend
+(`8e639b5`). `Program.View` sigue reservado a Plantillas y dashboards.

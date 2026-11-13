@@ -806,7 +806,7 @@ export function ClinicalBoardView({
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {can("Program.View") && (
+                      {can("Program.Profile360View") && (
                         <Button
                           variant="outline"
                           className="mr-2 min-h-11"
