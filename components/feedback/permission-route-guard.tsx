@@ -29,7 +29,10 @@ export function PermissionRouteGuard({ children }: { children: React.ReactNode }
   const item = navModule.items.find(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   );
-  const permission = item?.permission ?? navModule.permission;
+  // Lectura del Perfil 360: Program.View hasta alinear el seed de la tarea 0.10a.
+  const permission = /^\/patients\/[^/]+\/360\/?$/.test(pathname)
+    ? "Program.View"
+    : item?.permission ?? navModule.permission;
 
   if (!hasNavPermission(permission, can)) {
     return (
