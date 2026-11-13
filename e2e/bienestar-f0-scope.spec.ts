@@ -73,7 +73,7 @@ test("0.14 · nutricionista lee su paciente y recibe 404 para el ajeno", async (
   );
   await page.goto(`/patients/${foreign}/360`);
   expect((await denied).status()).toBe(404);
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Este paciente no está disponible o no tienes acceso a su perfil.",
   );
   await expect(page.getByRole("tab")).toHaveCount(0);

@@ -218,7 +218,7 @@ test.describe("Fase 0 · navegación con HTTP sintético", () => {
   }) => {
     await mockProfile360Http(page);
     await page.goto(`/patients/${foreignProfilePatientId}/360`);
-    await expect(page.getByRole("alert")).toContainText(
+    await expect(page.getByRole("main").getByRole("alert")).toContainText(
       "Este paciente no está disponible o no tienes acceso a su perfil.",
     );
     await expect(page.getByRole("tab")).toHaveCount(0);
