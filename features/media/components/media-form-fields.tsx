@@ -4,6 +4,7 @@ import {
   useState,
   useRef,
   useId,
+  useEffect,
   cloneElement,
   isValidElement,
   type ReactElement,
@@ -20,17 +21,36 @@ import {
   ImagePlus,
   Plus,
   Trash2,
+  ArrowLeftRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { MediaItem, MediaInput, MediaChapter } from "../types";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import type {
+  MediaItem,
+  MediaInput,
+  MediaChapter,
+  MediaReferences,
+} from "../types";
 import {
   detectMediaMetadata,
   type DetectedMediaMetadata,
 } from "../services/upload-service";
-import { formatDuration, formatFileSize } from "../services/media-service";
+import {
+  formatDuration,
+  formatFileSize,
+  fetchMediaReferences,
+} from "../services/media-service";
 import { MediaPlayer } from "./media-player";
 import { MediaThumb } from "./media-thumb";
 import { mediaCategoryMeta } from "./media-meta";
@@ -48,6 +68,8 @@ interface MediaFormFieldsProps {
   footerClassName?: string;
   previewClassName?: string;
   fullPage?: boolean;
+  /** El panel de la tarjeta conserva los metadatos avanzados sin mostrarlos. */
+  mode?: "full" | "quick";
   onCancel: () => void;
   onSubmit: (
     input: MediaInput,
@@ -100,10 +122,12 @@ export function MediaFormFields({
   footerClassName,
   previewClassName,
   fullPage = false,
+  mode = "full",
   onCancel,
   onSubmit,
 }: MediaFormFieldsProps) {
   const t = useT();
+  const quick = mode === "quick";
   const [form, setForm] = useState(() =>
     media
       ? {
@@ -186,6 +210,16 @@ export function MediaFormFields({
   ) => {
     const selected = event.target.files?.[0];
     if (!selected) return;
+    if (
+      quick &&
+      !selected.type.startsWith("audio/") &&
+      !/\.(mp3|m4a|aac|ogg|wav|flac)$/i.test(selected.name)
+    ) {
+      setValidationError(
+        t("Selecciona archivos de audio para la biblioteca de podcasts."),
+      );
+      return;
+    }
 
     setFile(selected);
     setMetadata(null);
@@ -302,7 +336,7 @@ export function MediaFormFields({
             mediaType: metadata?.mediaType ?? "Podcast",
             category: form.category,
             storageKey: "",
-            thumbnailKey: null,
+            thumbnailKey: !thumbnailCleared ? media?.thumbnailKey ?? null : null,
             contentType: metadata?.contentType ?? file?.type ?? null,
             fileSizeBytes: metadata?.fileSizeBytes ?? file?.size ?? null,
             durationSecs: metadata?.durationSecs ?? null,
@@ -322,7 +356,7 @@ export function MediaFormFields({
     }
   };
 
-  const uploading = progress !== null && progress > 0 && progress < 100;
+  const uploading = saving || progress !== null;
 
   const defaultSubmitLabel = media
     ? t("Guardar cambios")
@@ -337,6 +371,17 @@ export function MediaFormFields({
           : "flex flex-col gap-5 px-6 py-5"
       }
     >
+      {!media && !quick && (
+        <Link
+          href="/media/new?mode=bulk"
+          className={buttonVariants({
+            variant: "outline",
+            className: "min-h-11 self-start justify-self-start lg:col-span-2",
+          })}
+        >
+          {t("Carga múltiple de podcasts")}
+        </Link>
+      )}
       <div
         data-slot="media-file-section"
         className={
@@ -345,7 +390,7 @@ export function MediaFormFields({
             : "contents"
         }
       >
-        {!media && (
+        {!quick && !media && (
           <div>
             <Label htmlFor="media-file">
               {t("Archivo (audio o video)")}{" "}
@@ -408,7 +453,7 @@ export function MediaFormFields({
           </div>
         )}
 
-        {media && (
+        {!quick && media && (
           <div className="rounded-xl border border-border bg-background p-3">
             <p className="mb-2 text-xs font-semibold text-muted-foreground">
               {t("Archivo actual")}
@@ -588,34 +633,40 @@ export function MediaFormFields({
             {t("Información del medio")}
           </legend>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t("Título")} required>
-              <Input
-                value={form.title}
-                onChange={(event) => update("title", event.target.value)}
-                placeholder={t("Ej. Bienvenida al programa")}
-                disabled={uploading}
-              />
-            </Field>
-            <Field label={t("Orden de lección")}>
-              <Input
-                type="number"
-                min={0}
-                value={form.sortOrder}
-                onChange={(event) =>
-                  update("sortOrder", Number(event.target.value) || 0)
-                }
-                placeholder="Ej. 1"
-                disabled={uploading}
-              />
-            </Field>
-            <Field label={t("Autor")} required>
-              <Input
-                value={form.author}
-                onChange={(event) => update("author", event.target.value)}
-                placeholder={t("Ej. Dra. Ana Pérez")}
-                disabled={uploading}
-              />
-            </Field>
+            <div className={quick ? "sm:col-span-2" : undefined}>
+              <Field label={t("Título")} required>
+                <Input
+                  value={form.title}
+                  onChange={(event) => update("title", event.target.value)}
+                  placeholder={t("Ej. Bienvenida al programa")}
+                  disabled={uploading}
+                />
+              </Field>
+            </div>
+            {!quick && (
+              <Field label={t("Orden de lección")}>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.sortOrder}
+                  onChange={(event) =>
+                    update("sortOrder", Number(event.target.value) || 0)
+                  }
+                  placeholder="Ej. 1"
+                  disabled={uploading}
+                />
+              </Field>
+            )}
+            {(!quick || !media?.author?.trim()) && (
+              <Field label={t("Autor")} required>
+                <Input
+                  value={form.author}
+                  onChange={(event) => update("author", event.target.value)}
+                  placeholder={t("Ej. Dra. Ana Pérez")}
+                  disabled={uploading}
+                />
+              </Field>
+            )}
             <Field label={t("Categoría")} required>
               <select
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
@@ -635,46 +686,31 @@ export function MediaFormFields({
                 ))}
               </select>
             </Field>
-            <Field label={t("Día")}>
-              <Input
-                type="number"
-                min={0}
-                max={31}
-                value={form.day}
-                onChange={(event) =>
-                  update("day", Number(event.target.value) || 0)
-                }
-                placeholder="Ej. 1"
-                disabled={uploading}
-              />
-            </Field>
-            <Field label={t("Mes")}>
-              <Input
-                type="number"
-                min={0}
-                max={12}
-                value={form.month}
-                onChange={(event) =>
-                  update("month", Number(event.target.value) || 0)
-                }
-                placeholder="Ej. 1"
-                disabled={uploading}
-              />
-            </Field>
-            <Field label={t("Estado")} required>
-              <select
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                value={form.status}
-                onChange={(event) =>
-                  update("status", event.target.value as MediaInput["status"])
-                }
-                disabled={uploading}
-              >
-                <option value="Draft">{t("Borrador")}</option>
-                <option value="Published">{t("Publicado")}</option>
-                <option value="Archived">{t("Archivado")}</option>
-              </select>
-            </Field>
+            {quick && (
+              <Field label={t("Duración")}>
+                <output className="flex min-h-9 items-center rounded-md border border-border bg-muted px-3 font-mono text-sm">
+                  {formatDuration(
+                    metadata?.durationSecs ?? media?.durationSecs ?? null,
+                  )}
+                </output>
+              </Field>
+            )}
+            {!quick && (
+              <Field label={t("Estado")} required>
+                <select
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                  value={form.status}
+                  onChange={(event) =>
+                    update("status", event.target.value as MediaInput["status"])
+                  }
+                  disabled={uploading}
+                >
+                  <option value="Draft">{t("Borrador")}</option>
+                  <option value="Published">{t("Publicado")}</option>
+                  <option value="Archived">{t("Archivado")}</option>
+                </select>
+              </Field>
+            )}
           </div>
         </fieldset>
 
@@ -690,6 +726,59 @@ export function MediaFormFields({
           />
         </Field>
       </div>
+
+      {quick && media && (
+        <section
+          className="flex flex-col gap-3 border-t border-border pt-5"
+          aria-label={t("Dónde se usa")}
+        >
+          <h3 className="text-sm font-semibold">{t("Dónde se usa")}</h3>
+          <MediaQuickUsage key={media.id} mediaId={media.id} />
+          <input
+            ref={fileInputRef}
+            id="media-file"
+            type="file"
+            accept="audio/*"
+            className="hidden"
+            disabled={uploading || detecting}
+            onChange={handleFileChange}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 w-full"
+            disabled={uploading || detecting}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <ArrowLeftRight aria-hidden="true" />
+            {t("Reemplazar archivo")}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            {t(
+              "Al reemplazar el archivo se conservan las asignaciones. El cambio se aplica al guardar.",
+            )}
+          </p>
+          {file && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm">
+              <span className="min-w-0 break-all">{file.name}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                className="min-h-11"
+                disabled={uploading}
+                onClick={clearFile}
+              >
+                {t("Quitar archivo nuevo")}
+              </Button>
+            </div>
+          )}
+          {detecting && (
+            <p role="status" className="text-sm text-muted-foreground">
+              {t("Leyendo metadata del archivo...")}
+            </p>
+          )}
+        </section>
+      )}
       <div
         className={
           fullPage
@@ -697,135 +786,142 @@ export function MediaFormFields({
             : "contents"
         }
       >
-        <fieldset className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <legend className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              {t("Capítulos interactivos")}
-            </legend>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addChapter}
-              disabled={uploading}
-            >
-              <Plus className="size-3.5" data-icon="inline-start" />
-              {t("Agregar capítulo")}
-            </Button>
-          </div>
-          {chapters.length === 0 ? (
-            <p className="text-xs italic text-muted-foreground">
-              {t(
-                "Sin capítulos personalizados (se generarán automáticamente según la duración).",
-              )}
-            </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {chapters.map((ch, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <Input
-                    className="w-24 shrink-0"
-                    placeholder="00:00"
-                    value={ch.timeStr}
-                    onChange={(e) =>
-                      updateChapter(idx, "timeStr", e.target.value)
-                    }
-                    disabled={uploading}
-                  />
-                  <Input
-                    className="flex-1"
-                    placeholder={t("Nombre del capítulo (ej. Introducción)")}
-                    value={ch.label}
-                    onChange={(e) =>
-                      updateChapter(idx, "label", e.target.value)
-                    }
-                    disabled={uploading}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => removeChapter(idx)}
-                    disabled={uploading}
-                    aria-label={t("Eliminar capítulo")}
-                  >
-                    <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
-                  </Button>
+        {!quick && (
+          <>
+            <fieldset className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <legend className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("Capítulos interactivos")}
+                </legend>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addChapter}
+                  disabled={uploading}
+                >
+                  <Plus className="size-3.5" data-icon="inline-start" />
+                  {t("Agregar capítulo")}
+                </Button>
+              </div>
+              {chapters.length === 0 ? (
+                <p className="text-xs italic text-muted-foreground">
+                  {t(
+                    "Sin capítulos personalizados (se generarán automáticamente según la duración).",
+                  )}
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {chapters.map((ch, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Input
+                        className="w-24 shrink-0"
+                        placeholder="00:00"
+                        value={ch.timeStr}
+                        onChange={(e) =>
+                          updateChapter(idx, "timeStr", e.target.value)
+                        }
+                        disabled={uploading}
+                      />
+                      <Input
+                        className="flex-1"
+                        placeholder={t(
+                          "Nombre del capítulo (ej. Introducción)",
+                        )}
+                        value={ch.label}
+                        onChange={(e) =>
+                          updateChapter(idx, "label", e.target.value)
+                        }
+                        disabled={uploading}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => removeChapter(idx)}
+                        disabled={uploading}
+                        aria-label={t("Eliminar capítulo")}
+                      >
+                        <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <legend className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              {t("Puntos Clave (Takeaways)")}
-            </legend>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addTakeaway}
-              disabled={uploading}
-            >
-              <Plus className="size-3.5" data-icon="inline-start" />
-              {t("Agregar punto clave")}
-            </Button>
-          </div>
-          {takeaways.length === 0 ? (
-            <p className="text-xs italic text-muted-foreground">
-              {t(
-                "Sin puntos clave personalizados (se mostrarán las recomendaciones por defecto).",
               )}
-            </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {takeaways.map((tk, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <Input
-                    className="flex-1"
-                    placeholder={t("Ej. Proteína en cada comida principal")}
-                    value={tk}
-                    onChange={(e) => updateTakeaway(idx, e.target.value)}
-                    disabled={uploading}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => removeTakeaway(idx)}
-                    disabled={uploading}
-                    aria-label={t("Eliminar punto clave")}
-                  >
-                    <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
-                  </Button>
+            </fieldset>
+
+            <fieldset className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <legend className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("Puntos Clave (Takeaways)")}
+                </legend>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addTakeaway}
+                  disabled={uploading}
+                >
+                  <Plus className="size-3.5" data-icon="inline-start" />
+                  {t("Agregar punto clave")}
+                </Button>
+              </div>
+              {takeaways.length === 0 ? (
+                <p className="text-xs italic text-muted-foreground">
+                  {t(
+                    "Sin puntos clave personalizados (se mostrarán las recomendaciones por defecto).",
+                  )}
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {takeaways.map((tk, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Input
+                        className="flex-1"
+                        placeholder={t("Ej. Proteína en cada comida principal")}
+                        value={tk}
+                        onChange={(e) => updateTakeaway(idx, e.target.value)}
+                        disabled={uploading}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => removeTakeaway(idx)}
+                        disabled={uploading}
+                        aria-label={t("Eliminar punto clave")}
+                      >
+                        <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </fieldset>
-
-        <div className="flex items-center justify-between rounded-lg border border-border p-3">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">
-              {t("Publicar de inmediato")}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {t(
-                "Al publicar se fijará la fecha de publicación automáticamente.",
               )}
-            </span>
+            </fieldset>
+          </>
+        )}
+        {!quick && (
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">
+                {t("Publicar de inmediato")}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {t(
+                  "Al publicar se fijará la fecha de publicación automáticamente.",
+                )}
+              </span>
+            </div>
+            <Switch
+              checked={form.status === "Published"}
+              onCheckedChange={(checked) =>
+                update("status", checked ? "Published" : "Draft")
+              }
+              disabled={uploading}
+              aria-label={t("Publicar de inmediato")}
+            />
           </div>
-          <Switch
-            checked={form.status === "Published"}
-            onCheckedChange={(checked) =>
-              update("status", checked ? "Published" : "Draft")
-            }
-            disabled={uploading}
-            aria-label={t("Publicar de inmediato")}
-          />
-        </div>
+        )}
       </div>
 
       {(validationError || serverError) && (
@@ -853,13 +949,13 @@ export function MediaFormFields({
         >
           {t("Cancelar")}
         </Button>
-        <Button type="submit" disabled={saving || uploading}>
-          {uploading ? (
+        <Button type="submit" disabled={saving || uploading || detecting}>
+          {progress !== null && (file || thumbnailFile) ? (
             <>
               <LoaderCircle className="animate-spin" data-icon="inline-start" />
               {t("Subiendo...")}
             </>
-          ) : saving ? (
+          ) : uploading ? (
             <>
               <LoaderCircle className="animate-spin" data-icon="inline-start" />
               {t("Guardando...")}
@@ -870,6 +966,135 @@ export function MediaFormFields({
         </Button>
       </div>
     </form>
+  );
+}
+
+/** Punto de integración para las tarjetas de 1.17; conserva el archivo y los metadatos avanzados. */
+export function MediaQuickEditSheet({
+  open,
+  onOpenChange,
+  ...props
+}: Omit<MediaFormFieldsProps, "onCancel" | "fullPage" | "mode"> & {
+  open: boolean;
+  media: MediaItem;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useT();
+  const close = () => {
+    if (!props.saving) onOpenChange(false);
+  };
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        if (!props.saving) onOpenChange(next);
+      }}
+    >
+      <SheetContent
+        showCloseButton={false}
+        className="overflow-y-auto data-[side=right]:w-full data-[side=right]:sm:max-w-xl"
+      >
+        <SheetHeader>
+          <div className="flex items-center justify-between gap-3">
+            <SheetTitle>{t("Editar podcast")}</SheetTitle>
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-11"
+              disabled={props.saving}
+              onClick={close}
+            >
+              {t("Cerrar")}
+            </Button>
+          </div>
+          <SheetDescription>
+            {t(
+              "Actualiza título, categoría y miniatura sin salir de la biblioteca.",
+            )}
+          </SheetDescription>
+        </SheetHeader>
+        <MediaFormFields
+          key={props.media.id}
+          {...props}
+          mode="quick"
+          onCancel={close}
+        />
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+/** Resumen con referencias reales: el contrato devuelve inscripciones, no un total de pacientes. */
+function MediaQuickUsage({ mediaId }: { mediaId: string }) {
+  const t = useT();
+  const [refs, setRefs] = useState<MediaReferences | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let active = true;
+    void fetchMediaReferences(mediaId)
+      .then((data) => {
+        if (active) setRefs(data);
+      })
+      .catch(() => {
+        if (active) setError(t("No se pudieron cargar las referencias."));
+      });
+    return () => {
+      active = false;
+    };
+  }, [mediaId, attempt, t]);
+  if (error)
+    return (
+      <div role="alert" className="text-sm text-destructive">
+        <p>{error}</p>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-2 min-h-11"
+          onClick={() => {
+            setError(null);
+            setAttempt((value) => value + 1);
+          }}
+        >
+          {t("Reintentar")}
+        </Button>
+      </div>
+    );
+  if (!refs) return <Skeleton className="h-14 w-full rounded-lg" />;
+  const templates = [
+    ...new Map(
+      refs.templateReferences.map((ref) => [ref.templateId, ref.templateName]),
+    ).entries(),
+  ];
+  const enrollments = new Set(
+    refs.enrollmentReferences.map((ref) => ref.enrollmentId),
+  ).size;
+  return (
+    <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
+      {refs.totalReferences === 0 ? (
+        <p>{t("Sin referencias activas")}</p>
+      ) : (
+        <>
+          {templates.length > 0 && (
+            <ul className="flex flex-col gap-1">
+              {templates.map(([id, name]) => (
+                <li key={id}>{name}</li>
+              ))}
+            </ul>
+          )}
+          {enrollments > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("{count} inscripciones", { count: String(enrollments) })}
+            </p>
+          )}
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("{count} referencias activas", {
+              count: String(refs.totalReferences),
+            })}
+          </p>
+        </>
+      )}
+    </div>
   );
 }
 
