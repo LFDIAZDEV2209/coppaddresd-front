@@ -14,6 +14,15 @@ import {
   Layers,
   ShieldAlert,
   Sparkles,
+  Weight,
+  Ruler,
+  Gauge,
+  TestTube,
+  Send,
+  CopyPlus,
+  MessageSquare,
+  History,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,7 +35,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SectionHeader } from "@/components/layout/section-header";
-import { StatCard } from "@/components/feedback/stat-card";
 import { useBreadcrumbTitle } from "@/components/layout/breadcrumb-provider";
 import { useAppContext } from "@/providers/context-provider";
 import { useI18n, useT } from "@/providers/i18n-provider";
@@ -50,6 +58,7 @@ import {
 } from "./nutrition-feedback";
 import {
   NutritionStateChip,
+  useNutritionNumber,
   NutritionPatientAvatar,
   NutritionTargetsPanel,
   NutritionValidity,
@@ -60,7 +69,6 @@ import {
   NutritionClinicalHeader,
 } from "./nutrition-clinical-profile";
 import { NutritionPlanEditor } from "./nutrition-plan-editor";
-import { NutritionDisclaimer } from "./nutrition-disclaimer";
 import { NutritionReviewDialog } from "./nutrition-review-dialog";
 import {
   NutritionMonthEnergy,
@@ -157,6 +165,7 @@ function PatientWorkspace({
 }) {
   const t = useT();
   const { lang } = useI18n();
+  const format = useNutritionNumber();
   const {
     patient,
     editable,
@@ -177,21 +186,22 @@ function PatientWorkspace({
         : null;
     return value === "plan" || value === "programacion" ? value : "resultados";
   });
-  const auditRef = useRef<HTMLDetailsElement>(null);
+  const auditRef = useRef<HTMLElement>(null);
   const [toolbarHost, setToolbarHost] = useState<HTMLDivElement | null>(null);
   useEffect(() => {
     if (
       new URLSearchParams(window.location.search).get("history") === "1" &&
       auditRef.current
     ) {
-      auditRef.current.open = true;
       auditRef.current.scrollIntoView({ block: "start" });
-      auditRef.current.querySelector("summary")?.focus();
+      auditRef.current.querySelector<HTMLElement>("h3")?.focus();
     }
   }, []);
   useEffect(() => {
     // Al abrir o cambiar de prescripción, el recorrido empieza desde arriba.
-    document.querySelector(".nutrition-detail-panel")?.scrollTo?.({ top: 0 });
+    if (new URLSearchParams(window.location.search).get("history") !== "1") {
+      document.querySelector(".nutrition-detail-panel")?.scrollTo?.({ top: 0 });
+    }
   }, []);
   const cycle = patient.cycle;
   // La zona no se deduce del ordenador; el workspace nuevo la aportará.
@@ -236,10 +246,9 @@ function PatientWorkspace({
     }
     changeTab(history ? "resultados" : (keepTab ?? "plan"));
     if (history && auditRef.current) {
-      auditRef.current.open = true;
       requestAnimationFrame(() => {
         auditRef.current?.scrollIntoView({ block: "start" });
-        auditRef.current?.querySelector("summary")?.focus();
+        auditRef.current?.querySelector<HTMLElement>("h3")?.focus();
       });
     }
   }
@@ -349,7 +358,7 @@ function PatientWorkspace({
               disabled={locked}
               onClick={() => void run("new-version")}
             >
-              {t("Crear nueva versión")}
+              <CopyPlus className="size-4" aria-hidden="true" />{t("Crear nueva versión")}
             </Button>
           )}
           {cycle &&
@@ -359,7 +368,7 @@ function PatientWorkspace({
                 disabled={locked || !cycleIsComplete(cycle, catalog)}
                 onClick={() => void run("publish")}
               >
-                {t("Publicar plan")}
+                <Send className="size-4" aria-hidden="true" />{t("Publicar plan")}
               </Button>
             )}
           {cycle?.state === "en_aprobacion" && canApprove && (
@@ -369,7 +378,7 @@ function PatientWorkspace({
                 disabled={locked}
                 onClick={() => setReview("return")}
               >
-                {t("Devolver con comentario")}
+                <MessageSquare className="size-4" aria-hidden="true" />{t("Devolver con comentario")}
               </Button>
 
             </>
@@ -439,27 +448,11 @@ function PatientWorkspace({
         <TabsContent value="resultados" keepMounted>
           <div className="nutrition-tab-body">
             {cycle && (
-              <div className="nutrition-overview-stats">
-                <StatCard
-                  label={t("Meta diaria")}
-                  value={cycle.targets.kcal}
-                  suffix=" kcal"
-                  icon={Flame}
-                  variant="primary"
-                />
-                <StatCard
-                  label={t("Versión")}
-                  value={String(cycle.version)}
-                  icon={Layers}
-                  variant="info"
-                />
-                <StatCard
-                  label={t("Alertas críticas")}
-                  value={String(criticalCount)}
-                  icon={ShieldAlert}
-                  variant={criticalCount ? "destructive" : "success"}
-                />
-              </div>
+              <dl className="nutrition-plan-facts">
+                <div><Flame aria-hidden="true" /><dt>{t("Meta diaria")}</dt><dd className="nutrition-measure">{format(cycle.targets.kcal)} kcal</dd></div>
+                <div><Layers aria-hidden="true" /><dt>{t("Versión")}</dt><dd className="nutrition-measure">{cycle.version}</dd></div>
+                <div data-attention={criticalCount > 0}><ShieldAlert aria-hidden="true" /><dt>{t("Alertas críticas")}</dt><dd className="nutrition-measure">{criticalCount}</dd></div>
+              </dl>
             )}
             <NutritionReadings patient={patient} />
             <NutritionProgramCycles
@@ -497,45 +490,23 @@ function PatientWorkspace({
                   </div>
                 )}
                 <NutritionClinicalAlerts alerts={cycle.alerts} />
-                <section className="nutrition-section">
-                  <SectionHeader
-                    title={t("Resultados y ciclos")}
-                    icon={Layers}
-                    variant="tertiary"
-                  />
-                  <div className="nutrition-cycle-summary">
-                    <NutritionStateChip state={cycle.state} />
-                    <span className="nutrition-measure">
-                      {t("Versión {version}", {
-                        version: String(cycle.version),
-                      })}
-                    </span>
-                    <NutritionValidity
-                      start={cycle.startDate}
-                      end={cycle.endDate}
-                    />
-                  </div>
-                  {patient.publishedCycle && (
-                    <details className="nutrition-disclosure">
-                      <summary>
+                <div className="nutrition-published-summary">
+                  {patient.publishedCycle && patient.publishedCycle.id !== cycle.id && (
+                    <section className="nutrition-published-copy">
+                      <h3 className="nutrition-support-heading"><FileCheck aria-hidden="true" />
                         {t("Versión publicada: v{version}", {
                           version: String(patient.publishedCycle.version),
                         })}
-                      </summary>
-                      <p className="my-3 text-xs text-muted-foreground">
-                        {t(
-                          "El borrador no cambia esta copia hasta una nueva publicación.",
-                        )}
-                      </p>
+                      </h3>
                       <NutritionTargetsPanel
                         targets={patient.publishedCycle.targets}
                       />
                       <p className="mt-4 whitespace-pre-wrap text-sm">
                         {patient.publishedCycle.instructions}
                       </p>
-                    </details>
+                    </section>
                   )}
-                </section>
+                </div>
               </>
             ) : (
               <div className="nutrition-empty-plan">
@@ -556,25 +527,26 @@ function PatientWorkspace({
                 )}
               </div>
             )}
-            <details className="nutrition-disclosure nutrition-section">
-              <summary>{t("Perfil clínico completo")}</summary>
-              <NutritionClinicalHeader profile={patient.profile} />
-            </details>
-            <details
+            <div className="nutrition-support-grid">
+            <div className="nutrition-profile-section">
+              <NutritionClinicalHeader profile={patient.profile} showMeasurements={false} />
+            </div>
+            <section
               ref={auditRef}
-              className="nutrition-disclosure nutrition-section"
+              className="nutrition-audit nutrition-section"
+              aria-labelledby="nutrition-audit-title"
             >
-              <summary>
+              <h3 id="nutrition-audit-title" tabIndex={-1} className="nutrition-support-heading"><History aria-hidden="true" />
                 {t("Bitácora del plan")}{" "}
                 <span className="nutrition-measure">
                   ({patient.audit.length})
                 </span>
-              </summary>
+              </h3>
               {patient.auditIssue && (
                 <NutritionIssueMessage issue={patient.auditIssue} />
               )}
               {patient.audit.length ? (
-                <Table className="table-fixed">
+                <Table className="nutrition-history-table">
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t("Fecha")}</TableHead>
@@ -584,7 +556,7 @@ function PatientWorkspace({
                   </TableHeader>
                   <TableBody>
                     {patient.audit.map((entry) => (
-                      <TableRow key={entry.id}>
+                      <TableRow key={entry.id} data-action={entry.action}>
                         <TableCell className="whitespace-normal text-xs">
                           <time dateTime={entry.occurredAt}>
                             {new Intl.DateTimeFormat(
@@ -594,7 +566,7 @@ function PatientWorkspace({
                           </time>
                         </TableCell>
                         <TableCell className="whitespace-normal text-xs">
-                          {t(labels[entry.action])}
+                          <span className="nutrition-history-action">{t(labels[entry.action])}</span>
                           {entry.comment && (
                             <p className="mt-1 break-words text-muted-foreground">
                               {entry.comment}
@@ -616,7 +588,7 @@ function PatientWorkspace({
                           )}
                         </TableCell>
                         <TableCell className="nutrition-measure">
-                          v{entry.version}
+                          <span className="nutrition-row-version">v{entry.version}</span>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -627,7 +599,8 @@ function PatientWorkspace({
                   {t("Sin acciones registradas")}
                 </p>
               )}
-            </details>
+            </section>
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="programacion" keepMounted>
@@ -647,11 +620,7 @@ function PatientWorkspace({
                   {patient.timeZone || t("Zona sin definir")}
                 </span>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {t(
-                  "La vigencia se confirma al publicar. Cada ciclo comprende 30 días.",
-                )}
-              </p>
+
               <div className="nutrition-meal-schedule">
                 {mealDefinitions.map((meal) => (
                   <div key={meal.type}>
@@ -674,11 +643,7 @@ function PatientWorkspace({
                 />
                 <NutritionVerification cycle={cycle} catalog={catalog} />
                 <NutritionMonthEnergy cycle={cycle} catalog={catalog} />
-                <p className="my-4 text-xs text-muted-foreground">
-                  {t(
-                    "Esta comprobación estructural no sustituye la revisión clínica.",
-                  )}
-                </p>
+
 
               </section>
             )}
@@ -716,7 +681,6 @@ function PatientWorkspace({
           </div>
         </TabsContent>
       </Tabs>
-      {cycle && <NutritionDisclaimer />}
       {review && cycle && canApprove && (
         <NutritionReviewDialog
           key={`${cycle.id}:${review}`}
@@ -739,23 +703,22 @@ function NutritionReadings({ patient }: { patient: PatientDetail }) {
   const { can } = useAppContext();
   const p = patient.profile;
   const readings = [
-    { label: "Peso", value: p.weightKg, unit: "kg" },
-    { label: "Talla", value: p.heightCm, unit: "cm" },
-    { label: "IMC", value: p.bmi, unit: "" },
-    { label: "HbA1c", value: p.hba1c, unit: "%" },
+    { label: "Peso", value: p.weightKg, unit: "kg", icon: Weight },
+    { label: "Talla", value: p.heightCm, unit: "cm", icon: Ruler },
+    { label: "IMC", value: p.bmi, unit: "", icon: Gauge },
+    { label: "HbA1c", value: p.hba1c, unit: "%", icon: TestTube },
   ];
   return (
     <section className="nutrition-section nutrition-readings">
       <SectionHeader
         title={t("Lecturas")}
-        description={t("Mediciones disponibles para la revisión")}
         icon={Activity}
         variant="tertiary"
       />
       <dl>
-        {readings.map((reading) => (
+        {readings.map(({ icon: Icon, ...reading }) => (
           <div key={reading.label}>
-            <dt>{t(reading.label)}</dt>
+            <dt><Icon aria-hidden="true" />{t(reading.label)}</dt>
             <dd className="nutrition-measure">
               {reading.value == null ? "—" : `${reading.value} ${reading.unit}`}
             </dd>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Layers } from "lucide-react";
+import { CalendarDays, Layers, ArrowUpRight, History, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/layout/section-header";
 import { useT } from "@/providers/i18n-provider";
@@ -49,7 +49,6 @@ export function NutritionProgramCycles({ headers, selectedId, today, locked, onO
 
   return <section className="nutrition-section nutrition-program">
     <SectionHeader title={t("Calendario del programa")} icon={CalendarDays} variant="tertiary" />
-    <p className="mt-2 text-xs text-muted-foreground">{t("Cada ciclo comprende 30 días. Las versiones conservan el mismo ciclo.")}</p>
     {!groups.length ? <div className="nutrition-empty-plan mt-4"><p>{t("Aún no hay ciclos para mostrar.")}</p>{onCreate && <Button variant="outline" disabled={locked} onClick={onCreate}>{t("Crear primera propuesta")}</Button>}</div> : <>
       <ol className="nutrition-program-calendar" aria-label={t("Ciclos del programa")}>
         {groups.map((group) => {
@@ -63,21 +62,41 @@ export function NutritionProgramCycles({ headers, selectedId, today, locked, onO
           </button></li>;
         })}
       </ol>
-      <p className="nutrition-program-legend">{t("Período finalizado · En curso · Publicado / programado · Por publicar · Sin plan")}</p>
       {!today && <p className="mt-2 text-xs text-muted-foreground">{t("Zona del paciente pendiente: hoy no se representa.")}</p>}
       <div className="mt-5"><SectionHeader title={t("Plan por ciclo")} icon={Layers} variant="tertiary" /></div>
       <div className="nutrition-cycles-table-container">
         <table className="nutrition-cycles-table" role="table">
           <caption className="sr-only">{t("Planes y versiones por ciclo")}</caption>
-          <thead><tr>{["Ciclo", "Fechas y estado", "Plan y metas", "Seguimiento", "Acciones"].map((label) => <th scope="col" key={label}>{t(label)}</th>)}</tr></thead>
+          <thead>
+            <tr>{["Ciclo", "Fechas y estado", "Plan y metas", "Acciones"].map((label) => <th scope="col" key={label}>{t(label)}</th>)}</tr>
+          </thead>
           <tbody>{groups.map((group) => {
             const row = group.versions[0];
             return <tr key={group.id} data-selected={active === group.id}>
-              <th scope="row"><span className="nutrition-measure">C{group.number}</span><p className="mt-1 text-xs font-normal">{t("Versión {version}", { version: String(row.version) })}</p></th>
-              <td><span className="nutrition-cycle-cell-label">{t("Fechas y estado")}</span><NutritionValidity start={row.startDate} end={row.endDate} /><div className="mt-2"><NutritionStateChip state={row.state} /></div><p className="mt-2 text-xs text-muted-foreground">{temporalLabel(row)}</p>{group.versions.some((entry) => entry.isPublished && entry.id !== row.id) && <p className="mt-2 text-xs">{t("Conserva una versión publicada")}</p>}</td>
-              <td><span className="nutrition-cycle-cell-label">{t("Plan y metas")}</span><strong className="nutrition-measure">{format(row.targets.kcal, 0)} kcal</strong><dl className="nutrition-cycle-macros">{([["Carbohidratos", row.targets.carbsG], ["Proteínas", row.targets.proteinG], ["Grasas", row.targets.fatG]] as const).map(([label, value]) => <div key={label}><dt>{t(label)}</dt><dd className="nutrition-measure">{format(value)} g</dd></div>)}</dl></td>
-              <td><span className="nutrition-cycle-cell-label">{t("Seguimiento")}</span><p>{t("Adherencia")}</p><p className="text-muted-foreground">{t("Sin dato registrado")}</p><p className="mt-2">{t("Resultado")}</p><p className="text-muted-foreground">{t("Sin dato registrado")}</p></td>
-              <td><div className="nutrition-cycle-row-actions"><Button variant="outline" size="sm" disabled={locked} onClick={() => onOpen(row.id)} aria-label={t("Ver plan C{cycle}", { cycle: String(group.number) })}>{t("Ver")}</Button><Button variant="ghost" size="sm" disabled={locked} onClick={() => onOpen(row.id, true)} aria-label={t("Ver historial C{cycle}", { cycle: String(group.number) })}>{t("Ver historial")}</Button></div>{group.versions.length > 1 && <details className="nutrition-cycle-versions"><summary>{t("Versiones anteriores")}</summary>{group.versions.slice(1).map((version) => <Button key={version.id} variant="ghost" size="sm" disabled={locked} onClick={() => onOpen(version.id)}>{t("Versión {version}", { version: String(version.version) })}{version.isPublished && <span>{t("Publicada")}</span>}</Button>)}</details>}</td>
+              <th scope="row">
+                <div className="nutrition-cycle-identity">
+                  <span className="nutrition-cycle-index nutrition-measure">C{group.number}</span>
+                  <span className="nutrition-row-secondary">{t("Versión {version}", { version: String(row.version) })}</span>
+                </div>
+              </th>
+              <td>
+                <span className="nutrition-cycle-cell-label">{t("Fechas y estado")}</span>
+                <div className="nutrition-cycle-dates"><CalendarDays aria-hidden="true" /><NutritionValidity start={row.startDate} end={row.endDate} /></div>
+                <div className="nutrition-cycle-status"><NutritionStateChip state={row.state} /><span className="nutrition-row-secondary">{temporalLabel(row)}</span></div>
+                {group.versions.some((entry) => entry.isPublished && entry.id !== row.id) && <p className="nutrition-row-secondary mt-2">{t("Conserva una versión publicada")}</p>}
+              </td>
+              <td>
+                <span className="nutrition-cycle-cell-label">{t("Plan y metas")}</span>
+                <strong className="nutrition-cycle-energy nutrition-measure">{format(row.targets.kcal, 0)} <span>kcal</span></strong>
+                <dl className="nutrition-cycle-macros">{([["Carbohidratos", row.targets.carbsG], ["Proteínas", row.targets.proteinG], ["Grasas", row.targets.fatG]] as const).map(([label, value]) => <div key={label}><dt>{t(label)}</dt><dd className="nutrition-measure">{format(value)} <span>g</span></dd></div>)}</dl>
+              </td>
+              <td>
+                <div className="nutrition-cycle-row-actions">
+                  <Button variant="outline" size="sm" disabled={locked} onClick={() => onOpen(row.id)} aria-label={t("Ver plan C{cycle}", { cycle: String(group.number) })}>{t("Ver")}<ArrowUpRight aria-hidden="true" className="size-3.5" /></Button>
+                  <Button variant="ghost" size="icon" disabled={locked} onClick={() => onOpen(row.id, true)} aria-label={t("Ver historial C{cycle}", { cycle: String(group.number) })} title={t("Ver historial")}><History aria-hidden="true" className="size-4" /></Button>
+                </div>
+                {group.versions.length > 1 && <details className="nutrition-cycle-versions"><summary>{t("Versiones anteriores")}<ChevronDown aria-hidden="true" className="size-3.5" /></summary>{group.versions.slice(1).map((version) => <Button key={version.id} variant="ghost" size="sm" disabled={locked} onClick={() => onOpen(version.id)}>{t("Versión {version}", { version: String(version.version) })}{version.isPublished && <span>{t("Publicada")}</span>}</Button>)}</details>}
+              </td>
             </tr>;
           })}</tbody>
         </table>

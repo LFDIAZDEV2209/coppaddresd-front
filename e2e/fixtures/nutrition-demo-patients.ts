@@ -27,12 +27,16 @@ export const nutritionMockPatients: NutritionPatientSummary[] = names.map((patie
 
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
 
-export function mockNutritionQueue(query: NutritionQueueQuery, patients = nutritionMockPatients): NutritionQueueResponse {
+export function mockNutritionQueue(query: NutritionQueueQuery, patients = nutritionMockPatients, legacyOrder = false): NutritionQueueResponse {
   const search = normalize(query.search.trim());
   const searched = patients.filter((item) => normalize(`${item.patientName} ${item.patientDocument ?? ""}`).includes(search));
   const counts: Record<NutritionFilter, number> = { all: searched.length, en_aprobacion: 0, borrador_ia: 0, devuelto: 0, aprobado: 0, por_renovar: 0, sin_plan: 0 };
   for (const item of searched) counts[item.plan?.queueState ?? "sin_plan"]++;
-  const filtered = searched.filter((item) => query.state === "all" || (item.plan?.queueState ?? "sin_plan") === query.state);
+  const filtered = searched
+    .filter((item) => query.state === "all" || (item.plan?.queueState ?? "sin_plan") === query.state)
+    .sort((a, b) => legacyOrder
+      ? Number(!!a.plan) - Number(!!b.plan)
+      : Number(b.plan?.state === "aprobado") - Number(a.plan?.state === "aprobado"));
   return {
     items: filtered.slice((query.page - 1) * query.pageSize, query.page * query.pageSize),
     total: filtered.length,

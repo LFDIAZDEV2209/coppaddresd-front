@@ -8,6 +8,12 @@ import {
   Plus,
   Trash2,
   Sparkles,
+  ChevronDown,
+  Coffee,
+  Sun,
+  Apple,
+  Moon,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +33,7 @@ import type {
   NutritionCycle,
   NutritionFood,
   NutritionTargets,
+  NutritionMeal,
 } from "../types/nutrition";
 import {
   dayTotals,
@@ -63,10 +70,14 @@ export function NutritionPlanEditor({
   const t = useT();
   const format = useNutritionNumber();
   const [day, setDay] = useState(1);
+  const [selectedMeal, setSelectedMeal] = useState<NutritionMeal["mealType"]>("desayuno");
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [confirmCopy, setConfirmCopy] = useState(false);
   const meals = cycle.meals.filter((meal) => meal.dayNumber === day);
+  const activeMeal = meals.some(meal => meal.mealType === selectedMeal) ? selectedMeal : meals[0]?.mealType;
   const totals = dayTotals(meals, catalog);
+  const exceededTargets = nutrientDefinitions.filter(({ key }) => totals[key] != null && totals[key]! > cycle.targets[key]).length;
+  const mealIcons = { desayuno: Coffee, almuerzo: Sun, merienda: Apple, cena: Moon };
 
   const toolbar = <>
     {context}
@@ -117,9 +128,10 @@ export function NutritionPlanEditor({
   return (
     <section
       className="nutrition-section nutrition-editor"
+      data-editable={editable}
       aria-labelledby="nutrition-editor-title"
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="nutrition-editor-heading flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2
             id="nutrition-editor-title"
@@ -130,7 +142,7 @@ export function NutritionPlanEditor({
           <p className="mt-2 text-sm text-muted-foreground">
             {editable
               ? t(
-                  "Ajusta las cantidades. Los cambios se guardan automáticamente.",
+                  "Guardado automático",
                 )
               : t(
                   cycle.state === "en_aprobacion"
@@ -145,49 +157,68 @@ export function NutritionPlanEditor({
           variant="outline"
           disabled={!editable}
           onClick={() => setConfirmCopy(true)}
+          aria-label={t("Aplicar este día a los 30 días")}
         >
-          {t("Aplicar este día a los 30 días")}
+          <Copy className="size-4" aria-hidden="true" />{t("Copiar a 30 días")}
         </Button>
       </div>
       {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
-      <section
-        aria-labelledby="nutrition-day-totals"
+      <details
         className="nutrition-daily-totals"
       >
-        <h3
-          id="nutrition-day-totals"
-          className="nutrition-display text-lg font-semibold"
-        >
-          {t("Totales del día {day}", { day: String(day) })}
-        </h3>
-        <NutritionTargetsPanel targets={cycle.targets} totals={totals} />
-      </section>
+        <summary>
+          <span>{t("Totales del día {day}", { day: String(day) })}</span>
+          <strong className="nutrition-measure">{t("{actual} de {target} {unit}", { actual: format(totals.kcal), target: format(cycle.targets.kcal), unit: t("kcal") })}</strong>
+          {exceededTargets > 0 && <span className="nutrition-target-warning">{t("{count} sobre la meta", { count: String(exceededTargets) })}</span>}
+          <ChevronDown className="size-4 nutrition-disclosure-chevron" aria-hidden="true" />
+        </summary>
+        <div className="nutrition-daily-details"><NutritionTargetsPanel targets={cycle.targets} totals={totals} /></div>
+      </details>
+      <nav className="nutrition-meal-nav" aria-label={t("Comidas del día")}>
+        {mealDefinitions.map(({ type, label }) => {
+          const Icon = mealIcons[type];
+          return <Button key={type} id={`meal-${type}-button`} variant="ghost" data-meal-type={type}
+            aria-pressed={activeMeal === type} aria-controls={`meal-${type}-panel`}
+            disabled={!meals.some(meal => meal.mealType === type)} onClick={() => setSelectedMeal(type)}><Icon className="size-4" aria-hidden="true" />{t(label)}</Button>;
+        })}
+      </nav>
       <fieldset disabled={!editable} className="min-w-0">
         <legend className="sr-only">
           {t("Comidas del día {day}", { day: String(day) })}
         </legend>
+        <div className="nutrition-meal-grid">
         {mealDefinitions.map(({ type, label, time }) => {
           const meal = meals.find((entry) => entry.mealType === type);
           if (!meal) return null;
+          const Icon = mealIcons[type];
+          const mealValues = mealTotals(meal, catalog);
           return (
             <section
               key={type}
+              id={`meal-${type}-panel`}
               className="nutrition-meal"
+              hidden={activeMeal !== type}
+              data-meal-type={type}
               aria-labelledby={`meal-${type}-title`}
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-baseline gap-3">
+              <div className="nutrition-meal-heading">
+                <span className="nutrition-meal-icon"><Icon className="size-5" aria-hidden="true" /></span>
+                <div className="nutrition-meal-identity">
                   <h3
                     id={`meal-${type}-title`}
-                    className="nutrition-display text-xl font-semibold"
+                    className="nutrition-display"
+                    tabIndex={-1}
                   >
                     {t(label)}
                   </h3>
-                  <span className="nutrition-measure text-sm text-muted-foreground">
+                  <span className="nutrition-measure">
                     {time}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <strong className="nutrition-meal-calories nutrition-measure">{format(mealValues.kcal)} {t("kcal")}</strong>
+              </div>
+                <div className="nutrition-meal-tools">
+                  <div className="nutrition-meal-water">
                   <label
                     htmlFor={`water-${meal.id}`}
                     className="nutrition-label whitespace-nowrap"
@@ -219,6 +250,7 @@ export function NutritionPlanEditor({
                         }));
                     }}
                   />
+                  </div>
                   <Button
                     variant="outline"
                     onClick={() => setAddingTo(meal.id)}
@@ -230,12 +262,11 @@ export function NutritionPlanEditor({
                     {t("Agregar alimento")}
                   </Button>
                 </div>
-              </div>
               {meal.items.length > 0 && (
-                <div className="nutrition-meal-total">
-                  <span className="text-sm font-semibold">{t("Total de {meal}", { meal: t(label) })}</span>
-                  <NutritionNutrients totals={mealTotals(meal, catalog)} />
-                </div>
+                <details className="nutrition-meal-total">
+                  <summary aria-label={t("Total de {meal}", { meal: t(label) })}>{t("Totales")}<ChevronDown className="size-3.5 nutrition-disclosure-chevron" aria-hidden="true" /></summary>
+                  <NutritionNutrients totals={mealValues} />
+                </details>
               )}
               <ul role="list" className="nutrition-food-list mt-5">
                 {meal.items.map((item) => {
@@ -323,7 +354,7 @@ export function NutritionPlanEditor({
               {meal.items.length === 0 && (
                 <p className="py-4 text-sm text-muted-foreground">
                   {t(
-                    "Esta comida está vacía. Agrega un alimento antes de enviar a aprobación.",
+                    "Esta comida está vacía. Agrega un alimento.",
                   )}
                 </p>
               )}
@@ -331,6 +362,7 @@ export function NutritionPlanEditor({
             </section>
           );
         })}
+        </div>
         <div className="border-t border-border pt-6">
           <label htmlFor="nutrition-instructions" className="nutrition-label">
             {t("Indicaciones del plan")}
@@ -350,13 +382,13 @@ export function NutritionPlanEditor({
           />
         </div>
       </fieldset>
-      <details className="mt-7 border-t border-border pt-5">
+      <details className="nutrition-target-editor mt-7 border-t border-border pt-5">
         <summary className="cursor-pointer rounded-md text-sm font-semibold focus-visible:outline-2 focus-visible:outline-ring">
           {t("Editar metas del borrador")}
         </summary>
         <p className="my-4 text-sm text-muted-foreground">
           {t(
-            "Cambiar metas marca los menús como desactualizados. Regenera la propuesta antes de enviar a aprobación.",
+            "Regenera la propuesta para aplicar las nuevas metas.",
           )}
         </p>
         <form

@@ -60,7 +60,7 @@ test("detalle nutricional, foco y contexto en cinco anchos sin escrituras de pre
     await expect(grams).toHaveValue(original);
     expect(await grams.evaluate((element, previous) => element === previous, identity)).toBe(true);
     const context = page.locator(".nutrition-context-bar");
-    await page.locator(".nutrition-meal").last().getByRole("heading").scrollIntoViewIfNeeded();
+    await page.locator(".nutrition-meal:visible").getByRole("heading").scrollIntoViewIfNeeded();
     await expect(page.getByLabel("Día del ciclo", { exact: true })).toBeInViewport();
     await expect(context.getByText("Todos los cambios guardados", { exact: true })).toBeInViewport();
     const bounds = await context.boundingBox();
@@ -77,7 +77,7 @@ test("fila en inglés, oscuro y zoom conserva edición y nutrientes", async ({ p
   await page.goto("/nutrition/demo-patient-2?tab=plan");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => document.documentElement.classList.add("dark"));
-  const summary = page.getByText("View nutrients for Avena demo", { exact: true });
+  const summary = page.getByLabel("View nutrients for Avena demo", { exact: true });
   await summary.click();
   const detail = page.locator("details").filter({ has: summary });
   await expect(detail.getByText("Carbohydrates", { exact: true })).toBeVisible();

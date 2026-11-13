@@ -44,6 +44,7 @@ export async function mockNutritionHttp(
   permissions = ["Nutrition.Manage", "Nutrition.Approve"],
   options: {
     english?: boolean;
+    legacyInboxOrder?: boolean;
     includeE1?: boolean;
     unavailable?: string;
     malformedQueue?: boolean;
@@ -190,7 +191,7 @@ export async function mockNutritionHttp(
           }
         : null,
     }));
-    const queue = mockNutritionQueue(query, summaries);
+    const queue = mockNutritionQueue(query, summaries, options.legacyInboxOrder);
     return {
       total: queue.total,
       page: queue.page,

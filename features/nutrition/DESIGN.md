@@ -23,19 +23,19 @@ colors:
   renew-foreground: "#6b3aa0"
 typography:
   title:
-    fontFamily: "var(--font-plex), sans-serif"
+    fontFamily: "var(--font-plus-jakarta), sans-serif"
     fontSize: "1.5rem"
     fontWeight: 600
     lineHeight: 1.15
     letterSpacing: "-0.025em"
   body:
-    fontFamily: "var(--font-plex), sans-serif"
+    fontFamily: "var(--font-plus-jakarta), sans-serif"
     fontSize: "0.875rem"
   label:
-    fontFamily: "var(--font-plex), sans-serif"
+    fontFamily: "var(--font-plus-jakarta), sans-serif"
     fontSize: "0.75rem"
   measure:
-    fontFamily: "var(--font-plex-mono), monospace"
+    fontFamily: "var(--font-inter), sans-serif"
 rounded:
   control: "6px"
   disclosure: "8px"
@@ -87,9 +87,9 @@ El contenido clínico tiene prioridad sobre la decoración. La interfaz distingu
 
 **Key Characteristics:**
 
-- Dos paneles en escritorio y recorrido lista→ficha en móvil.
+- Directorio completo al entrar; lista lateral y ficha al seleccionar un paciente en escritorio. Lista→ficha en móvil.
 - Tres tareas accesibles mediante pestañas compartidas del ERP.
-- IBM Plex Sans para lectura; IBM Plex Mono para cantidades tabulares.
+- Plus Jakarta para títulos e Inter para lectura y cantidades tabulares, como el ERP.
 - Superficies delimitadas y color semántico localizado.
 
 Fuente de verdad visual: reglas efectivas de `nutrition.css`, componentes del módulo y primitivas compartidas. Evidencia observada: `openspec/changes/plan-nutricional-erp/screenshots/rework/` en el workspace, especialmente programación de escritorio y resultados de móvil, junto a `measurements.json`. Las capturas usan HTTP sintético explícito y acreditan composición; no datos clínicos reales. El contrato y la crítica de ese change explican la dirección, pero los valores registrados aquí proceden de la implementación.
@@ -122,7 +122,7 @@ La marca concentra el peso visual en navy/teal; los estados usan fondos suaves c
 
 ## Typography
 
-IBM Plex Sans (`--font-plex`, fallback sans-serif) resuelve lectura y títulos locales. IBM Plex Mono (`--font-plex-mono`, fallback monospace) resuelve cantidades con `tabular-nums`. La cabecera y las secciones reutilizan las primitivas ERP; no se prescribe una nueva fuente para el shell.
+Plus Jakarta (`--font-plus-jakarta`) resuelve los títulos e Inter (`--font-inter`) el texto y las cantidades con `tabular-nums`. La cabecera y las secciones reutilizan las primitivas ERP; no se prescribe una nueva fuente para el shell.
 
 - **Título de paciente:** peso semibold y escala del token `title`; en escritorio y móvil conserva la misma jerarquía.
 - **Texto operativo:** escala `body`; acciones y pestañas de escritorio también usan texto compacto (13px).
@@ -198,3 +198,38 @@ Cabecera y acciones permanecen fuera del scroll; solo el cuerpo desplaza. El foo
 - **Don't** añadir nuevas fuentes, emojis, paletas decorativas o servicios para reproducir esta presentación.
 - **Don't** reemplazar el selector compacto de día por una matriz de treinta controles.
 - **Don't** generalizar los tamaños excepcionales de 10–11px de ejes y microdatos de bandeja como texto operativo del módulo.
+
+## Ajuste de composición — 13/11/2026
+
+El directorio ocupa todo el espacio disponible antes de seleccionar un paciente.
+Muestra identidad, estado, meta, vigencia y alertas sin consultar cada ficha.
+Una container query muestra columnas cuando el panel tiene al menos 880px; por
+debajo conserva filas legibles. No se inventa un documento si el listado no lo
+incluye.
+
+La cabecera del paciente y el resumen de metas usan menos altura. Los detalles
+nutricionales diarios, por comida y por alimento parten cerrados, con calorías
+y número de metas superadas visibles. Los botones de comidas muestran una sola
+comida a la vez y señalan la activa, manteniendo cantidades, día y guardado. Los
+campos de agua y gramos conservan ancho para leer el valor en móvil.
+
+Se usan iconos Lucide, etiquetas breves y superficies de la paleta arcoíris del
+dashboard con tintes suaves, bordes neutros y acentos en iconos. La bandeja
+ofrece filtros con conteos reales. Las filas agrupan identidad, estado, valores y acciones; no se muestra
+una columna vacía de seguimiento. El editor muestra una sola comida por botón. Perfil, versión publicada y bitácora son secciones abiertas, sin
+acordeones. Por decisión de producto, la ficha ERP omite el aviso legal y el
+texto explicativo repetido. Las reglas del flujo y el cálculo no cambian.
+
+En escritorio el módulo usa la altura disponible del shell con flex y min-height: 0.
+La lista y la ficha desplazan su contenido; el fondo exterior no añade otro scroll.
+En móvil se conserva el flujo natural de página.
+
+La entrada agrupa título, búsqueda y selector en una barra compacta. Los
+contadores son filtros de texto con icono y cifra, sin tarjetas KPI. El directorio
+usa paciente, plan (estado, versión, meta y alertas) y vigencia; no repite Sin plan
+en varias columnas. El ERP compone la página de Todos por estados disjuntos: publicados, por renovar,
+por publicar, borradores, devueltos y sin plan. Reutiliza los conteos y pide solo
+las ventanas necesarias, de hasta dos páginas por estado, sin consultas por
+paciente ni descargar toda la bandeja. Así el orden funciona con la API actual
+y conserva búsqueda, alcance, cancelación y paginación. El backend también
+prioriza publicaciones cuando se despliegue su versión pendiente.
