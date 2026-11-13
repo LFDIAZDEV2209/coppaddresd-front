@@ -645,8 +645,9 @@ function PodcastCard({ item, selected, onPlay, onDetails, onEdit, onDelete }: {
   const t = useT();
   const status = mediaStatusMeta[item.status];
   return <article className={`group flex w-52 shrink-0 flex-col gap-3 rounded-xl p-3 transition-colors ${selected ? "bg-primary-soft" : "bg-muted/40 hover:bg-muted"}`}>
-    <div className="relative aspect-square rounded-lg bg-primary-soft text-primary">
-      <Mic aria-hidden="true" className="absolute inset-0 m-auto size-14" />
+    <div className="relative aspect-square rounded-lg bg-brand-gradient text-white">
+      {item.sortOrder > 0 ? <span className="absolute inset-0 flex items-center justify-center font-heading text-5xl font-bold">{item.sortOrder}</span>
+        : <Mic aria-hidden="true" className="absolute inset-0 m-auto size-14" />}
       {item.thumbnailKey && <MediaThumb storageKey={item.thumbnailKey} alt="" className="absolute inset-0 size-full rounded-lg object-cover" />}
       <Button size="icon" className="absolute right-2 bottom-2 rounded-full shadow-sm"
         onClick={onPlay} disabled={!item.storageKey}

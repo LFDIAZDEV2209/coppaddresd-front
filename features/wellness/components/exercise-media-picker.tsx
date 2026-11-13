@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { ImageIcon, Upload, Video, X } from "lucide-react";
+import { ImageIcon, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppContext } from "@/providers/context-provider";
 import { useT } from "@/providers/i18n-provider";
+import { MediaLibraryPicker } from "@/features/media/components/media-library-picker";
 import { MediaPlayer } from "@/features/media/components/media-player";
-import { createMediaItem, fetchMediaItems, getMediaItemById, publishMediaItem } from "@/features/media/services/media-service";
+import { createMediaItem, getMediaItemById, publishMediaItem } from "@/features/media/services/media-service";
 import { detectMediaMetadata, resolveStorageKeys } from "@/features/media/services/upload-service";
 import type { MediaItem } from "@/features/media/types";
 
@@ -26,10 +27,8 @@ export function ExerciseMediaPicker({ value, exerciseName, disabled, onChange, o
   const t = useT();
   const { can } = useAppContext();
   const fieldId = useId();
-  const [search, setSearch] = useState("");
-  const [items, setItems] = useState<MediaItem[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [selected, setSelected] = useState<MediaItem | null>(null);
-  const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(0);
@@ -37,27 +36,9 @@ export function ExerciseMediaPicker({ value, exerciseName, disabled, onChange, o
   const canUpload = can("Media.Create") && can("Media.Publish");
 
   useEffect(() => {
-    if (!canBrowse) return;
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      setLoading(true);
-      Promise.all([
-        fetchMediaItems(1, 20, { status: "Published", mediaType: "Video", search }, controller.signal),
-        fetchMediaItems(1, 20, { status: "Published", mediaType: "Image", search }, controller.signal),
-      ]).then(([videos, images]) => {
-        setItems([...videos.data, ...images.data]);
-        setError("");
-      }).catch(() => {
-        if (!controller.signal.aborted) setError(t("No se pudo cargar la biblioteca de ejercicios."));
-      }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    }, 250);
-    return () => { clearTimeout(timer); controller.abort(); };
-  }, [search, canBrowse, t]);
-
-  useEffect(() => {
     let active = true;
     if (value && canBrowse) {
-      getMediaItemById(value).then((item) => { if (active) setSelected(item); })
+      getMediaItemById(value).then((item) => { if (active) setSelected(item.mediaType === "Video" || item.mediaType === "Image" ? item : null); })
         .catch(() => { if (active) setSelected(null); });
     }
     return () => { active = false; };
@@ -100,7 +81,7 @@ export function ExerciseMediaPicker({ value, exerciseName, disabled, onChange, o
   return <section className="flex flex-col gap-3 rounded-xl border border-border bg-background p-4">
     <div className="flex items-start justify-between gap-3">
       <div className="flex flex-col gap-1">
-        <Label htmlFor={`${fieldId}-search`}>{t("Demostración del ejercicio")}</Label>
+        <h3 className="text-sm font-medium">{t("Demostración del ejercicio")}</h3>
         <p className="text-xs text-muted-foreground">{t("Adjunta una imagen o un vídeo real para guiar al paciente.")}</p>
       </div>
       <ImageIcon className="size-5 shrink-0 text-primary" aria-hidden />
@@ -116,19 +97,11 @@ export function ExerciseMediaPicker({ value, exerciseName, disabled, onChange, o
       </div>
     </div> : <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">{t("Este ejercicio todavía no tiene imagen o vídeo.")}</p>}
     {canBrowse ? <>
-      <Input id={`${fieldId}-search`} value={search} disabled={disabled || busy}
-        placeholder={t("Buscar una demostración publicada")}
-        onChange={(event) => setSearch(event.target.value)} />
-      <div className="flex max-h-36 flex-col gap-1 overflow-y-auto" aria-busy={loading}>
-        {loading ? <p role="status" className="py-2 text-xs text-muted-foreground">{t("Cargando demostraciones...")}</p>
-          : items.length === 0 ? <p className="py-2 text-xs text-muted-foreground">{t("No hay demostraciones publicadas para esta búsqueda.")}</p>
-          : items.map((item) => <Button key={item.id} type="button" variant={value === item.id ? "secondary" : "ghost"}
-              className="min-h-10 justify-start whitespace-normal text-left" disabled={disabled || busy}
-              onClick={() => { setSelected(item); onChange(item.id); }}>
-              {item.mediaType === "Image" ? <ImageIcon className="size-4 shrink-0" /> : <Video className="size-4 shrink-0" />}
-              {item.title}
-            </Button>)}
-      </div>
+      <Button id={`${fieldId}-library`} type="button" variant="outline" disabled={disabled || busy}
+        onClick={() => setPickerOpen(true)}>{t("Elegir de la biblioteca")}</Button>
+      <MediaLibraryPicker destino="rutinas" open={pickerOpen} onOpenChange={setPickerOpen}
+        selectedIds={value ? [value] : []} title={t("Demostración del ejercicio")}
+        onConfirm={items => { const item = items[0]; if (item) { setSelected(item); onChange(item.id); } }} />
     </> : <p className="text-xs text-muted-foreground">{t("Necesitas el permiso de biblioteca de medios para buscar demostraciones.")}</p>}
     {canUpload && <div className="flex flex-col gap-2 border-t border-border pt-3">
       <Label htmlFor={`${fieldId}-file`} className="flex items-center gap-2"><Upload className="size-4" />{t("Subir imagen o vídeo")}</Label>

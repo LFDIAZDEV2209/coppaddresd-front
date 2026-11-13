@@ -5294,5 +5294,20 @@
   "Explora por categoría y escucha sin salir de la biblioteca.": "Explora por categoría y escucha sin salir de la biblioteca.",
   "Escuchar {title}": "Escuchar {title}",
   "Reproduciendo ahora": "Reproduciendo ahora",
-  "Cerrar reproductor": "Cerrar reproductor"
+  "Cerrar reproductor": "Cerrar reproductor",
+  "Añadir desde la biblioteca": "Añadir desde la biblioteca",
+  "Solo podcasts publicados para el programa.": "Solo podcasts publicados para el programa.",
+  "Solo vídeos e imágenes publicados para las rutinas.": "Solo vídeos e imágenes publicados para las rutinas.",
+  "Seleccionar {title}": "Seleccionar {title}",
+  "Vista previa de {title}": "Vista previa de {title}",
+  "Abre una vista previa antes de confirmar la selección.": "Abre una vista previa antes de confirmar la selección.",
+  "Quitar de la selección: {title}": "Quitar de la selección: {title}",
+  "Recurso seleccionado": "Recurso seleccionado",
+  "Una selección anterior ya no está disponible. Quítala o elige otro recurso.": "Una selección anterior ya no está disponible. Quítala o elige otro recurso.",
+  "Elegir de la biblioteca": "Elegir de la biblioteca",
+  "Destino: Programa, solo podcasts": "Destino: Programa, solo podcasts",
+  "Destino: Rutinas, vídeos e imágenes": "Destino: Rutinas, vídeos e imágenes",
+  "Añadir {count}": "Añadir {count}",
+  "Podcast": "Podcast",
+  "Mindfulness": "Mindfulness"
 }
